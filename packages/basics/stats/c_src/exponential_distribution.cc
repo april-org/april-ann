@@ -25,11 +25,11 @@
 #include "smart_ptr.h"
 #include "utilMatrixFloat.h"
 
-using april_utils::log_float;
-using april_utils::SharedPtr;
+using AprilUtils::log_float;
+using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;
-using basics::MatrixFloat;
-using basics::MTRand;
+using Basics::MatrixFloat;
+using Basics::MTRand;
 
 namespace Stats {
   
@@ -135,7 +135,7 @@ namespace Stats {
   char *ExponentialDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->put("stats.dist.exponential(matrix.fromString[[");
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     lambda->write( stream.get(), options.putBoolean("ascii", is_ascii) );
     stream->put("]])\0",4); // forces a \0 at the end of the buffer
     return stream->releaseString();

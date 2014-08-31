@@ -55,7 +55,7 @@ namespace ZIP {
     
   private:
     
-    april_utils::SharedPtr<ZIPPackage> cpp_zip_package;
+    AprilUtils::SharedPtr<ZIPPackage> cpp_zip_package;
     zip_file *file;
     size_t size;
     off_t pos;

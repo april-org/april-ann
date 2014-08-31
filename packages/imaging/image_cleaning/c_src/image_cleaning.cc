@@ -24,9 +24,9 @@
 #include "maxmin.h"
 #include "image_cleaning.h"
 
-using namespace basics;
+using namespace Basics;
 
-namespace imaging {
+namespace Imaging {
 
   MatrixFloat *ImageHistogram::getHistogram(const ImageFloat *img, int gray_levels) {
 
@@ -104,8 +104,8 @@ namespace imaging {
     dims[1] = width;
     dims[2] = gray_levels;
 
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
 
     MatrixFloat *matrix = new MatrixFloat(3,dims);
     april_assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
@@ -201,8 +201,8 @@ namespace imaging {
 
   MatrixFloat * ImageHistogram::getHorizontalHistogram(int radius) {
   
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[2];
     dims[0] = this->height;
     dims[1] = this->gray_levels;
@@ -225,8 +225,8 @@ namespace imaging {
 
   MatrixFloat * ImageHistogram::getVerticalHistogram(int radius) {
 
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[2];
     dims[0] = this->width;
     dims[1] = this->gray_levels;
@@ -247,8 +247,8 @@ namespace imaging {
   }
 
   MatrixFloat * ImageHistogram::getIntegralHistogram(){
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[3];
     dims[0] = height;
     dims[1] = width;
@@ -265,4 +265,4 @@ namespace imaging {
     return matrix;
   }
 
-} // namespace imaging
+} // namespace Imaging

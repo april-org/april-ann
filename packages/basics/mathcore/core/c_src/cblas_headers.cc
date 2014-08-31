@@ -25,8 +25,8 @@
 #include "cblas_headers.h"
 #include "error_print.h"
 
-using april_utils::swap;
-using april_math::ComplexF;
+using AprilUtils::swap;
+using AprilMath::ComplexF;
 
 #ifdef ADHOC_BLAS
 

@@ -42,7 +42,7 @@
 #include "unused_variable.h"
 #include "mathcore.h"
 
-namespace basics {
+namespace Basics {
   
   namespace MatrixIO {
     /// Boolean option key for read/write using tabulated format.
@@ -98,8 +98,8 @@ namespace basics {
     int total_size;
     int last_raw_pos;
     /// Pointer to data
-    april_utils::SharedPtr< april_math::GPUMirroredMemoryBlock<T> > data;
-    april_utils::SharedPtr< april_utils::MMappedDataReader > mmapped_data;
+    AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > data;
+    AprilUtils::SharedPtr< AprilUtils::MMappedDataReader > mmapped_data;
     /// Major type (only when numDim=2)
     CBLAS_ORDER major_order;
     /// For CUDA purposes
@@ -118,6 +118,11 @@ namespace basics {
     const T *getData() const { return data->getPPALForRead(); }
   
     int getLastRawPos() const { return last_raw_pos; }
+    
+  public:
+    class sliding_window;
+    friend class sliding_window;
+  
     /// Returns if the matrix is a vector
     bool isVector() const { return (numDim==1 ||
                                     (numDim==2 &&
@@ -130,11 +135,7 @@ namespace basics {
       return (numDim == 1) ? stride[0] :
         ( (matrixSize[0]!=1) ? (stride[0]) : (stride[1]) );
     }
-  
-  public:
-    class sliding_window;
-    friend class sliding_window;
-  
+
     /// Computes the position at data array given it coordinates
     int  computeRawPos(const int *coords) const;
     /// Computes the coordinates given the raw data position
@@ -297,7 +298,7 @@ namespace basics {
      */
     class sliding_window : public Referenced {
       /// A reference to the matrix
-      april_utils::SharedPtr< Matrix<T> > m;
+      AprilUtils::SharedPtr< Matrix<T> > m;
       /// Offset coordinates
       int *offset;
       /// subPattern size.
@@ -522,9 +523,9 @@ namespace basics {
     //
     Matrix(int numDim, const int *stride, const int offset,
            const int *matrixSize, const int total_size, const int last_raw_pos,
-           april_math::GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
+           AprilMath::GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
            const bool use_cuda, const bool transposed,
-           april_utils::MMappedDataReader *mmapped_data = 0);
+           AprilUtils::MMappedDataReader *mmapped_data = 0);
 
     /// Modifies the offset of the matrix. WARNING, this method doesn't check the
     /// new data position, so be sure that it fits in the data pointer size
@@ -541,7 +542,7 @@ namespace basics {
     /// Full constructor given numDim, dim, and major_order
     Matrix(int numDim, const int* dim,
            CBLAS_ORDER major_order = CblasRowMajor,
-           april_math::GPUMirroredMemoryBlock<T> *data = 0,
+           AprilMath::GPUMirroredMemoryBlock<T> *data = 0,
            int offset = 0,
            bool transposed = false);
   
@@ -565,10 +566,10 @@ namespace basics {
     virtual ~Matrix();
   
     /// Constructor from a MMAP file
-    static Matrix<T> *fromMMappedDataReader(april_utils::MMappedDataReader
+    static Matrix<T> *fromMMappedDataReader(AprilUtils::MMappedDataReader
                                             *mmapped_data);
     /// Writes to a file
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) const;
   
     /// For DEBUG purposes
     void print() const;
@@ -698,8 +699,8 @@ namespace basics {
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
     /// you are losing sub-matrix abstraction, and the major order.
-    april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
-    const april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
+    AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
+    const AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
   
     bool getCol(int col, T* vec, int vecsize);
     bool putCol(int col, T *vec, int vecsize);
@@ -746,11 +747,11 @@ namespace basics {
      *
      * - MatrixIO::ASCII_OPTION if @c TAB_OPTION=false this key contains a bool
      *   value indicating if the data has to be binary or not. It uses
-     *   april_utils::binarizer for binarization purposes. By default it is
+     *   AprilUtils::binarizer for binarization purposes. By default it is
      *   true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const april_utils::GenericOptions *options);
+                       const AprilUtils::GenericOptions *options);
     
     /**
      * @brief Reads the Matrix from a stream.
@@ -798,14 +799,14 @@ namespace basics {
      * @note This method throws different kind of errors.
      */
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const april_utils::GenericOptions *options);
+                           const AprilUtils::GenericOptions *options);
     
   private:
     void allocate_memory(int size);
     void release_memory();
     void initialize(const int *dim);
 
-    static april_utils::constString readULine(AprilIO::StreamInterface *stream,
+    static AprilUtils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest,
                                               bool read_empty = false) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
@@ -814,22 +815,22 @@ namespace basics {
     }
 
     void writeNormal(AprilIO::StreamInterface *stream,
-                     const april_utils::GenericOptions *options);
+                     const AprilUtils::GenericOptions *options);
     
     void writeTab(AprilIO::StreamInterface *stream,
-                  const april_utils::GenericOptions *options);
+                  const AprilUtils::GenericOptions *options);
 
     static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
-                                 const april_utils::GenericOptions *options);
+                                 const AprilUtils::GenericOptions *options);
     
     static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const april_utils::GenericOptions *options);
+                              const AprilUtils::GenericOptions *options);
     
-    static T getTemplateOption(const april_utils::GenericOptions *options,
+    static T getTemplateOption(const AprilUtils::GenericOptions *options,
                                const char *name, T default_value);
   };
 
-} // namespace basics
+} // namespace Basics
 
 #include "sparse_matrix.h"
 

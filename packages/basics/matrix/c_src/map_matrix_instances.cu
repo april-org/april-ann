@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2014,Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -22,33 +22,35 @@
 #include "matrixFloat.h"
 
 #define INSTANTIATE_MATRIX_SCALAR_MAP1(TYPE,FUNCTOR)                    \
-  template basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,TYPE>(const basics::Matrix<TYPE> *, \
-                                                             basics::Matrix<TYPE> *, \
+  template Basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,TYPE>(const Basics::Matrix<TYPE> *, \
+                                                             Basics::Matrix<TYPE> *, \
                                                              const FUNCTOR &, \
                                                              const int, \
                                                              const unsigned int)
 
 #define INSTANTIATE_MATRIX_SCALAR_MAP1_O(TYPE,OUTPUT,FUNCTOR)           \
-  template basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,OUTPUT>(const basics::Matrix<TYPE> *, \
-                                                               basics::Matrix<OUTPUT> *, \
+  template Basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,OUTPUT>(const Basics::Matrix<TYPE> *, \
+                                                               Basics::Matrix<OUTPUT> *, \
                                                                const FUNCTOR &, \
                                                                const int, \
                                                                const unsigned int)
 
 #define INSTANTIATE_MATRIX_SCALAR_MAP2(TYPE,FUNCTOR)                    \
-  template basics::Matrix<TYPE> *MatrixScalarMap2<TYPE,TYPE,TYPE>(const basics::Matrix<TYPE> *, \
-                                                                  const basics::Matrix<TYPE> *, \
-                                                                  basics::Matrix<TYPE> *, \
+  template Basics::Matrix<TYPE> *MatrixScalarMap2<TYPE,TYPE,TYPE>(const Basics::Matrix<TYPE> *, \
+                                                                  const Basics::Matrix<TYPE> *, \
+                                                                  Basics::Matrix<TYPE> *, \
                                                                   const FUNCTOR &, \
                                                                   const int, \
                                                                   const unsigned int)
 
-namespace april_math {  
+namespace AprilMath {  
 
-  INSTANTIATE_MATRIX_SCALAR_MAP1(float, m_float_unary_float_map_t);
-  INSTANTIATE_MATRIX_SCALAR_MAP1(double, m_double_unary_double_map_t);
-  INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, m_complexf_unary_complexf_map_t);
-  INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, double, m_float_unary_double_map_t);
-  INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, ComplexF, m_float_unary_complexf_map_t);
+  namespace MatrixExt {
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, m_float_unary_float_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(double, m_double_unary_double_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, m_complexf_unary_complexf_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, double, m_float_unary_double_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, ComplexF, m_float_unary_complexf_map_t);
+  }
 
-} // namespace april_math
+} // namespace AprilMath

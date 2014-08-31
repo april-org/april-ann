@@ -20,7 +20,7 @@
  */
 #include "logbase_standard.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   const float log_float::floatnearzero    = 1e-37;
   const float log_float::rawscorenearzero = -99;

@@ -21,7 +21,7 @@
  */
 #include "gpu_mirrored_memory_block.h"
 
-namespace april_math {
+namespace AprilMath {
 
   bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
   bool   GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = false;
@@ -39,4 +39,4 @@ namespace april_math {
   template class GPUMirroredMemoryBlock<double>;
   template class GPUMirroredMemoryBlock<int32_t>;
   template class GPUMirroredMemoryBlock<ComplexF>;
-} // namespace april_math
+} // namespace AprilMath

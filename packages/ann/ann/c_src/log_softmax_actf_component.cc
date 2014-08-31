@@ -24,11 +24,11 @@
 #include "wrapper.h"
 #include "ceiling_power_of_two.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
-using april_utils::ceilingPowerOfTwo;
+using AprilUtils::ceilingPowerOfTwo;
 
 namespace ANN {
 

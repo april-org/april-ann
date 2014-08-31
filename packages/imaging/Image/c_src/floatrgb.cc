@@ -20,7 +20,7 @@
  */
 #include "floatrgb.h"
 
-namespace imaging {
+namespace Imaging {
 
   FloatRGB operator + (FloatRGB x, FloatRGB y)
   {
@@ -122,17 +122,17 @@ namespace imaging {
     return (x = x / y);
   }
 
-} // namespace imaging
+} // namespace Imaging
 
-namespace april_utils{
-  template<> imaging::FloatRGB clamp<imaging::FloatRGB>(imaging::FloatRGB val,
-                                                        imaging::FloatRGB lower,
-                                                        imaging::FloatRGB upper)
+namespace AprilUtils{
+  template<> Imaging::FloatRGB clamp<Imaging::FloatRGB>(Imaging::FloatRGB val,
+                                                        Imaging::FloatRGB lower,
+                                                        Imaging::FloatRGB upper)
   {
     float r = clamp(val.r, lower.r, upper.r);
     float g = clamp(val.g, lower.g, upper.g);
     float b = clamp(val.b, lower.b, upper.b);
     
-    return imaging::FloatRGB(r,g,b);
+    return Imaging::FloatRGB(r,g,b);
   }
 }

@@ -24,7 +24,7 @@
 #include "april_assert.h"
 #include <cstdio>
 
-/* april_utils::context<T>
+/* AprilUtils::context<T>
  *
  * Una cola con acceso aleatorio a los elementos. Sirve para guardar el
  * contexto de los objetos de una secuencia que vamos recorriendo.
@@ -86,7 +86,7 @@
  */
 
 
-namespace april_utils {
+namespace AprilUtils {
 
   template <typename T>
   class context {

@@ -24,7 +24,7 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
-namespace basics {
+namespace Basics {
 
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -72,7 +72,7 @@ namespace basics {
 
 //BIND_HEADER_H
 #include "matrixInt32.h"
-using namespace basics;
+using namespace Basics;
 typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 //BIND_END
 

@@ -172,7 +172,7 @@ namespace AprilIO {
   const char *StreamBuffer::getInBuffer(size_t &buffer_len, size_t max_size,
                                         const char *delim, bool keep_delim) {
     if (in_buffer == 0) in_buffer = nextInBuffer(in_buffer_len);
-    buffer_len = april_utils::min(in_buffer_len - in_buffer_pos, max_size);
+    buffer_len = AprilUtils::min(in_buffer_len - in_buffer_pos, max_size);
     if (delim != 0) {
       size_t pos  = in_buffer_pos;
       size_t last = pos + buffer_len;
@@ -185,7 +185,7 @@ namespace AprilIO {
   
   char *StreamBuffer::getOutBuffer(size_t &buffer_len, size_t max_size) {
     if (out_buffer == 0) out_buffer = nextOutBuffer(out_buffer_len);
-    buffer_len = april_utils::min(out_buffer_len - out_buffer_pos, max_size);
+    buffer_len = AprilUtils::min(out_buffer_len - out_buffer_pos, max_size);
     return out_buffer + out_buffer_pos;
   }
 

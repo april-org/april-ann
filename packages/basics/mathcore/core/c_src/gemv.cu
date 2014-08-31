@@ -22,7 +22,7 @@
 #include "mathcore.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
 
 #ifdef USE_CUDA
   /***************************************
@@ -412,4 +412,4 @@ template void doSparseGemv<ComplexF>(SPARSE_FORMAT sparse_format,
                                      ComplexF beta, GPUMirroredMemoryBlock<ComplexF> *y, unsigned int y_inc,
                                      unsigned int x_shift, unsigned int y_shift,
                                      bool use_gpu);
-} // namespace april_math
+} // namespace AprilMath

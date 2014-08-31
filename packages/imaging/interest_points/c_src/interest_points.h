@@ -32,8 +32,8 @@
 #include "vector.h"
 #include "geometry.h"
 
-using april_utils::vector;
-using april_utils::Point2D;
+using AprilUtils::vector;
+using AprilUtils::Point2D;
 namespace InterestPoints
 {
   
@@ -47,7 +47,7 @@ namespace InterestPoints
    * @param[in] local_context The number of pixels in stroke that is used to compute the local maxima/minima
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
-  april_utils::vector<Point2D>* extract_points_from_image_old(imaging::ImageFloat *pimg, float threshold_white = 0.6, float threshold_black = 0.4, int local_context = 6, int duplicate_interval = 5);
+  AprilUtils::vector<Point2D>* extract_points_from_image_old(Imaging::ImageFloat *pimg, float threshold_white = 0.6, float threshold_black = 0.4, int local_context = 6, int duplicate_interval = 5);
 
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
@@ -60,33 +60,33 @@ namespace InterestPoints
    * @param[in] local_context The number of pixels in stroke that is used to compute the local maxima/minima
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
-  void extract_points_from_image(imaging::ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3, bool reverse = true);
+  void extract_points_from_image(Imaging::ImageFloat *pimg, AprilUtils::vector<Point2D> *local_minima, AprilUtils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3, bool reverse = true);
 
 
-  imaging::ImageFloatRGB * area_to_rgb(imaging::ImageFloat *img);
+  Imaging::ImageFloatRGB * area_to_rgb(Imaging::ImageFloat *img);
   /*
    *
    *
    *
    */
-  imaging::ImageFloat *get_pixel_area(imaging::ImageFloat *source,
-                                      april_utils::vector<Point2D> ascenders,
-                                      april_utils::vector<Point2D> upper_baseline, 
-                                      april_utils::vector<Point2D> lower_baseline,
-                                      april_utils::vector<Point2D> descenders,
-                                      basics::MatrixFloat **transitions);
+  Imaging::ImageFloat *get_pixel_area(Imaging::ImageFloat *source,
+                                      AprilUtils::vector<Point2D> ascenders,
+                                      AprilUtils::vector<Point2D> upper_baseline, 
+                                      AprilUtils::vector<Point2D> lower_baseline,
+                                      AprilUtils::vector<Point2D> descenders,
+                                      Basics::MatrixFloat **transitions);
 
-  basics::MatrixFloat *get_image_matrix_from_index(basics::DataSetFloat *ds_out,
-                                                   basics::DataSetFloat *indexed,
+  Basics::MatrixFloat *get_image_matrix_from_index(Basics::DataSetFloat *ds_out,
+                                                   Basics::DataSetFloat *indexed,
                                                    int width,
                                                    int height,
                                                    int num_classes = 3);
 
-  imaging::ImageFloat *get_image_area_from_dataset(basics::DataSetFloat *ds_out, basics::DataSetFloat *indexed, int width, int height, int num_classes, float threshold = 0.8); 
-  basics::MatrixFloat * get_indexes_from_colored(imaging::ImageFloat *img, imaging::ImageFloat *img2=NULL);
+  Imaging::ImageFloat *get_image_area_from_dataset(Basics::DataSetFloat *ds_out, Basics::DataSetFloat *indexed, int width, int height, int num_classes, float threshold = 0.8); 
+  Basics::MatrixFloat * get_indexes_from_colored(Imaging::ImageFloat *img, Imaging::ImageFloat *img2=NULL);
 
-  imaging::ImageFloat *refine_colored(imaging::ImageFloat *img, basics::MatrixFloat *mat, int num_classes = 3);
-  struct interest_point:april_utils::Point<int> {
+  Imaging::ImageFloat *refine_colored(Imaging::ImageFloat *img, Basics::MatrixFloat *mat, int num_classes = 3);
+  struct interest_point:AprilUtils::Point<int> {
     bool natural_type;
     int point_class;
     float log_prob;
@@ -119,17 +119,17 @@ namespace InterestPoints
                                        const float min_prob = -999999.00);
     void sort_by_confidence();
     void sort_by_x();
-    april_utils::line *get_regression_line();
+    AprilUtils::line *get_regression_line();
   };
   class SetPoints: public Referenced {
   protected:
     vector< PointComponent > *ccPoints;
     int size;
     int num_points;
-    imaging::ImageFloat *img;
+    Imaging::ImageFloat *img;
 
   public:
-    SetPoints(imaging::ImageFloat *img);
+    SetPoints(Imaging::ImageFloat *img);
     void addComponent();
     void addComponent(PointComponent &);
     int getNumPoints() { return num_points;};
@@ -158,9 +158,9 @@ namespace InterestPoints
   class ConnectedPoints: public SetPoints {
 
   private:
-    imaging::ImageConnectedComponents *imgCCs;
+    Imaging::ImageConnectedComponents *imgCCs;
   public:
-    ConnectedPoints(imaging::ImageFloat *img);
+    ConnectedPoints(Imaging::ImageFloat *img);
     void addPoint(interest_point ip);
     void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
       addPoint(interest_point(x,y,c,natural_type,log_prob));

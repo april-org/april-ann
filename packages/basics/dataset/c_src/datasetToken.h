@@ -34,7 +34,7 @@
 #include "vector.h"
 #include "wrapper.h"
 
-namespace basics {
+namespace Basics {
 
   class DataSetToken : public Referenced {
   public:
@@ -107,7 +107,7 @@ namespace basics {
   };
 
   class DataSetTokenVector : public DataSetToken {
-    april_utils::vector<Token*> data;
+    AprilUtils::vector<Token*> data;
     int pattern_size;
   public:
     DataSetTokenVector(int pattern_size) : pattern_size(pattern_size) { }
@@ -144,8 +144,8 @@ namespace basics {
   };
 
   class UnionDataSetToken : public DataSetToken {
-    april_utils::vector<DataSetToken*> ds_array;
-    april_utils::vector<int>           sum_patterns;
+    AprilUtils::vector<DataSetToken*> ds_array;
+    AprilUtils::vector<int>           sum_patterns;
     int pattern_size;
 
   public:
@@ -225,7 +225,7 @@ namespace basics {
       int dims[2] = { 1, patternSize() };
       MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
-      april_math::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
       float *mem_ptr = mem_block->getPPALForWrite();
       ds->getPattern(index, mem_ptr);
       return token;
@@ -237,7 +237,7 @@ namespace basics {
       // The TokenMatrixFloat takes increases reference counter of Matrix.
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
       // The memory block given to ds->getPattern(...).
-      april_math::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
       float *aux_mem = aux_mem_block->getPPALForWrite();
       // int pattern_size = patternSize();
       int num_patterns = numPatterns();
@@ -259,7 +259,7 @@ namespace basics {
         ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
       TokenMatrixFloat *token_matrix = pat->convertTo<TokenMatrixFloat*>();
       MatrixFloat *mat = token_matrix->getMatrix();
-      april_math::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
       const float *v = mem_block->getPPALForRead();
       ds->putPattern(index, v);
     }
@@ -272,7 +272,7 @@ namespace basics {
       MatrixFloat *mat = token_matrix->getMatrix();
       if (mat->getNumDim() != 2)
         ERROR_EXIT(128, "Only allowed for 2-dim matrices\n");
-      april_math::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
       float *aux_mem = aux_mem_block->getPPALForWrite();
       int pattern_size = patternSize();
       int coords[2], major_dim;
@@ -338,6 +338,6 @@ namespace basics {
     }
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILDATASETFLOAT_H

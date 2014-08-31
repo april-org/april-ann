@@ -138,21 +138,21 @@ namespace matlab {
       // SUB-ELEMENTS
       TaggedDataElement *getNextSubElement();
       // FOR NUMERIC TYPES (casting)
-      basics::MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
+      Basics::MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
       // FOR NUMERIC TYPES (casting)
-      basics::MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize,
+      Basics::MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize,
                                                 bool col_major=false);
       // FOR NUMERIC TYPES (casting)
-      basics::MatrixDouble *getMatrixDouble(char *name, size_t maxsize);
+      Basics::MatrixDouble *getMatrixDouble(char *name, size_t maxsize);
       virtual uint32_t getClass();
       // ONLY IF CELL ARRAY
       CellArrayDataElement *getCellArray(char *name, size_t maxsize);
       // ONLY IF STRUCTURE
       StructureDataElement *getStructure(char *name, size_t maxsize);
       // ONLY IF CHAR ARRAY
-      basics::MatrixChar *getMatrixChar(char *name, size_t maxsize);
+      Basics::MatrixChar *getMatrixChar(char *name, size_t maxsize);
       // FOR NUMERIC TYPES (casting)
-      basics::MatrixInt32 *getMatrixInt32(char *name, size_t maxsize);
+      Basics::MatrixInt32 *getMatrixInt32(char *name, size_t maxsize);
     };
 
     class CellArrayDataElement : public DataElementInterface {
@@ -182,7 +182,7 @@ namespace matlab {
 
     class StructureDataElement : public DataElementInterface {
     public:
-      typedef april_utils::hash<april_utils::string, TaggedDataElement*> HashType;
+      typedef AprilUtils::hash<AprilUtils::string, TaggedDataElement*> HashType;
     private:
       HashType elements;
     public:
@@ -230,7 +230,7 @@ namespace matlab {
     int     fd;
     const HeaderType *header;
     bool swap_bytes;
-    april_utils::list<char*> decompressed_buffers;
+    AprilUtils::list<char*> decompressed_buffers;
   
     /** MMAPPED DATA POINTER ACCESS **/
     template<typename T>

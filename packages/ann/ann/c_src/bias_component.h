@@ -32,15 +32,15 @@ namespace ANN {
   /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(BiasANNComponent);
-    basics::MatrixFloat *bias_vector;
+    Basics::MatrixFloat *bias_vector;
     
   protected:
     
-    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat *input,
+    virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat *input,
                                                   bool during_training);
-    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
+    virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
-    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grad_mat);
+    virtual void computeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grad_mat);
     
   public:
     BiasANNComponent(unsigned int size=0,
@@ -49,9 +49,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
-    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
+    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
     
     virtual char *toLuaString();
   };

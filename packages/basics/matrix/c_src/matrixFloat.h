@@ -24,18 +24,18 @@
 
 #include "matrix.h"
 
-namespace basics {
+namespace Basics {
 
   namespace MatrixIO {
       
     /* Especialization of MatrixFloat ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<float>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<float>::operator()(AprilUtils::constString &line,
                                            float &destination);
   
     template<>
-    bool BinaryExtractor<float>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<float>::operator()(AprilUtils::constString &line,
                                             float &destination);
   
     template<>
@@ -57,7 +57,7 @@ namespace basics {
   } // namespace MatrixIO
   
   template<>
-  float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
+  float Matrix<float>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                          const char *name, float default_value);
   
   //////////////////////////////////////////////////////////////////////////

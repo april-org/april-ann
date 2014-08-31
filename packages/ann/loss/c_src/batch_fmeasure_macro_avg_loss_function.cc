@@ -22,8 +22,8 @@
 #include "batch_fmeasure_macro_avg_loss_function.h"
 #include "wrapper.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -40,13 +40,13 @@ namespace ANN {
 
   MatrixFloat *BatchFMeasureMacroAvgLossFunction::
   computeLossBunch(Token *input_, Token *target_) {
-    april_utils::SharedPtr<Token> input(input_);
-    april_utils::SharedPtr<Token> target(target_);
+    AprilUtils::SharedPtr<Token> input(input_);
+    AprilUtils::SharedPtr<Token> target(target_);
     MatrixFloat *input_mat_, *target_mat_;
     throwErrorAndGetMatrixFromTokens(input.get(), target.get(),
                                      input_mat_, target_mat_);
-    april_utils::SharedPtr<MatrixFloat> input_mat(input_mat_);
-    april_utils::SharedPtr<MatrixFloat> target_mat(target_mat_);
+    AprilUtils::SharedPtr<MatrixFloat> input_mat(input_mat_);
+    AprilUtils::SharedPtr<MatrixFloat> target_mat(target_mat_);
     if (complement_output) {
       input_mat  = input_mat->clone();
       target_mat = target_mat->clone();
@@ -59,8 +59,8 @@ namespace ANN {
     int num_classes = input_mat->getDimSize(1);
     Gs = new MatrixFloat(1,&num_classes,CblasColMajor);
     Hs = Gs->clone();
-    april_utils::SharedPtr<MatrixFloat> class_input_mat;
-    april_utils::SharedPtr<MatrixFloat> class_target_mat;
+    AprilUtils::SharedPtr<MatrixFloat> class_input_mat;
+    AprilUtils::SharedPtr<MatrixFloat> class_target_mat;
     MatrixFloat::iterator Gs_it(Gs->begin());
     MatrixFloat::iterator Hs_it(Hs->begin());
     float FMsum = 0.0f;
@@ -99,13 +99,13 @@ namespace ANN {
   
   Token *BatchFMeasureMacroAvgLossFunction::
   computeGradient(Token *input_,Token *target_) {
-    april_utils::SharedPtr<Token> input(input_);
-    april_utils::SharedPtr<Token> target(target_);
+    AprilUtils::SharedPtr<Token> input(input_);
+    AprilUtils::SharedPtr<Token> target(target_);
     MatrixFloat *input_mat_, *target_mat_;
     throwErrorAndGetMatrixFromTokens(input.get(), target.get(),
                                      input_mat_, target_mat_);
-    april_utils::SharedPtr<MatrixFloat> input_mat(input_mat_);
-    april_utils::SharedPtr<MatrixFloat> target_mat(target_mat_);
+    AprilUtils::SharedPtr<MatrixFloat> input_mat(input_mat_);
+    AprilUtils::SharedPtr<MatrixFloat> target_mat(target_mat_);
     if (complement_output) {
       target_mat = target_mat->clone();
       target_mat->complement();
@@ -123,7 +123,7 @@ namespace ANN {
       int num_classes = input_mat->getDimSize(1);
       MatrixFloat::const_iterator Gs_it(Gs->begin());
       MatrixFloat::const_iterator Hs_it(Hs->begin());
-      april_utils::SharedPtr<MatrixFloat> class_error_mat;
+      AprilUtils::SharedPtr<MatrixFloat> class_error_mat;
       float rel = 1.0f/num_classes;
       for (int i=0; i<num_classes; ++i, ++Gs_it, ++Hs_it) {
 	april_assert(Gs_it != Gs->end());

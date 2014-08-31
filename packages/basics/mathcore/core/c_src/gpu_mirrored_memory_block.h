@@ -63,7 +63,7 @@ extern "C" {
 #define ALLOC_MASK 0x08 // bit 3 = 8
 #define MMAP_MASK  0x10 // bit 4 = 16
 
-namespace april_math {
+namespace AprilMath {
 
   /**
    * @brief Class base for memory blocks mirrored between host (mem ppal) and
@@ -80,8 +80,8 @@ namespace april_math {
   class GPUMirroredMemoryBlockBase : public Referenced {
   public:
 #ifndef NO_POOL
-    typedef april_utils::list<char*>                PoolListType;
-    typedef april_utils::hash<size_t, PoolListType> PoolType;
+    typedef AprilUtils::list<char*>                PoolListType;
+    typedef AprilUtils::hash<size_t, PoolListType> PoolType;
 #endif
     static bool USE_CUDA_DEFAULT;
     
@@ -103,7 +103,7 @@ namespace april_math {
              it != pool_lists->end(); ++it) {
           for (PoolListType::iterator lit = it->second.begin();
                lit != it->second.end(); ++lit) {
-            april_utils::aligned_free(*lit);
+            AprilUtils::aligned_free(*lit);
           }
         }
         delete pool_lists;
@@ -122,7 +122,7 @@ namespace april_math {
     bool    pinned;
 #endif
     mutable unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
-    april_utils::MMappedDataReader *mmapped_data;
+    AprilUtils::MMappedDataReader *mmapped_data;
     
     void setConst() {
       status = status | CONST_MASK;
@@ -298,7 +298,7 @@ namespace april_math {
     }
 #endif
 
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) const {
 #ifdef USE_CUDA
       if (!getUpdatedPPAL())
         ERROR_EXIT(128, "Impossible to update memory from a const pointer\n");
@@ -307,7 +307,7 @@ namespace april_math {
       mmapped_data->put(char_mem, size);
     }
   
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) {
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) {
 #ifdef USE_CUDA
       updateMemPPAL();
 #endif
@@ -315,7 +315,7 @@ namespace april_math {
       mmapped_data->put(char_mem, size);
     }
   
-    GPUMirroredMemoryBlockBase(april_utils::MMappedDataReader *mmapped_data) :
+    GPUMirroredMemoryBlockBase(AprilUtils::MMappedDataReader *mmapped_data) :
       Referenced() {
       this->size     = *(mmapped_data->get<size_t>());
       this->char_mem = mmapped_data->get<char>(this->size);
@@ -374,7 +374,7 @@ namespace april_math {
       PoolListType &l = (*pool_lists)[size];
       if (l.empty()) {
         if (!use_mmap_allocation) {
-          char_mem = april_utils::aligned_malloc<char>(size);
+          char_mem = AprilUtils::aligned_malloc<char>(size);
 #ifdef POOL_DEBUG
           printf("ALLOC %lu :: %p\n", size, char_mem);
 #endif
@@ -399,7 +399,7 @@ namespace april_math {
       }
 #else
       if (!use_mmap_allocation) {
-        char_mem = april_utils::aligned_malloc<char>(size);
+        char_mem = AprilUtils::aligned_malloc<char>(size);
       }
       else {
         setMMapped();
@@ -437,10 +437,10 @@ namespace april_math {
 #ifdef POOL_DEBUG
               printf("FREE %lu :: %p\n", size, char_mem);
 #endif
-              april_utils::aligned_free(char_mem);
+              AprilUtils::aligned_free(char_mem);
             }
 #else
-            april_utils::aligned_free(char_mem);
+            AprilUtils::aligned_free(char_mem);
 #endif
           }
           else munmap(mem_ppal, size);
@@ -468,10 +468,10 @@ namespace april_math {
 #ifdef POOL_DEBUG
             printf("FREE %lu :: %p\n", size, char_mem);
 #endif
-            april_utils::aligned_free(char_mem);
+            AprilUtils::aligned_free(char_mem);
           }
 #else
-          april_utils::aligned_free(char_mem);
+          AprilUtils::aligned_free(char_mem);
 #endif
         }
         else munmap(mem_ppal, size);
@@ -489,7 +489,7 @@ namespace april_math {
       if (isConst() || isMMapped()) {
         ERROR_EXIT(128, "Impossible to set as pinned a const or mmapped memory block\n");
       }
-      if (mem_ppal) april_utils::aligned_free(char_mem);
+      if (mem_ppal) AprilUtils::aligned_free(char_mem);
       void *ptr;
       if (cudaHostAlloc(&ptr, size, 0) != cudaSuccess)
         ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
@@ -540,7 +540,7 @@ namespace april_math {
     
   protected:
     
-    GPUMirroredMemoryBlock(april_utils::MMappedDataReader *mmapped_data) :
+    GPUMirroredMemoryBlock(AprilUtils::MMappedDataReader *mmapped_data) :
       GPUMirroredMemoryBlockBase(mmapped_data) { }
   
     T *getPointer() {
@@ -564,7 +564,7 @@ namespace april_math {
   public:
   
     static GPUMirroredMemoryBlock<T> *
-    fromMMappedDataReader(april_utils::MMappedDataReader *mmapped_data) {
+    fromMMappedDataReader(AprilUtils::MMappedDataReader *mmapped_data) {
       return new GPUMirroredMemoryBlock<T>(mmapped_data);
     }
   
@@ -758,6 +758,6 @@ namespace april_math {
   typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H

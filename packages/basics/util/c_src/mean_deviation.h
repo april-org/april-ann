@@ -23,7 +23,7 @@
 
 #include <cmath>
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T>
     void mean_deviation(T v[], int sz, double *mean, double *dev) {

@@ -35,7 +35,7 @@
 #include "smart_ptr.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
   
   namespace CUDA {
 
@@ -94,6 +94,40 @@ namespace april_math {
       __syncthreads();
     }
     
+    template<typename T, typename O, typename F>
+    __global__ void genericCudaReduceMinMaxKernel(const T *input,
+                                                  unsigned int input_stride,
+                                                  int32_t *which,
+                                                  unsigned int which_stride,
+                                                  O *output,
+                                                  unsigned int output_stride,
+                                                  unsigned int reduce_top,
+                                                  unsigned int size,
+                                                  F reduce_op) {
+      unsigned int idx     = blockIdx.x * blockDim.x + threadIdx.x;
+      unsigned int idx_2   = (reduce_top + idx);
+      unsigned int x_pos   = idx   * input_stride;
+      unsigned int y_pos   = idx   * output_stride;
+      unsigned int y_pos_2 = idx   * which_stride;
+      unsigned int x_pos_2 = idx_2 * input_stride;
+      unsigned int w=0;
+      if (idx < size) {
+        if (idx_2 < size) {
+          // reduce when both indices are under size bound
+          output[y_pos] = reduce_op(input[x_pos], input[x_pos_2], w);
+          if (w == 0) which[y_pos_2] = idx;
+          else which[y_pos_2] = idx_2;
+        }
+        else {
+          // copy as it is in the input vector
+          output[y_pos]  = input[x_pos];
+          which[y_pos_2] = idx;
+        }
+      } // if (idx < size)
+      // else nothing to do, the data is out of the bounds
+      __syncthreads();
+    }
+    
     /**
      * @brief Performs a CUDA reduce over a vector and stores its result at
      * another vector.
@@ -144,8 +178,8 @@ namespace april_math {
       default:
         {
           unsigned int size = N;
-          unsigned int reduce_top = april_utils::ceilingPowerOfTwo(N) >> 1;
-          april_utils::SharedPtr< GPUMirroredMemoryBlock<O> >
+          unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
+          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
             output(new GPUMirroredMemoryBlock<O>(N));
           const T *input_ptr = input->getGPUForRead() + input_shift;
           O *output_ptr = output->getGPUForWrite();
@@ -169,6 +203,61 @@ namespace april_math {
         } // default:
       } // switch(N)
     } // function genericCudaReduceCall
+
+    template<typename T, typename O, typename F>
+    void genericCudaReduceMinMaxCall(unsigned int N,
+                                     const GPUMirroredMemoryBlock<T> *input,
+                                     unsigned int input_stride,
+                                     unsigned int input_shift,
+                                     O zero,
+                                     GPUMirroredMemoryBlock<O> *which,
+                                     unsigned int which_shuft,
+                                     GPUMirroredMemoryBlock<O> *dest,
+                                     unsigned int dest_shift,
+                                     F reduce_op) {
+      switch(N) {
+      case 0u:
+        dest->putValue(dest_shift, zero);
+        which->putValue(which_shift, -1);
+        break;
+      case 1u:
+        dest->copyFromBlock(dest_shift, input, input_shift, 1u);
+        which->putValue(which_shift, 0);
+        break;
+      default:
+        {
+          unsigned int size = N;
+          unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
+          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
+            output_which(new GPUMirroredMemoryBlock<O>(int32_t));
+          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
+            output(new GPUMirroredMemoryBlock<O>(N));
+          const T *input_ptr = input->getGPUForRead() + input_shift;
+          int32_t *output_which_ptr = output_which->getGPUForWrite();
+          O *output_ptr = output->getGPUForWrite();
+          dim3 block, grid;
+          do {
+            // Prepare reduce_top kernels, that is, size/2 kernels.
+            computeBlockAndGridSizesForArray(reduce_top, block, grid);
+            // Execute reduce_top kernels with size as upper bound.
+            genericCudaReduceMinMaxKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+              (input_ptr, input_stride,
+               output_which_ptr, 1u,
+               output_ptr, 1u,
+               reduce_top, size,
+               reduce_op);
+            // After first iteration it uses only output_ptr.
+            input_ptr       = output_ptr;
+            size            = reduce_top;
+            reduce_top >>= 1;
+          } while(reduce_top > 0);
+          // TODO: check return value (cudaError_t)
+          cudaDeviceSynchronize();
+          dest->copyFromBlock(dest_shift, output.get(), 0u, 1u);
+          which->copyFromBlock(which_shift, output_which.get(), 0u, 1u);
+        } // default:
+      } // switch(N)
+    } // function genericCudaReduceMinMaxCall
 
     /////////////////////////////// MAP ////////////////////////////////////
     
@@ -366,7 +455,7 @@ namespace april_math {
     
   } // namespace CUDA
 
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // USE_CUDA
 

@@ -22,7 +22,7 @@
 #include "mathcore.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
 
 #ifdef USE_CUDA
   /***************************************
@@ -539,4 +539,4 @@ namespace april_math {
                                      int c_shift,
                                      bool use_gpu);
 
-} // namespace april_math
+} // namespace AprilMath

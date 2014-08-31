@@ -24,7 +24,7 @@
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 
-namespace basics {
+namespace Basics {
   int token_bunch_vector_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
     // el estado invariante (en este caso el dataset) y _var es var_1 de
@@ -40,7 +40,7 @@ namespace basics {
     return 2;
   }
 
-} // namespace basics
+} // namespace Basics
 
 bool lua_isAuxToken(lua_State *L, int n) {
   return lua_isSparseMatrixFloat(L,n) || lua_isMatrixFloat(L,n) || lua_isToken(L,n);
@@ -70,7 +70,7 @@ Token *lua_toAuxToken(lua_State *L, int n) {
 #include "token_sparse_matrix.h"
 #include "token_vector.h"
 
-using namespace basics;
+using namespace Basics;
 
 bool lua_isAuxToken(lua_State *L, int n);
 Token *lua_toAuxToken(lua_State *L, int n);

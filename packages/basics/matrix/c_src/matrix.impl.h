@@ -34,7 +34,7 @@
 // Must be defined in this order.
 #include "matrix_operations.h"
 
-namespace basics {
+namespace Basics {
 
   template<typename T>
   const unsigned int Matrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
@@ -68,7 +68,7 @@ namespace basics {
   /// Allocation of memory for data pointer. It is Referenced for sharing.
   template <typename T>
   void Matrix<T>::allocate_memory(int size) {
-    data.reset( new april_math::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
+    data.reset( new AprilMath::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
   }
 
   /// Release of the memory allocated for data pointer.
@@ -83,11 +83,11 @@ namespace basics {
                     const int *matrixSize,
                     const int total_size,
                     const int last_raw_pos,
-                    april_math::GPUMirroredMemoryBlock<T> *data,
+                    AprilMath::GPUMirroredMemoryBlock<T> *data,
                     const CBLAS_ORDER major_order,
                     const bool use_cuda,
                     const bool transposed,
-                    april_utils::MMappedDataReader *mmapped_data) :
+                    AprilUtils::MMappedDataReader *mmapped_data) :
     AprilIO::Serializable(), shared_count(0), transposed(transposed),
     numDim(numDim), stride(new int[numDim]), offset(offset),
     matrixSize(new int[numDim]), total_size(total_size),
@@ -107,7 +107,7 @@ namespace basics {
   Matrix<T>::Matrix(int numDim,
                     const int* dim,
                     CBLAS_ORDER major_order,
-                    april_math::GPUMirroredMemoryBlock<T> *data,
+                    AprilMath::GPUMirroredMemoryBlock<T> *data,
                     int offset,
                     bool transposed) :
     AprilIO::Serializable(), shared_count(0), transposed(transposed),
@@ -115,7 +115,7 @@ namespace basics {
     offset(offset),
     data(data),
     major_order(major_order),
-    use_cuda(april_math::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
+    use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride     = new int[numDim];
@@ -250,7 +250,7 @@ namespace basics {
         aux_coords[i] = sizes[i]-1;
       }
       offset = other->computeRawPos(coords);
-      data.reset( new april_math::
+      data.reset( new AprilMath::
                   GPUMirroredMemoryBlock<T>(other->size(),
                                             other->data->getPPALForRead()) );
       last_raw_pos = computeRawPos(aux_coords);
@@ -303,7 +303,7 @@ namespace basics {
       transposed = false;
       initialize(other->matrixSize);
       allocate_memory(total_size);
-      april_math::MatrixExt::matCopy(this, other);
+      AprilMath::MatrixExt::Operations::matCopy(this, other);
       is_contiguous = CONTIGUOUS;
     }
     else {
@@ -317,11 +317,11 @@ namespace basics {
   }
 
   template <typename T>
-  Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
+  Matrix<T> *Matrix<T>::fromMMappedDataReader(AprilUtils::MMappedDataReader
                                               *mmapped_data) {
     Matrix<T> *obj = new Matrix();
     //
-    obj->data.reset( april_math::GPUMirroredMemoryBlock<T>::
+    obj->data.reset( AprilMath::GPUMirroredMemoryBlock<T>::
                      fromMMappedDataReader(mmapped_data) );
     //
     unsigned int binary_version = *(mmapped_data->get<unsigned int>());
@@ -339,7 +339,7 @@ namespace basics {
     obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
     obj->transposed    = *(mmapped_data->get<bool>());
     // NON MAPPED DATA
-    obj->use_cuda      = april_math::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT;
+    obj->use_cuda      = AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT;
     obj->shared_count  = 0;
     obj->is_contiguous = NONE;
     // THE MMAP POINTER
@@ -349,7 +349,7 @@ namespace basics {
   }
 
   template <typename T>
-  void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
+  void Matrix<T>::toMMappedDataWriter(AprilUtils::MMappedDataWriter
                                       *mmapped_data) const {
     data->toMMappedDataWriter(mmapped_data);
     mmapped_data->put(&MATRIX_BINARY_VERSION);
@@ -375,7 +375,7 @@ namespace basics {
   template <typename T>
   void Matrix<T>::print() const {
     for (Matrix<T>::const_iterator it(begin()); it != end(); ++it) {
-      april_utils::aprilPrint(*it);
+      AprilUtils::aprilPrint(*it);
       printf(" ");
     }
     printf("\n");
@@ -407,12 +407,12 @@ namespace basics {
                   size(), new_size);
     }
     if (need_clone) {
-      april_math::GPUMirroredMemoryBlock<T> *new_data =
-        new april_math::GPUMirroredMemoryBlock<T>(new_size);
+      AprilMath::GPUMirroredMemoryBlock<T> *new_data =
+        new AprilMath::GPUMirroredMemoryBlock<T>(new_size);
       obj = new Matrix<T>(len, new_dims, major_order, new_data);
-      april_utils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
+      AprilUtils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
-      april_math::MatrixExt::matCopy(aux.get(),this);
+      AprilMath::MatrixExt::Operations::matCopy(aux.get(),this);
     }
     else {
       obj = new Matrix<T>(len, new_dims, major_order, data.get(), offset);
@@ -501,7 +501,7 @@ namespace basics {
   template <typename T>
   Matrix<T>* Matrix<T>::clone() const {
     Matrix<T> *result = this->cloneOnlyDims();
-    april_math::MatrixExt::matCopy(result,this);
+    AprilMath::MatrixExt::Operations::matCopy(result,this);
     return result;
   }
 
@@ -971,8 +971,8 @@ namespace basics {
                                           resul->major_order,
                                           resul->use_cuda,
                                           resul->transposed);
-    april_math::MatrixExt::matZeros(resul);
-    april_math::MatrixExt::matCopy(resul_diag, this);
+    AprilMath::MatrixExt::Operations::matZeros(resul);
+    AprilMath::MatrixExt::Operations::matCopy(resul_diag, this);
     delete resul_diag;
     return resul;
   }
@@ -994,12 +994,12 @@ namespace basics {
     Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    april_math::MatrixExt::matFill(result, default_value);
+    AprilMath::MatrixExt::Operations::matFill(result, default_value);
     // take submatrix where data will be located
     Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
                                            false);
     // copy data to the submatrix
-    april_math::MatrixExt::matCopy(result_data, this);
+    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
     //
     delete result_data;
     delete[] result_sizes;
@@ -1018,12 +1018,12 @@ namespace basics {
     Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    april_math::MatrixExt::matFill(result, default_value);
+    AprilMath::MatrixExt::Operations::matFill(result, default_value);
     // take submatrix where data will be located
     Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
                                            false);
     // copy data to the submatrix
-    april_math::MatrixExt::matCopy(result_data, this);
+    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
     //
     delete result_data;
     delete[] result_sizes;
@@ -1031,6 +1031,6 @@ namespace basics {
     return result;
   }
   
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_IMPL_H

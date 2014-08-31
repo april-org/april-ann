@@ -22,7 +22,7 @@
 #define MATRIX_CHAR_H
 #include "matrix.h"
 
-namespace basics {
+namespace Basics {
 
 
   namespace MatrixIO {
@@ -30,11 +30,11 @@ namespace basics {
     /* Especialization of MatrixChar ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<char>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<char>::operator()(AprilUtils::constString &line,
                                           char &destination);
   
     template<>
-    bool BinaryExtractor<char>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<char>::operator()(AprilUtils::constString &line,
                                            char &destination);
   
     template<>
@@ -54,12 +54,12 @@ namespace basics {
   } // namespace MatrixIO
 
   template<>
-  char Matrix<char>::getTemplateOption(const april_utils::GenericOptions *options,
+  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                        const char *name, char default_value);
   
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<char> MatrixChar;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_CHAR_H

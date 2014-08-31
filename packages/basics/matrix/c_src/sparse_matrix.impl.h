@@ -37,7 +37,7 @@
 // Must be defined in this order.
 #include "matrix_operations.h"
 
-namespace basics {
+namespace Basics {
 
   template<typename T>
   const unsigned int SparseMatrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
@@ -88,8 +88,8 @@ namespace basics {
 
   template <typename T>
   struct SparseMatrixIndicesCmp {
-    bool operator()(const april_utils::pair<int,T> &a,
-                    const april_utils::pair<int,T> &b) {
+    bool operator()(const AprilUtils::pair<int,T> &a,
+                    const AprilUtils::pair<int,T> &b) {
       return a.first < b.first;
     }
   };
@@ -108,7 +108,7 @@ namespace basics {
       ERROR_EXIT2(256, "Incorrect last value of first_index block, "
                   "found %d, expected %u\n", first_index_ptr[dense_size],
                   values->getSize());
-    april_utils::vector< april_utils::pair<int,T> > aux_index_sorted;
+    AprilUtils::vector< AprilUtils::pair<int,T> > aux_index_sorted;
     for (int i=0; i<dense_size; ++i) {
       bool need_sort = false;
       if (first_index_ptr[i] < first_index_ptr[i+1] &&
@@ -129,10 +129,10 @@ namespace basics {
         T *values_ptr = values->getPPALForReadAndWrite();
         int *indices_ptr = indices->getPPALForReadAndWrite();
         for (int j=first_index_ptr[i]; j<first_index_ptr[i+1]; ++j)
-          aux_index_sorted.push_back(april_utils::make_pair(indices_ptr[j],
+          aux_index_sorted.push_back(AprilUtils::make_pair(indices_ptr[j],
                                                             values_ptr[j]));
         april_assert(aux_index_sorted.size() > 0);
-        april_utils::Sort(aux_index_sorted.begin(),
+        AprilUtils::Sort(aux_index_sorted.begin(),
                           0, static_cast<int>(aux_index_sorted.size())-1,
                           SparseMatrixIndicesCmp<T>());
         int k=0;
@@ -159,9 +159,9 @@ namespace basics {
   template <typename T>
   void SparseMatrix<T>::allocate_memory(int size) {
     unsigned int sz = static_cast<unsigned int>(size);
-    values  = new april_math::GPUMirroredMemoryBlock<T>(sz);
-    indices = new april_math::Int32GPUMirroredMemoryBlock(sz);
-    first_index = new april_math::Int32GPUMirroredMemoryBlock(static_cast<unsigned int>(getDenseCoordinateSize())+1);
+    values  = new AprilMath::GPUMirroredMemoryBlock<T>(sz);
+    indices = new AprilMath::Int32GPUMirroredMemoryBlock(sz);
+    first_index = new AprilMath::Int32GPUMirroredMemoryBlock(static_cast<unsigned int>(getDenseCoordinateSize())+1);
   }
 
   /// Release of the memory allocated for data pointer.
@@ -171,9 +171,9 @@ namespace basics {
   /// Default constructor
   template <typename T>
   SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
-                                april_math::GPUMirroredMemoryBlock<T> *values,
-                                april_math::Int32GPUMirroredMemoryBlock *indices,
-                                april_math::Int32GPUMirroredMemoryBlock *first_index,
+                                AprilMath::GPUMirroredMemoryBlock<T> *values,
+                                AprilMath::Int32GPUMirroredMemoryBlock *indices,
+                                AprilMath::Int32GPUMirroredMemoryBlock *first_index,
                                 const SPARSE_FORMAT sparse_format,
                                 bool sort) :
     AprilIO::Serializable(), shared_count(0), 
@@ -185,7 +185,7 @@ namespace basics {
     if (this->first_index.empty()) {
       if ( (d1 == 1 && sparse_format == CSC_FORMAT) ||
            (d0 == 1 && sparse_format == CSR_FORMAT) ) {
-        this->first_index = new april_math::Int32GPUMirroredMemoryBlock(2);
+        this->first_index = new AprilMath::Int32GPUMirroredMemoryBlock(2);
         int *first_index_ptr = this->first_index->getPPALForWrite();
         first_index_ptr[0] = 0;
         first_index_ptr[1] = static_cast<int>(values->getSize());
@@ -355,12 +355,12 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T> *SparseMatrix<T>::
-  fromMMappedDataReader(april_utils::MMappedDataReader *mmapped_data) {
+  fromMMappedDataReader(AprilUtils::MMappedDataReader *mmapped_data) {
     SparseMatrix<T> *obj = new SparseMatrix();
     //
-    obj->values  = april_math::GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
-    obj->indices = april_math::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
-    obj->first_index = april_math::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+    obj->values  = AprilMath::GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
+    obj->indices = AprilMath::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+    obj->first_index = AprilMath::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
     //
     unsigned int binary_version = *(mmapped_data->get<unsigned int>());
     if (binary_version != MATRIX_BINARY_VERSION)
@@ -382,7 +382,7 @@ namespace basics {
   }
 
   template <typename T>
-  void SparseMatrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
+  void SparseMatrix<T>::toMMappedDataWriter(AprilUtils::MMappedDataWriter
                                             *mmapped_data) const {
     values->toMMappedDataWriter(mmapped_data);
     indices->toMMappedDataWriter(mmapped_data);
@@ -461,7 +461,7 @@ namespace basics {
   Matrix<T> *SparseMatrix<T>::toDense(CBLAS_ORDER order) const {
     Matrix<T> *result = new Matrix<T>(2, matrixSize, order);
     typename Matrix<T>::random_access_iterator result_it(result);
-    april_math::MatrixExt::matZeros(result);
+    AprilMath::MatrixExt::Operations::matZeros(result);
     int x0=0,x1=0;
     for (const_iterator it(begin()); it != end(); ++it) {
       it.getCoords(x0,x1);
@@ -477,11 +477,11 @@ namespace basics {
     const int *this_first_index_ptr = first_index->getPPALForRead();
     //
     bool sort=false;
-    april_math::GPUMirroredMemoryBlock<T> *result_values  = values->clone();
-    april_math::Int32GPUMirroredMemoryBlock *result_indices =
-      new april_math::Int32GPUMirroredMemoryBlock(nonZeroSize());
-    april_math::Int32GPUMirroredMemoryBlock *result_first_index =
-      new april_math::Int32GPUMirroredMemoryBlock(2);
+    AprilMath::GPUMirroredMemoryBlock<T> *result_values  = values->clone();
+    AprilMath::Int32GPUMirroredMemoryBlock *result_indices =
+      new AprilMath::Int32GPUMirroredMemoryBlock(nonZeroSize());
+    AprilMath::Int32GPUMirroredMemoryBlock *result_first_index =
+      new AprilMath::Int32GPUMirroredMemoryBlock(2);
     //
     int *result_indices_ptr = result_indices->getPPALForWrite();
     int *result_first_index_ptr = result_first_index->getPPALForWrite();
@@ -521,6 +521,6 @@ namespace basics {
     return result;
   }
 
-} // namespace basics
+} // namespace Basics
 
 #endif // SPARSE_MATRIX_IMPL_H

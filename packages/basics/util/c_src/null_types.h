@@ -21,7 +21,7 @@
 #ifndef NULL_TYPE_H
 #define NULL_TYPE_H
 
-namespace april_utils {
+namespace AprilUtils {
     class NullType {};
 
     template <typename T> class NullContainer {};

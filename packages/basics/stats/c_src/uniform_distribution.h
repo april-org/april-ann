@@ -27,26 +27,26 @@
 namespace Stats {
   
   class UniformDistribution : public StatisticalDistributionBase {
-    basics::MatrixFloat *low, *high, *diff;
+    Basics::MatrixFloat *low, *high, *diff;
     
     void updateParams();
 
   protected:
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result) {
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result) {
       UNUSED_VARIABLE(x);
       result->zeros();
     }
 
   public:
-    UniformDistribution(basics::MatrixFloat *low,
-                        basics::MatrixFloat *high);
+    UniformDistribution(Basics::MatrixFloat *low,
+                        Basics::MatrixFloat *high);
     virtual ~UniformDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;

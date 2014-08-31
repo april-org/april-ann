@@ -27,7 +27,7 @@ extern "C" {
 #include "logbase.h"
 #include "constString.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   struct buffer_list_node {
     char *buffer;
@@ -98,6 +98,6 @@ namespace april_utils {
     char* to_string(string_termination t = NON_NULL_TERMINATED);
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // BUFFER_LIST_H

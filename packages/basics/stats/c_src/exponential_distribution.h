@@ -27,21 +27,21 @@
 namespace Stats {
 
   class ExponentialDistribution : public StatisticalDistributionBase {
-    basics::MatrixFloat *lambda, *inv_lambda;
-    april_utils::log_float lambda_prod;
+    Basics::MatrixFloat *lambda, *inv_lambda;
+    AprilUtils::log_float lambda_prod;
     
     void updateParams();
 
   protected:
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
     
   public:
-    ExponentialDistribution(basics::MatrixFloat *lambda);
+    ExponentialDistribution(Basics::MatrixFloat *lambda);
     virtual ~ExponentialDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;

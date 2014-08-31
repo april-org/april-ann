@@ -26,8 +26,8 @@
 #include <cstring>
 #include "april_assert.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace HMMs {
 

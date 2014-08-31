@@ -29,12 +29,12 @@
 #include "sparse_matrixFloat.h"
 #include "unused_variable.h"
 
-using april_utils::log_float;
-using april_utils::SharedPtr;
+using AprilUtils::log_float;
+using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;
-using basics::MatrixFloat;
-using basics::SparseMatrixFloat;
-using basics::MTRand;
+using Basics::MatrixFloat;
+using Basics::SparseMatrixFloat;
+using Basics::MTRand;
 
 namespace Stats {
   
@@ -152,7 +152,7 @@ namespace Stats {
   
   char *GeneralNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", is_ascii);
     stream->put("stats.dist.normal(matrix.fromString[[");
     mean->write(stream.get(), &options);
@@ -291,7 +291,7 @@ namespace Stats {
   
   char *DiagonalNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", is_ascii);
     stream->put("stats.dist.normal(matrix.fromString[[");
     mean->write(stream.get(), &options);
@@ -347,9 +347,9 @@ namespace Stats {
   
   char *StandardNormalDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
-    april_utils::buffer_list buffer;
+    AprilUtils::buffer_list buffer;
     buffer.printf("stats.dist.normal()");
-    return buffer.to_string(april_utils::buffer_list::NULL_TERMINATED);
+    return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
   }
 
   ////////////////////////////////////////////////////////////////////////////  
@@ -426,7 +426,7 @@ namespace Stats {
   
   char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", is_ascii);
     stream->put("stats.dist.lognormal(matrix.fromString[[");
     mean->write(stream.get(), &options);
@@ -512,7 +512,7 @@ namespace Stats {
   
   char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", is_ascii);
     stream->put("stats.dist.lognormal(matrix.fromString[[");
     mean->write(stream.get(), &options);

@@ -28,7 +28,7 @@
 #include "referenced.h"
 #include "unused_variable.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   /**
    * @brief Smart pointer similar to auto_ptr in old C++ (before C++11).
@@ -374,6 +374,6 @@ namespace april_utils {
     return UniquePtr<T>(ptr);
   }
   
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // UNIQUE_PTR_H

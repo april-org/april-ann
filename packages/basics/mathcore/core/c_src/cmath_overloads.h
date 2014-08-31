@@ -37,7 +37,7 @@
   of APRIL-ANN, and exported to CUDA if it is compiled with definition of
   USE_CUDA constant.
 */
-namespace april_math {
+namespace AprilMath {
   
   typedef float (*m_float_unary_float_map_t)(float);
   typedef double (*m_double_unary_double_map_t)(double);
@@ -271,7 +271,7 @@ namespace april_math {
   template<typename T>
   APRIL_CUDA_EXPORT bool m_relative_equals(const T &a,
                                            const T &b,
-                                           const T &TH) {
+                                           const float &TH) {
     if (a == T(0.0f) && b == T(0.0f)) return true;
     return 2.0 * ( m_abs(a - b) / (m_abs(a) + m_abs(b)) ) < TH;
   }
@@ -374,6 +374,11 @@ namespace april_math {
   }
 
   template<typename T>
+  APRIL_CUDA_EXPORT T r_div(const T &a, const T &b) {
+    return a/b;
+  }
+
+  template<typename T>
   APRIL_CUDA_EXPORT bool r_and(const T &a, const T &b) {
     return a && b;
   }
@@ -386,6 +391,7 @@ namespace april_math {
   ///////////////////////
   // Curried functions //
   ///////////////////////
+  
   template<typename T> struct m_curried_clamp {
     const T inf, sup;
     m_curried_clamp(const T &inf, const T &sup) : inf(inf), sup(sup) { }
@@ -501,7 +507,7 @@ namespace april_math {
     const T value;
     m_curried_mul(const T &value) : value(value) { }
     APRIL_CUDA_EXPORT T operator()(const T &a) {
-      return a*value;
+      return r_mul(a,value);
     }
   };
 
@@ -510,14 +516,14 @@ namespace april_math {
     const T value;
     m_curried_div(const T &value) : value(value) { }
     APRIL_CUDA_EXPORT T operator()(const T &a) {
-      return value / a;
+      return r_div(value,a);
     }
   };
   
   template<typename T>
   struct m_curried_relative_equals {
-    const T epsilon;
-    m_curried_relative_equals(const T &epsilon) : epsilon(epsilon) { }
+    const float epsilon;
+    m_curried_relative_equals(const float &epsilon) : epsilon(epsilon) { }
     APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) {
       return m_relative_equals(a, b, epsilon);
     }
@@ -526,6 +532,6 @@ namespace april_math {
 #undef SCALAR_MAP_TEMPLATE
 #undef SCALAR_STD_CMATH_MAP_TEMPLATE
 
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // CMATH_OVERLOADS_H

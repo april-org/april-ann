@@ -26,7 +26,7 @@
 #include "utilImageFloat.h"
 #include "vector.h"
 
-namespace imaging {
+namespace Imaging {
 
   struct bounding_box {
     int x1, y1;
@@ -40,13 +40,13 @@ namespace imaging {
   class ImageConnectedComponents: public Referenced{
 
     // Matrix of the size of the image that is used to 
-    april_utils::vector <int> pixelComponents;
+    AprilUtils::vector <int> pixelComponents;
 
     // Vector that stores the black pixels sorted by components 
-    april_utils::vector <int> components;
+    AprilUtils::vector <int> components;
 
     // index that delimites the CCs in components
-    april_utils::vector <int> indexComponents;
+    AprilUtils::vector <int> indexComponents;
 
     //black threshold
     float threshold;
@@ -60,16 +60,16 @@ namespace imaging {
     void dfs_component(int x, int y, int current_component, int &current_pixel);
 
   public:
-    basics::MatrixInt32 *getPixelMatrix();
+    Basics::MatrixInt32 *getPixelMatrix();
     bool connected(int x1, int y1, int x2, int y2);
 
     int getComponent(int x, int y);
     ImageFloatRGB  *getColoredImage();
     bounding_box getComponentBoundingBox(int component);
-    april_utils::vector<bounding_box> *getBoundingBoxes();    
+    AprilUtils::vector<bounding_box> *getBoundingBoxes();    
 
   };
 
-} // namespace imaging
+} // namespace Imaging
 
 #endif

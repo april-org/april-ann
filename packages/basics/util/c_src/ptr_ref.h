@@ -24,7 +24,7 @@
 #include "error_print.h"
 #include "referenced.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   /**
    * Default reference template, uses IncRef.

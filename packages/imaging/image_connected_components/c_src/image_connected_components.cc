@@ -22,10 +22,10 @@
 
 #include "image_connected_components.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
-namespace imaging {
+namespace Imaging {
 
   namespace rgb_colors {
     typedef enum { RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, PINK, BROWN, BLACK } COLOR;
@@ -208,4 +208,4 @@ namespace imaging {
     return bbs;
   }
 
-} // namespace imaging
+} // namespace Imaging

@@ -24,7 +24,7 @@
 #include "constString.h"
 #include "mystring.h"
 
-namespace april_utils {
+namespace AprilUtils {
   constString::constString(const char *s, size_t n) {
     buffer = s;
     length = n;
@@ -104,7 +104,7 @@ namespace april_utils {
   void constString::ltrim(const char *acepta) {
     // todo: puede fallar si la cadena no es terminada en '\0'
     if (buffer) {
-      size_t n = april_utils::strnspn(buffer,acepta,length);
+      size_t n = AprilUtils::strnspn(buffer,acepta,length);
       april_assert(n<=length);
       length -= n;
       buffer += n;
@@ -145,7 +145,7 @@ namespace april_utils {
     if (!keep_delim) ltrim(delim);
     if (empty()) return constString();
     const char *newbuffer = buffer;
-    size_t newlength = april_utils::strncspn(newbuffer,delim,length);
+    size_t newlength = AprilUtils::strncspn(newbuffer,delim,length);
     if (newlength < length && keep_delim) ++newlength;
     april_assert(newlength<=length);
     skip(newlength);
@@ -371,4 +371,4 @@ namespace april_utils {
     return n;
   }
 
-} // namespace april_utils
+} // namespace AprilUtils

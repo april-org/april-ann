@@ -27,21 +27,21 @@
 namespace Stats {
 
   class BetaDistribution : public StatisticalDistributionBase {
-    basics::MatrixFloat *alpha, *beta;
+    Basics::MatrixFloat *alpha, *beta;
     float alphaf, betaf;
-    april_utils::log_float Bab;
+    AprilUtils::log_float Bab;
 
     void updateParams();
     
   protected:
-    virtual void privateSample(basics::MTRand *rng, basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng, Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
     
   public:
-    BetaDistribution(basics::MatrixFloat *alpha, basics::MatrixFloat *beta);
+    BetaDistribution(Basics::MatrixFloat *alpha, Basics::MatrixFloat *beta);
     virtual ~BetaDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;

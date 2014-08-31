@@ -27,25 +27,25 @@
 namespace Stats {
 
   class BinomialDistribution : public StatisticalDistributionBase {
-    basics::MatrixFloat *n, *p;
+    Basics::MatrixFloat *n, *p;
     int ni;
     float pf, pfm1;
-    april_utils::log_float lpf, lpfm1;
+    AprilUtils::log_float lpf, lpfm1;
     
     void updateParams();
-    april_utils::log_float computeDensity(int k);
+    AprilUtils::log_float computeDensity(int k);
 
   protected:
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
     
   public:
-    BinomialDistribution(basics::MatrixFloat *alpha,
-                         basics::MatrixFloat *binomial);
+    BinomialDistribution(Basics::MatrixFloat *alpha,
+                         Basics::MatrixFloat *binomial);
     virtual ~BinomialDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;

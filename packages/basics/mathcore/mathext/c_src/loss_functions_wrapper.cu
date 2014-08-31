@@ -27,11 +27,11 @@
 #include "unused_variable.h"
 #include "april_assert.h"
 
-using april_utils::clamp;
+using AprilUtils::clamp;
 
 #define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
 
-namespace april_math {
+namespace AprilMath {
 
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
@@ -799,7 +799,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 
 */
 
-} // namespace april_math
+} // namespace AprilMath
 
 #undef sigmoid
 #undef clip

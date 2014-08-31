@@ -30,7 +30,7 @@ namespace Stats {
     // it is forbidden to instantiate this class, it is a static class
     Combinations() {}
   
-    static april_utils::vector<unsigned int> pascal_triangle;
+    static AprilUtils::vector<unsigned int> pascal_triangle;
     
     static void reserve(unsigned int n) {
       if (pascal_triangle.size() <= n) {

@@ -28,9 +28,9 @@
 #include "wrapper.h"
 
 using namespace AprilIO;
-using namespace april_math;
-using namespace april_utils;
-using namespace basics;
+using namespace AprilMath;
+using namespace AprilUtils;
+using namespace Basics;
 
 #define WEIGHTS_NAME "U_S_epsilon"
 
@@ -120,7 +120,7 @@ namespace ANN {
   
   char *PCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", false);
     stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());

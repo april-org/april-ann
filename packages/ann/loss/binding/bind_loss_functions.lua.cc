@@ -24,7 +24,7 @@
 #include "bind_matrix.h"
 #include "token_matrix.h"
 
-using namespace basics;
+using namespace Basics;
 //BIND_END
 
 //BIND_HEADER_H

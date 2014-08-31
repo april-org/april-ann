@@ -23,9 +23,9 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
 
@@ -313,7 +313,7 @@ namespace ANN {
     return error_output_mat;
   }
   
-  void ConvolutionANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> &grads_mat) {
+  void ConvolutionANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
     weights_matrix->addToSharedCount(number_input_windows);
     if (grads_mat.empty()) {
       grads_mat = weights_matrix->cloneOnlyDims();
@@ -395,7 +395,7 @@ namespace ANN {
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -424,7 +424,7 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
     if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

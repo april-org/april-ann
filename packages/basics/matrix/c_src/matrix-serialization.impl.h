@@ -33,14 +33,14 @@
 #include "smart_ptr.h"
 #include "stream.h"
 
-namespace basics {
+namespace Basics {
   
   /****************************************************************************/
 
   template <typename T>
   Matrix<T>*
   Matrix<T>::read(AprilIO::StreamInterface *stream,
-                  const april_utils::GenericOptions *options) {
+                  const AprilUtils::GenericOptions *options) {
     if (options->getOptionalBoolean(MatrixIO::TAB_OPTION, false)) {
       return readTab(stream, options);
     }
@@ -52,7 +52,7 @@ namespace basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readNormal(AprilIO::StreamInterface *stream,
-                        const april_utils::GenericOptions *options) {
+                        const AprilUtils::GenericOptions *options) {
     const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
@@ -61,10 +61,10 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<AprilIO::CStringStream>
+    AprilUtils::SharedPtr<AprilIO::CStringStream>
       c_str(new AprilIO::CStringStream());;
     april_assert(!c_str.empty());
-    april_utils::constString line,format,order,token;
+    AprilUtils::constString line,format,order,token;
     // First we read the matrix dimensions
     line = readULine(stream, c_str.get());
     if (!line) {
@@ -189,7 +189,7 @@ namespace basics {
   
   template <typename T>
   void Matrix<T>::write(AprilIO::StreamInterface *stream,
-                        const april_utils::GenericOptions *options) {
+                        const AprilUtils::GenericOptions *options) {
     bool is_tab = options->getOptionalBoolean(MatrixIO::TAB_OPTION, false);
     if (is_tab) writeTab(stream, options);
     else writeNormal(stream, options);
@@ -197,7 +197,7 @@ namespace basics {
 
   template <typename T>
   void Matrix<T>::writeNormal(AprilIO::StreamInterface *stream,
-                              const april_utils::GenericOptions *options) {
+                              const AprilUtils::GenericOptions *options) {
     bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
     //
     MatrixIO::AsciiSizer<T> ascii_sizer;
@@ -270,7 +270,7 @@ namespace basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readTab(AprilIO::StreamInterface *stream,
-                     const april_utils::GenericOptions *options) {
+                     const AprilUtils::GenericOptions *options) {
     const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
     const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
     bool read_empty         = options->getOptionalBoolean(MatrixIO::EMPTY_OPTION, false);
@@ -283,10 +283,10 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<AprilIO::CStringStream> c_str;
+    AprilUtils::SharedPtr<AprilIO::CStringStream> c_str;
     c_str = new AprilIO::CStringStream();
     april_assert(!c_str.empty());
-    april_utils::constString line("");
+    AprilUtils::constString line("");
     if (ncols == 0 || nrows == 0) {
       off_t first_pos = stream->seek();
       if (nrows == 0) {
@@ -322,7 +322,7 @@ namespace basics {
         return 0;
       }
     }
-    april_utils::constString order( (given_order) ? given_order : "row_major"),token;
+    AprilUtils::constString order( (given_order) ? given_order : "row_major"),token;
     int dims[2] = { nrows, ncols };
     Matrix<T> *mat = 0;
     if (order=="row_major") {
@@ -387,7 +387,7 @@ namespace basics {
   
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
-                           const april_utils::GenericOptions *options) {
+                           const AprilUtils::GenericOptions *options) {
     UNUSED_VARIABLE(options);
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
@@ -415,7 +415,7 @@ namespace basics {
   }
 
   template <typename T>
-  T Matrix<T>::getTemplateOption(const april_utils::GenericOptions *options,
+  T Matrix<T>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                  const char *name, T default_value) {
     UNUSED_VARIABLE(options);
     UNUSED_VARIABLE(name);
@@ -424,6 +424,6 @@ namespace basics {
     return T();
   }
   
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_SERIALIZATION

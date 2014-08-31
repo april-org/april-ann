@@ -22,7 +22,7 @@
 #define MATRIX_INT32_H
 #include "matrix.h"
 
-namespace basics {
+namespace Basics {
 
 
   namespace MatrixIO {
@@ -30,11 +30,11 @@ namespace basics {
     /* Especialization of MatrixInt32 ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<int32_t>::operator()(AprilUtils::constString &line,
                                              int32_t &destination);
   
     template<>
-    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<int32_t>::operator()(AprilUtils::constString &line,
                                               int32_t &destination);
   
     template<>
@@ -55,13 +55,13 @@ namespace basics {
 
   template<>
   int32_t Matrix<int32_t>::
-  getTemplateOption(const april_utils::GenericOptions *options,
+  getTemplateOption(const AprilUtils::GenericOptions *options,
                     const char *name, int32_t default_value);
   
   //////////////////////////////////////////////////////////////////////////////
   
   typedef Matrix<int32_t> MatrixInt32;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_INT_H

@@ -2,9 +2,9 @@
 #include "ctmf.h"
 #include "clamp.h"
 
-using april_utils::clamp;
+using AprilUtils::clamp;
 
-namespace imaging {
+namespace Imaging {
 
   ImageFloat* medianFilter(ImageFloat *img, int radio) {
     int numpixels = img->width() * img->height();
@@ -26,11 +26,11 @@ namespace imaging {
     int dims[2];
     dims[0] = img->height();
     dims[1] = img->width();
-    basics::MatrixFloat *mat = new basics::MatrixFloat(2,dims);
+    Basics::MatrixFloat *mat = new Basics::MatrixFloat(2,dims);
     ImageFloat  *resul = new ImageFloat(mat);
 
     int i=0;
-    for (basics::MatrixFloat::iterator it(mat->begin());
+    for (Basics::MatrixFloat::iterator it(mat->begin());
          it!=mat->end(); ++it, ++i)
       *it = dst[i]/255.0f;
   
@@ -40,4 +40,4 @@ namespace imaging {
     return resul;
   }
 
-} // namespace imaging
+} // namespace Imaging

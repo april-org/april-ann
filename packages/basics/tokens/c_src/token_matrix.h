@@ -26,7 +26,7 @@
 #include "token_base.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   template<typename T>
     class TokenMatrix : public Token {
@@ -39,10 +39,10 @@ namespace basics {
     const Matrix<T> *getMatrix() const { return mat; }
     unsigned int size() const { return mat->size(); }
     Token *clone() const;
-    april_utils::buffer_list* toString();
-    april_utils::buffer_list* debugString(const char *prefix, int debugLevel);
+    AprilUtils::buffer_list* toString();
+    AprilUtils::buffer_list* debugString(const char *prefix, int debugLevel);
     TokenCode getTokenCode() const;
-    static Token *fromString(april_utils::constString &cs) {
+    static Token *fromString(AprilUtils::constString &cs) {
       // NOT IMPLEMENTED
       UNUSED_VARIABLE(cs);
       return 0;
@@ -77,13 +77,13 @@ namespace basics {
   }
 
   template<typename T>
-    april_utils::buffer_list* TokenMatrix<T>::toString() {
+    AprilUtils::buffer_list* TokenMatrix<T>::toString() {
     // NOT IMPLEMENTED
     return 0;
   }
 
   template<typename T>
-    april_utils::buffer_list* TokenMatrix<T>::debugString(const char *prefix,
+    AprilUtils::buffer_list* TokenMatrix<T>::debugString(const char *prefix,
                                                           int debugLevel) {
     // NOT IMPLEMENTED
     UNUSED_VARIABLE(prefix);
@@ -100,6 +100,6 @@ namespace basics {
 
   typedef TokenMatrix<float> TokenMatrixFloat;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TOKEN_MATRIX_H

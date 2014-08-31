@@ -27,7 +27,7 @@ extern "C" {
 #include "error_print.h"
 #include "generic_options.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   /************************************************************************/
   static char lua_isCHAR(lua_State *L, int i) {
@@ -291,4 +291,4 @@ namespace april_utils {
     return v;
   }
   
-} // namespace april_utils
+} // namespace AprilUtils

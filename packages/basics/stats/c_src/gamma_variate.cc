@@ -22,7 +22,7 @@
 #include "april_assert.h"
 #include "gamma_variate.h"
 
-using basics::MTRand;
+using Basics::MTRand;
 
 namespace Stats {
   // Modification of: http://ftp.arl.mil/random/random.pdf

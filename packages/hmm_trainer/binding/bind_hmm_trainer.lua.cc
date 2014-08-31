@@ -6,7 +6,7 @@ using namespace HMMs;
 //BIND_END
 
 //BIND_HEADER_C
-using namespace april_utils;
+using namespace AprilUtils;
 //BIND_END
 
 //BIND_LUACLASSNAME hmm_trainer hmm_trainer

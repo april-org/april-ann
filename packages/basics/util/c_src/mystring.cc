@@ -2,7 +2,7 @@
 #include <cstring>
 #include "mystring.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   size_t strnspn(const char *buffer, const char *accept, size_t length) {
     if (length > 128) {

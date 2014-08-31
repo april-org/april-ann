@@ -51,8 +51,8 @@ namespace TAR {
     
   private:
     
-    april_utils::SharedPtr<TARPackage> cpp_tar_package;
-    april_utils::SharedPtr<StreamInterface> tar_file;
+    AprilUtils::SharedPtr<TARPackage> cpp_tar_package;
+    AprilUtils::SharedPtr<StreamInterface> tar_file;
     size_t offset, size, pos;
     
     TARFileStream(TARPackage *cpp_tar_package, StreamInterface *tar_file,

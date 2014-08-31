@@ -28,9 +28,9 @@
 #include "bind_tokens.h"
 #include "bind_function_interface.h"
 
-using april_utils::constString;
+using AprilUtils::constString;
 
-namespace basics {
+namespace Basics {
 
   int dataset_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -70,7 +70,7 @@ namespace basics {
     return 2;
   }
 
-} // namespace basics
+} // namespace Basics
 
 bool lua_isAuxDataSetToken(lua_State *L, int n) {
   return lua_isDataSetFloat(L,n) || lua_isDataSetToken(L,n);
@@ -98,7 +98,7 @@ DataSetToken *lua_toAuxDataSetToken(lua_State *L, int n) {
 #include "MersenneTwister.h"
 #include "datasetToken.h"
 
-using namespace basics;
+using namespace Basics;
 //BIND_END
 
 //BIND_LUACLASSNAME LinearCombConfFloat dataset.linear_comb_conf

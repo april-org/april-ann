@@ -20,7 +20,7 @@
  */
 #include "trie_hash_4_lua.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   TrieHash4Lua::TrieHash4Lua() {
     lastId = rootNode;

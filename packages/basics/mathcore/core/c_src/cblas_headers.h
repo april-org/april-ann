@@ -122,10 +122,10 @@ void cblas_daxpyi(int NNZ, double alpha,
 		  const double *x_values_mem,
 		  const int *x_indices_mem,
 		  double *y_mem);
-void cblas_caxpyi(int NNZ, const april_math::ComplexF *alpha,
-		  const april_math::ComplexF *x_values_mem,
+void cblas_caxpyi(int NNZ, const AprilMath::ComplexF *alpha,
+		  const AprilMath::ComplexF *x_values_mem,
 		  const int *x_indices_mem,
-		  april_math::ComplexF *y_mem);
+		  AprilMath::ComplexF *y_mem);
 #endif
 
 void cblas_sparse_mm(CBLAS_ORDER major_order,
@@ -160,12 +160,12 @@ void cblas_sparse_mm(CBLAS_ORDER major_order,
 		     CBLAS_TRANSPOSE b_transpose,
 		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
-		     april_math::ComplexF alpha,
-		     const april_math::ComplexF *a_values_mem,
+		     AprilMath::ComplexF alpha,
+		     const AprilMath::ComplexF *a_values_mem,
 		     const int *a_indices_mem,
 		     const int *a_first_index_mem,
-		     const april_math::ComplexF *b_mem, int b_inc,
-		     april_math::ComplexF beta, april_math::ComplexF *c_mem, int c_inc);
+		     const AprilMath::ComplexF *b_mem, int b_inc,
+		     AprilMath::ComplexF beta, AprilMath::ComplexF *c_mem, int c_inc);
 
 void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
@@ -190,12 +190,12 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
 		     int m, int n,
-		     april_math::ComplexF alpha,
-		     const april_math::ComplexF *a_values_mem,
+		     AprilMath::ComplexF alpha,
+		     const AprilMath::ComplexF *a_values_mem,
 		     const int *a_indices_mem,
 		     const int *a_first_index_mem,
-		     const april_math::ComplexF *x_mem, int x_inc,
-		     april_math::ComplexF beta, april_math::ComplexF *y_mem, int y_inc);
+		     const AprilMath::ComplexF *x_mem, int x_inc,
+		     AprilMath::ComplexF beta, AprilMath::ComplexF *y_mem, int y_inc);
 
 template<typename T>
 T cblas_sparse_dot(int NNZ,
@@ -212,7 +212,7 @@ T cblas_sparse_dot(int NNZ,
   return result;
 }
 
-namespace april_math {
+namespace AprilMath {
   
   ///////// CBLAS APRIL WRAPPERS ////////
   template<typename T>
@@ -417,6 +417,6 @@ namespace april_math {
     }
   };
   
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // CBLAS_HEADERS_H

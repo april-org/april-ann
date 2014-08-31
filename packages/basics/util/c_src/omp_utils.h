@@ -26,7 +26,7 @@ extern "C" {
 #include <omp.h>
 }
 #endif
-namespace omp_utils {
+namespace OMPUtils {
   int get_num_threads();
 }
 

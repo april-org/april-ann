@@ -30,7 +30,7 @@
 #include "token_base.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   class TokenNull : public Token {
     APRIL_DISALLOW_COPY_AND_ASSIGN(TokenNull);
@@ -42,7 +42,7 @@ namespace basics {
     
     // FOR DEBUG PURPOSES
     // TODO:
-    virtual april_utils::buffer_list* debugString(const char *prefix,
+    virtual AprilUtils::buffer_list* debugString(const char *prefix,
                                                   int debugLevel) {
       UNUSED_VARIABLE(prefix);
       UNUSED_VARIABLE(debugLevel);
@@ -54,13 +54,13 @@ namespace basics {
     }
     
     // TODO:
-    virtual april_utils::buffer_list* toString() { return 0; }
+    virtual AprilUtils::buffer_list* toString() { return 0; }
 
     // ALL TOKENS MUST IMPLEMENT THIS STATIC METHOD FOR SERIALIZATION PURPOSES
     // TODO:
-    // Token *fromString(april_utils::constString &cs);
+    // Token *fromString(AprilUtils::constString &cs);
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TOKEN_NULL_H

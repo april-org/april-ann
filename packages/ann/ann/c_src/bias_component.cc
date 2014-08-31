@@ -23,9 +23,9 @@
 #include "wrapper.h"
 #include "unused_variable.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
 
@@ -81,7 +81,7 @@ namespace ANN {
     bias_vector->resetSharedCount();
   }
 
-  void BiasANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  void BiasANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     // count one use of the vector
     bias_vector->addToSharedCount();
     if (grads_mat.empty()) {
@@ -134,7 +134,7 @@ namespace ANN {
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (!w.empty()) {
       AssignRef(bias_vector, w.get());
@@ -163,7 +163,7 @@ namespace ANN {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
     if (!w.empty() && w.get() != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",

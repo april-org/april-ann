@@ -32,10 +32,12 @@
                                           SparseMatrix<TYPE> *,             \
                                           const FUNCTOR &);
 
-namespace april_math {  
+namespace AprilMath {  
 
-  INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_unary_float_map_t);
-  INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(double, m_unary_double_map_t);
-  INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(ComplexF, m_unary_complexf_map_t);
+  namespace MatrixExt {
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_unary_float_map_t);
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(double, m_unary_double_map_t);
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(ComplexF, m_unary_complexf_map_t);
+  }
   
-} // namespace april_math
+} // namespace AprilMath

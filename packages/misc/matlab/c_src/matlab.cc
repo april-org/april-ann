@@ -34,9 +34,9 @@
 
 #define MOD8(v) (v)&(0x07)
 
-using namespace april_utils;
-using namespace april_math;
-using namespace basics;
+using namespace AprilUtils;
+using namespace AprilMath;
+using namespace Basics;
 
 namespace matlab {
 

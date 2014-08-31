@@ -20,10 +20,10 @@
  */
 #include "combinations.h"
 
-using april_utils::vector;
+using AprilUtils::vector;
 
 namespace Stats {
 
-  april_utils::vector<unsigned int> Combinations::pascal_triangle;
+  AprilUtils::vector<unsigned int> Combinations::pascal_triangle;
 
 }

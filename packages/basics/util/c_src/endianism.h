@@ -23,7 +23,7 @@
 
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T>  
   void swap_bytes_in_place(T &data) {

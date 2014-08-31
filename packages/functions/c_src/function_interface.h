@@ -47,7 +47,7 @@ namespace Functions {
     virtual unsigned int getOutputSize() const = 0;
     /// A new abstract method that computes output vector given input vector.
     // FIXME: const Token *input
-    virtual basics::Token *calculate(basics::Token *input) = 0;
+    virtual Basics::Token *calculate(Basics::Token *input) = 0;
   };
 }
 

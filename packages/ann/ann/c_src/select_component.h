@@ -36,10 +36,10 @@ namespace ANN {
     int dimension, index;
     
   protected:
-    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat* input,
+    virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat* input,
                                                   bool during_training);
     
-    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
+    virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
     
     virtual void privateReset(unsigned int it=0);
     
@@ -51,8 +51,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

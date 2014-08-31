@@ -30,7 +30,7 @@
 
 extern const char *__COMMIT_NUMBER__;
 
-namespace april_utils {
+namespace AprilUtils {
 
   const int MAGIC_NUMBER = 0x3333;
   

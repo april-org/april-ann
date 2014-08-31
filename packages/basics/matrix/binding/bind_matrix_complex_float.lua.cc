@@ -27,7 +27,7 @@
 #include "luabindmacros.h"
 #include "bind_complex.h"
 
-namespace basics {
+namespace Basics {
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
     int *v=0;
@@ -76,7 +76,7 @@ namespace basics {
 #include "matrixComplexF.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
-using namespace basics;
+using namespace Basics;
 typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_END
 
@@ -448,8 +448,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   LUABIND_CHECK_ARGN(==, 1);
   ComplexF value;
   LUABIND_GET_PARAMETER(1,ComplexF,value);
-  obj->fill(value);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF,
+                 AprilMath::MatrixExt::Operations::matFill(obj, value));
 }
 //BIND_END
 
@@ -459,8 +459,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
-  obj->zeros();
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF,
+                 AprilMath::MatrixExt::Operations::matZeros(obj));
 }
 //BIND_END
 
@@ -470,8 +470,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
-  obj->ones();
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF,
+                 AprilMath::MatrixExt::Operations::matOnes(obj));
 }
 //BIND_END
 
@@ -627,8 +627,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   LUABIND_CHECK_ARGN(==,1);
   ComplexF v;
   LUABIND_GET_PARAMETER(1, ComplexF, v);
-  obj->diag(v);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF,
+                 AprilMath::MatrixExt::Operations::matDiag(obj,v));
 }
 //BIND_END
 
@@ -655,7 +655,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   float epsilon;
   LUABIND_GET_PARAMETER(1, MatrixComplexF, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
-  LUABIND_RETURN(boolean, obj->equals(other, epsilon));
+  LUABIND_RETURN(boolean, AprilMath::MatrixExt::Operations::
+                 matEquals(obj, other, epsilon));
 }
 //BIND_END
 
@@ -664,12 +665,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     int argn;
     argn = lua_gettop(L); // number of arguments
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat,*resul;
+    MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix add wrong dimensions");
-    resul = obj->addition(mat);
-    LUABIND_RETURN(MatrixComplexF, resul);
+    LUABIND_RETURN(MatrixComplexF,
+                   AprilMath::MatrixExt::Operations::matAddition(obj,mat));
   }
 //BIND_END
 
@@ -679,32 +680,33 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_CHECK_ARGN(==, 1);
     ComplexF scalar;
     LUABIND_GET_PARAMETER(1, ComplexF, scalar);
-    obj->scalarAdd(scalar);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF,
+                   AprilMath::MatrixExt::Operations::
+                   matScalarAdd(obj, scalar));
 }
 //BIND_END
 
 //BIND_METHOD MatrixComplexF sub
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat,*resul;
+    MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    if (!obj->sameDim(mat))
+    if (!obj->sameDim(mat)) {
       LUABIND_ERROR("matrix sub wrong dimensions");
-    resul = obj->substraction(mat);
-    LUABIND_RETURN(MatrixComplexF, resul);
+    }
+    LUABIND_RETURN(MatrixComplexF,
+                   AprilMath::MatrixExt::Operations::matSubstraction(obj,mat));
   }
 //BIND_END
 
 //BIND_METHOD MatrixComplexF mul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat,*resul;
+    MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    resul = obj->multiply(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix mul wrong dimensions");
-    LUABIND_RETURN(MatrixComplexF, resul);
+    LUABIND_RETURN(MatrixComplexF,
+                   AprilMath::MatrixExt::Operations::
+                   matMultiply(obj,mat));
   }
 //BIND_END
 
@@ -713,8 +715,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_CHECK_ARGN(==, 1);
     MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    obj->cmul(mat);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::
+                   matCmul(obj,mat));
   }
 //BIND_END
 
@@ -724,10 +726,9 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   if (argn == 1) {
     int dim;
     LUABIND_GET_PARAMETER(1, int, dim);
-    MatrixComplexF *result = obj->sum(dim-1);
-    LUABIND_RETURN(MatrixComplexF, result);
+    LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::matSum(obj,dim-1));
   }
-  else if (argn == 0) LUABIND_RETURN(ComplexF, obj->sum());
+  else if (argn == 0) LUABIND_RETURN(ComplexF, AprilMath::MatrixExt::Operations::matSum(obj));
   else LUABIND_ERROR("Incorrect number of arguments");
 }
 //BIND_END
@@ -737,8 +738,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixComplexF *mat;
   LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-  obj->copy(mat);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF,
+                 AprilMath::MatrixExt::Operations::matCopy(obj,mat));
 }
 //BIND_END
 
@@ -749,8 +750,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   MatrixComplexF *mat;
   LUABIND_GET_PARAMETER(1, ComplexF, alpha);
   LUABIND_GET_PARAMETER(2, MatrixComplexF, mat);
-  obj->axpy(alpha, mat);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::
+                 matAxpy(obj, alpha, mat));
 }
 //BIND_END
 
@@ -772,11 +773,11 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 					 ComplexF::one_zero());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta,
 					 ComplexF::one_zero());
-    obj->gemm(trans_A ? CblasTrans : CblasNoTrans,
-	      trans_B ? CblasTrans : CblasNoTrans,
-	      alpha, matA, matB,
-	      beta);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::
+                   matGemm(obj, trans_A ? CblasTrans : CblasNoTrans,
+                           trans_B ? CblasTrans : CblasNoTrans,
+                           alpha, matA, matB,
+                           beta));
   }
 //BIND_END
 
@@ -795,10 +796,10 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta, ComplexF::one_zero());
-    obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
-	      alpha, matA, matX,
-	      beta);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::
+                   matGemv(obj, trans_A ? CblasTrans : CblasNoTrans,
+                           alpha, matA, matX,
+                           beta));
   }
 //BIND_END
 
@@ -813,8 +814,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixComplexF, matX);
     LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixComplexF, matY);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
-    obj->ger(alpha, matX, matY);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF, AprilMath::MatrixExt::Operations::
+                   matGer(obj, alpha, matX, matY));
   }
 //BIND_END
 
@@ -824,7 +825,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_CHECK_PARAMETER(1, MatrixComplexF);
     MatrixComplexF *matX;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, matX);
-    LUABIND_RETURN(ComplexF, obj->dot(matX));
+    LUABIND_RETURN(ComplexF, AprilMath::MatrixExt::Operations::
+                   matDot(obj, matX));
   }
 //BIND_END
 
@@ -833,14 +835,15 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_CHECK_ARGN(==, 1);
     ComplexF value;
     LUABIND_GET_PARAMETER(1, ComplexF, value);
-    obj->scal(value);
-    LUABIND_RETURN(MatrixComplexF, obj);
+    LUABIND_RETURN(MatrixComplexF,
+                   AprilMath::MatrixExt::Operations::matScal(obj,value));
   }
 //BIND_END
  
 //BIND_METHOD MatrixComplexF norm2
   {
-    LUABIND_RETURN(float, obj->norm2());
+    LUABIND_RETURN(float, AprilMath::MatrixExt::Operations::
+                   matNorm2(obj));
   }
 //BIND_END
 
@@ -977,4 +980,3 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
-

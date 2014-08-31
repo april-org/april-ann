@@ -23,7 +23,7 @@
 #define READ  0
 #define WRITE 1
 
-namespace april_utils {
+namespace AprilUtils {
 
   pid_t popen2(const char *command, int *infp, int *outfp) {
     int p_stdin[2], p_stdout[2];

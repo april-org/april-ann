@@ -71,7 +71,7 @@ namespace ZIP {
     zip *zip_package;
     int zerr, serr;
     static const size_t ERROR_BUFFER_SIZE;
-    april_utils::UniquePtr<char []> error_buffer;
+    AprilUtils::UniquePtr<char []> error_buffer;
     int num_open_files;
     bool is_closed;
     

@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <limits>
 #include "geometry.h"
-namespace april_utils {
+namespace AprilUtils {
 
   const float infinity = std::numeric_limits<float>::infinity();
 

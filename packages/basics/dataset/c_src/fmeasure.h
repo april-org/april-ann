@@ -26,7 +26,7 @@
 
 #define positive(v) (v)<=0.1f
 
-namespace basics {
+namespace Basics {
   /// This function computes Fmeasure given two DataSetFloat.
   float Fmeasure(DataSetFloat *ds, DataSetFloat *GT,
                  float &PR,

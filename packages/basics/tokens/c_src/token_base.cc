@@ -21,7 +21,7 @@
 #include <typeinfo>
 #include "token_base.h"
 
-namespace basics {
+namespace Basics {
 
   Token::Token() : Referenced()
   {
@@ -31,4 +31,4 @@ namespace basics {
   {
   }
 
-} // namespace basics
+} // namespace Basics

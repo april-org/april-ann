@@ -24,12 +24,12 @@
 #include "binarizer.h"
 #include "table_of_token_codes.h"
 
-using april_utils::buffer_list;
-using april_utils::constString;
-using april_utils::vector;
-using april_utils::pair;
+using AprilUtils::buffer_list;
+using AprilUtils::constString;
+using AprilUtils::vector;
+using AprilUtils::pair;
 
-namespace basics {
+namespace Basics {
 
   template <typename T>
   TokenVector<T>::TokenVector() : TokenVectorGeneric() {
@@ -384,4 +384,4 @@ namespace basics {
   template class TokenVector<char>;
   template class TokenVector<Token*>;
 
-} // namespace basics
+} // namespace Basics

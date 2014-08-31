@@ -50,7 +50,7 @@ antecesores de un nodo persistente tambien lo son.
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   class TrieVector : public Referenced {
     unsigned int max_allowed_size;

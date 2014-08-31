@@ -21,7 +21,7 @@
 
 #include <cstdio>
 
-namespace april_utils {
+namespace AprilUtils {
   void aprilPrint(const float &v);
   void aprilPrint(const double &v);
   void aprilPrint(const char &v);

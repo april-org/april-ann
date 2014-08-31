@@ -26,9 +26,9 @@
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
-using april_utils::constString;
+using AprilUtils::constString;
 
-namespace basics {
+namespace Basics {
 
   namespace MatrixIO {
   
@@ -56,7 +56,7 @@ namespace basics {
 
     template<>
     int BinarySizer<float>::operator()(const Matrix<float> *mat) {
-      return april_utils::binarizer::buffer_size_32(mat->size());
+      return AprilUtils::binarizer::buffer_size_32(mat->size());
     }
 
     template<>
@@ -69,7 +69,7 @@ namespace basics {
     void BinaryCoder<float>::operator()(const float &value,
                                         AprilIO::StreamInterface *stream) {
       char b[5];
-      april_utils::binarizer::code_float(value, b);
+      AprilUtils::binarizer::code_float(value, b);
       stream->put(b, sizeof(char)*5);
     }
 
@@ -79,7 +79,7 @@ namespace basics {
   } // namespace MatrixIO
 
   template<>
-  float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
+  float Matrix<float>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                          const char *name, float default_value) {
     return options->getOptionalFloat(name, default_value);
   }
@@ -87,7 +87,7 @@ namespace basics {
   template <>
   void Matrix<float>::pruneSubnormalAndCheckNormal() {
     float *data = getRawDataAccess()->getPPALForReadAndWrite();
-    if (!april_utils::check_floats(data, size()))
+    if (!AprilUtils::check_floats(data, size()))
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
   }
   
@@ -95,4 +95,4 @@ namespace basics {
 
   template class Matrix<float>;
 
-} // namespace basics
+} // namespace Basics

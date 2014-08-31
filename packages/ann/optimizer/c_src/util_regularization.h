@@ -26,9 +26,9 @@ namespace ANN {
   namespace optimizer {
     class UtilRegularization : public Referenced {
     public:
-      static void L1NormMap(basics::MatrixFloat *destw,
+      static void L1NormMap(Basics::MatrixFloat *destw,
 			    float value,
-			    basics::MatrixFloat *w);
+			    Basics::MatrixFloat *w);
     };
   }
 }

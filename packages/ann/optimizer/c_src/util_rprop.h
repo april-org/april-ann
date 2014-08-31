@@ -26,9 +26,9 @@ namespace ANN {
   namespace optimizer {
     class UtilRProp : public Referenced {
     public:
-      static void step(basics::MatrixFloat *steps,
-		       basics::MatrixFloat *old_sign,
-		       basics::MatrixFloat *sign,
+      static void step(Basics::MatrixFloat *steps,
+		       Basics::MatrixFloat *old_sign,
+		       Basics::MatrixFloat *sign,
 		       float eta_minus,
 		       float eta_plus);
     };

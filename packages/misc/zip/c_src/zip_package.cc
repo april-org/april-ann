@@ -30,7 +30,7 @@ extern "C" {
 
 using AprilIO::HandledStreamInterface;
 using AprilIO::StreamInterface;
-using april_utils::constString;
+using AprilUtils::constString;
 
 namespace ZIP {
 

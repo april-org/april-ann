@@ -53,7 +53,7 @@
 #define UNDEF_DEVICE
 #endif
 
-namespace april_math {
+namespace AprilMath {
 
   template<typename T>
   struct Complex {
@@ -195,7 +195,7 @@ namespace april_math {
     LuaComplexFNumber(const char *str) : Referenced() {
       float num;
       char  sign='+'; // initialized to avoid compilation warning
-      april_utils::constString cs(str);
+      AprilUtils::constString cs(str);
       STATES state = INITIAL;
       TOKENS token;
       while(state != FINAL && state != ERROR) {
@@ -253,7 +253,7 @@ namespace april_math {
     enum STATES { INITIAL, NUMBER, SIGN, NUMBER_SIGN, NUMBER_NUMBER,
                   FINAL, ERROR };
     enum TOKENS { TOKEN_FLOAT, TOKEN_SIGN, TOKEN_I, TOKEN_UNKOWN, TOKEN_END };
-    TOKENS getToken(april_utils::constString &cs, float &num, char &sign) {
+    TOKENS getToken(AprilUtils::constString &cs, float &num, char &sign) {
       if (cs.empty()) return TOKEN_END;
       char ch;
       if (cs.extract_float(&num)) return TOKEN_FLOAT;
@@ -266,7 +266,7 @@ namespace april_math {
     
   };
 
-} // namespace april_math
+} // namespace AprilMath
 
 #ifdef UNDEF_HOST
 #undef __host__
@@ -277,9 +277,9 @@ namespace april_math {
 #undef UNDEF_DEVICE
 #endif
 
-namespace april_utils {
-  void aprilPrint(const april_math::ComplexF &v);
-  void aprilPrint(const april_math::ComplexD &v);
+namespace AprilUtils {
+  void aprilPrint(const AprilMath::ComplexF &v);
+  void aprilPrint(const AprilMath::ComplexD &v);
 }
 
 #endif // COMPLEX_NUMBER_H

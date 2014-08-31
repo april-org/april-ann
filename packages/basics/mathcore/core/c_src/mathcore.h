@@ -40,7 +40,7 @@
 #include "gpu_helper.h"
 #include "gpu_mirrored_memory_block.h"
 
-namespace april_math {
+namespace AprilMath {
   
   //////////////////////////////////////////////////////////////////////
 

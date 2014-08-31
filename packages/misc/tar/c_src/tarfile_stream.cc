@@ -81,7 +81,7 @@ namespace TAR {
   size_t TARFileStream::privateRead(char *buf, size_t max_size) {
     if (pos >= size) return 0;
     tar_file->seek(SEEK_SET, offset + pos);
-    max_size = april_utils::min(max_size, size - pos);
+    max_size = AprilUtils::min(max_size, size - pos);
     size_t nbytes = tar_file->get(buf, max_size);
     pos += nbytes;
     return nbytes;

@@ -29,8 +29,8 @@ namespace HMMs {
 
   struct hmm_trainer_cls_transition {
     int emission;
-    april_utils::log_float prob;
-    april_utils::log_double acum; // contador para algoritmo em
+    AprilUtils::log_float prob;
+    AprilUtils::log_double acum; // contador para algoritmo em
     int next; // lista enlazada en un vector, apuntada por un cls_state,
     // poner next=-1 para finalizar, no usamos punteros porque
     // el vector se redimensiona
@@ -52,7 +52,7 @@ namespace HMMs {
 
   struct hmm_aux_transition {
     int from,to,emission,id;  
-    april_utils::log_float prob;
+    AprilUtils::log_float prob;
     hmm_aux_transition *next;
     char *output;
   };
@@ -66,10 +66,10 @@ namespace HMMs {
     int num_cls_emissions,   vsz_cls_emissions;
     hmm_trainer_cls_transition *cls_transition;
     hmm_trainer_cls_state      *cls_state;
-    april_utils::log_float *apriori_cls_emission;
-    april_utils::log_double *acum_cls_emission;
+    AprilUtils::log_float *apriori_cls_emission;
+    AprilUtils::log_double *acum_cls_emission;
 
-    void acum_tran_prob(int clstr, april_utils::log_float prob) {
+    void acum_tran_prob(int clstr, AprilUtils::log_float prob) {
       cls_transition[clstr].acum += prob;
     }
 
@@ -87,22 +87,22 @@ namespace HMMs {
     int new_cls_transition(int c_st);
     int get_num_cls_emissions() const { return num_cls_emissions; }
     int get_num_cls_transitions() const { return num_cls_transitions; }
-    void set_apriori_cls_emission(int i, april_utils::log_float a) {
+    void set_apriori_cls_emission(int i, AprilUtils::log_float a) {
       apriori_cls_emission[i] = a;
     }
-    april_utils::log_float get_apriori_cls_emission(int i) const {
+    AprilUtils::log_float get_apriori_cls_emission(int i) const {
       return apriori_cls_emission[i];
     }
-    april_utils::log_float get_cls_transition_prob(int i) const {
+    AprilUtils::log_float get_cls_transition_prob(int i) const {
       return cls_transition[i].prob;
     }
-    void acum_apriori_cls_emission(int i, april_utils::log_float prob) {
+    void acum_apriori_cls_emission(int i, AprilUtils::log_float prob) {
       acum_cls_emission[i] += prob;
     }
     void set_cls_transition_emission(int i, int emission) {
       cls_transition[i].emission = emission;
     }
-    void set_cls_transition_prob(int i, april_utils::log_float prob) {
+    void set_cls_transition_prob(int i, AprilUtils::log_float prob) {
       cls_transition[i].prob = prob;
     }
     int get_cls_transition_emission(int i) const {
@@ -147,12 +147,12 @@ namespace HMMs {
 
     // auxiliares para algoritmos:
     int transition_emission(int tr);
-    april_utils::log_float transition_prob(int tr);
+    AprilUtils::log_float transition_prob(int tr);
 
-    void forward (basics::MatrixFloat *emission, april_utils::log_float *alpha);
-    void backward(basics::MatrixFloat *input_emission, 
-                  basics::MatrixFloat *output_emission, 
-                  april_utils::log_float *alpha,
+    void forward (Basics::MatrixFloat *emission, AprilUtils::log_float *alpha);
+    void backward(Basics::MatrixFloat *input_emission, 
+                  Basics::MatrixFloat *output_emission, 
+                  AprilUtils::log_float *alpha,
                   bool do_expectation);
 
   public:
@@ -168,22 +168,22 @@ namespace HMMs {
     void new_transition(int from, int to, 
                         int emission, 
                         int cls_transition,
-                        april_utils::log_float prob,
+                        AprilUtils::log_float prob,
                         const char *output);
 
     bool prepare_model(); // llamarlo una vez introducido todo
 
-    april_utils::log_float viterbi(const basics::MatrixFloat *emission,
+    AprilUtils::log_float viterbi(const Basics::MatrixFloat *emission,
                                    bool emission_in_log_base,
                                    bool do_expectation,
-                                   basics::MatrixFloat *reest_emission,
-                                   basics::MatrixFloat *seq_reest_emission,
-                                   basics::MatrixFloat *state_probabilities,
+                                   Basics::MatrixFloat *reest_emission,
+                                   Basics::MatrixFloat *seq_reest_emission,
+                                   Basics::MatrixFloat *state_probabilities,
                                    char **output_str,
                                    float count_value);
 
-    void forward_backward(basics::MatrixFloat *input_emission, 
-                          basics::MatrixFloat *output_emission, 
+    void forward_backward(Basics::MatrixFloat *input_emission, 
+                          Basics::MatrixFloat *output_emission, 
                           bool do_expectation=true);
 
     void get_information(int &n_states, int &n_transitions) const {

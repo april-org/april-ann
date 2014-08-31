@@ -24,7 +24,7 @@
 
 #include "dataset.h"
 
-namespace basics {
+namespace Basics {
 
   typedef DataSet<float> DataSetFloat;
   typedef MatrixDataSet<float> MatrixDataSetFloat;
@@ -41,6 +41,6 @@ namespace basics {
   typedef SubAndDivNormalizationDataSet<float> SubAndDivNormalizationDataSetFloat;
   typedef ClampDataSet<float> ClampDataSetFloat;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILDATASETFLOAT_H

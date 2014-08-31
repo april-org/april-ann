@@ -25,7 +25,7 @@
 #include "matrix.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   /***** ITERATORS *****/
 
@@ -706,7 +706,7 @@ namespace basics {
           coords[i] = 0;
           order[i] = i;
         }
-        april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
+        AprilUtils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
       }
       else {
         // take given dim as the best and sort other dimensions
@@ -718,7 +718,7 @@ namespace basics {
           coords[i] = 0;
           order[i] = i;
         }
-        april_utils::Sort(order, 1, m->numDim-1, inverse_sort_compare(m));
+        AprilUtils::Sort(order, 1, m->numDim-1, inverse_sort_compare(m));
         coords[0] = 0;
         order[0]  = dim;
       }
@@ -1120,6 +1120,6 @@ namespace basics {
   int Matrix<T>::sliding_window::getNumDim() const {
     return m->getNumDim();
   }
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_ITERATORS_IMPL_H

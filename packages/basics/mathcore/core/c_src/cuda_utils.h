@@ -33,7 +33,7 @@
 
 #define APRIL_CUDA_EXPORT __host__ __device__ __forceinline__ inline
 
-namespace april_math {
+namespace AprilMath {
 
   namespace CUDA {
     
@@ -110,7 +110,7 @@ namespace april_math {
 
   } // namespace CUDA
 
-} // namespace april_math
+} // namespace AprilMath
 
 #else
 

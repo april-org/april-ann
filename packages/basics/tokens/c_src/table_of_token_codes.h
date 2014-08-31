@@ -35,7 +35,7 @@
     4     0x4000  graphs
 */
 
-namespace basics {
+namespace Basics {
 
 /// Definition of TokenCode type
 typedef uint32_t TokenCode;
@@ -75,6 +75,6 @@ typedef uint32_t TokenCode;
     static const TokenCode token_idag          = 0x4000;  
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TABLE_OF_TOKEN_CODES_H

@@ -10,9 +10,9 @@
 #include <cstdio>
 #include "interest_points.h"
 
-using namespace april_utils;
-using namespace basics;
-using namespace imaging;
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
 
 namespace OCR {
   namespace OffLineTextPreprocessing {
@@ -113,7 +113,7 @@ namespace OCR {
       for (int i=0; i<width; ++i) valid[i] = true;
       vector<Point2D> *new_points = new vector<Point2D>();
   
-      april_utils::Sort(&(*points)[0],points->size(),yComparator);
+      AprilUtils::Sort(&(*points)[0],points->size(),yComparator);
       for(int i = 0; i < (int)points->size();++i) {
         Point2D &p = (*points)[i];
         int x = int(p.x);
@@ -126,7 +126,7 @@ namespace OCR {
         }
       }
       // sort new_points by x
-      april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+      AprilUtils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
   
       // delete points and change to new_points
       vector<Point2D> *aux = points;
@@ -144,7 +144,7 @@ namespace OCR {
       for (int i=0; i<width; ++i) valid[i] = true;
       vector<Point2D> *new_points = new vector<Point2D>();
   
-      april_utils::Sort(&(*points)[0],points->size(),yComparatorReversed);
+      AprilUtils::Sort(&(*points)[0],points->size(),yComparatorReversed);
       for(int i = 0; i < (int)points->size();++i) {
         Point2D &p = (*points)[i];
         int x = int(p.x);
@@ -157,7 +157,7 @@ namespace OCR {
         }
       }
       // sort new_points by x
-      april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+      AprilUtils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
   
       // delete points and change to new_points
       vector<Point2D> *aux = points;

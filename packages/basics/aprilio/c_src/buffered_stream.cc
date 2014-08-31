@@ -138,7 +138,7 @@ namespace AprilIO {
       // Condition of empty buffer, no data is available.
       if (in_buffer_pos >= in_buffer_len) break;
       size_t available_size = in_buffer_len - in_buffer_pos;
-      size_t buf_len = april_utils::min(available_size, max_size - dest_len);
+      size_t buf_len = AprilUtils::min(available_size, max_size - dest_len);
       if (delim != 0) {
         // WARNING: in_buffer needs a '\0' to indicate its size
         char *delim_pos = strpbrk(in_buffer + in_buffer_pos, delim);
@@ -146,7 +146,7 @@ namespace AprilIO {
           if (delim_pos < in_buffer + in_buffer_len && keep_delim) ++delim_pos;
           ptrdiff_t ptr_diff = delim_pos - (in_buffer + in_buffer_pos);
           size_t diff = static_cast<size_t>(ptr_diff);
-          buf_len = april_utils::min(buf_len, diff);
+          buf_len = AprilUtils::min(buf_len, diff);
         }
       }
       // Put data into the given operator, which wraps a StreamInterface or a

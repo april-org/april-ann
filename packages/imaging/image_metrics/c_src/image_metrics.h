@@ -26,7 +26,7 @@
 #include "datasetFloat.h"
 #include "utilImageFloat.h"
 
-namespace imaging {
+namespace Imaging {
 
   /**
      Class that contains the counters for calculate the metrics on two different
@@ -62,7 +62,7 @@ namespace imaging {
     void processSample(float pred, float ref);
 
     //// Takes two datasets and add the information to the counters
-    void processDataset(basics::DataSetFloat *ds, basics::DataSetFloat *GT,
+    void processDataset(Basics::DataSetFloat *ds, Basics::DataSetFloat *GT,
                         bool binary, float threshold);
             
     /** Returns differents measures
@@ -90,6 +90,6 @@ namespace imaging {
     ImageMetrics* clone();
   };
 
-} // namespace imaging
+} // namespace Imaging
 
 #endif

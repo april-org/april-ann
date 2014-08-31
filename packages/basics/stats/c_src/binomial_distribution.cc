@@ -26,10 +26,10 @@
 #include "combinations.h"
 #include "utilMatrixFloat.h"
 
-using april_utils::buffer_list;
-using april_utils::log_float;
-using basics::MatrixFloat;
-using basics::MTRand;
+using AprilUtils::buffer_list;
+using AprilUtils::log_float;
+using Basics::MatrixFloat;
+using Basics::MTRand;
 
 namespace Stats {
   

@@ -27,7 +27,7 @@
 #include "referenced.h"
 #include "unused_variable.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   // forward declaration
   template<typename T> class WeakPtr;
@@ -244,6 +244,6 @@ namespace april_utils {
     return SharedPtr<T>(ptr);
   }
   
-} // namespace april_utils
+} // namespace AprilUtils
  
 #endif // SHARED_PTR_H

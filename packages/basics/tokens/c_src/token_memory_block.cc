@@ -22,9 +22,9 @@
 #include "gpu_mirrored_memory_block.h"
 #include "token_memory_block.h"
 
-using april_utils::buffer_list;
+using AprilUtils::buffer_list;
 
-namespace basics {
+namespace Basics {
   TokenMemoryBlock::TokenMemoryBlock() : Token(), mem_block(0), used_size(0) { }
 
   TokenMemoryBlock::TokenMemoryBlock(unsigned int size) :
@@ -46,10 +46,10 @@ namespace basics {
 
   void TokenMemoryBlock::resize(unsigned int size) {
     if (mem_block == 0)
-      mem_block = new april_math::FloatGPUMirroredMemoryBlock(size);
+      mem_block = new AprilMath::FloatGPUMirroredMemoryBlock(size);
     else if (size > mem_block->getSize()) {
       delete mem_block;
-      mem_block = new april_math::FloatGPUMirroredMemoryBlock(size);
+      mem_block = new AprilMath::FloatGPUMirroredMemoryBlock(size);
     }
     used_size = size;
   }
@@ -84,4 +84,4 @@ namespace basics {
     doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
   }
 
-} // namespace basics
+} // namespace Basics

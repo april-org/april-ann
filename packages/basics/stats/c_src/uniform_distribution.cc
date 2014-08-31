@@ -22,11 +22,11 @@
 #include "smart_ptr.h"
 #include "uniform_distribution.h"
 
-using april_utils::log_float;
-using april_utils::SharedPtr;
+using AprilUtils::log_float;
+using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;
-using basics::MatrixFloat;
-using basics::MTRand;
+using Basics::MatrixFloat;
+using Basics::MTRand;
 
 namespace Stats {
 
@@ -140,7 +140,7 @@ namespace Stats {
 
   char *UniformDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", is_ascii);
     stream->put("stats.dist.uniform(matrix.fromString[[");
     low->write(stream.get(), &options);

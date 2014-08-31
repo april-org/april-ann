@@ -23,8 +23,8 @@
 #include "wrapper.h"
 #include "unused_variable.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 

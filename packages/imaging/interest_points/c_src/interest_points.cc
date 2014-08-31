@@ -31,17 +31,17 @@
 #include <cstdio>
 #include "linear_least_squares.h"
 
-using namespace april_utils;
-using namespace basics;
-using namespace imaging;
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
 /*::vector;
-using april_utils::pair;
-using april_utils::min;
-using april_utils::max;
-using april_utils::max_finder;
-using april_utils::min_finder;
-using april_utils::swap;
-using april_utils::Point2D;
+using AprilUtils::pair;
+using AprilUtils::min;
+using AprilUtils::max;
+using AprilUtils::max_finder;
+using AprilUtils::min_finder;
+using AprilUtils::swap;
+using AprilUtils::Point2D;
 */
 
 namespace InterestPoints {
@@ -196,7 +196,7 @@ namespace InterestPoints {
 
     return false xor reverse;
   }
-  april_utils::vector < Point2D >
+  AprilUtils::vector < Point2D >
     *extract_points_from_image_old (
             ImageFloat * pimg, float threshold_white,
             float threshold_black, int local_context,
@@ -644,8 +644,8 @@ namespace InterestPoints {
           ds_out->getPattern(i, ftag);
           int row = index/width;
           int column = index%width; 
-          int tag = april_utils::argmax(ftag, num_classes)+1;
-          float prob = exp(april_utils::max(ftag, num_classes));
+          int tag = AprilUtils::argmax(ftag, num_classes)+1;
+          float prob = exp(AprilUtils::max(ftag, num_classes));
 
           float value = 1.0;
 
@@ -702,7 +702,7 @@ namespace InterestPoints {
           for (int c = 0; c < num_classes; ++c) {
               it(row, column,c) = exp(ftag[c]);
           }
-          // int tag = april_utils::argmax(ftag, num_classes)+1;
+          // int tag = AprilUtils::argmax(ftag, num_classes)+1;
       }
       delete []ftag;
       return result_mat;
@@ -989,13 +989,13 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
   void PointComponent::sort_by_confidence() {
       if (size() > 0)
-          april_utils::Sort(&(*this)[0], (int)size());
+          AprilUtils::Sort(&(*this)[0], (int)size());
 
   }
 
   void PointComponent::sort_by_x() {
 
-      april_utils::Sort(&(*this)[0], size(), interestPointXComparator);
+      AprilUtils::Sort(&(*this)[0], size(), interestPointXComparator);
   }
   void SetPoints::sort_by_confidence() {
 

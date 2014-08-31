@@ -23,7 +23,7 @@
 #include "util_regularization.h"
 #include "wrapper.h"
 
-using basics::MatrixFloat;
+using Basics::MatrixFloat;
 
 namespace ANN {
   namespace optimizer {
@@ -41,8 +41,8 @@ namespace ANN {
       while(dest_it != dest->end()) {
 	float x = *dest_it;
 	float y = *w_it;
-	if (y > 0.0f)      *dest_it = april_utils::max(-y, x-value);
-	else if (y < 0.0f) *dest_it = april_utils::min(-y, x+value);
+	if (y > 0.0f)      *dest_it = AprilUtils::max(-y, x-value);
+	else if (y < 0.0f) *dest_it = AprilUtils::min(-y, x+value);
 	else if (fabsf(x) < value) *dest_it = 0.0f;
 	//
 	++dest_it;

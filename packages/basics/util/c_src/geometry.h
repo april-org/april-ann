@@ -22,7 +22,7 @@
 #define GEOMETRY_H
 
 #include "pair.h"
-namespace april_utils {
+namespace AprilUtils {
 
     template <typename T>
     struct Point {

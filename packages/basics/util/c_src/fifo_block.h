@@ -23,7 +23,7 @@
 
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   /**
    * representa una cola fifo pero es una implementación hibrida entre
@@ -296,10 +296,10 @@ namespace april_utils {
     }
 
     void swap(fifo_block &other) {
-      april_utils::swap(index_read,  other.index_read);
-      april_utils::swap(index_write, other.index_write);
-      april_utils::swap(first, other.first);
-      april_utils::swap(last,  other.last);
+      AprilUtils::swap(index_read,  other.index_read);
+      AprilUtils::swap(index_write, other.index_write);
+      AprilUtils::swap(first, other.first);
+      AprilUtils::swap(last,  other.last);
     }
 
     bool contains_node(T *ptr) const {
@@ -311,6 +311,6 @@ namespace april_utils {
 
   }; // closes class fifo_block
 
-} // closes namespace april_utils
+} // closes namespace AprilUtils
 
 #endif // FIFO_BLOCK_H

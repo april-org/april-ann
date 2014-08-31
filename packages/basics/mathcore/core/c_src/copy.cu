@@ -23,7 +23,7 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
 
 #ifdef USE_CUDA
   /***************************************
@@ -218,4 +218,4 @@ namespace april_math {
                                           const unsigned int,
                                           bool);
 
-} // namespace april_math
+} // namespace AprilMath

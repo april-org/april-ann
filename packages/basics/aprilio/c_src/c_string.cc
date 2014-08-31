@@ -27,7 +27,7 @@ namespace AprilIO {
     data.reserve(StreamMemory::BLOCK_SIZE);
   }
 
-  CStringStream::CStringStream(const april_utils::string &str) :
+  CStringStream::CStringStream(const AprilUtils::string &str) :
     StreamMemory(), data(str), in_pos(0), out_pos(data.size()) {
   }
 
@@ -39,11 +39,11 @@ namespace AprilIO {
     close();
   }
 
-  april_utils::constString CStringStream::getConstString() const {
-    return april_utils::constString(data.c_str(), size());
+  AprilUtils::constString CStringStream::getConstString() const {
+    return AprilUtils::constString(data.c_str(), size());
   }
 
-  void CStringStream::swapString(april_utils::string &other) {
+  void CStringStream::swapString(AprilUtils::string &other) {
     data.swap(other);
   }
   

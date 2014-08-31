@@ -35,7 +35,7 @@
 #ifdef USE_CUDA
 #include "cuda_utils.h"
 
-namespace april_math {
+namespace AprilMath {
 
   __global__ void minMaxFirstReduction(const float *input_units,
                                        float *minimums,
@@ -228,10 +228,10 @@ namespace april_math {
     }
   }
 
-} // namespace april_math
+} // namespace AprilMath
 #endif
 
-namespace april_math {
+namespace AprilMath {
   
   void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
                                 FloatGPUMirroredMemoryBlock *output_units,
@@ -563,4 +563,4 @@ namespace april_math {
 #endif
   }
 
-} // namespace april_math
+} // namespace AprilMath

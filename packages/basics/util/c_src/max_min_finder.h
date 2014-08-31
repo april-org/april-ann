@@ -23,7 +23,7 @@
 
 #include "vector.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // encuentra los maximos/minimos locales de una secuencia, usa contexto
   // izquierdo y derecho, asume que T soporta == y <
@@ -254,7 +254,7 @@ namespace april_utils {
     }
   };
 
-} // closes namespace april_utils
+} // closes namespace AprilUtils
 
 #endif // MAX_MIN_FINDER_H
 

@@ -20,7 +20,7 @@
  *
  */
 #include "ceiling_power_of_two.h"
-namespace april_utils {
+namespace AprilUtils {
   
   // Returns the highest and closest power of two of a value
   unsigned int ceilingPowerOfTwo(unsigned int value) {

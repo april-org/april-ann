@@ -24,7 +24,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace basics {
+namespace Basics {
   
   namespace MatrixIO {
     
@@ -35,7 +35,7 @@ namespace basics {
     
     template<>
     int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat) {
-      return april_utils::binarizer::buffer_size_32(mat->nonZeroSize());
+      return AprilUtils::binarizer::buffer_size_32(mat->nonZeroSize());
     }
     
   }

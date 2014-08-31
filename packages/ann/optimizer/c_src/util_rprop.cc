@@ -21,7 +21,7 @@
 #include "util_rprop.h"
 #include "wrapper.h"
 
-using basics::MatrixFloat;
+using Basics::MatrixFloat;
 
 namespace ANN {
   namespace optimizer {

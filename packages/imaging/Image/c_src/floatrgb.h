@@ -23,7 +23,7 @@
 
 #include "clamp.h"
 
-namespace imaging {
+namespace Imaging {
 
   struct FloatRGB
   {
@@ -61,12 +61,12 @@ namespace imaging {
   FloatRGB operator *= (FloatRGB x, float y);
   FloatRGB operator /= (FloatRGB x, float y);
 
-} // namespace imaging
+} // namespace Imaging
 
-namespace april_utils{
-  template<> imaging::FloatRGB clamp<imaging::FloatRGB>(imaging::FloatRGB val,
-                                                        imaging::FloatRGB lower,
-                                                        imaging::FloatRGB upper);
+namespace AprilUtils{
+  template<> Imaging::FloatRGB clamp<Imaging::FloatRGB>(Imaging::FloatRGB val,
+                                                        Imaging::FloatRGB lower,
+                                                        Imaging::FloatRGB upper);
 }
 
 #endif

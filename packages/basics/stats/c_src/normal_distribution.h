@@ -30,23 +30,23 @@ namespace Stats {
   /// Normal distribution with general covariance matrix
   class GeneralNormalDistribution : public StatisticalDistributionBase {
   protected:
-    basics::MatrixFloat *mean, *cov, *inv_cov, *L;
-    april_utils::log_float cov_det, K;
+    Basics::MatrixFloat *mean, *cov, *inv_cov, *L;
+    AprilUtils::log_float cov_det, K;
     float cov_det_sign;
 
     void updateParams();
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result);
     
   public:
-    GeneralNormalDistribution(basics::MatrixFloat *mean,
-                              basics::MatrixFloat *cov);
+    GeneralNormalDistribution(Basics::MatrixFloat *mean,
+                              Basics::MatrixFloat *cov);
     virtual ~GeneralNormalDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;
@@ -55,24 +55,24 @@ namespace Stats {
   /// Normal distribution with diagonal covariance sparse matrix
   class DiagonalNormalDistribution : public StatisticalDistributionBase {
   protected:
-    basics::MatrixFloat *mean;
-    april_utils::log_float cov_det, K;
+    Basics::MatrixFloat *mean;
+    AprilUtils::log_float cov_det, K;
     float cov_det_sign;
-    basics::SparseMatrixFloat *cov, *inv_cov, *L;
+    Basics::SparseMatrixFloat *cov, *inv_cov, *L;
 
     void updateParams();
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result);
     
   public:
-    DiagonalNormalDistribution(basics::MatrixFloat *mean,
-                               basics::SparseMatrixFloat *cov);
+    DiagonalNormalDistribution(Basics::MatrixFloat *mean,
+                               Basics::SparseMatrixFloat *cov);
     virtual ~DiagonalNormalDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;
@@ -81,16 +81,16 @@ namespace Stats {
   /// Normal distribution with mean=0 and var=1
   class StandardNormalDistribution : public StatisticalDistributionBase {
   protected:
-    april_utils::log_float K;
+    AprilUtils::log_float K;
     
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result);
     
   public:
     StandardNormalDistribution();
@@ -102,22 +102,22 @@ namespace Stats {
 
   /// Log-Normal distribution with general covariance matrix
   class GeneralLogNormalDistribution : public GeneralNormalDistribution {
-    basics::MatrixFloat *location;
+    Basics::MatrixFloat *location;
   
   protected:
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result);
     
   public:
-    GeneralLogNormalDistribution(basics::MatrixFloat *mean,
-                                 basics::MatrixFloat *cov,
-                                 basics::MatrixFloat *location=0);
+    GeneralLogNormalDistribution(Basics::MatrixFloat *mean,
+                                 Basics::MatrixFloat *cov,
+                                 Basics::MatrixFloat *location=0);
     virtual ~GeneralLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;
@@ -125,22 +125,22 @@ namespace Stats {
 
   /// Log-LogNormal distribution with diagonal covariance sparse matrix
   class DiagonalLogNormalDistribution : public DiagonalNormalDistribution {
-    basics::MatrixFloat *location;
+    Basics::MatrixFloat *location;
 
   protected:
-    virtual void privateSample(basics::MTRand *rng,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogcdf(const basics::MatrixFloat *x,
-                               basics::MatrixFloat *result);
-    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
-                                         basics::MatrixFloat *result);
+    virtual void privateSample(Basics::MTRand *rng,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogcdf(const Basics::MatrixFloat *x,
+                               Basics::MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
+                                         Basics::MatrixFloat *result);
     
   public:
-    DiagonalLogNormalDistribution(basics::MatrixFloat *mean,
-                                  basics::SparseMatrixFloat *cov,
-                                  basics::MatrixFloat *location=0);
+    DiagonalLogNormalDistribution(Basics::MatrixFloat *mean,
+                                  Basics::SparseMatrixFloat *cov,
+                                  Basics::MatrixFloat *location=0);
     virtual ~DiagonalLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual char *toLuaString(bool is_ascii) const;

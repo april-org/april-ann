@@ -1,7 +1,7 @@
 #include <iostream>
 #include "../c_src/stringQueue.cc"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 int main() {
   StringQueue s;

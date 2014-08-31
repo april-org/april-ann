@@ -21,7 +21,7 @@
 #include "affine_transform.h"
 #include <cmath>
 
-namespace basics {
+namespace Basics {
 
   const int AffineTransform2D::dimensions[2] = {3,3};
 
@@ -116,4 +116,4 @@ namespace basics {
     *dst_y=res_y;
   }
 
-} // namespace basics
+} // namespace Basics

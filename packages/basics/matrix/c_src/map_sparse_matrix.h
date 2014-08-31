@@ -21,28 +21,28 @@
 #ifndef MAP_SPARSE_MATRIX_H
 #define MAP_SPARSE_MATRIX_H
 
-#ifndef SPARSE_MATRIX_H
-#error "Requires \#include \"sparse_matrix.h\""
-#endif
-
-namespace basics {
+namespace Basics {
   // forward declaration
   template <typename T>
   class SparseMatrix;
 }
 
-namespace april_math {
-  
-  template<typename T, typename O, typename OP>
-  basics::SparseMatrix<O> *SparseMatrixScalarMap1(const basics::SparseMatrix<T> *input,
-                                                  const OP &functor,
-                                                  basics::SparseMatrix<T> *dest = 0);
-  
-  template<typename T, typename O, typename OP>
-  basics::SparseMatrix<O> *SparseMatrixScalarMap2(const basics::SparseMatrix<T> *input1,
-                                                  const basics::SparseMatrix<T> *input2,
-                                                  const OP &functor,
-                                                  basics::SparseMatrix<T> *dest = 0);
-} // namespace april_math
+namespace AprilMath {
+
+  namespace MatrixExt {
+    
+    template<typename T, typename O, typename OP>
+    Basics::SparseMatrix<O> *SparseMatrixScalarMap1(const Basics::SparseMatrix<T> *input,
+                                                    const OP &functor,
+                                                    Basics::SparseMatrix<T> *dest = 0);
+    
+    template<typename T, typename O, typename OP>
+    Basics::SparseMatrix<O> *SparseMatrixScalarMap2(const Basics::SparseMatrix<T> *input1,
+                                                    const Basics::SparseMatrix<T> *input2,
+                                                    const OP &functor,
+                                                    Basics::SparseMatrix<T> *dest = 0);
+  } // namespace MatrixExt
+
+} // namespace AprilMath
 
 #endif // MAP_SPARSE_MATRIX_H

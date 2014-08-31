@@ -30,11 +30,11 @@
 #include "token_sparse_matrix.h"
 #include "table_of_token_codes.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
-using april_utils::swap;
+using AprilUtils::swap;
 
 namespace ANN {
 
@@ -167,7 +167,7 @@ namespace ANN {
   }
 
   void DotProductANNComponent::
-  initializeComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  initializeComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     weights_matrix->addToSharedCount();
     if (grads_mat.empty()) {
       grads_mat = weights_matrix->cloneOnlyDims();
@@ -182,7 +182,7 @@ namespace ANN {
   }
   
   void DotProductANNComponent::
-  privateDenseComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  privateDenseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     initializeComputeGradients(grads_mat);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
@@ -203,7 +203,7 @@ namespace ANN {
   }
   
   void DotProductANNComponent::
-  privateSparseComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  privateSparseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     initializeComputeGradients(grads_mat);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
@@ -253,7 +253,7 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -284,7 +284,7 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

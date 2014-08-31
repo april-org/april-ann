@@ -21,4 +21,23 @@
 #ifndef REDUCE_SPARSE_MATRIX_H
 #define REDUCE_SPARSE_MATRIX_H
 
+namespace Basics {
+  // forward declaration
+  template <typename T>
+  class SparseMatrix;
+}
+
+namespace AprilMath {
+  
+  namespace MatrixExt {
+    
+    template<typename T, typename O, typename OP>
+    O SparseMatrixScalarReduce1(const Basics::SparseMatrix<T> *input,
+                                const OP &scalar_red_functor,
+                                const O &zero);
+
+  } // namespace MatrixExt
+  
+} // namespace AprilMath
+
 #endif // REDUCE_SPARSE_MATRIX_H

@@ -2,7 +2,7 @@
 #include "fifo_block.h"
 #include "gtest.h"
 using namespace std;
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define N 20
 #define EXTRACTN 5
@@ -12,7 +12,7 @@ using namespace april_utils;
 namespace test_fifo_block {
 
   TEST(FifoBlockTest, All) {
-    typedef april_utils::fifo_block<int,BSIZE> fifo_block_type;
+    typedef AprilUtils::fifo_block<int,BSIZE> fifo_block_type;
     fifo_block_type fifobint;
     int i,v;
   

@@ -21,7 +21,7 @@
 //BIND_HEADER_H
 #include "gpu_mirrored_memory_block.h"
 
-using namespace april_math;
+using namespace AprilMath;
 //BIND_END
 
 //BIND_HEADER_C
@@ -29,7 +29,7 @@ using namespace april_math;
 #include "luabindmacros.h"
 #include "error_print.h"
 
-namespace april_math {
+namespace AprilMath {
   
 #define FUNCTION_NAME "Constructor"
   template<typename T>
@@ -77,7 +77,7 @@ namespace april_math {
   }
 #undef FUNCTION_NAME
 
-} // namespace april_math
+} // namespace AprilMath
 
 //BIND_END
 

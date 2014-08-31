@@ -23,7 +23,7 @@
 
 #include <cstdio>
 
-namespace april_utils {
+namespace AprilUtils {
   // responde al perfil de fgets
   inline
   char* get_uncommented_line(char *s, int size, FILE *stream) {
@@ -41,6 +41,6 @@ namespace april_utils {
     return aux;
   }
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // UNCOMMENTED_LINE_H

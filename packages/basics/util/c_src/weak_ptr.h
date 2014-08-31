@@ -27,7 +27,7 @@
 #include "shared_ptr.h"
 #include "unused_variable.h"
 
-namespace april_utils {
+namespace AprilUtils {
   /**
    * @brief A plain wrapper over a pointer.
    *
@@ -209,6 +209,6 @@ namespace april_utils {
     return WeakPtr<T>(ptr);
   }
   
-} // namespace april_utils
+} // namespace AprilUtils
  
 #endif // WEAK_PTR_H

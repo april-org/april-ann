@@ -128,7 +128,7 @@
                             unsigned int N,                             \
                             bool use_gpu)
 
-namespace april_math {
+namespace AprilMath {
 
   template<typename T, typename O, typename F>
   void genericMap1Call(unsigned int N,
@@ -243,6 +243,6 @@ namespace april_math {
     }
   };
   
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // MAP_TEMPLATE_H

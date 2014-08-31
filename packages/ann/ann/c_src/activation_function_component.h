@@ -33,37 +33,37 @@ namespace ANN {
   /// the anncomponents must fulfill.
   class ActivationFunctionANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
-    basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
+    Basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
   protected:
-    virtual void applyActivation(april_math::FloatGPUMirroredMemoryBlock *input_units,
-				 april_math::FloatGPUMirroredMemoryBlock *output_units,
+    virtual void applyActivation(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
+				 AprilMath::FloatGPUMirroredMemoryBlock *output_units,
 				 unsigned int size,
 				 unsigned int bunch_size) = 0;
-    virtual void multiplyDerivatives(april_math::FloatGPUMirroredMemoryBlock *input_units,
-				     april_math::FloatGPUMirroredMemoryBlock *output_units,
-				     april_math::FloatGPUMirroredMemoryBlock *input_errors,
-				     april_math::FloatGPUMirroredMemoryBlock *output_errors,
+    virtual void multiplyDerivatives(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
+				     AprilMath::FloatGPUMirroredMemoryBlock *output_units,
+				     AprilMath::FloatGPUMirroredMemoryBlock *input_errors,
+				     AprilMath::FloatGPUMirroredMemoryBlock *output_errors,
 				     unsigned int size,
 				     unsigned int bunch_size) = 0;
   public:
     ActivationFunctionANNComponent(const char *name=0);
     virtual ~ActivationFunctionANNComponent();
     
-    virtual basics::Token *getInput() { return input; }
-    virtual basics::Token *getOutput() { return output; }
-    virtual basics::Token *getErrorInput() { return error_input; }
-    virtual basics::Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
     
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
 
     virtual void reset(unsigned int it=0);
     
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
   };
 }

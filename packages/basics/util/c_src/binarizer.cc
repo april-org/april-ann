@@ -29,7 +29,7 @@
 #undef BIG_ENDIAN
 #undef LITTLE_ENDIAN
 
-namespace april_utils {
+namespace AprilUtils {
 
   // from BASE5 on we need to use long constants to avoid overflow
   static const uint32_t BASE  = 85;
@@ -359,4 +359,4 @@ namespace april_utils {
     return rb-dest_buffer;
   }
 
-} // namespace april_utils
+} // namespace AprilUtils

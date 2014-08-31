@@ -24,12 +24,12 @@
 #include "matrixFloat.h"
 #include "matrixDouble.h"
 
-namespace basics {
+namespace Basics {
 
   MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat,
                                                     bool col_major);
   
 
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILMATRIXDOUBLE_H

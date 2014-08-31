@@ -23,9 +23,9 @@
 #include "mathcore.h"
 #include "unused_variable.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
-namespace april_math {
+namespace AprilMath {
 
   /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
   /// in case it isn't there
@@ -141,4 +141,4 @@ namespace april_math {
 #endif
   }
 
-} // namespace april_math
+} // namespace AprilMath

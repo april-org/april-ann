@@ -22,8 +22,8 @@
 #include "batch_fmeasure_micro_avg_loss_function.h"
 #include "wrapper.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 

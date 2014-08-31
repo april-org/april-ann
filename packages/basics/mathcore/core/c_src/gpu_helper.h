@@ -28,7 +28,7 @@
 #include "mathcore.h"
 #include "vector.h"
 
-namespace april_math {
+namespace AprilMath {
 
   class GPUHelper {
     static cublasHandle_t handler;
@@ -37,7 +37,7 @@ namespace april_math {
     static cudaDeviceProp properties;
     static CUdevice  device;
     static CUcontext context;
-    static april_utils::vector<CUstream> streams;
+    static AprilUtils::vector<CUstream> streams;
     static unsigned int current_stream;
   public:
     static void initHelper() {
@@ -126,7 +126,7 @@ namespace april_math {
     }
   };
 
-} // namespace april_math
+} // namespace AprilMath
 #endif
 
 #endif // _CUBLAS_HANDLER_H_

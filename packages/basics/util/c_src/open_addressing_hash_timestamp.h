@@ -59,7 +59,7 @@
 #include "pair.h"
 #include "aux_hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   // HashFcn es del tipo:
   // struct hash_fcn {
@@ -461,7 +461,7 @@ namespace april_utils {
     }
   }
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // OPEN_ADDR_HASH_TIMESTAMP_H
 
