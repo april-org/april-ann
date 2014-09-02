@@ -384,22 +384,22 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_PARAMETER(1, string);
   int value;
   LUABIND_GET_PARAMETER(1,int,value);
-  obj->fill(static_cast<int32_t>(value));
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+                 matFill(obj, static_cast<int32_t>(value)));
 }
 //BIND_END
 
 //BIND_METHOD MatrixInt32 zeros
 {
-  obj->zeros();
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+                 matZeros(obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixInt32 ones
 {
-  obj->ones();
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+                 matOnes(obj));
 }
 //BIND_END
 
@@ -515,8 +515,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_ARGN(==,1);
   int v;
   LUABIND_GET_PARAMETER(1, int, v);
-  obj->diag(static_cast<int32_t>(v));
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+                 matDiag(obj, static_cast<int32_t>(v)));
 }
 //BIND_END
 
@@ -594,8 +594,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixInt32 *mat;
   LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
-  obj->copy(mat);
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+                 matCopy(obj, mat));
 }
 //BIND_END
 

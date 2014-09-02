@@ -723,8 +723,22 @@ namespace Basics {
         order[0]  = dim;
       }
       num_iterations = 1;
-      for (int i=1; i<m->numDim; ++i)
+      for (int i=1; i<m->numDim; ++i) {
         num_iterations *= m->matrixSize[order[i]];
+      }
+    }
+  }
+
+  template <typename T>
+  Matrix<T>::span_iterator::span_iterator(const Matrix<T> *m, const int *order) {
+    this->m       = m;
+    this->raw_pos = m->offset;
+    this->coords  = new int[m->numDim];
+    this->order   = new int[m->numDim];
+    for (int i=0; i<m->numDim; ++i) this->order[i] = order[i];
+    this->num_iterations = 1;
+    for (int i=1; i<m->numDim; ++i) {
+      this->num_iterations *= m->matrixSize[order[i]];
     }
   }
 

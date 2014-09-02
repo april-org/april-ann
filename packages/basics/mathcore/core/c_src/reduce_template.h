@@ -27,7 +27,7 @@
 #include "gpu_mirrored_memory_block.h"
 
 namespace AprilMath {
-  
+
   /**
    * @brief Performs a reduce over a vector and stores its result at
    * another vector.
@@ -59,24 +59,24 @@ namespace AprilMath {
    * @note For CUDA compilation, it is needed that reduce_op has been exported
    * using APRIL_CUDA_EXPORT macro.
    */
-  template<typename T, typename O, typename F>
-  O genericReduce1Call(unsigned int N,
-                       const GPUMirroredMemoryBlock<T> *input,
-                       unsigned int input_stride,
-                       unsigned int input_shift,
-                       bool use_gpu,
-                       const O &zero,
-                       F reduce_op,
-                       GPUMirroredMemoryBlock<O> *dest=0,
-                       unsigned int dest_shift=0) {
-    O result(zero);
+  template<typename T, typename F>
+  T genericReduceCall(unsigned int N,
+                      const GPUMirroredMemoryBlock<T> *input,
+                      unsigned int input_stride,
+                      unsigned int input_shift,
+                      bool use_gpu,
+                      const T &zero,
+                      F reduce_op,
+                      GPUMirroredMemoryBlock<T> *dest=0,
+                      unsigned int dest_shift=0) {
+    T result(zero);
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> > cuda_dest(dest);
-      if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<O>(1);
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > cuda_dest(dest);
+      if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<T>(1);
       CUDA::genericCudaReduceCall(N, input, input_stride, input_shift, zero,
                                   cuda_dest.get(), dest_shift,
                                   reduce_op);
@@ -89,7 +89,7 @@ namespace AprilMath {
         result = reduce_op(result, *v_mem);
       }
       if (dest != 0) {
-        O *dest_ptr = dest->getPPALForWrite() + dest_shift;
+        T *dest_ptr = dest->getPPALForWrite() + dest_shift;
         *dest_ptr = result;
       }
 #ifdef USE_CUDA
@@ -98,28 +98,28 @@ namespace AprilMath {
     return result;
   }
 
-  template<typename T, typename O, typename F>
-  O genericReduce1MinMaxCall(unsigned int N,
-                             const GPUMirroredMemoryBlock<T> *input,
-                             unsigned int input_stride,
-                             unsigned int input_shift,
-                             bool use_gpu,
-                             const O &zero,
-                             F reduce_op,
-                             GPUMirroredMemoryBlock<int32_t> *which,
-                             unsigned int which_shift,
-                             GPUMirroredMemoryBlock<O> *dest,
-                             unsigned int dest_shift) {
-    O result(zero);
+  template<typename T, typename F>
+  T genericReduceMinMaxCall(unsigned int N,
+                            const GPUMirroredMemoryBlock<T> *input,
+                            unsigned int input_stride,
+                            unsigned int input_shift,
+                            bool use_gpu,
+                            const T &zero,
+                            F reduce_op,
+                            GPUMirroredMemoryBlock<int32_t> *which,
+                            unsigned int which_shift,
+                            GPUMirroredMemoryBlock<T> *dest,
+                            unsigned int dest_shift) {
+    T result(zero);
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> > cuda_dest(dest);
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> > cuda_which(which);
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > cuda_which(which);
       if (cuda_which.empty()) cuda_which = new GPUMirroredMemoryBlock<int32_t>(1);
-      if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<O>(1);
+      if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<T>(1);
       CUDA::genericCudaReduceMinMaxCall(N, input, input_stride, input_shift, zero,
                                         cuda_which.get(), which_shift,
                                         cuda_dest.get(), dest_shift,
@@ -135,11 +135,11 @@ namespace AprilMath {
         if (w == 1) best = i;
       }
       if (dest != 0) {
-        O *dest_ptr = dest->getPPALForWrite() + dest_shift;
+        T *dest_ptr = dest->getPPALForWrite() + dest_shift;
         *dest_ptr = result;
       }
       if (which != 0) {
-        O *which_ptr = which->getPPALForWrite() + which_shift;
+        T *which_ptr = which->getPPALForWrite() + which_shift;
         *which_ptr = static_cast<int32_t>(best);
       }
 #ifdef USE_CUDA
@@ -148,64 +148,42 @@ namespace AprilMath {
     return result;
   }
 
-  template<typename T, typename O, typename OP>
-  struct ScalarToSpanReduce1 {
+  template<typename T, typename OP>
+  struct ScalarToSpanReduce {
     const OP functor;
-    ScalarToSpanReduce1(const OP &functor) : functor(functor) { }
-    O operator()(unsigned int N,
+    ScalarToSpanReduce(const OP &functor) : functor(functor) { }
+    T operator()(unsigned int N,
                  const GPUMirroredMemoryBlock<T> *input,
                  unsigned int input_stride,
                  unsigned int input_shift,
                  bool use_cuda,
-                 const O &zero,
-                 GPUMirroredMemoryBlock<O> *dest=0,
-                 unsigned int dest_raw_pos=0) {
-      return genericReduce1Call(N, input, input_stride, input_shift,
-                                use_cuda, zero, functor,
-                                dest, dest_raw_pos);
+                 const T &zero,
+                 GPUMirroredMemoryBlock<T> *dest=0,
+                 unsigned int dest_raw_pos=0) const {
+      return genericReduceCall(N, input, input_stride, input_shift,
+                               use_cuda, zero, functor,
+                               dest, dest_raw_pos);
     }
   };
 
-  template<typename T, typename O, typename OP>
-  struct ScalarToSpanReduce1MinMax {
+  template<typename T, typename OP>
+  struct ScalarToSpanReduceMinMax {
     const OP functor;
-    ScalarToSpanReduce1MinMax(const OP &functor) : functor(functor) { }
-    O operator()(unsigned int N,
+    ScalarToSpanReduceMinMax(const OP &functor) : functor(functor) { }
+    T operator()(unsigned int N,
                  const GPUMirroredMemoryBlock<T> *input,
                  unsigned int input_stride,
                  unsigned int input_shift,
                  bool use_cuda,
-                 const O &zero,
+                 const T &zero,
                  GPUMirroredMemoryBlock<int32_t> *which=0,
                  unsigned int which_raw_pos=0,
-                 GPUMirroredMemoryBlock<O> *dest=0,
-                 unsigned int dest_raw_pos=0) {
-      return genericReduce1Call(N, input, input_stride, input_shift,
-                                use_cuda, zero, functor,
-                                which, which_raw_pos,
-                                dest, dest_raw_pos);
-    }
-  };
-
-  template<typename T1, typename T2, typename O, typename OP>
-  struct ScalarToSpanReduce2 {
-    const OP functor;
-    ScalarToSpanReduce2(const OP &functor) : functor(functor) { }
-    O operator()(unsigned int N,
-                 const GPUMirroredMemoryBlock<T1> *input1,
-                 unsigned int input1_stride,
-                 unsigned int input1_shift,
-                 const GPUMirroredMemoryBlock<T2> *input2,
-                 unsigned int input2_stride,
-                 unsigned int input2_shift,
-                 bool use_cuda,
-                 const O &zero,
-                 GPUMirroredMemoryBlock<O> *dest=0,
-                 unsigned int dest_raw_pos=0) {
-      return genericReduce1Call(N, input1, input1_stride, input1_shift,
-                                input2, input2_stride, input2_shift,
-                                use_cuda, zero, functor,
-                                dest, dest_raw_pos);
+                 GPUMirroredMemoryBlock<T> *dest=0,
+                 unsigned int dest_raw_pos=0) const {
+      return genericReduceCall(N, input, input_stride, input_shift,
+                               use_cuda, zero, functor,
+                               which, which_raw_pos,
+                               dest, dest_raw_pos);
     }
   };
   

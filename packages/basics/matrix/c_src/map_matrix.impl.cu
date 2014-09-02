@@ -59,7 +59,6 @@ namespace AprilMath {
                                       Basics::Matrix<O> *dest,
                                       const int N_th,
                                       const unsigned int SIZE_th) {
-      if (dest == 0) dest = input->clone();
       april_assert(input != 0 && dest != 0);
       if (input->size() != dest->size() || !input->sameDim(dest)) {
         ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
@@ -93,10 +92,10 @@ namespace AprilMath {
       // General case.
       else {
         typename Basics::Matrix<T>::span_iterator input_span_it(input);
-        typename Basics::Matrix<T>::span_iterator dest_span_it(dest,
+        typename Basics::Matrix<O>::span_iterator dest_span_it(dest,
                                                                input_span_it.getDimOrder());
         const int N = input_span_it.numberOfIterations();
-        april_assert(N == static_cast<unsigned int>(dest_span_it.numberOfIterations()));
+        april_assert(N == dest_span_it.numberOfIterations());
         const unsigned int size         = static_cast<unsigned int>(input_span_it.getSize());
         const unsigned int input_stride = static_cast<unsigned int>(input_span_it.getStride());
         const unsigned int dest_stride  = static_cast<unsigned int>(dest_span_it.getStride());
@@ -157,7 +156,6 @@ namespace AprilMath {
                                       Basics::Matrix<O> *dest,
                                       const int N_th,
                                       const unsigned int SIZE_th) {
-      if (dest == 0) dest = input1->clone();
       april_assert(input1 != 0 && input2 != 0 && dest != 0);
       if (input1->size() != dest->size() || input2->size() != dest->size() ||
           !input1->sameDim(dest) || !input2->sameDim(dest)) {
@@ -199,12 +197,12 @@ namespace AprilMath {
       // General case.
       else {
         typename Basics::Matrix<T1>::span_iterator input1_span_it(input1);
-        typename Basics::Matrix<T1>::span_iterator input2_span_it(input2);
+        typename Basics::Matrix<T2>::span_iterator input2_span_it(input2);
         typename Basics::Matrix<O>::span_iterator dest_span_it(dest,
                                                                input1_span_it.getDimOrder());
         const int N = input1_span_it.numberOfIterations();
-        april_assert(N == static_cast<unsigned int>(dest_span_it.numberOfIterations()));
-        april_assert(N == static_cast<unsigned int>(input2_span_it.numberOfIterations()));
+        april_assert(N == dest_span_it.numberOfIterations());
+        april_assert(N == input2_span_it.numberOfIterations());
         const unsigned int size          = static_cast<unsigned int>(input1_span_it.getSize());
         const unsigned int input1_stride = static_cast<unsigned int>(input1_span_it.getStride());
         const unsigned int input2_stride = static_cast<unsigned int>(input2_span_it.getStride());

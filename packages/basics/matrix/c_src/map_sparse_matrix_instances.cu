@@ -18,26 +18,27 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "map_matrix.impl.cu"
-#include "matrixFloat.h"
 
-#define INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(TYPE,FUNCTOR)     \
-  template Matrix<TYPE> *MatrixScalarMap1(const SparseMatrix<TYPE> *, \
-                                          SparseMatrix<TYPE> *,             \
-                                          const FUNCTOR &);
+#include "cmath_overloads.h"
+#include "map_sparse_matrix.impl.cu"
 
-#define INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP2(TYPE,FUNCTOR)            \
-  template Matrix<TYPE> *MatrixScalarMap2(const SparseMatrix<TYPE> *, \
-                                          const SparseMatrix<TYPE> *,   \
-                                          SparseMatrix<TYPE> *,             \
-                                          const FUNCTOR &);
+#define INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(TYPE,OP)     \
+  template Basics::SparseMatrix< TYPE > *SparseMatrixScalarMap1< TYPE, TYPE, OP >(const Basics::SparseMatrix< TYPE > *, \
+                                                                                  const OP &, \
+                                                                                  Basics::SparseMatrix< TYPE > *)
+
+#define INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP2(TYPE,OP)                  \
+  template Basics::SparseMatrix< TYPE > *SparseMatrixScalarMap2< TYPE, TYPE, OP >(const Basics::SparseMatrix< TYPE > *, \
+                                                                                  const Basics::SparseMatrix< TYPE > *, \
+                                                                                  const OP &, \
+                                                                                  Basics::SparseMatrix< TYPE > *)
 
 namespace AprilMath {  
-
   namespace MatrixExt {
-    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_unary_float_map_t);
-    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(double, m_unary_double_map_t);
-    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(ComplexF, m_unary_complexf_map_t);
+    
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_float_unary_float_map_t);
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(double, m_double_unary_double_map_t);
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(ComplexF, m_complexf_unary_complexf_map_t);
+    
   }
-  
 } // namespace AprilMath

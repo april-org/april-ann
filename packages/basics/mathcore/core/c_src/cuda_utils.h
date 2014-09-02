@@ -31,7 +31,7 @@
 #include <cusparse_v2.h>
 #include "gpu_helper.h"
 
-#define APRIL_CUDA_EXPORT __host__ __device__ __forceinline__ inline
+#define APRIL_CUDA_EXPORT __host__ __device__ __forceinline__
 
 namespace AprilMath {
 
@@ -114,7 +114,7 @@ namespace AprilMath {
 
 #else
 
-#define APRIL_CUDA_EXPORT inline
+#define APRIL_CUDA_EXPORT
 
 #endif
 

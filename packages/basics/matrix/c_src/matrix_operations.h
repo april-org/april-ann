@@ -38,6 +38,11 @@
 #include "reduce_matrix.h"
 #include "reduce_sparse_matrix.h"
 
+#define UNARY_SCALAR_CAST T(*)(const T&)
+#define BINARY_SCALAR_CAST T(*)(const T&,const T&)
+#define BINARY_MINMAX_SCALAR_CAST T(*)(const T&,const T&,int&)
+#define UNARY_SPAN_CAST(T,O) void(*)(unsigned int,const GPUMirroredMemoryBlock< T > *, unsigned int, unsigned int, GPUMirroredMemoryBlock< O > *, unsigned int, unsigned int, bool)
+
 namespace AprilMath {
   
   /**
@@ -61,23 +66,6 @@ namespace AprilMath {
         }
       };
       
-      template <typename T>
-      struct SparseMatrixNorm2Reductor {
-        APRIL_CUDA_EXPORT float operator()(const T &a, const T &b) const {
-          return static_cast<float>(a + b*b);
-        }
-      };
-      
-      template<typename T>
-      struct EqualsReductor {
-        const m_curried_relative_equals<T> eq_functor;
-        EqualsReductor(const float &epsilon) : eq_functor(epsilon) { }
-        APRIL_CUDA_EXPORT bool operator()(const bool &acc,
-                                          const T &a, const T &b) {
-          return acc && eq_functor(a,b);
-        }
-      };
-      
     } // namespace Functors
     
     ///////// BASIC MAP FUNCTIONS /////////
@@ -95,42 +83,42 @@ namespace AprilMath {
       Basics::Matrix<T> *matPlogp(Basics::Matrix<T> *obj,
                                   Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T> (obj, m_plogp<T>, dest);
+        return MatrixScalarMap1<T,T> (obj, (UNARY_SCALAR_CAST)m_plogp<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matLog(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_log<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_log<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matLog1p(Basics::Matrix<T> *obj,
                                   Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_log1p<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_log1p<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matExp(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_exp<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_exp<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matSqrt(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_sqrt<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sqrt<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matSqrt(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_sqrt<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sqrt<T>, dest);
       }
     
       template <typename T>
@@ -151,175 +139,175 @@ namespace AprilMath {
       Basics::Matrix<T> *matTan(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_tan<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_tan<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matTan(Basics::SparseMatrix<T> *obj,
                                       Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_tan<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_tan<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matTanh(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_tanh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_tanh<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matTanh(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_tanh<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_tanh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAtan(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_atan<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_atan<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matAtan(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_atan<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_atan<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAtanh(Basics::Matrix<T> *obj,
                                   Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_atanh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_atanh<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matAtanh(Basics::SparseMatrix<T> *obj,
                                         Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_atanh<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_atanh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matSin(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_sin<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sin<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matSin(Basics::SparseMatrix<T> *obj,
                                       Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_sin<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sin<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matSinh(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_sinh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sinh<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matSinh(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_sinh<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sinh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAsin(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_asin<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_asin<T>, dest);
       }
     
       template <typename T>
       Basics::SparseMatrix<T> *matAsin(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_asin<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_asin<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAsinh(Basics::Matrix<T> *obj,
                                   Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_asinh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_asinh<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matAsinh(Basics::SparseMatrix<T> *obj,
                                         Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_asinh<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_asinh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matCos(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_cos<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_cos<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matCosh(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_cosh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_cosh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAcos(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_acos<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_acos<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAcosh(Basics::Matrix<T> *obj,
                                   Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_acosh<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_acosh<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matAbs(Basics::Matrix<T> *obj,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_abs<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_abs<T>, dest);
       }
 
       template <typename T>
       Basics::SparseMatrix<T> *matAbs(Basics::SparseMatrix<T> *obj,
                                       Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_abs<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_abs<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matComplement(Basics::Matrix<T> *obj,
                                        Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_complement<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_complement<T>, dest);
       }
     
       template <typename T>
       Basics::Matrix<T> *matSign(Basics::Matrix<T> *obj,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_sign<T>, dest);
+        return MatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sign<T>, dest);
       }
     
       template <typename T>
       Basics::SparseMatrix<T> *matSign(Basics::SparseMatrix<T> *obj,
                                        Basics::SparseMatrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return SparseMatrixScalarMap1<T,T>(obj, m_sign<T>, dest);
+        return SparseMatrixScalarMap1<T,T>(obj, (UNARY_SCALAR_CAST)m_sign<T>, dest);
       }
     
       ////////////////// OTHER MAP FUNCTIONS //////////////////
@@ -389,36 +377,28 @@ namespace AprilMath {
       template <typename T>
       Basics::Matrix<T> *matCopy(Basics::Matrix<T> *obj,
                                  const Basics::Matrix<T> *other) {
-        return MatrixSpanMap1<T,T>(other, doCopy<T>, obj);
+        return MatrixSpanMap1<T,T>(other,
+                                   (UNARY_SPAN_CAST(T,T))doCopy<T>, obj);
       }
 
       // SCOPY BLAS operation this = other
       template <typename T>
       Basics::SparseMatrix<T> *matCopy(Basics::SparseMatrix<T> *obj,
                                        const Basics::SparseMatrix<T> *other) {
-        return SparseMatrixScalarMap1<T,T>(other, m_identity<T>, obj);
+        return SparseMatrixScalarMap1<T,T>(other,
+                                           (UNARY_SCALAR_CAST)m_identity<T>,
+                                           obj);
       }
 
       // Specialization for char
       template <>
       Basics::Matrix<char> *matCopy(Basics::Matrix<char> *obj,
-                                    const Basics::Matrix<char> *other) {
-        if (obj->size() != other->size()) {
-          ERROR_EXIT(128, "Sizes don't match\n");
-        }
-        typename Basics::Matrix<char>::iterator obj_it(obj->begin());
-        typename Basics::Matrix<char>::const_iterator other_it(obj->begin());
-        while(obj_it != obj->end()) {
-          april_assert(obj_it != obj->end());
-          april_assert(other_it != other->end());
-          *obj_it = *other_it;
-          ++obj_it;
-          ++other_it;
-        }
-        april_assert(obj_it == obj->end());
-        april_assert(other_it == other->end());
-        return obj;
-      }
+                                    const Basics::Matrix<char> *other);
+
+      // Specialization for int32_t
+      template <>
+      Basics::Matrix<int32_t> *matCopy(Basics::Matrix<int32_t> *obj,
+                                       const Basics::Matrix<int32_t> *other);
   
       // AXPY BLAS operation this = this + alpha * other
       template <typename T>
@@ -737,7 +717,7 @@ namespace AprilMath {
         if (X->getMajorOrder() != Y->getMajorOrder()) {
           ERROR_EXIT(128, "Matrices with different major orders\n");
         }
-        return MatrixSpanReduce2<T,T,T>(X, Y, doDot<T>, r_add<T>, T(0.0f));
+        return MatrixSpanReduce2<T>(X, Y, doDot<T>, (BINARY_SCALAR_CAST)r_add<T>, T(0.0f));
       }
 
       // DOT Sparse BLAS operation value = dot(this, other)
@@ -786,13 +766,16 @@ namespace AprilMath {
                                  Functors::MatrixNorm2Reductor<T>(),
                                  float(0.0f));
       }
-
+      
+      // FIXME: implement using a wrapper
       template <typename T>
       float matNorm2(Basics::SparseMatrix<T> *obj) {
-        return
-          m_sqrt(SparseMatrixScalarReduce1(obj,
-                                           Functors::SparseMatrixNorm2Reductor<T>(),
-                                           float(0.0f)));
+        float result = 0.0f;
+        for (typename Basics::SparseMatrix<T>::const_iterator it(obj->begin());
+             it != obj->end(); ++it) {
+          result += (*it) * (*it);
+        }
+        return m_sqrt(result);
       }
     
       /////////////////// MAX MIN REDUCTIONS ///////////////////
@@ -806,11 +789,15 @@ namespace AprilMath {
                                 Basics::Matrix<T> *dest=0,
                                 Basics::Matrix<int32_t> *argmin=0) {
         if (argmin == 0) {
-          return MatrixScalarReduceOverDimension(obj, dim, r_min<T>, r_min<T>,
+          return MatrixScalarReduceOverDimension(obj, dim,
+                                                 (BINARY_SCALAR_CAST)r_min<T>,
+                                                 (BINARY_SCALAR_CAST)r_min<T>,
                                                  Limits<T>::max(), dest);
         }
         else {
-          return MatrixScalarReduceMinMaxOverDimension(obj, dim, r_min2<T>, r_min2<T>,
+          return MatrixScalarReduceMinMaxOverDimension(obj, dim,
+                                                       (BINARY_MINMAX_SCALAR_CAST)r_min2<T>,
+                                                       (BINARY_MINMAX_SCALAR_CAST)r_min2<T>,
                                                        Limits<T>::max(), argmin, dest);
         }
       }
@@ -876,11 +863,15 @@ namespace AprilMath {
                                 int dim, Basics::Matrix<T> *dest=0,
                                 Basics::Matrix<int32_t> *argmax=0) {
         if (argmax == 0) {
-          return MatrixScalarReduceOverDimension(obj, dim, r_max<T>, r_max<T>,
+          return MatrixScalarReduceOverDimension(obj, dim,
+                                                 (BINARY_SCALAR_CAST)r_max<T>,
+                                                 (BINARY_SCALAR_CAST)r_max<T>,
                                                  Limits<T>::min(), dest);
         }
         else {
-          return MatrixScalarReduceMinMaxOverDimension(obj, dim, r_max2<T>, r_max2<T>,
+          return MatrixScalarReduceMinMaxOverDimension(obj, dim,
+                                                       (BINARY_MINMAX_SCALAR_CAST)r_max2<T>,
+                                                       (BINARY_MINMAX_SCALAR_CAST)r_max2<T>,
                                                        Limits<T>::min(), argmax, dest);
         }
       }
@@ -1159,7 +1150,8 @@ namespace AprilMath {
                                const Basics::Matrix<T> *other,
                                Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T,T>(obj, other, m_lt<T>, dest);
+        return MatrixScalarMap2<T,T,T>(obj, other,
+                                       (BINARY_SCALAR_CAST)m_lt<T>, dest);
       }
 
       template <typename T>
@@ -1174,7 +1166,8 @@ namespace AprilMath {
                                const Basics::Matrix<T> *other,
                                Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T,T>(obj, other, m_gt<T>, dest);
+        return MatrixScalarMap2<T,T,T>(obj, other,
+                                       (BINARY_SCALAR_CAST)m_gt<T>, dest);
       }
 
       template <typename T>
@@ -1194,7 +1187,8 @@ namespace AprilMath {
                                const Basics::Matrix<T> *other,
                                Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T>(obj, other, m_eq<T>, dest);
+        return MatrixScalarMap2<T,T>(obj, other,
+                                     (BINARY_SCALAR_CAST)m_eq<T>, dest);
       }
     
       template <typename T>
@@ -1214,7 +1208,8 @@ namespace AprilMath {
                                 const Basics::Matrix<T> *other,
                                 Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T>(obj, other, m_neq<T>, dest);
+        return MatrixScalarMap2<T,T>(obj, other,
+                                     (BINARY_SCALAR_CAST)m_neq<T>, dest);
       }
     
       //////////////////// OTHER MATH OPERATIONS ////////////////////
@@ -1311,18 +1306,21 @@ namespace AprilMath {
     
       template <typename T>
       T matSum(const Basics::Matrix<T> *obj) {
-        return MatrixScalarSumReduce1<T,T>(obj, r_add<T>);
+        return MatrixScalarSumReduce1<T>(obj, (BINARY_SCALAR_CAST)r_add<T>);
       }
 
       template <typename T>
       T matSum(const Basics::SparseMatrix<T> *obj) {
-        return SparseMatrixScalarReduce1<T,T>(obj, r_add<T>, T(0.0f));
+        return SparseMatrixScalarReduce1<T>(obj,
+                                            (BINARY_SCALAR_CAST)r_add<T>, T(0.0f));
       }
     
       template <typename T>
       Basics::Matrix<T> *matSum(const Basics::Matrix<T> *obj, int dim,
                                 Basics::Matrix<T> *dest=0) {
-        return MatrixScalarReduceOverDimension(obj, dim, r_add<T>, r_add<T>,
+        return MatrixScalarReduceOverDimension(obj, dim,
+                                               (BINARY_SCALAR_CAST)r_add<T>,
+                                               (BINARY_SCALAR_CAST)r_add<T>,
                                                T(0.0f), dest);
       }
 
@@ -1364,9 +1362,13 @@ namespace AprilMath {
       bool matEquals(const Basics::Matrix<T> *a, const Basics::Matrix<T> *b,
                      float epsilon) {
         if (!a->sameDim(b)) return false;
-        return MatrixScalarReduce2<T,T,bool>(a, b,
-                                             Functors::EqualsReductor<T>(epsilon),
-                                             r_and<bool>, true);
+        typename Basics::Matrix<T>::const_iterator a_it(a->begin());
+        typename Basics::Matrix<T>::const_iterator b_it(b->begin());
+        while(a_it != a->end() && b_it != b->end()) {
+          if (!m_relative_equals(*a_it, *b_it, epsilon)) return false;
+        }
+        if (a_it != a->end() || b_it != b->end()) return false;
+        return true;
       }
 
       template <typename T>
@@ -1385,7 +1387,7 @@ namespace AprilMath {
                                  const Basics::Matrix<T> *other,
                                  Basics::Matrix<T> *dest=0) {
         if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T,T>(obj, other, r_mul<T>, dest);
+        return MatrixScalarMap2<T,T,T>(obj, other, (BINARY_SCALAR_CAST)r_mul<T>, dest);
       }
     
       template <typename T>
@@ -1432,132 +1434,18 @@ namespace AprilMath {
       // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex
       // numbers
 
-      Basics::Matrix<float> *matInv(const Basics::Matrix<float> *obj) {
-        if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
-          ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-        }
-        Basics::Matrix<float> *A = obj->clone(CblasColMajor);
-        AprilUtils::UniquePtr<int []> IPIV( new int[obj->getDimSize(0)] );
-        int INFO;
-        INFO = clapack_sgetrf(CblasColMajor,
-                              A->getDimSize(0), A->getDimSize(1),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
-                              IPIV.get());
-        checkLapackInfo(INFO);
-        INFO = clapack_sgetri(CblasColMajor,
-                              A->getDimSize(0),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
-                              IPIV.get());
-        checkLapackInfo(INFO);
-        return A;
-      }
+      Basics::Matrix<float> *matInv(const Basics::Matrix<float> *obj);
     
       void matSVD(const Basics::Matrix<float> *obj,
                   Basics::Matrix<float> **U, Basics::SparseMatrix<float> **S,
-                  Basics::Matrix<float> **VT) {
-        if (obj->getNumDim() != 2) {
-          ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-        }
-        AprilUtils::SharedPtr< Basics::Matrix<float> > A( obj->clone(CblasColMajor) );
-        int INFO;
-        const int m = A->getDimSize(0); // cols
-        const int n = A->getDimSize(1); // rows
-        const int lda = A->getStrideSize(1);
-        const int numSV = (m<n) ? m : n;
-        const int dimsU[2]  = {m, m};
-        const int dimsVT[2] = {n, n};
-        *U  = new Basics::Matrix<float>(2, dimsU,  CblasColMajor);
-        *S  = Basics::SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
-        *VT = new Basics::Matrix<float>(2, dimsVT, CblasColMajor);
-        INFO = clapack_sgesdd(CblasColMajor, m, n, lda,
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              (*U)->getRawDataAccess()->getPPALForWrite(),
-                              (*S)->getRawValuesAccess()->getPPALForWrite(),
-                              (*VT)->getRawDataAccess()->getPPALForWrite());
-        checkLapackInfo(INFO);
-      }
+                  Basics::Matrix<float> **VT);
 
       // FROM: http://www.r-bloggers.com/matrix-determinant-with-the-lapack-routine-dspsv/    
       AprilUtils::log_float matLogDeterminant(const Basics::Matrix<float> *obj,
-                                               float &sign) {
-        if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
-          ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
-        }
-        AprilUtils::SharedPtr< Basics::Matrix<float> > A( obj->clone(CblasColMajor) );
-        AprilUtils::UniquePtr<int []> IPIV( new int[A->getDimSize(0)] );
-        int INFO;
-        INFO = clapack_sgetrf(CblasColMajor,
-                              A->getDimSize(0), A->getDimSize(1),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
-                              IPIV.get());
-        checkLapackInfo(INFO);
-        Basics::Matrix<float>::const_random_access_iterator it(A.get());
-        AprilUtils::log_float det = AprilUtils::log_float::from_float(it(0,0));
-        int row_changes = 0;
-#if defined(USE_MKL) || defined(USE_XCODE)
-        // in MKL and XCODE the permutation IPIV is one-based
-        if (IPIV[0] != 1) ++row_changes;
-#else
-        // in atlas_lapack IPIV is zero-based
-        if (IPIV[0] != 0) ++row_changes;
-#endif
-        for (int i=1; i<A->getDimSize(0); ++i) {
-          const float &v = it(i,i);
-          if (v < 0.0f) {
-            ERROR_EXIT(128, "Impossible to compute logDeterminant over "
-                       "non-positive matrix\n");
-          }
-          det *= AprilUtils::log_float::from_float(v);
-#if defined(USE_MKL) || defined(USE_XCODE)
-          // in MKL and XCODE the permutation IPIV is one-based
-          if (IPIV[i] != (i+1)) ++row_changes;
-#else
-          // in atlas_lapack IPIV is zero-based
-          if (IPIV[i] != i) ++row_changes;
-#endif
-        }
-        if ( (row_changes & 1) == 0 ) sign = 1.0f;
-        else sign = -1.0f;
-        return det;
-      }
+                                              float &sign);
 
       // FROM: http://www.r-bloggers.com/matrix-determinant-with-the-lapack-routine-dspsv/    
-      double matDeterminant(const Basics::Matrix<float> *obj) {
-        if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
-          ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
-        }
-        AprilUtils::SharedPtr< Basics::Matrix<float> > A( obj->clone(CblasColMajor) );
-        AprilUtils::UniquePtr<int []> IPIV( new int[A->getDimSize(0)] );
-        int INFO;
-        INFO = clapack_sgetrf(CblasColMajor,
-                              A->getDimSize(0), A->getDimSize(1),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
-                              IPIV.get());
-        checkLapackInfo(INFO);
-        Basics::Matrix<float>::const_random_access_iterator it(A.get());
-        double det = 1.0f;
-        int row_changes = 0;
-        for (int i=0; i<obj->getDimSize(0); ++i) {
-          const float &v = it(i,i);
-          det *= v;
-#if defined(USE_MKL) || defined(USE_XCODE)
-          // in MKL and XCODE the permutation IPIV is one-based
-          if (IPIV[i] != (i+1)) ++row_changes;
-#else
-          // in atlas_lapack IPIV is zero-based
-          if (IPIV[i] != i) ++row_changes;
-#endif
-        }
-        double sign;
-        if ( (row_changes & 1) == 0 ) sign = 1.0f;
-        else sign = -1.0f;
-        return sign*det;
-      }
-    
+      double matDeterminant(const Basics::Matrix<float> *obj);    
       /**
        * @brief Compute the Cholesky factorization of a real symmetric positive
        * definite matrix A.
@@ -1572,45 +1460,16 @@ namespace AprilMath {
        * @param uplo - A char with 'U' or 'L'.
        */
       Basics::Matrix<float> *matCholesky(const Basics::Matrix<float> *obj,
-                                         char uplo) {
-        if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
-          ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
-        }
-        Basics::Matrix<float> *A = obj->clone(CblasColMajor);
-        int INFO = clapack_spotrf(CblasColMajor,
-                                  (uplo == 'U') ? CblasUpper : CblasLower,
-                                  A->getDimSize(0),
-                                  A->getRawDataAccess()->getPPALForReadAndWrite(),
-                                  A->getStrideSize(1));
-        checkLapackInfo(INFO);
-        switch(uplo) {
-        case 'U':
-          {
-            Basics::Matrix<float>::random_access_iterator it(A);
-            for (int i=0; i<A->getDimSize(0); ++i) {
-              for (int j=0; j<i; ++j) {
-                it(i,j) = 0.0f;
-              }
-            }
-          }
-          break;
-        case 'L':
-        default:
-          {
-            Basics::Matrix<float>::random_access_iterator it(A);
-            for (int i=0; i<A->getDimSize(0); ++i) {
-              for (int j=i+1; j<A->getDimSize(0); ++j) {
-                it(i,j) = 0.0f;
-              }
-            }
-          }
-        }
-        return A;
-      }
+                                         char uplo);
 
     } // namespace Operations
   } // namespace MatrixExt
 } // namespace AprilMath
+
+#undef UNARY_SCALAR_CAST
+#undef BINARY_SCALAR_CAST
+#undef BINARY_MINMAX_SCALAR_CAST
+#undef UNARY_SPAN_CAST
 
 #include "matrix-conv.impl.h"
 

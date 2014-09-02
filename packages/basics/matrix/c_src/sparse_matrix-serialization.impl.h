@@ -95,7 +95,7 @@ namespace Basics {
       ERROR_PRINT("Impossible to determine the sparse format\n");
       return 0;
     }
-    float *values_ptr = values->getPPALForWrite();
+    T *values_ptr = values->getPPALForWrite();
     int32_t *indices_ptr = indices->getPPALForWrite();
     int32_t *first_index_ptr = first_index->getPPALForWrite();
     if (format == "ascii") {
@@ -207,7 +207,7 @@ namespace Basics {
     stream->printf("%d ",this->getDimSize(0));
     stream->printf("%d ",this->getDimSize(1));
     stream->printf("%d\n",this->nonZeroSize());
-    const float *values_ptr = this->getRawValuesAccess()->getPPALForRead();
+    const T *values_ptr = this->getRawValuesAccess()->getPPALForRead();
     const int32_t *indices_ptr = this->getRawIndicesAccess()->getPPALForRead();
     const int32_t *first_index_ptr = this->getRawFirstIndexAccess()->getPPALForRead();
     if (is_ascii) {

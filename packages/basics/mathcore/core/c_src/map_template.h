@@ -129,7 +129,7 @@
                             bool use_gpu)
 
 namespace AprilMath {
-
+    
   template<typename T, typename O, typename F>
   void genericMap1Call(unsigned int N,
                        const GPUMirroredMemoryBlock<T> *input,
@@ -214,7 +214,7 @@ namespace AprilMath {
                     GPUMirroredMemoryBlock<O> *output,
                     unsigned int output_stride,
                     unsigned int output_shift,
-                    bool use_cuda) {
+                    bool use_cuda) const {
       genericMap1Call(N, input, input_stride, input_shift,
                       output, output_stride, output_shift,
                       use_cuda, functor);
@@ -235,8 +235,8 @@ namespace AprilMath {
                     GPUMirroredMemoryBlock<O> *output,
                     unsigned int output_stride,
                     unsigned int output_shift,
-                    bool use_cuda) {
-      genericMap1Call(N, input1, input1_stride, input1_shift,
+                    bool use_cuda) const {
+      genericMap2Call(N, input1, input1_stride, input1_shift,
                       input2, input2_stride, input2_shift,
                       output, output_stride, output_shift,
                       use_cuda, functor);

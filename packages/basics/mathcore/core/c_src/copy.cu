@@ -41,6 +41,15 @@ namespace AprilMath {
 
   cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
                                    int N,
+                                   const double *x_mem,
+                                   unsigned int x_inc,
+                                   double *y_mem,
+                                   unsigned int y_inc) {
+    return cublasDcopy(handle, N, x_mem, x_inc, y_mem, y_inc);
+  }
+
+  cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
+                                   int N,
                                    const ComplexF *x_mem,
                                    unsigned int x_inc,
                                    ComplexF *y_mem,
@@ -76,6 +85,11 @@ namespace AprilMath {
   void wrapperCblasCopy(int N, const float *x_mem, unsigned int x_inc,
                         float *y_mem, unsigned int y_inc) {
     cblas_scopy(N, x_mem, x_inc, y_mem, y_inc);
+  }
+
+  void wrapperCblasCopy(int N, const double *x_mem, unsigned int x_inc,
+                        double *y_mem, unsigned int y_inc) {
+    cblas_dcopy(N, x_mem, x_inc, y_mem, y_inc);
   }
 
   void wrapperCblasCopy(int N, const ComplexF *x_mem, unsigned int x_inc,
@@ -193,6 +207,15 @@ namespace AprilMath {
                               unsigned int,
                               unsigned int,
                               bool);
+
+  template void doCopy<double>(int, const GPUMirroredMemoryBlock<double>*,
+                               unsigned int,
+                               unsigned int,
+                               GPUMirroredMemoryBlock<double>*,
+                               unsigned int,
+                               unsigned int,
+                               bool);
+
   template void doCopy<ComplexF>(int, const GPUMirroredMemoryBlock<ComplexF>*,
                                  unsigned int,
                                  unsigned int,
@@ -209,6 +232,16 @@ namespace AprilMath {
                                        unsigned int,
                                        const unsigned int,
                                        bool);
+
+  template void doCopyBroadcast<double>(int,
+                                        GPUMirroredMemoryBlock<double>*,
+                                        unsigned int,
+                                        GPUMirroredMemoryBlock<double>*,
+                                        unsigned int,
+                                        unsigned int,
+                                        const unsigned int,
+                                        bool);
+
   template void doCopyBroadcast<ComplexF>(int,
                                           GPUMirroredMemoryBlock<ComplexF>*,
                                           unsigned int,

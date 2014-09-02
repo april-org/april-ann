@@ -34,7 +34,7 @@ namespace AprilMath {
     template<typename T, typename O, typename OP>
     Basics::SparseMatrix<O> *SparseMatrixScalarMap1(const Basics::SparseMatrix<T> *input,
                                                     const OP &functor,
-                                                    Basics::SparseMatrix<T> *dest) {
+                                                    Basics::SparseMatrix<O> *dest) {
       if (dest == 0) dest = input->clone();
       april_assert(input != 0 && dest != 0);
       // TODO: check coordinates
@@ -54,7 +54,7 @@ namespace AprilMath {
     Basics::SparseMatrix<O> *SparseMatrixScalarMap2(const Basics::SparseMatrix<T> *input1,
                                                     const Basics::SparseMatrix<T> *input2,
                                                     const OP &functor,
-                                                    Basics::SparseMatrix<T> *dest) {
+                                                    Basics::SparseMatrix<O> *dest) {
       if (dest == 0) dest = input1->clone();
       // TODO: check coordinates
       if (input1->size() != dest->size() || !input1->sameDim(dest) ||

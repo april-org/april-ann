@@ -728,6 +728,12 @@ namespace Basics {
       data->forceUpdate(use_cuda);
 #endif
     }
+
+    void update() const {
+#ifdef USE_CUDA
+      data->forceUpdate(use_cuda);
+#endif
+    }
   
     /*Matrix<T> **unrolled_kernel=0,
       Matrix<T> **unrolled_this=0);*/

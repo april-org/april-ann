@@ -18,39 +18,70 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+
+#include "cmath_overloads.h"
 #include "map_matrix.impl.cu"
-#include "matrixFloat.h"
 
-#define INSTANTIATE_MATRIX_SCALAR_MAP1(TYPE,FUNCTOR)                    \
-  template Basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,TYPE>(const Basics::Matrix<TYPE> *, \
-                                                             Basics::Matrix<TYPE> *, \
-                                                             const FUNCTOR &, \
-                                                             const int, \
-                                                             const unsigned int)
+#define INSTANTIATE_MATRIX_SCALAR_MAP1(TYPE,OUTPUT,OP)                  \
+  template Basics::Matrix< OUTPUT > *MatrixScalarMap1< TYPE, OUTPUT, OP >(const Basics::Matrix< TYPE > *, \
+                                                                          const OP &, \
+                                                                          Basics::Matrix< OUTPUT > *, \
+                                                                          const int, \
+                                                                          const unsigned int)
+    
+#define INSTANTIATE_MATRIX_SCALAR_MAP2(TYPE,OUTPUT,OP)                  \
+  template Basics::Matrix< OUTPUT > *MatrixScalarMap2< TYPE, TYPE, OUTPUT, OP >(const Basics::Matrix< TYPE > *, \
+                                                                                const Basics::Matrix< TYPE > *, \
+                                                                                const OP &, \
+                                                                                Basics::Matrix< OUTPUT > *, \
+                                                                                const int, \
+                                                                                const unsigned int)
 
-#define INSTANTIATE_MATRIX_SCALAR_MAP1_O(TYPE,OUTPUT,FUNCTOR)           \
-  template Basics::Matrix<TYPE> *MatrixScalarMap1<TYPE,OUTPUT>(const Basics::Matrix<TYPE> *, \
-                                                               Basics::Matrix<OUTPUT> *, \
-                                                               const FUNCTOR &, \
-                                                               const int, \
-                                                               const unsigned int)
-
-#define INSTANTIATE_MATRIX_SCALAR_MAP2(TYPE,FUNCTOR)                    \
-  template Basics::Matrix<TYPE> *MatrixScalarMap2<TYPE,TYPE,TYPE>(const Basics::Matrix<TYPE> *, \
-                                                                  const Basics::Matrix<TYPE> *, \
-                                                                  Basics::Matrix<TYPE> *, \
-                                                                  const FUNCTOR &, \
-                                                                  const int, \
-                                                                  const unsigned int)
+#define INSTANTIATE_MATRIX_SPAN_MAP1(TYPE,OUTPUT,OP)                    \
+  template Basics::Matrix< OUTPUT > *MatrixSpanMap1< TYPE, OUTPUT, OP >(const Basics::Matrix< TYPE > *, \
+                                                                        const OP &, \
+                                                                        Basics::Matrix< OUTPUT > *, \
+                                                                        const int, \
+                                                                        const unsigned int)
 
 namespace AprilMath {  
-
   namespace MatrixExt {
-    INSTANTIATE_MATRIX_SCALAR_MAP1(float, m_float_unary_float_map_t);
-    INSTANTIATE_MATRIX_SCALAR_MAP1(double, m_double_unary_double_map_t);
-    INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, m_complexf_unary_complexf_map_t);
-    INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, double, m_float_unary_double_map_t);
-    INSTANTIATE_MATRIX_SCALAR_MAP1_O(float, ComplexF, m_float_unary_complexf_map_t);
-  }
 
+    INSTANTIATE_MATRIX_SCALAR_MAP1(char, char, m_curried_fill<char>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(int32_t, int32_t, m_curried_fill<int32_t>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_fill<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(double, double, m_curried_fill<double>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, ComplexF, m_curried_fill<ComplexF>);
+    
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_float_unary_float_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(double, double, m_double_unary_double_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, ComplexF, m_complexf_unary_complexf_map_t);
+
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_pow<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_clamp<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_mul<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_lt<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_gt<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_eq_nan<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_eq<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_neq_nan<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_neq<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_add<float>);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_div<float>);
+    
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, double, m_float_unary_double_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP1(float, ComplexF, m_float_unary_complexf_map_t);
+
+    INSTANTIATE_MATRIX_SCALAR_MAP2(float, float, m_float_binary_float_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP2(double, double, m_double_binary_double_map_t);
+    INSTANTIATE_MATRIX_SCALAR_MAP2(ComplexF, ComplexF, m_complexf_binary_complexf_map_t);
+    
+    INSTANTIATE_MATRIX_SPAN_MAP1(float, float, float_float_span_map1_t);
+    INSTANTIATE_MATRIX_SPAN_MAP1(double, double, double_double_span_map1_t);
+    INSTANTIATE_MATRIX_SPAN_MAP1(ComplexF, ComplexF, complexf_complexf_span_map1_t);
+    
+    INSTANTIATE_MATRIX_SPAN_MAP1(float, float, CurriedAxpy<float>);
+    INSTANTIATE_MATRIX_SPAN_MAP1(float, float, CurriedScal<float>);
+
+  } // namespace MatrixExt
 } // namespace AprilMath

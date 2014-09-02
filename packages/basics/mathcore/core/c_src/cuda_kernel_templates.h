@@ -67,10 +67,10 @@ namespace AprilMath {
      * @note The reduce_op functor must be associative, commutative and
      * idempotent.
      */
-    template<typename T, typename O, typename F>
+    template<typename T, typename F>
     __global__ void genericCudaReduceKernel(const T *input,
                                             unsigned int input_stride,
-                                            O *output,
+                                            T *output,
                                             unsigned int output_stride,
                                             unsigned int reduce_top,
                                             unsigned int size,
@@ -94,12 +94,12 @@ namespace AprilMath {
       __syncthreads();
     }
     
-    template<typename T, typename O, typename F>
+    template<typename T, typename F>
     __global__ void genericCudaReduceMinMaxKernel(const T *input,
                                                   unsigned int input_stride,
                                                   int32_t *which,
                                                   unsigned int which_stride,
-                                                  O *output,
+                                                  T *output,
                                                   unsigned int output_stride,
                                                   unsigned int reduce_top,
                                                   unsigned int size,
@@ -159,13 +159,13 @@ namespace AprilMath {
      * @note The reduce_op functor must be associative, commutative and
      * idempotent.
      */
-    template<typename T, typename O, typename F>
+    template<typename T, typename F>
     void genericCudaReduceCall(unsigned int N,
                                const GPUMirroredMemoryBlock<T> *input,
                                unsigned int input_stride,
                                unsigned int input_shift,
-                               O zero,
-                               GPUMirroredMemoryBlock<O> *dest,
+                               T zero,
+                               GPUMirroredMemoryBlock<T> *dest,
                                unsigned int dest_shift,
                                F reduce_op) {
       switch(N) {
@@ -182,7 +182,7 @@ namespace AprilMath {
           AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
             output(new GPUMirroredMemoryBlock<O>(N));
           const T *input_ptr = input->getGPUForRead() + input_shift;
-          O *output_ptr = output->getGPUForWrite();
+          T *output_ptr = output->getGPUForWrite();
           dim3 block, grid;
           do {
             // Prepare reduce_top kernels, that is, size/2 kernels.
@@ -204,15 +204,15 @@ namespace AprilMath {
       } // switch(N)
     } // function genericCudaReduceCall
 
-    template<typename T, typename O, typename F>
+    template<typename T, typename F>
     void genericCudaReduceMinMaxCall(unsigned int N,
                                      const GPUMirroredMemoryBlock<T> *input,
                                      unsigned int input_stride,
                                      unsigned int input_shift,
-                                     O zero,
-                                     GPUMirroredMemoryBlock<O> *which,
-                                     unsigned int which_shuft,
-                                     GPUMirroredMemoryBlock<O> *dest,
+                                     T zero,
+                                     GPUMirroredMemoryBlock<int32_t> *which,
+                                     unsigned int which_shift,
+                                     GPUMirroredMemoryBlock<T> *dest,
                                      unsigned int dest_shift,
                                      F reduce_op) {
       switch(N) {
@@ -229,12 +229,12 @@ namespace AprilMath {
           unsigned int size = N;
           unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
           AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
-            output_which(new GPUMirroredMemoryBlock<O>(int32_t));
-          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
-            output(new GPUMirroredMemoryBlock<O>(N));
+            output_which(new GPUMirroredMemoryBlock<int32_t>(N));
+          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
+            output(new GPUMirroredMemoryBlock<T>(N));
           const T *input_ptr = input->getGPUForRead() + input_shift;
           int32_t *output_which_ptr = output_which->getGPUForWrite();
-          O *output_ptr = output->getGPUForWrite();
+          T *output_ptr = output->getGPUForWrite();
           dim3 block, grid;
           do {
             // Prepare reduce_top kernels, that is, size/2 kernels.

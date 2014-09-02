@@ -34,13 +34,13 @@ namespace AprilMath {
     template<typename T, typename O, typename OP>
     Basics::SparseMatrix<O> *SparseMatrixScalarMap1(const Basics::SparseMatrix<T> *input,
                                                     const OP &functor,
-                                                    Basics::SparseMatrix<T> *dest = 0);
+                                                    Basics::SparseMatrix<O> *dest = 0);
     
     template<typename T, typename O, typename OP>
     Basics::SparseMatrix<O> *SparseMatrixScalarMap2(const Basics::SparseMatrix<T> *input1,
                                                     const Basics::SparseMatrix<T> *input2,
                                                     const OP &functor,
-                                                    Basics::SparseMatrix<T> *dest = 0);
+                                                    Basics::SparseMatrix<O> *dest = 0);
   } // namespace MatrixExt
 
 } // namespace AprilMath

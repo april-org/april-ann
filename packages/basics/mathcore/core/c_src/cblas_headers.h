@@ -385,7 +385,7 @@ namespace AprilMath {
                     GPUMirroredMemoryBlock<T> *output,
                     unsigned int output_stride,
                     unsigned int output_shift,
-                    bool use_cuda) {
+                    bool use_cuda) const {
       doAxpy(static_cast<int>(N), alpha,
              input, input_stride, input_shift,
              output, output_stride, output_shift,
@@ -404,7 +404,7 @@ namespace AprilMath {
                     GPUMirroredMemoryBlock<T> *output,
                     unsigned int output_stride,
                     unsigned int output_shift,
-                    bool use_cuda) {
+                    bool use_cuda) const {
       if (input != output) {
         ERROR_EXIT(128, "Scal is always an in-place operation\n");
       }

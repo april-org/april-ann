@@ -39,11 +39,21 @@
 */
 namespace AprilMath {
   
-  typedef float (*m_float_unary_float_map_t)(float);
-  typedef double (*m_double_unary_double_map_t)(double);
-  typedef ComplexF (*m_complexf_unary_complexf_map_t)(ComplexF);
-  typedef float (*m_float_unary_double_map_t)(double);
-  typedef float (*m_float_unary_complexf_map_t)(ComplexF);
+  typedef float (*m_float_unary_float_map_t)(const float&);
+  typedef double (*m_double_unary_double_map_t)(const double&);
+  typedef ComplexF (*m_complexf_unary_complexf_map_t)(const ComplexF&);
+  typedef float (*m_float_unary_double_map_t)(const double&);
+  typedef float (*m_float_unary_complexf_map_t)(const ComplexF&);
+
+  typedef float (*m_float_binary_float_map_t)(const float&,const float&);
+  typedef double (*m_double_binary_double_map_t)(const double&,const double&);
+  typedef ComplexF (*m_complexf_binary_complexf_map_t)(const ComplexF&,const ComplexF&);
+
+  typedef bool (*m_bool_binary_float_map_t)(const float&,const float&);
+  typedef bool (*m_bool_binary_double_map_t)(const double&,const double&);
+  typedef bool (*m_bool_binary_complexf_map_t)(const ComplexF&,const ComplexF&);
+  typedef bool (*m_bool_binary_char_map_t)(const char&,const char&);
+  typedef bool (*m_bool_binary_int32_map_t)(const int32_t&,const int32_t&);
   
   const float  logf_NZ = logf(NEAR_ZERO);
   const double log_NZ  = log(NEAR_ZERO);
@@ -58,29 +68,23 @@ namespace AprilMath {
     static T epsilon() { return T(); }
   };
   
-  template<> char Limits<char>::min() { return CHAR_MIN; }
-  template<> char Limits<char>::max() { return CHAR_MAX; }
+  template<> char Limits<char>::min();
+  template<> char Limits<char>::max();
 
-  template<> int32_t Limits<int32_t>::min() { return INT_MIN; }
-  template<> int32_t Limits<int32_t>::max() { return INT_MAX; }
+  template<> int32_t Limits<int32_t>::min();
+  template<> int32_t Limits<int32_t>::max();
   
-  template<> float Limits<float>::min() { return FLT_MIN; }
-  template<> float Limits<float>::max() { return FLT_MAX; }
-  template<> float Limits<float>::epsilon() { return FLT_EPSILON; }
+  template<> float Limits<float>::min();
+  template<> float Limits<float>::max();
+  template<> float Limits<float>::epsilon();
   
-  template<> double Limits<double>::min() { return DBL_MIN; }
-  template<> double Limits<double>::max() { return DBL_MAX; }
-  template<> double Limits<double>::epsilon() { return DBL_EPSILON; }
+  template<> double Limits<double>::min();
+  template<> double Limits<double>::max();
+  template<> double Limits<double>::epsilon();
   
-  template<> ComplexF Limits<ComplexF>::min() {
-    return ComplexF(FLT_MIN,FLT_MIN);
-  }
-  template<> ComplexF Limits<ComplexF>::max() {
-    return ComplexF(FLT_MAX,FLT_MAX);
-  }
-  template<> ComplexF Limits<ComplexF>::epsilon() {
-    return ComplexF(FLT_EPSILON,FLT_EPSILON);
-  }
+  template<> ComplexF Limits<ComplexF>::min();
+  template<> ComplexF Limits<ComplexF>::max();
+  template<> ComplexF Limits<ComplexF>::epsilon();
 
   ///////////////// NAN CHECK /////////////////
   
@@ -101,20 +105,20 @@ namespace AprilMath {
   }
 #define SCALAR_STD_CMATH_MAP_TEMPLATE(NAME,CFUNC)                       \
   SCALAR_MAP_TEMPLATE(NAME, T, T);                                      \
-  template<> APRIL_CUDA_EXPORT float NAME(const float &v) { return CFUNC##f(v); } \
-  template<> APRIL_CUDA_EXPORT double NAME(const double &v) { return CFUNC(v); }
+  template<> APRIL_CUDA_EXPORT float NAME(const float &v);              \
+  template<> APRIL_CUDA_EXPORT double NAME(const double &v);
   
   // abs overload
   SCALAR_MAP_TEMPLATE(m_abs, T, float);
-  template<> APRIL_CUDA_EXPORT float m_abs(const float &v) { return fabsf(v); }
-  template<> APRIL_CUDA_EXPORT float m_abs(const double &v) { return fabs(v); }
-  template<> APRIL_CUDA_EXPORT float m_abs(const ComplexF &v) { return v.abs(); }
+  template<> APRIL_CUDA_EXPORT float m_abs(const float &v);
+  template<> APRIL_CUDA_EXPORT float m_abs(const double &v);
+  template<> APRIL_CUDA_EXPORT float m_abs(const ComplexF &v);
   
   // sqrt overload
   SCALAR_MAP_TEMPLATE(m_sqrt, T, float);
-  template<> APRIL_CUDA_EXPORT float m_sqrt(const float &v) { return sqrtf(v); }
-  template<> APRIL_CUDA_EXPORT float m_sqrt(const double &v) { return sqrt(v); }
-  template<> APRIL_CUDA_EXPORT float m_sqrt(const ComplexF &v) { return v.sqrtc(); }
+  template<> APRIL_CUDA_EXPORT float m_sqrt(const float &v);
+  template<> APRIL_CUDA_EXPORT float m_sqrt(const double &v);
+  template<> APRIL_CUDA_EXPORT float m_sqrt(const ComplexF &v);
 
   // log overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_log, log);
@@ -144,13 +148,9 @@ namespace AprilMath {
     return T();
   }
   template<>
-  APRIL_CUDA_EXPORT float m_pow(const float &v, const float &p) {
-    return powf(v, p);
-  }
+  APRIL_CUDA_EXPORT float m_pow(const float &v, const float &p);
   template<>
-  APRIL_CUDA_EXPORT double m_pow(const double &v, const double &p) {
-    return pow(v, p);
-  }
+  APRIL_CUDA_EXPORT double m_pow(const double &v, const double &p);
 
   // cos overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_cos, cos);
