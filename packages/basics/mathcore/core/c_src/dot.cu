@@ -109,11 +109,11 @@ namespace AprilMath {
   template <typename T>
   T doDot(unsigned int size,
           const GPUMirroredMemoryBlock<T> *x,
-          unsigned int x_shift,
           unsigned int x_inc,
+          unsigned int x_shift,
           const GPUMirroredMemoryBlock<T> *y,
-          unsigned int y_shift,
           unsigned int y_inc,
+          unsigned int y_shift,
           bool use_gpu) {
     const T *x_mem;
     const T *y_mem;

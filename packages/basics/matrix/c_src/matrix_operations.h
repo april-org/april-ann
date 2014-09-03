@@ -40,7 +40,7 @@
 
 #define UNARY_SCALAR_CAST T(*)(const T&)
 #define BINARY_SCALAR_CAST T(*)(const T&,const T&)
-#define BINARY_MINMAX_SCALAR_CAST T(*)(const T&,const T&,int&)
+#define BINARY_MINMAX_SCALAR_CAST T(*)(const T&,const T&,unsigned int&)
 #define UNARY_SPAN_CAST(T,O) void(*)(unsigned int,const GPUMirroredMemoryBlock< T > *, unsigned int, unsigned int, GPUMirroredMemoryBlock< O > *, unsigned int, unsigned int, bool)
 
 namespace AprilMath {
@@ -717,7 +717,9 @@ namespace AprilMath {
         if (X->getMajorOrder() != Y->getMajorOrder()) {
           ERROR_EXIT(128, "Matrices with different major orders\n");
         }
-        return MatrixSpanReduce2<T>(X, Y, doDot<T>, (BINARY_SCALAR_CAST)r_add<T>, T(0.0f));
+        return MatrixSpanReduce2<T>(X, Y,
+                                    (SPAN_REDUCE2_CAST(T,T))doDot<T>,
+                                    (BINARY_SCALAR_CAST)r_add<T>, T(0.0f));
       }
 
       // DOT Sparse BLAS operation value = dot(this, other)
@@ -762,7 +764,7 @@ namespace AprilMath {
 
       template <typename T>
       float matNorm2(Basics::Matrix<T> *obj) {
-        return MatrixSpanReduce1(obj, doNrm2<T>,
+        return MatrixSpanReduce1(obj, (SPAN_REDUCE_CAST(T,float))doNrm2<T>,
                                  Functors::MatrixNorm2Reductor<T>(),
                                  float(0.0f));
       }
@@ -785,18 +787,17 @@ namespace AprilMath {
       // in 0)
 
       template <typename T>
-      Basics::Matrix<T> *matMin(const Basics::Matrix<T> *obj, int dim,
+      Basics::Matrix<T> *matMin(Basics::Matrix<T> *obj,
+                                int dim,
                                 Basics::Matrix<T> *dest=0,
                                 Basics::Matrix<int32_t> *argmin=0) {
         if (argmin == 0) {
           return MatrixScalarReduceOverDimension(obj, dim,
                                                  (BINARY_SCALAR_CAST)r_min<T>,
-                                                 (BINARY_SCALAR_CAST)r_min<T>,
                                                  Limits<T>::max(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
-                                                       (BINARY_MINMAX_SCALAR_CAST)r_min2<T>,
                                                        (BINARY_MINMAX_SCALAR_CAST)r_min2<T>,
                                                        Limits<T>::max(), argmin, dest);
         }
@@ -804,7 +805,7 @@ namespace AprilMath {
 
       // TODO: use a wrapper for GPU/CPU
       template <typename T>
-      Basics::Matrix<T> *matMin(const Basics::SparseMatrix<T> *obj, int dim,
+      Basics::Matrix<T> *matMin(Basics::SparseMatrix<T> *obj, int dim,
                                 Basics::Matrix<T> *dest=0,
                                 Basics::Matrix<int32_t> *argmin=0) {
         if (dim != 0 && dim != 1) {
@@ -860,17 +861,16 @@ namespace AprilMath {
     
       template <typename T>
       Basics::Matrix<T> *matMax(Basics::Matrix<T> *obj,
-                                int dim, Basics::Matrix<T> *dest=0,
+                                int dim,
+                                Basics::Matrix<T> *dest=0,
                                 Basics::Matrix<int32_t> *argmax=0) {
         if (argmax == 0) {
           return MatrixScalarReduceOverDimension(obj, dim,
-                                                 (BINARY_SCALAR_CAST)r_max<T>,
                                                  (BINARY_SCALAR_CAST)r_max<T>,
                                                  Limits<T>::min(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
-                                                       (BINARY_MINMAX_SCALAR_CAST)r_max2<T>,
                                                        (BINARY_MINMAX_SCALAR_CAST)r_max2<T>,
                                                        Limits<T>::min(), argmax, dest);
         }
@@ -1312,14 +1312,15 @@ namespace AprilMath {
       template <typename T>
       T matSum(const Basics::SparseMatrix<T> *obj) {
         return SparseMatrixScalarReduce1<T>(obj,
-                                            (BINARY_SCALAR_CAST)r_add<T>, T(0.0f));
+                                            (BINARY_SCALAR_CAST)r_add<T>,
+                                            T(0.0f));
       }
     
       template <typename T>
-      Basics::Matrix<T> *matSum(const Basics::Matrix<T> *obj, int dim,
+      Basics::Matrix<T> *matSum(Basics::Matrix<T> *obj,
+                                int dim,
                                 Basics::Matrix<T> *dest=0) {
         return MatrixScalarReduceOverDimension(obj, dim,
-                                               (BINARY_SCALAR_CAST)r_add<T>,
                                                (BINARY_SCALAR_CAST)r_add<T>,
                                                T(0.0f), dest);
       }
@@ -1366,6 +1367,8 @@ namespace AprilMath {
         typename Basics::Matrix<T>::const_iterator b_it(b->begin());
         while(a_it != a->end() && b_it != b->end()) {
           if (!m_relative_equals(*a_it, *b_it, epsilon)) return false;
+          ++a_it;
+          ++b_it;
         }
         if (a_it != a->end() || b_it != b->end()) return false;
         return true;
@@ -1375,11 +1378,20 @@ namespace AprilMath {
       bool matEquals(const Basics::SparseMatrix<T> *a,
                      const Basics::SparseMatrix<T> *b,
                      float epsilon) {
-        UNUSED_VARIABLE(a);
-        UNUSED_VARIABLE(b);
-        UNUSED_VARIABLE(epsilon);
-        ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-        return false;
+        if (!a->sameDim(b)) return false;
+        typename Basics::SparseMatrix<T>::const_iterator a_it(a->begin());
+        typename Basics::SparseMatrix<T>::const_iterator b_it(b->begin());
+        while(a_it != a->end() && b_it != b->end()) {
+          int a_c0, a_c1, b_c0, b_c1;
+          a_it.getCoords(a_c0, a_c1);
+          b_it.getCoords(b_c0, b_c1);
+          if (a_c0 != b_c0 || a_c1 != b_c1 ||
+              !m_relative_equals(*a_it, *b_it, epsilon)) return false;
+          ++a_it;
+          ++b_it;
+        }
+        if (a_it != a->end() || b_it != b->end()) return false;
+        return true;
       }
     
       template <typename T>

@@ -20,7 +20,7 @@
  */
 
 #include "cmath_overloads.h"
-#include "map_sparse_matrix.impl.cu"
+#include "map_sparse_matrix.impl.h"
 
 #define INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(TYPE,OP)     \
   template Basics::SparseMatrix< TYPE > *SparseMatrixScalarMap1< TYPE, TYPE, OP >(const Basics::SparseMatrix< TYPE > *, \
@@ -39,6 +39,14 @@ namespace AprilMath {
     INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_float_unary_float_map_t);
     INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(double, m_double_unary_double_map_t);
     INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(ComplexF, m_complexf_unary_complexf_map_t);
+
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_curried_pow<float>);
+
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_curried_fill<float>);
+
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_curried_mul<float>);
+
+    INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1(float, m_curried_div<float>);
     
   }
 } // namespace AprilMath

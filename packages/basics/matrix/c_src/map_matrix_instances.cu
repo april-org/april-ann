@@ -20,7 +20,7 @@
  */
 
 #include "cmath_overloads.h"
-#include "map_matrix.impl.cu"
+#include "map_matrix.impl.h"
 
 #define INSTANTIATE_MATRIX_SCALAR_MAP1(TYPE,OUTPUT,OP)                  \
   template Basics::Matrix< OUTPUT > *MatrixScalarMap1< TYPE, OUTPUT, OP >(const Basics::Matrix< TYPE > *, \
@@ -69,6 +69,8 @@ namespace AprilMath {
     INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_add<float>);
     INSTANTIATE_MATRIX_SCALAR_MAP1(float, float, m_curried_div<float>);
     
+    INSTANTIATE_MATRIX_SCALAR_MAP1(ComplexF, ComplexF, m_curried_add<ComplexF>);
+
     INSTANTIATE_MATRIX_SCALAR_MAP1(float, double, m_float_unary_double_map_t);
     INSTANTIATE_MATRIX_SCALAR_MAP1(float, ComplexF, m_float_unary_complexf_map_t);
 
@@ -82,6 +84,9 @@ namespace AprilMath {
     
     INSTANTIATE_MATRIX_SPAN_MAP1(float, float, CurriedAxpy<float>);
     INSTANTIATE_MATRIX_SPAN_MAP1(float, float, CurriedScal<float>);
+
+    INSTANTIATE_MATRIX_SPAN_MAP1(ComplexF, ComplexF, CurriedAxpy<ComplexF>);
+    INSTANTIATE_MATRIX_SPAN_MAP1(ComplexF, ComplexF, CurriedScal<ComplexF>);
 
   } // namespace MatrixExt
 } // namespace AprilMath

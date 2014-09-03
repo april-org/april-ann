@@ -1,5 +1,6 @@
 local check    = utest.check
 local T        = utest.test
+local warning  = utest.warning
 
 local aux = matrix(1,1,3,3):linear()
 --print(aux)
@@ -37,6 +38,7 @@ end)
 
 T("MatrixConvolutionMediumTest",
   function()
+    if not ann then warning("needs ann package\n") return true end
     local rnd      = random(1234)
     local m        = matrix(2,3,6,6):uniform(-10,10,rnd)
     local k        = matrix(2,3,3,3):uniform(-1,1,rnd)
@@ -82,6 +84,7 @@ end)
 if #arg > 0 then
   T("MatrixConvolutionLenaTest",
     function()
+      if not ann then warning("needs ann package\n") return true end
       local rnd=random(1234)
       local kx=17
       local ky=17

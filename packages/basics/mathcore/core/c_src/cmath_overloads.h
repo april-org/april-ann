@@ -55,6 +55,8 @@ namespace AprilMath {
   typedef bool (*m_bool_binary_char_map_t)(const char&,const char&);
   typedef bool (*m_bool_binary_int32_map_t)(const int32_t&,const int32_t&);
   
+  typedef float(*m_float_minmax_t)(const float &, const float &, unsigned int &);
+
   const float  logf_NZ = logf(NEAR_ZERO);
   const double log_NZ  = log(NEAR_ZERO);
   

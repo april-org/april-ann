@@ -37,6 +37,18 @@ local function write(level,format,...)
   end
 end
 --
+utest.warning = function(format,...)
+  return fprintf(io.stderr,
+                 table.concat({
+                     "\t",
+                     ansi.fg.bright_yellow,
+                     "Warning: ",
+                     ansi.fg.default,
+                     format
+                 }),
+                 ...)
+end
+--
 local NONAMED = "UNKNOWN"
 local test_name = NONAMED
 local testn  = 0

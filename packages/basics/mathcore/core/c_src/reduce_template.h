@@ -139,7 +139,7 @@ namespace AprilMath {
         *dest_ptr = result;
       }
       if (which != 0) {
-        T *which_ptr = which->getPPALForWrite() + which_shift;
+        int32_t *which_ptr = which->getPPALForWrite() + which_shift;
         *which_ptr = static_cast<int32_t>(best);
       }
 #ifdef USE_CUDA
@@ -180,10 +180,10 @@ namespace AprilMath {
                  unsigned int which_raw_pos=0,
                  GPUMirroredMemoryBlock<T> *dest=0,
                  unsigned int dest_raw_pos=0) const {
-      return genericReduceCall(N, input, input_stride, input_shift,
-                               use_cuda, zero, functor,
-                               which, which_raw_pos,
-                               dest, dest_raw_pos);
+      return genericReduceMinMaxCall(N, input, input_stride, input_shift,
+                                     use_cuda, zero, functor,
+                                     which, which_raw_pos,
+                                     dest, dest_raw_pos);
     }
   };
   

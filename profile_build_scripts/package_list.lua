@@ -4,8 +4,8 @@ return {
   -- -- BASIC PACAKGES
   -- --  "plotter",
   -- "util",
-  -- "gtest",
-  -- "utest",
+  "gtest",
+  "utest",
   -- "stats",
   -- "dataset",
   -- "matrix",

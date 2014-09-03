@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef MAP_MATRIX_IMPL_CU
-#define MAP_MATRIX_IMPL_CU
+#ifndef MAP_MATRIX_IMPL_H
+#define MAP_MATRIX_IMPL_H
 
 // It must be defined here.
 #include "matrix.h"
@@ -273,4 +273,4 @@ namespace AprilMath {
 
 } // namespace AprilMath
 
-#endif // MAP_MATRIX_IMPL_CU
+#endif // MAP_MATRIX_IMPL_H

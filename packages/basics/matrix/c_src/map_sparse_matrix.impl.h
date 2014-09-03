@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef MAP_SPARSE_MATRIX_IMPL_CU
-#define MAP_SPARSE_MATRIX_IMPL_CU
+#ifndef MAP_SPARSE_MATRIX_IMPL_H
+#define MAP_SPARSE_MATRIX_IMPL_H
 
 // must be defined here
 #include "matrix.h"
@@ -75,4 +75,4 @@ namespace AprilMath {
   
 } // namespace AprilMath
 
-#endif // MAP_SPARSE_MATRIX_IMPL_CU
+#endif // MAP_SPARSE_MATRIX_IMPL_H

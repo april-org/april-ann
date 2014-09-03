@@ -20,19 +20,18 @@
  */
 
 #include "cmath_overloads.h"
-#include "reduce_matrix.impl.cu"
+#include "reduce_matrix.impl.h"
 
 // Must be defined here.
 #include "matrix_operations.h"
 
-#define INSTANTIATE_MATRIX_SCALAR_REDUCE1(TYPE,OP1,OP2)                 \
+#define INSTANTIATE_MATRIX_SCALAR_REDUCE1(TYPE,OP)                      \
   template TYPE                                                         \
-  MatrixScalarReduce1< TYPE, OP1, OP2 >(const Basics::Matrix< TYPE > *, \
-                                        const OP1 &,                    \
-                                        const OP2 &,                    \
-                                        const TYPE &,                   \
-                                        Basics::Matrix< TYPE > *,       \
-                                        unsigned int)
+  MatrixScalarReduce1< TYPE, OP >(const Basics::Matrix< TYPE > *,       \
+                                  const OP &,                           \
+                                  const TYPE &,                         \
+                                  Basics::Matrix< TYPE > *,             \
+                                  unsigned int)
 
 #define INSTANTIATE_MATRIX_SPAN_REDUCE1(TYPE,OUTPUT,OP1,OP2)            \
   template OUTPUT                                                       \
@@ -45,19 +44,78 @@
 
 #define INSTANTIATE_MATRIX_SPAN_REDUCE2(TYPE,OP1,OP2)                   \
   template TYPE                                                         \
-  MatrixSpanReduce2< TYPE, OP1, OP2 >(const Basics::Matrix< TYPE > *,   \
-                                      const Basics::Matrix< TYPE > *,   \
-                                      const OP1 &,                      \
-                                      const OP2 &,                      \
-                                      const TYPE &,                     \
-                                      Basics::Matrix< TYPE > *,         \
-                                      unsigned int)
+  MatrixSpanReduce2< TYPE, TYPE, OP1, OP2 >(const Basics::Matrix< TYPE > *, \
+                                            const Basics::Matrix< TYPE > *, \
+                                            const OP1 &,                \
+                                            const OP2 &,                \
+                                            const TYPE &,               \
+                                            Basics::Matrix< TYPE > *,   \
+                                            unsigned int)
 
+#define INSTANTIATE_MATRIX_SCALAR_REDUCE_OVER_DIMENSION(TYPE,OP)        \
+  template Basics::Matrix< TYPE >*                                      \
+  MatrixScalarReduceOverDimension< TYPE, OP >(Basics::Matrix< TYPE > *, \
+                                              int,                      \
+                                              const OP &,               \
+                                              const TYPE &,             \
+                                              Basics::Matrix< TYPE > *)
+
+#define INSTANTIATE_MATRIX_SCALAR_REDUCE_MINMAX(TYPE,OP)                \
+  template Basics::Matrix< TYPE >*                                      \
+  MatrixScalarReduceMinMaxOverDimension< TYPE, OP >(Basics::Matrix< TYPE > *, \
+                                                    int,                \
+                                                    const OP &,         \
+                                                    const TYPE &,       \
+                                                    Basics::Matrix< int32_t > *, \
+                                                    Basics::Matrix< TYPE > *)
+
+#define INSTANTIATE_MATRIX_SPAN_REDUCE_MINMAX(TYPE,OP1,OP2)             \
+  template TYPE                                                         \
+    MatrixSpanReduceMinMax< TYPE, TYPE, OP1, OP2 >(const Basics::Matrix< TYPE > *, \
+                                                   const OP1 &,         \
+                                                   const OP2 &,         \
+                                                   const TYPE &,        \
+                                                   Basics::Matrix< int32_t > *, \
+                                                   unsigned int,        \
+                                                   Basics::Matrix< TYPE > *, \
+                                                   unsigned int)
+
+#define INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(TYPE,OP)                   \
+  template TYPE MatrixScalarSumReduce1< TYPE, OP >(Basics::Matrix<TYPE> const*, \
+                                                   const OP &,          \
+                                                   Basics::Matrix< TYPE >*, \
+                                                   unsigned int,        \
+                                                   int,                 \
+                                                   unsigned int)        \
+    
 namespace AprilMath {  
   namespace MatrixExt {
     
-    INSTANTIATE_MATRIX_SPAN_REDUCE1(float, float, float_float_span_reduce1_t,
-                                    AprilMath::MatrixExt::Functors::MatrixNorm2Reductor<float>);
+    INSTANTIATE_MATRIX_SPAN_REDUCE1(float, float,
+                                    float_float_span_reduce1_t,
+                                    AprilMath::MatrixExt::Functors::
+                                    MatrixNorm2Reductor<float>);
+    INSTANTIATE_MATRIX_SPAN_REDUCE1(ComplexF, float,
+                                    complexf_float_span_reduce1_t,
+                                    AprilMath::MatrixExt::Functors::
+                                    MatrixNorm2Reductor<ComplexF>);
+    
+    INSTANTIATE_MATRIX_SPAN_REDUCE2(float,
+                                    float_float_span_reduce2_t,
+                                    m_float_binary_float_map_t);
+    INSTANTIATE_MATRIX_SPAN_REDUCE2(ComplexF,
+                                    complexf_complexf_span_reduce2_t,
+                                    m_complexf_binary_complexf_map_t);
+    
+    INSTANTIATE_MATRIX_SCALAR_REDUCE_OVER_DIMENSION(float,
+                                                    m_float_binary_float_map_t);
+    INSTANTIATE_MATRIX_SCALAR_REDUCE_OVER_DIMENSION(ComplexF,
+                                                    m_complexf_binary_complexf_map_t);
+
+    INSTANTIATE_MATRIX_SCALAR_REDUCE_MINMAX(float, m_float_minmax_t);
+    
+    INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(float, m_float_binary_float_map_t);
+    INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(ComplexF, m_complexf_binary_complexf_map_t);
     
   } // namespace MatrixExt
 } // namespace AprilMath

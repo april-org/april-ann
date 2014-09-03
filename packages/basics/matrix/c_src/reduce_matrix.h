@@ -38,7 +38,14 @@ namespace AprilMath {
   namespace MatrixExt {
 
     typedef float(*float_float_span_reduce1_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
+    typedef float(*float_float_span_reduce2_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
+    typedef float(*float_float_span_minmax_reduce_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<int32_t> *,unsigned int,GPUMirroredMemoryBlock<float> *,unsigned int);
 
+    typedef ComplexF(*complexf_complexf_span_reduce2_t)(unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,bool,const ComplexF &,GPUMirroredMemoryBlock<ComplexF> *,unsigned int);
+    
+    typedef float(*complexf_float_span_reduce1_t)(unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
+    
+    
 #define SPAN_REDUCE_CAST(T,O) O(*)(unsigned int,                         \
                                    const GPUMirroredMemoryBlock<T> *,   \
                                    unsigned int,                        \
@@ -61,33 +68,31 @@ namespace AprilMath {
                                     unsigned int)
     
   
-    template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixScalarReduceOverDimension(const Basics::Matrix<T> *input,
+    template<typename T, typename OP>
+    Basics::Matrix<T> * MatrixScalarReduceOverDimension(Basics::Matrix<T> *input,
                                                         int dim,
-                                                        const OP1 &scalar_red_functor,
-                                                        const OP2 &intra_span_red_functor,
+                                                        const OP &scalar_red_functor,
                                                         const T &zero,
                                                         Basics::Matrix<T> *dest = 0);
     
     template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixSpanReduceOverDimension(const Basics::Matrix<T> *input,
+    Basics::Matrix<T> * MatrixSpanReduceOverDimension(Basics::Matrix<T> *input,
                                                       int dim,
                                                       const OP1 &inter_span_red_functor,
                                                       const OP2 &intra_span_red_functor,
                                                       const T &zero,
                                                       Basics::Matrix<T> *dest = 0);
     
-    template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixScalarReduceMinMaxOverDimension(const Basics::Matrix<T> *input,
+    template<typename T, typename OP>
+    Basics::Matrix<T> * MatrixScalarReduceMinMaxOverDimension(Basics::Matrix<T> *input,
                                                               int dim,
-                                                              const OP1 &scalar_red_functor,
-                                                              const OP2 &intra_span_red_functor,
+                                                              const OP &scalar_red_functor,
                                                               const T &zero,
                                                               Basics::Matrix<int32_t> *which,
                                                               Basics::Matrix<T> *dest);
     
     template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixSpanReduceMinMaxOverDimension(const Basics::Matrix<T> *input,
+    Basics::Matrix<T> * MatrixSpanReduceMinMaxOverDimension(Basics::Matrix<T> *input,
                                                             int dim,
                                                             const OP1 &inter_span_red_functor,
                                                             const OP2 &intra_span_red_functor,
@@ -95,10 +100,9 @@ namespace AprilMath {
                                                             Basics::Matrix<int32_t> *which,
                                                             Basics::Matrix<T> *dest);
 
-    template<typename T, typename OP1, typename OP2>
+    template<typename T, typename OP>
     T MatrixScalarReduce1(const Basics::Matrix<T> *input,
-                          const OP1 &scalar_red_functor,
-                          const OP2 &intra_span_red_functor,
+                          const OP &scalar_red_functor,
                           const T &zero,
                           Basics::Matrix<T> *dest = 0,
                           unsigned int dest_raw_pos = 0);
@@ -112,14 +116,14 @@ namespace AprilMath {
                         unsigned int dest_raw_pos = 0);
 
     template<typename T, typename O, typename OP1, typename OP2>
-    O MatrixSpanReduce1(const Basics::Matrix<O> *input,
-                        const OP1 &inter_span_red_functor,
-                        const OP2 &intra_span_red_functor,
-                        const O &zero,
-                        Basics::Matrix<int32_t> *which,
-                        unsigned int which_raw_pos,
-                        Basics::Matrix<O> *dest,
-                        unsigned int dest_raw_pos);
+    O MatrixSpanReduceMinMax(const Basics::Matrix<T> *input,
+                             const OP1 &inter_span_red_functor,
+                             const OP2 &intra_span_red_functor,
+                             const O &zero,
+                             Basics::Matrix<int32_t> *which,
+                             unsigned int which_raw_pos,
+                             Basics::Matrix<O> *dest,
+                             unsigned int dest_raw_pos);
         
     template<typename T, typename O, typename OP1, typename OP2>
     O MatrixSpanReduce2(const Basics::Matrix<T> *input1,

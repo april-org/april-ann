@@ -735,7 +735,10 @@ namespace Basics {
     this->raw_pos = m->offset;
     this->coords  = new int[m->numDim];
     this->order   = new int[m->numDim];
-    for (int i=0; i<m->numDim; ++i) this->order[i] = order[i];
+    for (int i=0; i<m->numDim; ++i) {
+      this->order[i]  = order[i];
+      this->coords[i] = 0;
+    }
     this->num_iterations = 1;
     for (int i=1; i<m->numDim; ++i) {
       this->num_iterations *= m->matrixSize[order[i]];

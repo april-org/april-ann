@@ -18,23 +18,27 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef REDUCE_SPARSE_MATRIX_H
-#define REDUCE_SPARSE_MATRIX_H
+#ifndef REDUCE_SPARSE_MATRIX_IMPL_H
+#define REDUCE_SPARSE_MATRIX_IMPL_H
 
-namespace Basics {
-  // forward declaration
-  template <typename T>
-  class SparseMatrix;
-}
+#include "matrix.h"
+#include "reduce_sparse_matrix.h"
+#include "reduce_template.h"
 
 namespace AprilMath {
   
   namespace MatrixExt {
-    
+  
     template<typename T, typename OP>
     T SparseMatrixScalarReduce1(const Basics::SparseMatrix<T> *input,
                                 const OP &scalar_red_functor,
-                                const T &zero);
+                                const T &zero) {
+      return genericReduceCall(input->nonZeroSize(),
+                               input->getRawValuesAccess(), 1u, 0u,
+                               input->getCudaFlag(),
+                               zero,
+                               scalar_red_functor);
+    }
 
   } // namespace MatrixExt
   

@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef REDUCE_MATRIX_IMPL_CU
-#define REDUCE_MATRIX_IMPL_CU
+#ifndef REDUCE_MATRIX_IMPL_H
+#define REDUCE_MATRIX_IMPL_H
 
 // Must be defined here.
 #include "matrix.h"
@@ -33,22 +33,90 @@ namespace AprilMath {
 
   namespace MatrixExt {
 
-    template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixScalarReduceMinMaxOverDimension(const Basics::Matrix<T> *input,
+    template<typename T, typename OP>
+    Basics::Matrix<T> * MatrixScalarReduceMinMaxOverDimension(Basics::Matrix<T> *input,
                                                               int dim,
-                                                              const OP1 &scalar_red_functor,
-                                                              const OP2 &intra_span_red_functor,
+                                                              const OP &scalar_red_functor,
                                                               const T &zero,
                                                               Basics::Matrix<int32_t> *which,
                                                               Basics::Matrix<T> *dest) {
-      ScalarToSpanReduceMinMax<T,OP1> span_functor(scalar_red_functor);
+      ScalarToSpanReduceMinMax<T,OP> span_functor((const OP &)scalar_red_functor);
       return MatrixSpanReduceMinMaxOverDimension(input, dim, span_functor,
-                                                 intra_span_red_functor, zero,
+                                                 (const OP &)scalar_red_functor, zero,
                                                  which, dest);
     }
-    
+
+    template<typename T, typename O, typename OP1, typename OP2>
+    O MatrixSpanReduceMinMax(const Basics::Matrix<T> *input,
+                             const OP1 &inter_span_red_functor,
+                             const OP2 &intra_span_red_functor,
+                             const O &zero,
+                             Basics::Matrix<int32_t> *which,
+                             unsigned int which_raw_pos,
+                             Basics::Matrix<O> *dest,
+                             unsigned int dest_raw_pos) {
+      O result = zero;
+      // Contiguous memory block
+      if (input->getIsContiguous()) {
+        result = inter_span_red_functor(static_cast<unsigned int>(input->size()),
+                                        input->getRawDataAccess(), 1u,
+                                        static_cast<unsigned int>(input->getOffset()),
+                                        input->getCudaFlag(),
+                                        zero,
+                                        which->getRawDataAccess(),
+                                        which_raw_pos,
+                                        dest->getRawDataAccess(),
+                                        dest_raw_pos);
+      }
+      // One dimension
+      else if (input->getNumDim() == 1) {
+        result = inter_span_red_functor(static_cast<unsigned int>(input->size()),
+                                        input->getRawDataAccess(),
+                                        static_cast<unsigned int>(input->getStrideSize(0)),
+                                        static_cast<unsigned int>(input->getOffset()),
+                                        input->getCudaFlag(),
+                                        zero,
+                                        which->getRawDataAccess(),
+                                        which_raw_pos,
+                                        dest->getRawDataAccess(),
+                                        dest_raw_pos);
+      }
+      // General case
+      else {
+        typename Basics::Matrix<T>::span_iterator span_it(input);
+        unsigned int size   = static_cast<unsigned int>(span_it.getSize());
+        unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+        const int N = span_it.numberOfIterations();
+        int32_t which_result=0;
+        for (int i=0; i<N; ++i) {
+          april_assert(span_it != input->end_span_iterator());
+          O temp = inter_span_red_functor(size,
+                                          input->getRawDataAccess(),
+                                          stride,
+                                          span_it.getOffset(),
+                                          input->getCudaFlag(),
+                                          zero,
+                                          which->getRawDataAccess(),
+                                          which_raw_pos,
+                                          dest->getRawDataAccess(),
+                                          dest_raw_pos);
+          unsigned int aux=0;
+          result = intra_span_red_functor(result, temp, aux);
+          if (which != 0 && aux == 1) {
+            which->getRawDataAccess()->getValue(which_raw_pos, which_result);
+          }
+          ++span_it;
+        }
+        april_assert(span_it == input->end_span_iterator());
+        if (which != 0) {
+          which->getRawDataAccess()->putValue(which_raw_pos, which_result);
+        }
+      }
+      return result;
+    } // function MatrixSpanReduceMinMax
+
     template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixSpanReduceMinMaxOverDimension(const Basics::Matrix<T> *input,
+    Basics::Matrix<T> * MatrixSpanReduceMinMaxOverDimension(Basics::Matrix<T> *input,
                                                             int dim,
                                                             const OP1 &inter_span_red_functor,
                                                             const OP2 &intra_span_red_functor,
@@ -103,35 +171,34 @@ namespace AprilMath {
            it!=result->end(); ++it, ++it2) {
         april_assert(it2 != result2->end());
         input_w.getMatrix(slice.get());
-        MatrixSpanReduce1(slice.get(),
-                          inter_span_red_functor,
-                          intra_span_red_functor,
-                          zero,
-                          result2,
-                          it2.getRawPos(),
-                          result,
-                          it.getRawPos());
+        MatrixSpanReduceMinMax<float,float>(slice.get(),
+                                            inter_span_red_functor,
+                                            intra_span_red_functor,
+                                            zero,
+                                            result2,
+                                            static_cast<unsigned int>(it2.getRawPos()),
+                                            result,
+                                            static_cast<unsigned int>(it.getRawPos()));
         input_w.next();
       }
       april_assert(it2 == result2->end());
       return result;
     }
 
-    template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixScalarReduceOverDimension(const Basics::Matrix<T> *input,
+    template<typename T, typename OP>
+    Basics::Matrix<T> * MatrixScalarReduceOverDimension(Basics::Matrix<T> *input,
                                                         int dim,
-                                                        const OP1 &scalar_red_functor,
-                                                        const OP2 &intra_span_red_functor,
+                                                        const OP &scalar_red_functor,
                                                         const T &zero,
                                                         Basics::Matrix<T> *dest) {
-      ScalarToSpanReduce<T,OP1> span_functor(scalar_red_functor);
+      ScalarToSpanReduce<T,OP> span_functor(scalar_red_functor);
       return MatrixSpanReduceOverDimension(input, dim, span_functor,
-                                           intra_span_red_functor, zero,
+                                           scalar_red_functor, zero,
                                            dest);
     }
 
     template<typename T, typename OP1, typename OP2>
-    Basics::Matrix<T> * MatrixSpanReduceOverDimension(const Basics::Matrix<T> *input,
+    Basics::Matrix<T> * MatrixSpanReduceOverDimension(Basics::Matrix<T> *input,
                                                       int dim,
                                                       const OP1 &inter_span_red_functor,
                                                       const OP2 &intra_span_red_functor,
@@ -248,76 +315,14 @@ namespace AprilMath {
       return result;
     } // function MatrixSpanReduce1
 
-    template<typename T, typename O, typename OP1, typename OP2>
-    O MatrixSpanReduce1(const Basics::Matrix<T> *input,
-                        const OP1 &inter_span_red_functor,
-                        const OP2 &intra_span_red_functor,
-                        const O &zero,
-                        Basics::Matrix<int32_t> *which,
-                        unsigned int which_raw_pos,
-                        Basics::Matrix<O> *dest,
-                        unsigned int dest_raw_pos) {
-      O result = zero;
-      // Contiguous memory block
-      if (input->getIsContiguous()) {
-        result = inter_span_red_functor(static_cast<unsigned int>(input->size()),
-                                        input->getRawDataAccess(), 1u,
-                                        static_cast<unsigned int>(input->getOffset()),
-                                        input->getCudaFlag(),
-                                        zero,
-                                        which,
-                                        which_raw_pos,
-                                        dest,
-                                        dest_raw_pos);
-      }
-      // One dimension
-      else if (input->getNumDim() == 1) {
-        result = inter_span_red_functor(static_cast<unsigned int>(input->size()),
-                                        input->getRawDataAccess(),
-                                        static_cast<unsigned int>(input->getStrideSize(0)),
-                                        static_cast<unsigned int>(input->getOffset()),
-                                        input->getCudaFlag(),
-                                        zero,
-                                        which,
-                                        which_raw_pos,
-                                        dest,
-                                        dest_raw_pos);
-      }
-      // General case
-      else {
-        typename Basics::Matrix<T>::span_iterator span_it(input);
-        unsigned int size   = static_cast<unsigned int>(span_it.getSize());
-        unsigned int stride = static_cast<unsigned int>(span_it.getStride());
-        const int N = span_it.numberOfIterations();
-        for (int i=0; i<N; ++i) {
-          april_assert(span_it != input->end_span_iterator());
-          O temp = inter_span_red_functor(size,
-                                          input->getRawDataAccess(),
-                                          stride,
-                                          span_it.getOffset(),
-                                          input->getCudaFlag(),
-                                          zero,
-                                          which,
-                                          which_raw_pos,
-                                          dest,
-                                          dest_raw_pos);
-          result = intra_span_red_functor(result, temp);
-          ++span_it;
-        }
-        april_assert(span_it == input->end_span_iterator());
-      }
-      return result;
-    } // function MatrixSpanReduce1
-
-    template<typename T, typename OP1, typename OP2>
+    template<typename T, typename OP>
     T MatrixScalarReduce1(const Basics::Matrix<T> *input,
-                          const OP1 &scalar_red_functor,
-                          const OP2 &intra_span_red_functor,
+                          const OP &scalar_red_functor,
                           const T &zero,
                           Basics::Matrix<T> *dest,
                           unsigned int dest_raw_pos) {
-      ScalarToSpanReduce<T,OP1> span_functor(scalar_red_functor);
-      return MatrixSpanReduce1(input, span_functor, intra_span_red_functor,
+      ScalarToSpanReduce<T,OP> span_functor(scalar_red_functor);
+      return MatrixSpanReduce1(input, span_functor, scalar_red_functor,
                                zero, dest, dest_raw_pos);
     }
     
@@ -328,6 +333,10 @@ namespace AprilMath {
                            unsigned int dest_raw_pos,
                            int N_th,
                            unsigned int SIZE_th) {
+#ifdef NO_OMP
+      UNUSED_VARIABLE(N_th);
+      UNUSED_VARIABLE(SIZE_th);
+#endif
       T result = T(0.0f);
       // Contiguous memory block
       if (input->getIsContiguous()) {
@@ -430,7 +439,7 @@ namespace AprilMath {
         typename Basics::Matrix<T>::span_iterator input1_span_it(input1);
         typename Basics::Matrix<T>::span_iterator input2_span_it(input2);
         const int N = input1_span_it.numberOfIterations();
-        april_assert(N == static_cast<unsigned int>(input2_span_it.numberOfIterations()));
+        april_assert(N == input2_span_it.numberOfIterations());
         const unsigned int size          = static_cast<unsigned int>(input1_span_it.getSize());
         const unsigned int input1_stride = static_cast<unsigned int>(input1_span_it.getStride());
         const unsigned int input2_stride = static_cast<unsigned int>(input2_span_it.getStride());
@@ -464,4 +473,4 @@ namespace AprilMath {
   
 } // namespace AprilMath
 
-#endif // REDUCE_MATRIX_IMPL_CU
+#endif // REDUCE_MATRIX_IMPL_H
