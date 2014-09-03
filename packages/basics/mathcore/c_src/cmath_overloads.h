@@ -281,47 +281,35 @@ namespace AprilMath {
   // DERIVATIVES
   
   template<typename T>
-  APRIL_CUDA_EXPORT T m_logistic_der(const T &input,
-                                     const T &output) {
-    UNUSED_VARIABLE(input);
-    float value = m_clamp(output, NEAR_ZERO, T(1.0f) - NEAR_ZERO);
+  APRIL_CUDA_EXPORT T m_logistic_der(const T &after_actf) {
+    float value = m_clamp(after_actf, NEAR_ZERO, T(1.0f) - NEAR_ZERO);
     return value * (T(1.0f) - value);
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_antisym_logistic_der(const T &input,
-                                             const T &output) {
-    UNUSED_VARIABLE(input);
-    T value = m_clamp(output, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
+  APRIL_CUDA_EXPORT T m_antisym_logistic_der(const T &after_actf) {
+    T value = m_clamp(after_actf, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
     return T(0.5f) * (T(1.0f) - (value*value));
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_softsign_der(const T &input,
-                                     const T &output) {
-    UNUSED_VARIABLE(input);
-    T value = m_clamp(output, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
+  APRIL_CUDA_EXPORT T m_softsign_der(const T &after_actf) {
+    T value = m_clamp(after_actf, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
     T aux   = T(1.0f) + absolute_value(value);
     return T(1.0f) / (aux * aux);
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_softplus_der(const T &input,
-                                     const T &output) {
-    UNUSED_VARIABLE(output);
-    T value = m_logistic(input);
+  APRIL_CUDA_EXPORT T m_softplus_der(const T &before_actf) {
+    T value = m_logistic(before_actf);
     return value;
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_relu_der(const T &input,
-                                 const T &output) {
-    UNUSED_VARIABLE(output);
-    return (input > T(0.0f)) ? T(1.0f) : T(0.0f);
+  APRIL_CUDA_EXPORT T m_relu_der(const T &before_actf) {
+    return (before_actf > T(0.0f)) ? T(1.0f) : T(0.0f);
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_clamp_der(const T &input,
-                                  const T &output,
+  APRIL_CUDA_EXPORT T m_clamp_der(const T &before_actf,
                                   const T &inf,
                                   const T &sup) {
-    UNUSED_VARIABLE(output);
-    return (input < inf || input > sup) ? T(0.0f) : T(1.0f);
+    return (before_actf < inf || before_actf > sup) ? T(0.0f) : T(1.0f);
   }
   
   //////////////// MATH SCALAR REDUCE FUNCTIONS ////////////////
@@ -428,8 +416,8 @@ namespace AprilMath {
   struct m_curried_clamp_der {
     const T inf, sup;
     m_curried_clamp_der(const T &inf, const T &sup) : inf(inf), sup(sup) { }
-    APRIL_CUDA_EXPORT T operator()(const T &input, const T &output) const {
-      return m_clamp_der(input, output, inf, sup);
+    APRIL_CUDA_EXPORT T operator()(const T &before_actf) const {
+      return m_clamp_der(before_actf, inf, sup);
     }
   };
   

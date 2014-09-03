@@ -37,6 +37,11 @@
        include_dirs = "${include_dirs}",
        dest_dir = "build",
      },
+     object{ 
+       file = "c_src/*.cu",
+       include_dirs = "${include_dirs}",
+       dest_dir = "build",
+     },
      luac{
        orig_dir = "lua_src",
        dest_dir = "build",

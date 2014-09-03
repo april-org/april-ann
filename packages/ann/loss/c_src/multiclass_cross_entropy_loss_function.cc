@@ -20,7 +20,6 @@
  */
 #include "token_matrix.h"
 #include "multiclass_cross_entropy_loss_function.h"
-#include "wrapper.h"
 
 using namespace AprilUtils;
 using namespace Basics;

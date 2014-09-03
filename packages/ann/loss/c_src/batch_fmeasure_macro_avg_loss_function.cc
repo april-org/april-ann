@@ -51,8 +51,8 @@ namespace ANN {
     if (complement_output) {
       input_mat  = input_mat->clone();
       target_mat = target_mat->clone();
-      matComplement(input_mat);
-      matComplement(target_mat);
+      matComplement(input_mat.get());
+      matComplement(target_mat.get());
     }
     //         (1+b^2) dot(o,t)
     // FMb = ---------------------

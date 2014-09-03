@@ -43,9 +43,9 @@ namespace ANN {
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    SharedPtr<MatrixFloat> aux_output( matSubstraction(input, target) );
-    matPow(aux_output, 2.0f);
-    matSum(aux_output, 1, loss_output);
+    SharedPtr<MatrixFloat> aux_output( matSubstraction(input_mat, target_mat) );
+    matPow(aux_output.get(), 2.0f);
+    matSum(aux_output.get(), 1, loss_output);
     matScal(loss_output, 0.5f);
     return loss_output;
   }
