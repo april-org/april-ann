@@ -19,22 +19,25 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef MATRIX_H
+#include "matrix.h"
+#include "sparse_matrix.h"
+#endif
 #ifndef MATRIX_OPERATIONS_H
 #define MATRIX_OPERATIONS_H
 
 #include <climits> // for INT_MAX
 #include "cmath_overloads.h"
 #include "mathcore.h"
-#include "matrix.h"
 #include "mathcore.h"
 #include "maxmin.h"
 #include "smart_ptr.h"
-#include "sparse_matrix.h"
 
 // Must to be defined here.
 #include "map_matrix.h"
 #include "map_sparse_matrix.h"
 
+// Must to be defined here.
 #include "reduce_matrix.h"
 #include "reduce_sparse_matrix.h"
 

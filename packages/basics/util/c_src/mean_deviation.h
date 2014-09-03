@@ -54,11 +54,11 @@ namespace AprilUtils {
   public:
     RunningStat() : m_n(0) {}
     
-    void Clear() {
+    void clear() {
       m_n = 0;
     }
     
-    void Push(double x) {
+    void push(double x) {
       m_n++;
       
       // See Knuth TAOCP vol 2, 3rd edition, page 232
@@ -75,20 +75,20 @@ namespace AprilUtils {
       }
     }
     
-    int NumDataValues() const {
+    int numDataValues() const {
       return m_n;
     }
     
-    double Mean() const {
+    double mean() const {
       return (m_n > 0) ? m_newM : 0.0;
     }
     
-    double Variance() const {
+    double variance() const {
       return ( (m_n > 1) ? m_newS/(m_n - 1) : 0.0 );
     }
     
-    double StandardDeviation() const {
-      return sqrt( Variance() );
+    double standardDeviation() const {
+      return sqrt( variance() );
     }
     
   };

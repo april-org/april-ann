@@ -94,8 +94,8 @@ namespace ANN {
 	  int input_argmax, input_argmax_rawpos;
 	  float target_max;
 	  int target_argmax, target_argmax_rawpos;
-	  input_max  = input_sw_mat->max(input_argmax, input_argmax_rawpos);
-	  target_max = target_sw_mat->max(target_argmax, target_argmax_rawpos);
+	  input_max  = matMax(input_sw_mat, input_argmax, input_argmax_rawpos);
+	  target_max = matMax(target_sw_mat, target_argmax, target_argmax_rawpos);
 	  if (input_argmax != target_argmax) *loss_output_it = 1.0f;
 	  else *loss_output_it = 0.0f;
 	}
@@ -111,7 +111,7 @@ namespace ANN {
 	  input_sw_mat  = input_sw.getMatrix(input_sw_mat);
 	  float input_max;
 	  int input_argmax, input_argmax_rawpos;
-	  input_max = input_sw_mat->max(input_argmax, input_argmax_rawpos);
+	  input_max = matMax(input_sw_mat, input_argmax, input_argmax_rawpos);
 	  if (input_argmax != *target_it - 1) *loss_output_it = 1.0f;
 	  else *loss_output_it = 0.0f;
 	}

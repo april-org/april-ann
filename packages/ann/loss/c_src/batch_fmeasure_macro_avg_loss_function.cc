@@ -18,10 +18,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
 #include "batch_fmeasure_macro_avg_loss_function.h"
-#include "wrapper.h"
+#include "matrix_operations.h"
+#include "token_matrix.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -50,8 +51,8 @@ namespace ANN {
     if (complement_output) {
       input_mat  = input_mat->clone();
       target_mat = target_mat->clone();
-      input_mat->complement();
-      target_mat->complement();
+      matComplement(input_mat);
+      matComplement(target_mat);
     }
     //         (1+b^2) dot(o,t)
     // FMb = ---------------------
@@ -70,9 +71,9 @@ namespace ANN {
       class_input_mat  = input_mat->select(1,i,class_input_mat.get());
       class_target_mat = target_mat->select(1,i,class_target_mat.get());
       //
-      float dot        = class_input_mat->dot(class_target_mat.get());
-      float input_sum  = class_input_mat->sum();
-      float target_sum = class_target_mat->sum();
+      float dot        = matDot(class_input_mat.get(), class_target_mat.get());
+      float input_sum  = matSum(class_input_mat.get());
+      float target_sum = matSum(class_target_mat.get());
       *Gs_it = (1+beta2) * dot;
       *Hs_it = input_sum + beta2 * target_sum;
       if (*Hs_it > 0.0f || *Hs_it < 0.0f) {
@@ -108,7 +109,7 @@ namespace ANN {
     AprilUtils::SharedPtr<MatrixFloat> target_mat(target_mat_);
     if (complement_output) {
       target_mat = target_mat->clone();
-      target_mat->complement();
+      matComplement(target_mat.get());
     }
     MatrixFloat *error_mat = target_mat->clone();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
@@ -133,12 +134,14 @@ namespace ANN {
 	float H2    = H*H;
 	float scal  = -(1+beta2)/H;
 	float add   = G/H2;
-	class_error_mat->scal(scal);
-	class_error_mat->scalarAdd(add);
+        matScal(class_error_mat.get(),scal);
+	matScalarAdd(class_error_mat.get(),add);
       }
-      error_mat->scal(rel);
+      matScal(error_mat,rel);
     }
-    else error_mat->zeros();
+    else {
+      matZeros(error_mat);
+    }
     return error_output;
   }
 

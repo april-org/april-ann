@@ -21,21 +21,21 @@ return {
   -- "autodiff.ann",
 
   -- -- INPUT/OUTPUT
-  -- "aprilio",
-  -- "gzio",
-  -- "zip",
-  -- "tar",
+  "aprilio",
+  "gzio",
+  "zip",
+  "tar",
   
   -- -- MACHINE LEARNING
   -- "clustering.kmeans.matrix",
   -- "knn.kdtree",
-  -- "trainable",
+  "trainable",
   -- -- "function_interface",
   -- -- NEURAL NETWORKS
-  -- "ann",
-  -- "ann.loss",
-  -- "trainable",
-  -- "ann.autoencoders",
+  "ann",
+  "ann.loss",
+  "trainable",
+  "ann.autoencoders",
   -- "bayesian",
 
   -- -- LANGUAGE MODELS

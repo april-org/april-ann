@@ -21,14 +21,16 @@
  */
 //BIND_HEADER_C
 #include <cmath>
-#include "fmeasure.h"
+#include "bind_function_interface.h"
 #include "bind_mtrand.h"
-#include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
 #include "bind_tokens.h"
-#include "bind_function_interface.h"
+#include "fmeasure.h"
+#include "matrix_operations.h"
+#include "MersenneTwister.h"
 
 using AprilUtils::constString;
+using namespace AprilMath::MatrixExt::Operations;
 
 namespace Basics {
 
@@ -803,7 +805,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   float  *patt = new float[psize];
   int histogramlength = 1 << psize;
   MatrixFloat* mat = new MatrixFloat(1,&histogramlength);
-  mat->zeros();
+  matZeros(mat);
   for (int i=1; i < npatt; i++) {
     obj->getPattern(i,patt);
     int index = 0;

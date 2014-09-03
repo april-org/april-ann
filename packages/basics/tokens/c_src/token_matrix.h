@@ -29,7 +29,7 @@
 namespace Basics {
 
   template<typename T>
-    class TokenMatrix : public Token {
+  class TokenMatrix : public Token {
     APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMatrix);
     Matrix<T> *mat;
   public:
@@ -59,32 +59,32 @@ namespace Basics {
   };
 
   template<typename T>
-    TokenMatrix<T>::TokenMatrix(Matrix<T> *mat) :
+  TokenMatrix<T>::TokenMatrix(Matrix<T> *mat) :
     Token(),
     mat(mat) {
-      IncRef(mat);
-    }
+    IncRef(mat);
+  }
 
   template<typename T>
-    TokenMatrix<T>::~TokenMatrix() {
+  TokenMatrix<T>::~TokenMatrix() {
     DecRef(mat);
   }
 
   template<typename T>
-    Token *TokenMatrix<T>::clone() const {
+  Token *TokenMatrix<T>::clone() const {
     TokenMatrix *token = new TokenMatrix( mat->clone() );
     return token;
   }
 
   template<typename T>
-    AprilUtils::buffer_list* TokenMatrix<T>::toString() {
+  AprilUtils::buffer_list* TokenMatrix<T>::toString() {
     // NOT IMPLEMENTED
     return 0;
   }
-
+  
   template<typename T>
-    AprilUtils::buffer_list* TokenMatrix<T>::debugString(const char *prefix,
-                                                          int debugLevel) {
+  AprilUtils::buffer_list* TokenMatrix<T>::debugString(const char *prefix,
+                                                       int debugLevel) {
     // NOT IMPLEMENTED
     UNUSED_VARIABLE(prefix);
     UNUSED_VARIABLE(debugLevel);
@@ -92,7 +92,7 @@ namespace Basics {
   }
 
   template<typename T>
-    TokenCode TokenMatrix<T>::getTokenCode() const {
+  TokenCode TokenMatrix<T>::getTokenCode() const {
     return table_of_token_codes::token_matrix;
   }
 

@@ -22,10 +22,9 @@
 #ifndef ACTFCOMPONENT_H
 #define ACTFCOMPONENT_H
 
-#include "token_matrix.h"
 #include "ann_component.h"
-#include "gpu_mirrored_memory_block.h"
 #include "MersenneTwister.h"
+#include "token_matrix.h"
 
 namespace ANN {
 
@@ -35,16 +34,12 @@ namespace ANN {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
     Basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
   protected:
-    virtual void applyActivation(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
-				 AprilMath::FloatGPUMirroredMemoryBlock *output_units,
-				 unsigned int size,
-				 unsigned int bunch_size) = 0;
-    virtual void multiplyDerivatives(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
-				     AprilMath::FloatGPUMirroredMemoryBlock *output_units,
-				     AprilMath::FloatGPUMirroredMemoryBlock *input_errors,
-				     AprilMath::FloatGPUMirroredMemoryBlock *output_errors,
-				     unsigned int size,
-				     unsigned int bunch_size) = 0;
+    virtual void applyActivation(Basics::MatrixFloat *input_units,
+				 Basics::MatrixFloat *output_units) = 0;
+    virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
+				     Basics::MatrixFloat *output_units,
+				     Basics::MatrixFloat *input_errors,
+				     Basics::MatrixFloat *output_errors) = 0;
   public:
     ActivationFunctionANNComponent(const char *name=0);
     virtual ~ActivationFunctionANNComponent();

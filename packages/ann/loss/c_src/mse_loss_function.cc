@@ -18,10 +18,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
+#include "matrix_operations.h"
 #include "mse_loss_function.h"
-#include "wrapper.h"
+#include "token_matrix.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -42,30 +43,19 @@ namespace ANN {
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    doMSELossFunction(input_mat->getRawDataAccess(),
-                      target_mat->getRawDataAccess(),
-                      loss_output->getRawDataAccess(),
-                      0.0f,
-                      input_mat->getDimSize(1),
-                      input_mat->getDimSize(0),
-                      input_mat->getCudaFlag());
-    loss_output->scal(0.5f);
+    SharedPtr<MatrixFloat> aux_output( matSubstraction(input, target) );
+    matPow(aux_output, 2.0f);
+    matSum(aux_output, 1, loss_output);
+    matScal(loss_output, 0.5f);
     return loss_output;
   }
 
   Token *MSELossFunction::computeGradient(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+    MatrixFloat *error_mat = matSubstraction(input_mat, target_mat);
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
     AssignRef<Token>(error_output, error_mat_token);
-    doComputeMSEGradient(input_mat->getRawDataAccess(),
-			 target_mat->getRawDataAccess(),
-			 error_mat->getRawDataAccess(),
-			 0.0f,
-			 input_mat->getDimSize(1),
-			 input_mat->getDimSize(0),
-			 input_mat->getCudaFlag());
     return error_output;
   }
 

@@ -26,13 +26,13 @@
 #include "datasetFloat.h"
 #include "function_interface.h"
 #include "matrixFloat.h"
+#include "matrix_operations.h"
 #include "token_base.h"
 #include "token_matrix.h"
 #include "token_vector.h"
 #include "table_of_token_codes.h"
 #include "unused_variable.h"
 #include "vector.h"
-#include "wrapper.h"
 
 namespace Basics {
 
@@ -74,7 +74,7 @@ namespace Basics {
           IncRef(aux_mat_rewrapped);
 	
           submat = output_mat->select(0, i, submat);
-          submat->copy(aux_mat_rewrapped);
+          AprilMath::MatrixExt::Operations::matCopy(submat,aux_mat_rewrapped);
 	
           DecRef(aux_mat_rewrapped);
           DecRef(aux_mat);
@@ -248,7 +248,7 @@ namespace Basics {
         april_assert(0 <= indexes[i] && indexes[i] < num_patterns);
         ds->getPattern(indexes[i], aux_mem);
         MatrixFloat *submat = window.getMatrix();
-        submat->copy(aux_mat);
+        AprilMath::MatrixExt::Operations::matCopy(submat,aux_mat);
         delete submat;
         window.next();
       }
@@ -284,7 +284,7 @@ namespace Basics {
       for (unsigned int i=0; i<bunch_size; ++i) {
         coords[major_dim] = static_cast<int>(i);
         MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
-        aux_mat->copy(submat);
+        AprilMath::MatrixExt::Operations::matCopy(aux_mat,submat);
         delete submat;
         ds->putPattern(indexes[i], aux_mem);
       }

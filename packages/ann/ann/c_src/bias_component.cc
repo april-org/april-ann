@@ -19,13 +19,13 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "bias_component.h"  
-#include "wrapper.h"
+#include "bias_component.h"
 #include "unused_variable.h"
 
-using namespace Basics;
-using namespace AprilUtils;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -55,7 +55,9 @@ namespace ANN {
     MatrixFloat *output = input->clone();
     // bias
     MatrixFloat *bias_ptr = bias_vector;
-    if (bunch_size == 1) output->axpy(1.0f, bias_ptr);
+    if (bunch_size == 1) {
+      matAxpy(output, 1.0f, bias_ptr);
+    }
     else {
       // addition of bias vector at output
       doAxpyLoop(output_size, 1.0f,
@@ -86,7 +88,7 @@ namespace ANN {
     bias_vector->addToSharedCount();
     if (grads_mat.empty()) {
       grads_mat = bias_vector->cloneOnlyDims();
-      grads_mat->zeros();
+      matZeros(grads_mat.get());
     }
     else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
@@ -96,18 +98,22 @@ namespace ANN {
     MatrixFloat *error_input_mat = getErrorInputMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    if (bunch_size == 1) grads_mat->axpy(1.0f, error_input_mat);
-    else doAxpyLoop(output_size,
-		    1.0f,
-		    error_input_mat->getRawDataAccess(),
-		    error_input_mat->getStrideSize(1),
-		    0,
-		    grads_mat->getRawDataAccess(),
-		    grads_mat->getStrideSize(0),
-		    0,
-		    bunch_size,
-		    error_input_mat->getStrideSize(0), 0,
-		    use_cuda);
+    if (bunch_size == 1) {
+      matAxpy(grads_mat.get(), 1.0f, error_input_mat);
+    }
+    else {
+      doAxpyLoop(output_size,
+                 1.0f,
+                 error_input_mat->getRawDataAccess(),
+                 error_input_mat->getStrideSize(1),
+                 0,
+                 grads_mat->getRawDataAccess(),
+                 grads_mat->getStrideSize(0),
+                 0,
+                 bunch_size,
+                 error_input_mat->getStrideSize(0), 0,
+                 use_cuda);
+    }
   }
 
   ANNComponent *BiasANNComponent::clone() {

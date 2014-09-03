@@ -26,7 +26,6 @@
 #include "c_string.h"
 #include "swap.h"
 #include "utilMatrixFloat.h"
-#include "wrapper.h"
 
 using namespace AprilIO;
 using namespace AprilMath;

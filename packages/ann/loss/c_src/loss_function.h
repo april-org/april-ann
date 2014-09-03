@@ -62,10 +62,6 @@ namespace ANN {
 	april_assert(target_mat->getNumDim() == 2);
 	april_assert(input_mat->sameDim(target_mat));
       }
-      if (!input_mat->getIsContiguous())
-	ERROR_EXIT(128, "Needs a contiguous input matrix\n");
-      if (!target_mat->getIsContiguous())
-	ERROR_EXIT(128, "Needs a contiguous target matrix\n");
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
       april_assert(size==0 || input_mat->getDimSize(1)==static_cast<int>(size));
@@ -94,21 +90,21 @@ namespace ANN {
       if (error_output) DecRef(error_output);
     }
     virtual float getAccumLoss() {
-      return static_cast<float>(acc_loss.Mean());
+      return static_cast<float>(acc_loss.mean());
     }
     virtual float getAccumLossVariance() {
-      return static_cast<float>(acc_loss.Variance());
+      return static_cast<float>(acc_loss.variance());
     }
     virtual void reset() {
       if (error_output) DecRef(error_output);
       error_output = 0;
-      acc_loss.Clear();
+      acc_loss.clear();
     }
     virtual Basics::MatrixFloat *accumLoss(Basics::MatrixFloat *loss_data) {
       april_assert(loss_data->getNumDim() == 1);
       for (Basics::MatrixFloat::iterator it(loss_data->begin());
 	   it!=loss_data->end(); ++it)
-	acc_loss.Push(static_cast<double>(*it));
+	acc_loss.push(static_cast<double>(*it));
       return loss_data;
     }
     virtual Basics::MatrixFloat *computeLoss(Basics::Token *input,

@@ -18,10 +18,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
 #include "batch_fmeasure_micro_avg_loss_function.h"
-#include "wrapper.h"
+#include "matrix_operations.h"
+#include "token_matrix.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -48,8 +49,8 @@ namespace ANN {
     if (complement_output) {
       input_mat  = input_mat->clone();
       target_mat = target_mat->clone();
-      input_mat->complement();
-      target_mat->complement();
+      matComplement(input_mat);
+      matComplement(target_mat);
     }
     IncRef(input_mat);
     IncRef(target_mat);
@@ -59,7 +60,7 @@ namespace ANN {
     float dot;
     if (input_mat->getDimSize(0) == 1 || input_mat->getDimSize(1) == 1)
       // is a vector
-      dot = input_mat->dot(target_mat);
+      dot = matDot(input_mat,target_mat);
     else {
       // is a matrix
       int dim = (input_mat->getDimSize(0) > input_mat->getDimSize(1)) ? 0 : 1;
@@ -68,13 +69,13 @@ namespace ANN {
       for (int i=0; i<input_mat->getDimSize(dim); ++i) {
 	aux1 = input_mat->select(dim,i,aux1);
 	aux2 = target_mat->select(dim,i,aux2);
-	dot += aux1->dot(aux2);
+	dot += matDot(aux1,aux2);
       }
       delete aux1;
       delete aux2;
     }
-    float input_sum  = input_mat->sum();
-    float target_sum = target_mat->sum();
+    float input_sum  = matSum(input_mat);
+    float target_sum = matSum(target_mat);
     G = (1+beta2) * dot;
     H = input_sum + beta2 * target_sum;
     MatrixFloat *loss_output;
@@ -102,7 +103,7 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     if (complement_output) {
       target_mat = target_mat->clone();
-      target_mat->complement();
+      matComplement(target_mat);
     }
     IncRef(target_mat);
     MatrixFloat *error_mat = target_mat->clone();
@@ -118,10 +119,12 @@ namespace ANN {
       float H2    = H*H;
       float scal  = -(1+beta2)/H;
       float add   = G/H2;
-      error_mat->scal(scal);
-      error_mat->scalarAdd(add);
+      matScal(error_mat,scal);
+      matScalarAdd(error_mat,add);
     }
-    else error_mat->zeros();
+    else {
+      matZeros(error_mat);
+    }
     DecRef(target);
     DecRef(target_mat);
     return error_output;

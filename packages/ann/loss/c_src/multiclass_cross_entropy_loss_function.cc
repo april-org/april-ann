@@ -48,42 +48,19 @@ namespace ANN {
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    MatrixFloat *t_logp = target_mat->clone();
-    IncRef(t_logp);
-    t_logp->cmul(input_mat);
-    t_logp->sum(1, loss_output);
-    DecRef(t_logp);
-    loss_output->scal(-1.0);
-    /*
-      doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
-      target_mat->getRawDataAccess(),
-      loss_output->getRawDataAccess(),
-      NEAR_ZERO,
-      input_mat->getDimSize(1),
-      input_mat->getDimSize(0),
-      input_mat->getCudaFlag());
-    */
+    matMultiClassCrossEntropy(loss_output, input, target, NEAR_ZERO);
     return loss_output;
   }
 
   Token *MultiClassCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    MatrixFloat *error_mat = input_mat->clone(); //cloneOnlyDims();
+    MatrixFloat *error_mat = input_mat->clone();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
     AssignRef<Token>(error_output, error_mat_token);
-    error_mat->clamp(logf(NEAR_ZERO), logf(1.0f - NEAR_ZERO));
-    error_mat->exp();
-    error_mat->axpy(-1.0f, target_mat);
-    /*
-      doComputeCrossEntropyGradient(input_mat->getRawDataAccess(),
-      target_mat->getRawDataAccess(),
-      error_mat->getRawDataAccess(),
-      NEAR_ZERO,
-      input_mat->getDimSize(1),
-      input_mat->getDimSize(0),
-      input_mat->getCudaFlag());
-    */
+    matClamp(error_mat, m_log(NEAR_ZERO), m_log(1.0f - NEAR_ZERO));
+    matExp(error_mat);
+    matAxpy(error_mat, -1.0f, target_mat);
     return error_output;
   }
 

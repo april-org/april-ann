@@ -19,9 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
 #include "activation_function_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
 using namespace Basics;
 using namespace AprilUtils;
@@ -64,29 +63,11 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    unsigned int bunch_size = input_mat->getDimSize(0);
-    unsigned int current_input_size = input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
     AssignRef(output,new TokenMatrixFloat(output_mat));
-    // flatten the matrices if it is necessary
-    bool flattened = false;
-    if (input_mat->getNumDim() > 2) {
-      int dims[2] = { static_cast<int>(bunch_size),
-		      static_cast<int>(current_input_size) };
-      input_mat  = input_mat->rewrap(dims, 2);
-      output_mat = output_mat->rewrap(dims, 2);
-      flattened  = true;
-    }
-    // get memory blocks for tokens
-    FloatGPUMirroredMemoryBlock *input_ptr  = input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
     // execute apply activations abstract method
-    applyActivation(input_ptr, output_ptr, current_input_size, bunch_size);
-    if (flattened) {
-      delete input_mat;
-      delete output_mat;
-    }
+    applyActivation(input_mat, output_mat);
     return output;
   }
     
@@ -108,37 +89,17 @@ namespace ANN {
 #ifdef USE_CUDA
     error_input_mat->setUseCuda(use_cuda);
 #endif
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
-    unsigned int current_input_size = error_input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
     if (!error_output_mat->sameDim(input->getMatrix()))
       ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		  name.c_str());
-    // flatten the matrices if it is necessary
-    bool flattened = false;
-    if (error_input_mat->getNumDim() > 2) {
-      int dims[2] = { static_cast<int>(bunch_size),
-		      static_cast<int>(current_input_size) };
-      error_input_mat  = error_input_mat->rewrap(dims, 2);
-      error_output_mat = error_output_mat->rewrap(dims, 2);
-      flattened  = true;
-    }
     MatrixFloat *input_mat = input->getMatrix();
     MatrixFloat *output_mat = output->getMatrix();
-    FloatGPUMirroredMemoryBlock *input_ptr        = input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *output_ptr       = output_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output_mat->getRawDataAccess();
     // apply derivatives at gradients
-    multiplyDerivatives(input_ptr, output_ptr,
-			error_input_ptr, error_output_ptr,
-			current_input_size, bunch_size);
-    if (flattened) {
-      delete error_input_mat;
-      delete error_output_mat;
-    }
+    multiplyDerivatives(input_mat, output_mat,
+			error_input_mat, error_output_mat);
     return error_output;
   }
 

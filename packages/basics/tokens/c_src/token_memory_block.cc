@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
+#include "mathcore.h"
 #include "token_memory_block.h"
 
 using AprilUtils::buffer_list;
@@ -78,10 +78,6 @@ namespace Basics {
 
   TokenCode TokenMemoryBlock::getTokenCode() const {
     return table_of_token_codes::token_mem_block;
-  }
-
-  void TokenMemoryBlock::setToZero(bool use_cuda) {
-    doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
   }
 
 } // namespace Basics

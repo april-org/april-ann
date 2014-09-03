@@ -23,9 +23,10 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
-using namespace Basics;
-using namespace AprilUtils;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -59,12 +60,12 @@ namespace ANN {
     // first pattern is done out of the loop
     MatrixFloat *dest = bias_matrix_2d->select(0, 0);
     IncRef(dest);
-    dest->copy(bias_vec);
+    matCopy(dest,bias_vec);
     // for the rest of patterns at the bunch
     for (int b=1; b<window_size[0]; ++b) {
       // select the row b at the output bias matrix
       bias_matrix_2d->select(0, b, dest);
-      dest->copy(bias_vec);
+      matCopy(dest,bias_vec);
     }
     DecRef(dest);
     if (bias_matrix) DecRef(bias_matrix);
@@ -155,7 +156,7 @@ namespace ANN {
       input_sw->getMatrix(input_w);
       output_sw->getMatrix(output_w);
       // ADD BIAS
-      output_w->axpy(1.0f, bias_matrix);
+      matAxpy(output_w, 1.0f, bias_matrix);
       // Next iteration
       input_sw->next();
       output_sw->next();
@@ -180,7 +181,7 @@ namespace ANN {
     bias_vector->addToSharedCount(number_input_windows);
     if (grads_mat.empty()) {
       grads_mat = bias_vector->cloneOnlyDims();
-      grads_mat->zeros();
+      matZeros(grads_mat.get());
     }
 #ifdef USE_CUDA
     grads_mat->setUseCuda(use_cuda);
