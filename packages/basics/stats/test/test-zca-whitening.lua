@@ -14,6 +14,7 @@ local ds = dataset.matrix(m,
 local m = ds:toMatrix()
 local aux = stats.mean_centered_by_pattern(m:clone("col_major"))
 local aU,aS,aVT = stats.pca(aux)
+local takeN,eigen_value,prob_mass=stats.pca_threshold(aS, 0.99)
 
 -- PCA THRESHOLD STATISTICS
 T("PCAThresholdTest",

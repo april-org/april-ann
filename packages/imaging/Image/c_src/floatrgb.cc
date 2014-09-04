@@ -148,7 +148,7 @@ namespace AprilMath {
         if (!obj->sameDim(other)) ERROR_EXIT(128,"Incompatible matrix sizes\n");
         Basics::Matrix<Imaging::FloatRGB>::iterator dst_it(obj->begin());
         for (Basics::Matrix<Imaging::FloatRGB>::const_iterator src_it(other->begin());
-             src_it != other->end(); ++src_it) {
+             src_it != other->end(); ++src_it, ++dst_it) {
           *dst_it = *src_it;
         }
         return obj;
@@ -161,10 +161,8 @@ namespace AprilMath {
         if (!src->sameDim(dst)) ERROR_EXIT(128,"Incompatible matrix sizes\n");
         Basics::Matrix<Imaging::FloatRGB>::iterator dst_it(dst->begin());
         for (Basics::Matrix<Imaging::FloatRGB>::const_iterator src_it(src->begin());
-             src_it != dst->end(); ++src_it) {
-          *dst_it = Imaging::FloatRGB( 1.0f - src_it->r,
-                                       1.0f - src_it->g,
-                                       1.0f - src_it->b );
+             src_it != dst->end(); ++src_it, ++dst_it) {
+          *dst_it = 1.0f - *src_it;
         }
         return dst;
       }
