@@ -1,4 +1,4 @@
-get_table_from_dotted_string("bayesian", true)
+get_table_from_dotted_string("bayesian.optimizer", true)
 
 local wrap_matrices = matrix.dict.wrap_matrices
 
@@ -200,12 +200,13 @@ local function hmc(self, eval, theta)
   return eval_with_priors(origw, nsteps+1)
 end
 
-local hmc_methods, hmc_class_metatable = class("bayesian.optimizer.hmc",
-                                               ann.optimizer)
+local hmc_class,hmc_methods = class("bayesian.optimizer.hmc",
+                                    ann.optimizer)
+bayesian.optimizer.hmc = hmc_class -- global environment
 
-function hmc_class_metatable:__call(g_options, l_options, count, state)
+function hmc_class:constructor(g_options, l_options, count, state)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,{
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
                               { "alpha", "Step length perturbation stddev (0.1)" },
@@ -220,11 +221,11 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
                               { "scale", "Energy function scale (1)" },
                               { "seed", "Seed for random number generator (time)" },
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
-                            },
+                                 },
                             g_options,
                             l_options,
                             count)
-  obj.state = state or
+  self.state = state or
     {
       accepted        = false,
       acceptance_rate = nil,
@@ -239,21 +240,19 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
       energies = {},
       rng = nil,
     }
-  obj = class_instance(obj, self)
-  obj:set_option("thin", 1)
-  obj:set_option("acc_decay", 0.95)
-  obj:set_option("alpha", 0.1)
-  obj:set_option("mass", 1)
-  obj:set_option("nsteps", 20)
-  obj:set_option("epsilon", 0.01)
-  obj:set_option("epsilon_inc", 1.02)
-  obj:set_option("epsilon_dec", 0.98)
-  obj:set_option("epsilon_min", 1e-04)
-  obj:set_option("epsilon_max", 1.0)
-  obj:set_option("persistence", 0.0)
-  obj:set_option("scale", 1.0)
-  obj:set_option("target_acceptance_rate", 0.65)
-  return obj
+  self:set_option("thin", 1)
+  self:set_option("acc_decay", 0.95)
+  self:set_option("alpha", 0.1)
+  self:set_option("mass", 1)
+  self:set_option("nsteps", 20)
+  self:set_option("epsilon", 0.01)
+  self:set_option("epsilon_inc", 1.02)
+  self:set_option("epsilon_dec", 0.98)
+  self:set_option("epsilon_min", 1e-04)
+  self:set_option("epsilon_max", 1.0)
+  self:set_option("persistence", 0.0)
+  self:set_option("scale", 1.0)
+  self:set_option("target_acceptance_rate", 0.65)
 end
 
 hmc_methods.execute = hmc

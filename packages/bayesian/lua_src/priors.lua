@@ -58,15 +58,13 @@ local sampling_funcs = {
 
 -----------------------------------------------------------------------------
 
-local priors_methods, priors_class_metatable = class("bayesian.priors")
+local priors_class,priors_methods = class("bayesian.priors")
+bayesian.priors = priors_class -- global environment
 
-function priors_class_metatable:__call(tree,order,outcomes)
-  local obj = {
-    tree  = tree or {},
-    order = order or {},
-    outcomes = outcomes or {},
-  }
-  return class_instance(obj, self)
+function priors_class:constructor(tree,order,outcomes)
+  self.tree  = tree or {}
+  self.order = order or {}
+  self.outcomes = outcomes or {}
 end
 
 function priors_methods:compute_neg_log_prior(weights)

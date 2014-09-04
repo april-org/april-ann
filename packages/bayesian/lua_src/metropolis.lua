@@ -1,4 +1,4 @@
-get_table_from_dotted_string("bayesian", true)
+get_table_from_dotted_string("bayesian.optimizer", true)
 
 local wrap_matrices = matrix.dict.wrap_matrices
 
@@ -112,12 +112,14 @@ local function metropolis(self, eval, theta)
   return table.unpack(eval0_result)
 end
 
-local metropolis_methods, metropolis_class_metatable = class("bayesian.optimizer.metropolis",
-                                                             ann.optimizer)
+local metropolis_class,metropolis_methods = class("bayesian.optimizer.metropolis",
+                                                  ann.optimizer)
+bayesian.optimizer.metropolis = metropolis_class -- global environment
 
-function metropolis_class_metatable:__call(g_options, l_options, count, state)
+function metropolis_class:constructor(g_options, l_options, count, state)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,
+                            {
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
@@ -132,7 +134,7 @@ function metropolis_class_metatable:__call(g_options, l_options, count, state)
                             g_options,
                             l_options,
                             count)
-  obj.state = state or
+  self.state = state or
     {
       accepted        = false,
       acceptance_rate = nil,
@@ -147,17 +149,16 @@ function metropolis_class_metatable:__call(g_options, l_options, count, state)
       energies = {},
       rng = nil,
     }
-  obj = class_instance(obj, self)
-  obj:set_option("thin", 1)
-  obj:set_option("acc_decay", 0.95)
-  obj:set_option("epsilon", 0.1)
-  obj:set_option("epsilon_inc", 1.02)
-  obj:set_option("epsilon_dec", 0.98)
-  obj:set_option("epsilon_min", 1e-04)
-  obj:set_option("epsilon_max", 1.0)
-  obj:set_option("scale", 1)
-  obj:set_option("target_acceptance_rate", 0.40)
-  return obj
+  self:set_option("thin", 1)
+  self:set_option("acc_decay", 0.95)
+  self:set_option("epsilon", 0.1)
+  self:set_option("epsilon_inc", 1.02)
+  self:set_option("epsilon_dec", 0.98)
+  self:set_option("epsilon_min", 1e-04)
+  self:set_option("epsilon_max", 1.0)
+  self:set_option("scale", 1)
+  self:set_option("target_acceptance_rate", 0.40)
+  return self
 end
 
 metropolis_methods.execute = metropolis

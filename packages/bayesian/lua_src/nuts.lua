@@ -1,4 +1,4 @@
-get_table_from_dotted_string("bayesian", true)
+get_table_from_dotted_string("bayesian.optimizer", true)
 
 local wrap_matrices = matrix.dict.wrap_matrices
 
@@ -155,12 +155,14 @@ local function nuts(self, eval, theta)
   return eval()
 end
 
-local nuts_methods, nuts_class_metatable = class("bayesian.optimizer.nuts",
-                                                 ann.optimizer)
+local nuts_class,nuts_methods = class("bayesian.optimizer.nuts",
+                                      ann.optimizer)
+bayesian.optimizer.nuts = nuts_class -- global environment
 
-function nuts_class_metatable:__call(g_options, l_options, count, state)
+function nuts_class:constructor(g_options, l_options, count, state)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,
+                            {
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
@@ -179,7 +181,7 @@ function nuts_class_metatable:__call(g_options, l_options, count, state)
                             g_options,
                             l_options,
                             count)
-  obj.state = state or
+  self.state = state or
     {
       accepted        = false,
       acceptance_rate = nil,
@@ -192,21 +194,20 @@ function nuts_class_metatable:__call(g_options, l_options, count, state)
       samples = {},
       rng = nil,
     }
-  obj = class_instance(obj, self)
-  obj:set_option("thin", 1)
-  obj:set_option("acc_decay", 0.95)
-  obj:set_option("target_acceptance_rate", 0.65)
-  obj:set_option("alpha", 0.1)
-  obj:set_option("beta", 0.5)
-  obj:set_option("var", 1)
-  obj:set_option("nsteps", 20)
-  obj:set_option("epsilon", 0.01)
-  obj:set_option("epsilon_inc", 1.02)
-  obj:set_option("epsilon_dec", 0.98)
-  obj:set_option("epsilon_min", 1e-04)
-  obj:set_option("epsilon_max", 1.0)
-  obj:set_option("scale", 1.0)
-  return obj
+  self:set_option("thin", 1)
+  self:set_option("acc_decay", 0.95)
+  self:set_option("target_acceptance_rate", 0.65)
+  self:set_option("alpha", 0.1)
+  self:set_option("beta", 0.5)
+  self:set_option("var", 1)
+  self:set_option("nsteps", 20)
+  self:set_option("epsilon", 0.01)
+  self:set_option("epsilon_inc", 1.02)
+  self:set_option("epsilon_dec", 0.98)
+  self:set_option("epsilon_min", 1e-04)
+  self:set_option("epsilon_max", 1.0)
+  self:set_option("scale", 1.0)
+  return self
 end
 
 nuts_methods.execute = nuts

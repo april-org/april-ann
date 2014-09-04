@@ -146,10 +146,14 @@ namespace Basics {
 
   template <typename T>
   void SparseMatrix<T>::initialize(int d0, int d1) {
-    if (d1 == 1 && sparse_format == CSR_FORMAT)
-      ERROR_EXIT(128, "Column vector unable with CSR format\n");
-    else if (d0 == 1 && sparse_format == CSC_FORMAT)
-      ERROR_EXIT(128, "Row vector unable with CSC format\n");
+    if (d0 != 1 || d1 != 1) {
+      if (d1 == 1 && sparse_format == CSR_FORMAT) {
+        ERROR_EXIT(128, "Column vector unable with CSR format\n");
+      }
+      else if (d0 == 1 && sparse_format == CSC_FORMAT) {
+        ERROR_EXIT(128, "Row vector unable with CSC format\n");
+      }
+    }
     total_size    = d0*d1;
     matrixSize[0] = d0;
     matrixSize[1] = d1;
