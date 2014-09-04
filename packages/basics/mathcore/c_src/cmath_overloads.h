@@ -278,8 +278,15 @@ namespace AprilMath {
   APRIL_CUDA_EXPORT bool m_relative_equals(const T &a,
                                            const T &b,
                                            const float &TH) {
-    if (a == T(0.0f) && b == T(0.0f)) return true;
-    return 2.0 * ( m_abs(a - b) / (m_abs(a) + m_abs(b)) ) < TH;
+    float zero = TH * 0.01;
+    float a_abs = m_abs(a);
+    float b_abs = m_abs(b);
+    if (a_abs < zero || b_abs < zero) {
+      if (a_abs < zero) return b < zero;
+      else return a < zero;
+    }
+    float diff = 0.5f * ( m_abs(a - b) / (a_abs + b_abs) );
+    return diff < TH;
   }
   
   // DERIVATIVES

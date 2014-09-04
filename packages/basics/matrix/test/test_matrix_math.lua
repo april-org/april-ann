@@ -4,6 +4,18 @@ local T = utest.test
 
 T("MathOpTest",
   function()
+    local a = matrix(2,4,3,{
+                      0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2,
+                      0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4,
+                   })
+    ca = a:select(2,2):complement()
+    check.eq(ca,
+             matrix(2,4,3,{
+                      0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.9, 0.8,
+                      0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+             }):select(2,2))
+    
+    
     local a = matrix.fromString[[
 1 3
 ascii col_major

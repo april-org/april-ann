@@ -20,6 +20,7 @@
  */
 #include "batch_fmeasure_micro_avg_loss_function.h"
 #include "matrix_operations.h"
+#include "smart_ptr.h"
 #include "token_matrix.h"
 
 using namespace AprilMath::MatrixExt::Operations;
@@ -58,21 +59,20 @@ namespace ANN {
     // FMb = ---------------------
     //        sum(o) + b^2 sum(t)
     float dot;
-    if (input_mat->getDimSize(0) == 1 || input_mat->getDimSize(1) == 1)
+    if (input_mat->getDimSize(0) == 1 || input_mat->getDimSize(1) == 1) {
       // is a vector
       dot = matDot(input_mat,target_mat);
+    }
     else {
       // is a matrix
       int dim = (input_mat->getDimSize(0) > input_mat->getDimSize(1)) ? 0 : 1;
       dot = 0.0f;
-      MatrixFloat *aux1=0, *aux2=0;
+      SharedPtr<MatrixFloat> aux1, aux2;
       for (int i=0; i<input_mat->getDimSize(dim); ++i) {
-	aux1 = input_mat->select(dim,i,aux1);
-	aux2 = target_mat->select(dim,i,aux2);
-	dot += matDot(aux1,aux2);
+	aux1 = input_mat->select(dim,i,aux1.get());
+	aux2 = target_mat->select(dim,i,aux2.get());
+	dot += matDot(aux1.get(),aux2.get());
       }
-      delete aux1;
-      delete aux2;
     }
     float input_sum  = matSum(input_mat);
     float target_sum = matSum(target_mat);

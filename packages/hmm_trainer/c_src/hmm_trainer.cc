@@ -594,7 +594,9 @@ namespace HMMs {
         *st_prob_it = probnxt[i];
     }
 
-    if (reest_emission) reest_emission->zeros();
+    if (reest_emission) {
+      AprilMath::MatrixExt::Operations::matZeros(reest_emission);
+    }
   
     // recuperar prob final:
     //printf("recuperar prob final\n");

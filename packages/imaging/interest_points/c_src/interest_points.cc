@@ -31,6 +31,7 @@
 #include <cstdio>
 #include "linear_least_squares.h"
 
+using AprilMath::MatrixExt::Operations::matFill;
 using namespace AprilUtils;
 using namespace Basics;
 using namespace Imaging;
@@ -559,7 +560,7 @@ namespace InterestPoints {
       MatrixFloat::random_access_iterator mat_it(mat);
 
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
 
       ImageFloat  *result = new ImageFloat(result_mat);
 
@@ -632,7 +633,7 @@ namespace InterestPoints {
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
       ImageFloat  *result = new ImageFloat(result_mat);
       float ipat;
       float *ftag = new float[num_classes];
@@ -688,7 +689,7 @@ namespace InterestPoints {
       int dims[3] = {height, width, num_classes};
       MatrixFloat *result_mat = new MatrixFloat(3, dims);
       MatrixFloat::random_access_iterator it(result_mat);
-      result_mat->fill(0.0);
+      matFill(result_mat, 0.0f);
       float ipat; 
       float *ftag = new float[num_classes];
       // Get the softmax index
@@ -746,7 +747,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
       ImageFloat  *result = new ImageFloat(result_mat);
 
       int asc_idx = 0;

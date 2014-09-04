@@ -152,6 +152,6 @@ namespace Stats {
   
   void UniformDistribution::updateParams() {
     AssignRef(diff, high->clone());
-    diff->axpy(-1.0, low);
+    AprilMath::MatrixExt::Operations::matAxpy(diff, -1.0f, low);
   }
 }

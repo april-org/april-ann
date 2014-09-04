@@ -44,7 +44,7 @@ namespace ANN {
 						     MatrixFloat *input_errors,
 						     MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-    Kernels::applyLogistic(output_errors, output_units);
+    Kernels::applyLogisticDerivative(output_errors, output_units);
     matCmul(output_errors, input_errors);
   }
 

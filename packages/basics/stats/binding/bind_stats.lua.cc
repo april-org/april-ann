@@ -405,7 +405,7 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, lambdaf);
     int dims[1] = {1};
     lambda = new MatrixFloat(1, dims, CblasColMajor);
-    lambda->fill(lambdaf);
+    AprilMath::MatrixExt::Operations::matFill(lambda, lambdaf);
   }
   obj = new ExponentialDistribution(lambda);
   LUABIND_RETURN(ExponentialDistribution, obj);

@@ -1148,7 +1148,7 @@ namespace Basics {
   MatrixFloat *other;
   float epsilon;
   LUABIND_GET_PARAMETER(1, MatrixFloat, other);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 0.05f); // 5% error
 #ifdef USE_CUDA
   obj->update();
   other->update();

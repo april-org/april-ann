@@ -22,9 +22,11 @@
 #include "c_string.h"
 #include "error_print.h"
 #include "exponential_distribution.h"
+#include "matrix_operations.h"
 #include "smart_ptr.h"
 #include "utilMatrixFloat.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using AprilUtils::log_float;
 using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;
@@ -58,8 +60,8 @@ namespace Stats {
     }
     MatrixFloat *log_lambda = lambda->clone();
     IncRef(log_lambda);
-    log_lambda->log();
-    lambda_prod = log_float(log_lambda->sum());
+    matLog(log_lambda);
+    lambda_prod = log_float(matSum(log_lambda));
     DecRef(log_lambda);
     if (inv_lambda) {
       DecRef(inv_lambda);
@@ -71,19 +73,19 @@ namespace Stats {
                                               MatrixFloat *result) {
     if (inv_lambda == 0) {
       AssignRef(inv_lambda, lambda->clone());
-      inv_lambda->div(1.0f);
+      matDiv(inv_lambda,1.0f);
     }
     for (MatrixFloat::iterator it(result->begin()); it != result->end(); ++it) {
       float v = static_cast<float>(rng->randDblExc());
       april_assert(v > 0.0f && v < 1.0f);
       *it = v;
     }
-    result->log();
-    result->scal(-1.0f);
+    matLog(result);
+    matScal(result,-1.0f);
     MatrixFloat *result_row = 0;
     for (int i=0; i<result->getDimSize(0); ++i) {
       result_row = result->select(0, i, result_row);
-      result_row->cmul(inv_lambda);
+      matCmul(result_row, inv_lambda);
     }
     delete result_row;
   }
@@ -91,41 +93,36 @@ namespace Stats {
   void ExponentialDistribution::privateLogpdf(const MatrixFloat *x,
                                               MatrixFloat *result) {
     int a,b;
-    if (x->min(a,b) < 0.0f)
+    if (matMin(x,a,b) < 0.0f) {
       ERROR_EXIT(128, "Exponential dist. is not defined for neg. numbers\n");
+    }
     UNUSED_VARIABLE(a);
     UNUSED_VARIABLE(b);
-    result->fill(lambda_prod.log());
-    result->gemv(CblasNoTrans, -1.0f, x, lambda, 1.0f);
+    matFill(result, lambda_prod.log());
+    matGemv(result, CblasNoTrans, -1.0f, x, lambda, 1.0f);
   }
 
   void ExponentialDistribution::privateLogcdf(const MatrixFloat *x,
                                               MatrixFloat *result) {
     int a,b;
-    if (x->min(a,b) < 0.0f)
+    if (matMin(x,a,b) < 0.0f)
       ERROR_EXIT(128, "Exponential dist. is not defined for neg. numbers\n");
     UNUSED_VARIABLE(a);
     UNUSED_VARIABLE(b);
     int dims[2] = { result->getDimSize(0), 1 };
     // FIXME: needs a contiguous result matrix
-    MatrixFloat *rewrapped_result = result->rewrap(dims, 2);
-    IncRef(rewrapped_result);
-    MatrixFloat *x_clone=x->clone(), *x_row=0;
-    IncRef(x_clone);
+    SharedPtr<MatrixFloat> rewrapped_result( result->rewrap(dims, 2) );
+    SharedPtr<MatrixFloat> x_clone( x->clone() ), x_row;
     //
     for (int i=0; i<x->getDimSize(0); ++i) {
-      x_row = x_clone->select(0, i, x_row);
-      x_row->cmul(lambda);
+      x_row = x_clone->select(0, i, x_row.get());
+      matCmul(x_row.get(), lambda);
     }
-    x_clone->scal(-1.0f);
-    x_clone->exp();
-    x_clone->scal(-1.0f);
-    x_clone->log1p();
-    x_clone->sum(1, rewrapped_result);
-    //
-    delete x_row;
-    DecRef(x_clone);
-    DecRef(rewrapped_result);
+    matScal(x_clone.get(), -1.0f);
+    matExp(x_clone.get());
+    matScal(x_clone.get(), -1.0f);
+    matLog1p(x_clone.get());
+    matSum(x_clone.get(), 1, rewrapped_result.get());
   }
 
   StatisticalDistributionBase *ExponentialDistribution::clone() {

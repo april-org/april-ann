@@ -29,6 +29,7 @@
 #include "sparse_matrixFloat.h"
 #include "unused_variable.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using AprilUtils::log_float;
 using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;
@@ -67,9 +68,9 @@ namespace Stats {
   
   void GeneralNormalDistribution::updateParams() {
     // K = 1 / sqrtf( 2*pi^k * |cov| )
-    AssignRef(inv_cov, cov->inv());
+    AssignRef(inv_cov, matInv(cov));
     // TODO: check covariance matrix to be definite positive
-    cov_det = cov->logDeterminant(cov_det_sign);
+    cov_det = matLogDeterminant(cov, cov_det_sign);
     log_float KM_2PI = log_float::from_float(M_2PI).
       raise_to(static_cast<float>(mean->getDimSize(0)));
     log_float denom = (KM_2PI * cov_det).raise_to(0.5f);
@@ -81,7 +82,7 @@ namespace Stats {
   void GeneralNormalDistribution::privateSample(MTRand *rng,
                                                 MatrixFloat *result) {
     if (L == 0) {
-      L = cov->cholesky('L');
+      L = matCholesky(cov, 'L');
       IncRef(L);
     }
     MatrixFloat *z = result->cloneOnlyDims();
@@ -89,36 +90,31 @@ namespace Stats {
     for (MatrixFloat::iterator z_it = z->begin(); z_it != z->end(); ++z_it) {
       *z_it = static_cast<float>(rng->randNorm(0.0, 1.0));
     }
-    result->gemm(CblasNoTrans, CblasNoTrans, 1.0f, z, L, 0.0f);
+    matGemm(result, CblasNoTrans, CblasNoTrans, 1.0f, z, L, 0.0f);
     DecRef(z);
     MatrixFloat *result_row = 0;
     for (int i=0; i<result->getDimSize(0); ++i) {
       result_row = result->select(0, i, result_row);
-      result_row->axpy(1.0, mean);
+      matAxpy(result_row, 1.0f, mean);
     }
     delete result_row;
   }
   
   void GeneralNormalDistribution::privateLogpdf(const MatrixFloat *x,
                                                 MatrixFloat *result) {
-    MatrixFloat *diff = x->clone();
-    IncRef(diff);
+    SharedPtr<MatrixFloat> diff( x->clone() );
     int dims[1] = { x->getDimSize(1) };
-    MatrixFloat *mult = new MatrixFloat(1, dims, CblasColMajor);
-    IncRef(mult);
+    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims, CblasColMajor) );
     // over all samples (bunch_size)
     MatrixFloat::iterator result_it(result->begin());
-    MatrixFloat *diff_row = 0;
+    SharedPtr<MatrixFloat> diff_row;
     for (int i=0; i<x->getDimSize(0); ++i, ++result_it) {
-      diff_row = diff->select(0, i, diff_row);
-      diff_row->axpy(-1.0f, mean);
-      mult->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 0.0f);
-      *result_it = -0.5 * mult->dot(diff_row);
+      diff_row = diff->select(0, i, diff_row.get());
+      matAxpy(diff_row.get(), -1.0f, mean);
+      matGemv(mult.get(), CblasNoTrans, 1.0f, inv_cov, diff_row.get(), 0.0f);
+      *result_it = -0.5 * matDot(mult.get(), diff_row.get());
     }
-    result->scalarAdd( K.log() );
-    delete diff_row;
-    DecRef(diff);
-    DecRef(mult);
+    matScalarAdd(result, K.log() );
   }
 
   void GeneralNormalDistribution::privateLogcdf(const MatrixFloat *x,
@@ -130,20 +126,17 @@ namespace Stats {
 
   void GeneralNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                           MatrixFloat *result) {
-    MatrixFloat *diff = x->clone();
-    IncRef(diff);
+    SharedPtr<MatrixFloat> diff( x->clone() );
     // over all samples (bunch_size)
-    MatrixFloat *diff_row = 0;
-    MatrixFloat *result_row = 0;
+    SharedPtr<MatrixFloat> diff_row;
+    SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<x->getDimSize(0); ++i) {
-      diff_row = diff->select(0, i, diff_row);
-      result_row = result->select(0, i, result_row);
-      diff_row->axpy(-1.0, mean);
-      result_row->gemv(CblasNoTrans, -1.0f, inv_cov, diff_row, 1.0f);
+      diff_row = diff->select(0, i, diff_row.get());
+      result_row = result->select(0, i, result_row.get());
+      matAxpy(diff_row.get(), -1.0f, mean);
+      matGemv(result_row.get(), CblasNoTrans,
+              -1.0f, inv_cov, diff_row.get(), 1.0f);
     }
-    delete diff_row;
-    delete result_row;
-    DecRef(diff);
   }
 
   StatisticalDistributionBase *GeneralNormalDistribution::clone() {
@@ -193,7 +186,7 @@ namespace Stats {
       ERROR_EXIT(256, "Expected diagonal cov sparse matrix\n");
     // K = 1 / sqrtf( 2*pi^k * |cov| )
     AssignRef(inv_cov, cov->clone());
-    inv_cov->div(1.0f);
+    matDiv(inv_cov, 1.0f);
     // inv_cov->pruneSubnormalAndCheckNormal();
     cov_det = log_float::one();
     for (SparseMatrixFloat::iterator it(cov->begin());
@@ -220,44 +213,37 @@ namespace Stats {
                                                  MatrixFloat *result) {
     if (L == 0) {
       L = cov->clone();
-      L->sqrt();
+      matSqrt(L);
       IncRef(L);
     }
-    MatrixFloat *z = result->cloneOnlyDims();
-    IncRef(z);
+    SharedPtr<MatrixFloat> z( result->cloneOnlyDims() );
     for (MatrixFloat::iterator z_it = z->begin(); z_it != z->end(); ++z_it) {
       *z_it = static_cast<float>(rng->randNorm(0.0, 1.0));
     }
-    result->sparseMM(CblasTrans, CblasTrans, CblasTrans, 1.0f, L, z, 0.0f);
-    DecRef(z);
-    MatrixFloat *result_row = 0;
+    matSparseMM(result, CblasTrans, CblasTrans, CblasTrans,
+                1.0f, L, z.get(), 0.0f);
+    SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<result->getDimSize(0); ++i) {
-      result_row = result->select(0, i, result_row);
-      result_row->axpy(1.0, mean);
+      result_row = result->select(0, i, result_row.get());
+      matAxpy(result_row.get(), 1.0f, mean);
     }
-    delete result_row;
   }
   
   void DiagonalNormalDistribution::privateLogpdf(const MatrixFloat *x,
                                                  MatrixFloat *result) {
-    MatrixFloat *diff = x->clone();
-    IncRef(diff);
+    SharedPtr<MatrixFloat> diff( x->clone() );
     int dims[1] = { x->getDimSize(1) };
-    MatrixFloat *mult = new MatrixFloat(1, dims, CblasColMajor);
-    IncRef(mult);
+    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims, CblasColMajor) );
     // over all samples (bunch_size)
     MatrixFloat::iterator result_it(result->begin());
-    MatrixFloat *diff_row = 0;
+    SharedPtr<MatrixFloat> diff_row;
     for (int i=0; i<x->getDimSize(0); ++i, ++result_it) {
-      diff_row = diff->select(0, i, diff_row);
-      diff_row->axpy(-1.0, mean);
-      mult->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 0.0f);
-      *result_it = -0.5 * mult->dot(diff_row);
+      diff_row = diff->select(0, i, diff_row.get());
+      matAxpy(diff_row.get(), -1.0f, mean);
+      matGemv(mult.get(), CblasNoTrans, 1.0f, inv_cov, diff_row.get(), 0.0f);
+      *result_it = -0.5 * matDot(mult.get(), diff_row.get());
     }
-    result->scalarAdd( K.log() );
-    delete diff_row;
-    DecRef(diff);
-    DecRef(mult);
+    matScalarAdd(result, K.log() );
   }
 
   void DiagonalNormalDistribution::privateLogcdf(const MatrixFloat *x,
@@ -269,20 +255,17 @@ namespace Stats {
 
   void DiagonalNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                            MatrixFloat *result) {
-    MatrixFloat *diff = x->clone();
-    IncRef(diff);
+    SharedPtr<MatrixFloat> diff( x->clone() );
     // over all samples (bunch_size)
-    MatrixFloat *diff_row = 0;
-    MatrixFloat *result_row = 0;
+    SharedPtr<MatrixFloat> diff_row;
+    SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<x->getDimSize(0); ++i) {
-      diff_row = diff->select(0, i, diff_row);
-      result_row = result->select(0, i, result_row);
-      diff_row->axpy(-1.0, mean);
-      result_row->gemv(CblasNoTrans, -1.0f, inv_cov, diff_row, 1.0f);
+      diff_row = diff->select(0, i, diff_row.get());
+      result_row = result->select(0, i, result_row.get());
+      matAxpy(diff_row.get(), -1.0f, mean);
+      matGemv(result_row.get(), CblasNoTrans, -1.0f,
+              inv_cov, diff_row.get(), 1.0f);
     }
-    delete diff_row;
-    delete result_row;
-    DecRef(diff);
   }
 
   StatisticalDistributionBase *DiagonalNormalDistribution::clone() {
@@ -321,12 +304,10 @@ namespace Stats {
   
   void StandardNormalDistribution::privateLogpdf(const MatrixFloat *x,
                                                 MatrixFloat *result) {
-    MatrixFloat *x2 = x->clone();
-    IncRef(x2);
-    x2->pow(2);
-    result->fill(K.log());
-    result->axpy(-0.5,  x2);
-    DecRef(x2);
+    SharedPtr<MatrixFloat> x2( x->clone() );
+    matPow(x2.get(), 2.0f);
+    matFill(result, K.log());
+    matAxpy(result, -0.5f,  x2.get());
   }
 
   void StandardNormalDistribution::privateLogcdf(const MatrixFloat *x,
@@ -338,7 +319,7 @@ namespace Stats {
 
   void StandardNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                            MatrixFloat *result) {
-    result->axpy(-1.0, x);
+    matAxpy(result, -1.0f, x);
   }
 
   StatisticalDistributionBase *StandardNormalDistribution::clone() {
@@ -361,12 +342,13 @@ namespace Stats {
     location(location) {
     if (location == 0) {
       location = mean->cloneOnlyDims();
-      location->zeros();
+      matZeros(location);
       this->location = location;
     }
     IncRef(location);
-    if (!location->sameDim(mean))
+    if (!location->sameDim(mean)) {
       ERROR_EXIT(256, "Expected location param with same shape as mean param\n");
+    }
     updateParams();
   }
 
@@ -377,32 +359,26 @@ namespace Stats {
   void GeneralLogNormalDistribution::privateSample(MTRand *rng,
                                                    MatrixFloat *result) {
     GeneralNormalDistribution::privateSample(rng, result);
-    result->exp();
-    MatrixFloat *result_row = 0;
+    matExp(result);
+    SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<result->getDimSize(0); ++i) {
-      result_row = result->select(0, i, result_row);
-      result_row->axpy(1.0, location);
+      result_row = result->select(0, i, result_row.get());
+      matAxpy(result_row.get(), 1.0f, location);
     }
-    delete result_row;
   }
   
   void GeneralLogNormalDistribution::privateLogpdf(const MatrixFloat *x,
                                                    MatrixFloat *result) {
-    MatrixFloat *xlog = x->clone();
-    IncRef(xlog);
-    MatrixFloat *xlog_row = 0;
+    SharedPtr<MatrixFloat> xlog( x->clone() );
+    SharedPtr<MatrixFloat> xlog_row;
     for (int i=0; i<x->getDimSize(0); ++i) {
-      xlog_row = xlog->select(0, i, xlog_row);
-      xlog_row->axpy(-1.0f, location);
+      xlog_row = xlog->select(0, i, xlog_row.get());
+      matAxpy(xlog_row.get(), -1.0f, location);
     }
-    delete xlog_row;
-    xlog->log();
-    GeneralNormalDistribution::privateLogpdf(xlog, result);
-    MatrixFloat *xlog_sum = xlog->sum(1);
-    IncRef(xlog_sum);
-    result->axpy(-1.0f, xlog_sum);
-    DecRef(xlog);
-    DecRef(xlog_sum);
+    matLog(xlog.get());
+    GeneralNormalDistribution::privateLogpdf(matLog(xlog.get()), result);
+    SharedPtr<MatrixFloat> xlog_sum( matSum(xlog.get(), 1) );
+    matAxpy(result, -1.0f, xlog_sum.get());
   }
 
   void GeneralLogNormalDistribution::privateLogcdf(const MatrixFloat *x,
@@ -447,7 +423,7 @@ namespace Stats {
     location(location) {
     if (location == 0) {
       location = mean->cloneOnlyDims();
-      location->zeros();
+      matZeros(location);
       this->location = location;
     }
     IncRef(location);
@@ -463,32 +439,26 @@ namespace Stats {
   void DiagonalLogNormalDistribution::privateSample(MTRand *rng,
                                                     MatrixFloat *result) {
     DiagonalNormalDistribution::privateSample(rng, result);
-    result->exp();
-    MatrixFloat *result_row = 0;
+    matExp(result);
+    SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<result->getDimSize(0); ++i) {
-      result_row = result->select(0, i, result_row);
-      result_row->axpy(1.0, location);
+      result_row = result->select(0, i, result_row.get());
+      matAxpy(result_row.get(), 1.0f, location);
     }
-    delete result_row;
   }
   
   void DiagonalLogNormalDistribution::privateLogpdf(const MatrixFloat *x,
                                                     MatrixFloat *result) {
-    MatrixFloat *xlog = x->clone();
-    IncRef(xlog);
-    MatrixFloat *xlog_row = 0;
+    SharedPtr<MatrixFloat> xlog( x->clone() );
+    SharedPtr<MatrixFloat> xlog_row;
     for (int i=0; i<x->getDimSize(0); ++i) {
-      xlog_row = xlog->select(0, i, xlog_row);
-      xlog_row->axpy(-1.0f, location);
+      xlog_row = xlog->select(0, i, xlog_row.get());
+      matAxpy(xlog_row.get(), -1.0f, location);
     }
-    delete xlog_row;
-    xlog->log();
-    DiagonalNormalDistribution::privateLogpdf(xlog, result);
-    MatrixFloat *xlog_sum = xlog->sum(1);
-    IncRef(xlog_sum);
-    result->axpy(-1.0f, xlog_sum);
-    DecRef(xlog);
-    DecRef(xlog_sum);
+    matLog(xlog.get());
+    DiagonalNormalDistribution::privateLogpdf(xlog.get(), result);
+    SharedPtr<MatrixFloat> xlog_sum( matSum(xlog.get(), 1) );
+    matAxpy(result, -1.0f, xlog_sum.get());
   }
 
   void DiagonalLogNormalDistribution::privateLogcdf(const MatrixFloat *x,

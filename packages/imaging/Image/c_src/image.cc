@@ -31,10 +31,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include "clamp.h"
+#include "floatrgb.h"
 #include "image.h"
 #include "maxmin.h"
+#include "smart_ptr.h"
 #include "unused_variable.h"
-#include "floatrgb.h"
 
 namespace Imaging {
 
@@ -71,7 +72,7 @@ namespace Imaging {
     dims[0] = height;
     dims[1] = width;
     matrix = new Basics::Matrix<T>(2, dims);
-    matrix->fill(value);
+    AprilMath::MatrixExt::Operations::matFill(matrix, value);
     IncRef(matrix);
   }
 
@@ -104,7 +105,7 @@ namespace Imaging {
                                                    matrix->getMajorOrder());
     Image<T>  *img = new Image<T>(mat);
 
-    mat->fill(default_color);
+    AprilMath::MatrixExt::Operations::matFill(mat, default_color);
 
     // averiguar tamanyo subimage a copiar:
     int x_dest=0,        y_dest=0;
@@ -540,17 +541,12 @@ namespace Imaging {
     sizes[0] = AprilUtils::min(src->height() - src_pos[0], this->height() - dst_y);
     sizes[1] = AprilUtils::min(src->width()  - src_pos[1], this->width()  - dst_x);
   
-    Basics::Matrix<T> *src_submat = new Basics::Matrix<T>(src->getMatrix(),
-                                                          src_pos, sizes, false);
-    Basics::Matrix<T> *dst_submat = new Basics::Matrix<T>(this->getMatrix(),
-                                                          dst_pos, sizes, false);
-    const Basics::Matrix<T> *const_src_submat = src_submat;
-    IncRef(src_submat);
-    IncRef(dst_submat);
-    dst_submat->copy(const_src_submat);
-    DecRef(src_submat);
-    DecRef(dst_submat);
-  
+    AprilUtils::SharedPtr< Basics::Matrix<T> > src_submat =
+      new Basics::Matrix<T>(src->getMatrix(), src_pos, sizes, false);
+    AprilUtils::SharedPtr< Basics::Matrix<T> > dst_submat =
+      new Basics::Matrix<T>(this->getMatrix(), dst_pos, sizes, false);
+    AprilMath::MatrixExt::Operations::matCopy(dst_submat.get(), src_submat.get());
+    
     /*
       int x0=0, y0=0;
     
@@ -621,7 +617,7 @@ namespace Imaging {
   {
     Basics::Matrix<T> *new_mat = matrix->clone();
     Image<T> *result = new Image<T>(new_mat);
-    new_mat->complement();
+    AprilMath::MatrixExt::Operations::matComplement(new_mat);
     return result;
   }
 
@@ -711,8 +707,9 @@ namespace Imaging {
     // add padding to image
     Basics::Matrix<T> *padded_this_mat = matrix->padding(2, default_color);
     // execute convolution (D=2, step=NULL)
-    Basics::Matrix<T> *conv_result_mat = padded_this_mat->convolution(2, 0,
-                                                                      kernel_mat);
+    Basics::Matrix<T> *conv_result_mat =
+      AprilMath::MatrixExt::Operations::matConvolution(padded_this_mat,
+                                                       2, 0, kernel_mat);
     // rewrap conv_result_mat to be a 2-dimensional matrix
     Basics::Matrix<T> *result_mat = conv_result_mat->rewrap(rewrap_dims, 2);
     Image<T> *result = new Image<T>(result_mat);
@@ -838,10 +835,10 @@ namespace Imaging {
     using AprilUtils::min;
 
     float c[6];
-    Basics::MatrixFloat *inverse_mat = trans->inv();
-    IncRef(inverse_mat);
+    AprilUtils::SharedPtr<Basics::MatrixFloat> inverse_mat =
+      AprilMath::MatrixExt::Operations::matInv(trans);
     if (!inverse_mat->getIsContiguous()) {
-      AssignRef(inverse_mat, inverse_mat->clone());
+      inverse_mat = inverse_mat->clone();
     }
     const float *inverse = inverse_mat->getRawDataAccess()->getPPALForRead();
     /*
@@ -870,7 +867,6 @@ namespace Imaging {
     int x3 = int(roundf((width()-1) *inverse[0] + (height()-1)*inverse[1] + inverse[2]));
     int y3 = int(roundf((width()-1) *inverse[3] + (height()-1)*inverse[4] + inverse[5]));
 
-    DecRef(inverse_mat);
     inverse = 0;
   
     int xmax = int(roundf(max(x0, max(x1, max(x2, x3)))));
@@ -925,7 +921,7 @@ namespace Imaging {
     typename Basics::Matrix<T>::random_access_iterator mat_it(mat);
     typename Basics::Matrix<T>::const_random_access_iterator this_it(this->getMatrix());
  
-    mat->fill(T(0.0));
+    AprilMath::MatrixExt::Operations::matFill(mat, T(0.0));
 
     //FIXME: This is not working correctly if ancho y alto are not multiples of 2
     int miny = max(sy-alto/2,0);
@@ -954,9 +950,11 @@ namespace Imaging {
   }
   template <typename T>
   Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
-    Basics::Matrix<T> *mat = getMatrix()->substraction(img->getMatrix());
+    Basics::Matrix<T> *mat;
+    mat = AprilMath::MatrixExt::Operations::
+      matSubstraction(getMatrix(), img->getMatrix());
     Image<T>  *res = new Image<T>(mat);
-    mat->clamp(low, high);
+    AprilMath::MatrixExt::Operations::matClamp(mat, low, high);
     return res;
   }
 

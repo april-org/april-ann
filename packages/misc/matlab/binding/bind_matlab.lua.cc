@@ -25,7 +25,7 @@
 #include "bind_matrix_int32.h"
 #include "bind_matrix_double.h"
 
-namespace matlab {
+namespace Matlab {
   
   int elements_iterator_function(lua_State *L) {
     MatFileReader *obj = lua_toMatFileReader(L,1);
@@ -38,7 +38,7 @@ namespace matlab {
     return 1;
   }
 
-} // namespace matlab
+} // namespace Matlab
 
 //BIND_END
 

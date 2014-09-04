@@ -243,7 +243,7 @@ namespace AprilMath {
       Basics::Matrix<T> *matConvolution(Basics::Matrix<T> *obj,
                                         int D, const int *step,
                                         Basics::Matrix<T> *kernel,
-                                        Basics::Matrix<T> *result) {
+                                        Basics::Matrix<T> *result=0) {
         /*
           Matrix<T> **given_unrolled_kernel,
           Matrix<T> **given_unrolled_input) {

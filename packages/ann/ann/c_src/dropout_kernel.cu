@@ -30,7 +30,7 @@ namespace ANN {
                           Basics::MatrixFloat *mask,
                           float value) {
       AprilMath::MatrixExt::
-        MatrixScalarMap2(mask, output,
+        MatrixScalarMap2(output, mask,
                          AprilMath::m_curried_mask<float>(value),
                          output);
     }

@@ -142,7 +142,7 @@ end)
 -- DOT PRODUCT + BIAS + FMEASURE --
 -----------------------------------
 
-T("DOTPRODUCT + BIAS + FM_MICRO_AVG TEST",
+T("DOTPRODUCT + BIAS + LOGISTIC + FM_MICRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -161,7 +161,7 @@ T("DOTPRODUCT + BIAS + FM_MICRO_AVG TEST",
     end)
 end)
 
-T("DOTPRODUCT + BIAS + FM_MACRO_AVG TEST",
+T("DOTPRODUCT + BIAS + LOGISTIC + FM_MACRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -180,7 +180,7 @@ T("DOTPRODUCT + BIAS + FM_MACRO_AVG TEST",
     end)
 end)
 
-T("DOTPRODUCT + BIAS + FM_MACRO_AVG + SOFTMAX TEST",
+T("DOTPRODUCT + BIAS + SOFTMAX + FM_MACRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -234,7 +234,7 @@ end)
 -- AUTO-ENCODER --
 ------------------
 
-T("AUTO-ENCODER TEST",
+T("LOGISTIC AUTO-ENCODER TEST",
   function()
     check(function()
         for i=2,4 do
@@ -264,7 +264,7 @@ end)
 -- CONVOLUTION + ACTF + MAX POOLING --
 --------------------------------------
 
-T("REWRAP + CONVOLUTION + ACTF + MAXPOOLING TEST + FLATTEN TEST",
+T("REWRAP + CONVOLUTION + LOGISTIC + MAXPOOLING TEST + FLATTEN TEST",
   function()
     check(function()
         for n=1,4 do
@@ -378,6 +378,29 @@ T("DOTPRODUCT + TANH TEST",
                     push( ann.components.actf.tanh() )
                               end,
                 "mse", i, o, b, "TANH")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+---------------
+-- HARD TANH --
+---------------
+
+T("DOTPRODUCT + HARDTANH TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.hardtanh() )
+                              end,
+                "mse", i, o, b, "HARDTANH")
             end
           end
         end

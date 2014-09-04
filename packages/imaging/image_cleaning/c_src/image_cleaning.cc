@@ -24,6 +24,7 @@
 #include "maxmin.h"
 #include "image_cleaning.h"
 
+using AprilMath::MatrixExt::Operations::matZeros;
 using namespace Basics;
 
 namespace Imaging {
@@ -38,7 +39,7 @@ namespace Imaging {
     dims[0] = gray_levels;
 
     MatrixFloat *matrix = new MatrixFloat(1,dims);
-    matrix->zeros();
+    matZeros(matrix);
     int total = height*width;
 
     for (int i = 0; i < height; ++i) {
@@ -109,7 +110,7 @@ namespace Imaging {
 
     MatrixFloat *matrix = new MatrixFloat(3,dims);
     april_assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
-    matrix->zeros();
+    matZeros(matrix);
 
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
@@ -163,7 +164,7 @@ namespace Imaging {
     dims[0] = this->gray_levels;
   
     MatrixFloat *matrix = new MatrixFloat(1, dims);
-    matrix->zeros();
+    matZeros(matrix);
 
     // Normalize by size
     int size = (bottom - top + 1)*(right-left + 1);
