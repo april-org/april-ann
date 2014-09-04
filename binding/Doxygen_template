@@ -2,7 +2,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "APRIL-ANN toolkit"
-PROJECT_NUMBER         = 0.3.1
+PROJECT_NUMBER         = 0.4.0
 OUTPUT_DIRECTORY       = 
 CREATE_SUBDIRS         = NO
 DOXYFILE_ENCODING      = UTF-8
@@ -274,7 +274,7 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = 
+PREDEFINED             = USE_CUDA
 EXPAND_AS_DEFINED      = METHODS ARRAY_UNIQUE_PTR \
                          HEADER_MAP1_WRAPPER HEADER_MAP2_WRAPPER \
                          DECL_MAP1_WRAPPER DECL_MAP2_WRAPPER \

@@ -215,6 +215,27 @@ T cblas_sparse_dot(int NNZ,
 namespace AprilMath {
   
   ///////// CBLAS APRIL WRAPPERS ////////
+  
+  /**
+   * @brief Template wrapper for AXPY CBLAS operation.
+   *
+   * It computes y = y + alpha * x, where y and x are vectors with size N.
+   *
+   * @tparam T - The data type. In APRIL-ANN it is available for float, double,
+   * Basics::ComplexF.
+   *
+   * @param N - The number of elements in both vectors.
+   * @param alpha - The alpha value of the AXPY operation.
+   * @param x - The vector x in AXPY operation. It is given as a
+   * GPUMirroredMemoryBlock pointer.
+   * @param x_inc - The stride between two consecutive elements in x vector.
+   * @param x_shift - The first valid position at x pointer.
+   * @param[in,out] y - The vector y in AXPY operation. It is given as a
+   * GPUMirroredMemoryBlock pointer.
+   * @param y_inc - The stride between two consecutive elements in y vector.
+   * @param y_shift - The first valid position at y pointer.
+   * @param use_gpu - Indicates if to use GPU computation or not.
+   */
   template<typename T>
   void doAxpy(int N,
               T alpha,
@@ -239,6 +260,30 @@ namespace AprilMath {
                   const unsigned int stride_y,
                   bool use_gpu);
 
+  /**
+   * @brief Template wrapper for sparse ºqAXPY CBLAS operation.
+   *
+   * It computes y = y + alpha * x, where y is a dense vector and x is a sparse
+   * vector with NNZ number of non-zero elements, and y length is at least NNZ.
+   *
+   * @tparam T - The data type. In APRIL-ANN it is available for float, double,
+   * Basics::ComplexF.
+   *
+   * @param NNZ - The number of non-zero elements in y sparse vector.
+   * @param alpha - The alpha value of the sparse AXPY operation.
+   * @param x_values - A pointer to GPUMirroredMemoryBlock with values of x
+   * sparse vector.
+   * @param x_indices - A pointer to a Int32GPUMirroredMemoryBlock with the indices
+   * of the values in x_value parameter.
+   * @param[in,out] y - The vector y in AXPY operation. It is given as a
+   * GPUMirroredMemoryBlock pointer.
+   * @param y_shift - The first valid position at y pointer.
+   * @param y_inc - The stride between two consecutive elements in y vector.
+   * @param use_gpu - Indicates if to use GPU computation or not.
+   *
+   * @note The sparse vector is given by x_values and x_indices memory blocks,
+   * using a stride of 1 and an offset of 0.
+   */
   template<typename T>
   void doSparseAxpy(int NNZ,
                     T alpha,
@@ -249,6 +294,25 @@ namespace AprilMath {
                     unsigned int y_inc,
                     bool use_gpu);
   
+  
+  /**
+   * @brief Template wrapper for sparse copy CBLAS operation.
+   *
+   * It computes y = x, where y and x are vectors with size N.
+   *
+   * @tparam T - The data type. In APRIL-ANN it is available for float, double,
+   * Basics::ComplexF.
+   *
+   * @param NNZ - The number of non-zero elements in y sparse vector.
+   * @param x - A pointer to GPUMirroredMemoryBlock with values of x vector.
+   * @param x_inc - The stride between consecutive elements in x.
+   * @param x_shift - The position of the first valid element in x pointer.
+   * @param[in,out] y - The vector y in copy operation. It is given as a
+   * GPUMirroredMemoryBlock pointer.
+   * @param y_inc - The stride between two consecutive elements in y vector.
+   * @param y_shift - The first valid position at y pointer.
+   * @param use_gpu - Indicates if to use GPU computation or not.
+   */
   template<typename T>
   void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,
               unsigned int x_inc,
@@ -268,6 +332,21 @@ namespace AprilMath {
                        const unsigned int A_stride,
                        bool use_gpu);
 
+  /**
+   * @brief Template wrapper for dot product operation using CBLAS interface.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param size - The number of elements in both vectors.
+   * @param x - The GPUMirroredMemoryBlock pointer with x vector.
+   * @param x_inc - The stride between consecutive elements in x vector.
+   * @param x_shift - The position of the first valid element in x pointer.
+   * @param[in,out] y - The GPUMirroredMemoryBlock pointer with y vector.
+   * @param y_inc - The stride between consecutive elements in y vector.
+   * @param y_shift - The position of the first valid element in y pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */
   template<typename T>
   T doDot(unsigned int size,
           const GPUMirroredMemoryBlock<T> *x,
@@ -278,6 +357,23 @@ namespace AprilMath {
           unsigned int y_shift,
           bool use_gpu);
 
+  /**
+   * @brief Template wrapper for sparse dot product operation using CBLAS
+   * interface.
+   *
+   * It computes dot(x,y) where x is a sparse vector and y is a dense vector.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param NNZ - The number of non-zero elements in x vector.
+   * @param x_values - The GPUMirroredMemoryBlock pointer with x values.
+   * @param x_indices - The Int32GPUMirroredMemoryBlock pointer with x indices.
+   * @param[in,out] y - The GPUMirroredMemoryBlock pointer with y vector.
+   * @param y_inc - The stride between consecutive elements in y vector.
+   * @param y_shift - The position of the first valid element in y pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */
   template<typename T>
   T doSparseDot(int NNZ,
                 const GPUMirroredMemoryBlock<T> *x_values,
@@ -287,6 +383,35 @@ namespace AprilMath {
                 int y_inc,
                 bool use_gpu);
 
+  /**
+   * @brief Template wrapper for GEMM operation using CBLAS interface.
+   *
+   * GEMM computes C = alpha * op(A) * op(B) + beta * C where A, B and C are
+   * matrices, op is tranposition operator, and alpha and beta are scalars. C is
+   * a matrix with MxN size. op(A) will be MxK and op(B) will be KxN.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param major_type - The expected major_order in the matrices.
+   * @param a_transpose - Indicates if A matrix must be transposed.
+   * @param b_transpose - Indicates if B matrix must be transposed.
+   * @param m - The number of rows in C.
+   * @param n - The number of columns in C.
+   * @param k - The common dimension for A and B.
+   * @param alpha - The alpha scalar of GEMM operation.
+   * @param a - The A matrix given as a GPUMirroredMemoryBlock pointer.
+   * @param a_inc - The stride of the leading dimension of A.
+   * @param b - The B matrix given as a GPUMirroredMemoryBlock pointer.
+   * @param b_inc - The stride of the leading dimension of B.
+   * @param beta - The beta scalar of GEMM operation.
+   * @param[in,out] c - The matrix C given as a GPUMirroredMemoryBlock pointer.
+   * @param c_inc - The stride of the leading dimension of C.
+   * @param a_shift - The first valid position of matrix A pointer.
+   * @param b_shift - The first valid position of matrix B pointer.
+   * @param c_shift - The first valid position of matrix C pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */
   template<typename T>
   void doGemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
               CBLAS_TRANSPOSE b_transpose, int m, int n, int k, T alpha,
@@ -296,6 +421,40 @@ namespace AprilMath {
               unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
               bool use_gpu);
 
+  /**
+   * @brief Template wrapper for sparse MM operation.
+   *
+   * SparseMM computes op(C) = alpha * op(A) * op(B) + beta * C where A is a
+   * sparse matrix given in CSR or CSC formats, B and C are dense matrices, op
+   * is tranposition operator, and alpha and beta are scalars. op(C) is a matrix
+   * with MxN size. op(A) will be MxK and op(B) will be KxN.
+   *
+   * @see Basics::SparseMatrix class documentation.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param major_type - The expected major_order in the dense matrices.
+   * @param sparse_format - The format can be CSR_FORMAT or CSC_FORMAT.
+   * @param a_transpose - Indicates if A matrix must be transposed.
+   * @param b_transpose - Indicates if B matrix must be transposed.
+   * @param c_transpose - Indicates if C matrix must be transposed.
+   * @param m - The number of rows in C.
+   * @param n - The number of columns in C.
+   * @param k - The common dimension for A and B.
+   * @param alpha - The alpha scalar of GEMM operation.
+   * @param a_values - The A matrix values given as a GPUMirroredMemoryBlock pointer.
+   * @param a_indices - The A matrix indices given as a Int32GPUMirroredMemoryBlock pointer.
+   * @param a_first_index - The A matrix first indices given as a Int32GPUMirroredMemoryBlock pointer.
+   * @param b - The B matrix given as a GPUMirroredMemoryBlock pointer.
+   * @param b_inc - The stride of the leading dimension of B.
+   * @param beta - The beta scalar of GEMM operation.
+   * @param[in,out] c - The matrix C given as a GPUMirroredMemoryBlock pointer.
+   * @param c_inc - The stride of the leading dimension of C.
+   * @param b_shift - The first valid position of matrix B pointer.
+   * @param c_shift - The first valid position of matrix C pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */
   template <typename T>
   void doSparseMM(CBLAS_ORDER major_order,
                   SPARSE_FORMAT sparse_format,
@@ -319,6 +478,34 @@ namespace AprilMath {
                   bool use_gpu);
   
   // BLAS FUNCTIONS
+
+  /**
+   * @brief Template wrapper for GEMV CBLAS operation.
+   *
+   * GEMV computex Y = alpha * op(A)*X + beta*Y, where X and Y are vectors and A
+   * is a matrix, op is tranposition operator, and alpha and beta are scalars. A
+   * is of MxN size, Y is a N vector and X is a M vector.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param major_type - The expected major_order in the dense matrices.
+   * @param a_transpose - Indicates if A matrix must be transposed.
+   * @param m - The number of rows in A.
+   * @param n - The number of columns in A.
+   * @param alpha - The alpha scalar of GEMV operation.
+   * @param a - The A matrix given as a GPUMirroredMemoryBlock pointer.
+   * @param a_inc - The stride for the leading dimension of A matrix.
+   * @param x - The X vector given as a GPUMirroredMemoryBlock pointer.
+   * @param x_inc - The stride between consecutive elements of X.
+   * @param beta - The beta scalar of GEMV operation.
+   * @param y[in,out] - The Y vector given as a GPUMirroredMemoryBlock pointer.
+   * @param y_inc - The stride between consecutive elements of Y.
+   * @param a_shift - The first valid position of matrix A pointer.
+   * @param x_shift - The first valid position of matrix X pointer.
+   * @param y_shift - The first valid position of matrix Y pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */
   template<typename T>
   void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
               int m, int n,
@@ -327,7 +514,34 @@ namespace AprilMath {
               T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
               unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
               bool use_gpu);
-  
+
+  /**
+   * @brief Template wrapper for sparse GEMV CBLAS operation.
+   *
+   * GEMV computex Y = alpha * op(A)*X + Y, where X and Y are vectors and A is a
+   * sparse matrix, op is tranposition operator, and alpha and beta are
+   * scalars. A is of MxN size, Y is a N vector and X is a M vector.
+   *
+   * @tparam T - The data type. In APRIl-ANN it could be float, double,
+   * ComplexF.
+   *
+   * @param sparse_format - The sparse format for A matrix, CSR_FORMAT or CSC_FORMAT.
+   * @param a_transpose - Indicates if A matrix must be transposed.
+   * @param m - The number of rows in A.
+   * @param n - The number of columns in A.
+   * @param alpha - The alpha scalar of GEMV operation.
+   * @param a_values - The A matrix values given as a GPUMirroredMemoryBlock pointer.
+   * @param a_indices - The A matrix indices given as a Int32GPUMirroredMemoryBlock pointer.
+   * @param a_first_index - The A matrix first indices given as a Int32GPUMirroredMemoryBlock pointer.
+   * @param x - The X vector given as a GPUMirroredMemoryBlock pointer.
+   * @param x_inc - The stride between consecutive elements of X.
+   * @param beta - The beta scalar of sparse GEMV operation.
+   * @param y[in,out] - The Y vector given as a GPUMirroredMemoryBlock pointer.
+   * @param y_inc - The stride between consecutive elements of Y.
+   * @param x_shift - The first valid position of matrix X pointer.
+   * @param y_shift - The first valid position of matrix Y pointer.
+   * @param use_gpu - Indicates if use GPU or not for the computation.
+   */  
   template<typename T>
   void doSparseGemv(SPARSE_FORMAT sparse_format,
                     CBLAS_TRANSPOSE a_transpose,
