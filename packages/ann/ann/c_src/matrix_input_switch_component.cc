@@ -21,7 +21,6 @@
 #include "error_print.h"
 #include "matrix_input_switch_component.h"  
 #include "unused_variable.h"
-#include "wrapper.h"
 
 using namespace Basics;
 using namespace AprilUtils;

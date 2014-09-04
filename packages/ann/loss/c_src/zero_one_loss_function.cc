@@ -19,10 +19,10 @@
  *
  */
 #include "token_matrix.h"
-#include "zero_one_loss_function.h"
-#include "wrapper.h"
 #include "unused_variable.h"
+#include "zero_one_loss_function.h"
 
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 

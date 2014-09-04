@@ -18,14 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
+#include "activation_function_kernels.h"
 #include "cblas_headers.h"
 #include "log_logistic_actf_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
-using namespace Basics;
-using namespace AprilUtils;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -33,33 +34,20 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   LogLogisticActfANNComponent::~LogLogisticActfANNComponent() { }
 
-  void LogLogisticActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-						    FloatGPUMirroredMemoryBlock *output_units,
-						    unsigned int size,
-						    unsigned int bunch_size) {
-    doApplyLogLogisticActivation(input_units,
-				 output_units,
-				 size,
-				 bunch_size,
-				 use_cuda);
+  void LogLogisticActfANNComponent::applyActivation(MatrixFloat *input_units,
+                                                    MatrixFloat *output_units) {
+    Kernels::applyLogLogistic(output_units, input_units);
   }
 
-  void LogLogisticActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-							FloatGPUMirroredMemoryBlock *output_units,
-							FloatGPUMirroredMemoryBlock *input_errors,
-							FloatGPUMirroredMemoryBlock *output_errors,
-							unsigned int size,
-							unsigned int bunch_size) {
+  void LogLogisticActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+							MatrixFloat *output_units,
+							MatrixFloat *input_errors,
+							MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
     UNUSED_VARIABLE(output_units);
-    UNUSED_VARIABLE(bunch_size);
-    UNUSED_VARIABLE(size);
     // This activation function derivative is cancelled by cross-entropy
-    // derivative. It only could be used with cross entropy loss function.
-    doCopy(input_errors->getSize(),
-	   input_errors, 0, 1,
-	   output_errors, 0, 1,
-	   use_cuda);
+    // derivative. It must be used with cross entropy loss function.
+    matCopy(output_errors, input_errors);
   }
 
   ANNComponent *LogLogisticActfANNComponent::clone() {

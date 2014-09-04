@@ -216,14 +216,18 @@ namespace AprilMath {
   template<typename T>
   APRIL_CUDA_EXPORT T m_sigmoid(const T &numerator,
                                 const T &value) {
-    (numerator) / (m_exp(-(value))+T(1.0f));
+    return (numerator) / (m_exp(-(value))+T(1.0f));
   }
   template<typename T>
   APRIL_CUDA_EXPORT T m_logistic(const T &value) {
     return m_sigmoid(T(1.0f), value);
   }
   template<typename T>
-  APRIL_CUDA_EXPORT T m_antysim_logistic(const T &value) {
+  APRIL_CUDA_EXPORT T m_log_logistic(const T &value) {
+    return ( (value)<T(-10.0f)) ? (value) : (-m_log1p(m_exp(-(value))));
+  }
+  template<typename T>
+  APRIL_CUDA_EXPORT T m_antisym_logistic(const T &value) {
     return m_sigmoid(T(2.0f), value) - T(1.0f);
   }
   template<typename T>
@@ -293,7 +297,7 @@ namespace AprilMath {
   template<typename T>
   APRIL_CUDA_EXPORT T m_softsign_der(const T &after_actf) {
     T value = m_clamp(after_actf, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
-    T aux   = T(1.0f) + absolute_value(value);
+    T aux   = T(1.0f) + m_abs(value);
     return T(1.0f) / (aux * aux);
   }
   template<typename T>

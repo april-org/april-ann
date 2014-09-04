@@ -214,3 +214,85 @@ T("EQandNEQTest", function()
     check.eq(m:clone():eq(m), matrix(3,5):ones())
     check.eq(m:clone():neq(m), matrix(3,5):zeros())
 end)
+
+T("SumTest", function()
+    local m = matrix(2, 3, {1, 2, 3,
+                            4, 5, 6})
+    check.eq(m:sum(), 1+2+3+4+5+6)
+    check.eq(m:sum(1), matrix(1, 3, {1+4, 2+5, 3+6}))
+    check.eq(m:sum(2), matrix(2, 1, {1+2+3, 4+5+6}))
+
+    local m = matrix(2, 4, 3, { 1,  2,  3,    4,  5,  6,    7,  8,  9,   10, 11, 12,
+                               13, 14, 15,   16, 17, 18,   19, 20, 21,   22, 23, 24})
+    check.eq(m:sum(), 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+21+22+23+24)
+    check.eq(m:sum(1), matrix(1, 4, 3, { 1+13,  2+14,  3+15,
+                                         4+16,  5+17,  6+18,
+                                         7+19,  8+20,  9+21,
+                                        10+22, 11+23, 12+24}))
+    check.eq(m:sum(2), matrix(2, 1, 3, {  1+4+7+10,   2+5+8+11,    3+6+9+12,
+                                        13+16+19+22, 14+17+20+23, 15+18+21+24}))
+    check.eq(m:sum(3), matrix(2, 4, 1, { 1+2+3,    4+5+6,    7+8+9,   10+11+12,
+                                        13+14+15, 16+17+18, 19+20+21, 22+23+24}))
+end)
+
+T("MaxTest", function()
+    local m = matrix(2, 3, {1, 4, 2,
+                            6, 3, 5})
+    check.eq(m:max(), 6)
+    check.eq(m:max(1), matrix(1, 3, {6, 4, 5}))
+    check.eq(m:max(2), matrix(2, 1, {4, 6}))
+
+    local m = matrix(2, 4, 3, { 12, 14, 18,   8,  5, 6,    7, 16,  9,   10, 24, 1,
+                                13,  2, 15,   4, 17, 3,   19, 20, 21,   22, 23, 11})
+    check.eq(m:max(), 24)
+    local a,b = m:max(1)
+    check.eq(a, matrix(1, 4, 3, { 13,  14, 18,
+                                  8,   17,  6,
+                                  19,  20, 21,
+                                  22,  24, 11 }))
+    check.eq(b:to_float(), matrix(1, 4, 3, { 1, 0, 0,
+                                             0, 1, 0,
+                                             1, 1, 1,
+                                             1, 0, 1 }))
+    local a,b = m:max(2)
+    check.eq(a, matrix(2, 1, 3, { 12, 24, 18,
+                                  22, 23, 21 }))
+    check.eq(b:to_float(), matrix(2, 1, 3, { 0, 3, 0,
+                                             3, 3, 2 }))
+    local a,b = m:max(3)
+    check.eq(a, matrix(2, 4, 1, { 18, 8, 16, 24,
+                                  15, 17, 21, 23 }))
+    check.eq(b:to_float(), matrix(2, 4, 1, { 2, 0, 1, 1,
+                                             2, 1, 2, 1 }))
+end)
+
+T("MinTest", function()
+    local m = matrix(2, 3, {1, 4, 2,
+                            6, 3, 5})
+    check.eq(m:min(), 1)
+    check.eq(m:min(1), matrix(1, 3, {1, 3, 2}))
+    check.eq(m:min(2), matrix(2, 1, {1, 3}))
+
+    local m = matrix(2, 4, 3, { 12, 14, 18,   8,  5, 6,    7, 16,  9,   10, 24, 1,
+                                13,  2, 15,   4, 17, 3,   19, 20, 21,   22, 23, 11})
+    check.eq(m:min(), 1)
+    local a,b = m:min(1)
+    check.eq(a, matrix(1, 4, 3, { 12,   2, 15,
+                                  4,    5,  3,
+                                  7,   16,  9,
+                                  10,  23,  1 }))
+    check.eq(b:to_float(), matrix(1, 4, 3, { 0, 1, 1,
+                                             1, 0, 1,
+                                             0, 0, 0,
+                                             0, 1, 0 }))
+    local a,b = m:min(2)
+    check.eq(a, matrix(2, 1, 3, {  7,  5,  1,
+                                   4,  2,  3 }))
+    check.eq(b:to_float(), matrix(2, 1, 3, { 2, 1, 3,
+                                             1, 0, 1 }))
+    local a,b = m:min(3)
+    check.eq(a, matrix(2, 4, 1, { 12, 5,  7,  1,
+                                   2,  3, 19, 11 }))
+    check.eq(b:to_float(), matrix(2, 4, 1, { 0, 1, 0, 2,
+                                             1, 2, 0, 2 }))
+end)

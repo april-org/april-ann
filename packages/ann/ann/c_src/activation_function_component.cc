@@ -28,12 +28,14 @@ using namespace AprilMath;
 
 namespace ANN {
   
-  ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
+  ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name,
+                                                                 bool need_flatten) :
     ANNComponent(name, 0, 0, 0),
     input(0),
     output(0),
     error_input(0),
-    error_output(0) {
+    error_output(0),
+    need_flatten(need_flatten) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
@@ -66,8 +68,17 @@ namespace ANN {
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
     AssignRef(output,new TokenMatrixFloat(output_mat));
+    // flatten if needed
+    flat_input_mat = input_mat;
+    flat_output_mat = output_mat;
+    if (need_flatten && input_mat->getNumDim() > 2) {
+      int dims[2] = { input_mat->getDimSize(0),
+                      input_mat->size() / input_mat->getDimSize(0) };
+      flat_input_mat = input_mat->rewrap(dims, 2);
+      flat_output_mat = output_mat->rewrap(dims, 2);
+    }
     // execute apply activations abstract method
-    applyActivation(input_mat, output_mat);
+    applyActivation(flat_input_mat.get(), flat_output_mat.get());
     return output;
   }
     
@@ -97,9 +108,18 @@ namespace ANN {
 		  name.c_str());
     MatrixFloat *input_mat = input->getMatrix();
     MatrixFloat *output_mat = output->getMatrix();
+    // flatten if needed
+    flat_error_input_mat = error_input_mat;
+    flat_error_output_mat = error_output_mat;
+    if (need_flatten && error_input_mat->getNumDim() > 2) {
+      int dims[2] = { error_input_mat->getDimSize(0),
+                      error_input_mat->size() / error_input_mat->getDimSize(0) };
+      flat_error_input_mat = error_input_mat->rewrap(dims, 2);
+      flat_error_output_mat = error_output_mat->rewrap(dims, 2);
+    }
     // apply derivatives at gradients
-    multiplyDerivatives(input_mat, output_mat,
-			error_input_mat, error_output_mat);
+    multiplyDerivatives(flat_input_mat.get(), flat_output_mat.get(),
+			flat_error_input_mat.get(), flat_error_output_mat.get());
     return error_output;
   }
 
@@ -113,6 +133,10 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    flat_input_mat.reset();
+    flat_output_mat.reset();
+    flat_error_input_mat.reset();
+    flat_error_output_mat.reset();
   }
   
   void ActivationFunctionANNComponent::build(unsigned int _input_size,

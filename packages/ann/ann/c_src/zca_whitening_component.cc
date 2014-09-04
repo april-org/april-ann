@@ -24,11 +24,11 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "zca_whitening_component.h"
-#include "wrapper.h"
 #include "utilMatrixFloat.h"
 
 using namespace AprilIO;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 

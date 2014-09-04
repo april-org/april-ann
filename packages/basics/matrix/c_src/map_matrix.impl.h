@@ -60,7 +60,7 @@ namespace AprilMath {
                                       const int N_th,
                                       const unsigned int SIZE_th) {
       april_assert(input != 0 && dest != 0);
-      if (input->size() != dest->size() || !input->sameDim(dest)) {
+      if (input->size() != dest->size()) {
         ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
       }
 #ifdef NO_OMP
@@ -79,7 +79,7 @@ namespace AprilMath {
                 input->getCudaFlag());
       }
       // One dimension.
-      else if (input->getNumDim() == 1) {
+      else if (input->getNumDim() == 1 && dest->getNumDim() == 1) {
         functor(static_cast<unsigned int>(input->size()),
                 input->getRawDataAccess(),
                 static_cast<unsigned int>(input->getStrideSize(0)),
@@ -91,6 +91,9 @@ namespace AprilMath {
       }
       // General case.
       else {
+        if (!input->sameDim(dest)) {
+          ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+        }
         typename Basics::Matrix<T>::span_iterator input_span_it(input);
         typename Basics::Matrix<O>::span_iterator dest_span_it(dest,
                                                                input_span_it.getDimOrder());
@@ -157,8 +160,7 @@ namespace AprilMath {
                                       const int N_th,
                                       const unsigned int SIZE_th) {
       april_assert(input1 != 0 && input2 != 0 && dest != 0);
-      if (input1->size() != dest->size() || input2->size() != dest->size() ||
-          !input1->sameDim(dest) || !input2->sameDim(dest)) {
+      if (input1->size() != dest->size() || input2->size() != dest->size()) {
         ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
       }
 #ifdef NO_OMP
@@ -181,7 +183,8 @@ namespace AprilMath {
                 input1->getCudaFlag());
       }
       // One dimension.
-      else if (input1->getNumDim() == 1) {
+      else if (input1->getNumDim() == 1 && input2->getNumDim() == 1 &&
+               dest->getNumDim() == 1) {
         functor(static_cast<unsigned int>(input1->size()),
                 input1->getRawDataAccess(),
                 static_cast<unsigned int>(input1->getStrideSize(0)),
@@ -196,6 +199,9 @@ namespace AprilMath {
       }
       // General case.
       else {
+        if (!input1->sameDim(dest) || !input2->sameDim(dest)) {
+          ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+        }
         typename Basics::Matrix<T1>::span_iterator input1_span_it(input1);
         typename Basics::Matrix<T2>::span_iterator input2_span_it(input2);
         typename Basics::Matrix<O>::span_iterator dest_span_it(dest,

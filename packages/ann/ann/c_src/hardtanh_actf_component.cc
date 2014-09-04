@@ -43,7 +43,8 @@ namespace ANN {
                                                      MatrixFloat *output_units,
                                                      MatrixFloat *input_errors,
                                                      MatrixFloat *output_errors) {
-    applyHardTanhDerivative(output_errors, input_units, inf, sup);
+    UNUSED_VARIABLE(output_units);
+    Kernels::applyHardTanhDerivative(output_errors, input_units, inf, sup);
     matCmul(output_errors, input_errors);
   }
 

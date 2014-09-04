@@ -23,12 +23,14 @@
 #include <cmath>
 #include <cstring>
 #include <csignal>
-#include <errno.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdio>
+extern "C" {
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+}
 #ifndef NO_OMP
 #include <omp.h>
 #endif
@@ -593,7 +595,10 @@ extern const char *__COMMIT_NUMBER__;
   struct timespec req;
   req.tv_sec  = static_cast<time_t>(seconds);
   req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
-  nanosleep(&req, 0);
+  if (nanosleep(&req, 0) == 1) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, strerror(errno));
+  }
 }
 //BIND_END
 

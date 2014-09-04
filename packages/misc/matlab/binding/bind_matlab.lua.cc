@@ -45,7 +45,7 @@ namespace matlab {
 //BIND_HEADER_H
 #include "matlab.h"
 
-using namespace matlab;
+using namespace Matlab;
 
 typedef MatFileReader::DataElementInterface MatDataElementInterface;
 typedef MatFileReader::TaggedDataElement    MatTaggedDataElement;

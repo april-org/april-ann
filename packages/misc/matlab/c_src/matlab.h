@@ -51,7 +51,7 @@
 #define DATA_TYPE 0
 #define NUMBER_OF_BYTES 1
 
-namespace matlab {
+namespace Matlab {
 
   class MatFileReader : public Referenced {
   public:
@@ -253,5 +253,5 @@ namespace matlab {
   
   };
 
-} // namespace matlab
+} // namespace Matlab
 #endif // MATLAB_H

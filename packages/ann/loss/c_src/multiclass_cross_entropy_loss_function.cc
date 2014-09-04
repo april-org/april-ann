@@ -18,9 +18,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
+#include "cmath_overloads.h"
 #include "multiclass_cross_entropy_loss_function.h"
+#include "loss_kernels.h"
+#include "token_matrix.h"
 
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::LossOperations;
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -47,7 +52,7 @@ namespace ANN {
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    matMultiClassCrossEntropy(loss_output, input, target, NEAR_ZERO);
+    matMultiClassCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
     return loss_output;
   }
 

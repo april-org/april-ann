@@ -258,11 +258,11 @@ Wiki documentation
 Doxygen documentation
 ---------------------
 
-The documentation of the master branch will be mantained as updated as possible
+The documentation of the devel branch will be mantained as updated as possible
 in the following links:
 
-- [Developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
-- [Reference manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
+- [C/C++ developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
+- [C/C++ binding manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
 
 However, you can produce the Doxygen documentation of the branch where
 you are working by using the makefile's `document` target. Please, note that
@@ -277,21 +277,24 @@ $ open doxygen_doc/developer/html/index.html
 The last command can be substituted by you opening the indicated
 location in your prefered web browser ;)
 
-LINUX installation
-------------------
+LINUX dependencies installation
+-------------------------------
 
-Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
-libopenmp-dev or execute: `$ ./DEPENDENCIES-INSTALLER.sh`
+Execute: `$ ./DEPENDENCIES-INSTALLER.sh`
 
-MAC OS X installation
----------------------
+If your distribution is not supported (currently only Ubuntu has support), then
+install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
+libopenmp-dev, libzip-dev, liblua5.2-dev.
+
+MAC OS X dependencies installation
+----------------------------------
 
 Via MacPorts:
 
 - Install [MacPorts](http://www.macports.org/)
 - Execute `$ ./DEPENDENCIES-INSTALLER.sh`
 
-Or manually:
+Or via HomeBrew:
 
-- Install libpng, from [sourceforge](http://sourceforge.net/projects/libpng/files/). Follow INSTALL information.
-- Install findutils, from [GNU](http://ftp.gnu.org/pub/gnu/findutils/). Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
+- Install [Homebrew](http://brew.sh/)
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`

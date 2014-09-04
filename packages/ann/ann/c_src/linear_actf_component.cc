@@ -21,11 +21,11 @@
 #include "unused_variable.h"
 #include "cblas_headers.h"
 #include "linear_actf_component.h"
-#include "wrapper.h"
 
-using namespace Basics;
-using namespace AprilUtils;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -33,28 +33,18 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   LinearActfANNComponent::~LinearActfANNComponent() { }
 
-  void LinearActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-					       FloatGPUMirroredMemoryBlock *output_units,
-					       unsigned int size,
-					       unsigned int bunch_size) {
-    doCopy(size*bunch_size,
-	   input_units, 0, 1,
-	   output_units, 0, 1,
-	   use_cuda);
+  void LinearActfANNComponent::applyActivation(Basics::MatrixFloat *input_units,
+					       Basics::MatrixFloat *output_units) {
+    matCopy(output_units, input_units);
   }
   
-  void LinearActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						   FloatGPUMirroredMemoryBlock *output_units,
-						   FloatGPUMirroredMemoryBlock *input_errors,
-						   FloatGPUMirroredMemoryBlock *output_errors,
-						   unsigned int size,
-						   unsigned int bunch_size) {
+  void LinearActfANNComponent::multiplyDerivatives(Basics::MatrixFloat *input_units,
+						   Basics::MatrixFloat *output_units,
+						   Basics::MatrixFloat *input_errors,
+						   Basics::MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
     UNUSED_VARIABLE(output_units);
-    doCopy(size*bunch_size,
-	   input_errors, 0, 1,
-	   output_errors, 0, 1,
-	   use_cuda);
+    matCopy(output_errors, input_errors);
   }
 
   ANNComponent *LinearActfANNComponent::clone() {

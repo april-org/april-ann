@@ -38,7 +38,7 @@ using namespace AprilUtils;
 using namespace AprilMath;
 using namespace Basics;
 
-namespace matlab {
+namespace Matlab {
 
   int inflate(const void *src, int srcLen, void *dst, int dstLen) {
     z_stream strm;
@@ -968,4 +968,4 @@ namespace matlab {
     return ret;
   }
 
-} // namespace matlab
+} // namespace Matlab

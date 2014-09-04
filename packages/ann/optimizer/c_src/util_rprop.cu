@@ -18,14 +18,29 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "cuda_utils.h"
+#include "map_matrix.impl.h"
 #include "util_rprop.h"
-#include "wrapper.h"
 
 using Basics::MatrixFloat;
 
+
 namespace ANN {
-  namespace optimizer {
-    // FIXME: MAKE A CUDA IMPLEMENTATION
+  namespace Optimizer {
+
+    namespace Kernels {
+      struct RPropKernel {
+        float eta_minus;
+        float eta_plus;
+        RPropKernel(float eta_minus, float eta_plus) : eta_minus(eta_minus),
+                                                       eta_plus(eta_plus) {
+        }
+        APRIL_CUDA_EXPORT float operator()(const float &a, const float &b) {
+          return (a != b) ? eta_minus : eta_plus;
+        }
+      };
+    }
+
     void UtilRProp::step(MatrixFloat *steps,
 			 MatrixFloat *old_sign,
 			 MatrixFloat *sign,
@@ -35,17 +50,10 @@ namespace ANN {
       april_assert(steps->getNumDim() == 2);
       april_assert(steps->getMajorOrder() == CblasColMajor);
       //
-      MatrixFloat::col_major_iterator steps_it(steps->begin());
-      MatrixFloat::const_col_major_iterator old_sign_it(old_sign->begin());
-      MatrixFloat::const_col_major_iterator sign_it(sign->begin());
-      //
-      while(steps_it != steps->end()) {
-	(*steps_it) *= (*old_sign_it != *sign_it) ? eta_minus : eta_plus;
-	//
-	++steps_it;
-	++old_sign_it;
-	++sign_it;
-      }
+      AprilMath::MatrixExt::
+        MatrixScalarMap2(old_sign, sign,
+                         Kernels::RPropKernel(eta_minus, eta_plus),
+                         steps);
     }
   }
 }

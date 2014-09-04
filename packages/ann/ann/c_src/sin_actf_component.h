@@ -32,16 +32,12 @@ namespace ANN {
     APRIL_DISALLOW_COPY_AND_ASSIGN(SinActfANNComponent);
     
   protected:
-    virtual void applyActivation(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
-				 AprilMath::FloatGPUMirroredMemoryBlock *output_units,
-				 unsigned int size,
-				 unsigned int bunch_size);
-    virtual void multiplyDerivatives(AprilMath::FloatGPUMirroredMemoryBlock *input_units,
-				     AprilMath::FloatGPUMirroredMemoryBlock *output_units,
-				     AprilMath::FloatGPUMirroredMemoryBlock *input_errors,
-				     AprilMath::FloatGPUMirroredMemoryBlock *output_errors,
-				     unsigned int size,
-				     unsigned int bunch_size);
+    virtual void applyActivation(Basics::MatrixFloat *input_units,
+				 Basics::MatrixFloat *output_units);
+    virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
+				     Basics::MatrixFloat *output_units,
+				     Basics::MatrixFloat *input_errors,
+				     Basics::MatrixFloat *output_errors);
   public:
     SinActfANNComponent(const char *name);
     virtual ~SinActfANNComponent();

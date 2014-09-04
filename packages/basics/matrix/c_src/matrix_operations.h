@@ -1128,7 +1128,7 @@ namespace AprilMath {
               int aux, argmax_raw_pos;
               AprilUtils::SharedPtr< Basics::Matrix<T> >
                 current( const_cast<Basics::Matrix<T>*>(obj)->select(dim, i) );
-              current->max(aux, argmax_raw_pos);
+              matMax(current.get(), aux, argmax_raw_pos);
               if (argmax) argmax[i] = argmax_raw_pos;
             }
           }

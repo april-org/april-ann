@@ -19,9 +19,8 @@
  *
  */
 #include "matrix_component.h"  
-#include "unused_variable.h"
 #include "token_sparse_matrix.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
 using namespace Basics;
 using namespace AprilUtils;

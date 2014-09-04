@@ -124,7 +124,7 @@ namespace AprilMath {
         
         /////////////////////////////////////////////////////////////////////////
         
-      } // namespace Functors
+      } // namespace Kernels
 
       void matCrossEntropy(Basics::MatrixFloat *output,
                            const Basics::MatrixFloat *input,

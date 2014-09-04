@@ -23,7 +23,7 @@
 
 #include "matrixFloat.h"
 namespace ANN {
-  namespace optimizer {
+  namespace Optimizer {
     class UtilRProp : public Referenced {
     public:
       static void step(Basics::MatrixFloat *steps,

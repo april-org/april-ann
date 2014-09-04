@@ -23,7 +23,7 @@
 
 #include "matrixFloat.h"
 namespace ANN {
-  namespace optimizer {
+  namespace Optimizer {
     class UtilRegularization : public Referenced {
     public:
       static void L1NormMap(Basics::MatrixFloat *destw,

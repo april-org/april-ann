@@ -141,6 +141,7 @@ namespace AprilMath {
       for (int i=dim+1; i<numDim; ++i) {
         input_w_size[i] = 1;
         result_dims[i] = input_w_num_steps[i] = matrixSize[i];
+        result_size *= result_dims[i];
       }
       typename Basics::Matrix<T>::sliding_window input_w(input,input_w_size.get(),
                                                          0,0,
@@ -222,6 +223,7 @@ namespace AprilMath {
       for (int i=dim+1; i<numDim; ++i) {
         input_w_size[i] = 1;
         result_dims[i] = input_w_num_steps[i] = matrixSize[i];
+        result_size *= result_dims[i];
       }
       typename Basics::Matrix<T>::sliding_window input_w(input,input_w_size.get(),
                                                          0,0,

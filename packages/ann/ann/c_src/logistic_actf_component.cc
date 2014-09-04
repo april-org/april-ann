@@ -18,14 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
+#include "activation_function_kernels.h"
 #include "cblas_headers.h"
 #include "logistic_actf_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
-using namespace Basics;
-using namespace AprilUtils;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -33,30 +34,18 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   LogisticActfANNComponent::~LogisticActfANNComponent() { }
 
-  void LogisticActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-						 FloatGPUMirroredMemoryBlock *output_units,
-						 unsigned int size,
-						 unsigned int bunch_size) {
-    doApplyLogisticActivation(input_units,
-			      output_units,
-			      size,
-			      bunch_size,
-			      use_cuda);
+  void LogisticActfANNComponent::applyActivation(MatrixFloat *input_units,
+						 MatrixFloat *output_units) {
+    Kernels::applyLogistic(output_units, input_units);
   }
   
-  void LogisticActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						     FloatGPUMirroredMemoryBlock *output_units,
-						     FloatGPUMirroredMemoryBlock *input_errors,
-						     FloatGPUMirroredMemoryBlock *output_errors,
-						     unsigned int size,
-						     unsigned int bunch_size) {
+  void LogisticActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+						     MatrixFloat *output_units,
+						     MatrixFloat *input_errors,
+						     MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-    doMultiplyLogisticDerivatives(output_units,
-				  input_errors,
-				  output_errors,
-				  size,
-				  bunch_size,
-				  use_cuda);
+    Kernels::applyLogistic(output_errors, output_units);
+    matCmul(output_errors, input_errors);
   }
 
   ANNComponent *LogisticActfANNComponent::clone() {

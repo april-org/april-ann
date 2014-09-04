@@ -25,10 +25,10 @@
 #include "token_matrix.h"
 #include "unused_variable.h"
 #include "utilMatrixFloat.h"
-#include "wrapper.h"
 
 using namespace AprilIO;
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -72,7 +72,7 @@ namespace ANN {
     for (int i=0; i<U_S_epsilon->getDimSize(1); ++i, ++Sit) {
       april_assert(Sit != this->S->end());
       aux_mat = U_S_epsilon->select(1, i, aux_mat);
-      aux_mat->scal( 1/sqrtf( (*Sit) + epsilon ) );
+      matScal(aux_mat, 1/sqrtf( (*Sit) + epsilon ) );
     }
     delete aux_mat;
     //

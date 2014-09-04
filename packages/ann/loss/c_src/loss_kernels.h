@@ -42,7 +42,7 @@ namespace AprilMath {
                           const Basics::MatrixFloat *input,
                           const Basics::MatrixFloat *target,
                           float near_zero,
-                          int size);
+                          float inv_n);
       
       void matMultiClassCrossEntropy(Basics::MatrixFloat *output,
                                      const Basics::MatrixFloat *input,

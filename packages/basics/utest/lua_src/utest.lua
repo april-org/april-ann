@@ -161,7 +161,12 @@ utest.test = function(name, test_func)
   assert( type(name) == "string", "Needs a string as first argument" )
   assert( type(test_func) == "function", "Needs a function as second argument")
   test_name = name
-  test_func()
+  local ok = xpcall(test_func,debug.traceback)
+  if not ok then 
+    write(1, "Test %s: %sexecutionfailure%s\n", test_name,
+          ansi.fg.bright_red, ansi.fg.default)
+    failed = failed + 1
+  end
   test_name = NONAMED
 end
 --

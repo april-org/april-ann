@@ -24,6 +24,7 @@
 
 #include "ann_component.h"
 #include "MersenneTwister.h"
+#include "smart_ptr.h"
 #include "token_matrix.h"
 
 namespace ANN {
@@ -33,6 +34,11 @@ namespace ANN {
   class ActivationFunctionANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
     Basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
+    bool need_flatten;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_input_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_output_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_input_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_output_mat;
   protected:
     virtual void applyActivation(Basics::MatrixFloat *input_units,
 				 Basics::MatrixFloat *output_units) = 0;
@@ -41,7 +47,7 @@ namespace ANN {
 				     Basics::MatrixFloat *input_errors,
 				     Basics::MatrixFloat *output_errors) = 0;
   public:
-    ActivationFunctionANNComponent(const char *name=0);
+    ActivationFunctionANNComponent(const char *name=0, bool need_flatten=false);
     virtual ~ActivationFunctionANNComponent();
     
     virtual Basics::Token *getInput() { return input; }
