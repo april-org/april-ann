@@ -115,7 +115,8 @@ namespace AprilMath {
     INSTANTIATE_MATRIX_SCALAR_REDUCE_MINMAX(float, m_float_minmax_t);
     
     INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(float, m_float_binary_float_map_t);
-    INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(ComplexF, m_complexf_binary_complexf_map_t);
+
+    INSTANTIATE_MATRIX_SCALAR_REDUCE1(ComplexF, m_complexf_binary_complexf_map_t);
     
   } // namespace MatrixExt
 } // namespace AprilMath

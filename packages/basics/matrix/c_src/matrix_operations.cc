@@ -51,6 +51,13 @@ namespace AprilMath {
         }
         
       } // namespace Generic
+
+      template <>
+      ComplexF matSum(const Basics::Matrix<ComplexF> *obj) {
+        return MatrixScalarReduce1<ComplexF>(obj,
+                                             (m_complexf_binary_complexf_map_t)r_add<ComplexF>,
+                                             ComplexF(0.0f,0.0f));
+      }
       
       // Specialization for char
       template <>

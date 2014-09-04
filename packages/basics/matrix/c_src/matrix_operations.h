@@ -1312,6 +1312,9 @@ namespace AprilMath {
         return MatrixScalarSumReduce1<T>(obj, (BINARY_SCALAR_CAST)r_add<T>);
       }
 
+      template <>
+      ComplexF matSum(const Basics::Matrix<ComplexF> *obj);
+
       template <typename T>
       T matSum(const Basics::SparseMatrix<T> *obj) {
         return SparseMatrixScalarReduce1<T>(obj,
