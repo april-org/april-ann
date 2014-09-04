@@ -20,6 +20,7 @@
  */
 #include "cuda_utils.h"
 #include "map_matrix.impl.h"
+#include "smart_ptr.h"
 #include "util_rprop.h"
 
 using Basics::MatrixFloat;
@@ -49,11 +50,13 @@ namespace ANN {
       april_assert(steps->sameDim(old_sign) && steps->sameDim(sign));
       april_assert(steps->getNumDim() == 2);
       april_assert(steps->getMajorOrder() == CblasColMajor);
+      AprilUtils::SharedPtr<MatrixFloat> eta_values( steps->cloneOnlyDims() );
       //
       AprilMath::MatrixExt::
         MatrixScalarMap2(old_sign, sign,
                          Kernels::RPropKernel(eta_minus, eta_plus),
-                         steps);
+                         eta_values.get());
+      AprilMath::MatrixExt::Operations::matCmul(steps, eta_values.get());
     }
   }
 }
