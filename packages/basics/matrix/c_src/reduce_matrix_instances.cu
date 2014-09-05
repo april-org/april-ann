@@ -86,7 +86,15 @@
                                                    Basics::Matrix< TYPE >*, \
                                                    unsigned int,        \
                                                    int,                 \
-                                                   unsigned int)        \
+                                                   unsigned int)
+
+#define INSTANTIATE_MATRIX_SPAN_SUM_REDUCE(TYPE,OP)                     \
+  template TYPE MatrixSpanSumReduce1< TYPE, OP >(Basics::Matrix<TYPE> const*, \
+                                                 const OP &,            \
+                                                 Basics::Matrix< TYPE >*, \
+                                                 unsigned int,          \
+                                                 int,                   \
+                                                 unsigned int)
     
 namespace AprilMath {  
   namespace MatrixExt {
@@ -117,6 +125,9 @@ namespace AprilMath {
     INSTANTIATE_MATRIX_SCALAR_SUM_REDUCE(float, m_float_binary_float_map_t);
 
     INSTANTIATE_MATRIX_SCALAR_REDUCE1(ComplexF, m_complexf_binary_complexf_map_t);
+    
+    INSTANTIATE_MATRIX_SPAN_SUM_REDUCE(float, Functors::SpanSumReductor<float>);
+    INSTANTIATE_MATRIX_SPAN_SUM_REDUCE(double, Functors::SpanSumReductor<double>);
     
   } // namespace MatrixExt
 } // namespace AprilMath

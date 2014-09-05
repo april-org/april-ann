@@ -69,6 +69,22 @@ namespace AprilMath {
         }
       };
       
+      template<typename T>
+      struct SpanSumReductor {
+        T operator()(unsigned int N,
+                     const GPUMirroredMemoryBlock<T> *input,
+                     unsigned int input_stride,
+                     unsigned int input_shift,
+                     bool use_cuda,
+                     const T &zero,
+                     GPUMirroredMemoryBlock<T> *dest=0,
+                     unsigned int dest_raw_pos=0) const {
+          UNUSED_VARIABLE(zero);
+          return sumReduceCall(N, input, input_stride, input_shift,
+                               use_cuda, dest, dest_raw_pos);
+        }
+      };
+      
     } // namespace Functors
     
     ///////// BASIC MAP FUNCTIONS /////////
@@ -1309,7 +1325,7 @@ namespace AprilMath {
     
       template <typename T>
       T matSum(const Basics::Matrix<T> *obj) {
-        return MatrixScalarSumReduce1<T>(obj, (BINARY_SCALAR_CAST)r_add<T>);
+        return MatrixSpanSumReduce1<T>(obj, Functors::SpanSumReductor<T>());
       }
 
       template <>

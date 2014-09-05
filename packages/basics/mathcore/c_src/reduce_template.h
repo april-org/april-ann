@@ -22,6 +22,7 @@
 #ifndef REDUCE_TEMPLATE_H
 #define REDUCE_TEMPLATE_H
 
+#include "cmath_overloads.h"
 #include "cuda_kernel_templates.h"
 #include "cuda_utils.h"
 #include "gpu_mirrored_memory_block.h"
@@ -87,6 +88,66 @@ namespace AprilMath {
       const T *v_mem = input->getPPALForRead() + input_shift;
       for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
         result = reduce_op(result, *v_mem);
+      }
+      if (dest != 0) {
+        T *dest_ptr = dest->getPPALForWrite() + dest_shift;
+        *dest_ptr = result;
+      }
+#ifdef USE_CUDA
+    }
+#endif
+    return result;
+  }
+
+  /**
+   * @brief Performs a sum reduction over a vector and stores its result at
+   * another vector.
+   *
+   * It has been specialized because works betwen 2 and 3 times faster using
+   * operator += than using the AprilMath::r_add function template.
+   *
+   * @tparam T - The type for input and output vectors.
+   *
+   * @param input - The input vector.
+   *
+   * @param input_stride - The stride between consecutive values at input.
+   *
+   * @param input_shift - The first valid position at input vector.
+   *
+   * @param dest - The output vector.
+   *
+   * @param dest_shift - The first valid position at dest vector.
+   *
+   * @note Only the position located at dest_shift will be written in dest
+   * vector.
+   */
+  template<typename T>
+  T sumReduceCall(unsigned int N,
+                  const GPUMirroredMemoryBlock<T> *input,
+                  unsigned int input_stride,
+                  unsigned int input_shift,
+                  bool use_gpu,
+                  GPUMirroredMemoryBlock<T> *dest=0,
+                  unsigned int dest_shift=0) {
+    const T zero(0.0f);
+    T result(zero);
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+    if (use_gpu) {
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > cuda_dest(dest);
+      if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<T>(1);
+      CUDA::genericCudaReduceCall(N, input, input_stride, input_shift, zero,
+                                  cuda_dest.get(), dest_shift,
+                                  r_add<T>);
+      cuda_dest->getValue(dest_shift, result);
+    }
+    else {
+#endif
+      const T *v_mem = input->getPPALForRead() + input_shift;
+      for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
+        result += *v_mem;
       }
       if (dest != 0) {
         T *dest_ptr = dest->getPPALForWrite() + dest_shift;
