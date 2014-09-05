@@ -11,6 +11,9 @@ package `basics/utest`, and for C++ unit testing the package `basics/gtest`.
 At the end of this document there are information about Doxygen documentation
 which can be useful for C/C++ developing. For Lua developing use the wiki.
 
+It is possible to make a pull request directly to `master` branch for bug or
+memory leak solving.
+
 Requirements
 ------------
 
