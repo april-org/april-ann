@@ -51,7 +51,7 @@ namespace Basics {
     const T& operator[] (unsigned int i) const { return vec[i]; }
     AprilUtils::vector<T> &getContainer() { return vec; }
     const AprilUtils::vector<T> &getContainer() const { return vec; }
-    void push_back(T &data) { vec.push_back(data); }
+    void push_back(T const &data) { vec.push_back(data); }
     T *data() { return vec.begin(); }
     const T *data() const { return vec.begin(); }
     Token *clone() const;
@@ -158,7 +158,7 @@ namespace Basics {
   void TokenVector<Token*>::clear();
 
   template<>
-  void TokenVector<Token*>::push_back(Token *&data);
+  void TokenVector<Token*>::push_back(Token* const &data);
 
   template <>
   TokenVector<Token*>::~TokenVector();
