@@ -22,6 +22,7 @@
 #include <cstdarg>
 #include <cstdlib>
 #include "maxmin.h"
+#include "mystring.h"
 #include "stream.h"
 // #include "stream_memory.h"
 #include "unused_variable.h"
@@ -44,8 +45,10 @@ namespace AprilIO {
   void StreamBuffer::trimInBuffer(const char *delim) {
     if (delim != 0) {
       size_t pos, buf_len;
+      // size_t delim_len = strlen(delim);
       do {
         const char *buf = getInBuffer(buf_len, SIZE_MAX, 0, false);
+        // pos = AprilUtils::strnspn(buf, buf_len, delim, delim_len);
         pos = 0;
         while(pos < buf_len && strchr(delim, buf[pos]) != 0) ++pos;
         moveInBuffer(pos);
@@ -176,6 +179,10 @@ namespace AprilIO {
     if (delim != 0) {
       size_t pos  = in_buffer_pos;
       size_t last = pos + buffer_len;
+      /*
+        pos = in_buffer_pos + AprilUtils::strncspn(in_buffer + pos, buffer_len,
+        delim, strlen(delim));
+      */
       while(pos < last && strchr(delim, in_buffer[pos]) == 0) ++pos;
       if (pos < last && keep_delim) ++pos;
       buffer_len = pos - in_buffer_pos;

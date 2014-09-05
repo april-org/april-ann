@@ -115,13 +115,15 @@ namespace AprilMath {
         if (idx_2 < size) {
           // reduce when both indices are under size bound
           output[y_pos] = reduce_op(input[x_pos], input[x_pos_2], w);
-          if (w == 0) which[y_pos_2] = idx;
-          else which[y_pos_2] = idx_2;
+          // idx+1 and idx_2+1 because in Lua starts at 1
+          if (w == 0) which[y_pos_2] = idx+1;
+          else which[y_pos_2] = idx_2+1;
         }
         else {
           // copy as it is in the input vector
           output[y_pos]  = input[x_pos];
-          which[y_pos_2] = idx;
+          // idx+1 because in Lua starts at 1
+          which[y_pos_2] = idx+1;
         }
       } // if (idx < size)
       // else nothing to do, the data is out of the bounds

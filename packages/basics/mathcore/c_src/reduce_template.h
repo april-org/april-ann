@@ -140,7 +140,8 @@ namespace AprilMath {
       }
       if (which != 0) {
         int32_t *which_ptr = which->getPPALForWrite() + which_shift;
-        *which_ptr = static_cast<int32_t>(best);
+        // best+1 because in Lua it starts at 1
+        *which_ptr = static_cast<int32_t>(best+1);
       }
 #ifdef USE_CUDA
     }

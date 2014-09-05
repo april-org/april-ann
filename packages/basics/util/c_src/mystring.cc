@@ -4,15 +4,17 @@
 
 namespace AprilUtils {
 
-  size_t strnspn(const char *buffer, const char *accept, size_t length) {
-    if (length > 128) {
+#define BUFFER_LENGTH_THRESHOLD 128
+  size_t strnspn(const char *buffer, size_t buffer_length,
+                 const char *accept, size_t accept_length) {
+    if (buffer_length > BUFFER_LENGTH_THRESHOLD && accept_length > 1) {
       char lookup_table[256];
       memset(lookup_table, 0, 256*sizeof(char));
-      for (size_t i=0; accept[i] != '\0'; ++i) {
+      for (size_t i=0; i < accept_length && accept[i] != '\0'; ++i) {
         lookup_table[static_cast<unsigned char>(accept[i])] = 1;
       }
       size_t pos=0;
-      while(pos < length && buffer[pos] != '\0' &&
+      while(pos < buffer_length && buffer[pos] != '\0' &&
             lookup_table[static_cast<unsigned char>(buffer[pos])]) {
         ++pos;
       }
@@ -20,7 +22,7 @@ namespace AprilUtils {
     }
     else {
       size_t pos=0;
-      while(pos < length &&
+      while(pos < buffer_length &&
             buffer[pos] != '\0' &&
             strchr(accept, buffer[pos])) {
         ++pos;
@@ -29,15 +31,16 @@ namespace AprilUtils {
     }
   }
 
-  size_t strncspn(const char *buffer, const char *reject, size_t length) {
-    if (length > 128) {
+  size_t strncspn(const char *buffer, size_t buffer_length,
+                  const char *reject, size_t reject_length) {
+    if (buffer_length > BUFFER_LENGTH_THRESHOLD && reject_length > 1) {
       char lookup_table[256];
       memset(lookup_table, 0, 256*sizeof(char));
-      for (size_t i=0; reject[i] != '\0'; ++i) {
+      for (size_t i=0; i < reject_length && reject[i] != '\0'; ++i) {
         lookup_table[static_cast<unsigned char>(reject[i])] = 1;
       }
       size_t pos=0;
-      while(pos < length && buffer[pos] != '\0' &&
+      while(pos < buffer_length && buffer[pos] != '\0' &&
             !lookup_table[static_cast<unsigned char>(buffer[pos])]) {
         ++pos;
       }
@@ -45,7 +48,7 @@ namespace AprilUtils {
     }
     else {
       size_t pos=0;
-      while(pos < length &&
+      while(pos < buffer_length &&
             buffer[pos] != '\0' &&
             !strchr(reject, buffer[pos])) {
         ++pos;
@@ -53,11 +56,13 @@ namespace AprilUtils {
       return pos;
     }
   }
+#undef BUFFER_LENGTH_THRESHOLD
 
   const char *strnchr(const char *buffer, int c, size_t length) {
     for (size_t i=0; i<length; ++i) {
       if (buffer[i] == c) return buffer + i;
-      // WARNING this function looks the entire buffer if (buffer[i] == '\0') break;
+      // WARNING this function looks the entire buffer.
+      // if (buffer[i] == '\0') break;
     }
     return 0;
   }
@@ -65,7 +70,8 @@ namespace AprilUtils {
   const char *strncchr(const char *buffer, int c, size_t length) {
     for (size_t i=0; i<length; ++i) {
       if (buffer[i] != c) return buffer + i;
-      // WARNING this function looks the entire buffer if (buffer[i] == '\0') break;
+      // WARNING this function looks the entire buffer.
+      // if (buffer[i] == '\0') break;
     }
     return 0;
   }

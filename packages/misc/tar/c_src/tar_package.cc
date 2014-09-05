@@ -188,6 +188,7 @@ namespace TAR {
 
   void TARPackage::decode(const char *block, size_t block_size,
                           Header &header) {
+    UNUSED_VARIABLE(block_size);
     // sanity check
     april_assert(sizeof(Header) - 9*sizeof(size_t) - sizeof(header.pathname) <= block_size);
     size_t pos=0;

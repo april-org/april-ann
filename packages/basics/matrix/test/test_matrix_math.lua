@@ -262,20 +262,20 @@ T("MaxTest", function()
                                   8,   17,  6,
                                   19,  20, 21,
                                   22,  24, 11 }))
-    check.eq(b:to_float(), matrix(1, 4, 3, { 1, 0, 0,
-                                             0, 1, 0,
-                                             1, 1, 1,
-                                             1, 0, 1 }))
+    check.eq(b:to_float(), matrix(1, 4, 3, { 2, 1, 1,
+                                             1, 2, 1,
+                                             2, 2, 2,
+                                             2, 1, 2 }))
     local a,b = m:max(2)
     check.eq(a, matrix(2, 1, 3, { 12, 24, 18,
                                   22, 23, 21 }))
-    check.eq(b:to_float(), matrix(2, 1, 3, { 0, 3, 0,
-                                             3, 3, 2 }))
+    check.eq(b:to_float(), matrix(2, 1, 3, { 1, 4, 1,
+                                             4, 4, 3 }))
     local a,b = m:max(3)
     check.eq(a, matrix(2, 4, 1, { 18, 8, 16, 24,
                                   15, 17, 21, 23 }))
-    check.eq(b:to_float(), matrix(2, 4, 1, { 2, 0, 1, 1,
-                                             2, 1, 2, 1 }))
+    check.eq(b:to_float(), matrix(2, 4, 1, { 3, 1, 2, 2,
+                                             3, 2, 3, 2 }))
 end)
 
 T("MinTest", function()
@@ -293,18 +293,18 @@ T("MinTest", function()
                                   4,    5,  3,
                                   7,   16,  9,
                                   10,  23,  1 }))
-    check.eq(b:to_float(), matrix(1, 4, 3, { 0, 1, 1,
-                                             1, 0, 1,
-                                             0, 0, 0,
-                                             0, 1, 0 }))
+    check.eq(b:to_float(), matrix(1, 4, 3, { 1, 2, 2,
+                                             2, 1, 2,
+                                             1, 1, 1,
+                                             1, 2, 1 }))
     local a,b = m:min(2)
     check.eq(a, matrix(2, 1, 3, {  7,  5,  1,
                                    4,  2,  3 }))
-    check.eq(b:to_float(), matrix(2, 1, 3, { 2, 1, 3,
-                                             1, 0, 1 }))
+    check.eq(b:to_float(), matrix(2, 1, 3, { 3, 2, 4,
+                                             2, 1, 2 }))
     local a,b = m:min(3)
     check.eq(a, matrix(2, 4, 1, { 12, 5,  7,  1,
                                    2,  3, 19, 11 }))
-    check.eq(b:to_float(), matrix(2, 4, 1, { 0, 1, 0, 2,
-                                             1, 2, 0, 2 }))
+    check.eq(b:to_float(), matrix(2, 4, 1, { 1, 2, 1, 3,
+                                             2, 3, 1, 3 }))
 end)

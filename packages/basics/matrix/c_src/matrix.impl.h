@@ -100,6 +100,7 @@ namespace Basics {
       this->stride[i] = stride[i];
       this->matrixSize[i] = matrixSize[i];
     }
+    april_assert(offset >= 0);
   }
 
   /// Default constructor
@@ -128,6 +129,7 @@ namespace Basics {
         ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
                     size(), data->getSize());
     }
+    april_assert(offset >= 0);
   }
 
   /// Constructor for sub-matrix building
@@ -191,6 +193,7 @@ namespace Basics {
       last_raw_pos = computeRawPos(aux_coords);
       delete[] aux_coords;
     }
+    april_assert(offset >= 0);
   }
 
   // Constructor for sub-matrix building from a CONST matrix
@@ -256,6 +259,7 @@ namespace Basics {
       last_raw_pos = computeRawPos(aux_coords);
       delete[] aux_coords;
     }
+    april_assert(offset >= 0);
   }
 
   /// Constructor with variable arguments
@@ -314,6 +318,7 @@ namespace Basics {
         matrixSize[i] = other->matrixSize[i];
       }
     }
+    april_assert(offset >= 0);
   }
 
   template <typename T>
@@ -345,6 +350,7 @@ namespace Basics {
     // THE MMAP POINTER
     obj->mmapped_data.reset( mmapped_data );
     //
+    april_assert(obj->offset >= 0);
     return obj;
   }
 
@@ -731,6 +737,7 @@ namespace Basics {
       //
       result = dest;
     }
+    april_assert(result->offset >= 0);
     return result;
   }
 
