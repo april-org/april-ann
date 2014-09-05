@@ -9,12 +9,8 @@ if [ $UNAME = "Linux" ]; then
             exit 10
         fi
         if [[ $ubuntu_release == "12.04" ]]; then
-	    sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 	    sudo apt-get -qq update
-	    sudo apt-get install -qq gfortran libgfortran3
-	    sudo apt-get install -qq gcc-4.8 g++-4.8
-	    sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-	    sudo apt-get install -qq cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev libzip-dev
+	    sudo apt-get install -qq gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev libzip-dev
             if ! locate liblapacke.so; then
                 cwd=$(pwd)
                 cd /tmp/ &&

@@ -39,7 +39,7 @@
        file = "c_src/*.cc",
        include_dirs = "${include_dirs}",
        dest_dir = "build",
-       flags = "-std=c++11",
+       -- flags = "-std=c++11",
      },
      luac{
        orig_dir = "lua_src",
