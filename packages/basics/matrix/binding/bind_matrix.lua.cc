@@ -1156,8 +1156,12 @@ namespace Basics {
   obj->getRawDataAccess()->getPPALForRead();
   other->getRawDataAccess()->getPPALForRead();
 #endif
-  LUABIND_RETURN(boolean, AprilMath::MatrixExt::Operations::
-                 matEquals(obj, other, epsilon));
+  if (AprilMath::MatrixExt::Operations::matEquals(obj, other, epsilon)) {
+    LUABIND_RETURN(boolean, true);
+  }
+  else {
+    LUABIND_RETURN(boolean, false);
+  }
 }
 //BIND_END
 

@@ -302,21 +302,44 @@ namespace AprilMath {
         }
       }
     };
-
+    
     template<typename T>
     struct m_relative_equals {
       APRIL_CUDA_EXPORT bool operator()(const T &a,
                                         const T &b,
                                         const float &TH) const {
-        float zero = TH * 0.01;
-        float a_abs = AprilMath::m_abs(a);
-        float b_abs = AprilMath::m_abs(b);
-        if (a_abs < zero || b_abs < zero) {
-          if (a_abs < zero) return b < zero;
-          else return a < zero;
+        if (AprilMath::m_isnan(a) && AprilMath::m_isnan(b)) {
+          return true;
         }
-        float diff = 0.5f * ( AprilMath::m_abs(a - b) / (a_abs + b_abs) );
-        return diff < TH;
+        else if (a == b) {
+          return true;
+        }
+        else {
+          const static float ZERO  = 1e-03;
+          float a_abs = AprilMath::m_abs(a);
+          float b_abs = AprilMath::m_abs(b);
+          if (a_abs < ZERO || b_abs < ZERO) {
+            if (a_abs < ZERO && b_abs < ZERO) {
+              return true;
+            }
+            else if (AprilMath::m_abs(a_abs-ZERO)/(a_abs+ZERO) > TH ||
+                     AprilMath::m_abs(b_abs-ZERO)/(b_abs+ZERO) > TH) {
+              return false;
+            }
+            else {
+              return true;
+            }
+          }
+          else {
+            float diff = 2.0f * ( AprilMath::m_abs(a - b) / (a_abs + b_abs) );
+            if (diff < TH) {
+              return true;
+            }
+            else {
+              return false;
+            }
+          }
+        }
       }
     };
     

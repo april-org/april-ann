@@ -1394,12 +1394,18 @@ namespace AprilMath {
         typename Matrix<T>::const_iterator a_it(a->begin());
         typename Matrix<T>::const_iterator b_it(b->begin());
         while(a_it != a->end() && b_it != b->end()) {
-          if (!m_relative_equals(*a_it, *b_it, epsilon)) return false;
+          if (!m_relative_equals(*a_it, *b_it, epsilon)) {
+            return false;
+          }
           ++a_it;
           ++b_it;
         }
-        if (a_it != a->end() || b_it != b->end()) return false;
-        return true;
+        if (a_it == a->end() && b_it == b->end()) {
+          return true;
+        }
+        else {
+          return false;
+        }
       }
 
       template <typename T>

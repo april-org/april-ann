@@ -71,13 +71,13 @@ T("PCATest",
     -- check U matrix with octave computation
     local refU = matrix.fromTabFilename(base_dir.."data/U.gz", "col_major"):
       abs()
-    check(function() return refU:equals(aU:clone():abs() ) end,
+    check(function() return refU:equals(aU:clone():abs(), 0.06) end,
       "U matrix comparison with octave")
 
     -- check V matrix with octave computation
     local refV = matrix.fromTabFilename(base_dir.."data/V.gz", "col_major"):
       transpose():abs()
-    check(function() return refV:equals(aVT:clone():abs()) end,
+    check(function() return refV:equals(aVT:clone():abs(), 0.06) end,
       "V matrix comparison with octave")
 
     -- check S matrix with octave computation
