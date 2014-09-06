@@ -199,8 +199,8 @@ namespace Basics {
         AprilUtils::binarizer::buffer_size_32(this->getDenseCoordinateSize()) +
         3;
     }
-    size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
-    UNUSED_VARIABLE(expected_size);
+    // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
+    // UNUSED_VARIABLE(expected_size);
     if (!stream->isOpened()) {
       ERROR_EXIT(256, "The stream is not prepared\n");
     }

@@ -20,8 +20,7 @@
  */
 #include "cmath_overloads.h"
 #include "cuda_utils.h"
-#include "map_matrix.impl.h"
-#include "maxmin.h"
+#include "map_matrix.h"
 #include "util_regularization.h"
 
 using Basics::MatrixFloat;
@@ -37,8 +36,8 @@ namespace ANN {
         APRIL_CUDA_EXPORT float operator()(const float &x,
                                            const float &y) {
           float result = x;
-          if (y > 0.0f) result = AprilUtils::max(-y, x-value);
-          else if (y < 0.0f) result = AprilUtils::min(-y, x+value);
+          if (y > 0.0f) result = AprilMath::r_max(-y, x-value);
+          else if (y < 0.0f) result = AprilMath::r_min(-y, x+value);
           else if (AprilMath::m_abs(x) < value) result = 0.0f;          
           return result;
         }

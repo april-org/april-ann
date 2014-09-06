@@ -172,14 +172,14 @@ namespace AprilMath {
            it!=result->end(); ++it, ++it2) {
         april_assert(it2 != result2->end());
         input_w.getMatrix(slice.get());
-        MatrixSpanReduceMinMax<float,float>(slice.get(),
-                                            inter_span_red_functor,
-                                            intra_span_red_functor,
-                                            zero,
-                                            result2,
-                                            static_cast<unsigned int>(it2.getRawPos()),
-                                            result,
-                                            static_cast<unsigned int>(it.getRawPos()));
+        MatrixSpanReduceMinMax<T,T>(slice.get(),
+                                    inter_span_red_functor,
+                                    intra_span_red_functor,
+                                    zero,
+                                    result2,
+                                    static_cast<unsigned int>(it2.getRawPos()),
+                                    result,
+                                    static_cast<unsigned int>(it.getRawPos()));
         input_w.next();
       }
       april_assert(it2 == result2->end());

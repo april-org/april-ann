@@ -910,7 +910,8 @@ function formiga.__object__ (t)
 	  if formiga.compiler.global_flags.debug == "yes" then
 	    command[1] = command[1] .. " -g"
           end
-	  local flags = {}
+	  local flags = { }
+	  -- table.insert(flags, "-arch=sm_20")
 	  for _,flag in ipairs(formiga.compiler.extra_flags) do
 	    if not string.match(flag, "arch") and not string.match(flag, "sse") then
   	      if formiga.compiler.global_flags.debug ~= "yes" or not string.match(flag, "%-O[0-9]") then

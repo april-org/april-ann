@@ -20,7 +20,7 @@
  */
 #include "cmath_overloads.h"
 #include "dropout_kernel.h"
-#include "map_matrix.impl.h"
+#include "map_matrix.h"
 #include "matrixFloat.h"
 
 namespace ANN {

@@ -1152,6 +1152,9 @@ namespace Basics {
 #ifdef USE_CUDA
   obj->update();
   other->update();
+  // force to copy to PPAL memory
+  obj->getRawDataAccess()->getPPALForRead();
+  other->getRawDataAccess()->getPPALForRead();
 #endif
   LUABIND_RETURN(boolean, AprilMath::MatrixExt::Operations::
                  matEquals(obj, other, epsilon));

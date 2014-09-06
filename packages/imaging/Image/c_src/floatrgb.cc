@@ -19,7 +19,7 @@
  *
  */
 #include "floatrgb.h"
-#include "map_matrix.impl.h"
+#include "matrix_operations.h"
 
 namespace Imaging {
 

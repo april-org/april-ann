@@ -21,8 +21,8 @@
  */
 #include "cmath_overloads.h"
 #include "loss_kernels.h"
-#include "map_matrix.impl.h"
-#include "reduce_matrix.impl.h"
+#include "map_matrix.h"
+#include "reduce_matrix.h"
 #include "smart_ptr.h"
 
 using namespace AprilMath::MatrixExt::Operations;
@@ -112,7 +112,7 @@ namespace AprilMath {
           
           MultiClassCrossEntropy(float EPSILON) : EPSILON(EPSILON) { }
           
-          float operator()(const float &input, const float &target) const {
+          APRIL_CUDA_EXPORT float operator()(const float &input, const float &target) const {
             float log_o = input;
             float t = m_clamp(target, EPSILON, 1.0f - EPSILON);
             float sum;

@@ -41,11 +41,6 @@ extern "C" {
 #include "unused_variable.h"
 #include <new>
 
-#ifdef USE_CUDA
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#endif
-
 #include "gpu_helper.h"
 #include "error_print.h"
 #include "aligned_memory.h"
@@ -170,7 +165,7 @@ namespace AprilMath {
     void setUpdatedGPU() const {
       status = status | GPU_MASK;
     }
-    
+
     void updateMemPPAL() const {
       if (!getUpdatedPPAL())
         ERROR_EXIT(128, "You need first to update the "
@@ -252,7 +247,7 @@ namespace AprilMath {
 	return false;
       */
       if (mem_gpu == 0) {
-	GPUHelper::initHelper();
+        CUDA::GPUHelper::initHelper();
 	CUresult result;
 	result = cuMemAlloc(&mem_gpu, size);
 	if (result != CUDA_SUCCESS)
@@ -264,7 +259,7 @@ namespace AprilMath {
     
     bool allocMemGPU() {
       if (mem_gpu == 0) {
-	GPUHelper::initHelper();
+	CUDA::GPUHelper::initHelper();
 	CUresult result;
 	result = cuMemAlloc(&mem_gpu, size);
 	if (result != CUDA_SUCCESS)

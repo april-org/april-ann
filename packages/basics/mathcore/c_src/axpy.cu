@@ -26,113 +26,116 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
+  namespace CUDA {
 
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
-                                   int N,
-                                   float *alpha,
-                                   const float *x_mem,
+    cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
+                                     int N,
+                                     float *alpha,
+                                     const float *x_mem,
+                                     unsigned int x_inc,
+                                     float *y_mem,
+                                     unsigned int y_inc) {
+      return cublasSaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
+    }
+
+    cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
+                                     int N,
+                                     double *alpha,
+                                     const double *x_mem,
+                                     unsigned int x_inc,
+                                     double *y_mem,
+                                     unsigned int y_inc) {
+      return cublasDaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
+    }
+
+    cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
+                                     int N,
+                                     ComplexF *alpha,
+                                     const ComplexF *x_mem,
+                                     unsigned int x_inc,
+                                     ComplexF *y_mem,
+                                     unsigned int y_inc) {
+      return cublasCaxpy(handle, N,
+                         reinterpret_cast<const cuComplex*>(alpha),
+                         reinterpret_cast<const cuComplex*>(x_mem), x_inc,
+                         reinterpret_cast<cuComplex*>(y_mem), y_inc);
+    }
+
+    // Cusparse wrappers
+
+    cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+                                         int NNZ,
+                                         float *alpha,
+                                         const float *x_values_mem,
+                                         const int *x_indices_mem,
+                                         float *y_mem) {
+      return cusparseSaxpyi(handle, NNZ, alpha,
+                            x_values_mem, x_indices_mem,
+                            y_mem,
+                            CUSPARSE_INDEX_BASE_ZERO);
+    }
+
+    cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+                                         int NNZ,
+                                         double *alpha,
+                                         const double *x_values_mem,
+                                         const int *x_indices_mem,
+                                         double *y_mem) {
+      return cusparseDaxpyi(handle, NNZ, alpha,
+                            x_values_mem, x_indices_mem,
+                            y_mem,
+                            CUSPARSE_INDEX_BASE_ZERO);
+    }
+
+    cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+                                         int NNZ,
+                                         ComplexF *alpha,
+                                         const ComplexF *x_values_mem,
+                                         const int *x_indices_mem,
+                                         ComplexF *y_mem) {
+      return cusparseCaxpyi(handle, NNZ,
+                            reinterpret_cast<const cuComplex*>(alpha),
+                            reinterpret_cast<const cuComplex*>(x_values_mem),
+                            x_indices_mem,
+                            reinterpret_cast<cuComplex*>(y_mem),
+                            CUSPARSE_INDEX_BASE_ZERO);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    template<typename T>
+    __global__ void axpyLoopKernel(unsigned int N,
+                                   T alpha,
+                                   const T *x_mem,
                                    unsigned int x_inc,
-                                   float *y_mem,
-                                   unsigned int y_inc) {
-    return cublasSaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
-  }
-
-  cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
-                                   int N,
-                                   double *alpha,
-                                   const double *x_mem,
-                                   unsigned int x_inc,
-                                   double *y_mem,
-                                   unsigned int y_inc) {
-    return cublasDaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
-  }
-
-  cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
-                                   int N,
-                                   ComplexF *alpha,
-                                   const ComplexF *x_mem,
-                                   unsigned int x_inc,
-                                   ComplexF *y_mem,
-                                   unsigned int y_inc) {
-    return cublasCaxpy(handle, N,
-                       reinterpret_cast<const cuComplex*>(alpha),
-                       reinterpret_cast<const cuComplex*>(x_mem), x_inc,
-                       reinterpret_cast<cuComplex*>(y_mem), y_inc);
-  }
-
-  // Cusparse wrappers
-
-  cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
-                                       int NNZ,
-                                       float *alpha,
-                                       const float *x_values_mem,
-                                       const int *x_indices_mem,
-                                       float *y_mem) {
-    return cusparseSaxpyi(handle, NNZ, alpha,
-                          x_values_mem, x_indices_mem,
-                          y_mem,
-                          CUSPARSE_INDEX_BASE_ZERO);
-  }
-
-  cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
-                                       int NNZ,
-                                       double *alpha,
-                                       const double *x_values_mem,
-                                       const int *x_indices_mem,
-                                       double *y_mem) {
-    return cusparseDaxpyi(handle, NNZ, alpha,
-                          x_values_mem, x_indices_mem,
-                          y_mem,
-                          CUSPARSE_INDEX_BASE_ZERO);
-  }
-
-  cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
-                                       int NNZ,
-                                       ComplexF *alpha,
-                                       const ComplexF *x_values_mem,
-                                       const int *x_indices_mem,
-                                       ComplexF *y_mem) {
-    return cusparseCaxpyi(handle, NNZ,
-                          reinterpret_cast<const cuComplex*>(alpha),
-                          reinterpret_cast<const cuComplex*>(x_values_mem),
-                          x_indices_mem,
-                          reinterpret_cast<cuComplex*>(y_mem),
-                          CUSPARSE_INDEX_BASE_ZERO);
-  }
-
-  ////////////////////////////////////////////////////////////////////////////
-
-  template<typename T>
-  __global__ void axpyLoopKernel(unsigned int N,
-                                 T alpha,
-                                 const T *x_mem,
-                                 unsigned int x_inc,
-                                 T *y_mem,
-                                 unsigned int y_inc,
-                                 unsigned int times,
-                                 unsigned int x_ld,
-                                 unsigned int y_ld) {
-    unsigned int matrix_x_pos, matrix_y_pos;
-    matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
-    matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
-    if (matrix_x_pos < times && matrix_y_pos < N) {
-      unsigned int index_x = matrix_x_pos*x_ld + matrix_y_pos*x_inc;
-      unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
-      T val = alpha * x_mem[index_x];
-      // This loop is used to synchronize the threads for accessing
-      // the global memory where they write the results. The loop
-      // gets all the values from the threads at the index X in 
-      // the current block, synchronizing the access to Y.
-      for (unsigned int i=0; i<blockDim.x; ++i) {
-        if (i==threadIdx.x) y_mem[index_y] += val;
-        __syncthreads();
+                                   T *y_mem,
+                                   unsigned int y_inc,
+                                   unsigned int times,
+                                   unsigned int x_ld,
+                                   unsigned int y_ld) {
+      unsigned int matrix_x_pos, matrix_y_pos;
+      matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
+      matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
+      if (matrix_x_pos < times && matrix_y_pos < N) {
+        unsigned int index_x = matrix_x_pos*x_ld + matrix_y_pos*x_inc;
+        unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
+        T val = alpha * x_mem[index_x];
+        // This loop is used to synchronize the threads for accessing
+        // the global memory where they write the results. The loop
+        // gets all the values from the threads at the index X in 
+        // the current block, synchronizing the access to Y.
+        for (unsigned int i=0; i<blockDim.x; ++i) {
+          if (i==threadIdx.x) y_mem[index_y] += val;
+          __syncthreads();
+        }
       }
     }
-  }
+
+  } // namespace CUDA
 
 #endif
 
@@ -200,15 +203,16 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       //printf("Doing a saxpy with comp=1 & cuda=1\n");
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForReadAndWrite() + y_shift;
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
-      status = wrapperCublasAxpy(handle, N, &alpha, x_mem, x_inc, y_mem, y_inc);
+      status = CUDA::wrapperCublasAxpy(handle, N, &alpha, x_mem, x_inc,
+                                       y_mem, y_inc);
 
       checkCublasError(status);
     }
@@ -251,7 +255,7 @@ namespace AprilMath {
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForReadAndWrite() + y_shift;
 
-      const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+      const unsigned int MAX_THREADS = CUDA::GPUHelper::getMaxThreadsPerBlock();
       dim3 block, grid;
       // Number of threads on each block dimension
       block.x = min(MAX_THREADS, times);
@@ -263,7 +267,7 @@ namespace AprilMath {
       grid.y = (N/block.y + (N % block.y ? 1 : 0));
       grid.z = 1;
 
-      axpyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      CUDA::axpyLoopKernel<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
         (N, alpha, x_mem, x_inc, y_mem, y_inc, times, x_stride, y_stride);
     }
     else {
@@ -307,18 +311,18 @@ namespace AprilMath {
       if (y_inc != 1)
         ERROR_EXIT(128, "Error, executing sparse AXPY in CUDA with inc != 1\n");
       cusparseStatus_t status;
-      cusparseHandle_t handle = GPUHelper::getSparseHandler();
+      cusparseHandle_t handle = CUDA::GPUHelper::getSparseHandler();
       //printf("Doing a saxpy with comp=1 & cuda=1\n");
       x_values_mem  = x_values->getGPUForRead();
       x_indices_mem = x_indices->getGPUForRead();
       y_mem = y->getGPUForReadAndWrite() + y_shift;
     
-      status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
+      status = cusparseSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCusparseError(status);
 
-      status = wrapperCusparseAxpy(handle, NNZ, &alpha,
-                                   x_values_mem, x_indices_mem,
-                                   y_mem);
+      status = CUDA::wrapperCusparseAxpy(handle, NNZ, &alpha,
+                                         x_values_mem, x_indices_mem,
+                                         y_mem);
     
       checkCusparseError(status);
     }

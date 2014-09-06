@@ -36,37 +36,6 @@ namespace Basics {
 namespace AprilMath {
   
   namespace MatrixExt {
-
-    typedef float(*float_float_span_reduce1_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
-    typedef float(*float_float_span_reduce2_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
-    typedef float(*float_float_span_minmax_reduce_t)(unsigned int,const GPUMirroredMemoryBlock<float> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<int32_t> *,unsigned int,GPUMirroredMemoryBlock<float> *,unsigned int);
-
-    typedef ComplexF(*complexf_complexf_span_reduce2_t)(unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,bool,const ComplexF &,GPUMirroredMemoryBlock<ComplexF> *,unsigned int);
-    
-    typedef float(*complexf_float_span_reduce1_t)(unsigned int,const GPUMirroredMemoryBlock<ComplexF> *,unsigned int,unsigned int,bool,const float &,GPUMirroredMemoryBlock<float> *,unsigned int);
-    
-    
-#define SPAN_REDUCE_CAST(T,O) O(*)(unsigned int,                         \
-                                   const GPUMirroredMemoryBlock<T> *,   \
-                                   unsigned int,                        \
-                                   unsigned int,                        \
-                                   bool,                                \
-                                   const O &,                           \
-                                   GPUMirroredMemoryBlock<O> *,         \
-                                   unsigned int)
-    
-#define SPAN_REDUCE2_CAST(T,O) T(*)(unsigned int,                       \
-                                    const GPUMirroredMemoryBlock<T> *,  \
-                                    unsigned int,                       \
-                                    unsigned int,                       \
-                                    const GPUMirroredMemoryBlock<T> *,  \
-                                    unsigned int,                       \
-                                    unsigned int,                       \
-                                    bool,                               \
-                                    const O &,                          \
-                                    GPUMirroredMemoryBlock<O> *,        \
-                                    unsigned int)
-    
   
     template<typename T, typename OP>
     Basics::Matrix<T> * MatrixScalarReduceOverDimension(Basics::Matrix<T> *input,
@@ -156,5 +125,7 @@ namespace AprilMath {
 
 #undef DEFAULT_N_TH
 #undef DEFAULT_SIZE_TH
+
+#include "reduce_matrix.impl.h"
 
 #endif // MAP_MATRIX_H

@@ -21,7 +21,7 @@
 #include "activation_function_kernels.h"
 #include "cblas_headers.h"
 #include "cmath_overloads.h"
-#include "map_matrix.impl.h"
+#include "map_matrix.h"
 #include "smart_ptr.h"
 
 using namespace AprilMath;
@@ -34,6 +34,12 @@ using namespace AprilMath::MatrixExt::Operations;
 #include "gpu_helper.h"
 
 namespace AprilMath {
+  
+  static __device__ unsigned int getMatrixIndex(unsigned int x,
+                                                unsigned int lda_x,
+                                                unsigned int y) {
+    return x*lda_x + y;
+  }
 
   __global__ void minMaxFirstReduction(const float *input_units,
                                        float *minimums,
@@ -43,11 +49,11 @@ namespace AprilMath {
                                        unsigned int max_y,
                                        unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     unsigned int active_reduction = reduction_top >> 1;
 
     if (matrix_y_pos < max_y) {
@@ -80,11 +86,11 @@ namespace AprilMath {
                                       unsigned int max_y,
                                       unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     unsigned int active_reduction = reduction_top >> 1;
 
     if (matrix_y_pos < max_y) {
@@ -109,11 +115,11 @@ namespace AprilMath {
                                     unsigned int max_y,
                                     unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     unsigned int active_reduction = reduction_top >> 1;
 
     if (matrix_y_pos < max_y) {
@@ -135,11 +141,11 @@ namespace AprilMath {
                                    unsigned int max_y,
                                    unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     unsigned int active_reduction = reduction_top >> 1;
 
     if (matrix_y_pos < max_y) {
@@ -156,7 +162,7 @@ namespace AprilMath {
   __global__ void applyMinimumNorm(float *minimums,
                                    float *maximums,
                                    unsigned int max_x) {
-    unsigned int matrix_x_pos = getArrayIndex(blockIdx, blockDim, threadIdx);
+    unsigned int matrix_x_pos = CUDA::getArrayIndex(blockIdx, blockDim, threadIdx);
     if (matrix_x_pos < max_x)
       if ((maximums[matrix_x_pos] - minimums[matrix_x_pos]) > 30.0f)
         minimums[matrix_x_pos] = maximums[matrix_x_pos] - 30.0f;
@@ -169,14 +175,14 @@ namespace AprilMath {
                                 unsigned int max_y,
                                 unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
       unsigned int index  = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
-      output_units[index] = expf(input_units[index] - data[matrix_y_pos]);
+      output_units[index] = AprilMath::m_exp(input_units[index] - data[matrix_y_pos]);
     }
   }
 
@@ -188,21 +194,22 @@ namespace AprilMath {
                                 unsigned int max_y,
                                 unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
       unsigned int index  = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
       output_units[index] = (input_units[index] -
-                             maximums[matrix_y_pos] - log(sums[matrix_y_pos]));
+                             maximums[matrix_y_pos] -
+                             AprilMath::m_log(sums[matrix_y_pos]));
     }
   }
 
   __global__ void applyInverse(float *sums,
                                unsigned int max_x) {
-    unsigned int matrix_x_pos = getArrayIndex(blockIdx, blockDim, threadIdx);
+    unsigned int matrix_x_pos = CUDA::getArrayIndex(blockIdx, blockDim, threadIdx);
     if (matrix_x_pos < max_x)
       sums[matrix_x_pos] = 1.0f/sums[matrix_x_pos];
   }
@@ -215,11 +222,11 @@ namespace AprilMath {
                              unsigned int max_y,
                              unsigned int lda_x) {
     unsigned int matrix_x_pos, matrix_y_pos;
-    getMatrixIndices(blockIdx,
-                     blockDim,
-                     threadIdx,
-                     matrix_x_pos,
-                     matrix_y_pos);
+    CUDA::getMatrixIndices(blockIdx,
+                           blockDim,
+                           threadIdx,
+                           matrix_x_pos,
+                           matrix_y_pos);
     if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
       unsigned int index  = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
       output_units[index] = ratios[matrix_y_pos] * output_units[index];   
@@ -236,21 +243,21 @@ namespace ANN {
                                  Basics::MatrixFloat *input_units,
                                  float inf, float sup) {
       MatrixScalarMap1(input_units,
-                       m_curried_clamp_der<float>(inf, sup),
+                       AprilMath::m_curried_clamp_der<float>(inf, sup),
                        output_errors);
     }
 
     void applyTanh(Basics::MatrixFloat *output,
                    Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_antisym_logistic<float>),
+                       AprilMath::Functors::m_antisym_logistic<float>(),
                        output);
     }
     
     void applyTanhDerivative(Basics::MatrixFloat *output_errors,
                              Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
-                       static_cast<m_float_unary_float_map_t>(m_antisym_logistic_der<float>),
+                       AprilMath::Functors::m_antisym_logistic_der<float>(),
                        output_errors);
     }
 
@@ -258,63 +265,63 @@ namespace ANN {
     void applyLogistic(Basics::MatrixFloat *output,
                        Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_logistic<float>),
+                       AprilMath::Functors::m_logistic<float>(),
                        output);
     }
     
     void applyLogisticDerivative(Basics::MatrixFloat *output_errors,
                                  Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
-                       static_cast<m_float_unary_float_map_t>(m_logistic_der<float>),
+                       AprilMath::Functors::m_logistic_der<float>(),
                        output_errors);
     }
     
     void applySoftsign(Basics::MatrixFloat *output,
                        Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_softsign<float>),
+                       AprilMath::Functors::m_softsign<float>(),
                        output);
     }
     
     void applySoftsignDerivative(Basics::MatrixFloat *output_errors,
                                  Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
-                       static_cast<m_float_unary_float_map_t>(m_softsign_der<float>),
+                       AprilMath::Functors::m_softsign_der<float>(),
                        output_errors);
     }
 
     void applySoftplus(Basics::MatrixFloat *output,
                        Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_softplus<float>),
+                       AprilMath::Functors::m_softplus<float>(),
                        output);
     }
     
     void applySoftplusDerivative(Basics::MatrixFloat *output_errors,
                                  Basics::MatrixFloat *input_units) {
       MatrixScalarMap1(input_units,
-                       static_cast<m_float_unary_float_map_t>(m_softplus_der<float>),
+                       AprilMath::Functors::m_softplus_der<float>(),
                        output_errors);
     }
 
     void applyReLU(Basics::MatrixFloat *output,
                    Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_relu<float>),
+                       AprilMath::Functors::m_relu<float>(),
                        output);
     }
     
     void applyReLUDerivative(Basics::MatrixFloat *output_errors,
                              Basics::MatrixFloat *input_units) {
       MatrixScalarMap1(input_units,
-                       static_cast<m_float_unary_float_map_t>(m_relu_der<float>),
+                       AprilMath::Functors::m_relu_der<float>(),
                        output_errors);
     }
 
     void applyLogLogistic(Basics::MatrixFloat *output,
                           Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
-                       static_cast<m_float_unary_float_map_t>(m_log_logistic<float>),
+                       AprilMath::Functors::m_log_logistic<float>(),
                        output);
     }
 
@@ -328,7 +335,7 @@ namespace ANN {
         output->getRawDataAccess();
 #ifdef USE_CUDA
       if (input->getCudaFlag()) {
-        unsigned int reduction_size = ceilingPowerOfTwo(size) >> 1;
+        unsigned int reduction_size = AprilUtils::ceilingPowerOfTwo(size) >> 1;
         unsigned int mem_size = reduction_size * bunch_size;
         AprilUtils::SharedPtr<FloatGPUMirroredMemoryBlock> minimums =
           new FloatGPUMirroredMemoryBlock(mem_size);
@@ -345,10 +352,10 @@ namespace ANN {
         unsigned int units_top       = AprilUtils::ceilingPowerOfTwo(size);
         unsigned int top_reduction   = units_top;
         dim3 block, grid;
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
         
-        minMaxFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        minMaxFirstReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (input_units_ptr,
            minimums_ptr,
            maximums_ptr,
@@ -357,9 +364,9 @@ namespace ANN {
            bunch_size,
            bunch_size);
         for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
-          computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
-                                              block, grid);
-          minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+          CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
+                                                    block, grid);
+          minMaxNextReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
             (minimums_ptr,
              maximums_ptr,
              top_reduction,
@@ -367,16 +374,16 @@ namespace ANN {
              bunch_size);
         }
         
-        computeBlockAndGridSizesForArray(bunch_size, block, grid);
-        applyMinimumNorm<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        CUDA::computeBlockAndGridSizesForArray(bunch_size, block, grid);
+        applyMinimumNorm<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (minimums_ptr,
            maximums_ptr,
            bunch_size);
         
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
         
-        applyExpMinus<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        applyExpMinus<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (input_units_ptr,
            output_units_ptr,
            minimums_ptr,
@@ -387,7 +394,7 @@ namespace ANN {
         // We reset the top
         top_reduction = units_top;
         
-        sumFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        sumFirstReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (output_units_ptr,
            sums_ptr,
            top_reduction,
@@ -395,24 +402,24 @@ namespace ANN {
            bunch_size,
            bunch_size);
         for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
-          computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
-                                              block, grid);
-          sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+          CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
+                                                    block, grid);
+          sumNextReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
             (sums_ptr,
              top_reduction,
              bunch_size,
              bunch_size);
         }
         
-        computeBlockAndGridSizesForArray(bunch_size, block, grid);
-        applyInverse<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        CUDA::computeBlockAndGridSizesForArray(bunch_size, block, grid);
+        applyInverse<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (sums_ptr,
            bunch_size);
         
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
         
-        applyRatio<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        applyRatio<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (output_units_ptr,
            sums_ptr,
            size,
@@ -477,7 +484,7 @@ namespace ANN {
         output->getRawDataAccess();
 #ifdef USE_CUDA
       if (input->getCudaFlag()) {
-        unsigned int reduction_size = ceilingPowerOfTwo(size) >> 1;
+        unsigned int reduction_size = AprilUtils::ceilingPowerOfTwo(size) >> 1;
         unsigned int mem_size = reduction_size * bunch_size;
         AprilUtils::SharedPtr<FloatGPUMirroredMemoryBlock> minimums =
           new FloatGPUMirroredMemoryBlock(mem_size);
@@ -491,13 +498,13 @@ namespace ANN {
         float *minimums_ptr          = minimums->getGPUForWrite();
         float *maximums_ptr          = maximums->getGPUForWrite();
         float *sums_ptr              = sums->getGPUForWrite();
-        unsigned int units_top       = ceilingPowerOfTwo(size);
+        unsigned int units_top       = AprilUtils::ceilingPowerOfTwo(size);
         unsigned int top_reduction   = units_top;
         dim3 block, grid;
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
       
-        minMaxFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        minMaxFirstReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (input_units_ptr,
            minimums_ptr,
            maximums_ptr,
@@ -506,9 +513,9 @@ namespace ANN {
            bunch_size,
            bunch_size);
         for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
-          computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
-                                              block, grid);
-          minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+          CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
+                                                    block, grid);
+          minMaxNextReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
             (minimums_ptr,
              maximums_ptr,
              top_reduction,
@@ -516,16 +523,16 @@ namespace ANN {
              bunch_size);
         }
       
-        computeBlockAndGridSizesForArray(bunch_size, block, grid);
-        applyMinimumNorm<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        CUDA::computeBlockAndGridSizesForArray(bunch_size, block, grid);
+        applyMinimumNorm<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (minimums_ptr,
            maximums_ptr,
            bunch_size);
 
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
 
-        applyExpMinus<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        applyExpMinus<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (input_units_ptr,
            output_units_ptr,
            maximums_ptr,
@@ -536,7 +543,7 @@ namespace ANN {
         // We reset the top
         top_reduction = units_top;
 
-        sumFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        sumFirstReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (output_units_ptr,
            sums_ptr,
            top_reduction,
@@ -544,19 +551,19 @@ namespace ANN {
            bunch_size,
            bunch_size);
         for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
-          computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
-                                              block, grid);
-          sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+          CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, top_reduction,
+                                                    block, grid);
+          sumNextReduction<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
             (sums_ptr,
              top_reduction,
              bunch_size,
              bunch_size);
         }
       
-        computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
-                                            block, grid);
+        CUDA::computeBlockAndGridSizesFor2DMatrix(bunch_size, size,
+                                                  block, grid);
 
-        applyMinusLog<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        applyMinusLog<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
           (input_units_ptr,
            output_units_ptr,
            sums_ptr,
@@ -593,7 +600,7 @@ namespace ANN {
           cur_pos = 0;
           for (unsigned int i = 0; i < size; i++) {
             output_units_ptr[cur_pos] = input_units_ptr[cur_pos] - maximum;
-            double exp_output = exp(static_cast<double>(output_units_ptr[cur_pos]));
+            double exp_output = AprilMath::m_exp(static_cast<double>(output_units_ptr[cur_pos]));
             addition += exp_output;
             cur_pos  += bunch_size;
           }

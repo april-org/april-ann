@@ -25,144 +25,146 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   int m, int n,
-                                   const float *alpha,
-                                   const float *a_mem,
-                                   unsigned int a_inc,
-                                   const float *x_mem,
-                                   unsigned int x_inc,
-                                   const float *beta,
-                                   float *y_mem,
-                                   unsigned int y_inc) {
-    return cublasSgemv(handle, cublas_a_transpose,
-                       m, n,
-                       alpha, a_mem, a_inc,
-                       x_mem, x_inc,
-                       beta, y_mem, y_inc);
-  }
+    cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     int m, int n,
+                                     const float *alpha,
+                                     const float *a_mem,
+                                     unsigned int a_inc,
+                                     const float *x_mem,
+                                     unsigned int x_inc,
+                                     const float *beta,
+                                     float *y_mem,
+                                     unsigned int y_inc) {
+      return cublasSgemv(handle, cublas_a_transpose,
+                         m, n,
+                         alpha, a_mem, a_inc,
+                         x_mem, x_inc,
+                         beta, y_mem, y_inc);
+    }
 
-  cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   int m, int n,
-                                   const double *alpha,
-                                   const double *a_mem,
-                                   unsigned int a_inc,
-                                   const double *x_mem,
-                                   unsigned int x_inc,
-                                   const double *beta,
-                                   double *y_mem,
-                                   unsigned int y_inc) {
-    return cublasDgemv(handle, cublas_a_transpose,
-                       m, n,
-                       alpha, a_mem, a_inc,
-                       x_mem, x_inc,
-                       beta, y_mem, y_inc);
-  }
+    cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     int m, int n,
+                                     const double *alpha,
+                                     const double *a_mem,
+                                     unsigned int a_inc,
+                                     const double *x_mem,
+                                     unsigned int x_inc,
+                                     const double *beta,
+                                     double *y_mem,
+                                     unsigned int y_inc) {
+      return cublasDgemv(handle, cublas_a_transpose,
+                         m, n,
+                         alpha, a_mem, a_inc,
+                         x_mem, x_inc,
+                         beta, y_mem, y_inc);
+    }
 
-  cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   int m, int n,
-                                   const ComplexF *alpha,
-                                   const ComplexF *a_mem,
-                                   unsigned int a_inc,
-                                   const ComplexF *x_mem,
-                                   unsigned int x_inc,
-                                   const ComplexF *beta,
-                                   ComplexF *y_mem,
-                                   unsigned int y_inc) {
-    return cublasCgemv(handle, cublas_a_transpose,
-                       m, n,
-                       reinterpret_cast<const cuComplex*>(alpha),
-                       reinterpret_cast<const cuComplex*>(a_mem), a_inc,
-                       reinterpret_cast<const cuComplex*>(x_mem), x_inc,
-                       reinterpret_cast<const cuComplex*>(beta),
-                       reinterpret_cast<cuComplex*>(y_mem), y_inc);
-  }
+    cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     int m, int n,
+                                     const ComplexF *alpha,
+                                     const ComplexF *a_mem,
+                                     unsigned int a_inc,
+                                     const ComplexF *x_mem,
+                                     unsigned int x_inc,
+                                     const ComplexF *beta,
+                                     ComplexF *y_mem,
+                                     unsigned int y_inc) {
+      return cublasCgemv(handle, cublas_a_transpose,
+                         m, n,
+                         reinterpret_cast<const cuComplex*>(alpha),
+                         reinterpret_cast<const cuComplex*>(a_mem), a_inc,
+                         reinterpret_cast<const cuComplex*>(x_mem), x_inc,
+                         reinterpret_cast<const cuComplex*>(beta),
+                         reinterpret_cast<cuComplex*>(y_mem), y_inc);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
-                                          cusparseOperation_t &cusparse_a_transpose,
-                                          int m, int n, int NNZ,
-                                          const float *alpha,
-                                          cusparseMatDescr_t descrA,
-                                          const float *a_values_mem,
-                                          const int *a_indices_mem,
-                                          const int *a_first_index_mem,
-                                          const float *x_mem,
-                                          unsigned int x_inc,
-                                          const float *beta,
-                                          float *y_mem,
-                                          unsigned int y_inc) {
-    if (x_inc != 1 || y_inc != 1)
-      ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
-    return cusparseScsrmv(handle, cusparse_a_transpose,
-                          m, n, NNZ,
-                          alpha,
-                          descrA,
-                          a_values_mem,
-                          a_first_index_mem,
-                          a_indices_mem,
-                          x_mem,
-                          beta, y_mem);
-  }
+    cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
+                                            cusparseOperation_t &cusparse_a_transpose,
+                                            int m, int n, int NNZ,
+                                            const float *alpha,
+                                            cusparseMatDescr_t descrA,
+                                            const float *a_values_mem,
+                                            const int *a_indices_mem,
+                                            const int *a_first_index_mem,
+                                            const float *x_mem,
+                                            unsigned int x_inc,
+                                            const float *beta,
+                                            float *y_mem,
+                                            unsigned int y_inc) {
+      if (x_inc != 1 || y_inc != 1)
+        ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
+      return cusparseScsrmv(handle, cusparse_a_transpose,
+                            m, n, NNZ,
+                            alpha,
+                            descrA,
+                            a_values_mem,
+                            a_first_index_mem,
+                            a_indices_mem,
+                            x_mem,
+                            beta, y_mem);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
-                                          cusparseOperation_t &cusparse_a_transpose,
-                                          int m, int n, int NNZ,
-                                          const double *alpha,
-                                          cusparseMatDescr_t descrA,
-                                          const double *a_values_mem,
-                                          const int *a_indices_mem,
-                                          const int *a_first_index_mem,
-                                          const double *x_mem,
-                                          unsigned int x_inc,
-                                          const double *beta,
-                                          double *y_mem,
-                                          unsigned int y_inc) {
-    if (x_inc != 1 || y_inc != 1)
-      ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
-    return cusparseDcsrmv(handle, cusparse_a_transpose,
-                          m, n, NNZ,
-                          alpha,
-                          descrA,
-                          a_values_mem,
-                          a_first_index_mem,
-                          a_indices_mem,
-                          x_mem,
-                          beta, y_mem);
-  }
+    cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
+                                            cusparseOperation_t &cusparse_a_transpose,
+                                            int m, int n, int NNZ,
+                                            const double *alpha,
+                                            cusparseMatDescr_t descrA,
+                                            const double *a_values_mem,
+                                            const int *a_indices_mem,
+                                            const int *a_first_index_mem,
+                                            const double *x_mem,
+                                            unsigned int x_inc,
+                                            const double *beta,
+                                            double *y_mem,
+                                            unsigned int y_inc) {
+      if (x_inc != 1 || y_inc != 1)
+        ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
+      return cusparseDcsrmv(handle, cusparse_a_transpose,
+                            m, n, NNZ,
+                            alpha,
+                            descrA,
+                            a_values_mem,
+                            a_first_index_mem,
+                            a_indices_mem,
+                            x_mem,
+                            beta, y_mem);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
-                                          cusparseOperation_t &cusparse_a_transpose,
-                                          int m, int n, int NNZ,
-                                          const ComplexF *alpha,
-                                          cusparseMatDescr_t descrA,
-                                          const ComplexF *a_values_mem,
-                                          const int *a_indices_mem,
-                                          const int *a_first_index_mem,
-                                          const ComplexF *x_mem,
-                                          unsigned int x_inc,
-                                          const ComplexF *beta,
-                                          ComplexF *y_mem,
-                                          unsigned int y_inc) {
-    if (x_inc != 1 || y_inc != 1)
-      ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
-    return cusparseCcsrmv(handle, cusparse_a_transpose,
-                          m, n, NNZ,
-                          reinterpret_cast<const cuComplex*>(alpha),
-                          descrA,
-                          reinterpret_cast<const cuComplex*>(a_values_mem),
-                          a_first_index_mem,
-                          a_indices_mem,
-                          reinterpret_cast<const cuComplex*>(x_mem),
-                          reinterpret_cast<const cuComplex*>(beta),
-                          reinterpret_cast<cuComplex*>(y_mem));
-  }
+    cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
+                                            cusparseOperation_t &cusparse_a_transpose,
+                                            int m, int n, int NNZ,
+                                            const ComplexF *alpha,
+                                            cusparseMatDescr_t descrA,
+                                            const ComplexF *a_values_mem,
+                                            const int *a_indices_mem,
+                                            const int *a_first_index_mem,
+                                            const ComplexF *x_mem,
+                                            unsigned int x_inc,
+                                            const ComplexF *beta,
+                                            ComplexF *y_mem,
+                                            unsigned int y_inc) {
+      if (x_inc != 1 || y_inc != 1)
+        ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
+      return cusparseCcsrmv(handle, cusparse_a_transpose,
+                            m, n, NNZ,
+                            reinterpret_cast<const cuComplex*>(alpha),
+                            descrA,
+                            reinterpret_cast<const cuComplex*>(a_values_mem),
+                            a_first_index_mem,
+                            a_indices_mem,
+                            reinterpret_cast<const cuComplex*>(x_mem),
+                            reinterpret_cast<const cuComplex*>(beta),
+                            reinterpret_cast<cuComplex*>(y_mem));
+    }
+  } // namespace CUDA
 #endif
 
   /***************************************
@@ -242,22 +244,22 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       assert(major_order == CblasColMajor);
-      cublasOperation_t cublas_a_transpose = getCublasOperation(a_transpose);
+      cublasOperation_t cublas_a_transpose = CUDA::getCublasOperation(a_transpose);
       a_mem = a->getGPUForRead() + a_shift;
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForReadAndWrite() + y_shift;
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
-      status = wrapperCublasGemv(handle, cublas_a_transpose,
-                                 m, n,
-                                 &alpha, a_mem, a_inc,
-                                 x_mem, x_inc,
-                                 &beta, y_mem, y_inc);
-    
+      status = CUDA::wrapperCublasGemv(handle, cublas_a_transpose,
+                                       m, n,
+                                       &alpha, a_mem, a_inc,
+                                       x_mem, x_inc,
+                                       &beta, y_mem, y_inc);
+      
       checkCublasError(status);
     }
     else {
@@ -291,13 +293,14 @@ void doSparseGemv(SPARSE_FORMAT sparse_format,
   const int *a_indices_mem, *a_first_index_mem;
   T *y_mem;
   const int NNZ = static_cast<int>(a_values->getSize());
+  UNUSED_VARIABLE(NNZ);
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cusparseStatus_t status;
-    cusparseHandle_t handle = GPUHelper::getSparseHandler();
+    cusparseHandle_t handle = CUDA::GPUHelper::getSparseHandler();
     if (sparse_format != CSR_FORMAT)
       a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
     a_values_mem = a_values->getGPUForRead();
@@ -305,9 +308,9 @@ void doSparseGemv(SPARSE_FORMAT sparse_format,
     a_first_index_mem = a_first_index->getGPUForRead();
     x_mem = x->getGPUForRead() + x_shift;
     y_mem = y->getGPUForReadAndWrite() + y_shift;
-    cusparseOperation_t cusparse_a_transpose = getCusparseOperation(a_transpose);
+    cusparseOperation_t cusparse_a_transpose = CUDA::getCusparseOperation(a_transpose);
     
-    status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
+    status = cusparseSetStream(handle, CUDA::GPUHelper::getCurrentStream());
     checkCusparseError(status);
     cusparseMatDescr_t descrA;
     status = cusparseCreateMatDescr(&descrA);
@@ -318,16 +321,16 @@ void doSparseGemv(SPARSE_FORMAT sparse_format,
        descrA->DiagType   = 0;
        descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
     */
-    status = wrapperCusparseCSRGemv(handle,
-                                    cusparse_a_transpose,
-                                    m, n, NNZ,
-                                    &alpha,
-                                    descrA,
-                                    a_values_mem,
-                                    a_first_index_mem,
-                                    a_indices_mem,
-                                    x_mem, x_inc,
-                                    &beta, y_mem, y_inc);
+    status = CUDA::wrapperCusparseCSRGemv(handle,
+                                          cusparse_a_transpose,
+                                          m, n, NNZ,
+                                          &alpha,
+                                          descrA,
+                                          a_values_mem,
+                                          a_first_index_mem,
+                                          a_indices_mem,
+                                          x_mem, x_inc,
+                                          &beta, y_mem, y_inc);
     checkCusparseError(status);
     status = cusparseDestroyMatDescr(descrA);
     checkCusparseError(status);

@@ -166,6 +166,11 @@ utest.test = function(name, test_func)
     write(1, "Test %s: %sexecutionfailure%s\n", test_name,
           ansi.fg.bright_red, ansi.fg.default)
     failed = failed + 1
+    if not failed_list[test_name] then
+      table.insert(names_order, test_name)
+      failed_list[test_name] = {}
+    end
+    table.insert(failed_list[test_name], "executionfailure")
   end
   test_name = NONAMED
 end

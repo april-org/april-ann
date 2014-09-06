@@ -355,7 +355,10 @@ namespace AprilMath {
           const GPUMirroredMemoryBlock<T> *y,
           unsigned int y_inc,
           unsigned int y_shift,
-          bool use_gpu);
+          bool use_gpu,
+          T zero=T(0.0f),
+          GPUMirroredMemoryBlock<T> *dest=0,
+          unsigned int dest_raw_pos=0);
 
   /**
    * @brief Template wrapper for sparse dot product operation using CBLAS
@@ -576,7 +579,10 @@ namespace AprilMath {
                const GPUMirroredMemoryBlock<T> *x,
                unsigned int inc,
                unsigned int shift,
-               bool use_gpu);
+               bool use_gpu,
+               float zero=T(0.0f),
+               GPUMirroredMemoryBlock<float> *dest=0,
+               unsigned int dest_raw_pos=0);
 
   template<typename T>
   void doScal(unsigned int size,

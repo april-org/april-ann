@@ -35,33 +35,6 @@ namespace AprilMath {
 
   namespace MatrixExt {
 
-    typedef void (*float_float_span_map1_t)(unsigned int,
-                                            const GPUMirroredMemoryBlock< float > *,
-                                            unsigned int,
-                                            unsigned int,
-                                            GPUMirroredMemoryBlock< float > *,
-                                            unsigned int,
-                                            unsigned int,
-                                            bool);
-
-    typedef void (*double_double_span_map1_t)(unsigned int,
-                                              const GPUMirroredMemoryBlock< double > *,
-                                              unsigned int,
-                                              unsigned int,
-                                              GPUMirroredMemoryBlock< double > *,
-                                              unsigned int,
-                                              unsigned int,
-                                              bool);
-
-    typedef void (*complexf_complexf_span_map1_t)(unsigned int,
-                                                  const GPUMirroredMemoryBlock< ComplexF > *,
-                                                  unsigned int,
-                                                  unsigned int,
-                                                  GPUMirroredMemoryBlock< ComplexF > *,
-                                                  unsigned int,
-                                                  unsigned int,
-                                                  bool);
-  
     /**
      * @brief Applies a span-based unary MAP operation.
      *
@@ -219,5 +192,7 @@ namespace AprilMath {
 
 #undef DEFAULT_N_TH
 #undef DEFAULT_SIZE_TH
+
+#include "map_matrix.impl.h"
 
 #endif // MAP_MATRIX_H

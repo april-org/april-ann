@@ -55,26 +55,6 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
 end
 
------------------
--- DOT PRODUCT --
------------------
--- T("DOTPRODUCT TEST",
---   function()
---     check(function()
---         for i=2,4 do
---           for o=2,4 do
---             for b=1,4 do
---               check_component(function()
---                   return ann.components.dot_product{ input=i,
---                                                      output=o }                              end,
---                 "mse", i, o, b, "DOTPRODUCT")
---             end
---           end
---         end
---         return true
---     end)
--- end)
-
 ----------
 -- BIAS --
 ----------
@@ -92,6 +72,31 @@ T("BIAS TEST",
         return true
     end)
 end)
+
+-----------------
+-- DOT PRODUCT --
+-----------------
+T("DOTPRODUCT TEST",
+  function()
+    check(
+      function()
+        for i=2,4 do
+          for o=2,4 do
+            for b=1,4 do
+              check_component(
+                function()
+                  return ann.components.dot_product{ input=i, output=o }
+                end,
+                "mse", i, o, b, "DOTPRODUCT"
+              )
+            end
+          end
+        end
+        return true
+    end
+    )
+end
+)
 
 ------------------------
 -- DOT PRODUCT + BIAS --

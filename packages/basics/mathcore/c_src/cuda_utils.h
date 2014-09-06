@@ -22,6 +22,8 @@
 #ifndef CUDA_UTILS_H
 #define CUDA_UTILS_H
 
+#include "error_print.h"
+
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
 
@@ -29,14 +31,27 @@
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
 #include <cusparse_v2.h>
+
+#include "cblas_headers.h"
+#include "maxmin.h"
 #include "gpu_helper.h"
 
-#define APRIL_CUDA_EXPORT __host__ __device__ __forceinline__
+#define APRIL_CUDA_EXPORT __host__ __device__
+#define APRIL_CUDA_ERROR_EXIT(code,msg) aprilCudaErrorExit((code),(msg))
+
+static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
+  UNUSED_VARIABLE(code);
+  UNUSED_VARIABLE(msg);
+  // do nothing
+}
+
+// static void aprilCudaErrorExit(int code, const char *msg) {
+//   ERROR_EXIT(code,msg);
+// }
 
 namespace AprilMath {
-
   namespace CUDA {
-    
+
     static __device__ unsigned int getArrayIndex(const dim3 &blockIdx,
                                                  const dim3 &blockDim,
                                                  const dim3 &threadIdx) {
@@ -58,8 +73,8 @@ namespace AprilMath {
       const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
       // Number of threads on each block dimension
-      block.x = min(MAX_THREADS, N);
-      block.y = min(MAX_THREADS/block.x, M);
+      block.x = AprilUtils::min(MAX_THREADS, N);
+      block.y = AprilUtils::min(MAX_THREADS/block.x, M);
       block.z = 1;
   
       grid.x = (N/block.x + (N % block.x ? 1 : 0));
@@ -73,7 +88,7 @@ namespace AprilMath {
       const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
       // Number of threads on each block dimension
-      block.x = min(MAX_THREADS, bunch_size);
+      block.x = AprilUtils::min(MAX_THREADS, bunch_size);
       block.y = 1;
       block.z = 1;
   
@@ -107,14 +122,14 @@ namespace AprilMath {
         return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
       }
     }
-
+    
   } // namespace CUDA
-
 } // namespace AprilMath
 
 #else
 
 #define APRIL_CUDA_EXPORT
+#define APRIL_CUDA_ERROR_EXIT(code,msg) ERROR_EXIT(code,msg)
 
 #endif
 

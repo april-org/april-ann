@@ -23,15 +23,17 @@
 
 #ifdef USE_CUDA
 namespace AprilMath {
+  namespace CUDA {
 
-  bool GPUHelper::initialized = false;
-  cublasHandle_t GPUHelper::handler;
-  cusparseHandle_t GPUHelper::sparse_handler;
-  cudaDeviceProp GPUHelper::properties;
-  CUdevice GPUHelper::device;
-  CUcontext GPUHelper::context;
-  AprilUtils::vector<CUstream> GPUHelper::streams;
-  unsigned int GPUHelper::current_stream = 0;
+    bool GPUHelper::initialized = false;
+    cublasHandle_t GPUHelper::handler;
+    cusparseHandle_t GPUHelper::sparse_handler;
+    cudaDeviceProp GPUHelper::properties;
+    CUdevice GPUHelper::device;
+    CUcontext GPUHelper::context;
+    AprilUtils::vector<CUstream> GPUHelper::streams;
+    unsigned int GPUHelper::current_stream = 0;
 
+  } // namespace CUDA
 } // namespace AprilMath
 #endif

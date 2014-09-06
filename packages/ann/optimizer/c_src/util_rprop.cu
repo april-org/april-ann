@@ -19,7 +19,7 @@
  *
  */
 #include "cuda_utils.h"
-#include "map_matrix.impl.h"
+#include "map_matrix.h"
 #include "smart_ptr.h"
 #include "util_rprop.h"
 

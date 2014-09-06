@@ -25,6 +25,7 @@
 #include "bind_matrix.h"
 #include "bind_matrix_int32.h"
 #include "bind_mathcore.h"
+#include "cmath_overloads.h"
 #include "luabindmacros.h" // for lua_pushfloat and lua_pushint
 #include "luabindutil.h"   // for lua_pushfloat and lua_pushint
 

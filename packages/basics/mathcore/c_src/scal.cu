@@ -25,25 +25,35 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
-                                   int N,
-                                   float *alpha,
-                                   float *x_mem,
-                                   unsigned int x_inc) {
-    return cublasSscal(handle, N, alpha, x_mem, x_inc);
-  }
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     float *alpha,
+                                     float *x_mem,
+                                     unsigned int x_inc) {
+      return cublasSscal(handle, N, alpha, x_mem, x_inc);
+    }
 
-  cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
-                                   int N,
-                                   ComplexF *alpha,
-                                   ComplexF *x_mem,
-                                   unsigned int x_inc) {
-    return cublasCscal(handle, N, reinterpret_cast<cuComplex*>(alpha),
-                       reinterpret_cast<cuComplex*>(x_mem), x_inc);
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     double *alpha,
+                                     double *x_mem,
+                                     unsigned int x_inc) {
+      return cublasDscal(handle, N, alpha, x_mem, x_inc);
+    }
+
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     ComplexF *alpha,
+                                     ComplexF *x_mem,
+                                     unsigned int x_inc) {
+      return cublasCscal(handle, N, reinterpret_cast<cuComplex*>(alpha),
+                         reinterpret_cast<cuComplex*>(x_mem), x_inc);
+    }
   }
 #endif
 
@@ -53,6 +63,10 @@ namespace AprilMath {
 
   void wrapperCblasScal(int N, float alpha, float *x_mem, unsigned int x_inc) {
     cblas_sscal(N, alpha, x_mem, x_inc);
+  }
+
+  void wrapperCblasScal(int N, double alpha, double *x_mem, unsigned int x_inc) {
+    cblas_dscal(N, alpha, x_mem, x_inc);
   }
 
   void wrapperCblasScal(int N, ComplexF alpha,
@@ -78,13 +92,13 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       x_mem = x->getGPUForReadAndWrite() + shift;
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
-      status = wrapperCublasScal(handle, size, &alpha, x_mem, inc);
+      status = CUDA::wrapperCublasScal(handle, size, &alpha, x_mem, inc);
 
       checkCublasError(status);
     }
@@ -104,6 +118,13 @@ namespace AprilMath {
                               float alpha,
                               bool use_gpu);
 
+  template void doScal<double>(unsigned int size,
+                               GPUMirroredMemoryBlock<double> *x,
+                               unsigned int inc,
+                               unsigned int shift,
+                               double alpha,
+                               bool use_gpu);
+  
   template void doScal<ComplexF>(unsigned int size,
                                  GPUMirroredMemoryBlock<ComplexF> *x,
                                  unsigned int inc,

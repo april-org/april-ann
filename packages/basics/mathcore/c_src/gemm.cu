@@ -25,143 +25,146 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   cublasOperation_t &cublas_b_transpose,
-                                   int m, int n, int k,
-                                   float *alpha,
-                                   const float *a_mem,
-                                   unsigned int a_inc,
-                                   const float *b_mem,
-                                   unsigned int b_inc,
-                                   float *beta,
-                                   float *c_mem,
-                                   unsigned int c_inc) {
-    return cublasSgemm(handle, cublas_a_transpose, cublas_b_transpose,
-                       m, n, k,
-                       alpha, a_mem, a_inc,
-                       b_mem, b_inc,
-                       beta, c_mem, c_inc);
-  }
+    cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     cublasOperation_t &cublas_b_transpose,
+                                     int m, int n, int k,
+                                     float *alpha,
+                                     const float *a_mem,
+                                     unsigned int a_inc,
+                                     const float *b_mem,
+                                     unsigned int b_inc,
+                                     float *beta,
+                                     float *c_mem,
+                                     unsigned int c_inc) {
+      return cublasSgemm(handle, cublas_a_transpose, cublas_b_transpose,
+                         m, n, k,
+                         alpha, a_mem, a_inc,
+                         b_mem, b_inc,
+                         beta, c_mem, c_inc);
+    }
 
-  cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   cublasOperation_t &cublas_b_transpose,
-                                   int m, int n, int k,
-                                   double *alpha,
-                                   const double *a_mem,
-                                   unsigned int a_inc,
-                                   const double *b_mem,
-                                   unsigned int b_inc,
-                                   double *beta,
-                                   double *c_mem,
-                                   unsigned int c_inc) {
-    return cublasDgemm(handle, cublas_a_transpose, cublas_b_transpose,
-                       m, n, k,
-                       alpha, a_mem, a_inc,
-                       b_mem, b_inc,
-                       beta, c_mem, c_inc);
-  }
+    cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     cublasOperation_t &cublas_b_transpose,
+                                     int m, int n, int k,
+                                     double *alpha,
+                                     const double *a_mem,
+                                     unsigned int a_inc,
+                                     const double *b_mem,
+                                     unsigned int b_inc,
+                                     double *beta,
+                                     double *c_mem,
+                                     unsigned int c_inc) {
+      return cublasDgemm(handle, cublas_a_transpose, cublas_b_transpose,
+                         m, n, k,
+                         alpha, a_mem, a_inc,
+                         b_mem, b_inc,
+                         beta, c_mem, c_inc);
+    }
 
-  cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
-                                   cublasOperation_t &cublas_a_transpose,
-                                   cublasOperation_t &cublas_b_transpose,
-                                   int m, int n, int k,
-                                   ComplexF *alpha,
-                                   const ComplexF *a_mem,
-                                   unsigned int a_inc,
-                                   const ComplexF *b_mem,
-                                   unsigned int b_inc,
-                                   ComplexF *beta,
-                                   ComplexF *c_mem,
-                                   unsigned int c_inc) {
-    return cublasCgemm(handle, cublas_a_transpose, cublas_b_transpose,
-                       m, n, k,
-                       reinterpret_cast<const cuComplex*>(alpha),
-                       reinterpret_cast<const cuComplex*>(a_mem), a_inc,
-                       reinterpret_cast<const cuComplex*>(b_mem), b_inc,
-                       reinterpret_cast<const cuComplex*>(beta),
-                       reinterpret_cast<cuComplex*>(c_mem), c_inc);
-  }
+    cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
+                                     cublasOperation_t &cublas_a_transpose,
+                                     cublasOperation_t &cublas_b_transpose,
+                                     int m, int n, int k,
+                                     ComplexF *alpha,
+                                     const ComplexF *a_mem,
+                                     unsigned int a_inc,
+                                     const ComplexF *b_mem,
+                                     unsigned int b_inc,
+                                     ComplexF *beta,
+                                     ComplexF *c_mem,
+                                     unsigned int c_inc) {
+      return cublasCgemm(handle, cublas_a_transpose, cublas_b_transpose,
+                         m, n, k,
+                         reinterpret_cast<const cuComplex*>(alpha),
+                         reinterpret_cast<const cuComplex*>(a_mem), a_inc,
+                         reinterpret_cast<const cuComplex*>(b_mem), b_inc,
+                         reinterpret_cast<const cuComplex*>(beta),
+                         reinterpret_cast<cuComplex*>(c_mem), c_inc);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-                                        cusparseOperation_t &cusparse_a_transpose,
-                                        int m, int n, int k,
-                                        int NNZ,
-                                        float *alpha,
-                                        const cusparseMatDescr_t descrA,
-                                        const float *a_values_mem,
-                                        const int *a_first_index_mem,
-                                        const int *a_indices_mem,
-                                        const float *b_mem,
-                                        unsigned int b_inc,
-                                        float *beta,
-                                        float *c_mem,
-                                        unsigned int c_inc) {
-    return cusparseScsrmm(handle, cusparse_a_transpose,
-                          m, n, k,
-                          NNZ,
-                          alpha,
-                          descrA,
-                          a_values_mem, a_first_index_mem, a_indices_mem,
-                          b_mem, b_inc,
-                          beta, c_mem, c_inc);
-  }
+    cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                          cusparseOperation_t &cusparse_a_transpose,
+                                          int m, int n, int k,
+                                          int NNZ,
+                                          float *alpha,
+                                          const cusparseMatDescr_t descrA,
+                                          const float *a_values_mem,
+                                          const int *a_first_index_mem,
+                                          const int *a_indices_mem,
+                                          const float *b_mem,
+                                          unsigned int b_inc,
+                                          float *beta,
+                                          float *c_mem,
+                                          unsigned int c_inc) {
+      return cusparseScsrmm(handle, cusparse_a_transpose,
+                            m, n, k,
+                            NNZ,
+                            alpha,
+                            descrA,
+                            a_values_mem, a_first_index_mem, a_indices_mem,
+                            b_mem, b_inc,
+                            beta, c_mem, c_inc);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-                                        cusparseOperation_t &cusparse_a_transpose,
-                                        int m, int n, int k,
-                                        int NNZ,
-                                        double *alpha,
-                                        const cusparseMatDescr_t descrA,
-                                        const double *a_values_mem,
-                                        const int *a_first_index_mem,
-                                        const int *a_indices_mem,
-                                        const double *b_mem,
-                                        unsigned int b_inc,
-                                        double *beta,
-                                        double *c_mem,
-                                        unsigned int c_inc) {
-    return cusparseDcsrmm(handle, cusparse_a_transpose,
-                          m, n, k,
-                          NNZ,
-                          alpha,
-                          descrA,
-                          a_values_mem, a_first_index_mem, a_indices_mem,
-                          b_mem, b_inc,
-                          beta, c_mem, c_inc);
-  }
+    cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                          cusparseOperation_t &cusparse_a_transpose,
+                                          int m, int n, int k,
+                                          int NNZ,
+                                          double *alpha,
+                                          const cusparseMatDescr_t descrA,
+                                          const double *a_values_mem,
+                                          const int *a_first_index_mem,
+                                          const int *a_indices_mem,
+                                          const double *b_mem,
+                                          unsigned int b_inc,
+                                          double *beta,
+                                          double *c_mem,
+                                          unsigned int c_inc) {
+      return cusparseDcsrmm(handle, cusparse_a_transpose,
+                            m, n, k,
+                            NNZ,
+                            alpha,
+                            descrA,
+                            a_values_mem, a_first_index_mem, a_indices_mem,
+                            b_mem, b_inc,
+                            beta, c_mem, c_inc);
+    }
 
-  cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-                                        cusparseOperation_t &cusparse_a_transpose,
-                                        int m, int n, int k,
-                                        int NNZ,
-                                        ComplexF *alpha,
-                                        const cusparseMatDescr_t descrA,
-                                        const ComplexF *a_values_mem,
-                                        const int *a_first_index_mem,
-                                        const int *a_indices_mem,
-                                        const ComplexF *b_mem,
-                                        unsigned int b_inc,
-                                        ComplexF *beta,
-                                        ComplexF *c_mem,
-                                        unsigned int c_inc) {
-    return cusparseCcsrmm(handle, cusparse_a_transpose,
-                          m, n, k,
-                          NNZ,
-                          reinterpret_cast<const cuComplex*>(alpha),
-                          descrA,
-                          reinterpret_cast<const cuComplex*>(a_values_mem),
-                          a_first_index_mem, a_indices_mem,
-                          reinterpret_cast<const cuComplex*>(b_mem), b_inc,
-                          reinterpret_cast<const cuComplex*>(beta),
-                          reinterpret_cast<cuComplex*>(c_mem), c_inc);
-  }
+    cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                          cusparseOperation_t &cusparse_a_transpose,
+                                          int m, int n, int k,
+                                          int NNZ,
+                                          ComplexF *alpha,
+                                          const cusparseMatDescr_t descrA,
+                                          const ComplexF *a_values_mem,
+                                          const int *a_first_index_mem,
+                                          const int *a_indices_mem,
+                                          const ComplexF *b_mem,
+                                          unsigned int b_inc,
+                                          ComplexF *beta,
+                                          ComplexF *c_mem,
+                                          unsigned int c_inc) {
+      return cusparseCcsrmm(handle, cusparse_a_transpose,
+                            m, n, k,
+                            NNZ,
+                            reinterpret_cast<const cuComplex*>(alpha),
+                            descrA,
+                            reinterpret_cast<const cuComplex*>(a_values_mem),
+                            a_first_index_mem, a_indices_mem,
+                            reinterpret_cast<const cuComplex*>(b_mem), b_inc,
+                            reinterpret_cast<const cuComplex*>(beta),
+                            reinterpret_cast<cuComplex*>(c_mem), c_inc);
+    }
 
+  } // namespace CUDA
 #endif
 
   /***************************************
@@ -266,24 +269,25 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       assert(major_type == CblasColMajor);
       //printf("Doing a sgemm with comp=1 & cuda=1\n");
       a_mem = a->getGPUForRead() + a_shift;
       b_mem = b->getGPUForRead() + b_shift;
       c_mem = c->getGPUForReadAndWrite() + c_shift;
-      cublasOperation_t cublas_a_transpose = getCublasOperation(a_transpose);
-      cublasOperation_t cublas_b_transpose = getCublasOperation(b_transpose);
+      cublasOperation_t cublas_a_transpose = CUDA::getCublasOperation(a_transpose);
+      cublasOperation_t cublas_b_transpose = CUDA::getCublasOperation(b_transpose);
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
-      status = wrapperCublasGemm(handle, cublas_a_transpose, cublas_b_transpose,
-                                 m, n, k,
-                                 &alpha, a_mem, a_inc,
-                                 b_mem, b_inc,
-                                 &beta, c_mem, c_inc);
-
+      status = CUDA::wrapperCublasGemm(handle, cublas_a_transpose,
+                                       cublas_b_transpose,
+                                       m, n, k,
+                                       &alpha, a_mem, a_inc,
+                                       b_mem, b_inc,
+                                       &beta, c_mem, c_inc);
+      
       checkCublasError(status);
     }
     else {
@@ -340,13 +344,14 @@ namespace AprilMath {
     const int *a_indices_mem, *a_first_index_mem;
     T *c_mem;
     const int NNZ = static_cast<int>(a_values->getSize());
+    UNUSED_VARIABLE(NNZ);
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
       cusparseStatus_t status;
-      cusparseHandle_t handle = GPUHelper::getSparseHandler();
+      cusparseHandle_t handle = CUDA::GPUHelper::getSparseHandler();
       if (major_order != CblasColMajor)
         ERROR_EXIT(128, "Column major matrices are expected\n");
       if (b_transpose == CblasTrans || c_transpose == CblasTrans)
@@ -360,9 +365,9 @@ namespace AprilMath {
       a_first_index_mem = a_first_index->getGPUForRead();
       b_mem = b->getGPUForRead() + b_shift;
       c_mem = c->getGPUForReadAndWrite() + c_shift;
-      cusparseOperation_t cusparse_a_transpose = getCusparseOperation(a_transpose);
+      cusparseOperation_t cusparse_a_transpose = CUDA::getCusparseOperation(a_transpose);
     
-      status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
+      status = cusparseSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCusparseError(status);
       cusparseMatDescr_t descrA;
       status = cusparseCreateMatDescr(&descrA);
@@ -374,17 +379,17 @@ namespace AprilMath {
          descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
       */
       //
-      status = wrapperCusparseCSRMM(handle,
-                                    cusparse_a_transpose,
-                                    m, n, k,
-                                    NNZ,
-                                    &alpha,
-                                    descrA,
-                                    a_values_mem,
-                                    a_first_index_mem,
-                                    a_indices_mem,
-                                    b_mem, b_inc,
-                                    &beta, c_mem, c_inc);
+      status = CUDA::wrapperCusparseCSRMM(handle,
+                                          cusparse_a_transpose,
+                                          m, n, k,
+                                          NNZ,
+                                          &alpha,
+                                          descrA,
+                                          a_values_mem,
+                                          a_first_index_mem,
+                                          a_indices_mem,
+                                          b_mem, b_inc,
+                                          &beta, c_mem, c_inc);
       checkCusparseError(status);
       status = cusparseDestroyMatDescr(descrA);
       checkCusparseError(status);

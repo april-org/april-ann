@@ -75,7 +75,7 @@ namespace AprilMath {
                                             unsigned int reduce_top,
                                             unsigned int size,
                                             F reduce_op) {
-      unsigned int idx     = blockIdx.x * blockDim.x + threadIdx.x;
+      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
       unsigned int idx_2   = (reduce_top + idx);
       unsigned int x_pos   = idx   * input_stride;
       unsigned int y_pos   = idx   * output_stride;
@@ -104,7 +104,7 @@ namespace AprilMath {
                                                   unsigned int reduce_top,
                                                   unsigned int size,
                                                   F reduce_op) {
-      unsigned int idx     = blockIdx.x * blockDim.x + threadIdx.x;
+      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
       unsigned int idx_2   = (reduce_top + idx);
       unsigned int x_pos   = idx   * input_stride;
       unsigned int y_pos   = idx   * output_stride;
@@ -181,8 +181,8 @@ namespace AprilMath {
         {
           unsigned int size = N;
           unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
-          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
-            output(new GPUMirroredMemoryBlock<O>(N));
+          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
+            output(new GPUMirroredMemoryBlock<T>(N));
           const T *input_ptr = input->getGPUForRead() + input_shift;
           T *output_ptr = output->getGPUForWrite();
           dim3 block, grid;
@@ -205,7 +205,7 @@ namespace AprilMath {
         } // default:
       } // switch(N)
     } // function genericCudaReduceCall
-
+    
     template<typename T, typename F>
     void genericCudaReduceMinMaxCall(unsigned int N,
                                      const GPUMirroredMemoryBlock<T> *input,
@@ -291,8 +291,7 @@ namespace AprilMath {
                                           unsigned int output_stride,
                                           unsigned int size,
                                           F map_op) {
-      unsigned int idx =
-        getArrayIndex(blockIdx.x * blockDim.x + threadIdx.x);
+      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
       unsigned int x_pos   = idx * input_stride;
       unsigned int y_pos   = idx * output_stride;
       if (idx < size) output[y_pos] = map_op(input[x_pos]);
@@ -336,8 +335,7 @@ namespace AprilMath {
                                           unsigned int output_stride,
                                           unsigned int size,
                                           F map_op) {
-      unsigned int idx =
-        getArrayIndex(blockIdx.x * blockDim.x + threadIdx.x);
+      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
       unsigned int x1_pos  = idx * input1_stride;
       unsigned int x2_pos  = idx * input2_stride;
       unsigned int y_pos   = idx * output_stride;
@@ -392,7 +390,7 @@ namespace AprilMath {
       dim3 block, grid;
       computeBlockAndGridSizesForArray(N, block, grid);
       genericCudaMap1Kernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-        (input_ptr, input_stride, output_ptr, output_stride, size, map_op);
+        (input_ptr, input_stride, output_ptr, output_stride, N, map_op);
     } // function genericCudaMap1Call
 
     /**
@@ -452,7 +450,7 @@ namespace AprilMath {
       computeBlockAndGridSizesForArray(N, block, grid);
       genericCudaMap2Kernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
         (input1_ptr, input1_stride, input2_ptr, input2_stride,
-         output_ptr, output_stride, size, map_op);
+         output_ptr, output_stride, N, map_op);
     } // function genericCudaMap1Call
     
   } // namespace CUDA

@@ -26,56 +26,59 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                   int N,
-                                   const float *x_mem,
-                                   unsigned int x_inc,
-                                   float *y_mem,
-                                   unsigned int y_inc) {
-    return cublasScopy(handle, N, x_mem, x_inc, y_mem, y_inc);
-  }
-
-  cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                   int N,
-                                   const double *x_mem,
-                                   unsigned int x_inc,
-                                   double *y_mem,
-                                   unsigned int y_inc) {
-    return cublasDcopy(handle, N, x_mem, x_inc, y_mem, y_inc);
-  }
-
-  cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                   int N,
-                                   const ComplexF *x_mem,
-                                   unsigned int x_inc,
-                                   ComplexF *y_mem,
-                                   unsigned int y_inc) {
-    return cublasCcopy(handle, N, reinterpret_cast<const cuComplex*>(x_mem), x_inc,
-                       reinterpret_cast<cuComplex*>(y_mem), y_inc);
-  }
-
-  template<typename T>
-  __global__ void copyLoopKernel(unsigned int N,
-                                 const T *x_mem,
-                                 unsigned int x_inc,
-                                 T *y_mem,
-                                 unsigned int y_inc,
-                                 unsigned int times,
-                                 unsigned int y_ld) {
-    unsigned int matrix_x_pos, matrix_y_pos;
-    matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
-    matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
-    if (matrix_x_pos < times && matrix_y_pos < N) {
-      unsigned int index_x = matrix_y_pos*x_inc;
-      unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
-      y_mem[index_y] = x_mem[index_x];
+    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
+                                     int N,
+                                     const float *x_mem,
+                                     unsigned int x_inc,
+                                     float *y_mem,
+                                     unsigned int y_inc) {
+      return cublasScopy(handle, N, x_mem, x_inc, y_mem, y_inc);
     }
-  }
 
+    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
+                                     int N,
+                                     const double *x_mem,
+                                     unsigned int x_inc,
+                                     double *y_mem,
+                                     unsigned int y_inc) {
+      return cublasDcopy(handle, N, x_mem, x_inc, y_mem, y_inc);
+    }
+
+    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
+                                     int N,
+                                     const ComplexF *x_mem,
+                                     unsigned int x_inc,
+                                     ComplexF *y_mem,
+                                     unsigned int y_inc) {
+      return cublasCcopy(handle, N, reinterpret_cast<const cuComplex*>(x_mem), x_inc,
+                         reinterpret_cast<cuComplex*>(y_mem), y_inc);
+    }
+
+    template<typename T>
+    __global__ void copyLoopKernel(unsigned int N,
+                                   const T *x_mem,
+                                   unsigned int x_inc,
+                                   T *y_mem,
+                                   unsigned int y_inc,
+                                   unsigned int times,
+                                   unsigned int y_ld) {
+      unsigned int matrix_x_pos, matrix_y_pos;
+      matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
+      matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
+      if (matrix_x_pos < times && matrix_y_pos < N) {
+        unsigned int index_x = matrix_y_pos*x_inc;
+        unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
+        y_mem[index_y] = x_mem[index_x];
+      }
+    }
+
+  } // namespace CUDA
 #endif
 
   /***************************************
@@ -119,15 +122,15 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       //printf("Doing a scopy with comp=1 & cuda=1\n");
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForWrite() + y_shift;
     
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
     
-      status = wrapperCublasCopy(handle, N, x_mem, x_inc, y_mem, y_inc);
+      status = CUDA::wrapperCublasCopy(handle, N, x_mem, x_inc, y_mem, y_inc);
     
       checkCublasError(status);
     }
@@ -167,20 +170,20 @@ namespace AprilMath {
       x_mem = x->getGPUForRead();
       A_mem = A->getGPUForWrite();
 
-      const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+      const unsigned int MAX_THREADS = CUDA::GPUHelper::getMaxThreadsPerBlock();
       dim3 block, grid;
       // Number of threads on each block dimension
       block.x = min(MAX_THREADS, times);
-      block.A = min(MAX_THREADS/block.x, N);
+      block.y = min(MAX_THREADS/block.x, N);
       block.z = 1;
 
       grid.x = (times/block.x +
                 (times % block.x ? 1 : 0));
-      grid.A = (N/block.A + (N % block.A ? 1 : 0));
+      grid.y = (N/block.y + (N % block.y ? 1 : 0));
       grid.z = 1;
 
-      copyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-        (N, x_mem, x_inc, A_mem, A_inc, times, stride);
+      CUDA::copyLoopKernel<<<grid, block, 0, CUDA::GPUHelper::getCurrentStream()>>>
+        (N, x_mem, x_inc, A_mem, A_inc, times, A_stride);
     }
     else {
       //printf("Doing a scopy with comp=1 & cuda=0\n");

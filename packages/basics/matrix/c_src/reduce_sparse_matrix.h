@@ -40,4 +40,6 @@ namespace AprilMath {
   
 } // namespace AprilMath
 
+#include "reduce_sparse_matrix.impl.h"
+
 #endif // REDUCE_SPARSE_MATRIX_H

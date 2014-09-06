@@ -26,49 +26,52 @@
 namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
+    
+    cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
+                                    unsigned int size,
+                                    const float *x_mem,
+                                    unsigned int x_inc,
+                                    const float *y_mem,
+                                    unsigned int y_inc,
+                                    float *ret) {
+      return cublasSdot(handle,
+                        size,
+                        x_mem, x_inc,
+                        y_mem, y_inc,
+                        ret);
+    }
 
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const float *x_mem,
-                                  unsigned int x_inc,
-                                  const float *y_mem,
-                                  unsigned int y_inc,
-                                  float *ret) {
-    return cublasSdot(handle,
-                      size,
-                      x_mem, x_inc,
-                      y_mem, y_inc,
-                      ret);
-  }
+    cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
+                                    unsigned int size,
+                                    const double *x_mem,
+                                    unsigned int x_inc,
+                                    const double *y_mem,
+                                    unsigned int y_inc,
+                                    double *ret) {
+      return cublasDdot(handle,
+                        size,
+                        x_mem, x_inc,
+                        y_mem, y_inc,
+                        ret);
+    }
 
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const double *x_mem,
-                                  unsigned int x_inc,
-                                  const double *y_mem,
-                                  unsigned int y_inc,
-                                  double *ret) {
-    return cublasDdot(handle,
-                      size,
-                      x_mem, x_inc,
-                      y_mem, y_inc,
-                      ret);
-  }
-
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const ComplexF *x_mem,
-                                  unsigned int x_inc,
-                                  const ComplexF *y_mem,
-                                  unsigned int y_inc,
-                                  ComplexF *ret) {
-    ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
-    return CUBLAS_STATUS_INTERNAL_ERROR;
-  }
-
+    cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
+                                    unsigned int size,
+                                    const ComplexF *x_mem,
+                                    unsigned int x_inc,
+                                    const ComplexF *y_mem,
+                                    unsigned int y_inc,
+                                    ComplexF *ret) {
+      ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
+      return CUBLAS_STATUS_INTERNAL_ERROR;
+    }
+    
+  } // namespace CUDA
 #endif
 
   /***************************************
@@ -114,23 +117,27 @@ namespace AprilMath {
           const GPUMirroredMemoryBlock<T> *y,
           unsigned int y_inc,
           unsigned int y_shift,
-          bool use_gpu) {
+          bool use_gpu,
+          T zero,
+          GPUMirroredMemoryBlock<T> *dest,
+          unsigned int dest_raw_pos) {
     const T *x_mem;
     const T *y_mem;
-    T ret;
+    T ret = zero;
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForRead() + y_shift;
     
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
-      status = wrapperCublasDot(handle, size, x_mem, x_inc, y_mem, y_inc, &ret);
+      status = CUDA::wrapperCublasDot(handle, size, x_mem, x_inc,
+                                      y_mem, y_inc, &ret);
       checkCublasError(status);
     }
     else {
@@ -144,6 +151,7 @@ namespace AprilMath {
 #ifdef USE_CUDA
     }
 #endif
+    if (dest != 0) dest->putValue(dest_raw_pos, ret);
     return ret;
   }
 
@@ -163,8 +171,9 @@ namespace AprilMath {
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-    if (use_gpu)
+    if (use_gpu) {
       ERROR_PRINT("CUDA sparse DOT not implemented\n");
+    }
 #endif
     x_values_mem  = x_values->getPPALForRead();
     x_indices_mem = x_indices->getPPALForRead();
@@ -184,7 +193,10 @@ namespace AprilMath {
                               const GPUMirroredMemoryBlock<float> *,
                               unsigned int,
                               unsigned int,
-                              bool);
+                              bool,
+                              float,
+                              GPUMirroredMemoryBlock<float> *,
+                              unsigned int);
 
   template double doDot<double>(unsigned int,
                                 const GPUMirroredMemoryBlock<double> *,
@@ -193,8 +205,11 @@ namespace AprilMath {
                                 const GPUMirroredMemoryBlock<double> *,
                                 unsigned int,
                                 unsigned int,
-                                bool);
-
+                                bool,
+                                double,
+                                GPUMirroredMemoryBlock<double> *,
+                                unsigned int);
+  
   template ComplexF doDot<ComplexF>(unsigned int,
                                     const GPUMirroredMemoryBlock<ComplexF> *,
                                     unsigned int,
@@ -202,7 +217,10 @@ namespace AprilMath {
                                     const GPUMirroredMemoryBlock<ComplexF> *,
                                     unsigned int,
                                     unsigned int,
-                                    bool);
+                                    bool,
+                                    ComplexF,
+                                    GPUMirroredMemoryBlock<ComplexF> *,
+                                    unsigned int);
 
   template float doSparseDot(int NNZ,
                              const GPUMirroredMemoryBlock<float> *x_values,

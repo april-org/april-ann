@@ -140,7 +140,7 @@ namespace AprilMath {
       if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<T>(1);
       CUDA::genericCudaReduceCall(N, input, input_stride, input_shift, zero,
                                   cuda_dest.get(), dest_shift,
-                                  r_add<T>);
+                                  AprilMath::Functors::r_add<T>());
       cuda_dest->getValue(dest_shift, result);
     }
     else {
@@ -177,8 +177,8 @@ namespace AprilMath {
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> > cuda_dest(dest);
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > cuda_which(which);
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> > cuda_which(which);
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > cuda_dest(dest);
       if (cuda_which.empty()) cuda_which = new GPUMirroredMemoryBlock<int32_t>(1);
       if (cuda_dest.empty()) cuda_dest = new GPUMirroredMemoryBlock<T>(1);
       CUDA::genericCudaReduceMinMaxCall(N, input, input_stride, input_shift, zero,

@@ -45,4 +45,6 @@ namespace AprilMath {
 
 } // namespace AprilMath
 
+#include "map_sparse_matrix.impl.h"
+
 #endif // MAP_SPARSE_MATRIX_H
