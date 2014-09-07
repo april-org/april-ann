@@ -21,6 +21,7 @@
  */
 #include "cblas_headers.h"
 #include "cuda_utils.h"
+#include "dot.h"
 #include "unused_variable.h"
 
 namespace AprilMath {

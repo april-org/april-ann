@@ -33,12 +33,15 @@
 #include <cusparse_v2.h>
 
 #include "cblas_headers.h"
+#include "complex_number.h"
 #include "maxmin.h"
 #include "gpu_helper.h"
 
 #define APRIL_CUDA_EXPORT __host__ __device__
 #define APRIL_CUDA_ERROR_EXIT(code,msg) aprilCudaErrorExit((code),(msg))
 
+// FIXME: implement properly this feature to control errors in CUDA kernels and
+// CPU equivalent code.
 static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
   UNUSED_VARIABLE(code);
   UNUSED_VARIABLE(msg);
@@ -52,6 +55,54 @@ static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
 namespace AprilMath {
   namespace CUDA {
 
+    //
+    // From Reduction SDK sample:
+    //
+    // Utility class used to avoid linker errors with extern
+    // unsized shared memory arrays with templated type
+    //
+    template<class T>
+    struct SharedMemory
+    {
+      __device__ inline operator       T*()
+      {
+        extern __shared__ int __smem[];
+        return (T*) (void *) __smem;
+      }
+      
+      __device__ inline operator const T*() const
+      {
+        extern __shared__ int __smem[];
+        return (T*) (void *) __smem;
+      }
+    };
+    //
+    // from Reduction SDK sample:
+    // specialize to avoid unaligned memory 
+    // access compile errors
+    //
+#define SPECIALIZE_CUDA_SHARED_MEMORY(FULLTYPE,TYPE)            \
+    namespace AprilMath {                                       \
+      namespace CUDA {                                          \
+        template<>                                              \
+        struct SharedMemory<FULLTYPE>                           \
+        {                                                       \
+          __device__ inline operator FULLTYPE*()                \
+          {                                                     \
+            extern __shared__ FULLTYPE                          \
+              __smem_##TYPE[];                                  \
+              return (FULLTYPE*)__smem_##TYPE;                  \
+          }                                                     \
+          __device__ inline operator const FULLTYPE*() const    \
+          {                                                     \
+            extern __shared__ FULLTYPE                          \
+              __smem_##TYPE[];                                  \
+            return (FULLTYPE*)__smem_##TYPE;                    \
+          }                                                     \
+        };                                                      \
+      }                                                         \
+    }
+ 
     static __device__ unsigned int getArrayIndex(const dim3 &blockIdx,
                                                  const dim3 &blockDim,
                                                  const dim3 &threadIdx) {
@@ -130,7 +181,12 @@ namespace AprilMath {
 
 #define APRIL_CUDA_EXPORT
 #define APRIL_CUDA_ERROR_EXIT(code,msg) ERROR_EXIT(code,msg)
+#define SPECIALIZE_CUDA_SHARED_MEMORY(FULLTYPE,TYPE)
 
 #endif
+
+SPECIALIZE_CUDA_SHARED_MEMORY(float,float);
+SPECIALIZE_CUDA_SHARED_MEMORY(double,double);
+SPECIALIZE_CUDA_SHARED_MEMORY(AprilMath::ComplexF,ComplexF);
 
 #endif // CUDA_UTILS_H

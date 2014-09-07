@@ -84,8 +84,7 @@ namespace AprilMath {
                                             F reduce_op,
                                             P partials_reduce_op,
                                             O zero) {
-      extern __shared__ float shared[];
-      O *partials = (O *)shared;
+      SharedMemory<O> partials;
       O result = zero;
       const int tid = threadIdx.x;
       for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
@@ -116,10 +115,9 @@ namespace AprilMath {
                                                   unsigned int N,
                                                   F reduce_op,
                                                   T zero) {
-      extern __shared__ float shared[];
+      SharedMemory<T> partials;
+      int32_t *which_partials = (int32_t*)(&partials[blockDim.x]);
       int32_t which_result=0;
-      T *partials = (T*)(&shared[0]);
-      int32_t *which_partials = (int32_t*)(&((char*)shared)[sizeof(char)*blockDim.x]);
       T result = zero;
       const int tid = threadIdx.x;
       for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
@@ -158,10 +156,9 @@ namespace AprilMath {
                                                    unsigned int N,
                                                    F reduce_op,
                                                    T zero) {
-      extern __shared__ float shared[];
+      SharedMemory<T> partials;
+      int32_t *which_partials = (int32_t*)(&partials[blockDim.x]);
       int32_t which_result=0;
-      T *partials = (T*)(&shared[0]);
-      int32_t *which_partials = (int32_t*)(&((char*)shared)[sizeof(char)*blockDim.x]);
       T result = zero;
       const int tid = threadIdx.x;
       for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;

@@ -70,15 +70,6 @@ namespace AprilMath {
                                             const double *y_mem,
                                             unsigned int y_inc,
                                             double *ret);
-
-    template<>
-    cublasStatus_t wrapperCublasDot<ComplexF>(cublasHandle_t &handle,
-                                              unsigned int size,
-                                              const ComplexF *x_mem,
-                                              unsigned int x_inc,
-                                              const ComplexF *y_mem,
-                                              unsigned int y_inc,
-                                              ComplexF *ret);
     
   } // namespace CUDA
 #endif

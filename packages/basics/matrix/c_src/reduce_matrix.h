@@ -42,30 +42,34 @@ namespace AprilMath {
    * // The example uses the AprilMath::Function::r_add reduction, which uses
    * // operator+= to reduce two values which can be of different types.
    * #include "reduce_matrix.h"
-   * struct MeanReduceResult {
-   *   float sum;
-   *   int N;
-   *   MeanReduceResult() : sum(0.0f), N(0) { }
-   *   float getMean() const { return sum/N; }
-   *   // Called from AprilMath::Functors::r_add<MeanReduceResult,float>,
-   *   APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const float &b) const {
-   *     acc.N++;
-   *     acc.sum += b;
-   *     return *this;
-   *   }
-   *   // Called from AprilMath::Functors::r_add<MeanReduceResult,MeanReduceResult>
-   *   APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const MeanReduceResult &b) const {
-   *     acc.sum += b.sum;
-   *     acc.N   += b.N;
-   *     return *this;
-   *   }
+   * namespace MyNameSpace {
+   *   struct MeanReduceResult {
+   *     float sum;
+   *     int N;
+   *     MeanReduceResult() : sum(0.0f), N(0) { }
+   *     float getMean() const { return sum/N; }
+   *     // Called from AprilMath::Functors::r_add<MeanReduceResult,float>,
+   *     APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const float &b) const {
+   *       acc.N++;
+   *       acc.sum += b;
+   *       return *this;
+   *     }
+   *     // Called from AprilMath::Functors::r_add<MeanReduceResult,MeanReduceResult>
+   *     APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const MeanReduceResult &b) const {
+   *       acc.sum += b.sum;
+   *       acc.N   += b.N;
+   *       return *this;
+   *     }
+   *   };
    * }
+   * SPECIALIZE_CUDA_SHARED_MEMORY(MyNameSpace::MeanReduceResult,MeanReduceResult);
+   *
    * // a matrix of 1 dimension and 1 element
-   * MeanReduceResult result =
+   * MyNameSpace::MeanReduceResult result =
    *   MatrixScalarReduce1(my_matrix_float, // a pointer to a MatrixFloat instance
-   *                       AprilMath::Functors::r_add<MeanReduceResult,float>,
-   *                       AprilMath::Functors::r_add<MeanReduceResult,MeanReduceResult>,
-   *                       MeanReduceResult());
+   *                       AprilMath::Functors::r_add<MyNameSpace::MeanReduceResult,float>,
+   *                       AprilMath::Functors::r_add<MyNameSpace::MeanReduceResult,MyNameSpace::MeanReduceResult>,
+   *                       MyNameSpace::MeanReduceResult());
    * printf("Mean result: %f\n", result.getMean());
    * @endcode
    */
