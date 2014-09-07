@@ -36,6 +36,14 @@
   of APRIL-ANN, and exported to CUDA if it is compiled with definition of
   USE_CUDA constant.
 */
+
+/**
+ * @brief The namespace AprilMath contains operations over different scalar types by
+ * using templatized functions and C++ functors.
+ *
+ * All of this operations are exported to CUDA and can be used safely in
+ * functions implemented to run in GPU device or CPU host.
+ */
 namespace AprilMath {
   
   const float  logf_NZ = logf(NEAR_ZERO);
@@ -315,7 +323,7 @@ namespace AprilMath {
           return true;
         }
         else {
-          const static float ZERO  = 1e-03;
+          const float ZERO = 1e-03;
           float a_abs = AprilMath::m_abs(a);
           float b_abs = AprilMath::m_abs(b);
           if (a_abs < ZERO || b_abs < ZERO) {
@@ -342,7 +350,34 @@ namespace AprilMath {
         }
       }
     };
-    
+
+    template<typename T>
+    struct m_mul {
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return a*b;
+      }
+    };
+
+    template<typename T>
+    struct m_add {
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return a+b;
+      }
+    };
+
+    template<typename T>
+    struct m_max {
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return (a<b)?b:a;
+      }
+    };
+
+    template<typename T>
+    struct m_min {
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return (a<b)?a:b;
+      }
+    };
   } // namespace Functors
   
   /// @see Functors::m_identity
@@ -378,6 +413,19 @@ namespace AprilMath {
   /// @see Functors::m_relative_equals
   template<typename T> APRIL_CUDA_EXPORT
   bool m_relative_equals(const T &a, const T &b, const float &c) { return Functors::m_relative_equals<T>()(a,b,c); }
+  /// @see Functors::m_mul
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_mul(const T &a, const T &b) { return Functors::m_mul<T>()(a,b); }
+  /// @see Functors::m_add
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_add(const T &a, const T &b) { return Functors::m_add<T>()(a,b); }
+  /// @see Functors::m_min
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_min(const T &a, const T &b) { return Functors::m_min<T>()(a,b); }
+  /// @see Functors::m_max
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_max(const T &a, const T &b) { return Functors::m_max<T>()(a,b); }
+
   
   namespace Functors {
     
@@ -523,115 +571,105 @@ namespace AprilMath {
     
     template<typename T>
     struct r_max {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return (a<b) ? (b) : (a);
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        if (acc<b) acc = b;
       }
     };
 
     template<typename T>
     struct r_min {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return (a<b) ? (a) : (b);
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        if (!(acc < b)) acc = b;
       }
     };
     
     template<typename T>
     struct r_max2 {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b,
-                                     unsigned int &which) const {
-        T result;
-        if (a<b) {
-          result = b;
-          which  = 1;
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &b,
+                                        int32_t &which_acc,
+                                        const int b_idx) const {
+        if (acc<b) {
+          acc = b;
+          which_acc = b_idx+1; // +1 because Lua starts at 1
         }
-        else {
-          result = a;
-          which  = 0;
-        }
-        return result;
       }
     };
 
     template<typename T>
     struct r_min2 {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b,
-                                     unsigned int &which) const {
-        T result;
-        if (a<b) {
-          result = a;
-          which  = 0;
+      APRIL_CUDA_EXPORT void operator()(T & acc, const T &b,
+                                        int32_t &which_acc,
+                                        const int b_idx) const {
+        if (!(acc<b)) {
+          acc = b;
+          which_acc = b_idx+1; // +1 because Lua starts at 1
         }
-        else {
-          result = b;
-          which  = 1;
-        }
-        return result;
       }
     };
 
-    template<typename T>
+    template<typename T, typename O>
     struct r_add {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return a+b;
+      APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
+        acc += v;
+      }
+    };
+    
+    template<typename T, typename O>
+    struct r_mul {
+      APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
+        acc *= v;
+      }
+    };
+
+    template<typename T, typename O>
+    struct r_div {
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &v) const {
+        acc /= v;
       }
     };
     
     template<typename T>
-    struct r_mul {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return a*b;
-      }
-    };
-
-    template<typename T>
-    struct r_div {
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return a/b;
-      }
-    };
-
-    template<typename T>
     struct r_and {
-      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) const {
-        return a && b;
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        acc = acc && b;
       }
     };
 
     template<typename T>
     struct r_or {
-      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) const {
-        return a || b;
+      APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        acc = acc || b;
       }
     };
   } // namespace Functors
   
   /// @see Functors::r_max
   template<typename T> APRIL_CUDA_EXPORT
-  T r_max(const T &a, const T &b) { return Functors::r_max<T>()(a,b); }
+  void r_max(T &acc, const T &a, const T &b) { Functors::r_max<T>()(acc,a,b); }
   /// @see Functors::r_min
   template<typename T> APRIL_CUDA_EXPORT
-  T r_min(const T &a, const T &b) { return Functors::r_min<T>()(a,b); }
+  void r_min(T &acc, const T &a, const T &b) { Functors::r_min<T>()(acc,a,b); }
   /// @see Functors::r_max2
   template<typename T> APRIL_CUDA_EXPORT
-  T r_max2(const T &a, const T &b, unsigned int &c) { return Functors::r_max2<T>()(a,b,c); }
+  void r_max2(T &acc, const T &a, const T &b, int32_t &c, const int d) { Functors::r_max2<T>()(acc,a,b,c,d); }
   /// @see Functors::r_min2
   template<typename T> APRIL_CUDA_EXPORT
-  T r_min2(const T &a, const T &b, unsigned int &c) { return Functors::r_min2<T>()(a,b,c); }
+  void r_min2(const T &a, const T &b, int32_t &c, const int d) { Functors::r_min2<T>()(a,b,c,d); }
   /// @see Functors::r_add
-  template<typename T> APRIL_CUDA_EXPORT
-  T r_add(const T &a, const T &b) { return Functors::r_add<T>()(a,b); }
+  template<typename T, typename O> APRIL_CUDA_EXPORT
+  void r_add(O &a, const T &b) { Functors::r_add<T,O>()(a,b); }
   /// @see Functors::r_mul
-  template<typename T> APRIL_CUDA_EXPORT
-  T r_mul(const T &a, const T &b) { return Functors::r_mul<T>()(a,b); }
+  template<typename T,typename O> APRIL_CUDA_EXPORT
+  void r_mul(O &a, const T &b) { Functors::r_mul<T,O>()(a,b); }
   /// @see Functors::r_div
-  template<typename T> APRIL_CUDA_EXPORT
-  T r_div(const T &a, const T &b) { return Functors::r_div<T>()(a,b); }
+  template<typename T,typename O> APRIL_CUDA_EXPORT
+  void r_div(O &a, const T &b) { return Functors::r_div<T,O>()(a,b); }
   /// @see Functors::r_and
   template<typename T> APRIL_CUDA_EXPORT
-  T r_and(const T &a, const T &b) { return Functors::r_and<T>()(a,b); }
+  void r_and(T &a, const T &b) { Functors::r_and<T>()(a,b); }
   /// @see Functors::r_or
   template<typename T> APRIL_CUDA_EXPORT
-  T r_or(const T &a, const T &b) { return Functors::r_or<T>()(a,b); }
+  void r_or(T &a, const T &b) { Functors::r_or<T>()(a,b); }
 
   ///////////////////////
   // Curried functions //
@@ -752,7 +790,7 @@ namespace AprilMath {
     const T value;
     m_curried_mul(const T &value) : value(value) { }
     APRIL_CUDA_EXPORT T operator()(const T &a) {
-      return AprilMath::r_mul(a,value);
+      return a*value;
     }
   };
 
@@ -761,7 +799,7 @@ namespace AprilMath {
     const T value;
     m_curried_div(const T &value) : value(value) { }
     APRIL_CUDA_EXPORT T operator()(const T &a) {
-      return AprilMath::r_div(value,a);
+      return value/a;
     }
   };
   

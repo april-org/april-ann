@@ -1,7 +1,7 @@
 local arg = arg or {}
 local use_cuda = (table.remove(arg,1)=="true")
 if util.is_cuda_available() and use_cuda then
-  util.set_use_cuda_default = true
+  mathcore.set_use_cuda_default(true)
   printf("USING CUDA\n\n")
 end
 --

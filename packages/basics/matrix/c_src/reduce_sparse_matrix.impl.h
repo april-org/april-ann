@@ -33,11 +33,15 @@ namespace AprilMath {
     T SparseMatrixScalarReduce1(const Basics::SparseMatrix<T> *input,
                                 const OP &scalar_red_functor,
                                 const T &zero) {
-      return genericReduceCall(input->nonZeroSize(),
-                               input->getRawValuesAccess(), 1u, 0u,
-                               input->getCudaFlag(),
-                               zero,
-                               scalar_red_functor);
+      GPUMirroredMemoryBlock<T> result(1u);
+      genericReduceCall(input->nonZeroSize(),
+                        input->getRawValuesAccess(), 1u, 0u,
+                        input->getCudaFlag(),
+                        zero,
+                        scalar_red_functor,
+                        scalar_red_functor,
+                        &result, 0u);
+      return result.get(0);
     }
 
   } // namespace MatrixExt

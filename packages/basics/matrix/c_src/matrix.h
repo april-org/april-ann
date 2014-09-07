@@ -160,6 +160,33 @@ namespace Basics {
                                         const int numDim,
                                         const int last_raw_pos);
     /********* Iterators for Matrix traversal *********/
+    /**
+     * @brief This iterator only traverses the Matrix positions, but doesn't
+     * have access to the memory.
+     *
+     * @todo Implement other iterators as wrappers or derived class from
+     * pos_iterator, allowing to share a lot of code.
+     */
+    class pos_iterator {
+      friend class Matrix;
+      Matrix<T> *m; ///< A weak reference.
+      int idx;
+      int raw_pos;
+      /// The coords array is only used when the matrix is not congiuous
+      /// or it is in col_major order, otherwise it is NULL
+      int *coords;
+    public:
+      pos_iterator(Matrix<T> *m);
+      pos_iterator();
+      ~pos_iterator();
+      pos_iterator &operator=(const pos_iterator &other);
+      bool      operator==(const pos_iterator &other) const;
+      bool      operator!=(const pos_iterator &other) const;
+      pos_iterator &operator++();
+      int getRawPos() const { return raw_pos; }
+      int getIdx() const { return idx; }
+      bool isEnd() const { return raw_pos == m->last_raw_pos+1; }
+    };
     // forward declaration
     class const_iterator;
     class col_major_iterator;
@@ -289,6 +316,7 @@ namespace Basics {
       int getRawPos() const;
       int getIdx() const { return idx; }
     };
+    
 
     /********************************************************/
     /**
@@ -515,7 +543,7 @@ namespace Basics {
     mutable iterator end_iterator;
     mutable const_iterator end_const_iterator;
     mutable span_iterator end_span_iterator_;
-  
+    
     // NULL constructor
     Matrix() : is_contiguous(NONE),
                end_iterator(), end_const_iterator(),
@@ -546,7 +574,7 @@ namespace Basics {
            int offset = 0,
            bool transposed = false);
   
-    /// Constructor with T() values and CblasRowMajor order
+    /// Constructor for CblasRowMajor order
     Matrix(int numDim, int d1, ...);
   
     /// Constructor given other matrix, it does a shallow or deep copy (clone). By

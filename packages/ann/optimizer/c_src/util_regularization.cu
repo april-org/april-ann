@@ -36,8 +36,8 @@ namespace ANN {
         APRIL_CUDA_EXPORT float operator()(const float &x,
                                            const float &y) {
           float result = x;
-          if (y > 0.0f) result = AprilMath::r_max(-y, x-value);
-          else if (y < 0.0f) result = AprilMath::r_min(-y, x+value);
+          if (y > 0.0f) result = AprilMath::m_max(-y, x-value);
+          else if (y < 0.0f) result = AprilMath::m_min(-y, x+value);
           else if (AprilMath::m_abs(x) < value) result = 0.0f;          
           return result;
         }

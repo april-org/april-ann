@@ -873,6 +873,64 @@ namespace Basics {
   /////////////////////////////////////////////////////////////////////////////
 
   template <typename T>
+  Matrix<T>::pos_iterator::pos_iterator(Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
+    if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
+      coords = new int[m->getNumDim()];
+      for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
+    }
+    else coords = 0;
+    raw_pos = m->getOffset();
+  }
+  
+  template <typename T>
+  Matrix<T>::pos_iterator::pos_iterator() : m(0), idx(0), raw_pos(0), coords(0) { }
+
+  template <typename T>
+  Matrix<T>::pos_iterator::~pos_iterator() {
+    delete[] coords;
+  }
+
+  template <typename T>
+  typename Matrix<T>::pos_iterator &Matrix<T>::pos_iterator::
+  operator=(const Matrix<T>::pos_iterator &other) {
+    m = other.m;
+    idx = other.idx;
+    raw_pos = other.raw_pos;
+    if (other.coords != 0) {
+      if (coords==0 || m->numDim != other.m->numDim) {
+        delete[] coords;
+        coords = new int[other.m->getNumDim()];
+      }
+      for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+    }
+    else {
+      delete[] coords;
+      coords = 0;
+    }
+    return *this;
+  }
+
+  template <typename T>
+  bool Matrix<T>::pos_iterator::operator==(const Matrix<T>::pos_iterator &other) const {
+    return m==other.m && raw_pos == other.raw_pos;
+  }
+
+  template <typename T>
+  bool Matrix<T>::pos_iterator::operator!=(const Matrix<T>::pos_iterator &other) const {
+    return !( (*this) == other );
+  }
+
+  template <typename T>
+  typename Matrix<T>::pos_iterator &Matrix<T>::pos_iterator::operator++() {
+    ++idx;
+    if (coords != 0) m->nextCoordVectorRowOrder(coords, raw_pos);
+    else ++raw_pos;
+    return *this;
+  }
+
+  /*******************************************************************/
+
+  template <typename T>
   Matrix<T>::sliding_window::sliding_window() : Referenced(),
                                                 m(0), offset(0), sub_matrix_size(0), step(0),
                                                 num_steps(0), order_step(0), coords(0), raw_pos(0),

@@ -32,7 +32,7 @@ ascii col_major
 
     local c = a*b
     check.eq(c:get(1,1), 1*1+2*4+3*7, "dot product")
-
+    
     check.eq(b*a, matrix.col_major(3,3,{
                                      1,  2,  3,
                                      4,  8, 12,

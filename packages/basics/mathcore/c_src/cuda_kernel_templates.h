@@ -44,17 +44,19 @@ namespace AprilMath {
     /**
      * @brief Executes the CUDA reduce kernel over a vector position.
      *
-     * @tparam T - The type for input and output vectors.
+     * @tparam T - The type for input vectors.
+     *
+     * @tparam O - The type for output vectors.
      *
      * @tparam F - An operator implemented as a functor.
+     *
+     * @tparam P - An operator implemented as a functor.
      *
      * @param input - The input vector.
      *
      * @param input_stride - The stride between consecutive values at input.
      *
      * @param output - The output vector.
-     *
-     * @param output_stride - The stride between consecutive values at output.
      *
      * @param reduction_top - Bound for the reduction, it must be the floor
      * power of two of size parameter.
@@ -64,34 +66,42 @@ namespace AprilMath {
      * @param reduce_op - The functor operator with the reduction over two
      * values.
      *
+     * @param partials_reduce_op - The functor operator with the reduction over
+     * two partial values.
+     *
+     * @param zero - The initial value for the reduction.
+     *
      * @note The reduce_op functor must be associative, commutative and
      * idempotent.
      */
-    template<typename T, typename F>
+    template<typename T, template O, typename F, typename P>
     __global__ void genericCudaReduceKernel(const T *input,
                                             unsigned int input_stride,
-                                            T *output,
+                                            O *output,
                                             unsigned int output_stride,
-                                            unsigned int reduce_top,
-                                            unsigned int size,
-                                            F reduce_op) {
-      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
-      unsigned int idx_2   = (reduce_top + idx);
-      unsigned int x_pos   = idx   * input_stride;
-      unsigned int y_pos   = idx   * output_stride;
-      unsigned int x_pos_2 = idx_2 * input_stride;
-      if (idx < size) {
-        if (idx_2 < size) {
-          // reduce when both indices are under size bound
-          output[y_pos] = reduce_op(input[x_pos], input[x_pos_2]);
-        }
-        else {
-          // copy as it is in the input vector
-          output[y_pos] = input[x_pos];
-        }
-      } // if (idx < size)
-      // else nothing to do, the data is out of the bounds
+                                            unsigned int N,
+                                            F reduce_op,
+                                            P partials_reduce_op,
+                                            O zero) {
+      SharedMemory<T> partials;
+      O result = zero;
+      const int tid = threadIdx.x;
+      for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
+            i += blockDim.x*gridDim.x ) {
+        reduce_op(result, input[i * input_stride]);
+      }
+      partials[tid] = result;
       __syncthreads();
+      for ( int activeThreads = blockDim.x>>1; activeThreads; 
+            activeThreads >>= 1 ) {
+        if ( tid < activeThreads ) {
+          partials_reduce_op(partials[tid], partials[tid+activeThreads]);
+        }
+        __syncthreads();
+      }
+      if ( tid == 0 ) {
+        partials_reduce_op(output[blockIdx.x * output_stride], partials[0]);
+      }
     }
     
     template<typename T, typename F>
@@ -101,33 +111,36 @@ namespace AprilMath {
                                                   unsigned int which_stride,
                                                   T *output,
                                                   unsigned int output_stride,
-                                                  unsigned int reduce_top,
-                                                  unsigned int size,
+                                                  unsigned int N,
                                                   F reduce_op) {
-      unsigned int idx     = getArrayIndex(blockIdx, blockDim, threadIdx);
-      unsigned int idx_2   = (reduce_top + idx);
-      unsigned int x_pos   = idx   * input_stride;
-      unsigned int y_pos   = idx   * output_stride;
-      unsigned int y_pos_2 = idx   * which_stride;
-      unsigned int x_pos_2 = idx_2 * input_stride;
-      unsigned int w=0;
-      if (idx < size) {
-        if (idx_2 < size) {
-          // reduce when both indices are under size bound
-          output[y_pos] = reduce_op(input[x_pos], input[x_pos_2], w);
-          // idx+1 and idx_2+1 because in Lua starts at 1
-          if (w == 0) which[y_pos_2] = idx+1;
-          else which[y_pos_2] = idx_2+1;
-        }
-        else {
-          // copy as it is in the input vector
-          output[y_pos]  = input[x_pos];
-          // idx+1 because in Lua starts at 1
-          which[y_pos_2] = idx+1;
-        }
-      } // if (idx < size)
-      // else nothing to do, the data is out of the bounds
+      unsigned int w=0, which_result=0;
+      SharedMemory<char> shared;
+      T *partials = static_cast<T*>(&(shared[0]));
+      int32_t *which_partials = static_cast<int32_t*>(&(shared[sizeof(T)*blockDim.x]));
+      O result = zero;
+      const int tid = threadIdx.x;
+      for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
+            i += blockDim.x*gridDim.x ) {
+        reduce_op(result, input[i * input_stride], which_result, i);
+      }
+      partials[tid] = result;
+      which_partials[tid] = which_result;
       __syncthreads();
+      for ( int activeThreads = blockDim.x>>1; activeThreads; 
+            activeThreads >>= 1 ) {
+        if ( tid < activeThreads ) {
+          partials_reduce_op(partials[tid], partials[tid+activeThreads],
+                             which_partials[tid],
+                             which_partials[tid+activeThreads]);
+          
+        }
+        __syncthreads();
+      }
+      if ( tid == 0 ) {
+        partials_reduce_op(output[blockIdx.x * output_stride], partials[0],
+                           which[blockIdx.x * which_stride],
+                           which_partials[0]);
+      }
     }
     
     /**
@@ -139,7 +152,9 @@ namespace AprilMath {
      * function needs <tt>O(log N)</tt> sequential iterations to perform the
      * required operation.
      *
-     * @tparam T - The type for input and output vectors.
+     * @tparam T - The type for input vector.
+     *
+     * @tparam O - The type for output vector.
      *
      * @tparam F - An operator implemented as a functor.
      *
@@ -155,55 +170,46 @@ namespace AprilMath {
      *
      * @param dest_shift - The first valid position at dest vector.
      *
-     * @param reduce_op - The functor operator with the reduce over two
-     * values.
+     * @param reduce_op - The functor operator with the reduce one input values
+     * into an output accumulator.
      *
-     * @note The reduce_op functor must be associative, commutative and
-     * idempotent.
+     * @param partials_reduce_op - The functor operator with the reduce over two
+     * output values.
+     *
+     * @note It is assumed that dest memory has been initialized properly to
+     * zero value, allowing to chain multiple reductions over the same dest
+     * pointer.
      */
-    template<typename T, typename F>
+    template<typename T, typename O, typename F, typename P>
     void genericCudaReduceCall(unsigned int N,
                                const GPUMirroredMemoryBlock<T> *input,
                                unsigned int input_stride,
                                unsigned int input_shift,
-                               T zero,
-                               GPUMirroredMemoryBlock<T> *dest,
+                               O zero,
+                               GPUMirroredMemoryBlock<O> *dest,
                                unsigned int dest_shift,
-                               F reduce_op) {
-      switch(N) {
-      case 0u:
-        dest->putValue(dest_shift, zero);
-        break;
-      case 1u:
-        dest->copyFromBlock(dest_shift, input, input_shift, 1u);
-        break;
-      default:
-        {
-          unsigned int size = N;
-          unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
-          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
-            output(new GPUMirroredMemoryBlock<T>(N));
-          const T *input_ptr = input->getGPUForRead() + input_shift;
-          T *output_ptr = output->getGPUForWrite();
-          dim3 block, grid;
-          do {
-            // Prepare reduce_top kernels, that is, size/2 kernels.
-            computeBlockAndGridSizesForArray(reduce_top, block, grid);
-            // Execute reduce_top kernels with size as upper bound.
-            genericCudaReduceKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-              (input_ptr, input_stride, output_ptr, 1u,
-               reduce_top, size,
-               reduce_op);
-            // After first iteration it uses only output_ptr.
-            input_ptr       = output_ptr;
-            size            = reduce_top;
-            reduce_top >>= 1;
-          } while(reduce_top > 0);
-          // TODO: check return value (cudaError_t)
-          cudaDeviceSynchronize();
-          dest->copyFromBlock(dest_shift, output.get(), 0u, 1u);
-        } // default:
-      } // switch(N)
+                               F reduce_op, P partials_reduce_op) {
+      if (N == 0u) return;
+      april_assert(GPUHelper::getMaxThreadsPerBlock() > 128u);
+      int threadSize = AprilUtils::min(2048, N);
+      int numThreads = AprilUtils::min(128, AprilUtils::ceilingPowerOfTwo(N/threadSize));
+      int numBlocks  = static_cast<int>(ceilf(static_cast<float>(N/(numThreads*threadSize))));
+      const T *input_ptr = input->getGPUForRead() + input_shift;
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
+        partials(new GPUMirroredMemoryBlock<O>(static_cast<unsigned int>(numBlocks)));
+      O *partials_ptr = partials->getGPUForWrite();
+      O *dest_ptr = dest->getGPUForWrite();
+      // First pass
+      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*sizeof(O),
+        GPUHelper::getCurrentStream()>>>
+        (input_ptr, input_stride, partials_ptr, 1u, N, reduce_op, zero);
+      // Second pass
+      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*sizeof(O),
+        GPUHelper::getCurrentStream()>>>
+        (partials_ptr, 1u, dest_ptr, 1u,
+         static_cast<unsigned int>(numBlocks), reduce_op, zero);
+      // TODO: check return value (cudaError_t)
+      // cudaDeviceSynchronize();
     } // function genericCudaReduceCall
     
     template<typename T, typename F>
@@ -217,48 +223,29 @@ namespace AprilMath {
                                      GPUMirroredMemoryBlock<T> *dest,
                                      unsigned int dest_shift,
                                      F reduce_op) {
-      switch(N) {
-      case 0u:
-        dest->putValue(dest_shift, zero);
-        which->putValue(which_shift, -1);
-        break;
-      case 1u:
-        dest->copyFromBlock(dest_shift, input, input_shift, 1u);
-        which->putValue(which_shift, 0);
-        break;
-      default:
-        {
-          unsigned int size = N;
-          unsigned int reduce_top = AprilUtils::ceilingPowerOfTwo(N) >> 1;
-          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
-            output_which(new GPUMirroredMemoryBlock<int32_t>(N));
-          AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
-            output(new GPUMirroredMemoryBlock<T>(N));
-          const T *input_ptr = input->getGPUForRead() + input_shift;
-          int32_t *output_which_ptr = output_which->getGPUForWrite();
-          T *output_ptr = output->getGPUForWrite();
-          dim3 block, grid;
-          do {
-            // Prepare reduce_top kernels, that is, size/2 kernels.
-            computeBlockAndGridSizesForArray(reduce_top, block, grid);
-            // Execute reduce_top kernels with size as upper bound.
-            genericCudaReduceMinMaxKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-              (input_ptr, input_stride,
-               output_which_ptr, 1u,
-               output_ptr, 1u,
-               reduce_top, size,
-               reduce_op);
-            // After first iteration it uses only output_ptr.
-            input_ptr       = output_ptr;
-            size            = reduce_top;
-            reduce_top >>= 1;
-          } while(reduce_top > 0);
-          // TODO: check return value (cudaError_t)
-          cudaDeviceSynchronize();
-          dest->copyFromBlock(dest_shift, output.get(), 0u, 1u);
-          which->copyFromBlock(which_shift, output_which.get(), 0u, 1u);
-        } // default:
-      } // switch(N)
+      if (N == 0u) return;
+      april_assert(GPUHelper::getMaxThreadsPerBlock() > 128u);
+      int threadSize = AprilUtils::min(2048, N);
+      int numThreads = AprilUtils::min(128, AprilUtils::ceilingPowerOfTwo(N/threadSize));
+      int numBlocks  = static_cast<int>(ceilf(static_cast<float>(N/(numThreads*threadSize))));
+      const T *input_ptr = input->getGPUForRead() + input_shift;
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
+        partials(new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(numBlocks)));
+      O *partials_ptr = partials->getGPUForWrite();
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
+        which_partials(new GPUMirroredMemoryBlock<int32_t>(static_cast<unsigned int>(numBlocks)));
+      int32_t *which_partials_ptr = which_partials->getGPUForWrite();
+      // First pass
+      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),
+        GPUHelper::getCurrentStream()>>>
+        (input_ptr, input_stride, partials_ptr, 1u, N, reduce_op, zero);
+      // Second pass
+      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*(sizeof(O)+sizeof(int32_t)),
+        GPUHelper::getCurrentStream()>>>
+        (partials_ptr, 1u, dest_ptr, 1u,
+         static_cast<unsigned int>(numBlocks), reduce_op, zero);
+      // TODO: check return value (cudaError_t)
+      // cudaDeviceSynchronize();
     } // function genericCudaReduceMinMaxCall
 
     /////////////////////////////// MAP ////////////////////////////////////

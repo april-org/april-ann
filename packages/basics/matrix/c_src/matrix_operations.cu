@@ -48,24 +48,9 @@ namespace AprilMath {
       
       template <typename T>
       struct MatrixNorm2Reductor {
-        float operator()(const T &a, const T &b) const {
-          return static_cast<float>(AprilMath::m_sqrt(a*a + b*b));
-        }
-      };
-      
-      template<typename T>
-      struct SpanSumReductor {
-        T operator()(unsigned int N,
-                     const GPUMirroredMemoryBlock<T> *input,
-                     unsigned int input_stride,
-                     unsigned int input_shift,
-                     bool use_cuda,
-                     const T &zero,
-                     GPUMirroredMemoryBlock<T> *dest,
-                     unsigned int dest_raw_pos=0) const {
-          UNUSED_VARIABLE(zero);
-          return sumReduceCall(N, input, input_stride, input_shift,
-                               use_cuda, dest, dest_raw_pos);
+        void operator()(float &acc, const T &b) const {
+          float b_abs = AprilMath::m_abs(b);
+          acc = AprilMath::m_sqrt(acc*acc + b_abs*b_abs);
         }
       };
       
@@ -737,9 +722,9 @@ namespace AprilMath {
         if (X->getMajorOrder() != Y->getMajorOrder()) {
           ERROR_EXIT(128, "Matrices with different major orders\n");
         }
-        return MatrixSpanReduce2<T>(X, Y, doDot<T>,
-                                    AprilMath::Functors::r_add<T>(),
-                                    T(0.0f));
+        return MatrixSpanReduce2(X, Y, doDot< T, AprilMath::Functors::r_add<T,T> >,
+                                 AprilMath::Functors::r_add<T,T>(),
+                                 T(0.0f));
       }
 
       // DOT Sparse BLAS operation value = dot(this, other)
@@ -785,7 +770,8 @@ namespace AprilMath {
 
       template <typename T>
       float matNorm2(Matrix<T> *obj) {
-        return MatrixSpanReduce1(obj, doNrm2<T>,
+        return MatrixSpanReduce1(obj,
+                                 doNrm2< T, Functors::MatrixNorm2Reductor<T> >,
                                  Functors::MatrixNorm2Reductor<T>(),
                                  float(0.0f));
       }
@@ -814,6 +800,7 @@ namespace AprilMath {
                         Matrix<int32_t> *argmin) {
         if (argmin == 0) {
           return MatrixScalarReduceOverDimension(obj, dim,
+                                                 AprilMath::Functors::r_min<T>(),
                                                  AprilMath::Functors::r_min<T>(),
                                                  Limits<T>::max(), dest);
         }
@@ -887,6 +874,7 @@ namespace AprilMath {
                         Matrix<int32_t> *argmax) {
         if (argmax == 0) {
           return MatrixScalarReduceOverDimension(obj, dim,
+                                                 AprilMath::Functors::r_max<T>(),
                                                  AprilMath::Functors::r_max<T>(),
                                                  Limits<T>::min(), dest);
         }
@@ -1327,20 +1315,23 @@ namespace AprilMath {
     
       template <typename T>
       T matSum(const Matrix<T> *obj) {
-        return MatrixSpanSumReduce1<T>(obj, Functors::SpanSumReductor<T>());
+        return MatrixSpanSumReduce1(obj,
+                                    ScalarToSpanReduce< T, T, AprilMath::Functors::r_add<T,T> >
+                                    (AprilMath::Functors::r_add<T,T>()));
       }
       
       template <>
       ComplexF matSum(const Matrix<ComplexF> *obj) {
-        return MatrixScalarReduce1<ComplexF>(obj,
-                                             AprilMath::Functors::r_add<ComplexF>(),
-                                             ComplexF(0.0f,0.0f));
+        return MatrixScalarReduce1(obj,
+                                   AprilMath::Functors::r_add<ComplexF,ComplexF>(),
+                                   AprilMath::Functors::r_add<ComplexF,ComplexF>(),
+                                   ComplexF(0.0f,0.0f));
       }
       
       template <typename T>
       T matSum(const SparseMatrix<T> *obj) {
         return SparseMatrixScalarReduce1<T>(obj,
-                                            AprilMath::Functors::r_add<T>(),
+                                            AprilMath::Functors::r_add<T,T>(),
                                             T(0.0f));
       }
     
@@ -1349,7 +1340,8 @@ namespace AprilMath {
                         int dim,
                         Matrix<T> *dest) {
         return MatrixScalarReduceOverDimension(obj, dim,
-                                               AprilMath::Functors::r_add<T>(),
+                                               AprilMath::Functors::r_add<T,T>(),
+                                               AprilMath::Functors::r_add<T,T>(),
                                                T(0.0f), dest);
       }
 
@@ -1434,7 +1426,8 @@ namespace AprilMath {
                          Matrix<T> *dest) {
         if (dest == 0) dest = obj;
         return MatrixScalarMap2<T,T,T>(obj, other,
-                                       AprilMath::Functors::r_mul<T>(), dest);
+                                       AprilMath::Functors::m_mul<T>(),
+                                       dest);
       }
     
       template <typename T>

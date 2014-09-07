@@ -333,60 +333,6 @@ namespace AprilMath {
                        bool use_gpu);
 
   /**
-   * @brief Template wrapper for dot product operation using CBLAS interface.
-   *
-   * @tparam T - The data type. In APRIl-ANN it could be float, double,
-   * ComplexF.
-   *
-   * @param size - The number of elements in both vectors.
-   * @param x - The GPUMirroredMemoryBlock pointer with x vector.
-   * @param x_inc - The stride between consecutive elements in x vector.
-   * @param x_shift - The position of the first valid element in x pointer.
-   * @param[in,out] y - The GPUMirroredMemoryBlock pointer with y vector.
-   * @param y_inc - The stride between consecutive elements in y vector.
-   * @param y_shift - The position of the first valid element in y pointer.
-   * @param use_gpu - Indicates if use GPU or not for the computation.
-   */
-  template<typename T>
-  T doDot(unsigned int size,
-          const GPUMirroredMemoryBlock<T> *x,
-          unsigned int x_inc,
-          unsigned int x_shift,
-          const GPUMirroredMemoryBlock<T> *y,
-          unsigned int y_inc,
-          unsigned int y_shift,
-          bool use_gpu,
-          T zero=T(0.0f),
-          GPUMirroredMemoryBlock<T> *dest=0,
-          unsigned int dest_raw_pos=0);
-
-  /**
-   * @brief Template wrapper for sparse dot product operation using CBLAS
-   * interface.
-   *
-   * It computes dot(x,y) where x is a sparse vector and y is a dense vector.
-   *
-   * @tparam T - The data type. In APRIl-ANN it could be float, double,
-   * ComplexF.
-   *
-   * @param NNZ - The number of non-zero elements in x vector.
-   * @param x_values - The GPUMirroredMemoryBlock pointer with x values.
-   * @param x_indices - The Int32GPUMirroredMemoryBlock pointer with x indices.
-   * @param[in,out] y - The GPUMirroredMemoryBlock pointer with y vector.
-   * @param y_inc - The stride between consecutive elements in y vector.
-   * @param y_shift - The position of the first valid element in y pointer.
-   * @param use_gpu - Indicates if use GPU or not for the computation.
-   */
-  template<typename T>
-  T doSparseDot(int NNZ,
-                const GPUMirroredMemoryBlock<T> *x_values,
-                const Int32GPUMirroredMemoryBlock *x_indices,
-                const GPUMirroredMemoryBlock<T> *y,
-                int y_shift,
-                int y_inc,
-                bool use_gpu);
-
-  /**
    * @brief Template wrapper for GEMM operation using CBLAS interface.
    *
    * GEMM computes C = alpha * op(A) * op(B) + beta * C where A, B and C are
@@ -575,16 +521,6 @@ namespace AprilMath {
              bool use_gpu);
 
   template<typename T>
-  float doNrm2(unsigned int n,
-               const GPUMirroredMemoryBlock<T> *x,
-               unsigned int inc,
-               unsigned int shift,
-               bool use_gpu,
-               float zero=T(0.0f),
-               GPUMirroredMemoryBlock<float> *dest=0,
-               unsigned int dest_raw_pos=0);
-
-  template<typename T>
   void doScal(unsigned int size,
               GPUMirroredMemoryBlock<T> *x,
               unsigned int inc,
@@ -638,5 +574,8 @@ namespace AprilMath {
   };
   
 } // namespace AprilMath
+
+#include "nrm2.h"
+#include "dot.h"
 
 #endif // CBLAS_HEADERS_H
