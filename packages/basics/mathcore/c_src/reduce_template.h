@@ -54,7 +54,8 @@ namespace AprilMath {
    * @param partials_reduce_op - The functor operator with the reduce over two
    * partial results.
    *
-   * @param dest - The output vector.
+   * @param[in,out] dest - The output vector, it content will be reduced with
+   * the result of the current reduction.
    *
    * @param dest_shift - The first valid position at dest vector.
    *
@@ -86,7 +87,8 @@ namespace AprilMath {
 #ifdef USE_CUDA
     if (use_gpu) {
       CUDA::genericCudaReduceCall(N, input, input_stride, input_shift,
-                                  dest, dest_shift, zero,
+                                  zero,
+                                  dest, dest_shift,
                                   reduce_op, partials_reduce_op);
     }
     else {
@@ -121,7 +123,8 @@ namespace AprilMath {
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      CUDA::genericCudaReduceMinMaxCall(N, input, input_stride, input_shift, zero,
+      CUDA::genericCudaReduceMinMaxCall(N, input, input_stride, input_shift,
+                                        zero,
                                         which, which_shift,
                                         dest, dest_shift,
                                         reduce_op);

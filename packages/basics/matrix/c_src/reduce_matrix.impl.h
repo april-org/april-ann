@@ -385,7 +385,6 @@ namespace AprilMath {
       }
       // General case
       else {
-        T result = T(0.0f);
         typename Basics::Matrix<T>::span_iterator span_it(input);
         unsigned int size   = static_cast<unsigned int>(span_it.getSize());
         unsigned int stride = static_cast<unsigned int>(span_it.getStride());
@@ -394,6 +393,7 @@ namespace AprilMath {
         // this if controls the execution using OMP only when the number of threads
         // is more than 1 and the iterator size is big enough
         if (OMPUtils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
+          T result = T(0.0f);
           GPUMirroredMemoryBlock<T> aux(1);
           T partial;
           // Forces execution of memory copy from GPU to PPAL or viceversa (if

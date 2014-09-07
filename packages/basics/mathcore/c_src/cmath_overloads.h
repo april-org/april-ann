@@ -587,7 +587,7 @@ namespace AprilMath {
     struct r_max2 {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b,
                                         int32_t &which_acc,
-                                        const int b_idx) const {
+                                        const int32_t b_idx) const {
         if (acc<b) {
           acc = b;
           which_acc = b_idx+1; // +1 because Lua starts at 1
@@ -599,7 +599,7 @@ namespace AprilMath {
     struct r_min2 {
       APRIL_CUDA_EXPORT void operator()(T & acc, const T &b,
                                         int32_t &which_acc,
-                                        const int b_idx) const {
+                                        const int32_t b_idx) const {
         if (!(acc<b)) {
           acc = b;
           which_acc = b_idx+1; // +1 because Lua starts at 1
@@ -651,10 +651,10 @@ namespace AprilMath {
   void r_min(T &acc, const T &a, const T &b) { Functors::r_min<T>()(acc,a,b); }
   /// @see Functors::r_max2
   template<typename T> APRIL_CUDA_EXPORT
-  void r_max2(T &acc, const T &a, const T &b, int32_t &c, const int d) { Functors::r_max2<T>()(acc,a,b,c,d); }
+  void r_max2(T &acc, const T &a, const T &b, int32_t &c, const int32_t d) { Functors::r_max2<T>()(acc,a,b,c,d); }
   /// @see Functors::r_min2
   template<typename T> APRIL_CUDA_EXPORT
-  void r_min2(const T &a, const T &b, int32_t &c, const int d) { Functors::r_min2<T>()(a,b,c,d); }
+  void r_min2(const T &a, const T &b, int32_t &c, const int32_t d) { Functors::r_min2<T>()(a,b,c,d); }
   /// @see Functors::r_add
   template<typename T, typename O> APRIL_CUDA_EXPORT
   void r_add(O &a, const T &b) { Functors::r_add<T,O>()(a,b); }

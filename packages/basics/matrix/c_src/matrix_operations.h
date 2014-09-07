@@ -43,8 +43,8 @@ namespace AprilMath {
     
     /**
      * @brief Valid operations over Matrix instances. They are wrappers over
-     * generic functions defined at MatrixExt for map or reduce operations using
-     * Matrix instances.
+     * generic functions defined at AprilMath::MatrixExt for map or reduce
+     * operations using Matrix instances.
      *
      * @see AprilMath::MatrixExt
      */

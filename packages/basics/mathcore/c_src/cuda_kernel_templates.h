@@ -38,8 +38,12 @@
 namespace AprilMath {
   
   namespace CUDA {
-
+    
     /////////////////////////////// REDUCE ////////////////////////////////////    
+
+    // From CUDA Handbook:
+    //   - http://www.cudahandbook.com/
+    //   - https://github.com/ArchaeaSoftware/cudahandbook
     
     /**
      * @brief Executes the CUDA reduce kernel over a vector position.
@@ -70,11 +74,8 @@ namespace AprilMath {
      * two partial values.
      *
      * @param zero - The initial value for the reduction.
-     *
-     * @note The reduce_op functor must be associative, commutative and
-     * idempotent.
      */
-    template<typename T, template O, typename F, typename P>
+    template<typename T, typename O, typename F, typename P>
     __global__ void genericCudaReduceKernel(const T *input,
                                             unsigned int input_stride,
                                             O *output,
@@ -83,7 +84,8 @@ namespace AprilMath {
                                             F reduce_op,
                                             P partials_reduce_op,
                                             O zero) {
-      SharedMemory<T> partials;
+      extern __shared__ float shared[];
+      O *partials = (O *)shared;
       O result = zero;
       const int tid = threadIdx.x;
       for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
@@ -112,16 +114,17 @@ namespace AprilMath {
                                                   T *output,
                                                   unsigned int output_stride,
                                                   unsigned int N,
-                                                  F reduce_op) {
-      unsigned int w=0, which_result=0;
-      SharedMemory<char> shared;
-      T *partials = static_cast<T*>(&(shared[0]));
-      int32_t *which_partials = static_cast<int32_t*>(&(shared[sizeof(T)*blockDim.x]));
-      O result = zero;
+                                                  F reduce_op,
+                                                  T zero) {
+      extern __shared__ float shared[];
+      int32_t which_result=0;
+      T *partials = (T*)(&shared[0]);
+      int32_t *which_partials = (int32_t*)(&((char*)shared)[sizeof(char)*blockDim.x]);
+      T result = zero;
       const int tid = threadIdx.x;
       for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
             i += blockDim.x*gridDim.x ) {
-        reduce_op(result, input[i * input_stride], which_result, i);
+        reduce_op(result, input[i * input_stride], which_result, static_cast<int32_t>(i));
       }
       partials[tid] = result;
       which_partials[tid] = which_result;
@@ -129,17 +132,60 @@ namespace AprilMath {
       for ( int activeThreads = blockDim.x>>1; activeThreads; 
             activeThreads >>= 1 ) {
         if ( tid < activeThreads ) {
-          partials_reduce_op(partials[tid], partials[tid+activeThreads],
-                             which_partials[tid],
-                             which_partials[tid+activeThreads]);
+          reduce_op(partials[tid], partials[tid+activeThreads],
+                    which_partials[tid],
+                    which_partials[tid+activeThreads]);
           
         }
         __syncthreads();
       }
       if ( tid == 0 ) {
-        partials_reduce_op(output[blockIdx.x * output_stride], partials[0],
-                           which[blockIdx.x * which_stride],
-                           which_partials[0]);
+        reduce_op(output[blockIdx.x * output_stride], partials[0],
+                  which[blockIdx.x * which_stride],
+                  which_partials[0]);
+      }
+    }
+
+    template<typename T, typename F>
+    __global__ void genericCudaReduceMinMaxKernel2(const int32_t *which_input,
+                                                   unsigned int which_input_stride,
+                                                   const T *input,
+                                                   unsigned int input_stride,
+                                                   int32_t *which,
+                                                   unsigned int which_stride,
+                                                   T *output,
+                                                   unsigned int output_stride,
+                                                   unsigned int N,
+                                                   F reduce_op,
+                                                   T zero) {
+      extern __shared__ float shared[];
+      int32_t which_result=0;
+      T *partials = (T*)(&shared[0]);
+      int32_t *which_partials = (int32_t*)(&((char*)shared)[sizeof(char)*blockDim.x]);
+      T result = zero;
+      const int tid = threadIdx.x;
+      for ( size_t i = blockIdx.x*blockDim.x + tid; i < N;
+            i += blockDim.x*gridDim.x ) {
+        reduce_op(result, input[i * input_stride],
+                  which_result, which_input[i * which_input_stride]);
+      }
+      partials[tid] = result;
+      which_partials[tid] = which_result;
+      __syncthreads();
+      for ( int activeThreads = blockDim.x>>1; activeThreads; 
+            activeThreads >>= 1 ) {
+        if ( tid < activeThreads ) {
+          reduce_op(partials[tid], partials[tid+activeThreads],
+                    which_partials[tid],
+                    which_partials[tid+activeThreads]);
+          
+        }
+        __syncthreads();
+      }
+      if ( tid == 0 ) {
+        reduce_op(output[blockIdx.x * output_stride], partials[0],
+                  which[blockIdx.x * which_stride],
+                  which_partials[0]);
       }
     }
     
@@ -191,23 +237,25 @@ namespace AprilMath {
                                F reduce_op, P partials_reduce_op) {
       if (N == 0u) return;
       april_assert(GPUHelper::getMaxThreadsPerBlock() > 128u);
-      int threadSize = AprilUtils::min(2048, N);
-      int numThreads = AprilUtils::min(128, AprilUtils::ceilingPowerOfTwo(N/threadSize));
+      int threadSize = AprilUtils::min(2048u, N);
+      int numThreads = AprilUtils::min(128u, AprilUtils::ceilingPowerOfTwo(N/threadSize));
       int numBlocks  = static_cast<int>(ceilf(static_cast<float>(N/(numThreads*threadSize))));
-      const T *input_ptr = input->getGPUForRead() + input_shift;
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
-        partials(new GPUMirroredMemoryBlock<O>(static_cast<unsigned int>(numBlocks)));
-      O *partials_ptr = partials->getGPUForWrite();
+        blocks(new GPUMirroredMemoryBlock<O>(static_cast<unsigned int>(numBlocks)));
+      const T *input_ptr = input->getGPUForRead() + input_shift;
+      O *blocks_ptr = blocks->getGPUForWrite();
       O *dest_ptr = dest->getGPUForWrite();
       // First pass
-      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*sizeof(O),
+      genericCudaReduceKernel<T,O,F,P><<<numBlocks, numThreads, numThreads*sizeof(O),
         GPUHelper::getCurrentStream()>>>
-        (input_ptr, input_stride, partials_ptr, 1u, N, reduce_op, zero);
+        (input_ptr, input_stride, blocks_ptr, 1u, N, reduce_op,
+         partials_reduce_op, zero);
       // Second pass
-      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*sizeof(O),
+      genericCudaReduceKernel<T,O,F,P><<<numBlocks, numThreads, numThreads*sizeof(O),
         GPUHelper::getCurrentStream()>>>
-        (partials_ptr, 1u, dest_ptr, 1u,
-         static_cast<unsigned int>(numBlocks), reduce_op, zero);
+        (blocks_ptr, 1u, dest_ptr, 1u,
+         static_cast<unsigned int>(numBlocks), reduce_op,
+         partials_reduce_op, zero);
       // TODO: check return value (cudaError_t)
       // cudaDeviceSynchronize();
     } // function genericCudaReduceCall
@@ -225,24 +273,28 @@ namespace AprilMath {
                                      F reduce_op) {
       if (N == 0u) return;
       april_assert(GPUHelper::getMaxThreadsPerBlock() > 128u);
-      int threadSize = AprilUtils::min(2048, N);
-      int numThreads = AprilUtils::min(128, AprilUtils::ceilingPowerOfTwo(N/threadSize));
+      int threadSize = AprilUtils::min(2048u, N);
+      int numThreads = AprilUtils::min(128u, AprilUtils::ceilingPowerOfTwo(N/threadSize));
       int numBlocks  = static_cast<int>(ceilf(static_cast<float>(N/(numThreads*threadSize))));
-      const T *input_ptr = input->getGPUForRead() + input_shift;
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
-        partials(new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(numBlocks)));
-      O *partials_ptr = partials->getGPUForWrite();
+        blocks(new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(numBlocks)));
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
-        which_partials(new GPUMirroredMemoryBlock<int32_t>(static_cast<unsigned int>(numBlocks)));
-      int32_t *which_partials_ptr = which_partials->getGPUForWrite();
+        which_blocks(new GPUMirroredMemoryBlock<int32_t>(static_cast<unsigned int>(numBlocks)));
+      const T *input_ptr = input->getGPUForRead() + input_shift;
+      int32_t *which_ptr = which->getGPUForReadAndWrite() + which_shift;
+      T *dest_ptr = dest->getGPUForReadAndWrite() + dest_shift;
+      T *blocks_ptr = blocks->getGPUForWrite();
+      int32_t *which_blocks_ptr = which_blocks->getGPUForWrite();
       // First pass
-      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),
+      genericCudaReduceMinMaxKernel<<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),
         GPUHelper::getCurrentStream()>>>
-        (input_ptr, input_stride, partials_ptr, 1u, N, reduce_op, zero);
+        (input_ptr, input_stride, which_blocks_ptr, 1u, blocks_ptr, 1u,
+         N, reduce_op, zero);
       // Second pass
-      genericCudaReduceKernel<<<numBlocks, numThreads, numThreads*(sizeof(O)+sizeof(int32_t)),
+      genericCudaReduceMinMaxKernel2<<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),
         GPUHelper::getCurrentStream()>>>
-        (partials_ptr, 1u, dest_ptr, 1u,
+        (which_blocks_ptr, 1u, blocks_ptr, 1u,
+         which_ptr, 1u,  dest_ptr, 1u,
          static_cast<unsigned int>(numBlocks), reduce_op, zero);
       // TODO: check return value (cudaError_t)
       // cudaDeviceSynchronize();

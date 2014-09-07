@@ -52,20 +52,6 @@ static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
 namespace AprilMath {
   namespace CUDA {
 
-    template<class T>
-    struct SharedMemory {
-      __device__ inline operator T*()
-      {
-        extern __shared__ int __smem[];
-        return (T*) (void *) __smem;
-      }
-      __device__ inline operator const T*() const
-      {
-        extern __shared__ int __smem[];
-        return (T*) (void *) __smem;
-      }
-    };
-
     static __device__ unsigned int getArrayIndex(const dim3 &blockIdx,
                                                  const dim3 &blockDim,
                                                  const dim3 &threadIdx) {
