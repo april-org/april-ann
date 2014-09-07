@@ -34,6 +34,7 @@ namespace AprilMath {
                                 const OP &scalar_red_functor,
                                 const T &zero) {
       GPUMirroredMemoryBlock<T> result(1u);
+      result.putValue(0u, zero);
       genericReduceCall(input->nonZeroSize(),
                         input->getRawValuesAccess(), 1u, 0u,
                         input->getCudaFlag(),
