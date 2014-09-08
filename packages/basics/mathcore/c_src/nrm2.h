@@ -89,9 +89,9 @@ namespace AprilMath {
               float zero,
               OP functor,
               GPUMirroredMemoryBlock<float> *dest,
-              unsigned int dest_raw_pos) {
+              unsigned int dest_raw_pos,
+              bool set_dest_to_zero) {
     UNUSED_VARIABLE(zero);
-    GPUMirroredMemoryBlock<float> result(1);
     const T *x_mem;
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
@@ -103,20 +103,33 @@ namespace AprilMath {
       x_mem  = x->getGPUForRead() + shift;
       status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
-      status = CUDA::wrapperCublasNrm2(handle, n, x_mem, inc, result.getGPUForWrite());
+      if (set_dest_to_zero) {
+        status = CUDA::wrapperCublasNrm2(handle, n, x_mem, inc,
+                                         dest->getPPALForWrite() + dest_raw_pos);
+      }
+      else {
+        GPUMirroredMemoryBlock<float> result(1);
+        status = CUDA::wrapperCublasNrm2(handle, n, x_mem, inc,
+                                         result.getPPALForWrite());
+        float *dest_ptr = dest->getPPALForReadAndWrite() + dest_raw_pos;
+        functor(*dest_ptr, *(result.getPPALForRead()));
+      }
       checkCublasError(status);
     }
     else {
 #endif
       x_mem = x->getPPALForRead() + shift;
-      result.putValue(0u, wrapperCblasNrm2(n, x_mem, inc));
+      if (set_dest_to_zero) {
+        float *dest_ptr = dest->getPPALForWrite() + dest_raw_pos;
+        *dest_ptr = wrapperCblasNrm2(n, x_mem, inc);
+      }
+      else {
+        float *dest_ptr = dest->getPPALForReadAndWrite() + dest_raw_pos;
+        functor(*dest_ptr, wrapperCblasNrm2(n, x_mem, inc));
+      }
 #ifdef USE_CUDA
     }
 #endif
-    float aux;
-    dest->getValue(dest_raw_pos, aux);
-    functor(aux, *(result.getPPALForRead()));
-    dest->putValue(dest_raw_pos, aux);
   }
 
 } // namespace AprilMath

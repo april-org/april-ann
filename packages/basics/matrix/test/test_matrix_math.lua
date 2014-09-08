@@ -1,28 +1,32 @@
+-- forces the use of CUDA
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
 local check = utest.check
 local T = utest.test
 --
 
-T("MathOpTest",
-  function()
-    local a = matrix(2,4,3,{
-                       0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2,
-                       0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4,
-    })
-    ca = a:select(2,2):complement()
-    check.eq(ca,
-             matrix(2,4,3,{
-                      0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.9, 0.8,
-                      0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
-             }):select(2,2))
-    
-    
-    local a = matrix.fromString[[
+if not util.is_cuda_available() then
+  T("MathOpTest",
+    function()
+      local a = matrix(2,4,3,{
+                         0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2,
+                         0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4,
+      })
+      ca = a:select(2,2):complement()
+      check.eq(ca,
+               matrix(2,4,3,{
+                        0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0, 0.9, 0.8,
+                        0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+               }):select(2,2))
+      
+      
+      local a = matrix.fromString[[
 1 3
 ascii col_major
 1 2 3
 ]]
 
-    local b = matrix.fromString[[
+      local b = matrix.fromString[[
 3 1
 ascii col_major
 1
@@ -30,17 +34,17 @@ ascii col_major
 7
 ]]
 
-    local c = a*b
-    check.eq(c:get(1,1), 1*1+2*4+3*7, "dot product")
-    
-    check.eq(b*a, matrix.col_major(3,3,{
-                                     1,  2,  3,
-                                     4,  8, 12,
-                                     7, 14, 21,
-    }),
-    "cross product")
+      local c = a*b
+      check.eq(c:get(1,1), 1*1+2*4+3*7, "dot product")
+      
+      check.eq(b*a, matrix.col_major(3,3,{
+                                       1,  2,  3,
+                                       4,  8, 12,
+                                       7, 14, 21,
+                                    }),
+               "cross product")
 
-    local d = matrix.fromString[[
+      local d = matrix.fromString[[
 3 3
 ascii
 1 2 3
@@ -48,108 +52,116 @@ ascii
 7 8 9
 ]]
 
-    check.eq(d:clone("col_major"), matrix.col_major(3,3,{
-                                                      1, 2, 3,
-                                                      4, 5, 6,
-                                                      7, 8, 9,
-    }),
-    "col_major clone")
-    
-    check(d:transpose(), matrix(3,3,{
-                                  1, 4, 7,
-                                  2, 5, 8,
-                                  3, 6, 9,
-    }),
-    "transpose")
-    
-    local e = d * d 
-    check(e, matrix(3,3,{
-                      30,   36,  42,
-                      66,   81,  96,
-                      102, 126, 150,
-    }),
-    "matrix mult *")
+      check.eq(d:clone("col_major"), matrix.col_major(3,3,{
+                                                        1, 2, 3,
+                                                        4, 5, 6,
+                                                        7, 8, 9,
+                                                     }),
+               "col_major clone")
+      
+      check(d:transpose(), matrix(3,3,{
+                                    1, 4, 7,
+                                    2, 5, 8,
+                                    3, 6, 9,
+                                 }),
+            "transpose")
+      
+      local e = d * d 
+      check(e, matrix(3,3,{
+                        30,   36,  42,
+                        66,   81,  96,
+                        102, 126, 150,
+                     }),
+            "matrix mult *")
 
-    local d = d:clone("col_major")
-    local e = d * d
-    check(e, matrix.col_major(3,3,{
-                                30,   36,  42,
-                                66,   81,  96,
-                                102, 126, 150,
-    }),
-    "matrix mult * in col_major")
+      local d = d:clone("col_major")
+      local e = d * d
+      check(e, matrix.col_major(3,3,{
+                                  30,   36,  42,
+                                  66,   81,  96,
+                                  102, 126, 150,
+                               }),
+            "matrix mult * in col_major")
 
-    local h = d:slice({2,2},{2,2})
-    check(h, matrix.col_major(2,2,{
-                                5, 6,
-                                8, 9,
-    }),
-    "matrix slice")
+      local h = d:slice({2,2},{2,2})
+      check(h, matrix.col_major(2,2,{
+                                  5, 6,
+                                  8, 9,
+                               }),
+            "matrix slice")
 
-    local e = h * h
-    check(e, matrix.col_major(2,2,{
-                                73,  84,
-                                112, 129,
-    }),
-    "matrix slice mul *")
+      local h = d:slice({2,2},{2,2},true)
+      check(h, matrix.col_major(2,2,{
+                                  5, 6,
+                                  8, 9,
+                               }),
+            "matrix slice clone")
 
-    local l = matrix.col_major(2,2):fill(4) + h
-    check(l, matrix.col_major(2,2,{
-                                9, 10,
-                                12, 13,
-    }),
-    "matrix fill and slice add +")
+      local e = h * h
+      check(e, matrix.col_major(2,2,{
+                                  73,  84,
+                                  112, 129,
+                               }),
+            "matrix slice mul *")
 
-    local g = matrix(3,2,{1,2,
-                          3,4,
-                          5,6})
-    check(g:transpose():clone("col_major"), matrix.col_major(2,3,{
-                                                               1, 3, 5,
-                                                               2, 4, 6,
-    }),
-    "transpose + col_major clone")
-    
-    check(g:transpose():clone("col_major"):clone("row_major"), matrix(2,3,{
-                                                                        1, 3, 5,
-                                                                        2, 4, 6,
-    }),
-    "transpose + col_major clone + row_major clone")
-    
-    check(g:transpose(), matrix(2,3,{
-                                  1, 3, 5,
-                                  2, 4, 6,
-    }),
-    "transpose")
-    
-    local j = g:transpose() * g
-    check(j, matrix(2,2,{
-                      35, 44,
-                      44, 56,
-                   }),
-          "transpose mul *")
+      local l = matrix.col_major(2,2):fill(4) + h
+      check(l, matrix.col_major(2,2,{
+                                  9, 10,
+                                  12, 13,
+                               }),
+            "matrix fill and slice add +")
 
-    local j = matrix(2,2):gemm{
-      trans_A=true, trans_B=false,
-      alpha=1.0, A=g, B=g,
-      beta=0.0
-                              }
-    check(j, matrix(2,2,{
-                      35, 44,
-                      44, 56,
-                   }),
-          "gemm in row_major")
-    
-    local j = matrix.col_major(2,2):gemm{
-      trans_A=true, trans_B=false,
-      alpha=1.0, A=g:clone("col_major"), B=g:clone("col_major"),
-      beta=0.0
-                                        }
-    check(j, matrix.col_major(2,2,{
-                                35, 44,
-                                44, 56,
-                             }),
-          "gemm in col_major")
-end)
+      local g = matrix(3,2,{1,2,
+                            3,4,
+                            5,6})
+      check(g:transpose():clone("col_major"), matrix.col_major(2,3,{
+                                                                 1, 3, 5,
+                                                                 2, 4, 6,
+                                                              }),
+            "transpose + col_major clone")
+      
+      check(g:transpose():clone("col_major"):clone("row_major"), matrix(2,3,{
+                                                                          1, 3, 5,
+                                                                          2, 4, 6,
+                                                                       }),
+            "transpose + col_major clone + row_major clone")
+      
+      check(g:transpose(), matrix(2,3,{
+                                    1, 3, 5,
+                                    2, 4, 6,
+                                 }),
+            "transpose")
+      
+      local j = g:transpose() * g
+      check(j, matrix(2,2,{
+                        35, 44,
+                        44, 56,
+                     }),
+            "transpose mul *")
+
+      local j = matrix(2,2):gemm{
+        trans_A=true, trans_B=false,
+        alpha=1.0, A=g, B=g,
+        beta=0.0
+                                }
+      check(j, matrix(2,2,{
+                        35, 44,
+                        44, 56,
+                     }),
+            "gemm in row_major")
+      
+      local j = matrix.col_major(2,2):gemm{
+        trans_A=true, trans_B=false,
+        alpha=1.0, A=g:clone("col_major"), B=g:clone("col_major"),
+        beta=0.0
+                                          }
+      check(j, matrix.col_major(2,2,{
+                                  35, 44,
+                                  44, 56,
+                               }),
+            "gemm in col_major")
+  end)
+end
 
 ---------------------------------------------------------------
 ---------------------------------------------------------------

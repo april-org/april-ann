@@ -144,9 +144,9 @@ namespace AprilMath {
              T zero,
              OP functor,
              GPUMirroredMemoryBlock<T> *dest,
-             unsigned int dest_raw_pos) {
+             unsigned int dest_raw_pos,
+             bool set_dest_to_zero=true) {
     UNUSED_VARIABLE(zero);
-    GPUMirroredMemoryBlock<T> result(1);
     const T *x_mem;
     const T *y_mem;
 #ifndef USE_CUDA
@@ -161,23 +161,35 @@ namespace AprilMath {
       
       status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
-      status = CUDA::wrapperCublasDot(handle, size, x_mem, x_inc,
-                                      y_mem, y_inc,
-                                      result.getGPUForWrite());
+      if (set_dest_to_zero) {
+        status = CUDA::wrapperCublasDot(handle, size, x_mem, x_inc,
+                                        y_mem, y_inc,
+                                        dest->getPPALForWrite() + dest_raw_pos);
+      }
+      else {
+        GPUMirroredMemoryBlock<T> result(1);
+        status = CUDA::wrapperCublasDot(handle, size, x_mem, x_inc,
+                                        y_mem, y_inc, result.getPPALForWrite());
+        T *dest_ptr = dest->getPPALForReadAndWrite() + dest_raw_pos;
+        functor(*dest_ptr, *(result.getPPALForRead()));
+      }
       checkCublasError(status);
     }
     else {
 #endif
       x_mem = x->getPPALForRead() + x_shift;
       y_mem = y->getPPALForRead() + y_shift;
-      result.putValue(0u, wrapperCblasDot(size, x_mem, x_inc, y_mem, y_inc));
+      if (set_dest_to_zero) {
+        T *dest_ptr = dest->getPPALForWrite() + dest_raw_pos;
+        *dest_ptr = wrapperCblasDot(size, x_mem, x_inc, y_mem, y_inc);
+      }
+      else {
+        T *dest_ptr = dest->getPPALForReadAndWrite() + dest_raw_pos;
+        functor(*dest_ptr, wrapperCblasDot(size, x_mem, x_inc, y_mem, y_inc));
+      }
 #ifdef USE_CUDA
     }
 #endif
-    T aux;
-    dest->getValue(dest_raw_pos, aux);
-    functor(aux, *(result.getPPALForRead()));
-    dest->putValue(dest_raw_pos, aux);
   }
 
   /**

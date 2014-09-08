@@ -73,10 +73,10 @@ namespace AprilUtils{
 namespace AprilMath {
   namespace MatrixExt {
     namespace Operations {
-      
-      template <>
-      Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *obj,
-                                                 const Basics::Matrix<Imaging::FloatRGB> *other);
+  
+      template<>
+      Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *dst,
+                                                 const Basics::Matrix<Imaging::FloatRGB> *src);
       
       template <>
       Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,

@@ -18,7 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-
+#ifndef APRIL_PRINT_H
+#define APRIL_PRINT_H
 #include <cstdio>
 
 namespace AprilUtils {
@@ -35,3 +36,4 @@ namespace AprilUtils {
     if (str2 != 0) printf("%s",str2);
   }
 }
+#endif // APRIL_PRINT_H

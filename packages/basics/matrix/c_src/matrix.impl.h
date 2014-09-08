@@ -30,6 +30,7 @@
 #include "error_print.h"
 #include "ignore_result.h"
 #include "matrix.h"
+#include "omp_utils.h"
 
 // Must be defined in this order.
 #include "matrix_operations.h"
@@ -157,30 +158,65 @@ namespace Basics {
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
-      int other_raw_pos = other->computeRawPos(coords);
-      const T *other_data = other->data->getPPALForRead();
-      int *aux_coords = new int[numDim];
-      for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-      if (major_order == CblasRowMajor) {
-        for (iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorRowOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+      span_iterator it(this), it_other(other, it.getDimOrder());
+      const int *dims_order = it_other.getDimOrder();
+      const int first_dim = dims_order[0];
+      int diff_raw_pos = other->getStrideSize(first_dim) * coords[first_dim];
+      int other_first_iteration = 0;
+      if (numDim > 1) {
+        // compute it_other traversal length until the coordinates of the slice
+        // (except first_dim)
+        AprilUtils::UniquePtr<int []> aux_stride( new int[numDim] );
+        aux_stride[dims_order[0]] = 1;
+        aux_stride[dims_order[1]] = 1;
+        for (int i=2; i<numDim; ++i) {
+          aux_stride[dims_order[i]] = aux_stride[dims_order[i-1]] * other->matrixSize[i-1];
+        }
+        other_first_iteration = 0;
+        for (int i=1; i<numDim; ++i){ 
+          other_first_iteration += aux_stride[dims_order[i]] * coords[dims_order[i]];
+        }
+      }
+      const int N = it.numberOfIterations();
+#ifndef NO_OMP
+      if (N > OMPUtils::get_num_threads()) {
+#pragma omp parallel for firstprivate(it) firstprivate(it_other)
+        for (int i=0; i<N; ++i) {
+          it.setAtIteration(i);
+          it_other.setAtIteration(other_first_iteration + i);
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(),
+                 it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(),
+                 it.getStride(),
+                 it.getOffset(),
+                 this->getCudaFlag());
         }
       }
       else {
-        for (col_major_iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorColOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+#else
+        it_other.setAtIteration(other_first_iteration);
+        for (int i=0; i<N; ++i) {
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(), it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(), it.getStride(), it.getOffset(),
+                 this->getCudaFlag());
+          ++it;
+          ++it_other;
         }
+#endif
+#ifndef NO_OMP
       }
-      delete[] aux_coords;
+#endif
     }
     else {
-      int *aux_coords = new int[numDim];
+      AprilUtils::UniquePtr<int []> aux_coords( new int[numDim] );
       total_size = 1;
       for (int i=0; i<numDim; i++) {
         stride[i]     = other->stride[i];
@@ -190,8 +226,7 @@ namespace Basics {
       }
       offset = other->computeRawPos(coords);
       data = other->data;
-      last_raw_pos = computeRawPos(aux_coords);
-      delete[] aux_coords;
+      last_raw_pos = computeRawPos(aux_coords.get());
     }
     april_assert(offset >= 0);
   }
@@ -221,27 +256,62 @@ namespace Basics {
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
-      int other_raw_pos = other->computeRawPos(coords);
-      const T *other_data = other->data->getPPALForRead();
-      int *aux_coords = new int[numDim];
-      for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-      if (major_order == CblasRowMajor) {
-        for (iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorRowOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+      span_iterator it(this), it_other(other, it.getDimOrder());
+      const int *dims_order = it_other.getDimOrder();
+      const int first_dim = dims_order[0];
+      int diff_raw_pos = other->getStrideSize(first_dim) * coords[first_dim];
+      int other_first_iteration = 0;
+      if (numDim > 1) {
+        // compute it_other traversal length until the coordinates of the slice
+        // (except first_dim)
+        AprilUtils::UniquePtr<int []> aux_stride( new int[numDim] );
+        aux_stride[dims_order[0]] = 1;
+        aux_stride[dims_order[1]] = 1;
+        for (int i=2; i<numDim; ++i) {
+          aux_stride[dims_order[i]] = aux_stride[dims_order[i-1]] * other->matrixSize[i-1];
+        }
+        other_first_iteration = 0;
+        for (int i=1; i<numDim; ++i){ 
+          other_first_iteration += aux_stride[dims_order[i]] * coords[dims_order[i]];
+        }
+      }
+      const int N = it.numberOfIterations();
+#ifndef NO_OMP
+      if (N > OMPUtils::get_num_threads()) {
+#pragma omp parallel for firstprivate(it) firstprivate(it_other)
+        for (int i=0; i<N; ++i) {
+          it.setAtIteration(i);
+          it_other.setAtIteration(other_first_iteration + i);
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(),
+                 it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(),
+                 it.getStride(),
+                 it.getOffset(),
+                 this->getCudaFlag());
         }
       }
       else {
-        for (col_major_iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorColOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+#else
+        it_other.setAtIteration(other_first_iteration);
+        for (int i=0; i<N; ++i) {
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(), it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(), it.getStride(), it.getOffset(),
+                 this->getCudaFlag());
+          ++it;
+          ++it_other;
         }
+#endif
+#ifndef NO_OMP
       }
-      delete[] aux_coords;
+#endif
     }
     else {
       int *aux_coords = new int[numDim];

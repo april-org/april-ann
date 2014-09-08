@@ -223,17 +223,7 @@ namespace AprilMath {
       template <typename T>
       Basics::SparseMatrix<T> *matCopy(Basics::SparseMatrix<T> *obj,
                                        const Basics::SparseMatrix<T> *other);
-
-      // Specialization for char
-      template <>
-      Basics::Matrix<char> *matCopy(Basics::Matrix<char> *obj,
-                                    const Basics::Matrix<char> *other);
-
-      // Specialization for int32_t
-      template <>
-      Basics::Matrix<int32_t> *matCopy(Basics::Matrix<int32_t> *obj,
-                                       const Basics::Matrix<int32_t> *other);
-  
+      
       // AXPY BLAS operation this = this + alpha * other
       template <typename T>
       Basics::Matrix<T> *matAxpy(Basics::Matrix<T> *obj, const T alpha,

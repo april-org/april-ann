@@ -138,20 +138,33 @@ namespace AprilUtils{
   }
 }
 
+#include "copy.impl.h"
 namespace AprilMath {
+
+  template void doCopy<Imaging::FloatRGB>(int,
+                                          const GPUMirroredMemoryBlock<Imaging::FloatRGB>*,
+                                          unsigned int,
+                                          unsigned int,
+                                          GPUMirroredMemoryBlock<Imaging::FloatRGB>*,
+                                          unsigned int,
+                                          unsigned int,
+                                          bool);
+  
   namespace MatrixExt {
     namespace Operations {
       
-      template <>
-      Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *obj,
-                                                 const Basics::Matrix<Imaging::FloatRGB> *other) {
-        if (!obj->sameDim(other)) ERROR_EXIT(128,"Incompatible matrix sizes\n");
-        Basics::Matrix<Imaging::FloatRGB>::iterator dst_it(obj->begin());
-        for (Basics::Matrix<Imaging::FloatRGB>::const_iterator src_it(other->begin());
-             src_it != other->end(); ++src_it, ++dst_it) {
+      template<>
+      Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *dst,
+                                                 const Basics::Matrix<Imaging::FloatRGB> *src) {
+        if (!dst->sameDim(src)) ERROR_EXIT(128, "Incompatible matrix sizes\n");
+        Basics::Matrix<Imaging::FloatRGB>::iterator dst_it(dst->begin());
+        Basics::Matrix<Imaging::FloatRGB>::const_iterator src_it(src->begin());
+        while(dst_it != dst->end() && src_it != src->end()) {
           *dst_it = *src_it;
+          ++dst_it;
+          ++src_it;
         }
-        return obj;
+        return dst;
       }
       
       template <>

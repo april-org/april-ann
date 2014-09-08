@@ -52,34 +52,15 @@ namespace AprilMath {
           float b_abs = AprilMath::m_abs(b);
           acc = AprilMath::m_sqrt(acc*acc + b_abs*b_abs);
         }
+        void operator()(volatile float &acc, const T b) const {
+          float b_abs = AprilMath::m_abs(b);
+          acc = AprilMath::m_sqrt(acc*acc + b_abs*b_abs);
+        }
       };
       
     } // namespace Functors
     
     namespace Operations {
-      
-      namespace Generic {
-        template <typename T>
-        Matrix<T> *matCopy(Matrix<T> *obj,
-                           const Matrix<T> *other) {
-          if (obj->size() != other->size()) {
-            ERROR_EXIT(128, "Sizes don't match\n");
-          }
-          typename Matrix<T>::iterator obj_it(obj->begin());
-          typename Matrix<T>::const_iterator other_it(obj->begin());
-          while(obj_it != obj->end()) {
-            april_assert(obj_it != obj->end());
-            april_assert(other_it != other->end());
-            *obj_it = *other_it;
-            ++obj_it;
-            ++other_it;
-          }
-          april_assert(obj_it == obj->end());
-          april_assert(other_it == other->end());
-          return obj;          
-        }
-        
-      } // namespace Generic
       
       template <typename T>
       Matrix<T> *matPlogp(Matrix<T> *obj,
@@ -380,20 +361,6 @@ namespace AprilMath {
       Matrix<T> *matCopy(Matrix<T> *obj,
                          const Matrix<T> *other) {
         return MatrixSpanMap1<T,T>(other, doCopy<T>, obj);
-      }
-
-      // Specialization for char
-      template <>
-      Matrix<char> *matCopy(Matrix<char> *obj,
-                            const Matrix<char> *other) {
-        return AprilMath::MatrixExt::Operations::Generic::matCopy(obj,other);
-      }
-      
-      // Specialization for int32_t
-      template <>
-      Matrix<int32_t> *matCopy(Matrix<int32_t> *obj,
-                               const Matrix<int32_t> *other) {
-        return AprilMath::MatrixExt::Operations::Generic::matCopy(obj,other);
       }
       
       // SCOPY BLAS operation this = other
@@ -1973,12 +1940,14 @@ namespace AprilMath {
                                         Matrix<ComplexF> *);
 
       // INSTANTIATIONS (char type, dense matrix)
+      template Matrix<char> *matCopy(Matrix<char> *, const Matrix<char> *);
       template Matrix<char> *matFill(Matrix<char> *, const char);
       template Matrix<char> *matZeros(Matrix<char> *);
       template Matrix<char> *matOnes(Matrix<char> *);
       template Matrix<char> *matDiag(Matrix<char> *, const char);
       
       // INSTANTIATIONS (int32_t type, dense matrix)
+      template Matrix<int32_t> *matCopy(Matrix<int32_t> *, const Matrix<int32_t> *);
       template Matrix<int32_t> *matFill(Matrix<int32_t> *, const int32_t);
       template Matrix<int32_t> *matZeros(Matrix<int32_t> *);
       template Matrix<int32_t> *matOnes(Matrix<int32_t> *);

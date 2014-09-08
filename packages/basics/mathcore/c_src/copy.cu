@@ -20,6 +20,7 @@
  *
  */
 #include "cblas_headers.h"
+#include "copy.impl.h"
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
@@ -32,30 +33,33 @@ namespace AprilMath {
      ************** CUDA SECTION ***********
      ***************************************/
 
-    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                     int N,
-                                     const float *x_mem,
-                                     unsigned int x_inc,
-                                     float *y_mem,
-                                     unsigned int y_inc) {
+    template<>
+    cublasStatus_t wrapperCublasCopy<float>(cublasHandle_t &handle,
+                                            int N,
+                                            const float *x_mem,
+                                            unsigned int x_inc,
+                                            float *y_mem,
+                                            unsigned int y_inc) {
       return cublasScopy(handle, N, x_mem, x_inc, y_mem, y_inc);
     }
 
-    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                     int N,
-                                     const double *x_mem,
-                                     unsigned int x_inc,
-                                     double *y_mem,
-                                     unsigned int y_inc) {
+    template<>
+    cublasStatus_t wrapperCublasCopy<double>(cublasHandle_t &handle,
+                                             int N,
+                                             const double *x_mem,
+                                             unsigned int x_inc,
+                                             double *y_mem,
+                                             unsigned int y_inc) {
       return cublasDcopy(handle, N, x_mem, x_inc, y_mem, y_inc);
     }
-
-    cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
-                                     int N,
-                                     const ComplexF *x_mem,
-                                     unsigned int x_inc,
-                                     ComplexF *y_mem,
-                                     unsigned int y_inc) {
+    
+    template<>
+    cublasStatus_t wrapperCublasCopy<ComplexF>(cublasHandle_t &handle,
+                                               int N,
+                                               const ComplexF *x_mem,
+                                               unsigned int x_inc,
+                                               ComplexF *y_mem,
+                                               unsigned int y_inc) {
       return cublasCcopy(handle, N, reinterpret_cast<const cuComplex*>(x_mem), x_inc,
                          reinterpret_cast<cuComplex*>(y_mem), y_inc);
     }
@@ -85,70 +89,28 @@ namespace AprilMath {
    ************* CBLAS SECTION ***********
    ***************************************/
 
-  void wrapperCblasCopy(int N, const float *x_mem, unsigned int x_inc,
-                        float *y_mem, unsigned int y_inc) {
+  template<>
+  void wrapperCblasCopy<float>(int N, const float *x_mem, unsigned int x_inc,
+                               float *y_mem, unsigned int y_inc) {
     cblas_scopy(N, x_mem, x_inc, y_mem, y_inc);
   }
 
-  void wrapperCblasCopy(int N, const double *x_mem, unsigned int x_inc,
-                        double *y_mem, unsigned int y_inc) {
+  template<>
+  void wrapperCblasCopy<double>(int N, const double *x_mem, unsigned int x_inc,
+                                double *y_mem, unsigned int y_inc) {
     cblas_dcopy(N, x_mem, x_inc, y_mem, y_inc);
   }
 
-  void wrapperCblasCopy(int N, const ComplexF *x_mem, unsigned int x_inc,
-                        ComplexF *y_mem, unsigned int y_inc) {
+  template<>
+  void wrapperCblasCopy<ComplexF>(int N, const ComplexF *x_mem, unsigned int x_inc,
+                                  ComplexF *y_mem, unsigned int y_inc) {
     cblas_ccopy(N, x_mem, x_inc, y_mem, y_inc);
   }
 
   /***************************************
    *********** TEMPLATE SECTION **********
    ***************************************/
-
-  template<typename T>
-  void doCopy(int N,
-              const GPUMirroredMemoryBlock<T>* x,
-              unsigned int x_inc,
-              unsigned int x_shift,
-              GPUMirroredMemoryBlock<T>* y,
-              unsigned int y_inc,
-              unsigned int y_shift,
-              bool use_gpu)
-  {
-    const T *x_mem;
-    T *y_mem;
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_gpu);
-#endif
-#ifdef USE_CUDA
-    if (use_gpu) {
-      cublasStatus_t status;
-      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
-      //printf("Doing a scopy with comp=1 & cuda=1\n");
-      x_mem = x->getGPUForRead() + x_shift;
-      y_mem = y->getGPUForWrite() + y_shift;
-    
-      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
-      checkCublasError(status);
-    
-      status = CUDA::wrapperCublasCopy(handle, N, x_mem, x_inc, y_mem, y_inc);
-    
-      checkCublasError(status);
-    }
-    else {
-      //printf("Doing a scopy with comp=1 & cuda=0\n");
-#endif
-#ifndef USE_CUDA
-      //printf("Doing a scopy with comp=0 & cuda=0\n");
-#endif
-      x_mem = x->getPPALForRead() + x_shift;
-      y_mem = y->getPPALForWrite() + y_shift;
-
-      wrapperCblasCopy(N, x_mem, x_inc, y_mem, y_inc);
-#ifdef USE_CUDA
-    }
-#endif
-  }
-
+  
   template<typename T>
   void doCopyBroadcast(int N,
                        GPUMirroredMemoryBlock<T>* x,
@@ -202,6 +164,22 @@ namespace AprilMath {
     }
 #endif
   }
+
+  template void doCopy<int32_t>(int, const GPUMirroredMemoryBlock<int32_t>*,
+                                unsigned int,
+                                unsigned int,
+                                GPUMirroredMemoryBlock<int32_t>*,
+                                unsigned int,
+                                unsigned int,
+                                bool);
+
+  template void doCopy<char>(int, const GPUMirroredMemoryBlock<char>*,
+                             unsigned int,
+                             unsigned int,
+                             GPUMirroredMemoryBlock<char>*,
+                             unsigned int,
+                             unsigned int,
+                             bool);
 
   template void doCopy<float>(int, const GPUMirroredMemoryBlock<float>*,
                               unsigned int,

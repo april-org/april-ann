@@ -79,7 +79,8 @@ namespace AprilMath {
                          F reduce_op,
                          P partials_reduce_op,
                          GPUMirroredMemoryBlock<O> *dest,
-                         unsigned int dest_shift) {
+                         unsigned int dest_shift,
+                         bool set_dest_to_zero) {
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
     UNUSED_VARIABLE(partials_reduce_op);
@@ -89,17 +90,17 @@ namespace AprilMath {
       CUDA::genericCudaReduceCall(N, input, input_stride, input_shift,
                                   zero,
                                   dest, dest_shift,
+                                  set_dest_to_zero,
                                   reduce_op, partials_reduce_op);
     }
     else {
 #endif
-      O result(zero);
       const T *v_mem = input->getPPALForRead() + input_shift;
-      for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
-        reduce_op(result, *v_mem);
-      }
       O *dest_ptr = dest->getPPALForReadAndWrite() + dest_shift;
-      partials_reduce_op(*dest_ptr, result);
+      if (set_dest_to_zero) *dest_ptr = zero;
+      for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
+        reduce_op(*dest_ptr, *v_mem);
+      }
 #ifdef USE_CUDA
     }
 #endif
@@ -116,7 +117,8 @@ namespace AprilMath {
                                GPUMirroredMemoryBlock<int32_t> *which,
                                unsigned int which_shift,
                                GPUMirroredMemoryBlock<T> *dest,
-                               unsigned int dest_shift) {
+                               unsigned int dest_shift,
+                               bool set_dest_to_zero) {
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
     UNUSED_VARIABLE(zero);
@@ -127,13 +129,15 @@ namespace AprilMath {
                                         zero,
                                         which, which_shift,
                                         dest, dest_shift,
+                                        set_dest_to_zero,
                                         reduce_op);
     }
     else {
 #endif
+      const T *v_mem = input->getPPALForRead() + input_shift;
       T *dest_ptr = dest->getPPALForReadAndWrite() + dest_shift;
       int32_t *which_ptr = which->getPPALForReadAndWrite() + which_shift;
-      const T *v_mem = input->getPPALForRead() + input_shift;
+      if (set_dest_to_zero) *dest_ptr = zero;
       for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
         reduce_op(*dest_ptr, *v_mem, *which_ptr, static_cast<int>(i));
       }
@@ -155,10 +159,11 @@ namespace AprilMath {
                     const O &zero,
                     const OP2 &functor2,
                     GPUMirroredMemoryBlock<O> *dest,
-                    unsigned int dest_raw_pos) const {
+                    unsigned int dest_raw_pos,
+                    bool set_dest_to_zero) const {
       genericReduceCall(N, input, input_stride, input_shift,
                         use_cuda, zero, functor, functor2,
-                        dest, dest_raw_pos);
+                        dest, dest_raw_pos, set_dest_to_zero);
     }
   };
 
@@ -177,12 +182,13 @@ namespace AprilMath {
                     GPUMirroredMemoryBlock<int32_t> *which,
                     unsigned int which_raw_pos,
                     GPUMirroredMemoryBlock<T> *dest,
-                    unsigned int dest_raw_pos) const {
+                    unsigned int dest_raw_pos,
+                    bool set_dest_to_zero) const {
       UNUSED_VARIABLE(functor2);
       genericReduceMinMaxCall(N, input, input_stride, input_shift,
                               use_cuda, zero, functor,
                               which, which_raw_pos,
-                              dest, dest_raw_pos);
+                              dest, dest_raw_pos, set_dest_to_zero);
     }
   };
   

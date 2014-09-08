@@ -574,11 +574,17 @@ namespace AprilMath {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         if (acc<b) acc = b;
       }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T b) const {
+        if (acc<b) acc = b;
+      }
     };
 
     template<typename T>
     struct r_min {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        if (!(acc < b)) acc = b;
+      }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T b) const {
         if (!(acc < b)) acc = b;
       }
     };
@@ -587,6 +593,14 @@ namespace AprilMath {
     struct r_max2 {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b,
                                         int32_t &which_acc,
+                                        const int32_t b_idx) const {
+        if (acc<b) {
+          acc = b;
+          which_acc = b_idx+1; // +1 because Lua starts at 1
+        }
+      }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T b,
+                                        volatile int32_t &which_acc,
                                         const int32_t b_idx) const {
         if (acc<b) {
           acc = b;
@@ -605,39 +619,82 @@ namespace AprilMath {
           which_acc = b_idx+1; // +1 because Lua starts at 1
         }
       }
+      APRIL_CUDA_EXPORT void operator()(volatile T & acc, const T b,
+                                        volatile int32_t &which_acc,
+                                        const int32_t b_idx) const {
+        if (!(acc<b)) {
+          acc = b;
+          which_acc = b_idx+1; // +1 because Lua starts at 1
+        }
+      }
     };
 
+    /**
+     * @brief Reduction for @c acc+=v
+     * @note Uses the C++ @c operator+=
+     */
     template<typename T, typename O>
     struct r_add {
       APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
         acc += v;
       }
+      APRIL_CUDA_EXPORT void operator()(volatile O &acc, const T v) const {
+        acc += v;
+      }
     };
     
+    /**
+     * @brief Reduction for @c acc*=v
+     * @note Uses the C++ @c operator*=
+     */
     template<typename T, typename O>
     struct r_mul {
       APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
         acc *= v;
       }
+      APRIL_CUDA_EXPORT void operator()(volatile O acc, const T v) const {
+        acc *= v;
+      }
     };
 
+    /**
+     * @brief Reduction for @c acc/=v
+     * @note Uses the C++ @c operator/=
+     */
     template<typename T, typename O>
     struct r_div {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &v) const {
         acc /= v;
       }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T v) const {
+        acc /= v;
+      }
     };
     
+    /**
+     * @brief Reduction for @c acc=acc&&v
+     * @note Uses the C++ @c operator&&
+     */
     template<typename T>
     struct r_and {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         acc = acc && b;
       }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T b) const {
+        acc = acc && b;
+      }
     };
 
+    /**
+     * @brief Reduction for @c acc=acc||v
+     * @note Uses the C++ @c operator||
+     */
     template<typename T>
     struct r_or {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
+        acc = acc || b;
+      }
+      APRIL_CUDA_EXPORT void operator()(volatile T &acc, const T b) const {
         acc = acc || b;
       }
     };
@@ -645,31 +702,58 @@ namespace AprilMath {
   
   /// @see Functors::r_max
   template<typename T> APRIL_CUDA_EXPORT
-  void r_max(T &acc, const T &a, const T &b) { Functors::r_max<T>()(acc,a,b); }
+  void r_max(T &acc, const T &b) { Functors::r_max<T>()(acc,b); }
+  /// @see Functors::r_max
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_max(volatile T &acc, const T b) { Functors::r_max<T>()(acc,b); }
   /// @see Functors::r_min
   template<typename T> APRIL_CUDA_EXPORT
-  void r_min(T &acc, const T &a, const T &b) { Functors::r_min<T>()(acc,a,b); }
+  void r_min(T &acc, const T &b) { Functors::r_min<T>()(acc,b); }
+  /// @see Functors::r_min
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_min(volatile T &acc, const T b) { Functors::r_min<T>()(acc,b); }
   /// @see Functors::r_max2
   template<typename T> APRIL_CUDA_EXPORT
-  void r_max2(T &acc, const T &a, const T &b, int32_t &c, const int32_t d) { Functors::r_max2<T>()(acc,a,b,c,d); }
+  void r_max2(T &acc, const T &b, int32_t &c, const int32_t d) { Functors::r_max2<T>()(acc,b,c,d); }
+  /// @see Functors::r_max2
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_max2(volatile T &acc, const T b, volatile int32_t &c, const int32_t d) { Functors::r_max2<T>()(acc,b,c,d); }
   /// @see Functors::r_min2
   template<typename T> APRIL_CUDA_EXPORT
-  void r_min2(const T &a, const T &b, int32_t &c, const int32_t d) { Functors::r_min2<T>()(a,b,c,d); }
+  void r_min2(T &acc, const T b, int32_t &c, const int32_t d) { Functors::r_min2<T>()(acc,b,c,d); }
+  /// @see Functors::r_min2
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_min2(volatile T &acc, const T b, volatile int32_t &c, const int32_t d) { Functors::r_min2<T>()(acc,b,c,d); }
   /// @see Functors::r_add
   template<typename T, typename O> APRIL_CUDA_EXPORT
   void r_add(O &a, const T &b) { Functors::r_add<T,O>()(a,b); }
+  /// @see Functors::r_add
+  template<typename T, typename O> APRIL_CUDA_EXPORT
+  void r_add(volatile O &a, const T b) { Functors::r_add<T,O>()(a,b); }
   /// @see Functors::r_mul
   template<typename T,typename O> APRIL_CUDA_EXPORT
   void r_mul(O &a, const T &b) { Functors::r_mul<T,O>()(a,b); }
+  /// @see Functors::r_mul
+  template<typename T,typename O> APRIL_CUDA_EXPORT
+  void r_mul(volatile O &a, const T b) { Functors::r_mul<T,O>()(a,b); }
   /// @see Functors::r_div
   template<typename T,typename O> APRIL_CUDA_EXPORT
   void r_div(O &a, const T &b) { return Functors::r_div<T,O>()(a,b); }
+  /// @see Functors::r_div
+  template<typename T,typename O> APRIL_CUDA_EXPORT
+  void r_div(volatile O &a, const T b) { return Functors::r_div<T,O>()(a,b); }
   /// @see Functors::r_and
   template<typename T> APRIL_CUDA_EXPORT
   void r_and(T &a, const T &b) { Functors::r_and<T>()(a,b); }
+  /// @see Functors::r_and
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_and(volatile T &a, const T b) { Functors::r_and<T>()(a,b); }
   /// @see Functors::r_or
   template<typename T> APRIL_CUDA_EXPORT
   void r_or(T &a, const T &b) { Functors::r_or<T>()(a,b); }
+  /// @see Functors::r_or
+  template<typename T> APRIL_CUDA_EXPORT
+  void r_or(volatile T &a, const T b) { Functors::r_or<T>()(a,b); }
 
   ///////////////////////
   // Curried functions //

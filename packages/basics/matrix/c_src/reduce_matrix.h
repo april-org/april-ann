@@ -54,8 +54,18 @@ namespace AprilMath {
    *       acc.sum += b;
    *       return *this;
    *     }
+   *     APRIL_CUDA_EXPORT volatile MeanReduceResult &operator+=(const float b) const volatile {
+   *       acc.N++;
+   *       acc.sum += b;
+   *       return *this;
+   *     }
    *     // Called from AprilMath::Functors::r_add<MeanReduceResult,MeanReduceResult>
    *     APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const MeanReduceResult &b) const {
+   *       acc.sum += b.sum;
+   *       acc.N   += b.N;
+   *       return *this;
+   *     }
+   *     APRIL_CUDA_EXPORT volatile MeanReduceResult &operator+=(const MeanReduceResult b) const volatile {
    *       acc.sum += b.sum;
    *       acc.N   += b.N;
    *       return *this;
@@ -81,7 +91,8 @@ namespace AprilMath {
                                                         const OP1 &scalar_red_functor,
                                                         const OP2 &partials_red_functor,
                                                         const O &zero,
-                                                        Basics::Matrix<O> *dest);
+                                                        Basics::Matrix<O> *dest=0,
+                                                        bool set_dest_to_zero=true);
     
     template<typename T, typename O, typename OP1, typename OP2>
     Basics::Matrix<O> * MatrixSpanReduceOverDimension(Basics::Matrix<T> *input,
@@ -89,15 +100,17 @@ namespace AprilMath {
                                                       const OP1 &inter_span_red_functor,
                                                       const OP2 &intra_span_red_functor,
                                                       const O &zero,
-                                                      Basics::Matrix<O> *dest);
+                                                      Basics::Matrix<O> *dest=0,
+                                                      bool set_dest_to_zero=true);
     
     template<typename T, typename OP>
     Basics::Matrix<T> * MatrixScalarReduceMinMaxOverDimension(Basics::Matrix<T> *input,
                                                               int dim,
                                                               const OP &scalar_red_functor,
                                                               const T &zero,
-                                                              Basics::Matrix<int32_t> *which,
-                                                              Basics::Matrix<T> *dest);
+                                                              Basics::Matrix<int32_t> *which=0,
+                                                              Basics::Matrix<T> *dest=0,
+                                                              bool set_dest_to_zero=true);
     
     template<typename T, typename OP1, typename OP2>
     Basics::Matrix<T> * MatrixSpanReduceMinMaxOverDimension(Basics::Matrix<T> *input,
@@ -105,16 +118,18 @@ namespace AprilMath {
                                                             const OP1 &inter_span_red_functor,
                                                             const OP2 &intra_span_red_functor,
                                                             const T &zero,
-                                                            Basics::Matrix<int32_t> *which,
-                                                            Basics::Matrix<T> *dest);
+                                                            Basics::Matrix<int32_t> *which=0,
+                                                            Basics::Matrix<T> *dest=0,
+                                                            bool set_dest_to_zero=true);
     
     template<typename T, typename O, typename OP1, typename OP2>
     void MatrixScalarReduce1(const Basics::Matrix<T> *input,
                              const OP1 &scalar_red_functor,
                              const OP2 &partials_red_functor,
                              const O &zero,
-                             Basics::Matrix<O> *dest,
-                             unsigned int dest_raw_pos=0);
+                             AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                             unsigned int dest_raw_pos=0,
+                             bool set_dest_to_zero=true);
     
     template<typename T, typename O, typename OP1, typename OP2>
     O MatrixScalarReduce1(const Basics::Matrix<T> *input,
@@ -127,8 +142,9 @@ namespace AprilMath {
                            const OP1 &inter_span_red_functor,
                            const OP2 &intra_span_red_functor,
                            const O &zero,
-                           Basics::Matrix<O> *dest,
-                           unsigned int dest_raw_pos=0);
+                           AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                           unsigned int dest_raw_pos=0,
+                           bool set_dest_to_zero=true);
 
     template<typename T, typename O, typename OP1, typename OP2>
     O MatrixSpanReduce1(const Basics::Matrix<T> *input,
@@ -141,10 +157,11 @@ namespace AprilMath {
                                 const OP1 &inter_span_red_functor,
                                 const OP2 &intra_span_red_functor,
                                 const O &zero,
-                                Basics::Matrix<int32_t> *which,
+                                AprilMath::GPUMirroredMemoryBlock<int32_t> *which,
                                 unsigned int which_raw_pos,
-                                Basics::Matrix<O> *dest,
-                                unsigned int dest_raw_pos=0);
+                                AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                                unsigned int dest_raw_pos=0,
+                                bool set_dest_to_zero=true);
     
     template<typename T, typename O, typename OP1, typename OP2>
     void MatrixSpanReduce2(const Basics::Matrix<T> *input1,
@@ -152,8 +169,9 @@ namespace AprilMath {
                            const OP1 &inter_span_red_functor,
                            const OP2 &intra_span_red_functor,
                            const O &zero,
-                           Basics::Matrix<O> *dest,
-                           unsigned int dest_raw_pos=0);
+                           AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                           unsigned int dest_raw_pos=0,
+                           bool set_dest_to_zero=true);
 
     template<typename T, typename O, typename OP1, typename OP2>
     O MatrixSpanReduce2(const Basics::Matrix<T> *input1,
@@ -165,16 +183,18 @@ namespace AprilMath {
     template<typename T, typename OP>
     void MatrixScalarSumReduce1(const Basics::Matrix<T> *input,
                                 const OP &scalar_red_functor,
-                                Basics::Matrix<T> *dest,
+                                AprilMath::GPUMirroredMemoryBlock<T> *dest,
                                 unsigned int dest_raw_pos=0,
+                                bool set_dest_to_zero=true,
                                 int N_th = DEFAULT_N_TH,
                                 unsigned int SIZE_th = DEFAULT_SIZE_TH);
     
     template<typename T, typename OP>
     void MatrixSpanSumReduce1(const Basics::Matrix<T> *input,
                               const OP &inter_span_red_functor,
-                              Basics::Matrix<T> *dest,
+                              AprilMath::GPUMirroredMemoryBlock<T> *dest,
                               unsigned int dest_raw_pos=0,
+                              bool set_dest_to_zero=true,
                               int N_th = DEFAULT_N_TH,
                               unsigned int SIZE_th = DEFAULT_N_TH);
 

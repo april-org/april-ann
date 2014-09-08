@@ -40,11 +40,12 @@ namespace AprilMath {
                                                               const OP &scalar_red_functor,
                                                               const T &zero,
                                                               Basics::Matrix<int32_t> *which,
-                                                              Basics::Matrix<T> *dest) {
+                                                              Basics::Matrix<T> *dest,
+                                                              bool set_dest_to_zero) {
       ScalarToSpanReduceMinMax<T,OP> span_functor(scalar_red_functor);
       return MatrixSpanReduceMinMaxOverDimension(input, dim, span_functor,
                                                  scalar_red_functor, zero,
-                                                 which, dest);
+                                                 which, dest, set_dest_to_zero);
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -52,11 +53,13 @@ namespace AprilMath {
                                 const OP1 &inter_span_red_functor,
                                 const OP2 &intra_span_red_functor,
                                 const O &zero,
-                                Basics::Matrix<int32_t> *which,
+                                AprilMath::GPUMirroredMemoryBlock<int32_t> *which,
                                 unsigned int which_raw_pos,
-                                Basics::Matrix<O> *dest,
-                                unsigned int dest_raw_pos) {
-      dest->getRawDataAccess()->putValue(dest_raw_pos, zero);
+                                AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                                unsigned int dest_raw_pos,
+                                bool set_dest_to_zero) {
+      if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
+      if (which == 0) ERROR_EXIT(128, "Expected a non-NULL which pointer\n");
       // Contiguous memory block
       if (input->getIsContiguous()) {
         inter_span_red_functor(static_cast<unsigned int>(input->size()),
@@ -65,10 +68,11 @@ namespace AprilMath {
                                input->getCudaFlag(),
                                zero,
                                intra_span_red_functor,
-                               which->getRawDataAccess(),
+                               which,
                                which_raw_pos,
-                               dest->getRawDataAccess(),
-                               dest_raw_pos);
+                               dest,
+                               dest_raw_pos,
+                               set_dest_to_zero);
       }
       // One dimension
       else if (input->getNumDim() == 1) {
@@ -79,10 +83,11 @@ namespace AprilMath {
                                input->getCudaFlag(),
                                zero,
                                intra_span_red_functor,
-                               which->getRawDataAccess(),
+                               which,
                                which_raw_pos,
-                               dest->getRawDataAccess(),
-                               dest_raw_pos);
+                               dest,
+                               dest_raw_pos,
+                               set_dest_to_zero);
       }
       // General case
       else {
@@ -99,10 +104,12 @@ namespace AprilMath {
                                  input->getCudaFlag(),
                                  zero,
                                  intra_span_red_functor,
-                                 which->getRawDataAccess(),
+                                 which,
                                  which_raw_pos,
-                                 dest->getRawDataAccess(),
-                                 dest_raw_pos);
+                                 dest,
+                                 dest_raw_pos,
+                                 set_dest_to_zero);
+          set_dest_to_zero = false; // only use it in the first iteration
           ++span_it;
         }
         april_assert(span_it == input->end_span_iterator());
@@ -116,7 +123,8 @@ namespace AprilMath {
                                                             const OP2 &intra_span_red_functor,
                                                             const T &zero,
                                                             Basics::Matrix<int32_t> *which,
-                                                            Basics::Matrix<T> *dest) {
+                                                            Basics::Matrix<T> *dest,
+                                                            bool set_dest_to_zero) {
       const int numDim      = input->getNumDim();
       const int *matrixSize = input->getDimPtr();
       AprilUtils::UniquePtr<int []> result_dims( new int[numDim] );
@@ -144,39 +152,40 @@ namespace AprilMath {
       /******************************/
       Basics::Matrix<T> *result  = dest;
       Basics::Matrix<int32_t> *result2 = which;
-      if (result == 0) result = new Basics::Matrix<T>(numDim, result_dims.get(),
-                                                      input->getMajorOrder());
-      if (result2 == 0) result2 = new Basics::Matrix<int32_t>(numDim,
-                                                              result_dims.get());
-      else if (result->size()  != result_size ||
-               result2->size() != result_size) {
+      if (result == 0) {
+        result = new Basics::Matrix<T>(numDim, result_dims.get(),
+                                       input->getMajorOrder());
+        set_dest_to_zero = true;
+      }
+      if (result2 == 0) {
+        result2 = new Basics::Matrix<int32_t>(numDim,
+                                              result_dims.get());
+        set_dest_to_zero = true;
+      }
+      if (result->size()  != result_size ||
+          result2->size() != result_size) {
         // else if (!result->sameDim(result_dims, numDim))
         ERROR_EXIT2(256, "Incorrect size at the given dest matrtix, "
                     "expected %d, found %d\n", result_size, result->size());
       }
-      // Forces to mark PPAL memory as updated, needed to avoid copying the
-      // memory block because of the iterator.
-      T *force_ppal_bit = result->getRawDataAccess()->getPPALForWrite();
-      UNUSED_VARIABLE(force_ppal_bit);
-      int32_t *force_ppal_bit2 = result2->getRawDataAccess()->getPPALForWrite();
-      UNUSED_VARIABLE(force_ppal_bit2);
-      typename Basics::Matrix<int32_t>::iterator it2(result2->begin());
+      typename Basics::Matrix<int32_t>::pos_iterator it2(result2);
       // traverse in row major order
-      for (typename Basics::Matrix<T>::iterator it(result->begin());
-           it!=result->end(); ++it, ++it2) {
-        april_assert(it2 != result2->end());
+      for (typename Basics::Matrix<T>::pos_iterator it(result);
+           !it.isEnd(); ++it, ++it2) {
+        april_assert(!it2.isEnd());
         input_w.getMatrix(slice.get());
         MatrixSpanReduceMinMax<T,T>(slice.get(),
                                     inter_span_red_functor,
                                     intra_span_red_functor,
                                     zero,
-                                    result2,
+                                    result2->getRawDataAccess(),
                                     static_cast<unsigned int>(it2.getRawPos()),
-                                    result,
-                                    static_cast<unsigned int>(it.getRawPos()));
+                                    result->getRawDataAccess(),
+                                    static_cast<unsigned int>(it.getRawPos()),
+                                    set_dest_to_zero);
         input_w.next();
       }
-      april_assert(it2 == result2->end());
+      april_assert(it2.isEnd());
       return result;
     }
 
@@ -186,11 +195,13 @@ namespace AprilMath {
                                                         const OP1 &scalar_red_functor,
                                                         const OP2 &partials_red_functor,
                                                         const O &zero,
-                                                        Basics::Matrix<O> *dest) {
+                                                        Basics::Matrix<O> *dest,
+                                                        bool set_dest_to_zero) {
       ScalarToSpanReduce<T,O,OP1> span_functor(scalar_red_functor);
       return MatrixSpanReduceOverDimension(input, dim, span_functor,
                                            partials_red_functor, zero,
-                                           dest);
+                                           dest,
+                                           set_dest_to_zero);
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -199,7 +210,8 @@ namespace AprilMath {
                                                       const OP1 &inter_span_red_functor,
                                                       const OP2 &intra_span_red_functor,
                                                       const O &zero,
-                                                      Basics::Matrix<O> *dest) {
+                                                      Basics::Matrix<O> *dest,
+                                                      bool set_dest_to_zero) {
       const int numDim      = input->getNumDim();
       const int *matrixSize = input->getDimPtr();
       AprilUtils::UniquePtr<int []> result_dims( new int[numDim] );
@@ -226,8 +238,11 @@ namespace AprilMath {
       AprilUtils::SharedPtr< Basics::Matrix<T> > slice( input_w.getMatrix() );
       /******************************/
       Basics::Matrix<O> *result = dest;
-      if (result == 0) result = new Basics::Matrix<O>(numDim, result_dims.get(),
-                                                      input->getMajorOrder());
+      if (result == 0) {
+        result = new Basics::Matrix<O>(numDim, result_dims.get(),
+                                       input->getMajorOrder());
+        set_dest_to_zero = true;
+      }
       else if (result->size() != result_size)
         // else if (!result->sameDim(result_dims, numDim))
         ERROR_EXIT2(256, "Incorrect size at the given dest matrix, "
@@ -240,8 +255,9 @@ namespace AprilMath {
                           inter_span_red_functor,
                           intra_span_red_functor,
                           zero,
-                          result,
-                          it.getRawPos());
+                          result->getRawDataAccess(),
+                          it.getRawPos(),
+                          set_dest_to_zero);
         input_w.next();
       }
       return result;
@@ -250,12 +266,14 @@ namespace AprilMath {
     template<typename T, typename OP>
     void MatrixScalarSumReduce1(const Basics::Matrix<T> *input,
                                 const OP &scalar_red_functor,
-                                Basics::Matrix<T> *dest,
+                                AprilMath::GPUMirroredMemoryBlock<T> *dest,
                                 unsigned int dest_raw_pos,
+                                bool set_dest_to_zero,
                                 int N_th, unsigned int SIZE_th) {
       ScalarToSpanReduce<T,T,OP> span_functor(scalar_red_functor);
       MatrixSpanSumReduce1(input, span_functor, dest, dest_raw_pos,
-                           N_th, SIZE_th);
+                           N_th, SIZE_th,
+                           set_dest_to_zero);
     }
     
     template<typename T, typename O, typename OP1, typename OP2>
@@ -263,12 +281,11 @@ namespace AprilMath {
                         const OP1 &inter_span_red_functor,
                         const OP2 &intra_span_red_functor,
                         const O &zero) {
-      AprilUtils::SharedPtr< Basics::Matrix<O> > dest( new Basics::Matrix<O>(1,1) );
-      dest->getRawDataAccess()->putValue(0u, zero);
+      AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<O> > dest( new AprilMath::GPUMirroredMemoryBlock<O>(1u) );
       MatrixSpanReduce1(input, inter_span_red_functor,
                         intra_span_red_functor, zero,
-                        dest.get(), 0u);
-      return (*dest)(0);
+                        dest.get(), 0u, true);
+      return dest->get(0);
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -276,9 +293,10 @@ namespace AprilMath {
                            const OP1 &inter_span_red_functor,
                            const OP2 &intra_span_red_functor,
                            const O &zero,
-                           Basics::Matrix<O> *dest,
-                           unsigned int dest_raw_pos) {
-      dest->getRawDataAccess()->putValue(dest_raw_pos, zero);
+                           AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                           unsigned int dest_raw_pos,
+                           bool set_dest_to_zero) {
+      if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
       // Contiguous memory block
       if (input->getIsContiguous()) {
         inter_span_red_functor(static_cast<unsigned int>(input->size()),
@@ -286,7 +304,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input->getOffset()),
                                input->getCudaFlag(),
                                zero, intra_span_red_functor,
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // One dimension
       else if (input->getNumDim() == 1) {
@@ -296,7 +315,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input->getOffset()),
                                input->getCudaFlag(),
                                zero, intra_span_red_functor,
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // General case
       else {
@@ -312,7 +332,9 @@ namespace AprilMath {
                                  span_it.getOffset(),
                                  input->getCudaFlag(),
                                  zero, intra_span_red_functor,
-                                 dest->getRawDataAccess(), dest_raw_pos);
+                                 dest, dest_raw_pos,
+                                 set_dest_to_zero);
+          set_dest_to_zero = false; // use only in the first iteration
           ++span_it;
         }
         april_assert(span_it == input->end_span_iterator());
@@ -324,11 +346,10 @@ namespace AprilMath {
                           const OP1 &scalar_red_functor,
                           const OP2 &partials_red_functor,
                           const O &zero) {
-      AprilUtils::SharedPtr< Basics::Matrix<O> > dest( new Basics::Matrix<O>(1,1) );
-      dest->getRawDataAccess()->putValue(0u, zero);
+      AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<O> > dest( new AprilMath::GPUMirroredMemoryBlock<O>(1) );
       MatrixScalarReduce1(input, scalar_red_functor, partials_red_functor,
-                          zero, dest.get(), 0u);
-      return (*dest)(0);
+                          zero, dest.get(), 0u, true);
+      return dest->get(0);
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -336,30 +357,32 @@ namespace AprilMath {
                              const OP1 &scalar_red_functor,
                              const OP2 &partials_red_functor,
                              const O &zero,
-                             Basics::Matrix<O> *dest,
-                             unsigned int dest_raw_pos) {
+                             AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                             unsigned int dest_raw_pos,
+                             bool set_dest_to_zero) {
       ScalarToSpanReduce<T,O,OP1> span_functor(scalar_red_functor);
       MatrixSpanReduce1(input, span_functor, partials_red_functor,
-                        zero, dest, dest_raw_pos);
+                        zero, dest, dest_raw_pos, set_dest_to_zero);
     }
     
 
     template<typename T, typename OP>
     T MatrixSpanSumReduce1(const Basics::Matrix<T> *input,
                            const OP &inter_span_red_functor) {
-      AprilUtils::SharedPtr< Basics::Matrix<T> > dest( new Basics::Matrix<T>(1,1) );
-      dest->getRawDataAccess()->putValue(0u, T());
-      MatrixSpanSumReduce1(input, inter_span_red_functor, dest.get(), 0u);
-      return (*dest)(0);
+      AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > dest( new AprilMath::GPUMirroredMemoryBlock<T>(1) );
+      MatrixSpanSumReduce1(input, inter_span_red_functor, dest.get(), 0u, true);
+      return dest->get(0);
     }
     
     template<typename T, typename OP>
     void MatrixSpanSumReduce1(const Basics::Matrix<T> *input,
                               const OP &inter_span_red_functor,
-                              Basics::Matrix<T> *dest,
+                              AprilMath::GPUMirroredMemoryBlock<T> *dest,
                               unsigned int dest_raw_pos,
+                              bool set_dest_to_zero,
                               int N_th,
                               unsigned int SIZE_th) {
+      if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
 #ifdef NO_OMP
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
@@ -371,7 +394,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input->getOffset()),
                                input->getCudaFlag(),
                                T(0.0f), AprilMath::Functors::r_add<T,T>(),
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // One dimension
       else if (input->getNumDim() == 1) {
@@ -381,7 +405,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input->getOffset()),
                                input->getCudaFlag(),
                                T(0.0f), AprilMath::Functors::r_add<T,T>(),
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // General case
       else {
@@ -393,7 +418,9 @@ namespace AprilMath {
         // this if controls the execution using OMP only when the number of threads
         // is more than 1 and the iterator size is big enough
         if (OMPUtils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
-          T result = T(0.0f);
+          T result;
+          if (set_dest_to_zero) result = T(0.0f);
+          else dest->getValue(dest_raw_pos, result);
           GPUMirroredMemoryBlock<T> aux(1);
           T partial;
           // Forces execution of memory copy from GPU to PPAL or viceversa (if
@@ -408,11 +435,11 @@ namespace AprilMath {
                                    span_it.getOffset(),
                                    input->getCudaFlag(),
                                    T(0.0f), AprilMath::Functors::r_add<T,T>(),
-                                   &aux, 0);
+                                   &aux, 0, true);
             aux.getValue(0, partial);
             result += partial;
           }
-          dest->getRawDataAccess()->putValue(dest_raw_pos, result);
+          dest->putValue(dest_raw_pos, result);
         }
         else {
 #endif
@@ -424,7 +451,9 @@ namespace AprilMath {
                                    span_it.getOffset(),
                                    input->getCudaFlag(),
                                    T(0.0f), AprilMath::Functors::r_add<T,T>(),
-                                   dest->getRawDataAccess(), dest_raw_pos);
+                                   dest, dest_raw_pos,
+                                   set_dest_to_zero);
+            set_dest_to_zero = false; // use only in the first iteration
             ++span_it;
           }
           april_assert(span_it == input->end_span_iterator());
@@ -440,11 +469,10 @@ namespace AprilMath {
                         const OP1 &inter_span_red_functor,
                         const OP2 &intra_span_red_functor,
                         const O &zero) {
-      AprilUtils::SharedPtr< Basics::Matrix<O> > dest( new Basics::Matrix<O>(1,1) );
-      dest->getRawDataAccess()->putValue(0u, zero);
+      AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<O> > dest( new AprilMath::GPUMirroredMemoryBlock<O>(1) );
       MatrixSpanReduce2(input1, input2, inter_span_red_functor,
-                        intra_span_red_functor, zero, dest.get(), 0u);
-      return (*dest)(0);
+                        intra_span_red_functor, zero, dest.get(), 0u, true);
+      return dest->get(0);
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -453,8 +481,10 @@ namespace AprilMath {
                            const OP1 &inter_span_red_functor,
                            const OP2 &intra_span_red_functor,
                            const O &zero,
-                           Basics::Matrix<O> *dest,
-                           unsigned int dest_raw_pos) {
+                           AprilMath::GPUMirroredMemoryBlock<O> *dest,
+                           unsigned int dest_raw_pos,
+                           bool set_dest_to_zero) {
+      if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
       // Contiguous memory block
       if (input1->getIsContiguous() &&
           input2->getIsContiguous()) {
@@ -465,7 +495,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input2->getOffset()),
                                input1->getCudaFlag(),
                                zero, intra_span_red_functor,
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // One dimension
       else if (input1->getNumDim() == 1 && input2->getNumDim() == 1) {
@@ -478,7 +509,8 @@ namespace AprilMath {
                                static_cast<unsigned int>(input2->getOffset()),
                                input1->getCudaFlag(),
                                zero, intra_span_red_functor,
-                               dest->getRawDataAccess(), dest_raw_pos);
+                               dest, dest_raw_pos,
+                               set_dest_to_zero);
       }
       // General case
       else {
@@ -502,7 +534,9 @@ namespace AprilMath {
                                  input2_span_it.getOffset(),
                                  input1->getCudaFlag(),
                                  zero, intra_span_red_functor,
-                                 dest->getRawDataAccess(), dest_raw_pos);
+                                 dest, dest_raw_pos,
+                                 set_dest_to_zero);
+          set_dest_to_zero = false; // use only in the first iteration
           ++input1_span_it;
           ++input2_span_it;
         }

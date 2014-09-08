@@ -575,7 +575,8 @@ namespace AprilMath {
   
 } // namespace AprilMath
 
-#include "nrm2.h"
 #include "dot.h"
+#include "nrm2.h"
+
 
 #endif // CBLAS_HEADERS_H

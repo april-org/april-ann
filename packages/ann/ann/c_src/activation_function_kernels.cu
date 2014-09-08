@@ -19,6 +19,7 @@
  *
  */
 #include "activation_function_kernels.h"
+#include "april_assert.h"
 #include "cblas_headers.h"
 #include "cmath_overloads.h"
 #include "map_matrix.h"
@@ -608,8 +609,8 @@ namespace ANN {
           cur_pos = 0;
           for (unsigned int i = 0; i < size; i++) {
             output_units_ptr[cur_pos] -= ratio;
-            assert(!(output_units_ptr[cur_pos] > 0.0f) &&
-                   "Numerical inestability at log-softmax activation function");
+            april_assert(!(output_units_ptr[cur_pos] > 0.0f) &&
+                         "Numerical inestability at log-softmax activation function");
             cur_pos += bunch_size;
           }
           output_units_ptr++;

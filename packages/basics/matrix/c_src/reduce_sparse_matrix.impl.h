@@ -40,7 +40,7 @@ namespace AprilMath {
                         zero,
                         scalar_red_functor,
                         scalar_red_functor,
-                        &result, 0u);
+                        &result, 0u, true);
       return result.get(0);
     }
 

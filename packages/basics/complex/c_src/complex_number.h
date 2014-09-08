@@ -80,8 +80,20 @@ namespace AprilMath {
       data[IMG_IDX]  = i;
     }
     __host__ __device__ ~Complex() { }
-    __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
+    __host__ __device__ Complex(const Complex<T> &other) {
+      this->data[0] = other.data[0];
+      this->data[1] = other.data[1];
+    }
+    __host__ __device__ Complex(const volatile Complex<T> &other) {
+      this->data[0] = other.data[0];
+      this->data[1] = other.data[1];
+    }
     __host__ __device__ Complex<T> &operator=(const Complex<T> &other) {
+      this->data[REAL_IDX] = other.data[REAL_IDX];
+      this->data[IMG_IDX]  = other.data[IMG_IDX];
+      return *this;
+    }
+    __host__ __device__ volatile Complex<T> &operator=(const Complex<T> other) volatile {
       this->data[REAL_IDX] = other.data[REAL_IDX];
       this->data[IMG_IDX]  = other.data[IMG_IDX];
       return *this;
@@ -116,12 +128,33 @@ namespace AprilMath {
       this->data[IMG_IDX]  += other.data[IMG_IDX];
       return *this;
     }
+    __host__ __device__ volatile Complex<T> &operator+=(const Complex<T> other) volatile {
+      this->data[REAL_IDX] += other.data[REAL_IDX];
+      this->data[IMG_IDX]  += other.data[IMG_IDX];
+      return *this;
+    }
     __host__ __device__ Complex<T> &operator*=(const Complex<T> &other) {
-      *this = (*this) * other;
+      *this = *this * other;
+      return *this;
+    }
+    __host__ __device__ volatile Complex<T> &operator*=(const Complex<T> other) volatile {
+      this->data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] -
+                              this->data[IMG_IDX]*other.data[IMG_IDX]);
+      this->data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
+                              this->data[IMG_IDX]*other.data[REAL_IDX]);
       return *this;
     }
     __host__ __device__ Complex<T> &operator/=(const Complex<T> &other) {
       *this = (*this) / other;
+      return *this;
+    }
+    __host__ __device__ volatile Complex<T> &operator/=(const Complex<T> other) volatile {
+      T c2_d2 = ( other.data[REAL_IDX]* other.data[REAL_IDX] +
+                  other.data[IMG_IDX] * other.data[IMG_IDX] );
+      this->data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
+                              this->data[IMG_IDX]*other.data[IMG_IDX]) / c2_d2;
+      this->data[IMG_IDX]  = (this->data[IMG_IDX]*other.data[REAL_IDX] -
+                              this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
       return *this;
     }
     __host__ __device__ Complex<T> operator+(const Complex<T> &other) const {
@@ -137,6 +170,12 @@ namespace AprilMath {
       return result;
     }
     __host__ __device__ Complex<T> operator-() const {
+      Complex<T> result;
+      result.data[REAL_IDX] = -this->data[REAL_IDX];
+      result.data[IMG_IDX]  = -this->data[IMG_IDX];
+      return result;
+    }
+    __host__ __device__ Complex<T> operator-() const volatile {
       Complex<T> result;
       result.data[REAL_IDX] = -this->data[REAL_IDX];
       result.data[IMG_IDX]  = -this->data[IMG_IDX];

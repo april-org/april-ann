@@ -250,8 +250,10 @@ namespace AprilMath {
         CUDA::GPUHelper::initHelper();
 	CUresult result;
 	result = cuMemAlloc(&mem_gpu, size);
-	if (result != CUDA_SUCCESS)
-	  ERROR_EXIT1(161, "Could not allocate memory in device, error %d\n", result);
+	if (result != CUDA_SUCCESS) {
+	  ERROR_EXIT2(161, "Could not allocate %lu memory bytes in device, error %d\n",
+                      size, result);
+        }
 	return true;
       }
       return false;
@@ -262,10 +264,13 @@ namespace AprilMath {
 	CUDA::GPUHelper::initHelper();
 	CUresult result;
 	result = cuMemAlloc(&mem_gpu, size);
-	if (result != CUDA_SUCCESS)
-	  ERROR_EXIT1(161, "Could not allocate memory in device, error %d\n", result);
+	if (result != CUDA_SUCCESS) {
+	  ERROR_EXIT2(161, "Could not allocate %lu memory bytes in device, error %d\n",
+                      size, result);
+        }
+        return true;
       }
-      return true;
+      return false;
     }
 #endif
 
@@ -273,20 +278,20 @@ namespace AprilMath {
 
 #ifdef USE_CUDA  
   void updateMemGPU() const {
+    allocMemGPU();
     if (!getUpdatedGPU()) {
       /*
         ERROR_EXIT(128, "You need first to update the "
         "memory in a non const pointer\n");
       */
-      allocMemGPU();
       setUpdatedGPU();
       copyPPALtoGPU();
     }
   }
   
     void updateMemGPU() {
+      allocMemGPU();
       if (!getUpdatedGPU()) {
-        allocMemGPU();
         setUpdatedGPU();
         copyPPALtoGPU();
       }
@@ -360,7 +365,7 @@ namespace AprilMath {
       mmapped_data = 0;
       setAllocated();
 #ifdef USE_CUDA
-      unsetUpdatedGPU();
+      setUpdatedGPU();
       setUpdatedPPAL();
       mem_gpu  = 0;
       pinned   = false;
@@ -705,7 +710,7 @@ namespace AprilMath {
     T *getGPUForWrite() {
       if (isConst())
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
-      if (allocMemGPU()) copyPPALtoGPU();
+      allocMemGPU();
       setUpdatedGPU();
       unsetUpdatedPPAL();
       return reinterpret_cast<T*>(mem_gpu);

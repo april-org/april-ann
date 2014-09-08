@@ -33,9 +33,14 @@
 #include <cusparse_v2.h>
 
 #include "cblas_headers.h"
+#include "ceiling_power_of_two.h"
 #include "complex_number.h"
 #include "maxmin.h"
 #include "gpu_helper.h"
+
+#define MAX_CUDA_REDUCE_THREAD_SIZE 1024
+#define MIN_CUDA_REDUCE_THREAD_SIZE    8
+#define MAX_CUDA_REDUCE_NUM_THREADS 1024 // must be multiple of 2 (wrap size=32)
 
 #define APRIL_CUDA_EXPORT __host__ __device__
 #define APRIL_CUDA_ERROR_EXIT(code,msg) aprilCudaErrorExit((code),(msg))
@@ -118,6 +123,17 @@ namespace AprilMath {
       matrix_col_pos = blockIdx.y*blockDim.y + threadIdx.y;
     }
 
+    static void computeReductionSize(int N, int &numThreads,
+                                     int &threadSize, int &numBlocks) {
+      int N2 = AprilUtils::ceilingPowerOfTwo(N);
+      numThreads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
+                                                      AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
+                                                                      static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
+      threadSize = AprilUtils::max(1, AprilUtils::min(MAX_CUDA_REDUCE_THREAD_SIZE,
+                                                      N/numThreads));
+      numBlocks  = AprilUtils::max(1, N/(numThreads*threadSize));
+    }
+    
     static void computeBlockAndGridSizesFor2DMatrix(unsigned int N,
                                                     unsigned int M,
                                                     dim3 &block, dim3 &grid) {
@@ -185,6 +201,7 @@ namespace AprilMath {
 
 #endif
 
+SPECIALIZE_CUDA_SHARED_MEMORY(int32_t,int32_t);
 SPECIALIZE_CUDA_SHARED_MEMORY(float,float);
 SPECIALIZE_CUDA_SHARED_MEMORY(double,double);
 SPECIALIZE_CUDA_SHARED_MEMORY(AprilMath::ComplexF,ComplexF);
