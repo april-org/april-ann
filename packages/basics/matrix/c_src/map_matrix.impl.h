@@ -67,26 +67,19 @@ namespace AprilMath {
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
-      // Contiguous memory block.
-      if (input->getIsContiguous() && dest->getIsContiguous()) {
-        functor(static_cast<unsigned int>(input->size()),
-                input->getRawDataAccess(),
-                1u,
-                static_cast<unsigned int>(input->getOffset()),
-                dest->getRawDataAccess(),
-                1u,
-                static_cast<unsigned int>(dest->getOffset()),
-                input->getCudaFlag());
-      }
-      // One dimension.
-      else if (input->getNumDim() == 1 && dest->getNumDim() == 1) {
-        functor(static_cast<unsigned int>(input->size()),
-                input->getRawDataAccess(),
-                static_cast<unsigned int>(input->getStrideSize(0)),
-                static_cast<unsigned int>(input->getOffset()),
-                dest->getRawDataAccess(),
-                static_cast<unsigned int>(dest->getStrideSize(0)),
-                static_cast<unsigned int>(dest->getOffset()),
+      // Contiguous memory block or one dimension.
+      if ( (input->getIsContiguous() || input->getNumDim() == 1) &&
+           (dest->getIsContiguous() || dest->getNumDim() == 1) ) {
+        unsigned int size = input->size();
+        unsigned int input_stride, input_offset = input->getOffset();
+        unsigned int dest_stride, dest_offset = dest->getOffset();
+        if (input->getIsContiguous()) input_stride = 1u;
+        else input_stride = input->getStrideSize(0);
+        if (dest->getIsContiguous()) dest_stride = 1u;
+        else dest_stride = dest->getStrideSize(0);
+        functor(size,
+                input->getRawDataAccess(), input_stride, input_offset,
+                dest->getRawDataAccess(), dest_stride, dest_offset,
                 input->getCudaFlag());
       }
       // General case.
@@ -161,46 +154,36 @@ namespace AprilMath {
                                       const unsigned int SIZE_th) {
       april_assert(input1 != 0 && input2 != 0 && dest != 0);
       if (input1->size() != dest->size() || input2->size() != dest->size()) {
-        ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+        ERROR_EXIT(128, "Incompatible matrix sizes or dimensions\n");
       }
 #ifdef NO_OMP
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
-      // Contiguous memory block.
-      if (input1->getIsContiguous() && input2->getIsContiguous() &&
-          dest->getIsContiguous()) {
-        functor(static_cast<unsigned int>(input1->size()),
-                input1->getRawDataAccess(),
-                1u,
-                static_cast<unsigned int>(input1->getOffset()),
-                input2->getRawDataAccess(),
-                1u,
-                static_cast<unsigned int>(input2->getOffset()),
-                dest->getRawDataAccess(),
-                1u,
-                static_cast<unsigned int>(dest->getOffset()),
-                input1->getCudaFlag());
-      }
-      // One dimension.
-      else if (input1->getNumDim() == 1 && input2->getNumDim() == 1 &&
-               dest->getNumDim() == 1) {
-        functor(static_cast<unsigned int>(input1->size()),
-                input1->getRawDataAccess(),
-                static_cast<unsigned int>(input1->getStrideSize(0)),
-                static_cast<unsigned int>(input1->getOffset()),
-                input2->getRawDataAccess(),
-                static_cast<unsigned int>(input2->getStrideSize(0)),
-                static_cast<unsigned int>(input2->getOffset()),
-                dest->getRawDataAccess(),
-                static_cast<unsigned int>(dest->getStrideSize(0)),
-                static_cast<unsigned int>(dest->getOffset()),
+      // Contiguous memory block or one dimension.
+      if ( (input1->getIsContiguous() || input1->getNumDim() == 1) &&
+           (input2->getIsContiguous() || input2->getNumDim() == 1) &&
+           (dest->getIsContiguous() || dest->getNumDim() == 1) ) {
+        unsigned int size = input1->size();
+        unsigned int input1_stride, input1_offset = input1->getOffset();
+        unsigned int input2_stride, input2_offset = input2->getOffset();
+        unsigned int dest_stride, dest_offset = dest->getOffset();
+        if (input1->getIsContiguous()) input1_stride = 1u;
+        else input1_stride = input1->getStrideSize(0);
+        if (input2->getIsContiguous()) input2_stride = 1u;
+        else input2_stride = input2->getStrideSize(0);
+        if (dest->getIsContiguous()) dest_stride = 1u;
+        else dest_stride = dest->getStrideSize(0);
+        functor(size,
+                input1->getRawDataAccess(), input1_stride, input1_offset,
+                input2->getRawDataAccess(), input2_stride, input2_offset,
+                dest->getRawDataAccess(), dest_stride, dest_offset,
                 input1->getCudaFlag());
       }
       // General case.
       else {
         if (!input1->sameDim(dest) || !input2->sameDim(dest)) {
-          ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+          ERROR_EXIT(128, "Incompatible matrix sizes or dimensions\n");
         }
         typename Basics::Matrix<T1>::span_iterator input1_span_it(input1);
         typename Basics::Matrix<T2>::span_iterator input2_span_it(input2);

@@ -1,3 +1,5 @@
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
 -- un generador de valores aleatorios... y otros parametros
 bunch_size     = tonumber(arg[1]) or 512
 semilla        = 1234
@@ -74,7 +76,6 @@ val_output   = dataset.matrix(m2,
 
 
 thenet = ann.mlp.all_all.generate(description)
-if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size,

@@ -143,7 +143,9 @@ namespace ANN {
 #endif
     
     /////////////////////////////////////////////////////////////////////////
-    
+    float *aux = input_mat->getRawDataAccess()->getPPALForReadAndWrite();
+    UNUSED_VARIABLE(aux);
+    /////////////////////////////////////////////////////////////////////////
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window *input_sw =
       new MatrixFloat::sliding_window(input_mat, input_window_size,

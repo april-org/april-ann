@@ -162,6 +162,10 @@ namespace AprilMath {
                                               result_dims.get());
         set_dest_to_zero = true;
       }
+#ifdef USE_CUDA
+      result->setUseCuda(input->getCudaFlag());
+      result2->setUseCuda(input->getCudaFlag());
+#endif
       if (result->size()  != result_size ||
           result2->size() != result_size) {
         // else if (!result->sameDim(result_dims, numDim))
@@ -247,6 +251,9 @@ namespace AprilMath {
         // else if (!result->sameDim(result_dims, numDim))
         ERROR_EXIT2(256, "Incorrect size at the given dest matrix, "
                     "expected %d, found %d\n", result_size, result->size());
+#ifdef USE_CUDA
+      result->setUseCuda(input->getCudaFlag());
+#endif
       // traverse in row major order
       for (typename Basics::Matrix<O>::pos_iterator it(result);
            !it.isEnd(); ++it) {
