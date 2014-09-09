@@ -6,6 +6,19 @@ Master branch release
 
 ### Unstable changes
 
+### API Changes
+
+### Bugs removed
+
+### C/C++
+
+### Other
+
+v0.4.0
+------
+
+### Unstable changes
+
 - Added statistical distributions in `stats.dist`.
 - Added `Matrix<T>::convolution` method and `matrix:convolution` lua
   method. They are in experimental stage, please, be advice to use them by your
