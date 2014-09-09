@@ -291,8 +291,8 @@ T("GEMV", function()
     for i=4,11 do
       local N = 2^i
       local a = matrix(N,N):uniformf(-1,1,rnd) a:update()
-      local x = matrix(N):uniformf(-1,1,rnd) b:update()
-      local y = matrix(N):uniformf(-1,1,rnd) c:update()
+      local x = matrix(N):uniformf(-1,1,rnd) x:update()
+      local y = matrix(N):uniformf(-1,1,rnd) y:update()
       printf("\tsize=%10d      %20.9f  %20.9f\n",a:size(),
 	     measure_process_time(function()
 		 y:gemv{ A=a, X=x, alpha=1.0, beta=1.0 }
