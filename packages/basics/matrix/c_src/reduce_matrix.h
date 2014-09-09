@@ -54,18 +54,8 @@ namespace AprilMath {
    *       acc.sum += b;
    *       return *this;
    *     }
-   *     APRIL_CUDA_EXPORT volatile MeanReduceResult &operator+=(const float b) const volatile {
-   *       acc.N++;
-   *       acc.sum += b;
-   *       return *this;
-   *     }
    *     // Called from AprilMath::Functors::r_add<MeanReduceResult,MeanReduceResult>
    *     APRIL_CUDA_EXPORT MeanReduceResult &operator+=(const MeanReduceResult &b) const {
-   *       acc.sum += b.sum;
-   *       acc.N   += b.N;
-   *       return *this;
-   *     }
-   *     APRIL_CUDA_EXPORT volatile MeanReduceResult &operator+=(const MeanReduceResult b) const volatile {
    *       acc.sum += b.sum;
    *       acc.N   += b.N;
    *       return *this;

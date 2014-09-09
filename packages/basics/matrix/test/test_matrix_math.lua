@@ -204,6 +204,18 @@ T("SliceTest",
     check.eq(subm, m({5,10},{4,12}))
     local subm = m:slice({1,4},{6,m:dim(2)-3})
     check.eq(subm, m(":6","4:"))
+    --
+    local m = matrix.col_major(1,4):linear()
+    check.eq(m:slice({1,1},{1,2},true), matrix.col_major(1,2,{0,1}))
+    check.eq(m:slice({1,3},{1,2},true), matrix.col_major(1,2,{2,3}))
+    check.eq(m:slice({1,1},{1,2}), matrix.col_major(1,2,{0,1}))
+    check.eq(m:slice({1,3},{1,2}), matrix.col_major(1,2,{2,3}))
+    --
+    local m = matrix(1,4):linear()
+    check.eq(m:slice({1,1},{1,2},true), matrix(1,2,{0,1}))
+    check.eq(m:slice({1,3},{1,2},true), matrix(1,2,{2,3}))
+    check.eq(m:slice({1,1},{1,2}), matrix(1,2,{0,1}))
+    check.eq(m:slice({1,3},{1,2}), matrix(1,2,{2,3}))
 end)
 
 local function load_csv()
@@ -319,4 +331,12 @@ T("MinTest", function()
                                    2,  3, 19, 11 }))
     check.eq(b:to_float(), matrix(2, 4, 1, { 1, 2, 1, 3,
                                              2, 3, 1, 3 }))
+end)
+
+T("LargeMatrices", function()
+    local m1 = matrix(300,200,100)
+    local m2 = matrix(300,200,100)
+    for i=1,m1:dim(3) do m1:select(3,i):fill(i) end
+    for i=1,m2:dim(3) do m2(':',':',i):fill(i) end
+    check.eq(m1, m2, "select and slice")
 end)

@@ -133,6 +133,13 @@ namespace AprilMath {
                                                       N/numThreads));
       numBlocks  = AprilUtils::max(1, N/(numThreads*threadSize));
     }
+
+    static void computeSecondReductionSize(int N, int &numThreads) {
+      int N2 = AprilUtils::ceilingPowerOfTwo(N);
+      numThreads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
+                                                      AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
+                                                                      static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
+    }
     
     static void computeBlockAndGridSizesFor2DMatrix(unsigned int N,
                                                     unsigned int M,

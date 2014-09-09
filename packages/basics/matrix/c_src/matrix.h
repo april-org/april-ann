@@ -138,6 +138,8 @@ namespace Basics {
 
     /// Computes the position at data array given it coordinates
     int  computeRawPos(const int *coords) const;
+    /// Computes the position at data array given it coordinates
+    int  computeRawPos(const int *coords, const int *offset) const;
     /// Computes the coordinates given the raw data position
     void computeCoords(const int raw_pos, int *coords) const;
     /// Updates with the following coordinates vector
@@ -423,6 +425,7 @@ namespace Basics {
       int numberOfIterations() const;
       void setAtIteration(int idx);
       const int *getDimOrder() const { return order; }
+      const int *getCoordinates() const { return coords; }
     };
 
     /********************************************************/

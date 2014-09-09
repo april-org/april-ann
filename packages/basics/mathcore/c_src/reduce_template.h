@@ -137,7 +137,10 @@ namespace AprilMath {
       const T *v_mem = input->getPPALForRead() + input_shift;
       T *dest_ptr = dest->getPPALForReadAndWrite() + dest_shift;
       int32_t *which_ptr = which->getPPALForReadAndWrite() + which_shift;
-      if (set_dest_to_zero) *dest_ptr = zero;
+      if (set_dest_to_zero) {
+        *dest_ptr = zero;
+        *which_ptr = -1;
+      }
       for (unsigned int i=0; i<N; ++i, v_mem+=input_stride) {
         reduce_op(*dest_ptr, *v_mem, *which_ptr, static_cast<int>(i));
       }

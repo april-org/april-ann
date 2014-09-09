@@ -51,6 +51,30 @@ namespace AprilMath {
       return CUBLAS_STATUS_INTERNAL_ERROR;
     }
 
+    template<>
+    cublasStatus_t wrapperCublasCopy<float>(cublasHandle_t &handle,
+                                            int N,
+                                            const float *x_mem,
+                                            unsigned int x_inc,
+                                            float *y_mem,
+                                            unsigned int y_inc);
+
+    template<>
+    cublasStatus_t wrapperCublasCopy<double>(cublasHandle_t &handle,
+                                             int N,
+                                             const double *x_mem,
+                                             unsigned int x_inc,
+                                             double *y_mem,
+                                             unsigned int y_inc);
+    
+    template<>
+    cublasStatus_t wrapperCublasCopy<ComplexF>(cublasHandle_t &handle,
+                                               int N,
+                                               const ComplexF *x_mem,
+                                               unsigned int x_inc,
+                                               ComplexF *y_mem,
+                                               unsigned int y_inc);
+
   } // namespace CUDA
 #endif
 
@@ -63,6 +87,18 @@ namespace AprilMath {
                         T *y_mem, unsigned int y_inc) {
     for (int i=0; i<N; ++i, x_mem += x_inc, y_mem += y_inc) *y_mem = *x_mem;
   }
+
+  template<>
+  void wrapperCblasCopy<float>(int N, const float *x_mem, unsigned int x_inc,
+                               float *y_mem, unsigned int y_inc);
+
+  template<>
+  void wrapperCblasCopy<double>(int N, const double *x_mem, unsigned int x_inc,
+                                double *y_mem, unsigned int y_inc);
+
+  template<>
+  void wrapperCblasCopy<ComplexF>(int N, const ComplexF *x_mem, unsigned int x_inc,
+                                  ComplexF *y_mem, unsigned int y_inc);
 
   /***************************************
    *********** TEMPLATE SECTION **********

@@ -75,7 +75,7 @@ namespace AprilMath {
      * @param zero - The initial value for the reduction.
      */
     template<typename T, typename O, typename F, typename P,
-             bool overwrite_output, int numThreads>
+             bool overwrite_output>
     __global__ void genericCudaReduceKernel(const T *input,
                                             unsigned int input_stride,
                                             O *output,
@@ -87,92 +87,28 @@ namespace AprilMath {
       SharedMemory<O> partials;
       O result = zero;
       const int tid = threadIdx.x;
-      for ( size_t i = blockIdx.x*numThreads + tid;
+      for ( size_t i = blockIdx.x*blockDim.x + tid;
             i < N;
-            i += numThreads*gridDim.x ) {
+            i += blockDim.x*gridDim.x ) {
         reduce_op(result, input[i * input_stride]);
       }
       partials[tid] = result;
       __syncthreads();
-
-      if (numThreads >= 1024) { 
-        if (tid < 512) {
-          partials_reduce_op(partials[tid], partials[tid+512]);
-        } 
+      for ( int activeThreads = blockDim.x>>1; 
+            activeThreads; 
+            activeThreads >>= 1 ) {
+        if ( tid < activeThreads ) {
+          partials_reduce_op(partials[tid], partials[tid+activeThreads]);
+        }
         __syncthreads();
-      }
-      if (numThreads >= 512) { 
-        if (tid < 256) {
-          partials_reduce_op(partials[tid], partials[tid+256]);
-        } 
-        __syncthreads();
-      }
-      if (numThreads >= 256) {
-        if (tid < 128) {
-          partials_reduce_op(partials[tid], partials[tid+128]);
-        } 
-        __syncthreads();
-      }
-      if (numThreads >= 128) {
-        if (tid <  64) { 
-          partials_reduce_op(partials[tid], partials[tid+64]);
-        } 
-        __syncthreads();
-      }
-      // warp synchronous at the end
-      if ( tid < 32 ) {
-        volatile O *aux = partials;
-        if (numThreads >=  64) { partials_reduce_op(aux[tid], aux[tid+32]); }
-        if (numThreads >=  32) { partials_reduce_op(aux[tid], aux[tid+16]); }
-        if (numThreads >=  16) { partials_reduce_op(aux[tid], aux[tid+ 8]); }
-        if (numThreads >=   8) { partials_reduce_op(aux[tid], aux[tid+ 4]); }
-        if (numThreads >=   4) { partials_reduce_op(aux[tid], aux[tid+ 2]); }
-        if (numThreads >=   2) { partials_reduce_op(aux[tid], aux[tid+ 1]); }
       }
       if ( tid == 0 ) {
         if (overwrite_output) {
-          output[blockIdx.x * output_stride] = partials[0];
+          output[blockIdx.x * output_stride] = zero;
         }
-        else {
-          partials_reduce_op(output[blockIdx.x * output_stride], partials[0]);
-        }
+        partials_reduce_op(output[blockIdx.x * output_stride], partials[0]);
       }
     }
-
-    template<typename T, typename O, typename F, typename P, int numThreads>
-    void genericReduceTemplateCall(const T *input_ptr,
-                                   unsigned int input_stride,
-                                   O *output_ptr,
-                                   unsigned int output_stride,
-                                   unsigned int N,
-                                   F reduce_op,
-                                   P partials_reduce_op,
-                                   O zero,
-                                   int numBlocks,
-                                   bool set_dest_to_zero) {
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
-        blocks(new GPUMirroredMemoryBlock<O>(static_cast<unsigned int>(numBlocks)));
-      O *blocks_ptr = blocks->getGPUForWrite();
-      genericCudaReduceKernel<T,O,F,P,false,numThreads>
-        <<<numBlocks, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
-        (input_ptr, input_stride, blocks_ptr, 1u, N, reduce_op,
-         partials_reduce_op, zero);
-      if (set_dest_to_zero) {
-        genericCudaReduceKernel<T,O,F,P,true,numThreads>
-          <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
-          (blocks_ptr, 1u, output_ptr, output_stride,
-           static_cast<unsigned int>(numBlocks), reduce_op,
-           partials_reduce_op, zero);
-      }
-      else {
-        genericCudaReduceKernel<T,O,F,P,false,numThreads>
-          <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
-          (blocks_ptr, 1u, output_ptr, output_stride,
-           static_cast<unsigned int>(numBlocks), reduce_op,
-           partials_reduce_op, zero);
-      }
-    }
-
     
     template<typename T, typename F>
     __global__ void genericCudaReduceMinMaxKernel(const T *input,
@@ -250,14 +186,12 @@ namespace AprilMath {
       }
       if ( tid == 0 ) {
         if (overwrite_output)  {
-          output[blockIdx.x * output_stride] = partials[0];
-          which[blockIdx.x * which_stride] = which_partials[0];
+          output[blockIdx.x * output_stride] = zero;
+          which[blockIdx.x * which_stride] = -1;
         }
-        else {
-          reduce_op(output[blockIdx.x * output_stride], partials[0],
-                    which[blockIdx.x * which_stride],
-                    which_partials[0]);
-        }
+        reduce_op(output[blockIdx.x * output_stride], partials[0],
+                  which[blockIdx.x * which_stride],
+                  which_partials[0]);
       }
     }
     
@@ -317,65 +251,43 @@ namespace AprilMath {
                            threadSize, numBlocks);
       const T *input_ptr = input->getGPUForRead() + input_shift;
       O *dest_ptr = dest->getGPUForWrite() + dest_shift;
-      
-      switch ( numThreads ) {
-      case    1: genericReduceTemplateCall<T,O,F,P,1>(input_ptr, input_stride,
-                                                      dest_ptr, 1u,
-                                                      N, reduce_op, partials_reduce_op,
-                                                      zero, numBlocks,
-                                                      set_dest_to_zero); break;
-      case    2: genericReduceTemplateCall<T,O,F,P,2>(input_ptr, input_stride,
-                                                      dest_ptr, 1u,
-                                                      N, reduce_op, partials_reduce_op,
-                                                      zero, numBlocks,
-                                                      set_dest_to_zero); break;
-      case    4: genericReduceTemplateCall<T,O,F,P,4>(input_ptr, input_stride,
-                                                      dest_ptr, 1u,
-                                                      N, reduce_op, partials_reduce_op,
-                                                      zero, numBlocks,
-                                                      set_dest_to_zero); break;
-      case    8: genericReduceTemplateCall<T,O,F,P,8>(input_ptr, input_stride,
-                                                      dest_ptr, 1u,
-                                                      N, reduce_op, partials_reduce_op,
-                                                      zero, numBlocks,
-                                                      set_dest_to_zero); break;
-      case   16: genericReduceTemplateCall<T,O,F,P,16>(input_ptr, input_stride,
-                                                       dest_ptr, 1u,
-                                                       N, reduce_op, partials_reduce_op,
-                                                       zero, numBlocks,
-                                                       set_dest_to_zero); break;
-      case   32: genericReduceTemplateCall<T,O,F,P,32>(input_ptr, input_stride,
-                                                       dest_ptr, 1u,
-                                                       N, reduce_op, partials_reduce_op,
-                                                       zero, numBlocks,
-                                                       set_dest_to_zero); break;
-      case   64: genericReduceTemplateCall<T,O,F,P,64>(input_ptr, input_stride,
-                                                       dest_ptr, 1u,
-                                                       N, reduce_op, partials_reduce_op,
-                                                       zero, numBlocks,
-                                                       set_dest_to_zero); break;
-      case  128: genericReduceTemplateCall<T,O,F,P,128>(input_ptr, input_stride,
-                                                        dest_ptr, 1u,
-                                                        N, reduce_op, partials_reduce_op,
-                                                        zero, numBlocks,
-                                                        set_dest_to_zero); break;
-      case  256: genericReduceTemplateCall<T,O,F,P,256>(input_ptr, input_stride,
-                                                        dest_ptr, 1u,
-                                                        N, reduce_op, partials_reduce_op,
-                                                        zero, numBlocks,
-                                                        set_dest_to_zero); break;
-      case  512: genericReduceTemplateCall<T,O,F,P,512>(input_ptr, input_stride,
-                                                        dest_ptr, 1u,
-                                                        N, reduce_op, partials_reduce_op,
-                                                        zero, numBlocks,
-                                                        set_dest_to_zero); break;
-      case 1024: genericReduceTemplateCall<T,O,F,P,1024>(input_ptr, input_stride,
-                                                         dest_ptr, 1u,
-                                                         N, reduce_op, partials_reduce_op,
-                                                         zero, numBlocks,
-                                                         set_dest_to_zero); break;
-      default:
-        ERROR_EXIT1(128, "Unexpected number of threads: %d\n", numThreads);
+      if (numBlocks > 1) {
+        AprilUtils::SharedPtr< GPUMirroredMemoryBlock<O> >
+          blocks(new GPUMirroredMemoryBlock<O>(static_cast<unsigned int>(numBlocks)));
+        O *blocks_ptr = blocks->getGPUForWrite();
+        genericCudaReduceKernel<T,O,F,P,false>
+          <<<numBlocks, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
+          (input_ptr, input_stride, blocks_ptr, 1u, N, reduce_op,
+           partials_reduce_op, zero);
+        computeSecondReductionSize(numBlocks, numThreads);
+        if (set_dest_to_zero) {
+          genericCudaReduceKernel<T,O,F,P,true>
+            <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
+            (blocks_ptr, 1u, dest_ptr, 1u,
+             static_cast<unsigned int>(numBlocks), reduce_op,
+             partials_reduce_op, zero);
+        }
+        else {
+          genericCudaReduceKernel<T,O,F,P,false>
+            <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
+            (blocks_ptr, 1u, dest_ptr, 1u,
+             static_cast<unsigned int>(numBlocks), reduce_op,
+             partials_reduce_op, zero);
+        }
+      } // numBlocks > 1
+      else { // numBlocks == 1
+        if (set_dest_to_zero) {
+          genericCudaReduceKernel<T,O,F,P,true>
+            <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
+            (input_ptr, input_stride, dest_ptr, 1u, N, reduce_op,
+             partials_reduce_op, zero);
+        }
+        else {
+          genericCudaReduceKernel<T,O,F,P,false>
+            <<<1, numThreads, numThreads*sizeof(O), GPUHelper::getCurrentStream()>>>
+            (input_ptr, input_stride, dest_ptr, 1u, N, reduce_op,
+             partials_reduce_op, zero);
+        }
       }
       // TODO: check return value (cudaError_t)
       // cudaDeviceSynchronize();
@@ -394,26 +306,32 @@ namespace AprilMath {
                                      bool set_dest_to_zero,
                                      F reduce_op) {
       if (N == 0u) {
-        if (set_dest_to_zero) dest->putValue(dest_shift, zero);
+        if (set_dest_to_zero) {
+          dest->putValue(dest_shift, zero);
+          which->putValue(which_shift, -1);
+        }
         return;
       }
       int numThreads, threadSize, numBlocks;
       computeReductionSize(static_cast<int>(N), numThreads,
                            threadSize, numBlocks);        
+      const T *input_ptr = input->getGPUForRead() + input_shift;
+      int32_t *which_ptr = which->getGPUForReadAndWrite() + which_shift;
+      T *dest_ptr = dest->getGPUForReadAndWrite() + dest_shift;
+
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> >
         blocks(new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(numBlocks)));
       AprilUtils::SharedPtr< GPUMirroredMemoryBlock<int32_t> >
         which_blocks(new GPUMirroredMemoryBlock<int32_t>(static_cast<unsigned int>(numBlocks)));
-      const T *input_ptr = input->getGPUForRead() + input_shift;
-      int32_t *which_ptr = which->getGPUForReadAndWrite() + which_shift;
-      T *dest_ptr = dest->getGPUForReadAndWrite() + dest_shift;
       T *blocks_ptr = blocks->getGPUForWrite();
       int32_t *which_blocks_ptr = which_blocks->getGPUForWrite();
+      
       // First pass
       genericCudaReduceMinMaxKernel<<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),
         GPUHelper::getCurrentStream()>>>
         (input_ptr, input_stride, which_blocks_ptr, 1u, blocks_ptr, 1u,
          N, reduce_op, zero);
+      computeSecondReductionSize(numBlocks, numThreads);
       if (set_dest_to_zero) {
         // Second pass
         genericCudaReduceMinMaxKernel2<T,F,true><<<numBlocks, numThreads, numThreads*(sizeof(T)+sizeof(int32_t)),

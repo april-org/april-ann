@@ -158,64 +158,24 @@ namespace Basics {
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
-      span_iterator it(this), it_other(other, it.getDimOrder());
-      const int *dims_order = it_other.getDimOrder();
+      span_iterator it(this);
+      const int *dims_order = it.getDimOrder();
       const int first_dim = dims_order[0];
-      int diff_raw_pos = other->getStrideSize(first_dim) * coords[first_dim];
-      int other_first_iteration = 0;
-      if (numDim > 1) {
-        // compute it_other traversal length until the coordinates of the slice
-        // (except first_dim)
-        AprilUtils::UniquePtr<int []> aux_stride( new int[numDim] );
-        aux_stride[dims_order[0]] = 1;
-        aux_stride[dims_order[1]] = 1;
-        for (int i=2; i<numDim; ++i) {
-          aux_stride[dims_order[i]] = aux_stride[dims_order[i-1]] * other->matrixSize[i-1];
-        }
-        other_first_iteration = 0;
-        for (int i=1; i<numDim; ++i){ 
-          other_first_iteration += aux_stride[dims_order[i]] * coords[dims_order[i]];
-        }
-      }
+      const int this_stride = it.getStride();
+      const int other_stride = other->getStrideSize(first_dim);
       const int N = it.numberOfIterations();
-#ifndef NO_OMP
-      if (N > OMPUtils::get_num_threads()) {
-#pragma omp parallel for firstprivate(it) firstprivate(it_other)
-        for (int i=0; i<N; ++i) {
-          it.setAtIteration(i);
-          it_other.setAtIteration(other_first_iteration + i);
-          april_assert(it != this->end_span_iterator());
-          april_assert(it_other != other->end_span_iterator());
-          doCopy(it.getSize(),
-                 other->data.get(),
-                 it_other.getStride(),
-                 diff_raw_pos + it_other.getOffset(),
-                 this->data.get(),
-                 it.getStride(),
-                 it.getOffset(),
-                 this->getCudaFlag());
-        }
+      for (int i=0; i<N; ++i) {
+        april_assert(it != this->end_span_iterator());
+        const int other_raw_pos = other->computeRawPos(it.getCoordinates(), coords);
+        doCopy(it.getSize(),
+               other->data.get(), other_stride, other_raw_pos,
+               this->data.get(), this_stride, it.getOffset(),
+               this->getCudaFlag());
+        ++it;
       }
-      else {
-#else
-        it_other.setAtIteration(other_first_iteration);
-        for (int i=0; i<N; ++i) {
-          april_assert(it != this->end_span_iterator());
-          april_assert(it_other != other->end_span_iterator());
-          doCopy(it.getSize(),
-                 other->data.get(), it_other.getStride(),
-                 diff_raw_pos + it_other.getOffset(),
-                 this->data.get(), it.getStride(), it.getOffset(),
-                 this->getCudaFlag());
-          ++it;
-          ++it_other;
-        }
-#endif
-#ifndef NO_OMP
-      }
-#endif
-    }
-    else {
+      april_assert(it == this->end_span_iterator());
+    } // if (clone)
+    else { // !clone
       AprilUtils::UniquePtr<int []> aux_coords( new int[numDim] );
       total_size = 1;
       for (int i=0; i<numDim; i++) {
@@ -227,7 +187,7 @@ namespace Basics {
       offset = other->computeRawPos(coords);
       data = other->data;
       last_raw_pos = computeRawPos(aux_coords.get());
-    }
+    } // !clone
     april_assert(offset >= 0);
   }
 
@@ -970,6 +930,29 @@ namespace Basics {
       }
     }
     return raw_pos + offset;
+  }
+
+  template <typename T>
+  int Matrix<T>::computeRawPos(const int *coords, const int *offset) const {
+    int raw_pos;
+    switch(numDim) {
+    case 1:
+      april_assert(coords[0]+offset[0] < matrixSize[0]);
+      raw_pos = (coords[0]+offset[0])*stride[0];
+      break;
+    case 2:
+      april_assert(coords[0]+offset[0] < matrixSize[0]);
+      april_assert(coords[1]+offset[1] < matrixSize[1]);
+      raw_pos = (coords[0]+offset[0])*stride[0]+(coords[1]+offset[1])*stride[1];
+      break;
+    default:
+      raw_pos=0;
+      for(int i=0; i<numDim; i++) {
+        april_assert(coords[i]+offset[i] < matrixSize[i]);
+        raw_pos += stride[i]*(coords[i]+offset[i]);
+      }
+    }
+    return raw_pos + this->offset;
   }
 
   template <typename T>
