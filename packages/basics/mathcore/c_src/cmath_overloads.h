@@ -28,34 +28,39 @@
 #include "error_print.h"
 #include "unused_variable.h"
 
+/// Constant for values close to zero.
 #define NEAR_ZERO             1e-6f
+/**
+ * @brief A derivative is considered saturated when its abs is greater than this
+ * constant.
+ */
 #define DERIVATIVE_SATURATION 17.0f
 
-/*
-  This file contains math operators overloaded to work with basic numeric types
-  of APRIL-ANN, and exported to CUDA if it is compiled with definition of
-  USE_CUDA constant.
-*/
-
-/**
- * @brief The namespace AprilMath contains operations over different scalar types by
- * using templatized functions and C++ functors.
- *
- * All of this operations are exported to CUDA and can be used safely in
- * functions implemented to run in GPU device or CPU host.
- */
+// Documentation of AprilMath namespace is in mathcore.h
 namespace AprilMath {
-  
+
+  /// Logarithm of NEAR_ZERO for float numbers.
   const float  logf_NZ = logf(NEAR_ZERO);
+  /// Logarithm of NEAR_ZERO for double numbers.
   const double log_NZ  = log(NEAR_ZERO);
   
   ///////////////// NUMERIC LIMITS /////////////////
   
+  /**
+   * @brief A replacement of std::limits implemented to avoid dependencies in
+   * C++ std namespace.
+   */
   template<typename T>
   class Limits {
   public:
+    /// Returns the minimum finite value of a typename T.
     static T min() { return T(); }
+    /// Returns the maximum finite value of a typename T.
     static T max() { return T(); }
+    /**
+     * @brief Machine the difference between 1 and the least value greater
+     * than 1 that is representable for typename T.
+     */
     static T epsilon() { return T(); }
   };
   
@@ -79,15 +84,33 @@ namespace AprilMath {
 
   ///////////////// NAN CHECK /////////////////
 
+  /**
+   * @brief Operations over scalar types are defined as C++ functors in this
+   * namespace.
+   *
+   * This functors allow to implement map or reduce operations defined in
+   * AprilMath.
+   */
   namespace Functors {
+    /// Functor for comparison with a NaN value.
     template<typename T>  
     struct m_isnan {
+      /**
+       * @brief The operator returns @c true/false if @c v is NaN or not.
+       *
+       * @note By definition, a NaN is always different of any other value, even
+       * another NaN, so this operator identifies it using <tt>return v != v</tt>
+       */
       APRIL_CUDA_EXPORT bool operator()(const T &v) const {
-        return v != v; // by definition, a NAN is always different of any other
-        // value, even another NAN
+        return v != v;
       }
     };
   }
+  
+  /**
+   * @brief Function for instantiation and call of Functors::m_isnan::operator()
+   * @see Functors::m_isnan
+   */
   template<typename T>
   APRIL_CUDA_EXPORT bool m_isnan(const T &v) { return Functors::m_isnan<T>()(v); }
   
@@ -118,6 +141,21 @@ namespace AprilMath {
     };                                                                  \
   }
   
+  /**
+   * @struct Functors::m_abs
+   *
+   * @brief Overloaded abs operation, currently defined for float, double and
+   * ComplexF types.
+   *
+   * @note Its @c operator() returns a float always.
+   */
+  /**
+   * @fn m_abs
+   *
+   * @brief Function for instantiation and call of Functors::m_abs::operator()
+   * @see Functors::m_abs
+   */
+
   // abs overload
   SCALAR_MAP_TEMPLATE(m_abs, T, float);
   namespace Functors {
@@ -131,6 +169,21 @@ namespace AprilMath {
       APRIL_CUDA_EXPORT float operator()(const ComplexF &v) const { return v.abs(); }
     };
   }
+  
+  /**
+   * @struct Functors::m_sqrt
+   *
+   * @brief Overloaded sqrt operation, currently defined for float, double and
+   * ComplexF types.
+   *
+   * @note Its @c operator() returns a float always.
+   */
+  /**
+   * @fn m_sqrt
+   *
+   * @brief Function for instantiation and call of Functors::m_sqrt::operator()
+   * @see Functors::m_sqrt
+   */
   
   // sqrt overload
   SCALAR_MAP_TEMPLATE(m_sqrt, T, float);
@@ -146,6 +199,18 @@ namespace AprilMath {
     };
   }
 
+  /**
+   * @struct Functors::m_log
+   *
+   * @brief Overloaded log operation, currently defined for float and double
+   */
+  /**
+   * @fn m_log
+   *
+   * @brief Function for instantiation and call of Functors::m_log::operator()
+   * @see Functors::m_log
+   */
+
   // log overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_log, log);
   
@@ -159,11 +224,46 @@ namespace AprilMath {
   //   else return log(v);
   // }
   
+  /**
+   * @struct Functors::m_log1p
+   *
+   * @brief Overloaded log1p operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_log1p
+   *
+   * @brief Function for instantiation and call of Functors::m_log1p::operator()
+   * @see Functors::m_log1p
+   */
   // log1p overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_log1p, log1p);
   
+  /**
+   * @struct Functors::m_exp
+   *
+   * @brief Overloaded exp operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_exp
+   *
+   * @brief Function for instantiation and call of Functors::m_exp::operator()
+   * @see Functors::m_exp
+   */
+
   // exp overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_exp, exp);
+  
+  /**
+   * @struct Functors::m_pow
+   *
+   * @brief Overloaded pow operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_pow
+   *
+   * @brief Function for instantiation and call of Functors::m_pow::operator()
+   * @see Functors::m_pow
+   */
   
   // pow overload
   namespace Functors {
@@ -190,75 +290,237 @@ namespace AprilMath {
   template<typename T> APRIL_CUDA_EXPORT
   T m_pow(const T &a, const T &b) { return Functors::m_pow<T>()(a,b); }
 
+  /**
+   * @struct Functors::m_cos
+   *
+   * @brief Overloaded cos operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_cos
+   *
+   * @brief Function for instantiation and call of Functors::m_cos::operator()
+   * @see Functors::m_cos
+   */
+  
   // cos overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_cos, cos);
   
+  /**
+   * @struct Functors::m_acos
+   *
+   * @brief Overloaded acos operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_acos
+   *
+   * @brief Function for instantiation and call of Functors::m_acos::operator()
+   * @see Functors::m_acos
+   */
+
   // acos overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_acos, acos);
+
+  /**
+   * @struct Functors::m_cosh
+   *
+   * @brief Overloaded cosh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_cosh
+   *
+   * @brief Function for instantiation and call of Functors::m_cosh::operator()
+   * @see Functors::m_cosh
+   */
 
   // cosh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_cosh, cosh);
 
+  /**
+   * @struct Functors::m_acosh
+   *
+   * @brief Overloaded acosh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_acosh
+   *
+   * @brief Function for instantiation and call of Functors::m_acosh::operator()
+   * @see Functors::m_acosh
+   */
+
   // acosh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_acosh, acosh);
+
+  /**
+   * @struct Functors::m_sin
+   *
+   * @brief Overloaded sin operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_sin
+   *
+   * @brief Function for instantiation and call of Functors::m_sin::operator()
+   * @see Functors::m_sin
+   */
 
   // sin overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_sin, sin);
 
+  /**
+   * @struct Functors::m_asin
+   *
+   * @brief Overloaded asin operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_asin
+   *
+   * @brief Function for instantiation and call of Functors::m_asin::operator()
+   * @see Functors::m_asin
+   */
+
   // asin overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_asin, asin);
+
+  /**
+   * @struct Functors::m_sinh
+   *
+   * @brief Overloaded sinh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_sinh
+   *
+   * @brief Function for instantiation and call of Functors::m_sinh::operator()
+   * @see Functors::m_sinh
+   */
 
   // sinh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_sinh, sinh);
 
+  /**
+   * @struct Functors::m_asinh
+   *
+   * @brief Overloaded asinh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_asinh
+   *
+   * @brief Function for instantiation and call of Functors::m_asinh::operator()
+   * @see Functors::m_asinh
+   */
+
   // asinh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_asinh, asinh);
+
+  /**
+   * @struct Functors::m_tan
+   *
+   * @brief Overloaded tan operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_tan
+   *
+   * @brief Function for instantiation and call of Functors::m_tan::operator()
+   * @see Functors::m_tan
+   */
 
   // tan overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_tan, tan);
 
+  /**
+   * @struct Functors::m_atan
+   *
+   * @brief Overloaded atan operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_atan
+   *
+   * @brief Function for insatantiation and call of Functors::m_atan::operator()
+   * @see Functors::m_atan
+   */
+  
   // atan overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_atan, atan);
+
+  /**
+   * @struct Functors::m_tanh
+   *
+   * @brief Overloaded tanh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_tanh
+   *
+   * @brief Function for instantiation and call of Functors::m_tanh::operator()
+   * @see Functors::m_tanh
+   */
 
   // tanh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_tanh, tanh);
 
+  /**
+   * @struct Functors::m_atanh
+   *
+   * @brief Overloaded atanh operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_atanh
+   *
+   * @brief Function for instantiation and call of Functors::m_atanh::operator()
+   * @see Functors::m_atanh
+   */
+  
   // atanh overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_atanh, atanh);
 
   //
   namespace Functors {
-    
+  
+    /// Identity functor, it can be used to copy vectors using map.
     template<typename T>
     struct m_identity {
+      /// Returns by value its given parameter.
       APRIL_CUDA_EXPORT T operator()(const T &a) const {
         return a;
       }
     };
     
+    /// Implementation of <tt> p log(p) </tt>.
     template<typename T>
     struct m_plogp {
+      /**
+       * @brief <tt> p log(p) </tt> is simplified to take into account the case
+       * <tt> 0 log(0) = 0 </tt>
+       */
       APRIL_CUDA_EXPORT T operator()(const T &x) const {
         return ((x) > T(0.0f) || (x) < T(0.0f)) ? (x) * AprilMath::m_log(x) : (x);
       }
     };
     
+    /// Sign functor.
     template<typename T>
     struct m_sign {
+      /**
+       * @brief Returns the sign of the given parameter.
+       * 
+       * It uses a comparison with T(0.0f) to decide the sign, and returns
+       * T(-1.0f) or T(1.0f) depending in the result of previous comparison.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &x) const {
         return ((x)<T(0.0f)) ? T(-1.0f) : ( ((x)>T(0.0f)) ? T(1.0f) : T(0.0f) );
       }
     };
     
+    /// Complement functor.
     template<typename T>
     struct m_complement {
+      /// Returns <tt> T(1.0f) - x </tt>
       APRIL_CUDA_EXPORT T operator()(const T &x) const {
         return (T(1.0f) - (x));
       }
     };
     
+    /// Clamp functor.
     template<typename T>
     struct m_clamp {
+      /// Returns the clamp of @c x using the range <tt>[min,max]</tt>
       APRIL_CUDA_EXPORT T operator()(const T &x,
                                      const T &min,
                                      const T &max) const {
@@ -266,39 +528,49 @@ namespace AprilMath {
       }
     };
     
+    /// Sigmoid function.
     template<typename T>
     struct m_sigmoid {
+      /// Returns \f$ \displaystyle{ \frac{n}{e^{-v} + 1.0} } \f$ where @c n is numerator param.
       APRIL_CUDA_EXPORT T operator()(const T &numerator,
                                      const T &value) const {
         return (numerator) / (AprilMath::m_exp(-(value))+T(1.0f));
       }
     };
 
+    /// Rectified Linear Unit (ReLU) function.
     template<typename T>
     struct m_relu {
+      /// Returns <tt> max(0, value) </tt>
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
         return (value > T(0.0f)) ? (value) : T(0.0f);
       }
     };
     
+    /// Less than comparison.
     template<typename T>
     struct m_lt {
+      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c a<b
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         if (a < b) return T(1.0f);
         else return T(0.0f);
       }
     };
     
+    /// Greater than comparison.
     template<typename T>
     struct m_gt {
+      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c b<a
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         if (b < a) return T(1.0f);
         else return T(0.0f);
       }
     };
     
+    /// Equals comparison.
     template<typename T>
     struct m_eq {
+      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c b=a
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         if (AprilMath::m_isnan(a)) {
           if (AprilMath::m_isnan(b)) return T(1.0f);
@@ -311,8 +583,13 @@ namespace AprilMath {
       }
     };
     
+    /// Equals comparison using a percentage threshold.
     template<typename T>
     struct m_relative_equals {
+      /**
+       * @brief Compares @c a=b using @c TH as percentage of relative error.
+       * @returns True or false.
+       */
       APRIL_CUDA_EXPORT bool operator()(const T &a,
                                         const T &b,
                                         const float &TH) const {
@@ -351,36 +628,46 @@ namespace AprilMath {
       }
     };
 
+    /// Multiplication map operation.
     template<typename T>
     struct m_mul {
+      /// Returns \f$ a*b \f$
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return a*b;
       }
     };
 
+    /// Addition map operation.
     template<typename T>
     struct m_add {
+      /// Returns \f$ a+b \f$
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return a+b;
       }
     };
 
+    /// Division map operation.
     template<typename T>
     struct m_div {
+      /// Returns \f$ a/b \f$
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return a/b;
       }
     };
 
+    /// Maximum map operation.
     template<typename T>
     struct m_max {
+      /// Returns \f$ max(a,b) \f$
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return (a<b)?b:a;
       }
     };
 
+    /// Minimum map operation.
     template<typename T>
     struct m_min {
+      /// Returns \f$ min(a,b) \f$
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return (a<b)?a:b;
       }

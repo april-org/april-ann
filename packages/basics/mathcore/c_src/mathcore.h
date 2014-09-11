@@ -40,6 +40,37 @@
 #include "gpu_helper.h"
 #include "gpu_mirrored_memory_block.h"
 
+/**
+ * @brief The namespace AprilMath contains operations over different scalar types by
+ * using templatized functions and C++ functors.
+ *
+ * - **Reduce operations**: they are defined over vector spans, taking two
+ * functors which allow the reduce computation. The first functor computes the
+ * reduce from the input typename into the output typename. The second functor
+ * allows to reduce output typename scalars and is needed because it is possible
+ * to need intermediate partial results in the output space before the reduction
+ * is computed:
+ *     - AprilMath::genericReduce1Call
+ *     - AprilMath::genericReduce2Call
+ *     - AprilMath::genericReduceMinMAxCall
+ *
+ * - **Map operations**: they are defined over vector spans, taking a functor
+ * which implement the map operation over a vector span.
+ *     - AprilMath::genericMap1Call
+ *     - AprilMath::genericMap2Call
+ *
+ * Previous functions take mathematicals functors like ones declared in
+ * AprilMath::Functors namespace. For simplicity, some of this functors has a
+ * function which allows to call @c operator() without an explicit instantiation
+ * of the functor object. This functions are in AprilMath namespace under the
+ * same name as their equivalent AprilMath::Functors object declaration.
+ *
+ * @note All of this operations are exported to CUDA and can be used safely in
+ * functions implemented to run in GPU device or CPU host.
+ *
+ * @note Some of the math operations defined in AprilMath has a curried version
+ * that allow to call the function with a fixed parameter.
+ */
 namespace AprilMath {
   
   //////////////////////////////////////////////////////////////////////

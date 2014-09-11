@@ -14,7 +14,7 @@ local T = function(id, func)
   local id=id:gsub(" ","_")
   if #arg == 0 or tests_list[id] then
     print(id)
-    func()
+    pcall(func)
     print()
   end
 end
@@ -24,7 +24,10 @@ local measure_process_time = function(func,...)
   local it=0
   clock:reset()
   clock:go()
-  repeat func(...) it=it+1 until clock:read() > 0.1
+  repeat
+    if not pcall(func,...) then collectgarbage("collect") end
+    it=it+1
+  until clock:read() > 0.1
   clock:stop()
   local a,b = clock:read()
   return a/it,b/it
