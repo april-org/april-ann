@@ -80,6 +80,33 @@ namespace AprilMath {
    *********** TEMPLATE SECTION **********
    ***************************************/
 
+  /**
+   * @brief doNrm2 reduction, it is applied over a vector span, and follows the
+   * CBLAS wrapper API.
+   *
+   * @tparam T - The type of the input/output data.
+   * @tparam OP - A functor typename, needed to reduce the partial result of
+   * dest pointer in case @c set_dest_to_zero=false
+   *
+   * @param n - The size of the vector.
+   * @param x - The input vector.
+   * @param inc - The stride between consecutive elements.
+   * @param shift - The position of the first valid element.
+   * @param use_gpu - Indicates if do computation using GPU or not.
+   * @param zero - The initial value of the reduction.
+   * @param functor - The functor for partial results reduction, used to reduce
+   * dest content.
+   * @param dest - A pointer to result memory.
+   * @param dest_raw_pos - The position in previous memory block where result
+   * will be stored.
+   * @param set_dest_to_zero - Indicates if @c dest memory needs to be initialized
+   * to zero or if its content will be taken as partial value of the reduction.
+   *
+   * @note functor implements <tt>void operator()(T &acc, const T &other) const;</tt>
+   *
+   * @see AprilMath::MatrixExt for more information about API of CBLAS and
+   * user-defined reductions.
+   */
   template <typename T, typename OP>
   void doNrm2(unsigned int n,
               const GPUMirroredMemoryBlock<T> *x,

@@ -34,40 +34,33 @@ namespace AprilMath {
    * another vector.
    *
    * @tparam T - The type for input vectors.
-   *
    * @tparam O - The type for output vector (reduction type).
-   *
-   * @tparam F - An operator implemented as a functor.
-   *
-   * @tparam P - An operator implemented as a functor.
+   * @tparam F - A functor typename.
+   * @tparam P - A functor typename.
    *
    * @param input - The input vector.
-   *
    * @param input_stride - The stride between consecutive values at input.
-   *
    * @param input_shift - The first valid position at input vector.
-   *
    * @param zero - The value of reduce over zero elements.
-   *
    * @param reduce_op - The functor operator with the reduce over two inputs.
-   *
    * @param partials_reduce_op - The functor operator with the reduce over two
    * partial results.
-   *
    * @param[in,out] dest - The output vector, it content will be reduced with
    * the result of the current reduction.
-   *
    * @param dest_shift - The first valid position at dest vector.
+   * @param set_dest_to_zero - A boolean indicating if dest will be set to zero
+   * or its content will be reused in the reduction.
    *
    * @note Only the position located at dest_shift will be written in dest
    * vector.
    *
-   * @note For CUDA compilation, it is needed that all functros have been
+   * @note For CUDA compilation, it is needed that all functors have been
    * exported using APRIL_CUDA_EXPORT macro and to be inline operations which
    * can call functions defined for host and device.
    *
-   * @note The zero parameter is needed by CUDA implementation to initialize
-   * partials.
+   * @note reduce_op implements <tt>void operator()(O &acc, const T &other) const</tt>
+   *
+   * @note partials_reduce_op implements <tt>void operator()(O &acc, const O &other) const</tt>
    */
   template<typename T, typename O, typename F, typename P>
   void genericReduce1Call(unsigned int N,
@@ -119,8 +112,8 @@ namespace AprilMath {
    * @tparam T1 - The type for input1 vectors.
    * @tparam T2 - The type for input1 vectors.
    * @tparam O - The type for output vector (reduction type).
-   * @tparam F - An operator implemented as a functor.
-   * @tparam P - An operator implemented as a functor.
+   * @tparam F - A functor typename.
+   * @tparam P - A functor typename.
    *
    * @param input1 - The input1 vector.
    * @param input1_stride - The stride between consecutive values at input1.
@@ -135,6 +128,8 @@ namespace AprilMath {
    * @param[in,out] dest - The output vector, it content will be reduced with
    * the result of the current reduction.
    * @param dest_shift - The first valid position at dest vector.
+   * @param set_dest_to_zero - A boolean indicating if dest will be set to zero
+   * or its content will be reused in the reduction.
    *
    * @note Only the position located at dest_shift will be written in dest
    * vector.
@@ -143,8 +138,9 @@ namespace AprilMath {
    * exported using APRIL_CUDA_EXPORT macro and to be inline operations which
    * can call functions defined for host and device.
    *
-   * @note The zero parameter is needed by CUDA implementation to initialize
-   * partials.
+   * @note reduce_op implements <tt>void operator()(O &acc, const T1 &other1, const T2 &other2) const</tt>
+   *
+   * @note partials_reduce_op implements <tt>void operator()(O &acc, const O &other) const</tt>
    */
   template<typename T1, typename T2, typename O, typename F, typename P>
   void genericReduce2Call(unsigned int N,
@@ -194,7 +190,37 @@ namespace AprilMath {
     }
 #endif
   }
-  
+
+  /**
+   * @brief Performs a reduce over a vector and stores its result at
+   * another vector.
+   *
+   * @tparam T - The type for input vectors.
+   * @tparam O - The type for output vector (reduction type).
+   * @tparam F - A functor typename.
+   *
+   * @param input - The input vector.
+   * @param input_stride - The stride between consecutive values at input.
+   * @param input_shift - The first valid position at input vector.
+   * @param zero - The value of reduce over zero elements.
+   * @param reduce_op - The functor operator with the reduce over two inputs.
+   * @param partials_reduce_op - The functor operator with the reduce over two
+   * partial results.
+   * @param[in,out] dest - The output vector, it content will be reduced with
+   * the result of the current reduction.
+   * @param dest_shift - The first valid position at dest vector.
+   * @param set_dest_to_zero - A boolean indicating if dest will be set to zero
+   * or its content will be reused in the reduction.
+   *
+   * @note Only the position located at dest_shift will be written in dest
+   * vector.
+   *
+   * @note For CUDA compilation, it is needed that all functors have been
+   * exported using APRIL_CUDA_EXPORT macro and to be inline operations which
+   * can call functions defined for host and device.
+   *
+   * @note reduce_op implements <tt>void operator()(T &, const T &, int32_t &, const int32_t &) const</tt>
+   */  
   template<typename T, typename F>
   void genericReduceMinMaxCall(unsigned int N,
                                const GPUMirroredMemoryBlock<T> *input,
@@ -245,11 +271,54 @@ namespace AprilMath {
 #endif
   }
   
+  /**
+   * @brief A functor which transforms a unary reduction functor into a
+   * unary span reduction functor.
+   *
+   * @tparam T - The input type.
+   * @tparam O - The output type.
+   * @tparam OP1 - The type of the unary functor.
+   *
+   * @note OP1 implements <tt>void operator()(O &acc, const T &other) const</tt>
+   *
+   * @note The unary span is the concept of unary reduction applied over a vector
+   * span.
+   *
+   * @note This struct is used by AprilMath::MatrixExt reduce functions to
+   * force user-defined reductions to follow CBLAS wrappers API.
+   *
+   * @see AprilMath::MatrixExt for more information about API of CBLAS and
+   * user-defined reductions.
+   */
   template<typename T, typename O, typename OP1>
   struct ScalarToSpanReduce1 {
+    /// An instance of the unary functor.
     const OP1 functor;
+    /// The constructor stores the functor.
     ScalarToSpanReduce1(const OP1 &functor) : functor(functor) { }
     template<typename OP2>
+    /**
+     * @brief The unary span functor implements an operator() which receives the
+     * vector (pointer, size, stride and shift/offset) where @c functor will be
+     * applied.
+     *
+     * Additionally, it needs another @c functor2 for reduction of partial
+     * results.
+     *
+     * @param N - The size of the vector.
+     * @param input - A pointer to the vector.
+     * @param input_stride - The stride between consecutive elements.
+     * @param input_shift - The position of the first valid element.
+     * @param use_cuda - A boolean indicating if use or not CUDA.
+     * @param zero - The initial value of the reduction.
+     * @param functor2 - The functor for partial results reduction.
+     * @param dest - A pointer to a destination memory block.
+     * @param dest_raw_pos - The position in dest where result will be stored.
+     * @param set_dest_to_zero - Indicates if dest will be set to zero or its
+     * content will be reused in the reduction.
+     *
+     * @note functor2 implements <tt>void operator(O &acc, const O &other) const</tt>
+     */
     void operator()(unsigned int N,
                     const GPUMirroredMemoryBlock<T> *input,
                     unsigned int input_stride,
@@ -266,10 +335,57 @@ namespace AprilMath {
     }
   };
 
+  /**
+   * @brief A functor which transforms a binary reduction functor into a
+   * binary span reduction functor.
+   *
+   * @tparam T1 - The input1 type.
+   * @tparam T2 - The input2 type.
+   * @tparam O - The output type.
+   * @tparam OP1 - The type of the unary functor.
+   *
+   * @note OP1 implements <tt>void operator()(O &acc, const T1 &other, const T2 &other) const</tt>
+   *
+   * @note The binary span is the concept of binary reduction applied over a vector
+   * span.
+   *
+   * @note This struct is used by AprilMath::MatrixExt reduce functions to
+   * force user-defined reductions to follow CBLAS wrappers API.
+   *
+   * @see AprilMath::MatrixExt for more information about API of CBLAS and
+   * user-defined reductions.
+   */
   template<typename T1, typename T2, typename O, typename OP1>
   struct ScalarToSpanReduce2 {
+    /// An instance of the given functor typename.
     const OP1 functor;
+    /// The constructor stores the given functor.
     ScalarToSpanReduce2(const OP1 &functor) : functor(functor) { }
+    /**
+     * @brief The binary span functor implements an operator() which receives
+     * the input vectors (pointer, size, stride and shift/offset) where @c
+     * functor will be applied.
+     *
+     * Additionally, it needs another @c functor2 for reduction of partial
+     * results.
+     *
+     * @param N - The size of the vector.
+     * @param input1 - A pointer to the vector.
+     * @param input1_stride - The stride between consecutive elements.
+     * @param input1_shift - The position of the first valid element.
+     * @param input2 - A pointer to the vector.
+     * @param input2_stride - The stride between consecutive elements.
+     * @param input2_shift - The position of the first valid element.
+     * @param use_cuda - A boolean indicating if use or not CUDA.
+     * @param zero - The initial value of the reduction.
+     * @param functor2 - The functor for partial results reduction.
+     * @param dest - A pointer to a destination memory block.
+     * @param dest_raw_pos - The position in dest where result will be stored.
+     * @param set_dest_to_zero - Indicates if dest will be set to zero or its
+     * content will be reused in the reduction.
+     *
+     * @note functor2 implements <tt>void operator(O &acc, const O &other) const</tt>
+     */
     template<typename OP2>
     void operator()(unsigned int N,
                     const GPUMirroredMemoryBlock<T1> *input1,
