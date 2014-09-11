@@ -61,8 +61,7 @@ namespace AprilMath {
       april_assert(input != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
       if (which == 0) ERROR_EXIT(128, "Expected a non-NULL which pointer\n");
-      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag() ||
-        which->getCudaFlag();
+      bool cuda_flag = input->getCudaFlag();
 
       // This specialization has a problem to compute the argmin or argmax when
       // matrices are in col_major
@@ -325,7 +324,7 @@ namespace AprilMath {
                            bool set_dest_to_zero) {
       april_assert(input != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
-      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag();
+      bool cuda_flag = input->getCudaFlag();
       // Contiguous memory block or one dimension.
       if (input->getIsContiguous() || input->getNumDim() == 1) {
         unsigned int size = static_cast<unsigned int>(input->size());
@@ -417,7 +416,7 @@ namespace AprilMath {
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
-      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag();
+      bool cuda_flag = input->getCudaFlag();
       // Contiguous memory block or one dimension.
       if (input->getIsContiguous() || input->getNumDim() == 1) {
         unsigned int size = static_cast<unsigned int>(input->size());
@@ -522,8 +521,7 @@ namespace AprilMath {
       if (input1->size() != input2->size()) {
         ERROR_EXIT(128, "Incompatible matrix sizes\n");
       }
-      bool cuda_flag = input1->getCudaFlag() || input2->getCudaFlag() ||
-        dest->getCudaFlag();
+      bool cuda_flag = input1->getCudaFlag() || input2->getCudaFlag();
       // Contiguous memory block or one dimension.
       if ( (input1->getIsContiguous() || input1->getNumDim() == 1) &&
            (input2->getIsContiguous() || input2->getNumDim() == 1) ) {

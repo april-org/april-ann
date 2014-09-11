@@ -520,7 +520,7 @@ namespace AprilMath {
     }
 #endif
   
-    bool getCudaFlag() const {
+    bool getInCuda() const {
 #ifdef USE_CUDA
       return getUpdatedGPU();
 #else
