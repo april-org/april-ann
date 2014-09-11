@@ -38,9 +38,13 @@ namespace Basics {
 
   template <typename T>
   MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m) : DataSet<T>() {
-    if (!m->isSimple())
+    if (!m->isSimple()) {
       ERROR_EXIT(128, "Matrix need to be simple (contiguous "
                  "and in row-major)\n");
+    }
+#ifdef USE_CUDA
+    m->setUseCuda(false); // never use CUDA with this dataset
+#endif
     // numdim debe ser siempre >0
     int d        = m->getNumDim();	
     matrix       = m;

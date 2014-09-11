@@ -58,8 +58,12 @@ namespace AprilMath {
                                 AprilMath::GPUMirroredMemoryBlock<O> *dest,
                                 unsigned int dest_raw_pos,
                                 bool set_dest_to_zero) {
+      april_assert(input != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
       if (which == 0) ERROR_EXIT(128, "Expected a non-NULL which pointer\n");
+      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag() ||
+        which->getCudaFlag();
+
       // This specialization has a problem to compute the argmin or argmax when
       // matrices are in col_major
 
@@ -84,7 +88,7 @@ namespace AprilMath {
                                input->getRawDataAccess(),
                                static_cast<unsigned int>(input->getStrideSize(0)),
                                static_cast<unsigned int>(input->getOffset()),
-                               input->getCudaFlag(),
+                               cuda_flag,
                                zero,
                                intra_span_red_functor,
                                which,
@@ -135,6 +139,9 @@ namespace AprilMath {
                                                             Basics::Matrix<int32_t> *which,
                                                             Basics::Matrix<T> *dest,
                                                             bool set_dest_to_zero) {
+      april_assert(input != 0);
+      bool cuda_flag = input->getCudaFlag() || (dest && dest->getCudaFlag()) ||
+        (which && which->getCudaFlag());
       const int numDim      = input->getNumDim();
       const int *matrixSize = input->getDimPtr();
       AprilUtils::UniquePtr<int []> result_dims( new int[numDim] );
@@ -167,8 +174,8 @@ namespace AprilMath {
         set_dest_to_zero = true;
       }
 #ifdef USE_CUDA
-      result->setUseCuda(input->getCudaFlag());
-      result2->setUseCuda(input->getCudaFlag());
+      result->setUseCuda(cuda_flag);
+      result2->setUseCuda(cuda_flag);
 #endif
       if (result->size()  != result_size ||
           result2->size() != result_size) {
@@ -190,7 +197,7 @@ namespace AprilMath {
                                input->getRawDataAccess(),
                                span_stride,
                                static_cast<unsigned int>(span_it.getOffset()),
-                               input->getCudaFlag(),
+                               cuda_flag,
                                zero,
                                intra_span_red_functor,
                                result2->getRawDataAccess(),
@@ -227,6 +234,8 @@ namespace AprilMath {
                                                        const O &zero,
                                                        Basics::Matrix<O> *dest,
                                                        bool set_dest_to_zero) {
+      april_assert(input != 0);
+      bool cuda_flag = input->getCudaFlag() || (dest && dest->getCudaFlag());
       const int numDim      = input->getNumDim();
       const int *matrixSize = input->getDimPtr();
       AprilUtils::UniquePtr<int []> result_dims( new int[numDim] );
@@ -257,7 +266,7 @@ namespace AprilMath {
         ERROR_EXIT2(256, "Incorrect size at the given dest matrix, "
                     "expected %d, found %d\n", result_size, result->size());
 #ifdef USE_CUDA
-        result->setUseCuda(input->getCudaFlag());
+        result->setUseCuda(cuda_flag);
 #endif
       }
       typename Basics::Matrix<T>::span_iterator span_it(input, span_order.get());
@@ -272,7 +281,7 @@ namespace AprilMath {
                                input->getRawDataAccess(),
                                span_stride,
                                static_cast<unsigned int>(span_it.getOffset()),
-                               input->getCudaFlag(),
+                               cuda_flag,
                                zero, intra_span_red_functor,
                                result->getRawDataAccess(), it.getRawPos(),
                                set_dest_to_zero);
@@ -314,24 +323,26 @@ namespace AprilMath {
                            AprilMath::GPUMirroredMemoryBlock<O> *dest,
                            unsigned int dest_raw_pos,
                            bool set_dest_to_zero) {
+      april_assert(input != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
-      // Contiguous memory block
-      if (input->getIsContiguous()) {
-        inter_span_red_functor(static_cast<unsigned int>(input->size()),
-                               input->getRawDataAccess(), 1u,
-                               static_cast<unsigned int>(input->getOffset()),
-                               input->getCudaFlag(),
-                               zero, intra_span_red_functor,
-                               dest, dest_raw_pos,
-                               set_dest_to_zero);
-      }
-      // One dimension
-      else if (input->getNumDim() == 1) {
-        inter_span_red_functor(static_cast<unsigned int>(input->size()),
+      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag();
+      // Contiguous memory block or one dimension.
+      if (input->getIsContiguous() || input->getNumDim() == 1) {
+        unsigned int size = static_cast<unsigned int>(input->size());
+        unsigned int input_offset = static_cast<unsigned int>(input->getOffset());
+        unsigned int input_stride;
+        if (input->getIsContiguous()) {
+          // Contiguous.
+          input_stride = 1u;
+        }
+        else {
+          // One dimension.
+          input_stride = static_cast<unsigned int>(input->getStrideSize(0));
+        }
+        inter_span_red_functor(size,
                                input->getRawDataAccess(),
-                               static_cast<unsigned int>(input->getStrideSize(0)),
-                               static_cast<unsigned int>(input->getOffset()),
-                               input->getCudaFlag(),
+                               input_stride, input_offset,
+                               cuda_flag,
                                zero, intra_span_red_functor,
                                dest, dest_raw_pos,
                                set_dest_to_zero);
@@ -348,7 +359,7 @@ namespace AprilMath {
                                  input->getRawDataAccess(),
                                  stride,
                                  span_it.getOffset(),
-                                 input->getCudaFlag(),
+                                 cuda_flag,
                                  zero, intra_span_red_functor,
                                  dest, dest_raw_pos,
                                  set_dest_to_zero);
@@ -400,28 +411,30 @@ namespace AprilMath {
                               bool set_dest_to_zero,
                               int N_th,
                               unsigned int SIZE_th) {
+      april_assert(input != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
 #ifdef NO_OMP
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
-      // Contiguous memory block
-      if (input->getIsContiguous()) {
-        inter_span_red_functor(static_cast<unsigned int>(input->size()),
-                               input->getRawDataAccess(), 1u,
-                               static_cast<unsigned int>(input->getOffset()),
-                               input->getCudaFlag(),
-                               T(0.0f), AprilMath::Functors::r_add<T,T>(),
-                               dest, dest_raw_pos,
-                               set_dest_to_zero);
-      }
-      // One dimension
-      else if (input->getNumDim() == 1) {
-        inter_span_red_functor(static_cast<unsigned int>(input->size()),
+      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag();
+      // Contiguous memory block or one dimension.
+      if (input->getIsContiguous() || input->getNumDim() == 1) {
+        unsigned int size = static_cast<unsigned int>(input->size());
+        unsigned int input_offset = static_cast<unsigned int>(input->getOffset());
+        unsigned int input_stride;
+        if (input->getIsContiguous()) {
+          // Contiguous.
+          input_stride = 1u;
+        }
+        else {
+          // One dimension.
+          input_stride = static_cast<unsigned int>(input->getStrideSize(0));
+        }
+        inter_span_red_functor(size,
                                input->getRawDataAccess(),
-                               static_cast<unsigned int>(input->getStrideSize(0)),
-                               static_cast<unsigned int>(input->getOffset()),
-                               input->getCudaFlag(),
+                               input_stride, input_offset,
+                               cuda_flag,
                                T(0.0f), AprilMath::Functors::r_add<T,T>(),
                                dest, dest_raw_pos,
                                set_dest_to_zero);
@@ -441,9 +454,11 @@ namespace AprilMath {
           else dest->getValue(dest_raw_pos, result);
           GPUMirroredMemoryBlock<T> aux(1);
           T partial;
+#ifdef USE_CUDA
           // Forces execution of memory copy from GPU to PPAL or viceversa (if
           // needed), avoiding race conditions on the following.
-          input->update();
+          input->getRawDataAccess()->forceUpdate(cuda_flag);
+#endif
 #pragma omp parallel for reduction(+:result) firstprivate(span_it)
           for (int i=0; i<N; ++i) {
             span_it.setAtIteration(i);
@@ -451,7 +466,7 @@ namespace AprilMath {
                                    input->getRawDataAccess(),
                                    stride,
                                    span_it.getOffset(),
-                                   input->getCudaFlag(),
+                                   cuda_flag,
                                    T(0.0f), AprilMath::Functors::r_add<T,T>(),
                                    &aux, 0, true);
             aux.getValue(0, partial);
@@ -467,7 +482,7 @@ namespace AprilMath {
                                    input->getRawDataAccess(),
                                    stride,
                                    span_it.getOffset(),
-                                   input->getCudaFlag(),
+                                   cuda_flag,
                                    T(0.0f), AprilMath::Functors::r_add<T,T>(),
                                    dest, dest_raw_pos,
                                    set_dest_to_zero);
@@ -502,30 +517,42 @@ namespace AprilMath {
                            AprilMath::GPUMirroredMemoryBlock<O> *dest,
                            unsigned int dest_raw_pos,
                            bool set_dest_to_zero) {
+      april_assert(input1 != 0 && input2 != 0);
       if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
-      // Contiguous memory block
-      if (input1->getIsContiguous() &&
-          input2->getIsContiguous()) {
-        inter_span_red_functor(static_cast<unsigned int>(input1->size()),
-                               input1->getRawDataAccess(), 1u,
-                               static_cast<unsigned int>(input1->getOffset()),
-                               input2->getRawDataAccess(), 1u,
-                               static_cast<unsigned int>(input2->getOffset()),
-                               input1->getCudaFlag(),
-                               zero, intra_span_red_functor,
-                               dest, dest_raw_pos,
-                               set_dest_to_zero);
+      if (input1->size() != input2->size()) {
+        ERROR_EXIT(128, "Incompatible matrix sizes\n");
       }
-      // One dimension
-      else if (input1->getNumDim() == 1 && input2->getNumDim() == 1) {
-        inter_span_red_functor(static_cast<unsigned int>(input1->size()),
+      bool cuda_flag = input1->getCudaFlag() || input2->getCudaFlag() ||
+        dest->getCudaFlag();
+      // Contiguous memory block or one dimension.
+      if ( (input1->getIsContiguous() || input1->getNumDim() == 1) &&
+           (input2->getIsContiguous() || input2->getNumDim() == 1) ) {
+        unsigned int size = static_cast<unsigned int>(input1->size());
+        unsigned int input1_offset = static_cast<unsigned int>(input1->getOffset());
+        unsigned int input2_offset = static_cast<unsigned int>(input2->getOffset());
+        unsigned int input1_stride, input2_stride;
+        if (input1->getIsContiguous()) {
+          // Contiguous.
+          input1_stride = 1u;
+        }
+        else {
+          // One dimension.
+          input1_stride = static_cast<unsigned int>(input1->getStrideSize(0));
+        }
+        if (input2->getIsContiguous()) {
+          // Contiguous.
+          input2_stride = 1u;
+        }
+        else {
+          // One dimension.
+          input2_stride = static_cast<unsigned int>(input2->getStrideSize(0));
+        }
+        inter_span_red_functor(size,
                                input1->getRawDataAccess(),
-                               static_cast<unsigned int>(input1->getStrideSize(0)),
-                               static_cast<unsigned int>(input1->getOffset()),
+                               input1_stride, input1_offset,
                                input2->getRawDataAccess(),
-                               static_cast<unsigned int>(input2->getStrideSize(0)),
-                               static_cast<unsigned int>(input2->getOffset()),
-                               input1->getCudaFlag(),
+                               input2_stride, input2_offset,
+                               cuda_flag,
                                zero, intra_span_red_functor,
                                dest, dest_raw_pos,
                                set_dest_to_zero);
@@ -550,7 +577,7 @@ namespace AprilMath {
                                  input2->getRawDataAccess(),
                                  input2_stride,
                                  input2_span_it.getOffset(),
-                                 input1->getCudaFlag(),
+                                 cuda_flag,
                                  zero, intra_span_red_functor,
                                  dest, dest_raw_pos,
                                  set_dest_to_zero);
@@ -614,9 +641,12 @@ namespace AprilMath {
                                                        const O &zero,
                                                        Basics::Matrix<O> *dest,
                                                        bool set_dest_to_zero) {
-      if (!input1->sameDim(input2)) {
+      april_assert(input1 != 0 && input2 != 0);
+      if (input1->size() != input2->size()) {
         ERROR_EXIT(128, "Incompatible matrix sizes\n");
       }
+      bool cuda_flag = input1->getCudaFlag() || input2->getCudaFlag() ||
+        (dest && dest->getCudaFlag());
       const int numDim      = input1->getNumDim();
       const int *matrixSize = input1->getDimPtr();
       AprilUtils::UniquePtr<int []> result_dims( new int[numDim] );
@@ -647,7 +677,7 @@ namespace AprilMath {
         ERROR_EXIT2(256, "Incorrect size at the given dest matrix, "
                     "expected %d, found %d\n", result_size, result->size());
 #ifdef USE_CUDA
-        result->setUseCuda(input1->getCudaFlag());
+        result->setUseCuda(cuda_flag);
 #endif
       }
       typename Basics::Matrix<T1>::span_iterator span1_it(input1, span_order.get());
@@ -670,7 +700,7 @@ namespace AprilMath {
                                input2->getRawDataAccess(),
                                span2_stride,
                                static_cast<unsigned int>(span2_it.getOffset()),
-                               input1->getCudaFlag(),
+                               cuda_flag,
                                zero, intra_span_red_functor,
                                result->getRawDataAccess(), it.getRawPos(),
                                set_dest_to_zero);

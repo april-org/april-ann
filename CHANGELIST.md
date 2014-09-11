@@ -39,6 +39,7 @@ v0.4.0
 
 ### Bugs removed
 
+- CUDA is working, time performance of convolutions needs a review.
 - Solved bug in `constString` extract numeric methods which returns `false` when
   the extraction procedure ends up to the character after the last valid number.
 - Solved bug at `Matrix<T>::div` and `SparseMatrix<T>::div` methods.
