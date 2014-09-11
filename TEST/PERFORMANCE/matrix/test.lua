@@ -24,10 +24,7 @@ local measure_process_time = function(func,...)
   local it=0
   clock:reset()
   clock:go()
-  repeat func(...)
-    it=it+1
-    if it%100 then collectgarbage("collect") end
-  until clock:read() > 0.1
+  repeat func(...) it=it+1 until clock:read() > 0.1
   clock:stop()
   local a,b = clock:read()
   return a/it,b/it
@@ -54,7 +51,7 @@ T("SUM 2D TEST", function()
     for i=4,13 do
       local N = 4^i
       local m = matrix(root(N,2)):uniformf(-1,1,rnd) m:update()
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"2D",
 	     measure_process_time(function() m:sum() end))
     end
 end)
@@ -63,7 +60,7 @@ T("SUM 3D TEST", function()
     for i=1,8 do
       local N = 9^i
       local m = matrix(root(N,3)):uniformf(-1,1,rnd)
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"3D",
 	     measure_process_time(function() m:sum() end))
     end
 end)
@@ -72,7 +69,7 @@ T("SUM 4D TEST", function()
     for i=4,13 do
       local N = 4^i
       local m = matrix(root(N,4)):uniformf(-1,1,rnd) m:update()
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"4D",
 	     measure_process_time(function() m:sum() end))
     end
 end)
@@ -92,7 +89,7 @@ T("SUM 2D TEST SUBMATRIX", function()
     for i=4,13 do
       local N = 4^i
       local m = matrix(root(N,2,2)):uniformf(-1,1,rnd):select(3,1) m:update()
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"2D",
 	     measure_process_time(function() m:sum() end))
     end
 end)
@@ -101,7 +98,7 @@ T("SUM 3D TEST SUBMATRIX", function()
     for i=1,8 do
       local N = 9^i
       local m = matrix(root(N,3,2)):uniformf(-1,1,rnd):select(4,1) m:update()
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"3D",
 	     measure_process_time(function() m:sum() end))
     end
 end)
@@ -109,7 +106,7 @@ end)
 -----------------------------------------------------------------------------
 
 T("CLONE 1D TEST", function()
-    for i=2,7 do
+    for i=1,7 do
       local N = 10^i
       local m = matrix(N):uniformf(-1,1,rnd) m:update()
       printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
@@ -145,7 +142,7 @@ T("CLONE+SCAL 1D TEST", function()
     for i=1,7 do
       local N = 10^i
       local m = matrix(N):uniformf(-1,1,rnd) m:update()
-      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"2D",
 	     measure_process_time(function() m:clone():scal(10) end))
     end
 end)
