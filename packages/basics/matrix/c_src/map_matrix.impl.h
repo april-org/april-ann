@@ -67,6 +67,7 @@ namespace AprilMath {
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
+      bool cuda_flag = input->getCudaFlag() || dest->getCudaFlag();
       // Contiguous memory block or one dimension.
       if ( (input->getIsContiguous() || input->getNumDim() == 1) &&
            (dest->getIsContiguous() || dest->getNumDim() == 1) ) {
@@ -80,7 +81,7 @@ namespace AprilMath {
         functor(size,
                 input->getRawDataAccess(), input_stride, input_offset,
                 dest->getRawDataAccess(), dest_stride, dest_offset,
-                input->getCudaFlag());
+                cuda_flag);
       }
       // General case.
       else {
@@ -96,9 +97,11 @@ namespace AprilMath {
         const unsigned int input_stride = static_cast<unsigned int>(input_span_it.getStride());
         const unsigned int dest_stride  = static_cast<unsigned int>(dest_span_it.getStride());
         april_assert(size == static_cast<unsigned int>(dest_span_it.getSize()));
+#ifdef USE_CUDA
         // Forces execution of memory copy from GPU to PPAL or viceversa (if
         // needed), avoiding race conditions on the following.
-        input->update();
+        input->getRawDataAccess()->forceUpdate(cuda_flag);
+#endif
 #ifndef NO_OMP
         // This if controls the execution using OMP only when the number of threads
         // is more than 1 and the iterator size is large enough.
@@ -115,7 +118,7 @@ namespace AprilMath {
                     dest->getRawDataAccess(),
                     dest_stride,
                     static_cast<unsigned int>(dest_span_it.getOffset()),
-                    input->getCudaFlag());
+                    cuda_flag);
           } // for every possible span
         } // if num_threads>1 and large enough computation
         else {
@@ -131,7 +134,7 @@ namespace AprilMath {
                     dest->getRawDataAccess(),
                     dest_stride,
                     static_cast<unsigned int>(dest_span_it.getOffset()),
-                    input->getCudaFlag());
+                    cuda_flag);
             //
             ++input_span_it;
             ++dest_span_it;
@@ -160,6 +163,8 @@ namespace AprilMath {
       UNUSED_VARIABLE(N_th);
       UNUSED_VARIABLE(SIZE_th);
 #endif
+      bool cuda_flag = input1->getCudaFlag() || input2->getCudaFlag() ||
+        dest->getCudaFlag();
       // Contiguous memory block or one dimension.
       if ( (input1->getIsContiguous() || input1->getNumDim() == 1) &&
            (input2->getIsContiguous() || input2->getNumDim() == 1) &&
@@ -178,7 +183,7 @@ namespace AprilMath {
                 input1->getRawDataAccess(), input1_stride, input1_offset,
                 input2->getRawDataAccess(), input2_stride, input2_offset,
                 dest->getRawDataAccess(), dest_stride, dest_offset,
-                input1->getCudaFlag());
+                cuda_flag);
       }
       // General case.
       else {
@@ -198,10 +203,12 @@ namespace AprilMath {
         const unsigned int dest_stride   = static_cast<unsigned int>(dest_span_it.getStride());
         april_assert(size == static_cast<unsigned int>(input2_span_it.getSize()));
         april_assert(size == static_cast<unsigned int>(dest_span_it.getSize()));
+#ifdef USE_CUDA
         // Forces execution of memory copy from GPU to PPAL or viceversa (if
         // needed), avoiding race conditions on the following.
-        input1->update();
-        input2->update();
+        input1->getRawDataAccess()->forceUpdate(cuda_flag);
+        input2->getRawDataAccess()->forceUpdate(cuda_flag);
+#endif
 #ifndef NO_OMP
         // This if controls the execution using OMP only when the number of threads
         // is more than 1 and the iterator size is large enough.
@@ -222,7 +229,7 @@ namespace AprilMath {
                     dest->getRawDataAccess(),
                     dest_stride,
                     static_cast<unsigned int>(dest_span_it.getOffset()),
-                    input1->getCudaFlag());
+                    cuda_flag);
           } // for every possible span
         } // if num_threads>1 and large enough computation
         else {
@@ -242,7 +249,7 @@ namespace AprilMath {
                     dest->getRawDataAccess(),
                     dest_stride,
                     static_cast<unsigned int>(dest_span_it.getOffset()),
-                    input1->getCudaFlag());
+                    cuda_flag);
             //
             ++input1_span_it;
             ++input2_span_it;

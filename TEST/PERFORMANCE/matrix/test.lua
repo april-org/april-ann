@@ -24,10 +24,7 @@ local measure_process_time = function(func,...)
   local it=0
   clock:reset()
   clock:go()
-  repeat func(...)
-    it=it+1
-    if it%100 then collectgarbage("collect") end
-  until clock:read() > 0.1
+  repeat func(...) it=it+1 until clock:read() > 0.1
   clock:stop()
   local a,b = clock:read()
   return a/it,b/it

@@ -43,13 +43,13 @@ val_output   = dataset.matrix(m2,
 			      })
 
 bunch_size = 64
-thenet = ann.mlp.all_all.generate("256 inputs 256 tanh 10 log_softmax")
+thenet = ann.mlp.all_all.generate("256 inputs 1024 tanh 10 log_softmax")
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(),
 				       bunch_size)
 trainer:build()
 --
-trainer:set_option("learning_rate", 0.01)
+trainer:set_option("learning_rate", 0.1)
 trainer:set_option("momentum", 0.01)
 trainer:set_option("weight_decay", 1e-04)
 trainer:set_option("L1_norm", 1e-05)
