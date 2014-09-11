@@ -162,21 +162,7 @@ namespace AprilUtils {
       reset(other);
       return *this;
     }
-    
-    /**
-     * @brief Operator[], returns a reference to the data.
-     */
-    T &operator[](int i) {
-      return ptr[i];
-    }
-
-    /**
-     * @brief Operator[], returns a reference to the data.
-     */
-    const T &operator[](int i) const {
-      return ptr[i];
-    }
-    
+        
     bool operator==(const SharedPtr<T> &other) const {
       return ptr == other.ptr;
     }

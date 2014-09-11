@@ -28,6 +28,10 @@ namespace AprilMath {
   namespace MatrixExt {
     namespace LossOperations {
 
+      void matMSE(Basics::MatrixFloat *output,
+                  const Basics::MatrixFloat *input,
+                  const Basics::MatrixFloat *target);
+
       void matCrossEntropy(Basics::MatrixFloat *output,
                            const Basics::MatrixFloat *input,
                            const Basics::MatrixFloat *target,

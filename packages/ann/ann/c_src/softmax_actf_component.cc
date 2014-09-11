@@ -30,7 +30,7 @@ using namespace Basics;
 namespace ANN {
 
   SoftmaxActfANNComponent::SoftmaxActfANNComponent(const char *name) :
-    ActivationFunctionANNComponent(name) { }
+    ActivationFunctionANNComponent(name, true) { }
   SoftmaxActfANNComponent::~SoftmaxActfANNComponent() { }
 
   void SoftmaxActfANNComponent::applyActivation(MatrixFloat *input_units,

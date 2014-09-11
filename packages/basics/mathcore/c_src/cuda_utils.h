@@ -102,12 +102,12 @@ namespace AprilMath {
           {                                                     \
             extern __shared__ FULLTYPE                          \
               __smem_##TYPE[];                                  \
-            return (FULLTYPE*)__smem_##TYPE;                    \
+              return (FULLTYPE*)__smem_##TYPE;                  \
           }                                                     \
         };                                                      \
       }                                                         \
     }
- 
+    
     static __device__ unsigned int getArrayIndex(const dim3 &blockIdx,
                                                  const dim3 &blockDim,
                                                  const dim3 &threadIdx) {
@@ -123,22 +123,26 @@ namespace AprilMath {
       matrix_col_pos = blockIdx.y*blockDim.y + threadIdx.y;
     }
 
-    static void computeReductionSize(int N, int &numThreads,
-                                     int &threadSize, int &numBlocks) {
+    static void computeReductionSize(int N, int &num_threads,
+                                     int &thread_size, int &num_blocks) {
       int N2 = AprilUtils::ceilingPowerOfTwo(N);
-      numThreads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
-                                                      AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
-                                                                      static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
-      threadSize = AprilUtils::max(1, AprilUtils::min(MAX_CUDA_REDUCE_THREAD_SIZE,
-                                                      N/numThreads));
-      numBlocks  = AprilUtils::max(1, N/(numThreads*threadSize));
+      num_threads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
+                                                       AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
+                                                                       static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
+      thread_size = AprilUtils::max(1, AprilUtils::min(MAX_CUDA_REDUCE_THREAD_SIZE,
+                                                       N/num_threads +
+                                                       ((N%num_threads)?1:0)));
+      int num_threads_by_thread_size = num_threads*thread_size;
+      num_blocks  = AprilUtils::max(1, N/num_threads_by_thread_size +
+                                    ((N%num_threads_by_thread_size)?1:0));
+      april_assert(num_threads * thread_size * num_blocks >= N);
     }
 
-    static void computeSecondReductionSize(int N, int &numThreads) {
+    static void computeSecondReductionSize(int N, int &num_threads) {
       int N2 = AprilUtils::ceilingPowerOfTwo(N);
-      numThreads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
-                                                      AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
-                                                                      static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
+      num_threads = AprilUtils::max(1, AprilUtils::min(N2/MIN_CUDA_REDUCE_THREAD_SIZE,
+                                                       AprilUtils::min(MAX_CUDA_REDUCE_NUM_THREADS,
+                                                                       static_cast<int>(GPUHelper::getMaxThreadsPerBlock()))));
     }
     
     static void computeBlockAndGridSizesFor2DMatrix(unsigned int N,
@@ -157,20 +161,10 @@ namespace AprilMath {
       // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
     }
 
-    static void computeBlockAndGridSizesForArray(unsigned int bunch_size,
-                                                 dim3 &block, dim3 &grid) {
-      const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
-  
-      // Number of threads on each block dimension
-      block.x = AprilUtils::min(MAX_THREADS, bunch_size);
-      block.y = 1;
-      block.z = 1;
-  
-      grid.x = (bunch_size/block.x +
-                (bunch_size % block.x ? 1 : 0));
-      grid.y = 1;
-      grid.z = 1;
-      // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
+    static void computeBlockAndGridSizesForArray(int N, int &num_threads,
+                                                 int &num_blocks) {
+      int thread_size;
+      computeReductionSize(N, num_threads, thread_size, num_blocks);
     }
 
     static cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {

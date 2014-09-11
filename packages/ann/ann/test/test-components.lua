@@ -26,7 +26,7 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     target = matrix.col_major(b, o):uniformf(0,1,rnd)
   end
   if norm then
-    apply(function(m) m:scal(1/m:sum()) end,
+    apply(function(m) m:exp() m:scal(1/m:sum()) end,
       target:sliding_window():iterate())
   end
   result = trainer:grad_check_step(input, target, verbose)
@@ -449,7 +449,7 @@ T("DOTPRODUCT + SOFTMAX TEST",
                     push( ann.components.dot_product{ input=i, output=o } ):
                     push( ann.components.actf.softmax() )
                               end,
-                "mse", i, o, b, "SOFTMAX")
+                "mse", i, o, b, "SOFTMAX", true)
             end
           end
         end

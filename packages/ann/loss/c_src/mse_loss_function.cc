@@ -20,6 +20,7 @@
  */
 #include "matrix_operations.h"
 #include "mse_loss_function.h"
+#include "loss_kernels.h"
 #include "token_matrix.h"
 
 using namespace AprilMath::MatrixExt::Operations;
@@ -34,7 +35,7 @@ namespace ANN {
   
   MSELossFunction::~MSELossFunction() {
   }
-  
+
   MatrixFloat *MSELossFunction::computeLossBunch(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
@@ -43,10 +44,8 @@ namespace ANN {
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    SharedPtr<MatrixFloat> aux_output( matSubstraction(input_mat, target_mat) );
-    matPow(aux_output.get(), 2.0f);
-    matSum(aux_output.get(), 1, loss_output);
-    matScal(loss_output, 0.5f);
+    AprilMath::MatrixExt::LossOperations::
+      matMSE(loss_output, input_mat, target_mat);
     return loss_output;
   }
 

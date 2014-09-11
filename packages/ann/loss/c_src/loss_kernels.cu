@@ -32,6 +32,16 @@ namespace AprilMath {
     namespace LossOperations {
       
       namespace Kernels {
+
+        struct MSE {
+          APRIL_CUDA_EXPORT float operator()(const float &input,
+                                             const float &target) const {
+            float diff = input - target;
+            return 0.5f * diff * diff;
+          }
+        };
+        
+        /////////////////////////////////////////////////////////////////////////
         
         struct CrossEntropy {
           const float log_epsilon, log_1_epsilon, EPSILON;
@@ -126,6 +136,15 @@ namespace AprilMath {
         
       } // namespace Kernels
 
+      void matMSE(Basics::MatrixFloat *output,
+                  const Basics::MatrixFloat *input,
+                  const Basics::MatrixFloat *target) {
+        AprilUtils::SharedPtr<Basics::MatrixFloat>
+          map_output( MatrixScalarMap2(input, target, Kernels::MSE(),
+                                       input->cloneOnlyDims()) );
+        matSum(map_output.get(), 1, output);
+      }
+      
       void matCrossEntropy(Basics::MatrixFloat *output,
                            const Basics::MatrixFloat *input,
                            const Basics::MatrixFloat *target,

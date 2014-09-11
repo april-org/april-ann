@@ -51,7 +51,7 @@ namespace ANN {
       aux_output( matSubstraction(input_mat, target_mat) );
     matAbs(aux_output.get());
     matSum(aux_output.get(), 1, loss_output);
-    matScal(loss_output, 1.0f/N );
+    if (N > 1) matScal(loss_output, 1.0f/N );
     return loss_output;
   }
 

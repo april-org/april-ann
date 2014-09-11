@@ -45,6 +45,9 @@ namespace ANN {
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
+    const float *aux = input_mat->getRawDataAccess()->getPPALForRead();
+    aux = target_mat->getRawDataAccess()->getPPALForRead();
+    UNUSED_VARIABLE(aux);
 #endif
     MatrixFloat::iterator loss_output_it(loss_output->begin());
     // Two major cases:

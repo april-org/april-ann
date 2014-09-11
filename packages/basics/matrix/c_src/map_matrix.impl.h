@@ -61,7 +61,7 @@ namespace AprilMath {
                                       const unsigned int SIZE_th) {
       april_assert(input != 0 && dest != 0);
       if (input->size() != dest->size()) {
-        ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+        ERROR_EXIT(128, "Incompatible matrix sizes or dimensions\n");
       }
 #ifdef NO_OMP
       UNUSED_VARIABLE(N_th);
@@ -85,7 +85,7 @@ namespace AprilMath {
       // General case.
       else {
         if (!input->sameDim(dest)) {
-          ERROR_EXIT(128, "Incorrect matrix sizes or dimensions\n");
+          ERROR_EXIT(128, "Incompatible matrix sizes or dimensions\n");
         }
         typename Basics::Matrix<T>::span_iterator input_span_it(input);
         typename Basics::Matrix<O>::span_iterator dest_span_it(dest,

@@ -466,6 +466,11 @@ namespace AprilMath {
                                 Basics::Matrix<T> *dest=0);
 
       template <typename T>
+      Basics::Matrix<T> *matDiv(Basics::Matrix<T> *obj,
+                                const Basics::Matrix<T> *other,
+                                Basics::Matrix<T> *dest=0);
+
+      template <typename T>
       Basics::SparseMatrix<T> *matDiv(Basics::SparseMatrix<T> *obj, const T &value,
                                       Basics::SparseMatrix<T> *dest=0);
 

@@ -873,7 +873,7 @@ namespace Basics {
   /////////////////////////////////////////////////////////////////////////////
 
   template <typename T>
-  Matrix<T>::pos_iterator::pos_iterator(Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
+  Matrix<T>::pos_iterator::pos_iterator(const Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
     if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
       coords = new int[m->getNumDim()];
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;

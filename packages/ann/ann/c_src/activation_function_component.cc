@@ -106,8 +106,6 @@ namespace ANN {
     if (!error_output_mat->sameDim(input->getMatrix()))
       ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		  name.c_str());
-    MatrixFloat *input_mat = input->getMatrix();
-    MatrixFloat *output_mat = output->getMatrix();
     // flatten if needed
     flat_error_input_mat = error_input_mat;
     flat_error_output_mat = error_output_mat;

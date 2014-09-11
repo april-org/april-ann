@@ -366,6 +366,13 @@ namespace AprilMath {
     };
 
     template<typename T>
+    struct m_div {
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return a/b;
+      }
+    };
+
+    template<typename T>
     struct m_max {
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         return (a<b)?b:a;
@@ -419,6 +426,9 @@ namespace AprilMath {
   /// @see Functors::m_add
   template<typename T> APRIL_CUDA_EXPORT
   T m_add(const T &a, const T &b) { return Functors::m_add<T>()(a,b); }
+  /// @see Functors::m_div
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_div(const T &a, const T &b) { return Functors::m_div<T>()(a,b); }
   /// @see Functors::m_min
   template<typename T> APRIL_CUDA_EXPORT
   T m_min(const T &a, const T &b) { return Functors::m_min<T>()(a,b); }
@@ -569,6 +579,28 @@ namespace AprilMath {
   //////////////// MATH SCALAR REDUCE FUNCTIONS ////////////////
   namespace Functors {
     
+    template<typename T, typename O, typename MAP_OP, typename RED_OP>
+    struct r_map1 {
+      MAP_OP map_functor;
+      RED_OP red_functor;
+      r_map1(const MAP_OP &map_functor, const RED_OP &red_functor) :
+        map_functor(map_functor), red_functor(red_functor) { }
+      APRIL_CUDA_EXPORT void operator()(O &acc, const T &b) const {
+        red_functor(acc, map_functor(b));
+      }
+    };
+
+    template<typename T1, typename T2, typename O, typename MAP_OP, typename RED_OP>
+    struct r_map2 {
+      MAP_OP map_functor;
+      RED_OP red_functor;
+      r_map2(const MAP_OP &map_functor, const RED_OP &red_functor) :
+        map_functor(map_functor), red_functor(red_functor) { }
+      APRIL_CUDA_EXPORT void operator()(O &acc, const T1 &b, const T2 &c) const {
+        red_functor(acc, map_functor(b,c));
+      }
+    };
+    
     template<typename T>
     struct r_max {
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
@@ -590,7 +622,7 @@ namespace AprilMath {
                                         const int32_t b_idx) const {
         if (acc<b) {
           acc = b;
-          which_acc = b_idx+1; // +1 because Lua starts at 1
+          which_acc = b_idx;
         }
       }
     };
@@ -602,7 +634,7 @@ namespace AprilMath {
                                         const int32_t b_idx) const {
         if (!(acc<b)) {
           acc = b;
-          which_acc = b_idx+1; // +1 because Lua starts at 1
+          which_acc = b_idx;
         }
       }
     };
@@ -662,6 +694,21 @@ namespace AprilMath {
       }
     };
   } // namespace Functors
+
+  /// @see Functors::r_map1
+  template<typename T, typename O, typename MAP_OP, typename RED_OP>
+  Functors::r_map1<T,O,MAP_OP,RED_OP> make_r_map1(const MAP_OP &map_functor,
+                                                  const RED_OP &red_functor) {
+    return Functors::r_map1<T,O,MAP_OP,RED_OP>(map_functor, red_functor);
+  }
+  
+  /// @see Functors::r_map2
+  template<typename T1, typename T2, typename O,
+           typename MAP_OP, typename RED_OP>
+  Functors::r_map2<T1,T2,O,MAP_OP,RED_OP> make_r_map2(const MAP_OP &map_functor,
+                                                      const RED_OP &red_functor) {
+    return Functors::r_map2<T1,T2,O,MAP_OP,RED_OP>(map_functor, red_functor);
+  }
   
   /// @see Functors::r_max
   template<typename T> APRIL_CUDA_EXPORT

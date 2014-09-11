@@ -1152,9 +1152,6 @@ namespace Basics {
 #ifdef USE_CUDA
   obj->update();
   other->update();
-  // force to copy to PPAL memory
-  obj->getRawDataAccess()->getPPALForRead();
-  other->getRawDataAccess()->getPPALForRead();
 #endif
   if (AprilMath::MatrixExt::Operations::matEquals(obj, other, epsilon)) {
     LUABIND_RETURN(boolean, true);
@@ -1630,10 +1627,18 @@ namespace Basics {
 //BIND_METHOD MatrixFloat div
 {
   LUABIND_CHECK_ARGN(==, 1);
-  float value;
-  LUABIND_GET_PARAMETER(1, float, value);
-  LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
-                 matDiv(obj, value));
+  if (lua_isMatrixFloat(L,1)) {
+    MatrixFloat *other;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, other);
+    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+                   matDiv(obj, other));
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+                   matDiv(obj, value));
+  }
 }
 //BIND_END
  

@@ -171,14 +171,14 @@ namespace Basics {
      */
     class pos_iterator {
       friend class Matrix;
-      Matrix<T> *m; ///< A weak reference.
+      const Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
       /// The coords array is only used when the matrix is not congiuous
       /// or it is in col_major order, otherwise it is NULL
       int *coords;
     public:
-      pos_iterator(Matrix<T> *m);
+      pos_iterator(const Matrix<T> *m);
       pos_iterator();
       ~pos_iterator();
       pos_iterator &operator=(const pos_iterator &other);

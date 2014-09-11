@@ -65,7 +65,6 @@ april_set_doc(aprilio.serializable.."write", {
 		  "A Lua table with options [optional].",
 		},
                 outputs = {
-                  "The given stream object.",
                 },
 })
 

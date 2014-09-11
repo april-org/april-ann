@@ -52,10 +52,6 @@ namespace AprilMath {
           float b_abs = AprilMath::m_abs(b);
           acc = AprilMath::m_sqrt(acc*acc + b_abs*b_abs);
         }
-        void operator()(volatile float &acc, const T b) const {
-          float b_abs = AprilMath::m_abs(b);
-          acc = AprilMath::m_sqrt(acc*acc + b_abs*b_abs);
-        }
       };
       
     } // namespace Functors
@@ -766,10 +762,10 @@ namespace AprilMath {
                         Matrix<T> *dest,
                         Matrix<int32_t> *argmin) {
         if (argmin == 0) {
-          return MatrixScalarReduceOverDimension(obj, dim,
-                                                 AprilMath::Functors::r_min<T>(),
-                                                 AprilMath::Functors::r_min<T>(),
-                                                 Limits<T>::max(), dest);
+          return MatrixScalarReduce1OverDimension(obj, dim,
+                                                  AprilMath::Functors::r_min<T>(),
+                                                  AprilMath::Functors::r_min<T>(),
+                                                  Limits<T>::max(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
@@ -840,10 +836,10 @@ namespace AprilMath {
                         Matrix<T> *dest,
                         Matrix<int32_t> *argmax) {
         if (argmax == 0) {
-          return MatrixScalarReduceOverDimension(obj, dim,
-                                                 AprilMath::Functors::r_max<T>(),
-                                                 AprilMath::Functors::r_max<T>(),
-                                                 Limits<T>::min(), dest);
+          return MatrixScalarReduce1OverDimension(obj, dim,
+                                                  AprilMath::Functors::r_max<T>(),
+                                                  AprilMath::Functors::r_max<T>(),
+                                                  Limits<T>::min(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
@@ -1283,7 +1279,7 @@ namespace AprilMath {
       template <typename T>
       T matSum(const Matrix<T> *obj) {
         return MatrixSpanSumReduce1(obj,
-                                    ScalarToSpanReduce< T, T, AprilMath::Functors::r_add<T,T> >
+                                    ScalarToSpanReduce1< T, T, AprilMath::Functors::r_add<T,T> >
                                     (AprilMath::Functors::r_add<T,T>()));
       }
       
@@ -1306,10 +1302,10 @@ namespace AprilMath {
       Matrix<T> *matSum(Matrix<T> *obj,
                         int dim,
                         Matrix<T> *dest) {
-        return MatrixScalarReduceOverDimension(obj, dim,
-                                               AprilMath::Functors::r_add<T,T>(),
-                                               AprilMath::Functors::r_add<T,T>(),
-                                               T(0.0f), dest);
+        return MatrixScalarReduce1OverDimension(obj, dim,
+                                                AprilMath::Functors::r_add<T,T>(),
+                                                AprilMath::Functors::r_add<T,T>(),
+                                                T(0.0f), dest);
       }
 
       // TODO: Implement using a wrapper for GPU/CPU computation.
@@ -1427,6 +1423,15 @@ namespace AprilMath {
                         Matrix<T> *dest) {
         if (dest == 0) dest = obj;
         return MatrixScalarMap1<T,T>(obj, m_curried_div<T>(value), dest);
+      }
+
+      template <typename T>
+      Basics::Matrix<T> *matDiv(Basics::Matrix<T> *obj,
+                                const Basics::Matrix<T> *other,
+                                Basics::Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap2<T,T,T>(obj, other,
+                                       AprilMath::Functors::m_div<T>(), dest);
       }
 
       template <typename T>
@@ -1739,6 +1744,9 @@ namespace AprilMath {
                                              const float &, const float &,
                                              Matrix<float> *);        
       template Matrix<float> *matDiv(Matrix<float> *, const float &,
+                                     Matrix<float> *);
+      template Matrix<float> *matDiv(Matrix<float> *,
+                                     const Matrix<float> *,
                                      Matrix<float> *);
 
       // INSTANTIATIONS (double type, dense matrix)

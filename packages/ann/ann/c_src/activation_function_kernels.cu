@@ -132,13 +132,14 @@ namespace ANN {
           column = output->select(1,i,column.get());
           matAxpy(column.get(), -1.0f, maximums.get());
         }
+        maximums.reset(); // frees the memory
         matExp(output);
-        maximums.reset();
         AprilUtils::SharedPtr<Basics::MatrixFloat> sums( matSum(output,1) );
-        matDiv(sums.get(), 1.0f);
+        // Avoid overhead of division operator inside loop.
+        matDiv(sums.get(), 1.0f); // divide once
         for (unsigned int i=0; i<size; ++i) {
           column = output->select(1,i,column.get());
-          matCmul(column.get(), sums.get());
+          matCmul(column.get(), sums.get()); // multiply several times
         }
       }
       else {
@@ -193,12 +194,6 @@ namespace ANN {
 #endif
     }
     
-    struct ExpAddReductor {
-      APRIL_CUDA_EXPORT void operator()(float &acc, const float a) const {
-        acc += AprilMath::m_exp(a);
-      }
-    };
-    
     void applyLogSoftmax(Basics::MatrixFloat *output,
                          Basics::MatrixFloat *input) {
       unsigned int bunch_size = input->getDimSize(0);
@@ -214,10 +209,18 @@ namespace ANN {
         }
         maximums.reset();
         AprilUtils::SharedPtr<Basics::MatrixFloat> sums;
-        sums = MatrixScalarReduceOverDimension(output, 1,
-                                               ExpAddReductor(),
-                                               AprilMath::Functors::r_add<float,float>(),
-                                               0.0f);
+        sums = MatrixScalarReduce1OverDimension
+          (output, // b
+           1,      // dimension for the reduction
+         // This template instantiates an operator like this:
+         // operator()(acc, b) { acc += exp(b); }
+           AprilMath::
+           make_r_map1<float,float>(// aux = exp(b)
+                                    AprilMath::Functors::m_exp<float>(),
+                                    // acc += aux
+                                    AprilMath::Functors::r_add<float,float>() ),
+           AprilMath::Functors::r_add<float,float>(),
+           0.0f);
         matLog(sums.get());
         for (unsigned int i=0; i<size; ++i) {
           column = output->select(1,i,column.get());
@@ -279,51 +282,27 @@ namespace ANN {
     void applySoftmaxDerivative(Basics::MatrixFloat *output_errors_mat,
                                 Basics::MatrixFloat *input_errors_mat,
                                 Basics::MatrixFloat *output_units_mat) {
-      unsigned int bunch_size = output_units_mat->getDimSize(0);
       unsigned int size = output_units_mat->getDimSize(1);
-      AprilMath::FloatGPUMirroredMemoryBlock *output_errors =
-        output_errors_mat->getRawDataAccess();
-      AprilMath::FloatGPUMirroredMemoryBlock *input_errors =
-        input_errors_mat->getRawDataAccess();
-      AprilMath::FloatGPUMirroredMemoryBlock *output_units =
-        output_units_mat->getRawDataAccess();
-#ifdef USE_CUDA
-      if (output_units->getCudaFlag()) {
-        AprilUtils::SharedPtr<Basics::MatrixFloat> sums( matSum(output_units_mat, 1) );
-        AprilUtils::SharedPtr<Basics::MatrixFloat> column;
-        matCopy(output_errors_mat, output_units_mat);
-        for (unsigned int i=0; i<size; ++i) {
-          column = output_errors_mat->select(1,i,column.get());
-          matAxpy(column.get(), -1.0f, sums.get());
-        }
-        matCmul(output_errors_mat, input_errors_mat);
+      AprilUtils::SharedPtr<Basics::MatrixFloat> column, sums;
+      sums = MatrixScalarReduce2OverDimension
+        (output_units_mat, // b
+         input_errors_mat, // c
+         1,                // dimension for the reduction
+         // This template instantiates an operator like this:
+         // operator()(acc, b, c) { acc += b * c; }
+         AprilMath::
+         make_r_map2<float,float,float>(// aux = b*c
+                                        AprilMath::Functors::m_mul<float>(),
+                                        // acc += aux
+                                        AprilMath::Functors::r_add<float,float>() ),
+         AprilMath::Functors::r_add<float,float>(),
+         0.0f);
+      matCopy(output_errors_mat, input_errors_mat);
+      for (unsigned int i=0; i<size; ++i) {
+        column = output_errors_mat->select(1,i,column.get());
+        matAxpy(column.get(), -1.0f, sums.get());
       }
-      else {
-#endif
-        const float *output_units_ptr = output_units->getPPALForRead();
-        const float *input_errors_ptr = input_errors->getPPALForRead();
-        float *output_errors_ptr      = output_errors->getPPALForWrite();
-        
-        for (unsigned int b = 0; b < bunch_size; ++b) {
-          float sum = 0.0f;
-          unsigned int cur_pos = 0;
-          for (unsigned int i = 0; i < size; i++) {
-            sum += output_units_ptr[cur_pos] * input_errors_ptr[cur_pos];
-            cur_pos += bunch_size;
-          }
-          cur_pos = 0;
-          for (unsigned int i = 0; i < size; i++) {
-            output_errors_ptr[cur_pos] = ( output_units_ptr[cur_pos] *
-                                           ( input_errors_ptr[cur_pos] - sum ) );
-            cur_pos += bunch_size;
-          }
-          output_units_ptr++;
-          input_errors_ptr++;
-          output_errors_ptr++;
-        }
-#ifdef USE_CUDA
-      }
-#endif
+      matCmul(output_errors_mat, output_units_mat);
     }
   } // namespace Kernels
 } // namespace ANN

@@ -959,12 +959,13 @@ trainable_supervised_trainer_methods.grad_check_step =
     local gradient = loss:gradient(output, target)
     gradient=self.ann_component:backprop(gradient)
     self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
-    local epsilond = 0.3
+    local epsilond = 0.10 -- 10% relative error
     local epsilon  = 1e-03
     local ret      = true
     local bunch_size = tr_loss_matrix:dim(1)
     local it = 1
     for wname,cnn in self:iterate_weights() do
+      collectgarbage("collect")
       local w = cnn
       -- The shared parameter has no effect in gradients check, only bunch_size
       local ratio = 1/bunch_size
@@ -972,6 +973,7 @@ trainable_supervised_trainer_methods.grad_check_step =
       assert(w:is_contiguous(),
              "Unable to check grads of non-contiguous matrices")
       for i=1,w:size() do
+        collectgarbage("collect")
         local orig_w = w:raw_get(w:offset() + i-1)
         w:raw_set(w:offset() + i-1, orig_w - epsilon)
         self.ann_component:reset(it)
@@ -992,11 +994,10 @@ trainable_supervised_trainer_methods.grad_check_step =
                   "CHECK GRADIENT %s[%d], found %g, expected %g\n",
                   wname, i-1, ann_g, g)
         end
-        if ann_g ~= 0 or g ~= 0 then
+        if math.abs(ann_g) > 2*epsilon or math.abs(g) > 2*epsilon then
           local abs_err = math.abs(ann_g - g)
-          local err = abs_err/math.abs(ann_g+g)
-          -- if err > epsilond and abs_err > 1e-02 then
-          if abs_err > 2*epsilon then
+          local err = 2*abs_err/(math.abs(ann_g) + math.abs(g))
+          if err > epsilond and abs_err > 2*epsilon then
             -- force backprop step
             self.ann_component:reset(it)
             loss:reset()

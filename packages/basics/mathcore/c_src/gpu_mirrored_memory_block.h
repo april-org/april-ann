@@ -109,7 +109,7 @@ namespace AprilMath {
     size_t size;
     union {
       char *char_mem;
-      void *mem_ppal;
+      mutable void *mem_ppal;
       const void *const_mem_ppal;
     };
 #ifdef USE_CUDA  
@@ -159,6 +159,9 @@ namespace AprilMath {
     void setUpdatedPPAL() {
       status = status | PPAL_MASK;
     }
+    void setUpdatedPPAL() const {
+      status = status | PPAL_MASK;
+    }
     void setUpdatedGPU() {
       status = status | GPU_MASK;
     }
@@ -167,9 +170,27 @@ namespace AprilMath {
     }
 
     void updateMemPPAL() const {
-      if (!getUpdatedPPAL())
-        ERROR_EXIT(128, "You need first to update the "
-                   "memory in a non const pointer\n");
+      if (!getUpdatedPPAL()) {
+        CUresult result;
+        setUpdatedPPAL();
+        april_assert(mem_gpu != 0);
+
+        if (!pinned) {
+          result = cuMemcpyDtoH(mem_ppal, mem_gpu, size);
+          if (result != CUDA_SUCCESS)
+            ERROR_EXIT1(160, "Could not copy memory from device to host: %s\n",
+                        cudaGetErrorString(cudaGetLastError()));
+        }
+        else {
+          if (cudaMemcpyAsync(mem_ppal,
+                              reinterpret_cast<void*>(mem_gpu),
+                              size,
+                              cudaMemcpyDeviceToHost, 0) != cudaSuccess)
+            ERROR_EXIT1(162, "Could not copy memory from device to host: %s\n",
+                        cudaGetErrorString(cudaGetLastError()));
+          cudaThreadSynchronize();
+        }
+      }
     }
 
     void updateMemPPAL() {
@@ -666,9 +687,14 @@ namespace AprilMath {
     }
   
     const T *getPPALForRead() const {
-#ifdef USE_CUDA
-      if (!getUpdatedPPAL())
+      /*
+        #ifdef USE_CUDA
+        if (!getUpdatedPPAL())
         ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+        #endif
+      */
+#ifdef USE_CUDA
+      updateMemPPAL();
 #endif
       return getPointer();
     }
@@ -770,7 +796,7 @@ namespace AprilMath {
       return other;
     }
   };
-
+  
   // typedef for referring to float memory blocks
   typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;

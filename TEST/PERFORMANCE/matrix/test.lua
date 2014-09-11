@@ -24,7 +24,10 @@ local measure_process_time = function(func,...)
   local it=0
   clock:reset()
   clock:go()
-  repeat func(...) it=it+1 until clock:read() > 0.1
+  repeat func(...)
+    it=it+1
+    if it%100 then collectgarbage("collect") end
+  until clock:read() > 0.1
   clock:stop()
   local a,b = clock:read()
   return a/it,b/it
@@ -106,7 +109,7 @@ end)
 -----------------------------------------------------------------------------
 
 T("CLONE 1D TEST", function()
-    for i=1,7 do
+    for i=2,7 do
       local N = 10^i
       local m = matrix(N):uniformf(-1,1,rnd) m:update()
       printf("\tsize=%10d  %s  %20.9f  %20.9f\n",m:size(),"1D",
