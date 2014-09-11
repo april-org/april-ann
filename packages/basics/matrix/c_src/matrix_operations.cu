@@ -407,7 +407,7 @@ namespace AprilMath {
                      obj->getRawDataAccess(),
                      static_cast<unsigned int>(obj->getOffset()),
                      static_cast<unsigned int>(obj->getVectorStride()),
-                     obj->getCudaFlag());
+                     obj->getCudaFlag() || other->getCudaFlag());
         return obj;
       }
 
@@ -473,7 +473,7 @@ namespace AprilMath {
                otherB->getRawDataAccess(), ldb,
                beta, C->getRawDataAccess(), ldc,
                otherA->getOffset(), otherB->getOffset(), C->getOffset(),
-               C->getCudaFlag());
+               C->getCudaFlag() || otherA->getCudaFlag() || otherB->getCudaFlag());
         return C;
       }
 
@@ -541,7 +541,7 @@ namespace AprilMath {
                       otherB->getRawDataAccess(), ldb,
                       beta, C->getRawDataAccess(), ldc,
                       otherB->getOffset(), C->getOffset(),
-                      C->getCudaFlag());
+                      C->getCudaFlag() || otherA->getCudaFlag() || otherB->getCudaFlag());
         return C;
       }
 
@@ -595,7 +595,7 @@ namespace AprilMath {
                beta, Y->getRawDataAccess(), ldy,
                otherA->getOffset(), otherX->getOffset(),
                Y->getOffset(),
-               Y->getCudaFlag());
+               Y->getCudaFlag() || otherX->getCudaFlag() || otherA->getCudaFlag());
         return Y;
       }
     
@@ -638,7 +638,7 @@ namespace AprilMath {
                      otherX->getRawDataAccess(), ldx,
                      beta, Y->getRawDataAccess(), ldy,
                      otherX->getOffset(), Y->getOffset(),
-                     Y->getCudaFlag());
+                     Y->getCudaFlag() || otherX->getCudaFlag() || otherA->getCudaFlag());
         return Y;
       }
   
@@ -671,7 +671,7 @@ namespace AprilMath {
               alpha, otherX->getRawDataAccess(), otherX->getOffset(), ldx,
               otherY->getRawDataAccess(), otherY->getOffset(), ldy,
               A->getRawDataAccess(), A->getOffset(), lda,
-              A->getCudaFlag());
+              A->getCudaFlag() || otherX->getCudaFlag() || otherY->getCudaFlag());
         return A;
       }
 
@@ -710,7 +710,7 @@ namespace AprilMath {
                             Y->getRawIndicesAccess(),
                             X->getRawDataAccess(), X->getOffset(),
                             X->getVectorStride(),
-                            X->getCudaFlag());
+                            X->getCudaFlag() || Y->getCudaFlag());
         return ret;
       }
     
@@ -1212,14 +1212,14 @@ namespace AprilMath {
             int dim[2] = {a->size(),b->size()};
             if (c == 0) {
               c = new Matrix<T>(2, dim, a->getMajorOrder());
+#ifdef USE_CUDA
+              c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
+#endif
             }
             else if (!c->sameDim(dim, 2)) {
               ERROR_EXIT2(128, "Incorrect matrix sizes, expected %dx%d\n",
                           dim[0], dim[1]);
             }
-#ifdef USE_CUDA
-            c->setUseCuda(a->getCudaFlag());
-#endif
             matGer(matZeros(c), T(1.0f), a, b);
           }
           else if (!a->isVector()) {
@@ -1227,14 +1227,14 @@ namespace AprilMath {
             int dim[2] = {a->getDimSize(0),1};
             if (c == 0) {
               c = new Matrix<T>(b->getNumDim(), dim, a->getMajorOrder());
+#ifdef USE_CUDA
+              c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
+#endif
             }
             else if (!c->sameDim(dim, b->getNumDim())) {
               ERROR_EXIT2(128, "Incorrect matrix sizes, expected %dx%d\n",
                           dim[0], dim[1]);
             }
-#ifdef USE_CUDA
-            c->setUseCuda(a->getCudaFlag());
-#endif
             matGemv(matZeros(c), CblasNoTrans, T(1.0f), a, b, T());
           }
           else {
@@ -1242,14 +1242,14 @@ namespace AprilMath {
             int dim[2] = {1,1};
             if (c == 0) {
               c = new Matrix<T>(a->getNumDim(), dim, a->getMajorOrder());
+#ifdef USE_CUDA
+              c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
+#endif
             }
             else if (!c->sameDim(dim, a->getNumDim())) {
               ERROR_EXIT2(128, "Incorrect matrix sizes, expected %dx%d\n",
                           dim[0], dim[1]);
             }
-#ifdef USE_CUDA
-            c->setUseCuda(a->getCudaFlag());
-#endif
             c->getRawDataAccess()->putValue( c->getOffset(), matDot(a, b) );
           }
         }
@@ -1259,14 +1259,14 @@ namespace AprilMath {
           int dim[2] = {a->getDimSize(0), b->getDimSize(1)};
           if (c == 0) {
             c = new Matrix<T>(2,dim,a->getMajorOrder());
+#ifdef USE_CUDA
+              c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
+#endif
           }
           else if (!c->sameDim(dim,2)) {
             ERROR_EXIT2(128, "Incorrect matrix sizes, expected %dx%d\n",
                         dim[0], dim[1]);
           }
-#ifdef USE_CUDA
-          c->setUseCuda(a->getCudaFlag());
-#endif
           matGemm(matZeros(c), CblasNoTrans, CblasNoTrans,
                   T(1.0f), a, b, T());
         }
