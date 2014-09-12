@@ -20,9 +20,9 @@ v0.4.0
 ### Unstable changes
 
 - Added statistical distributions in `stats.dist`.
-- Added `Matrix<T>::convolution` method and `matrix:convolution` lua
-  method. They are in experimental stage, please, be advice to use them by your
-  own risk.
+- Added `matrix.ext.convolution` and `matrix.ext.real_fftwh`.
+- Added `Matrix<T>::convolution` method. It is in experimental stage, please,
+  be advice to use them by your own risk.
 - Because of the changes in `Image`, several classes in package `imaging` has
   been reviewed, consistent tests are necessary to merge with master branch.
 

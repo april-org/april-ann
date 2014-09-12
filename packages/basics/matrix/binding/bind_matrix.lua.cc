@@ -1764,25 +1764,28 @@ namespace Basics {
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat convolution
+///////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION matrix.ext.convolution
 {
-  MatrixFloat *kernel, *result; //, *unrolled_kernel, *unrolled_self;
+  MatrixFloat *obj, *kernel, *result; //, *unrolled_kernel, *unrolled_self;
   int *step = 0;
   int D;
   
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, table);
-  LUABIND_GET_TABLE_PARAMETER(1, D, int, D);
-  LUABIND_GET_TABLE_PARAMETER(1, kernel, MatrixFloat, kernel);
+  LUABIND_CHECK_ARGN(>=, 2);
+  LUABIND_CHECK_ARGN(<=, 3);
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  LUABIND_CHECK_PARAMETER(2, table);
+  LUABIND_GET_TABLE_PARAMETER(2, D, int, D);
+  LUABIND_GET_TABLE_PARAMETER(2, kernel, MatrixFloat, kernel);
   /*
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_kernel,
     MatrixFloat, unrolled_kernel, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_self,
     MatrixFloat, unrolled_self, 0);
   */
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, result, 0);
-  lua_getfield(L, 1, "step");
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, result, 0);
+  lua_getfield(L, 2, "step");
   if (!lua_isnil(L, -1)) {
     step = new int[D];
     int len;
@@ -1802,6 +1805,20 @@ namespace Basics {
   delete[] step;
   /*LUABIND_RETURN(MatrixFloat, unrolled_kernel);
     LUABIND_RETURN(MatrixFloat, unrolled_self);*/
+}
+//BIND_END
+
+//BIND_FUNCTION matrix.ext.real_fftwh
+{
+  MatrixFloat *obj, *dest;
+  int wsize, wadvance;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, int, wsize, obj->size());
+  LUABIND_GET_OPTIONAL_PARAMETER(3, int, wadvance, wsize);
+  LUABIND_GET_OPTIONAL_PARAMETER(4, MatrixFloat, dest, 0);
+  LUABIND_RETURN(MatrixFloat,
+		 AprilMath::MatrixExt::Operations::
+		 matRealFFTwithHamming(obj, wsize, wadvance, dest));
 }
 //BIND_END
 

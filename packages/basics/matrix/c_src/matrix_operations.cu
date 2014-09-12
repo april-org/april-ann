@@ -23,6 +23,7 @@
 #include "mathcore.h"
 #include "matrix.h"
 #include "maxmin.h"
+#include "realfftwithhamming.h"
 #include "smart_ptr.h"
 #include "sparse_matrix.h"
 
@@ -1615,6 +1616,67 @@ namespace AprilMath {
           }
         }
         return A;
+      }
+
+      Basics::Matrix<float> *matRealFFTwithHamming(Basics::Matrix<float> *obj,
+						   int wsize,
+						   int wadvance,
+						   Basics::Matrix<float> *dest) {
+	const int N = obj->getNumDim();
+	if (N != 1) ERROR_EXIT(128, "Only valid for numDim=1\n");
+	if (wsize > obj->size() || wadvance > obj->size()) {
+	  ERROR_EXIT(128, "Incompatible wsize or wadvance value\n");
+	}
+	AprilMath::RealFFTwithHamming real_fft(wsize);
+	const int M = real_fft.getOutputSize();
+	AprilUtils::UniquePtr<int []> dest_size(new int[N+1]);
+	dest_size[0] = (obj->getDimSize(0) - wsize)/wadvance + 1;
+	dest_size[1] = M;
+	if (dest != 0) {
+	  if (!dest->sameDim(dest_size.get(), N+1)) {
+	    ERROR_EXIT(128, "Incompatible dest matrix\n");
+	  }
+	}
+	else {
+	  dest = new Matrix<float>(N+1, dest_size.get(), obj->getMajorOrder());
+#ifdef USE_CUDA
+	  dest->setUseCuda(obj->getCudaFlag());
+#endif
+	}
+	AprilUtils::UniquePtr<double []> input(new double[wsize]);
+	AprilUtils::UniquePtr<double []> output(new double[M]);
+	//
+	typename Basics::Matrix<float>::sliding_window swindow(obj,
+							       &wsize,
+							       0, // offset
+							       &wadvance);
+	AprilUtils::SharedPtr< Matrix<float> > input_slice;
+	AprilUtils::SharedPtr< Matrix<float> > output_slice;
+	int i=0, j;
+	while(!swindow.isEnd()) {
+	  april_assert(i < dest_size[0]);
+	  input_slice = swindow.getMatrix(input_slice.get());
+	  output_slice = dest->select(0, i);
+	  j=0;
+	  for (typename Basics::Matrix<float>::const_iterator it(input_slice->begin());
+	       it != input_slice->end(); ++it, ++j) {
+	    april_assert(j<wsize);
+	    input[j] = static_cast<double>(*it);
+	  }
+	  april_assert(j==wsize);
+	  real_fft(input.get(), output.get());
+	  j=0;
+	  for (typename Basics::Matrix<float>::iterator it(output_slice->begin());
+	       it != output_slice->end(); ++it, ++j) {
+	    april_assert(j<M);
+	    *it = static_cast<float>(output[j]);
+	  }
+	  april_assert(j==M);
+	  ++i;
+	  swindow.next();
+	}
+	april_assert(i == dest_size[0]);
+	return dest;
       }
       
       // INSTANTIATIONS (float type, dense matrix)

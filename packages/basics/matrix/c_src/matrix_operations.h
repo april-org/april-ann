@@ -507,6 +507,11 @@ namespace AprilMath {
       Basics::Matrix<float> *matCholesky(const Basics::Matrix<float> *obj,
                                          char uplo);
 
+      Basics::Matrix<float> *matRealFFTwithHamming(Basics::Matrix<float> *obj,
+						   int wsize,
+						   int wadvance,
+						   Basics::Matrix<float> *dest=0);
+      
     } // namespace Operations
   } // namespace MatrixExt
 } // namespace AprilMath

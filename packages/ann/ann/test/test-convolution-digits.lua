@@ -208,7 +208,7 @@ end
 -- print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
-  local totalepocas = totalepocas+1
+  totalepocas = totalepocas+1
   local errortrain  = trainer:train_dataset(datosentrenar)
   local errorval    = trainer:validate_dataset(datosvalidar)
   --
