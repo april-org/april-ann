@@ -521,4 +521,35 @@ T("LargeMatrices", function()
     for i=1,m1:dim(3) do m1:select(3,i):fill(i) end
     for i=1,m2:dim(3) do m2(':',':',i):fill(i) end
     check.eq(m1, m2, "select and slice")
+    m1,m2=nil,nil
+    collectgarbage("collect")
+    --
+    local m1 = matrix(300,200,100):fill(200)
+    local eq = true
+    for i=1,m1:size() do eq = eq and m1:raw_get(i-1) == 200 end
+    check.TRUE(eq, "fill")
+    --
+    m1:scalar_add(10)
+    local eq = true
+    for i=1,m1:size() do eq = eq and m1:raw_get(i-1) == 210 end
+    check.TRUE(eq, "scalar_add")
+    --
+    m1:scal(0.5)
+    local eq = true
+    for i=1,m1:size() do eq = eq and m1:raw_get(i-1) == 105 end
+    check.TRUE(eq, "scalar")
+    --
+    local aux = m1:sum(1):scal(1/300):sum(1):scal(1/200):sum()/100
+    check.number_eq(aux, 105)
+    local aux = m1:select(3,1):sum(1):scal(1/300):sum()/200
+    check.number_eq(aux, 105)
+    local m1 = nil
+    collectgarbage("collect")
+    --
+    local m1 = matrix(300,200,100):uniformf()
+    m1:set(290,190,1, -20)
+    check.eq(-20, (m1:min()))
+    check.eq(-20, (m1:min(1):min(1):min()))
+    check.eq(-20, (m1:select(3,1):min()))
+    check.eq(-20, (m1:select(3,1):min(1):min()))
 end)
