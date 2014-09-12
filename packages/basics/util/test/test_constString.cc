@@ -4,7 +4,7 @@
 #include "gtest.h"
 
 using namespace std;
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define N 4
 

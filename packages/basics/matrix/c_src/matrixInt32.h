@@ -21,9 +21,8 @@
 #ifndef MATRIX_INT32_H
 #define MATRIX_INT32_H
 #include "matrix.h"
-#include "matrix_not_implemented.h"
 
-namespace basics {
+namespace Basics {
 
 
   namespace MatrixIO {
@@ -31,11 +30,11 @@ namespace basics {
     /* Especialization of MatrixInt32 ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<int32_t>::operator()(AprilUtils::constString &line,
                                              int32_t &destination);
   
     template<>
-    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<int32_t>::operator()(AprilUtils::constString &line,
                                               int32_t &destination);
   
     template<>
@@ -56,27 +55,13 @@ namespace basics {
 
   template<>
   int32_t Matrix<int32_t>::
-  getTemplateOption(const april_utils::GenericOptions *options,
+  getTemplateOption(const AprilUtils::GenericOptions *options,
                     const char *name, int32_t default_value);
-
-  NOT_IMPLEMENT_AXPY_HEADER(int32_t)
-  NOT_IMPLEMENT_GEMM_HEADER(int32_t)
-  NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
-  NOT_IMPLEMENT_GER_HEADER(int32_t)
-  NOT_IMPLEMENT_DOT_HEADER(int32_t)
-
-  /************* ZEROS FUNCTION **************/
-  template<>
-  void Matrix<int32_t>::zeros();
-
-  /************* ONES FUNCTION **************/
-  template<>
-  void Matrix<int32_t>::ones();
-
-  ///////////////////////////////////////////////////////////////////////////////
-
+  
+  //////////////////////////////////////////////////////////////////////////////
+  
   typedef Matrix<int32_t> MatrixInt32;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_INT_H

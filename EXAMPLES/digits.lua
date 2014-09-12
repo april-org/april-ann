@@ -1,3 +1,6 @@
+ -- forces CUDA when available
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
 digits_image = ImageIO.read(string.get_path(arg[0]).."digits.png")
 m1           = digits_image:to_grayscale():invert_colors():matrix()
 
@@ -39,15 +42,14 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-bunch_size = 32
-thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
-if util.is_cuda_available() then thenet:set_use_cuda(true) end
+bunch_size = 64
+thenet = ann.mlp.all_all.generate("256 inputs 1024 tanh 10 log_softmax")
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(),
 				       bunch_size)
 trainer:build()
 --
-trainer:set_option("learning_rate", 0.01)
+trainer:set_option("learning_rate", 0.1)
 trainer:set_option("momentum", 0.01)
 trainer:set_option("weight_decay", 1e-04)
 trainer:set_option("L1_norm", 1e-05)
@@ -97,7 +99,7 @@ num_epochs = train_func:get_state_table().current_epoch
 local val_error,val_variance=best:validate_dataset{
   input_dataset  = val_input,
   output_dataset = val_output,
-  loss           = ann.loss.zero_one(10)
+  loss           = ann.loss.zero_one(),
 }
 printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
 printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)

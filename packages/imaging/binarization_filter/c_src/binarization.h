@@ -23,7 +23,7 @@
 
 #include "utilImageFloat.h"
 
-namespace imaging {
+namespace Imaging {
 
   //// Computes Niblack normalization
   ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, 
@@ -41,7 +41,7 @@ namespace imaging {
   /// Simple Image Thresholding
   ImageFloat *binarize_threshold(const ImageFloat *src, double threshold);
 
-} // namespace imaging
+} // namespace Imaging
 
 #endif
 

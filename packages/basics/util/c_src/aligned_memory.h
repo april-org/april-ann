@@ -28,7 +28,7 @@ extern "C" {
 
 #define VECTOR_ALIGNMENT 16
 
-namespace april_utils {
+namespace AprilUtils {
   template<typename T>
   inline
   T* aligned_malloc(size_t nmemb) {
@@ -40,13 +40,13 @@ namespace april_utils {
   void aligned_free(T *ptr) {
     _mm_free(ptr);
   }
-} // namespace april_utils
+} // namespace AprilUtils
 
 #else
 
 #include <cstdlib>
 
-namespace april_utils {
+namespace AprilUtils {
   template<typename T>
   inline
   T* aligned_malloc(size_t nmemb) {
@@ -58,7 +58,7 @@ namespace april_utils {
   void aligned_free(T *ptr) {
     free(ptr);
   }
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif
 

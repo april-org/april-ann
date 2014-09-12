@@ -21,7 +21,7 @@
 //BIND_HEADER_C
 #include "bind_image_RGB.h"
 
-using april_utils::constString;
+using AprilUtils::constString;
 //BIND_END
 
 //BIND_HEADER_H
@@ -34,7 +34,7 @@ using april_utils::constString;
 #include "dataset.h"
 #include "bind_dataset.h"
 
-using namespace imaging;
+using namespace Imaging;
 //BIND_END
 
 //BIND_LUACLASSNAME ImageFloat Image
@@ -46,7 +46,7 @@ using namespace imaging;
   int argn;
   argn = lua_gettop(L); // number of arguments
   
-  basics::MatrixFloat *mat;
+  Basics::MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
   
   if (mat->getNumDim() != 2) {
@@ -198,7 +198,7 @@ using namespace imaging;
 //BIND_METHOD ImageFloat projection_h
 {
   LUABIND_CHECK_ARGN(==,0);
-  basics::MatrixFloat *mat;
+  Basics::MatrixFloat *mat;
   obj->projection_h(&mat);
   LUABIND_RETURN(MatrixFloat, mat);
 }
@@ -207,7 +207,7 @@ using namespace imaging;
 //BIND_METHOD ImageFloat projection_v
 {
   LUABIND_CHECK_ARGN(==,0);
-  basics::MatrixFloat *mat;
+  Basics::MatrixFloat *mat;
   obj->projection_v(&mat);
   LUABIND_RETURN(MatrixFloat, mat);
 }
@@ -407,7 +407,7 @@ using namespace imaging;
 
 //BIND_METHOD ImageFloat affine_transform
 {
-  basics::AffineTransform2D *trans;
+  Basics::AffineTransform2D *trans;
   float default_value;
   int offset_x, offset_y;
   ImageFloat *res;
@@ -435,7 +435,7 @@ using namespace imaging;
 {
   LUABIND_CHECK_ARGN(==, 7);
   int x, y, alto, ancho, minialto, miniancho, output_size;
-  basics::LinearCombConfFloat *cl;
+  Basics::LinearCombConfFloat *cl;
   LUABIND_GET_PARAMETER(1, int, x);
   LUABIND_GET_PARAMETER(2, int, y);
   LUABIND_GET_PARAMETER(3, int, ancho);
@@ -444,7 +444,7 @@ using namespace imaging;
   LUABIND_GET_PARAMETER(6, int, minialto);
   LUABIND_GET_PARAMETER(7, LinearCombConfFloat, cl);
 
-  basics::MatrixFloat *res = obj->comb_lineal_forward(x,y,ancho, alto,
+  Basics::MatrixFloat *res = obj->comb_lineal_forward(x,y,ancho, alto,
                                                       miniancho, minialto, cl);
   LUABIND_RETURN(MatrixFloat, res);
 

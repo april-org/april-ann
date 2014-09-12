@@ -25,7 +25,7 @@
 #include <cmath>
 #include <cstdio>
 
-namespace april_utils {
+namespace AprilUtils {
 
   // Esta clase representa valores numéricos en base logarítmica.
   // Por tanto, sólo tiene sentido para representar números >0
@@ -443,7 +443,7 @@ namespace april_utils {
     return *this;
   }
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // LOGBASE_ASSERT_H
 

@@ -25,7 +25,7 @@
 #include "aux_hash_table.h"
 #include "hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // This c++ class replaces a previous one implemented in lua, I have
   // decided not to reuse a previous trie class since this one is even
@@ -44,6 +44,6 @@ namespace april_utils {
   };
 
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // TRIE_HASH_4_LUA_H

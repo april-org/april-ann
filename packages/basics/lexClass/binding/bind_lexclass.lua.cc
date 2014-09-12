@@ -4,7 +4,7 @@
 //BIND_HEADER_H
 #include <cstring>
 #include "lexclass.h"
-using namespace april_utils;
+using namespace AprilUtils;
 //BIND_END
 
 //BIND_LUACLASSNAME LexClass _internal_lexclass_

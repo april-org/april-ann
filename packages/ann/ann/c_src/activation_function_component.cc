@@ -19,22 +19,23 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
 #include "activation_function_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
   
-  ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
+  ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name,
+                                                                 bool need_flatten) :
     ANNComponent(name, 0, 0, 0),
     input(0),
     output(0),
     error_input(0),
-    error_output(0) {
+    error_output(0),
+    need_flatten(need_flatten) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
@@ -64,29 +65,20 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    unsigned int bunch_size = input_mat->getDimSize(0);
-    unsigned int current_input_size = input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
     AssignRef(output,new TokenMatrixFloat(output_mat));
-    // flatten the matrices if it is necessary
-    bool flattened = false;
-    if (input_mat->getNumDim() > 2) {
-      int dims[2] = { static_cast<int>(bunch_size),
-		      static_cast<int>(current_input_size) };
-      input_mat  = input_mat->rewrap(dims, 2);
-      output_mat = output_mat->rewrap(dims, 2);
-      flattened  = true;
+    // flatten if needed
+    flat_input_mat = input_mat;
+    flat_output_mat = output_mat;
+    if (need_flatten && input_mat->getNumDim() > 2) {
+      int dims[2] = { input_mat->getDimSize(0),
+                      input_mat->size() / input_mat->getDimSize(0) };
+      flat_input_mat = input_mat->rewrap(dims, 2);
+      flat_output_mat = output_mat->rewrap(dims, 2);
     }
-    // get memory blocks for tokens
-    FloatGPUMirroredMemoryBlock *input_ptr  = input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
     // execute apply activations abstract method
-    applyActivation(input_ptr, output_ptr, current_input_size, bunch_size);
-    if (flattened) {
-      delete input_mat;
-      delete output_mat;
-    }
+    applyActivation(flat_input_mat.get(), flat_output_mat.get());
     return output;
   }
     
@@ -108,37 +100,24 @@ namespace ANN {
 #ifdef USE_CUDA
     error_input_mat->setUseCuda(use_cuda);
 #endif
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
-    unsigned int current_input_size = error_input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
     if (!error_output_mat->sameDim(input->getMatrix()))
       ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		  name.c_str());
-    // flatten the matrices if it is necessary
-    bool flattened = false;
-    if (error_input_mat->getNumDim() > 2) {
-      int dims[2] = { static_cast<int>(bunch_size),
-		      static_cast<int>(current_input_size) };
-      error_input_mat  = error_input_mat->rewrap(dims, 2);
-      error_output_mat = error_output_mat->rewrap(dims, 2);
-      flattened  = true;
+    // flatten if needed
+    flat_error_input_mat = error_input_mat;
+    flat_error_output_mat = error_output_mat;
+    if (need_flatten && error_input_mat->getNumDim() > 2) {
+      int dims[2] = { error_input_mat->getDimSize(0),
+                      error_input_mat->size() / error_input_mat->getDimSize(0) };
+      flat_error_input_mat = error_input_mat->rewrap(dims, 2);
+      flat_error_output_mat = error_output_mat->rewrap(dims, 2);
     }
-    MatrixFloat *input_mat = input->getMatrix();
-    MatrixFloat *output_mat = output->getMatrix();
-    FloatGPUMirroredMemoryBlock *input_ptr        = input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *output_ptr       = output_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input_mat->getRawDataAccess();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output_mat->getRawDataAccess();
     // apply derivatives at gradients
-    multiplyDerivatives(input_ptr, output_ptr,
-			error_input_ptr, error_output_ptr,
-			current_input_size, bunch_size);
-    if (flattened) {
-      delete error_input_mat;
-      delete error_output_mat;
-    }
+    multiplyDerivatives(flat_input_mat.get(), flat_output_mat.get(),
+			flat_error_input_mat.get(), flat_error_output_mat.get());
     return error_output;
   }
 
@@ -152,6 +131,10 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    flat_input_mat.reset();
+    flat_output_mat.reset();
+    flat_error_input_mat.reset();
+    flat_error_output_mat.reset();
   }
   
   void ActivationFunctionANNComponent::build(unsigned int _input_size,

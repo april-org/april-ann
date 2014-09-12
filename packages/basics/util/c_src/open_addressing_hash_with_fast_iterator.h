@@ -59,7 +59,7 @@
 #include <cstddef> // ptrdiff_t, size_t...
 #include "pair.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   // HashFcn es del tipo:
   // struct hash_fcn {
@@ -493,6 +493,6 @@ namespace april_utils {
     }
   }
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // OPEN_ADDR_HASH_FAST_IT_H

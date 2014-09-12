@@ -21,9 +21,10 @@
  */
 #include "gpu_mirrored_memory_block.h"
 
-namespace april_math {
+namespace AprilMath {
 
   bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+  bool   GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = false;
 
 #ifndef NO_POOL
   size_t GPUMirroredMemoryBlockBase::MAX_POOL_LIST_SIZE = 200*1024*1024; // 200 Megabytes
@@ -38,4 +39,4 @@ namespace april_math {
   template class GPUMirroredMemoryBlock<double>;
   template class GPUMirroredMemoryBlock<int32_t>;
   template class GPUMirroredMemoryBlock<ComplexF>;
-} // namespace april_math
+} // namespace AprilMath

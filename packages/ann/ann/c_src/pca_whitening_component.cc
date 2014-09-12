@@ -25,12 +25,12 @@
 #include "token_matrix.h"
 #include "unused_variable.h"
 #include "utilMatrixFloat.h"
-#include "wrapper.h"
 
 using namespace AprilIO;
-using namespace april_math;
-using namespace april_utils;
-using namespace basics;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 #define WEIGHTS_NAME "U_S_epsilon"
 
@@ -72,7 +72,7 @@ namespace ANN {
     for (int i=0; i<U_S_epsilon->getDimSize(1); ++i, ++Sit) {
       april_assert(Sit != this->S->end());
       aux_mat = U_S_epsilon->select(1, i, aux_mat);
-      aux_mat->scal( 1/sqrtf( (*Sit) + epsilon ) );
+      matScal(aux_mat, 1/sqrtf( (*Sit) + epsilon ) );
     }
     delete aux_mat;
     //
@@ -120,7 +120,7 @@ namespace ANN {
   
   char *PCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     options.putBoolean("ascii", false);
     stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());

@@ -21,11 +21,10 @@
 #include "error_print.h"
 #include "matrix_input_switch_component.h"  
 #include "unused_variable.h"
-#include "wrapper.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
 
@@ -251,7 +250,7 @@ namespace ANN {
     else privateSparseReset(it);
   }
 
-  void MatrixInputSwitchANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  void MatrixInputSwitchANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     if (!is_sparse_input) privateDenseComputeGradients(grads_mat);
     else privateSparseComputeGradients(grads_mat);
   }

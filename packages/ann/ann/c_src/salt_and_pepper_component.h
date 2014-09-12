@@ -34,26 +34,26 @@ namespace ANN {
   class SaltAndPepperANNComponent : public StochasticANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(SaltAndPepperANNComponent);
     
-    basics::TokenMatrixFloat *input, *output;
-    basics::Token            *error_input, *error_output;
+    Basics::TokenMatrixFloat *input, *output;
+    Basics::Token            *error_input, *error_output;
     float            zero, one;
     float            prob;
     
   public:
-    SaltAndPepperANNComponent(basics::MTRand *random, float zero,
+    SaltAndPepperANNComponent(Basics::MTRand *random, float zero,
                               float one, float prob,
 			      const char *name=0,
 			      unsigned int size=0);
     virtual ~SaltAndPepperANNComponent();
     
-    virtual basics::Token *getInput() { return input; }
-    virtual basics::Token *getOutput() { return output; }
-    virtual basics::Token *getErrorInput() { return error_input; }
-    virtual basics::Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
     
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -61,8 +61,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

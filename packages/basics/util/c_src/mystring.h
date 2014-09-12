@@ -5,10 +5,12 @@
 #include "vector.h"
 #include "aux_hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
-  size_t strnspn(const char *buffer, const char *accept, size_t length);
-  size_t strncspn(const char *buffer, const char *reject, size_t length);
+  size_t strnspn(const char *buffer, size_t buffer_length,
+                 const char *accept, size_t accept_length);
+  size_t strncspn(const char *buffer, size_t buffer_length,
+                  const char *reject, size_t reject_length);
   const char *strnchr(const char *buffer, int c, size_t length);
   const char *strncchr(const char *buffer, int c, size_t length);
   int strcmpi(const char *a, const char *b);

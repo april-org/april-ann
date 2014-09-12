@@ -772,3 +772,14 @@ function pearson_methods:compute()
   local rxy = ( self.xy_sum - N*mu_x*mu_y ) / ( (N-1)*math.sqrt(s_x*s_y) )
   return rxy
 end
+
+-------------------------------------------------------------------------------
+
+stats.dist.bernoulli = function(p)
+  if class.is_a(p, matrix) then
+    return stats.dist.binomial(matrix.col_major(1,{1}),p)
+  else
+    return stats.dist.binomial(1,p)
+  end
+end
+

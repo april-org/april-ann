@@ -28,7 +28,7 @@
 #ifndef LEAST_SQUARES_H
 #define LEAST_SQUARES_H
 
-namespace april_utils {
+namespace AprilUtils {
   void least_squares(double x[], double y[], int numPoints, double &a, double &b);
 }
 

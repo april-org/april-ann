@@ -31,6 +31,33 @@ function AD.ann.logistic(a)
 			dest:write_expr_assign(self.var_name,
 					       table.concat(tbl, ""))
 		      end)
+  return s
+end
+
+function AD.ann.tanh(a)
+  local a = AD.coercion(a)
+  local s = AD.gen_op('tanh', AD.dtypes.MATRIX, {a},
+		      function(self, ...)
+			local a = self.args[1]:eval(...)
+			return a:clone():scal(-1):exp():scalar_add(1.0):div(1.0):
+                          scal(2.0):scalar_add(-1.0)
+		      end,
+		      function(self, seed, result)
+			local a     = self.args[1]
+			local dself = 0.5 * (1.0 - AD.op.pow(self,2))
+			a:diff(AD.op.cmul(seed, dself), result)
+			return result
+		      end,
+		      function(self, dest)
+			local a = self.args[1]
+			local tbl = { a.var_name, ":clone()", ":scal(-1)",
+				      ":exp()", ":scalar_add(1.0)",
+				      ":div(1.0):",
+                                      "scal(2.0):",
+                                      "scalar_add(-1.0)", }
+			dest:write_expr_assign(self.var_name,
+					       table.concat(tbl, ""))
+		      end)
   return s  
 end
 

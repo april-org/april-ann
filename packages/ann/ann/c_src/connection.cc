@@ -26,12 +26,11 @@
 #include "c_string.h"
 #include "swap.h"
 #include "utilMatrixFloat.h"
-#include "wrapper.h"
 
 using namespace AprilIO;
-using namespace april_math;
-using namespace april_utils;
-using namespace basics;
+using namespace AprilMath;
+using namespace AprilUtils;
+using namespace Basics;
 
 #define MAX_ITERATIONS_RANDOMIZE_LOOP 1000
 // generates a random weight, checking number of iterations and weightnearzero
@@ -171,7 +170,7 @@ namespace ANN {
   char *Connections::toLuaString(MatrixFloat *weights) {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->put("matrix.fromString[[");
-    april_utils::HashTableOptions options;
+    AprilUtils::HashTableOptions options;
     weights->write( stream.get(), options.putBoolean("ascii", false) );
     stream->put("]]\0", 3); // forces a \0 at the end of the buffer
     return stream->releaseString();

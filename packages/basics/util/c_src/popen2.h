@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-namespace april_utils { 
+namespace AprilUtils { 
   pid_t popen2(const char *command, int *infp, int *outfp);
 }
 

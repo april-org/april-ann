@@ -27,7 +27,7 @@
 #include "hash_table.h"
 #include "aux_hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // OJO! esta tabla empieza en 1. el 0 esta reservado
   struct LexClass : public Referenced {

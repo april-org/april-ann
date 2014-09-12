@@ -846,11 +846,13 @@ train_wo_validation_methods.save =
       },
     }
   } ..
-  train_holdout_methods.save
+  function(...)
+    return train_holdout_methods.save(...)
+  end
 
 trainable.train_wo_validation.load = 
   april_doc{
-    class = "method",
+    class = "function",
     summary = "Loads the training from a filename",
     params={
       "The filename",
@@ -860,7 +862,9 @@ trainable.train_wo_validation.load =
       "A table with extra saved data or nil if not given when saving",
     },
   } ..
-  trainable.train_holdout_validation.load
+  function(...)
+    return trainable.train_holdout_validation.load(...)
+  end
 
 -------------------------------------------------------------------------------
 

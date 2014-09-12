@@ -26,10 +26,10 @@
 #include "constString.h"
 #include "utilMatrixFloat.h"
 
-using april_utils::clamp;
-using april_utils::constString;
+using AprilUtils::clamp;
+using AprilUtils::constString;
 
-namespace basics {
+namespace Basics {
   
   inline int hexdigit(char c) {
     if ('0'<=c && c<='9') return c-'0';
@@ -215,4 +215,4 @@ namespace basics {
     return sizedata2+(r-b);
   }
   
-} // namespace basics
+} // namespace Basics

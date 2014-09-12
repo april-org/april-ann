@@ -29,13 +29,13 @@ namespace ANN {
   class MSELossFunction : public LossFunction {
     MSELossFunction(MSELossFunction *other) : LossFunction(other) { }
   protected:
-    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
-                                                  basics::Token *target);
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
   public:
     MSELossFunction(unsigned int size);
     virtual ~MSELossFunction();
-    virtual basics::Token *computeGradient(basics::Token *input,
-                                           basics::Token *target);
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
     virtual LossFunction *clone() {
       return new MSELossFunction(this);
     }

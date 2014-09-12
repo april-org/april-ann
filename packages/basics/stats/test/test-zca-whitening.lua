@@ -19,7 +19,6 @@ local aU,aS,aVT = stats.pca(aux)
 T("PCAThresholdTest",
   function()
     local takeN,eigen_value,prob_mass=stats.pca_threshold(aS, 0.99)
-    -- print(takeN, eigen_value, prob_mass)
     check.eq(takeN, 192)
     check.lt(math.abs(eigen_value-0.01752162), 1e-03)
     check.lt(math.abs(prob_mass-0.9897367), 1e-03)

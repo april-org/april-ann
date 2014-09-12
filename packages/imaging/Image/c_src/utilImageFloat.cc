@@ -20,12 +20,12 @@
  */
 #include "utilImageFloat.h"
 
-namespace imaging {
+namespace Imaging {
 
   ImageFloat *RGB_to_grayscale(ImageFloatRGB *src)
   {
     int dims[2]={src->height(), src->width()};
-    basics::MatrixFloat *m = new basics::MatrixFloat(2, dims);
+    Basics::MatrixFloat *m = new Basics::MatrixFloat(2, dims);
     ImageFloat *result = new ImageFloat(m);
 
     for (int y=0; y < src->height(); y++) {
@@ -41,7 +41,7 @@ namespace imaging {
   ImageFloatRGB *grayscale_to_RGB(ImageFloat *src)
   {
     int dims[2]={src->height(), src->width()};
-    basics::Matrix<FloatRGB> *m = new basics::Matrix<FloatRGB>(2, dims);
+    Basics::Matrix<FloatRGB> *m = new Basics::Matrix<FloatRGB>(2, dims);
     ImageFloatRGB *result = new ImageFloatRGB(m);
 
     for (int y=0; y < src->height(); y++) {
@@ -64,4 +64,4 @@ namespace imaging {
     return 0;
   }
 
-} // namespace imaging
+} // namespace Imaging

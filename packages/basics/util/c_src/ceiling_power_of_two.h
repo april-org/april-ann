@@ -22,7 +22,7 @@
 #ifndef CEILING_POWER_OF_TWO_H
 #define CEILING_POWER_OF_TWO_H
 
-namespace april_utils {
+namespace AprilUtils {
   
   // Returns the highest and closest power of two of a value
   unsigned int ceilingPowerOfTwo(unsigned int value);

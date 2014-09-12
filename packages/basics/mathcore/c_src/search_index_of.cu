@@ -19,14 +19,13 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
-#include "wrapper.h"
 #include "binary_search.h"
-#include "cuda_utils.h"
+#include "mathcore.h"
+#include "unused_variable.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
-namespace april_math {
+namespace AprilMath {
 
   /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
   /// in case it isn't there
@@ -142,4 +141,4 @@ namespace april_math {
 #endif
   }
 
-} // namespace april_math
+} // namespace AprilMath

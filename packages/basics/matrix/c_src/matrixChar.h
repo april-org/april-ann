@@ -21,9 +21,8 @@
 #ifndef MATRIX_CHAR_H
 #define MATRIX_CHAR_H
 #include "matrix.h"
-#include "matrix_not_implemented.h"
 
-namespace basics {
+namespace Basics {
 
 
   namespace MatrixIO {
@@ -31,11 +30,11 @@ namespace basics {
     /* Especialization of MatrixChar ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<char>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<char>::operator()(AprilUtils::constString &line,
                                           char &destination);
   
     template<>
-    bool BinaryExtractor<char>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<char>::operator()(AprilUtils::constString &line,
                                            char &destination);
   
     template<>
@@ -55,19 +54,12 @@ namespace basics {
   } // namespace MatrixIO
 
   template<>
-  char Matrix<char>::getTemplateOption(const april_utils::GenericOptions *options,
+  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                        const char *name, char default_value);
   
-  /////////////////////////////////////////////////////////////////////////////
-  NOT_IMPLEMENT_AXPY_HEADER(char)
-  NOT_IMPLEMENT_GEMM_HEADER(char)
-  NOT_IMPLEMENT_GEMV_HEEADER(char)
-  NOT_IMPLEMENT_GER_HEADER(char)
-  NOT_IMPLEMENT_DOT_HEADER(char)
-
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<char> MatrixChar;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_CHAR_H

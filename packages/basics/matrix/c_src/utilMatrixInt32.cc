@@ -20,7 +20,7 @@
  */
 #include "utilMatrixInt32.h"
 
-namespace basics {
+namespace Basics {
 
   MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
                                                    bool col_major) {
@@ -43,4 +43,4 @@ namespace basics {
     return new_mat;
   }
 
-} // namespace basics
+} // namespace Basics

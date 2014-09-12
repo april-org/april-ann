@@ -28,7 +28,7 @@
 /// Table which contains the Lua function references
 #define TABLE_NAME "__signal__"
 
-namespace april_utils {
+namespace AprilUtils {
   /// The mapping between signals and Lua function references
   int SignalHandler::signal_handlers[MAX_SIGNALS];
   lua_State *SignalHandler::globalL = 0;

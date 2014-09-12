@@ -21,7 +21,7 @@
 #ifndef STRINGQUEUE_H
 #define STRINGQUEUE_H
 
-namespace april_utils {
+namespace AprilUtils {
 
   class StringQueue {
     struct Node {
@@ -75,7 +75,7 @@ namespace april_utils {
 
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // STRINGQUEUE_H
 

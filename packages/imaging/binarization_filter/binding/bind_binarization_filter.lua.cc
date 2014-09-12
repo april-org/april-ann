@@ -27,7 +27,7 @@
 #include "bind_image.h"
 #include "binarization.h"
 #include "utilMatrixFloat.h"
-using namespace imaging;
+using namespace Imaging;
 //BIND_END
 
 //BIND_LUACLASSNAME ImageFloat Image

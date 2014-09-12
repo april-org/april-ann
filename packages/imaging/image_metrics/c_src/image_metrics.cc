@@ -24,7 +24,7 @@
 #include "image_metrics.h"
 #include <cmath>
 
-namespace imaging {
+namespace Imaging {
 
   void ImageMetrics::processSample(float pred, float ref){
 
@@ -123,8 +123,8 @@ namespace imaging {
   }
 
 
-  void ImageMetrics::processDataset(basics::DataSetFloat *ds,
-                                    basics::DataSetFloat *GT,
+  void ImageMetrics::processDataset(Basics::DataSetFloat *ds,
+                                    Basics::DataSetFloat *GT,
                                     bool binary, float threshold)
   {
     // Error control
@@ -189,4 +189,4 @@ namespace imaging {
                             SSE, n_samples);
   }
 
-} // namespace imaging
+} // namespace Imaging

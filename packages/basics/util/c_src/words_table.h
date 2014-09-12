@@ -25,9 +25,9 @@
 #include "referenced.h"
 #include "vector.h"
 
-using april_utils::vector;
+using AprilUtils::vector;
 
-namespace april_utils {
+namespace AprilUtils {
   class WordsTable : public Referenced {
     vector<unsigned int> table_first_index;
     vector<unsigned int> words;

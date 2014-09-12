@@ -22,7 +22,7 @@
 #include "error_print.h"
 #include "fmeasure.h"
 
-namespace basics {
+namespace Basics {
 
   float Fmeasure(DataSetFloat *ds, DataSetFloat *GT,
                  float &PR,
@@ -80,4 +80,4 @@ namespace basics {
     return FM;
   }
 
-} // namespace basics
+} // namespace Basics

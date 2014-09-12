@@ -1,7 +1,7 @@
 #include "vector.h"
 #include <iostream>
 
-using namespace april_utils;
+using namespace AprilUtils;
 using std::cout;
 using std::endl;
 

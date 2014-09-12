@@ -22,7 +22,7 @@
 
 //BIND_HEADER_C
 #include "bind_dataset.h"
-using namespace basics;
+using namespace Basics;
 //BIND_END
 
 //BIND_HEADER_H
@@ -30,7 +30,7 @@ using namespace basics;
 #include <stdio.h>
 #include "image_metrics.h"
 
-using namespace imaging;
+using namespace Imaging;
 //BIND_END
 
 

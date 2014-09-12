@@ -23,7 +23,7 @@
 
 #include "matrixFloat.h"
 
-namespace basics {
+namespace Basics {
   class AffineTransform2D: public MatrixFloat
   {
   public:
@@ -43,7 +43,7 @@ namespace basics {
     static const int dimensions[2];
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif
 

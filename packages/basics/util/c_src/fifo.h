@@ -21,7 +21,7 @@
 #ifndef FIFO_H
 #define FIFO_H
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename S>
     struct fifo_node {

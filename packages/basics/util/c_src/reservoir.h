@@ -40,7 +40,7 @@
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   template <typename T>
   struct ReservoirPool {
@@ -167,6 +167,6 @@ namespace april_utils {
     }
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // RESERVOIR_H

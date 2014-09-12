@@ -20,21 +20,21 @@
  */
 #include "matrixDouble.h"
 
-namespace basics {
+namespace Basics {
 
   namespace MatrixIO {
 
     /////////////////////////////////////////////////////////////////////////
   
     template<>
-    bool AsciiExtractor<double>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<double>::operator()(AprilUtils::constString &line,
                                             double &destination) {
       if (!line.extract_double(&destination)) return false;
       return true;
     }
   
     template<>
-    bool BinaryExtractor<double>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<double>::operator()(AprilUtils::constString &line,
                                              double &destination) {
       if (!line.extract_double_binary(&destination)) return false;
       return true;
@@ -47,7 +47,7 @@ namespace basics {
 
     template<>
     int BinarySizer<double>::operator()(const Matrix<double> *mat) {
-      return april_utils::binarizer::buffer_size_64(mat->size());
+      return AprilUtils::binarizer::buffer_size_64(mat->size());
     }
 
     template<>
@@ -60,7 +60,7 @@ namespace basics {
     void BinaryCoder<double>::operator()(const double &value,
                                          AprilIO::StreamInterface *stream) {
       char b[10];
-      april_utils::binarizer::code_double(value, b);
+      AprilUtils::binarizer::code_double(value, b);
       stream->put(b, sizeof(char)*10);
     }
 
@@ -70,23 +70,9 @@ namespace basics {
   
   template<>
   double Matrix<double>::
-  getTemplateOption(const april_utils::GenericOptions *options,
+  getTemplateOption(const AprilUtils::GenericOptions *options,
                     const char *name, double default_value) {
     return options->getOptionalDouble(name, default_value);
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  
-  /************* ZEROS FUNCTION **************/
-  template<>
-  void Matrix<double>::zeros() {
-    fill(0.0);
-  }
-
-  /************* ONES FUNCTION **************/
-  template<>
-  void Matrix<double>::ones() {
-    fill(1.0);
   }
 
   /////////////////////////////////////////////////////////////////////////

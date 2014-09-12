@@ -19,12 +19,12 @@
  *
  */
 #include "token_matrix.h"
-#include "zero_one_loss_function.h"
-#include "wrapper.h"
 #include "unused_variable.h"
+#include "zero_one_loss_function.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -43,6 +43,12 @@ namespace ANN {
     int N = input_mat->getDimSize(1);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+    const float *aux = input_mat->getRawDataAccess()->getPPALForRead();
+    aux = target_mat->getRawDataAccess()->getPPALForRead();
+    UNUSED_VARIABLE(aux);
+#endif
     MatrixFloat::iterator loss_output_it(loss_output->begin());
     // Two major cases:
     //    1) A two-class problem.
@@ -91,8 +97,8 @@ namespace ANN {
 	  int input_argmax, input_argmax_rawpos;
 	  float target_max;
 	  int target_argmax, target_argmax_rawpos;
-	  input_max  = input_sw_mat->max(input_argmax, input_argmax_rawpos);
-	  target_max = target_sw_mat->max(target_argmax, target_argmax_rawpos);
+	  input_max  = matMax(input_sw_mat, input_argmax, input_argmax_rawpos);
+	  target_max = matMax(target_sw_mat, target_argmax, target_argmax_rawpos);
 	  if (input_argmax != target_argmax) *loss_output_it = 1.0f;
 	  else *loss_output_it = 0.0f;
 	}
@@ -108,7 +114,7 @@ namespace ANN {
 	  input_sw_mat  = input_sw.getMatrix(input_sw_mat);
 	  float input_max;
 	  int input_argmax, input_argmax_rawpos;
-	  input_max = input_sw_mat->max(input_argmax, input_argmax_rawpos);
+	  input_max = matMax(input_sw_mat, input_argmax, input_argmax_rawpos);
 	  if (input_argmax != *target_it - 1) *loss_output_it = 1.0f;
 	  else *loss_output_it = 0.0f;
 	}

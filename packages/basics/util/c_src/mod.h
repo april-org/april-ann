@@ -21,7 +21,7 @@
 #ifndef MOD_H
 #define MOD_H
 
-namespace april_utils {
+namespace AprilUtils {
   inline int mod(int x, int y) {
     int z = x % y;
     return (z>=0) ? z : y+z;

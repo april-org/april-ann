@@ -3,7 +3,7 @@
 
 using std::cout;
 using std::endl;
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace smart_ptr_test {
 

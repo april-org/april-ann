@@ -2,14 +2,14 @@
 #include "gtest.h"
 #include "hash_table.h"
 #include "null_types.h"
-using namespace april_utils;
+using namespace AprilUtils;
 
 #include <iostream>
 #include <algorithm>
 using std::cout;
 using std::endl;
 
-typedef april_utils::hash<const char *,NullType> hash_test;
+typedef AprilUtils::hash<const char *,NullType> hash_test;
 
 #define hola "hola"
 #define adios "adios"

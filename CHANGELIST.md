@@ -6,9 +6,23 @@ Master branch release
 
 ### Unstable changes
 
-- Added `Matrix<T>::convolution` method and `matrix:convolution` lua
-  method. They are in experimental stage, please, be advice to use them by your
-  own risk.
+### API Changes
+
+### Bugs removed
+
+### C/C++
+
+### Other
+
+v0.4.0
+------
+
+### Unstable changes
+
+- Added statistical distributions in `stats.dist`.
+- Added `matrix.ext.convolution` and `matrix.ext.real_fftwh`.
+- Added `Matrix<T>::convolution` method. It is in experimental stage, please,
+  be advice to use them by your own risk.
 - Because of the changes in `Image`, several classes in package `imaging` has
   been reviewed, consistent tests are necessary to merge with master branch.
 
@@ -20,11 +34,15 @@ Master branch release
 - New `april_doc` and `april_set_doc` API, works with values instead of strings.
 - Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
   iterators.
+- `matrix.dict` could store sparse and dense float matrices.
+- Added `matrix.cholesky(...)` method.
 
 ### Bugs removed
 
+- CUDA is working, time performance of convolutions needs a review.
 - Solved bug in `constString` extract numeric methods which returns `false` when
   the extraction procedure ends up to the character after the last valid number.
+- Solved bug at `Matrix<T>::div` and `SparseMatrix<T>::div` methods.
 
 ### C/C++
 
@@ -36,6 +54,9 @@ Master branch release
 - Added new `StreamInterface` for input/output operations, with specializations
   for C files, C strings, Lua strings, GZIP files, ZIP files. Other
   specializations are easier to implement in the future.
+- Added statistical distribution classes.
+- Removed C stack trace in ERROR_PRINT and ERROR_EXIT when compiling without
+  debug.
 - `Image` class code has been reviewed to be more coherent with current `Matrix`
   class implementation.
 

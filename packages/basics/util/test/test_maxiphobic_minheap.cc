@@ -7,7 +7,7 @@
 using std::rand;
 using std::srand;
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define NUM_QUEUES 100000
 #define NUM_ELEMENTS 10000000

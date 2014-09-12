@@ -26,32 +26,32 @@
 #include "token_base.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   class TokenMemoryBlock : public Token {
     APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMemoryBlock);
-    april_math::FloatGPUMirroredMemoryBlock *mem_block;
+    AprilMath::FloatGPUMirroredMemoryBlock *mem_block;
     unsigned int used_size;
   public:
     TokenMemoryBlock();
     TokenMemoryBlock(unsigned int size);
     ~TokenMemoryBlock();
     void setData(float *data, unsigned int size);
-    april_math::FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
+    AprilMath::FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
     unsigned int getUsedSize() const { return used_size; }
     unsigned int getMaxSize() const { return mem_block?mem_block->getSize():0; }
     void resize(unsigned int size);
     Token *clone() const;
-    april_utils::buffer_list* toString();
-    april_utils::buffer_list* debugString(const char *prefix, int debugLevel);
+    AprilUtils::buffer_list* toString();
+    AprilUtils::buffer_list* debugString(const char *prefix, int debugLevel);
     TokenCode getTokenCode() const;
-    static Token *fromString(april_utils::constString &cs) {
+    static Token *fromString(AprilUtils::constString &cs) {
       // NOT IMPLEMENTED
       UNUSED_VARIABLE(cs);
       return 0;
     }
     void clear() { used_size = 0; }
-    bool getCudaFlag() { return mem_block->getCudaFlag(); }
+    bool getInCudag() { return mem_block->getInCuda(); }
     void printDebug() {
       const float *data = mem_block->getPPALForRead();
       for (unsigned int i=0; i<used_size; ++i)
@@ -61,6 +61,6 @@ namespace basics {
     void setToZero(bool use_cuda);
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TOKEN_MEMORY_BLOCK_H

@@ -1,3 +1,7 @@
+-- forces the use of CUDA
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
+
 local check = utest.check
 local T = utest.test
 local w = matrix.col_major(4,3):uniformf(0,1,random(1234))
@@ -15,22 +19,24 @@ T("SparseDotProductTest",
         {w:transpose():clone(),true}
     }) do
       local w,transpose = table.unpack(aux)
-      local c = ann.components.dot_product{
-        input = 3,
-        output = 4,
-        weights = "w",
-        transpose = transpose,
-      }:build{ weights=matrix.dict{ w=w } }
-      --
-      local output = c:forward(input):get_matrix()
-      c:backprop(e)
-      local grads1 = c:compute_gradients()
-      --
-      local sparse_output = c:forward(sparse_input):get_matrix()
-      c:backprop(e)
-      local grads2 = c:compute_gradients()
-      --
-      check.eq(output,sparse_output)
-      check.eq(grads1("w"),grads2("w"))
+      if not util.is_cuda_available() or transpose then
+        local c = ann.components.dot_product{
+          input = 3,
+          output = 4,
+          weights = "w",
+          transpose = transpose,
+        }:build{ weights=matrix.dict{ w=w } }
+        --
+        local output = c:forward(input):get_matrix()
+        c:backprop(e)
+        local grads1 = c:compute_gradients()
+        --
+        local sparse_output = c:forward(sparse_input):get_matrix()
+        c:backprop(e)
+        local grads2 = c:compute_gradients()
+        --
+        check.eq(output,sparse_output)
+        check.eq(grads1("w"),grads2("w"))
+      end
     end
 end)

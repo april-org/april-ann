@@ -28,13 +28,13 @@
 //#include <iterator>
 #include "vector.h"
 
-/** \namespace april_utils 
+/** \namespace AprilUtils 
 
     esto es una prueba
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   // HashFcn es del tipo:
   // struct hash_fcn {
@@ -557,6 +557,6 @@ namespace april_utils {
     
   }
   
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // HASH_TABLE_H

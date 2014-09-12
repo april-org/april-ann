@@ -29,6 +29,11 @@ package{ name = "tokens",
        dest_dir = "build",
        --       flags = "-std=c99",
      },
+     object{ 
+       file = "c_src/*.cu",
+       dest_dir = "build",
+       --       flags = "-std=c99",
+     },
      luac{
        orig_dir = "lua_src",
        dest_dir = "build",

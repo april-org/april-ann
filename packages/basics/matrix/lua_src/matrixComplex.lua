@@ -19,7 +19,7 @@ matrixComplex.meta_instance.__eq = function(op1, op2)
 end
 
 matrixComplex.meta_instance.__add = function(op1, op2)
-  if not isa(op1,matrixComplex) then op1,op2=op2,op1 end
+  if not class.is_a(op1,matrixComplex) then op1,op2=op2,op1 end
   if type(op2) == "number" then
     return op1:clone():scalar_add(op2)
   else
@@ -28,17 +28,17 @@ matrixComplex.meta_instance.__add = function(op1, op2)
 end
 
 matrixComplex.meta_instance.__sub = function(op1, op2)
-  if not isa(op1,matrixComplex) then op1,op2=op2,op1 end
+  if not class.is_a(op1,matrixComplex) then op1,op2=op2,op1 end
   return op1:sub(op2)
 end
 
 matrixComplex.meta_instance.__mul = function(op1, op2)
-  if not isa(op1,matrixComplex) then op1,op2=op2,op1 end
+  if not class.is_a(op1,matrixComplex) then op1,op2=op2,op1 end
   if type(op2) == "number" then
     return op1:clone():scal(complex(op2,0))
   elseif type(op2) == "string" then
     return op1:clone():scal(complex(op2))
-  elseif isa(op2,complex) then
+  elseif class.is_a(op2,complex) then
     return op1:clone():scal(op2)
   else return op1:mul(op2)
   end

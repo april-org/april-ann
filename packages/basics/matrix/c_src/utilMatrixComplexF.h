@@ -25,7 +25,7 @@
 #include "matrixComplexF.h"
 #include "matrixFloat.h"
 
-namespace basics {
+namespace Basics {
 
   MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
   void applyConjugateInPlace(MatrixComplexF *mat);
@@ -34,6 +34,6 @@ namespace basics {
   MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
   MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
   
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILMATRIXCOMPLEXF_H

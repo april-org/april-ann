@@ -25,7 +25,7 @@ extern "C" {
 #include <stdint.h>
 }
 
-namespace april_utils {
+namespace AprilUtils {
 
   // glibc defines these ones in string.h 
   // they're gone in C99, but stay in C++ :_(
@@ -110,6 +110,6 @@ namespace april_utils {
   
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // BINARIZER_H

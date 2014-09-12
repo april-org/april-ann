@@ -24,7 +24,7 @@
 #include "sparse_matrix.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   /***** ITERATORS *****/
 
@@ -233,6 +233,6 @@ namespace basics {
     }
   }
 
-} // namespace basics
+} // namespace Basics
 
 #endif // SPARSE_MATRIX_ITERATORS_IMPL_H

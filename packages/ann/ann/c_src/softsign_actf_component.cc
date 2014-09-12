@@ -18,14 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
+#include "activation_function_kernels.h"
 #include "cblas_headers.h"
 #include "softsign_actf_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -33,30 +34,18 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   SoftsignActfANNComponent::~SoftsignActfANNComponent() { }
 
-  void SoftsignActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-						 FloatGPUMirroredMemoryBlock *output_units,
-						 unsigned int size,
-						 unsigned int bunch_size) {
-    doApplySoftsignActivation(input_units,
-			      output_units,
-			      size,
-			      bunch_size,
-			      use_cuda);
+  void SoftsignActfANNComponent::applyActivation(MatrixFloat *input_units,
+						 MatrixFloat *output_units) {
+    Kernels::applySoftsign(output_units, input_units);
   }
 
-  void SoftsignActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						     FloatGPUMirroredMemoryBlock *output_units,
-						     FloatGPUMirroredMemoryBlock *input_errors,
-						     FloatGPUMirroredMemoryBlock *output_errors,
-						     unsigned int size,
-						     unsigned int bunch_size) {
+  void SoftsignActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+						     MatrixFloat *output_units,
+						     MatrixFloat *input_errors,
+						     MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-    doMultiplySoftsignDerivatives(output_units,
-				  input_errors,
-				  output_errors,
-				  size,
-				  bunch_size,
-				  use_cuda);
+    Kernels::applySoftsign(output_errors, output_units);
+    matCmul(output_errors, input_errors);
   }
 
   ANNComponent *SoftsignActfANNComponent::clone() {

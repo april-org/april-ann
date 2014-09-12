@@ -35,7 +35,7 @@ namespace ANN {
     APRIL_DISALLOW_COPY_AND_ASSIGN(StackANNComponent);
     
     /// Vector with the stack
-    april_utils::vector<ANNComponent*> components;
+    AprilUtils::vector<ANNComponent*> components;
 
   public:
     StackANNComponent(const char *name=0);
@@ -52,9 +52,9 @@ namespace ANN {
     /// Returns the component at the given index
     const ANNComponent *getComponentAt(unsigned int i) const { return components[i]; }
 
-    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
-				      april_utils::vector<unsigned int> &output_size) {
-      april_utils::vector<unsigned int> aux(input_size);
+    virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
+				      AprilUtils::vector<unsigned int> &output_size) {
+      AprilUtils::vector<unsigned int> aux(input_size);
       if (getOutputSize()>0) output_size.push_back(getOutputSize());
       else {
 	for (unsigned int i=0; i<components.size(); ++i) {
@@ -65,14 +65,14 @@ namespace ANN {
       }
     }
 
-    virtual basics::Token *getInput();
-    virtual basics::Token *getOutput();
-    virtual basics::Token *getErrorInput();
-    virtual basics::Token *getErrorOutput();
+    virtual Basics::Token *getInput();
+    virtual Basics::Token *getOutput();
+    virtual Basics::Token *getErrorInput();
+    virtual Basics::Token *getErrorOutput();
     
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
 
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -82,15 +82,15 @@ namespace ANN {
     
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
+    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
 
-    virtual void copyComponents(april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual ANNComponent *getComponent(april_utils::string &name);
-    virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict);
+    virtual ANNComponent *getComponent(AprilUtils::string &name);
+    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i) {

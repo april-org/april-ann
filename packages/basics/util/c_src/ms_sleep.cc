@@ -20,7 +20,7 @@
  */
 #include "ms_sleep.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   void msleep(unsigned long milisec) {
     struct timespec req={0,0};

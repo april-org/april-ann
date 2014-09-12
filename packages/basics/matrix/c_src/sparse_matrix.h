@@ -29,6 +29,7 @@
 #include "cblas_headers.h"
 #include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
+#include "mathcore.h"
 #include "matrix.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
@@ -36,9 +37,8 @@
 #include "serializable.h"
 #include "swap.h"
 #include "unused_variable.h"
-#include "wrapper.h"
 
-namespace basics {
+namespace Basics {
 
   // CSC or CSR format explained at MKL "Sparse Matrix Storage Formats":
   // http://software.intel.com/sites/products/documentation/hpc/mkl/mklman/GUID-9FCEB1C4-670D-4738-81D2-F378013412B0.htm
@@ -67,13 +67,13 @@ namespace basics {
     int total_size;
     // Pointers to data: values,indices,first_index
     /// non-zero values
-    april_utils::SharedPtr< april_math::GPUMirroredMemoryBlock<T> > values;
+    AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > values;
     /// indices for rows (CSC) or columns (CSR)
-    april_utils::SharedPtr< april_math::Int32GPUMirroredMemoryBlock > indices;
+    AprilUtils::SharedPtr< AprilMath::Int32GPUMirroredMemoryBlock > indices;
     /// size(values) + 1
-    april_utils::SharedPtr< april_math::Int32GPUMirroredMemoryBlock > first_index;
+    AprilUtils::SharedPtr< AprilMath::Int32GPUMirroredMemoryBlock > first_index;
     /// For mmapped matrices
-    april_utils::SharedPtr< april_utils::MMappedDataReader > mmapped_data;
+    AprilUtils::SharedPtr< AprilUtils::MMappedDataReader > mmapped_data;
     /// Format type (CSC or CSR)
     SPARSE_FORMAT sparse_format;
     /// For CUDA purposes
@@ -85,14 +85,15 @@ namespace basics {
       CBLAS_ORDER major_order = CblasRowMajor);
     */
   
-    /// Returns if the matrix is a vector
-    bool isVector() const { return ( (matrixSize[0]==1) ||
-                                     (matrixSize[1]==1) ); }
-    bool isColVector() const { return matrixSize[1]==1; }
     int searchIndexOf(const int c0, const int c1) const;
     int searchIndexOfFirst(const int c0, const int c1) const;
   
   public:
+
+    /// Returns if the matrix is a vector
+    bool isVector() const { return ( (matrixSize[0]==1) ||
+                                     (matrixSize[1]==1) ); }
+    bool isColVector() const { return matrixSize[1]==1; }
   
     /********* Iterators for Matrix traversal *********/
     // forward declaration
@@ -167,9 +168,9 @@ namespace basics {
   
     /// Constructor
     SparseMatrix(const int d0, const int d1,
-                 april_math::GPUMirroredMemoryBlock<T> *values,
-                 april_math::Int32GPUMirroredMemoryBlock *indices,
-                 april_math::Int32GPUMirroredMemoryBlock *first_index,
+                 AprilMath::GPUMirroredMemoryBlock<T> *values,
+                 AprilMath::Int32GPUMirroredMemoryBlock *indices,
+                 AprilMath::Int32GPUMirroredMemoryBlock *first_index,
                  const SPARSE_FORMAT sparse_format = CSR_FORMAT,
                  bool sort=false);
 
@@ -188,10 +189,10 @@ namespace basics {
     virtual ~SparseMatrix();
   
     /// Constructor from a MMAP file
-    static SparseMatrix<T> *fromMMappedDataReader(april_utils::MMappedDataReader
+    static SparseMatrix<T> *fromMMappedDataReader(AprilUtils::MMappedDataReader
                                                   *mmapped_data);
     /// Writes to a file
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) const;
 
     /* Getters and setters */
     int getNumDim() const { return numDim; }
@@ -215,9 +216,9 @@ namespace basics {
     // UPDATE GPU OR PPAL IF NEEDED
     void update() {
 #ifdef USE_CUDA
-      values->forceUpdate();
-      indices->forceUpdate();
-      first_index->forceUpdate();
+      values->forceUpdate(use_cuda);
+      indices->forceUpdate(use_cuda);
+      first_index->forceUpdate(use_cuda);
 #endif
     }
     void setUseCuda(bool v) {
@@ -300,13 +301,13 @@ namespace basics {
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
     /// you are losing sub-matrix abstraction, and the major order.
-    april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values.get(); }
-    april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices.get(); }
-    april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index.get(); }
+    AprilMath::GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values.get(); }
+    AprilMath::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices.get(); }
+    AprilMath::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index.get(); }
 
-    const april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values.get(); }
-    const april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices.get(); }
-    const april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index.get(); }
+    const AprilMath::GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values.get(); }
+    const AprilMath::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices.get(); }
+    const AprilMath::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index.get(); }
   
     /// Returns true if they have the same dimension
     template<typename O>
@@ -328,16 +329,13 @@ namespace basics {
       return true;
     }
   
-    void fill(T value);
-    void zeros();
-    void ones();
     static SparseMatrix<T> *diag(int N, T value=T(),
                                  SPARSE_FORMAT sparse_format = CSR_FORMAT) {
       unsigned int uN = static_cast<unsigned int>(N);
       SparseMatrix<T> *result;
-      april_math::GPUMirroredMemoryBlock<T> *values = new april_math::GPUMirroredMemoryBlock<T>(uN);
-      april_math::Int32GPUMirroredMemoryBlock *indices = new april_math::Int32GPUMirroredMemoryBlock(uN);
-      april_math::Int32GPUMirroredMemoryBlock *first_index = new april_math::Int32GPUMirroredMemoryBlock(uN+1);
+      AprilMath::GPUMirroredMemoryBlock<T> *values = new AprilMath::GPUMirroredMemoryBlock<T>(uN);
+      AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(uN);
+      AprilMath::Int32GPUMirroredMemoryBlock *first_index = new AprilMath::Int32GPUMirroredMemoryBlock(uN+1);
       T *values_ptr = values->getPPALForWrite();
       int *indices_ptr = indices->getPPALForWrite();
       int *first_index_ptr = first_index->getPPALForWrite();
@@ -360,9 +358,9 @@ namespace basics {
       int N = m->getDimSize(0);
       unsigned int uN = static_cast<unsigned int>(N);
       SparseMatrix<T> *result;
-      april_math::GPUMirroredMemoryBlock<T> *values = new april_math::GPUMirroredMemoryBlock<T>(uN);
-      april_math::Int32GPUMirroredMemoryBlock *indices = new april_math::Int32GPUMirroredMemoryBlock(uN);
-      april_math::Int32GPUMirroredMemoryBlock *first_index = new april_math::Int32GPUMirroredMemoryBlock(uN+1);
+      AprilMath::GPUMirroredMemoryBlock<T> *values = new AprilMath::GPUMirroredMemoryBlock<T>(uN);
+      AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(uN);
+      AprilMath::Int32GPUMirroredMemoryBlock *first_index = new AprilMath::Int32GPUMirroredMemoryBlock(uN+1);
       T *values_ptr = values->getPPALForWrite();
       int *indices_ptr = indices->getPPALForWrite();
       int *first_index_ptr = first_index->getPPALForWrite();
@@ -380,13 +378,13 @@ namespace basics {
       return result;
     }
 
-    static SparseMatrix<T> *diag(april_math::GPUMirroredMemoryBlock<T> *values,
+    static SparseMatrix<T> *diag(AprilMath::GPUMirroredMemoryBlock<T> *values,
                                  SPARSE_FORMAT sparse_format = CSR_FORMAT) {
       unsigned int uN = values->getSize();
       int N = static_cast<int>(uN);
       SparseMatrix<T> *result;
-      april_math::Int32GPUMirroredMemoryBlock *indices = new april_math::Int32GPUMirroredMemoryBlock(uN);
-      april_math::Int32GPUMirroredMemoryBlock *first_index = new april_math::Int32GPUMirroredMemoryBlock(uN+1);
+      AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(uN);
+      AprilMath::Int32GPUMirroredMemoryBlock *first_index = new AprilMath::Int32GPUMirroredMemoryBlock(uN+1);
       int *indices_ptr = indices->getPPALForWrite();
       int *first_index_ptr = first_index->getPPALForWrite();
       first_index_ptr[0] = 0;
@@ -399,47 +397,7 @@ namespace basics {
                                    sparse_format);
       return result;
     }
-
-    T sum() const;
-
-    // the argument indicates over which dimension the sum must be performed
-    Matrix<T>* sum(int dim, Matrix<T> *dest=0);
-
-    /**** COMPONENT WISE OPERATIONS ****/
-    bool equals(const SparseMatrix<T> *other, float epsilon) const;
-    void sqrt();
-    void pow(T value);
-    void tan();
-    void tanh();
-    void atan();
-    void atanh();
-    void sin();
-    void sinh();
-    void asin();
-    void asinh();
-    void abs();
-    void sign();
-  
-    /**** BLAS OPERATIONS ****/
-  
-    // SCOPY BLAS operation this = other
-    void copy(const SparseMatrix<T> *other);
-  
-    void scal(T value);
-
-    void div(T value);
-  
-    float norm2() const;
-    T min(int &c0, int &c1) const;
-    T max(int &c0, int &c1) const;
-    void minAndMax(T &min, T &max) const;
-  
-    // Min and max over given dimension, be careful, argmin and argmax matrices
-    // contains the min/max index at the given dimension, but starting in 1 (not
-    // in 0)
-    Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
-    Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
-  
+    
     /// This method converts the caller SparseMatrix in a vector, unrolling the
     /// dimensions in row-major order. If the SparseMatrix is in CSR format, the
     /// resulting vector is a row vector, otherwise, it is a column vector.
@@ -454,11 +412,11 @@ namespace basics {
      * The @c options dictionary can contain the following keys:
      *
      * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
-     *   has to be binary or not. It uses april_utils::binarizer for
+     *   has to be binary or not. It uses AprilUtils::binarizer for
      *   binarization purposes. By default it is true.
      */
     static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
-                                 const april_utils::GenericOptions *options);
+                                 const AprilUtils::GenericOptions *options);
 
     /**
      * @brief Reads the SparseMatrix from a stream.
@@ -466,11 +424,11 @@ namespace basics {
      * The @c options dictionary can contain the following keys:
      *
      * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
-     *   has to be binary or not. It uses april_utils::binarizer for
+     *   has to be binary or not. It uses AprilUtils::binarizer for
      *   binarization purposes. By default it is true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const april_utils::GenericOptions *options);
+                       const AprilUtils::GenericOptions *options);
 
     
   private:
@@ -479,7 +437,7 @@ namespace basics {
     void release_memory();
     void initialize(int d0, int d1);
 
-    static april_utils::constString readULine(AprilIO::StreamInterface *stream,
+    static AprilUtils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
       extractULineFromStream(stream, dest);
@@ -487,11 +445,13 @@ namespace basics {
     }
   };
 
-} // namespace basics
+} // namespace Basics
+
+// must be defined here
+#include "matrix_operations.h"
 
 #include "sparse_matrix.impl.h"
 #include "sparse_matrix-iterators.impl.h"
-#include "sparse_matrix-math.impl.h"
 #include "sparse_matrix-serialization.impl.h"
 
 #endif // SPARSE_MATRIX_H

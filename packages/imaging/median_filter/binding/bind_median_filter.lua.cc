@@ -26,7 +26,7 @@
   if (radio < 1) {
     LUABIND_ERROR("median filter, radio must be > 0");
   }
-  LUABIND_RETURN(ImageFloat, imaging::medianFilter(obj,radio));
+  LUABIND_RETURN(ImageFloat, Imaging::medianFilter(obj,radio));
 }
 //BIND_END
 

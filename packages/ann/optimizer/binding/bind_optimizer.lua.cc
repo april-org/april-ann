@@ -25,7 +25,7 @@
 //BIND_HEADER_H
 #include "util_rprop.h"
 #include "util_regularization.h"
-using namespace ANN::optimizer;
+using namespace ANN::Optimizer;
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////

@@ -21,16 +21,18 @@
  */
 //BIND_HEADER_C
 #include <cmath>
-#include "fmeasure.h"
+#include "bind_function_interface.h"
 #include "bind_mtrand.h"
-#include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
 #include "bind_tokens.h"
-#include "bind_function_interface.h"
+#include "fmeasure.h"
+#include "matrix_operations.h"
+#include "MersenneTwister.h"
 
-using april_utils::constString;
+using AprilUtils::constString;
+using namespace AprilMath::MatrixExt::Operations;
 
-namespace basics {
+namespace Basics {
 
   int dataset_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -70,7 +72,7 @@ namespace basics {
     return 2;
   }
 
-} // namespace basics
+} // namespace Basics
 
 bool lua_isAuxDataSetToken(lua_State *L, int n) {
   return lua_isDataSetFloat(L,n) || lua_isDataSetToken(L,n);
@@ -98,7 +100,7 @@ DataSetToken *lua_toAuxDataSetToken(lua_State *L, int n) {
 #include "MersenneTwister.h"
 #include "datasetToken.h"
 
-using namespace basics;
+using namespace Basics;
 //BIND_END
 
 //BIND_LUACLASSNAME LinearCombConfFloat dataset.linear_comb_conf
@@ -803,7 +805,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   float  *patt = new float[psize];
   int histogramlength = 1 << psize;
   MatrixFloat* mat = new MatrixFloat(1,&histogramlength);
-  mat->zeros();
+  matZeros(mat);
   for (int i=1; i < npatt; i++) {
     obj->getPattern(i,patt);
     int index = 0;
