@@ -373,8 +373,8 @@ namespace imaging {
   
     // int ntotal = src->height()*src->width();
 
-    for (int y = 1; y < src->height(); y++){
-      for (int x = 1; x < src->width(); x++){
+    for (int y = 0; y < src->height(); y++){
+      for (int x = 0; x < src->width(); x++){
         if ((*src)(x,y) < threshold) {
           (*result)(x,y) = 0;   
         }
