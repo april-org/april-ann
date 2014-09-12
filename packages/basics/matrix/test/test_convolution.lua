@@ -6,8 +6,9 @@ local aux = matrix(1,1,3,3):linear()
 --print(aux)
 local aux = matrix.join(1,aux,aux)
 local k = matrix(2,1,2,2):linear()
-local o = aux:convolution{ kernel=k, D=2 }
-local o2 = aux:clone("col_major"):convolution{ kernel=k:clone("col_major"), D=2 }
+local o = matrix.ext.convolution(aux, { kernel=k, D=2 })
+local o2 = matrix.ext.convolution(aux:clone("col_major"),
+				  { kernel=k:clone("col_major"), D=2 })
 
 --print(o)
 --print(o2)
@@ -26,9 +27,9 @@ T("MatrixConvolutionBasicTest",
     local m = matrix.join(1,m,m,m)
     local target_o = matrix.join(1, target_o, target_o, target_o)
     --
-    local o  = m:convolution{ kernel=k, D=2 }
-    local o2 = m:clone("col_major"):convolution{ kernel=k:clone("col_major"),
-                                                 D=2 }
+    local o  = matrix.ext.convolution(m, { kernel=k, D=2 })
+    local o2 = matrix.ext.convolution(m:clone("col_major"),
+				      { kernel=k:clone("col_major"), D=2 })
     --
     --print(o)
     check.eq(o,  target_o)
@@ -69,8 +70,8 @@ T("MatrixConvolutionMediumTest",
     local m2 = m:clone("col_major")
     local k2 = k:clone("col_major")
     -------------------------------------------------------------------------
-    local o = m:convolution{ kernel=k, D=2 }
-    local o2 = m2:convolution{ kernel=k2, D=2 }
+    local o = matrix.ext.convolution(m, { kernel=k, D=2 })
+    local o2 = matrix.ext.convolution(m2, { kernel=k2, D=2 })
     local c = ann.components.convolution{ kernel = { 3,3,3 }, n=2,
                                           weights = "w1" }
     c:build{ weights = matrix.dict{ w1 = k2:rewrap(2, k:size()/2) } }
@@ -94,7 +95,7 @@ if #arg > 0 then
         matrix():transpose():clone()
       local m = m:padding(0,0,8,8,8,8)
       local k = matrix(h,3,kx,ky):uniformf(-0.1,0.1,rnd)
-      local o = m:convolution{ kernel=k, D=2 }:squeeze()
+      local o = matrix.ext.convolution(m, { kernel=k, D=2 }):squeeze()
       local x,y = o:dim(2),o:dim(3)
       local o = o:rewrap(o:dim(1),x*y)
       local img = ann.connections.input_filters_image(o, {x,y})
