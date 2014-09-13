@@ -459,7 +459,7 @@ namespace Rates {
       rrate = rate_iap(counted);
     }
     else {
-      // TODO REPORT ERROR???
+      // TODO: REPORT ERROR???
       rrate = -1;
     }
     return rrate;

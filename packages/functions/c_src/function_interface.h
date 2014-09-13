@@ -27,6 +27,7 @@
 #include "referenced.h"
 #include "token_base.h"
 
+/// Generic functions that receive and produce Basics::Token pointers.
 namespace Functions {
   
   /// A virtual class that serves as high level interface.

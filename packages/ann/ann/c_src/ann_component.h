@@ -56,6 +56,9 @@ using AprilUtils::vector;
  */
 #define MAX_NAME_STR 256
 
+/**
+ * @brief All ANN components and other stuff is implemented here.
+ */
 namespace ANN {
   
   unsigned int mult(const int *v, int n);

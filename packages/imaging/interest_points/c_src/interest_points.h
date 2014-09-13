@@ -34,6 +34,17 @@
 
 using AprilUtils::vector;
 using AprilUtils::Point2D;
+
+/**
+ * @brief Functions and other utilities for InterestPoints approach.
+ * @note Published at:
+ * - S. España-Boquera, M.J. Castro-Bleda, J. Gorbe-Moya, F. Zamora-Martínez,
+ *   *Improving Offline Handwritten Text Recognition with Hybrid HMM/ANN
+ *   Models*, IEEE TPAMI 33(4), 767-769, 2011
+ * - J. Gorbe-Moya, S. España-Boquera, F. Zamora-Martínez, M.J. Castro-Bleda,
+ *   *Handwritten Text Normalization by using Local Extrema Classification*.
+ *   PRIS, 164-172, 2008.
+ */
 namespace InterestPoints
 {
   

@@ -28,6 +28,7 @@
 #include "vector.h"
 #include "geometry.h"
 
+/// Optical Character Recognition stuff.
 namespace OCR {
   namespace OffLineTextPreprocessing {
 

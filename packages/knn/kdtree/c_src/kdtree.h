@@ -32,6 +32,7 @@
 #include "qsort.h"
 #include "referenced.h"
 
+/// K-Nearest-Neighbors.
 namespace KNN {
 
   /// KDTree class for KNN search. It is not a complete KDTree, it isn't allow

@@ -42,7 +42,7 @@ namespace AprilUtils {
       return (Point2D(infinity, infinity));
     }
 
-    //FIXME: Infinite slope
+    // FIXME: Infinite slope
     float m1 = m;
     float m2 = out.m;
     float b1 = b;

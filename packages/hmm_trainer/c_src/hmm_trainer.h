@@ -25,6 +25,7 @@
 #include "matrixFloat.h"
 #include "logbase.h"
 
+/// Implementation of HMM trainer.
 namespace HMMs {
 
   struct hmm_trainer_cls_transition {

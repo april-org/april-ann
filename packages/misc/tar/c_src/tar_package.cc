@@ -143,7 +143,7 @@ namespace TAR {
   StreamInterface *TARPackage::openFile(const char *name, int flags) {
     april_assert(!tar_file.empty());
     size_t *index = name2index.find(name);
-    // TODO: make an error code
+    // TODO make an error code
     if (index == 0) return 0;
     return openFile(*index, flags);
   }

@@ -29,6 +29,7 @@
 #include "matrix.h"
 #include "referenced.h"
 
+/// Classes and utilities related with image processing.
 namespace Imaging {
 
   template <typename T>

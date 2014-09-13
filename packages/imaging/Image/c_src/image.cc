@@ -923,7 +923,7 @@ namespace Imaging {
  
     AprilMath::MatrixExt::Operations::matFill(mat, T(0.0));
 
-    //FIXME: This is not working correctly if ancho y alto are not multiples of 2
+    // FIXME: This is not working correctly if ancho y alto are not multiples of 2
     int miny = max(sy-alto/2,0);
     int maxy = min(sy+alto/2-1, this->height());
     int minx = max(sx-ancho/2,0);
