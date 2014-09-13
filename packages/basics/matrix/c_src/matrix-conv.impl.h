@@ -302,7 +302,6 @@ namespace AprilMath {
           source_pattern = unrolled_this->select(0, j, source_pattern.get());
           result_pattern = unrolled_result->select(0, j, result_pattern.get());
           matCopy(contiguous_source_pattern.get(), source_pattern.get());
-          matCopy(contiguous_result_pattern.get(), result_pattern.get());
           // compute convolution by using CBLAS GEMM
           matGemm(contiguous_result_pattern.get(),
                   CblasNoTrans, CblasTrans,
