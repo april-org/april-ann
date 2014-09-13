@@ -32,17 +32,17 @@ namespace AprilIO {
    * @note The string is ended with a '\0' in order to ensure safe operations.
    */
   class CStringStream : public StreamMemory {
-    april_utils::string data;
+    AprilUtils::string data;
     size_t in_pos, out_pos;
     
   public:
     CStringStream();
-    CStringStream(const april_utils::string &str);
+    CStringStream(const AprilUtils::string &str);
     CStringStream(const char *str, size_t size);
     virtual ~CStringStream();
     
-    april_utils::constString getConstString() const;
-    void swapString(april_utils::string &other);
+    AprilUtils::constString getConstString() const;
+    void swapString(AprilUtils::string &other);
     char *releaseString();
 
     virtual bool empty() const;

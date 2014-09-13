@@ -22,10 +22,10 @@
 #ifndef ACTFCOMPONENT_H
 #define ACTFCOMPONENT_H
 
-#include "token_matrix.h"
 #include "ann_component.h"
-#include "gpu_mirrored_memory_block.h"
 #include "MersenneTwister.h"
+#include "smart_ptr.h"
+#include "token_matrix.h"
 
 namespace ANN {
 
@@ -33,37 +33,38 @@ namespace ANN {
   /// the anncomponents must fulfill.
   class ActivationFunctionANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
-    basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
+    Basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
+    bool need_flatten;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_input_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_output_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_input_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_output_mat;
   protected:
-    virtual void applyActivation(april_math::FloatGPUMirroredMemoryBlock *input_units,
-				 april_math::FloatGPUMirroredMemoryBlock *output_units,
-				 unsigned int size,
-				 unsigned int bunch_size) = 0;
-    virtual void multiplyDerivatives(april_math::FloatGPUMirroredMemoryBlock *input_units,
-				     april_math::FloatGPUMirroredMemoryBlock *output_units,
-				     april_math::FloatGPUMirroredMemoryBlock *input_errors,
-				     april_math::FloatGPUMirroredMemoryBlock *output_errors,
-				     unsigned int size,
-				     unsigned int bunch_size) = 0;
+    virtual void applyActivation(Basics::MatrixFloat *input_units,
+				 Basics::MatrixFloat *output_units) = 0;
+    virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
+				     Basics::MatrixFloat *output_units,
+				     Basics::MatrixFloat *input_errors,
+				     Basics::MatrixFloat *output_errors) = 0;
   public:
-    ActivationFunctionANNComponent(const char *name=0);
+    ActivationFunctionANNComponent(const char *name=0, bool need_flatten=false);
     virtual ~ActivationFunctionANNComponent();
     
-    virtual basics::Token *getInput() { return input; }
-    virtual basics::Token *getOutput() { return output; }
-    virtual basics::Token *getErrorInput() { return error_input; }
-    virtual basics::Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
     
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
 
     virtual void reset(unsigned int it=0);
     
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
   };
 }

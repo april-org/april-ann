@@ -21,7 +21,7 @@
 #ifndef SWAP_H
 #define SWAP_H
 
-namespace april_utils {
+namespace AprilUtils {
   template<typename T>
   inline void swap(T & a, T & b) {
     T tmp(a);

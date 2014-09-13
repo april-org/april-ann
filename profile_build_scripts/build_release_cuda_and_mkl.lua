@@ -30,6 +30,7 @@ luapkg{
       "-DNO_POOL",
       --"-fPIC",
       -- For CUDA
+      "-DUSE_CUDA",
        --"-I/usr/local/cuda/include",
        --"-L/usr/local/cuda/lib",
     },
@@ -46,7 +47,11 @@ luapkg{
       "/opt/MKL/lib/libiomp5.a",
       -- For CUBLAS
       "-lcublas",
-       --
+      -- For CUDA
+      "-lcuda",
+      "-lcudart",
+      "-lcusparse",
+      --
       "-lpthread",
     },
     shared_extra_libs={

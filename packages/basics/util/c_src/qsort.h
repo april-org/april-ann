@@ -23,7 +23,7 @@
 
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // use T::operator<()
   template<typename T>

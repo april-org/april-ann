@@ -24,7 +24,7 @@
 #include "clamp.h"
 #include "libpng.h"
 
-namespace imaging {
+namespace Imaging {
   namespace LibPNG {
     ImageFloatRGB *readPNG(const char *filename)
     {
@@ -129,8 +129,8 @@ namespace imaging {
       // Copy read data to a ImageFloatRGB
       int dims[2]={static_cast<int>(height),
                    static_cast<int>(width)};
-      basics::Matrix<FloatRGB> *m = new basics::Matrix<FloatRGB>(2, dims);
-      m->fill(FloatRGB(0.0f,0.0f,0.0f));
+      Basics::Matrix<FloatRGB> *m = new Basics::Matrix<FloatRGB>(2, dims);
+      AprilMath::MatrixExt::Operations::matFill(m, FloatRGB(0.0f,0.0f,0.0f));
       ImageFloatRGB *res = new ImageFloatRGB(m);
 
       unsigned char *p = image_data;
@@ -208,9 +208,9 @@ namespace imaging {
       for (int y=0; y < img->height(); y++) {
         for (int x=0; x < img->width(); x++) {
           FloatRGB c = (*img)(x,y);
-          *p++ = (unsigned char)(april_utils::clamp(c.r, 0.0f, 1.0f)*255.0f);
-          *p++ = (unsigned char)(april_utils::clamp(c.g, 0.0f, 1.0f)*255.0f);
-          *p++ = (unsigned char)(april_utils::clamp(c.b, 0.0f, 1.0f)*255.0f);
+          *p++ = (unsigned char)(AprilUtils::clamp(c.r, 0.0f, 1.0f)*255.0f);
+          *p++ = (unsigned char)(AprilUtils::clamp(c.g, 0.0f, 1.0f)*255.0f);
+          *p++ = (unsigned char)(AprilUtils::clamp(c.b, 0.0f, 1.0f)*255.0f);
         }
       }
         
@@ -250,6 +250,6 @@ namespace imaging {
     }
 
   } // namespace LibPNG
-} // namespace imaging
+} // namespace Imaging
 
 

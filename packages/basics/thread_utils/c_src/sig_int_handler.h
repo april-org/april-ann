@@ -23,12 +23,12 @@
 #include <cstdio>
 #include <csignal>
 #include "list.h"
-using april_utils::list;
+using AprilUtils::list;
 
 // forward declaration
 class Threadable;
 
-namespace april_thread_utils {
+namespace AprilThreadUtils {
 
   class SigIntHandler {
     static bool installed;

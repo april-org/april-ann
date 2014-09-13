@@ -25,7 +25,7 @@
 #include <cstring>
 #include "binarizer.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   buffer_list_node::buffer_list_node(int sz, buffer_list_node *nxt) {
     size   = sz;
@@ -361,4 +361,4 @@ namespace april_utils {
     add_buffer_right(node);
   }
 
-} // namespace april_utils
+} // namespace AprilUtils

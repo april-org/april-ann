@@ -20,7 +20,7 @@
  */
 #include "dice.h"
 
-namespace basics {
+namespace Basics {
 
   Dice::Dice(int outcom, double *prob) {
     outcomes = outcom;
@@ -50,4 +50,4 @@ namespace basics {
     return left;
   };
 
-} // namespace basics
+} // namespace Basics

@@ -2,7 +2,7 @@
 using namespace std;
 #include "qsort.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 int main() { // Lectura de datos e invocación de la función de sort
   int i,leido,indDat;
@@ -14,7 +14,7 @@ int main() { // Lectura de datos e invocación de la función de sort
   while (indDat < maxVec && cin >> leido) {
     v[indDat] = leido; indDat++;
   }
-  april_utils::Sort(v,indDat); // ordenamos el vector
+  AprilUtils::Sort(v,indDat); // ordenamos el vector
   cout << "El vector ordenado:\n";
   for(i=0; i < indDat; i++)
     cout << v[i] 

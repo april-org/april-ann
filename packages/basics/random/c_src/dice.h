@@ -24,7 +24,7 @@
 #include "referenced.h"
 #include "MersenneTwister.h"
 
-namespace basics {
+namespace Basics {
 
   class Dice : public Referenced {
     int outcomes;
@@ -36,6 +36,6 @@ namespace basics {
     int thrown(MTRand *generator);
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // DICE_H

@@ -26,7 +26,7 @@
 #include "image.h"
 #include "floatrgb.h"
 
-namespace imaging {
+namespace Imaging {
 
   typedef Image<float> ImageFloat;
   typedef Image<FloatRGB> ImageFloatRGB;

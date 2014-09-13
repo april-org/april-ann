@@ -27,7 +27,7 @@ extern "C" {
 }
 #include "logbase.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   class constString {
     const char *buffer;
@@ -113,6 +113,6 @@ namespace april_utils {
 
   char *copystr(const char *c);
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // CONSTSTRING_H

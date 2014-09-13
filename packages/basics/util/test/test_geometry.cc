@@ -2,24 +2,24 @@
 #include "geometry.h"
 #include "gtest.h"
 using namespace std;
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace test_geometry {
   
   TEST(GeometryTest, All) {
     // Given two points (2,2) -> (6,3)
-    april_utils::Point2D p1 = april_utils::Point2D(3,2);
-    april_utils::Point2D p2 = april_utils::Point2D(6,3);
+    AprilUtils::Point2D p1 = AprilUtils::Point2D(3,2);
+    AprilUtils::Point2D p2 = AprilUtils::Point2D(6,3);
     
     //Define the line
-    april_utils::line morgan = april_utils::line(p1,p2);
+    AprilUtils::line morgan = AprilUtils::line(p1,p2);
     EXPECT_FLOAT_EQ( morgan.getSlope(), 0.33333334f );
     EXPECT_FLOAT_EQ( morgan.getYintercept(), 1.0f );
     
     // Create a new line
-    april_utils::Point2D p3 = april_utils::Point2D(4, 1);
-    april_utils::Point2D p4 = april_utils::Point2D(6, 0.5);
-    april_utils::line rect2 = april_utils::line(p3,p4);
+    AprilUtils::Point2D p3 = AprilUtils::Point2D(4, 1);
+    AprilUtils::Point2D p4 = AprilUtils::Point2D(6, 0.5);
+    AprilUtils::line rect2 = AprilUtils::line(p3,p4);
     EXPECT_FLOAT_EQ( rect2.getSlope(), -0.25f );
     EXPECT_FLOAT_EQ( rect2.getYintercept(), 2.0f );
     

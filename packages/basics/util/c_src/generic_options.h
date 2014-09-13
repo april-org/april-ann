@@ -27,7 +27,7 @@
 #include "referenced.h"
 #include "smart_ptr.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
 #define METHODS(method, type)                                            \
   virtual GenericOptions *put##method(const char *name, type value) = 0; \
@@ -127,7 +127,7 @@ namespace april_utils {
    * @brief Specialization of GenericOptions for passing data stored at a hash
    * table in C++.
    *
-   * This class uses a april_utils::hash table where (key,value) pairs will be
+   * This class uses a AprilUtils::hash table where (key,value) pairs will be
    * stored. To allow multiple value types, a @c union has been declared, and an
    * enum HashTableOptions::ValueTpyes allows to indicate which type has been
    * stored.
@@ -177,14 +177,14 @@ namespace april_utils {
         uint64_t u64;
         bool bl;
       };
-      april_utils::string str; // can't be in the union
-      april_utils::SharedPtr<Referenced> ref_ptr;
+      AprilUtils::string str; // can't be in the union
+      AprilUtils::SharedPtr<Referenced> ref_ptr;
       ValueTypes type;
     };
     
-    typedef april_utils::hash<april_utils::string, Value> HashTable;
+    typedef AprilUtils::hash<AprilUtils::string, Value> HashTable;
     
-    /// The april_utils::hash with the key,value pairs.
+    /// The AprilUtils::hash with the key,value pairs.
     HashTable dict;
       
   };
@@ -238,6 +238,6 @@ namespace april_utils {
 
 #undef METHODS
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // GENERIC_OPTIONS_H

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdio> // debug
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace Rates {
 

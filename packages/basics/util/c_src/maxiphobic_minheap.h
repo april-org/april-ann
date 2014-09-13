@@ -28,7 +28,7 @@
 
 using std::size_t;
 
-namespace april_utils{
+namespace AprilUtils{
 
   template <typename T> class maxiphobic_minheap
   {

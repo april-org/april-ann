@@ -23,8 +23,8 @@
 #include "matrixFloat.h"
 #include "utilLua.h"
 #include "bind_matrix.h"
-using april_utils::ReferencedVectorFloat;
-using april_utils::ReferencedVectorUint;
+using AprilUtils::ReferencedVectorFloat;
+using AprilUtils::ReferencedVectorUint;
 //BIND_END
 
 

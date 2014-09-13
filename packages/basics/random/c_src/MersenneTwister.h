@@ -67,7 +67,7 @@
 #include <stdint.h>
 #include "referenced.h"
 
-namespace basics {
+namespace Basics {
 
   class MTRand : public Referenced {
     // Data
@@ -144,7 +144,7 @@ namespace basics {
     static uint32_t hash( time_t t, clock_t c );
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif  // MERSENNETWISTER_H
 

@@ -6,7 +6,7 @@ using std::endl;
 
 #include "open_addressing_hash_timestamp.h"
 #include "aux_hash_table.h"
-using namespace april_utils;
+using namespace AprilUtils;
 using namespace hash_aux;
 
 typedef open_addr_hash_timestamp<const char *,const char*> hash_test;

@@ -35,7 +35,7 @@
     4     0x4000  graphs
 */
 
-namespace basics {
+namespace Basics {
 
 /// Definition of TokenCode type
 typedef uint32_t TokenCode;
@@ -58,6 +58,7 @@ typedef uint32_t TokenCode;
     static const TokenCode token_mem_block     = 0x2004;
     static const TokenCode token_matrix        = 0x2005;
     static const TokenCode token_sparse_matrix = 0x2006;
+    static const TokenCode token_null          = 0x2999;
   
     // vectors:
     static const TokenCode vector_float        = 0x3000;
@@ -74,6 +75,6 @@ typedef uint32_t TokenCode;
     static const TokenCode token_idag          = 0x4000;  
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TABLE_OF_TOKEN_CODES_H

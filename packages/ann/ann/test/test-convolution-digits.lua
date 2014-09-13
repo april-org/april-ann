@@ -1,111 +1,113 @@
-bunch_size       = tonumber(arg[1]) or 64
-semilla          = 1234
-weights_random   = random(semilla)
-inf              = -0.6
-sup              =  0.6
-shuffle_random   = random(5678)
-learning_rate    = 0.1
-momentum         = 0.2
-weight_decay     = 1e-04
-L1_norm          = 0.00001
-max_norm_penalty = 4
-max_epochs       = 100
-check_grandients = false
-check_tokens     = false
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
+local bunch_size       = tonumber(arg[1]) or 64
+local semilla          = 1234
+local weights_random   = random(semilla)
+local inf              = -0.6
+local sup              =  0.6
+local shuffle_random   = random(5678)
+local learning_rate    = 0.1
+local momentum         = 0.2
+local weight_decay     = 1e-04
+local L1_norm          = 0.00001
+local max_norm_penalty = 4
+local max_epochs       = 100
+local check_grandients = false
+local check_tokens     = false
 
-conv1 = {1, 3, 3} nconv1=10
-maxp1 = {1, 2, 2}
-conv2 = {nconv1, 2, 2,} nconv2=20
-maxp2 = {1, 2, 2}
-hidden = 100
+local conv1 = {1, 3, 3} nconv1=10
+local maxp1 = {1, 2, 2}
+local conv2 = {nconv1, 2, 2,} nconv2=20
+local maxp2 = {1, 2, 2}
+local hidden = 100
 
 --------------------------------------------------------------
 
-m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
-train_input = dataset.matrix(m1,
-			     {
-			       patternSize = {16,16},
-			       offset      = {0,0},
-			       numSteps    = {80,10},
-			       stepSize    = {16,16},
-			       orderStep   = {1,0}
-			     })
+local m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
+local train_input = dataset.matrix(m1,
+                                   {
+                                     patternSize = {16,16},
+                                     offset      = {0,0},
+                                     numSteps    = {80,10},
+                                     stepSize    = {16,16},
+                                     orderStep   = {1,0}
+})
 
-val_input  = dataset.matrix(m1,
-			    {
-			      patternSize = {16,16},
-			      offset      = {1280,0},
-			      numSteps    = {20,10},
-			      stepSize    = {16,16},
-			      orderStep   = {1,0}
-			    })
+local val_input  = dataset.matrix(m1,
+                                  {
+                                    patternSize = {16,16},
+                                    offset      = {1280,0},
+                                    numSteps    = {20,10},
+                                    stepSize    = {16,16},
+                                    orderStep   = {1,0}
+})
 -- una matriz pequenya la podemos cargar directamente
-m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})
+local m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})
 
 -- ojito con este dataset, fijaros que usa una matriz de dim 1 y talla
 -- 10 PERO avanza con valor -1 y la considera CIRCULAR en su unica
 -- dimension
 
-train_output = dataset.matrix(m2,
-			      {
-				patternSize = {10},
-				offset      = {0},
-				numSteps    = {800},
-				stepSize    = {-1},
-				circular    = {true}
-			      })
+local train_output = dataset.matrix(m2,
+                                    {
+                                      patternSize = {10},
+                                      offset      = {0},
+                                      numSteps    = {800},
+                                      stepSize    = {-1},
+                                      circular    = {true}
+})
 
-val_output   = dataset.matrix(m2,
-			      {
-				patternSize = {10},
-				offset      = {0},
-				numSteps    = {200},
-				stepSize    = {-1},
-				circular    = {true}
-			      })
+local val_output   = dataset.matrix(m2,
+                                    {
+                                      patternSize = {10},
+                                      offset      = {0},
+                                      numSteps    = {200},
+                                      stepSize    = {-1},
+                                      circular    = {true}
+})
 
-thenet = ann.components.stack{ name="stack" }:
-push( ann.components.rewrap{ size={ 1, 16, 16 },
-			     name="rewrap" } ):
-push( ann.components.convolution{ kernel=conv1, n=nconv1,
-				  name="conv-w1", weights="w1" } ):
-push( ann.components.convolution_bias{ n=nconv1, ndims=#conv1,
-				       name="conv-b1", weights="b1" } ):
-push( ann.components.actf.relu{ name="actf-1" } ):
-push( ann.components.max_pooling{ kernel=maxp1,
-				  name="pool-1" } ):
-push( ann.components.convolution{ kernel=conv2, n=nconv2,
-                                  name="conv-w2", weights="w2" } ):
-push( ann.components.convolution_bias{ n=nconv2, ndims=#conv2,
-				       name="conv-b2", weights="b2" } ):
-push( ann.components.actf.relu{ name="actf-2" } ):
-push( ann.components.max_pooling{ kernel=maxp2,
-				  name="pool-2" } ):
-push( ann.components.flatten{ name="flatten" } )
+local thenet = ann.components.stack{ name="stack" }:
+  push( ann.components.rewrap{ size={ 1, 16, 16 },
+                               name="rewrap" } ):
+  push( ann.components.convolution{ kernel=conv1, n=nconv1,
+                                    name="conv-w1", weights="w1" } ):
+  push( ann.components.convolution_bias{ n=nconv1, ndims=#conv1,
+                                         name="conv-b1", weights="b1" } ):
+  push( ann.components.actf.relu{ name="actf-1" } ):
+  push( ann.components.max_pooling{ kernel=maxp1,
+                                    name="pool-1" } ):
+  push( ann.components.convolution{ kernel=conv2, n=nconv2,
+                                    name="conv-w2", weights="w2" } ):
+  push( ann.components.convolution_bias{ n=nconv2, ndims=#conv2,
+                                         name="conv-b2", weights="b2" } ):
+  push( ann.components.actf.relu{ name="actf-2" } ):
+  push( ann.components.max_pooling{ kernel=maxp2,
+                                    name="pool-2" } ):
+  push( ann.components.flatten{ name="flatten" } )
 
-convolution_output_size = thenet:precompute_output_size()[1]
+local convolution_output_size = thenet:precompute_output_size()[1]
 
 thenet:
-push( ann.components.hyperplane{ input=convolution_output_size,
-				 output=hidden,
-				 name="hyp-1",
-				 bias_name="b3",
-				 dot_product_name="w3",
-				 bias_weights="b3",
-                                 dot_product_weights="w3" } ):
-push( ann.components.actf.relu{ name="actf-3" } ):
-push( ann.components.hyperplane{ input=hidden, output= 10,
-				 name="hyp-2",
-				 bias_name="b4",
-				 dot_product_name="w4",
-				 bias_weights="b4",
-				 dot_product_weights="w4" } ):
-push( ann.components.actf.log_softmax{ name="actf-4" } )
+  push( ann.components.hyperplane{ input=convolution_output_size,
+                                   output=hidden,
+                                   name="hyp-1",
+                                   bias_name="b3",
+                                   dot_product_name="w3",
+                                   bias_weights="b3",
+                                   dot_product_weights="w3" } ):
+  push( ann.components.actf.relu{ name="actf-3" } ):
+  push( ann.components.hyperplane{ input=hidden, output= 10,
+                                   name="hyp-2",
+                                   bias_name="b4",
+                                   dot_product_name="w4",
+                                   bias_weights="b4",
+                                   dot_product_weights="w4" } ):
+  push( ann.components.actf.log_softmax{ name="actf-4" } )
 
 
-trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(10),
-				       bunch_size)
+local trainer = trainable.supervised_trainer(thenet,
+                                             ann.loss.multi_class_cross_entropy(10),
+                                             bunch_size)
 trainer:build()
 
 trainer:set_option("learning_rate",     learning_rate)
@@ -140,13 +142,13 @@ trainer:randomize_weights{
 -- trainer:set_component_option("actf2", "dropout_factor", 0.5)
 
 -- datos para entrenar
-datosentrenar = {
+local datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
   shuffle        = shuffle_random,
 }
 
-datosvalidar = {
+local datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
   --  bunch_size = 128,
@@ -177,12 +179,12 @@ for input,idxs in trainable.dataset_multiple_iterator{
   end
 end
 
-totalepocas = 0
+local totalepocas = 0
 
-errorval = trainer:validate_dataset(datosvalidar)
+local errorval = trainer:validate_dataset(datosvalidar)
 print("# Initial validation error:", errorval)
 
-clock = util.stopwatch()
+local clock = util.stopwatch()
 clock:go()
 
 if check_tokens then
@@ -207,16 +209,16 @@ end
 for epoch = 1,max_epochs do
   collectgarbage("collect")
   totalepocas = totalepocas+1
-  errortrain  = trainer:train_dataset(datosentrenar)
-  errorval    = trainer:validate_dataset(datosvalidar)
+  local errortrain  = trainer:train_dataset(datosentrenar)
+  local errorval    = trainer:validate_dataset(datosvalidar)
   --
-  norm2_w = trainer:norm2(".*w.*")
-  norm2_b = trainer:norm2(".*b.*")
+  local norm2_w = trainer:norm2(".*w.*")
+  local norm2_b = trainer:norm2(".*b.*")
   --
   if false then
-    inp  = trainer:component("conv"):get_input():get_matrix()
-    outp = trainer:component("conv"):get_output():get_matrix()
-    err = trainer:component("conv"):get_error_input():get_matrix()
+    local inp  = trainer:component("conv"):get_input():get_matrix()
+    local outp = trainer:component("conv"):get_output():get_matrix()
+    local err = trainer:component("conv"):get_error_input():get_matrix()
     print("DIM", table.concat(err:dim(), " "))
     for i=1,err:dim()[2] do
     --   for j=1,err:dim()[1] do
@@ -268,6 +270,6 @@ local img = ann.connections.input_filters_image(trainer:weights("w1"), {3,3})
 ImageIO.write(img,"/tmp/filters.png")
 
 clock:stop()
-cpu,wall = clock:read()
+local cpu,wall = clock:read()
 printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
 printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)

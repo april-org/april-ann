@@ -66,6 +66,15 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
   delete[] iwork;
   return info;
 }
+int clapack_spotrf(const int Order, const int Uplo, const int N, float *A,
+                   const int LDA) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int info = 0;
+  char uplo = (Uplo == CblasLower) ? 'L' : 'U';
+  spotrf_(&uplo, &N, A, &LDA, &info);
+  return info;
+}
 #elif defined(USE_XCODE)
 #include "cblas_headers.h"
 int clapack_sgetrf(int Order, int M, int N,
@@ -111,6 +120,15 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
   delete[] iwork;
   return info;
 }
+int clapack_spotrf(int Order, int Uplo, int N, float *A,
+                   int LDA) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int info = 0;
+  char uplo = (Uplo == CblasLower) ? 'L' : 'U';
+  spotrf_(&uplo, &N, A, &LDA, &info);
+  return info;
+}
 #else
 #include "lapacke.h"
 int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
@@ -127,5 +145,5 @@ void checkLapackInfo(int info) {
   if (info < 0)
     ERROR_EXIT1(128, "The %d argument had an ilegal value\n", -info);
   else if (info > 0)
-    ERROR_EXIT(128, "The matrix is singular and inverse can't be computed\n");
+    ERROR_EXIT(128, "The matrix is singular, computation can't be done\n");
 }

@@ -26,7 +26,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace basics {
+namespace Basics {
   
   namespace MatrixIO {
     
@@ -39,7 +39,9 @@ namespace basics {
     int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
     
   }
-
+  
+  /////////////////////////////////////////////////////////////////////////
+  
   typedef SparseMatrix<float> SparseMatrixFloat;
 
 }

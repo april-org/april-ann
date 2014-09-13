@@ -4,14 +4,11 @@ matrix.sparse.csr = function(...)
 end
 
 -- serialization
-matrix.sparse.fromFilename    = matrix.__generic__.__make_generic_fromFilename__(matrix.sparse)
-matrix.sparse.fromString      = matrix.__generic__.__make_generic_fromString__(matrix.sparse)
-class.extend(matrix.sparse, "to_lua_string",
-             matrix.__generic__.__make_generic_to_lua_string__(matrix.sparse))
-class.extend(matrix.sparse, "toFilename",
-             matrix.__generic__.__make_generic_toFilename__(matrix.sparse))
-class.extend(matrix.sparse, "toString",
-             matrix.__generic__.__make_generic_toString__(matrix.sparse))
+matrix.__generic__.__make_generic_fromFilename__(matrix.sparse)
+matrix.__generic__.__make_generic_fromString__(matrix.sparse)
+matrix.__generic__.__make_generic_to_lua_string__(matrix.sparse)
+matrix.__generic__.__make_generic_toFilename__(matrix.sparse)
+matrix.__generic__.__make_generic_toString__(matrix.sparse)
 
 matrix.sparse.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()

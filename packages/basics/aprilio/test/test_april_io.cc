@@ -21,7 +21,7 @@ const size_t REP = 10000;
 namespace AprilIO {
   
   TEST(FileStream, ConstructorTests) {
-    april_utils::SharedPtr<StreamInterface> ptr;
+    AprilUtils::SharedPtr<StreamInterface> ptr;
 
     remove(FILE1);
     
@@ -62,8 +62,8 @@ namespace AprilIO {
   }
   
   TEST(FileStream, ReadAndWrite) {
-    april_utils::UniquePtr<char> aux( new char[N+1] );
-    april_utils::SharedPtr<StreamInterface> ptr;
+    AprilUtils::UniquePtr<char []> aux( new char[N+1] );
+    AprilUtils::SharedPtr<StreamInterface> ptr;
     
     // write of a bunch of data
     ptr.reset( new FileStream(FILE1, "w") );
@@ -124,7 +124,7 @@ namespace AprilIO {
     EXPECT_FALSE( ptr->hasError() );
     
     // read into a c_string
-    april_utils::SharedPtr<CStringStream> c_str;
+    AprilUtils::SharedPtr<CStringStream> c_str;
     c_str.reset( new CStringStream() );
     EXPECT_TRUE( c_str->empty() );
     // EXPECT_TRUE( c_str->good() );

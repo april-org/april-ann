@@ -37,27 +37,27 @@ namespace ANN {
   class JoinANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(JoinANNComponent);
     
-    april_utils::vector<ANNComponent*> components;
+    AprilUtils::vector<ANNComponent*> components;
     // Token pointers which contains exactly the same that was received
-    basics::Token *input, *error_output;
+    Basics::Token *input, *error_output;
 
     // This token is always a MatrixFloat
-    basics::TokenMatrixFloat *output, *error_input;
+    Basics::TokenMatrixFloat *output, *error_input;
 
     // Auxiliar Token pointers to prepare data from and for contained components
-    basics::TokenBunchVector *input_vector,  *error_input_vector;
-    basics::TokenBunchVector *output_vector, *error_output_vector;
+    Basics::TokenBunchVector *input_vector,  *error_input_vector;
+    Basics::TokenBunchVector *output_vector, *error_output_vector;
 
     bool segmented_input;
 
     // private auxiliar methods
-    void buildInputBunchVector(basics::TokenBunchVector *&vector_token,
-			       basics::Token *token);
-    void buildErrorInputBunchVector(basics::TokenBunchVector *&vector_token,
-				    basics::Token *token);
-    basics::TokenMatrixFloat *buildMatrixFloatToken(basics::TokenBunchVector *token,
+    void buildInputBunchVector(Basics::TokenBunchVector *&vector_token,
+			       Basics::Token *token);
+    void buildErrorInputBunchVector(Basics::TokenBunchVector *&vector_token,
+				    Basics::Token *token);
+    Basics::TokenMatrixFloat *buildMatrixFloatToken(Basics::TokenBunchVector *token,
                                                     bool is_output);
-    basics::TokenMatrixFloat *buildMatrixFloatToken(basics::Token *token,
+    Basics::TokenMatrixFloat *buildMatrixFloatToken(Basics::Token *token,
                                                     bool is_output);
     
   public:
@@ -66,22 +66,22 @@ namespace ANN {
     
     void addComponent(ANNComponent *component);
     
-    virtual basics::Token *getInput() { return input; }
-    virtual basics::Token *getOutput() { return output; }
-    virtual basics::Token *getErrorInput() { return error_input; }
-    virtual basics::Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
 
-    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
-				      april_utils::vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
+				      AprilUtils::vector<unsigned int> &output_size) {
       UNUSED_VARIABLE(input_size);
       UNUSED_VARIABLE(output_size);
       ERROR_EXIT(128,
 		 "Impossible to precomputeOutputSize in JoinANNComponent\n");
     }
     
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
 
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -91,15 +91,15 @@ namespace ANN {
     
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
+    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
 
-    virtual void copyComponents(april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual ANNComponent *getComponent(april_utils::string &name);
-    virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict);
+    virtual ANNComponent *getComponent(AprilUtils::string &name);
+    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i)

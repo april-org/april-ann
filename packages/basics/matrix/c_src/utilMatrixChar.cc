@@ -21,6 +21,6 @@
 
 #include "utilMatrixChar.h"
 
-namespace basics {
+namespace Basics {
   
-} // namespace basics
+} // namespace Basics

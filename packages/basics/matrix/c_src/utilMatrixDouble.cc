@@ -22,7 +22,7 @@
 #include "error_print.h"
 #include "utilMatrixDouble.h"
 
-namespace basics {
+namespace Basics {
   
   MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat,
                                                     bool col_major) {
@@ -45,4 +45,4 @@ namespace basics {
     return new_mat;
   }
 
-} // namespace basics
+} // namespace Basics

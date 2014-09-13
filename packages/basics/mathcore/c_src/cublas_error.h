@@ -22,9 +22,6 @@
 #ifndef _CUBLAS_ERROR_H_
 #define _CUBLAS_ERROR_H_
 
-#include "error_print.h"
-#include "cblas_headers.h"
-
 #ifdef USE_CUDA
 #include <cublas_v2.h>
 

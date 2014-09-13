@@ -39,11 +39,11 @@ namespace AprilIO {
     
     // The read method needs to be implemented in derived classes.
     // Whatever *read(StreamInterface *dest,
-    //                const april_utils::GenericOptions *options);
+    //                const AprilUtils::GenericOptions *options);
 
     /// Writes the object data into dest, and it could be retrieved by read.
     virtual void write(StreamInterface *dest,
-                       const april_utils::GenericOptions *options) = 0;
+                       const AprilUtils::GenericOptions *options) = 0;
     
     /**
      * @brief Writes a Lua string which can be instantiated to get the object.
@@ -54,13 +54,13 @@ namespace AprilIO {
      * @note THIS METHOD IS A FUTURE FEATURE, IT IS NOT BEEN USED ANYWHERE.
      */
     virtual void toLuaString(StreamInterface *dest,
-                             const april_utils::GenericOptions *options) {
+                             const AprilUtils::GenericOptions *options) {
       UNUSED_VARIABLE(dest);
       UNUSED_VARIABLE(options);
       ERROR_EXIT(128, "Unable to instantiate into a Lua string\n");
     }
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // SERIALIZABLE_H

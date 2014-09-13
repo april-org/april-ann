@@ -31,7 +31,7 @@ extern "C" {
 #include "mystring.h"
 #include "pair.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   //----------------------------------------------------------------------
   template<typename T> struct default_hash_function
@@ -78,7 +78,7 @@ namespace april_utils {
   //----------------------------------------------------------------------
   // Hash function for pair<int,int> (operator == is OK)
   //
-  typedef april_utils::pair<int,int> int_pair;
+  typedef AprilUtils::pair<int,int> int_pair;
 
   template<> struct default_hash_function<int_pair> {
     static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
@@ -91,7 +91,7 @@ namespace april_utils {
   //----------------------------------------------------------------------
   // Hash function for pair<unsigned int,unsigned int> (operator == is OK)
   //
-  typedef april_utils::pair<unsigned int,unsigned int> uint_pair;
+  typedef AprilUtils::pair<unsigned int,unsigned int> uint_pair;
 
   template<> struct default_hash_function<uint_pair> {
     static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
@@ -103,7 +103,7 @@ namespace april_utils {
   //----------------------------------------------------------------------
   // Hash function for pair<int16_t,int16_t> (operator == is OK)
   //
-  typedef april_utils::pair<int16_t,int16_t> int16_pair;
+  typedef AprilUtils::pair<int16_t,int16_t> int16_pair;
 
   template<> struct default_hash_function<int16_pair> {
     static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci

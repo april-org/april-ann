@@ -1,7 +1,7 @@
 #include "buffer_list.h"
 #include "MersenneTwister.h"
 
-namespace basics {
+namespace Basics {
 
   const unsigned int MTRand::N;
   const unsigned int MTRand::SAVE;
@@ -262,12 +262,12 @@ namespace basics {
     uint32_t randState[ SAVE ];
     save( randState );
     //
-    april_utils::buffer_list buffer;
+    AprilUtils::buffer_list buffer;
     buffer.printf("random():fromTable{");
     for (unsigned int i=0; i<SAVE; ++i)
       buffer.printf(" %u,", randState[i]);
     buffer.printf(" }");
-    return buffer.to_string(april_utils::buffer_list::NULL_TERMINATED);
+    return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
   }
 
-} // namespace basics
+} // namespace Basics

@@ -22,10 +22,10 @@
 
 #include "image_connected_components.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 
-namespace imaging {
+namespace Imaging {
 
   namespace rgb_colors {
     typedef enum { RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, PINK, BROWN, BLACK } COLOR;
@@ -134,7 +134,7 @@ namespace imaging {
     using rgb_colors::getIndexColor;
 
     Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->height(), img->width());
-    m->fill(FloatRGB(1, 1, 1));
+    AprilMath::MatrixExt::Operations::matFill(m, FloatRGB(1, 1, 1));
     ImageFloatRGB *result = new ImageFloatRGB(m);
 
     int first = 0;
@@ -208,4 +208,4 @@ namespace imaging {
     return bbs;
   }
 
-} // namespace imaging
+} // namespace Imaging

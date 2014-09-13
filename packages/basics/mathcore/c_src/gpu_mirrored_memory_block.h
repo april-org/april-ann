@@ -41,11 +41,6 @@ extern "C" {
 #include "unused_variable.h"
 #include <new>
 
-#ifdef USE_CUDA
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#endif
-
 #include "gpu_helper.h"
 #include "error_print.h"
 #include "aligned_memory.h"
@@ -63,20 +58,31 @@ extern "C" {
 #define ALLOC_MASK 0x08 // bit 3 = 8
 #define MMAP_MASK  0x10 // bit 4 = 16
 
-namespace april_math {
+namespace AprilMath {
 
-  /// Class base for memory blocks mirrored between host (mem ppal) and device
-  /// (GPU)
+  /**
+   * @brief Class base for memory blocks mirrored between host (mem ppal) and
+   * device (GPU).
+   *
+   * This base defines a generic which keeps a pool of memory pointers, stores the
+   * mem ppal pointer and the device pointer, and updates the status of this
+   * pointers. This class does not know pointers type, it works with generic void*
+   * or char* pointers. Therefore, the size property stores the number of
+   * bytes. Doing this way, it is possible to reinterpret the same memory pointer
+   * as different types, allowing a complex number block to be interpreted as a
+   * float block with twice number of floats (but the same size).
+   */
   class GPUMirroredMemoryBlockBase : public Referenced {
-#ifndef NO_POOL
   public:
-    typedef april_utils::list<char*>                PoolListType;
-    typedef april_utils::hash<size_t, PoolListType> PoolType;
+#ifndef NO_POOL
+    typedef AprilUtils::list<char*>                PoolListType;
+    typedef AprilUtils::hash<size_t, PoolListType> PoolType;
 #endif
-
+    static bool USE_CUDA_DEFAULT;
+    
   private:
     static bool use_mmap_allocation;
-
+    
   protected:
 #ifndef NO_POOL
     static size_t MAX_POOL_LIST_SIZE;
@@ -92,7 +98,7 @@ namespace april_math {
              it != pool_lists->end(); ++it) {
           for (PoolListType::iterator lit = it->second.begin();
                lit != it->second.end(); ++lit) {
-            april_utils::aligned_free(*lit);
+            AprilUtils::aligned_free(*lit);
           }
         }
         delete pool_lists;
@@ -103,16 +109,16 @@ namespace april_math {
     size_t size;
     union {
       char *char_mem;
-      void *mem_ppal;
+      mutable void *mem_ppal;
       const void *const_mem_ppal;
     };
 #ifdef USE_CUDA  
-    CUdeviceptr mem_gpu;
+    mutable CUdeviceptr mem_gpu;
     bool    pinned;
 #endif
-    unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
-    april_utils::MMappedDataReader *mmapped_data;
-  
+    mutable unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
+    AprilUtils::MMappedDataReader *mmapped_data;
+    
     void setConst() {
       status = status | CONST_MASK;
     }
@@ -140,7 +146,7 @@ namespace april_math {
 #ifdef USE_CUDA  
     bool getUpdatedPPAL() const {
       return status & PPAL_MASK;
-    }
+}
     bool getUpdatedGPU() const {
       return status & GPU_MASK;
     }
@@ -153,14 +159,38 @@ namespace april_math {
     void setUpdatedPPAL() {
       status = status | PPAL_MASK;
     }
+    void setUpdatedPPAL() const {
+      status = status | PPAL_MASK;
+    }
     void setUpdatedGPU() {
       status = status | GPU_MASK;
     }
-  
+    void setUpdatedGPU() const {
+      status = status | GPU_MASK;
+    }
+
     void updateMemPPAL() const {
-      if (!getUpdatedPPAL())
-        ERROR_EXIT(128, "You need first to update the "
-                   "memory in a non const pointer\n");
+      if (!getUpdatedPPAL()) {
+        CUresult result;
+        setUpdatedPPAL();
+        april_assert(mem_gpu != 0);
+
+        if (!pinned) {
+          result = cuMemcpyDtoH(mem_ppal, mem_gpu, size);
+          if (result != CUDA_SUCCESS)
+            ERROR_EXIT1(160, "Could not copy memory from device to host: %s\n",
+                        cudaGetErrorString(cudaGetLastError()));
+        }
+        else {
+          if (cudaMemcpyAsync(mem_ppal,
+                              reinterpret_cast<void*>(mem_gpu),
+                              size,
+                              cudaMemcpyDeviceToHost, 0) != cudaSuccess)
+            ERROR_EXIT1(162, "Could not copy memory from device to host: %s\n",
+                        cudaGetErrorString(cudaGetLastError()));
+          cudaThreadSynchronize();
+        }
+      }
     }
 
     void updateMemPPAL() {
@@ -188,43 +218,77 @@ namespace april_math {
     }
   
     void copyPPALtoGPU() const {
-      ERROR_EXIT(128, "You need first to update the "
-                 "memory in a non const pointer\n");
-    }
-
-    void copyPPALtoGPU() {
+      /*
+	ERROR_EXIT(128, "You need first to update the "
+	"memory in a non const pointer\n");
+      */
       CUresult result;
-
+      
       if (!pinned) {
-        result = cuMemcpyHtoD(mem_gpu, mem_ppal, size);
-        if (result != CUDA_SUCCESS)
-          ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
-                      cudaGetErrorString(cudaGetLastError()));
+	result = cuMemcpyHtoD(mem_gpu, mem_ppal, size);
+	if (result != CUDA_SUCCESS)
+	  ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		      cudaGetErrorString(cudaGetLastError()));
       }
       else {
-        cudaThreadSynchronize();
-        if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_gpu),
-                            mem_ppal,
-                            size,
-                            cudaMemcpyHostToDevice, 0) != cudaSuccess)
-          ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
-                      cudaGetErrorString(cudaGetLastError()));
+	cudaThreadSynchronize();
+	if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_gpu),
+			    mem_ppal,
+			    size,
+			    cudaMemcpyHostToDevice, 0) != cudaSuccess)
+	  ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		      cudaGetErrorString(cudaGetLastError()));
+      }
+    }
+    
+    void copyPPALtoGPU() {
+      CUresult result;
+      
+      if (!pinned) {
+	result = cuMemcpyHtoD(mem_gpu, mem_ppal, size);
+	if (result != CUDA_SUCCESS)
+	  ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		      cudaGetErrorString(cudaGetLastError()));
+      }
+      else {
+	cudaThreadSynchronize();
+	if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_gpu),
+			    mem_ppal,
+			    size,
+			    cudaMemcpyHostToDevice, 0) != cudaSuccess)
+	  ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		      cudaGetErrorString(cudaGetLastError()));
       }
     }
 
     bool allocMemGPU() const {
-      ERROR_EXIT(128, "You need first to update the "
-                 "memory in a non const pointer\n");
+      /*
+	ERROR_EXIT(128, "You need first to update the "
+	"memory in a non const pointer\n");
+	return false;
+      */
+      if (mem_gpu == 0) {
+        CUDA::GPUHelper::initHelper();
+	CUresult result;
+	result = cuMemAlloc(&mem_gpu, size);
+	if (result != CUDA_SUCCESS) {
+	  ERROR_EXIT2(161, "Could not allocate %lu memory bytes in device, error %d\n",
+                      size, result);
+        }
+	return true;
+      }
       return false;
     }
-
+    
     bool allocMemGPU() {
       if (mem_gpu == 0) {
-        GPUHelper::initHelper();
-        CUresult result;
-        result = cuMemAlloc(&mem_gpu, size);
-        if (result != CUDA_SUCCESS)
-          ERROR_EXIT1(161, "Could not allocate memory in device, error %d\n", result);
+	CUDA::GPUHelper::initHelper();
+	CUresult result;
+	result = cuMemAlloc(&mem_gpu, size);
+	if (result != CUDA_SUCCESS) {
+	  ERROR_EXIT2(161, "Could not allocate %lu memory bytes in device, error %d\n",
+                      size, result);
+        }
         return true;
       }
       return false;
@@ -234,23 +298,28 @@ namespace april_math {
   public:
 
 #ifdef USE_CUDA  
-    void updateMemGPU() const {
-      if (!getUpdatedGPU()) {
+  void updateMemGPU() const {
+    allocMemGPU();
+    if (!getUpdatedGPU()) {
+      /*
         ERROR_EXIT(128, "You need first to update the "
-                   "memory in a non const pointer\n");
-      }
+        "memory in a non const pointer\n");
+      */
+      setUpdatedGPU();
+      copyPPALtoGPU();
     }
+  }
   
     void updateMemGPU() {
+      allocMemGPU();
       if (!getUpdatedGPU()) {
-        allocMemGPU();
         setUpdatedGPU();
         copyPPALtoGPU();
       }
     }
 #endif
 
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) const {
 #ifdef USE_CUDA
       if (!getUpdatedPPAL())
         ERROR_EXIT(128, "Impossible to update memory from a const pointer\n");
@@ -259,7 +328,7 @@ namespace april_math {
       mmapped_data->put(char_mem, size);
     }
   
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) {
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) {
 #ifdef USE_CUDA
       updateMemPPAL();
 #endif
@@ -267,7 +336,7 @@ namespace april_math {
       mmapped_data->put(char_mem, size);
     }
   
-    GPUMirroredMemoryBlockBase(april_utils::MMappedDataReader *mmapped_data) :
+    GPUMirroredMemoryBlockBase(AprilUtils::MMappedDataReader *mmapped_data) :
       Referenced() {
       this->size     = *(mmapped_data->get<size_t>());
       this->char_mem = mmapped_data->get<char>(this->size);
@@ -317,7 +386,7 @@ namespace april_math {
       mmapped_data = 0;
       setAllocated();
 #ifdef USE_CUDA
-      unsetUpdatedGPU();
+      setUpdatedGPU();
       setUpdatedPPAL();
       mem_gpu  = 0;
       pinned   = false;
@@ -326,7 +395,7 @@ namespace april_math {
       PoolListType &l = (*pool_lists)[size];
       if (l.empty()) {
         if (!use_mmap_allocation) {
-          char_mem = april_utils::aligned_malloc<char>(size);
+          char_mem = AprilUtils::aligned_malloc<char>(size);
 #ifdef POOL_DEBUG
           printf("ALLOC %lu :: %p\n", size, char_mem);
 #endif
@@ -351,7 +420,7 @@ namespace april_math {
       }
 #else
       if (!use_mmap_allocation) {
-        char_mem = april_utils::aligned_malloc<char>(size);
+        char_mem = AprilUtils::aligned_malloc<char>(size);
       }
       else {
         setMMapped();
@@ -389,10 +458,10 @@ namespace april_math {
 #ifdef POOL_DEBUG
               printf("FREE %lu :: %p\n", size, char_mem);
 #endif
-              april_utils::aligned_free(char_mem);
+              AprilUtils::aligned_free(char_mem);
             }
 #else
-            april_utils::aligned_free(char_mem);
+            AprilUtils::aligned_free(char_mem);
 #endif
           }
           else munmap(mem_ppal, size);
@@ -420,10 +489,10 @@ namespace april_math {
 #ifdef POOL_DEBUG
             printf("FREE %lu :: %p\n", size, char_mem);
 #endif
-            april_utils::aligned_free(char_mem);
+            AprilUtils::aligned_free(char_mem);
           }
 #else
-          april_utils::aligned_free(char_mem);
+          AprilUtils::aligned_free(char_mem);
 #endif
         }
         else munmap(mem_ppal, size);
@@ -441,7 +510,7 @@ namespace april_math {
       if (isConst() || isMMapped()) {
         ERROR_EXIT(128, "Impossible to set as pinned a const or mmapped memory block\n");
       }
-      if (mem_ppal) april_utils::aligned_free(char_mem);
+      if (mem_ppal) AprilUtils::aligned_free(char_mem);
       void *ptr;
       if (cudaHostAlloc(&ptr, size, 0) != cudaSuccess)
         ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
@@ -451,7 +520,7 @@ namespace april_math {
     }
 #endif
   
-    bool getCudaFlag() const {
+    bool getInCuda() const {
 #ifdef USE_CUDA
       return getUpdatedGPU();
 #else
@@ -462,12 +531,31 @@ namespace april_math {
     static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
     void forceUpdate(bool use_cuda) {
 #ifdef USE_CUDA
-      if (isConst())
+      if (isConst()) {
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
-      if (use_cuda)
+      }
+      if (use_cuda) {
         updateMemGPU();
-      else
+      }
+      else {
         updateMemPPAL();
+      }
+#else
+      UNUSED_VARIABLE(use_cuda);
+#endif
+    }
+
+    void forceUpdate(bool use_cuda) const {
+#ifdef USE_CUDA
+      if (isConst()) {
+        ERROR_EXIT(128, "Impossible to write in a const memory block\n");
+      }
+      if (use_cuda) {
+        updateMemGPU();
+      }
+      else {
+        updateMemPPAL();
+      }
 #else
       UNUSED_VARIABLE(use_cuda);
 #endif
@@ -483,14 +571,16 @@ namespace april_math {
 
   ////////////////////////////////////////////////////////////////////////////
 
-  /// Class template for instantiation of GPUMirroredMemoryBlockBase for different
-  /// data types.
+  /**
+   * @brief Class template for instantiation of GPUMirroredMemoryBlockBase for different
+   * data types.
+   */
   template<typename T>
   class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
-  
+    
   protected:
-  
-    GPUMirroredMemoryBlock(april_utils::MMappedDataReader *mmapped_data) :
+    
+    GPUMirroredMemoryBlock(AprilUtils::MMappedDataReader *mmapped_data) :
       GPUMirroredMemoryBlockBase(mmapped_data) { }
   
     T *getPointer() {
@@ -514,7 +604,7 @@ namespace april_math {
   public:
   
     static GPUMirroredMemoryBlock<T> *
-    fromMMappedDataReader(april_utils::MMappedDataReader *mmapped_data) {
+    fromMMappedDataReader(AprilUtils::MMappedDataReader *mmapped_data) {
       return new GPUMirroredMemoryBlock<T>(mmapped_data);
     }
   
@@ -536,26 +626,75 @@ namespace april_math {
   
     GPUMirroredMemoryBlock<T> *clone() const {
       GPUMirroredMemoryBlock<T> *result = new GPUMirroredMemoryBlock(getSize());
-      result->copyFromBlock(this, 0, 0, getSize());
+      result->copyFromBlock(0, this, 0, getSize());
       return result;
     }
   
-    void copyFromBlock(const GPUMirroredMemoryBlock<T> *other,
-                       size_t from, size_t where, size_t sz) {
-      const T *other_ptr = other->getPPALForRead() + from;
-      T *this_ptr        = this->getPPALForWrite() + where;
-      memcpy(this_ptr, other_ptr, sz * sizeof(T));
+    void copyFromBlock(size_t where,
+                       const GPUMirroredMemoryBlock<T> *other, size_t from,
+                       size_t sz) {
+#ifdef USE_CUDA
+      if (other->getUpdatedGPU()) {
+        const T *other_ptr = other->getGPUForRead() + from;
+        T *this_ptr        = this->getGPUForWrite() + where;
+        cudaMemcpy(this_ptr, other_ptr, sz * sizeof(T),
+                   cudaMemcpyDeviceToDevice);
+      }
+      else {
+#endif
+        const T *other_ptr = other->getPPALForRead() + from;
+        T *this_ptr        = this->getPPALForWrite() + where;
+        memcpy(this_ptr, other_ptr, sz * sizeof(T));
+#ifdef USE_CUDA
+      }
+#endif
     }
 
+    void putValue(size_t where, const T &value) {
+#ifdef USE_CUDA
+      if (this->getUpdatedGPU()) {
+        cudaMemcpy(this->getGPUForWrite() + where,
+                   &value,
+                   sizeof(T), cudaMemcpyHostToDevice);
+      }
+      else {
+#endif
+        T *ptr = this->getPPALForWrite();
+        ptr[where] = value;
+#ifdef USE_CUDA
+      }
+#endif
+    }
+
+    void getValue(size_t from, T &result) const {
+#ifdef USE_CUDA
+      if (this->getUpdatedGPU()) {
+        cudaMemcpy(&result,
+                   this->getGPUForRead() + from,
+                   sizeof(T), cudaMemcpyDeviceToHost);
+      }
+      else {
+#endif
+        const T *ptr = this->getPPALForRead();
+        result = ptr[from];
+#ifdef USE_CUDA
+      }
+#endif
+    }
 
     unsigned int getSize() const {
       return size/sizeof(T);
     }
   
     const T *getPPALForRead() const {
-#ifdef USE_CUDA
-      if (!getUpdatedPPAL())
+      /*
+        #ifdef USE_CUDA
+        if (!getUpdatedPPAL())
         ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+        #endif
+      */
+#ifdef USE_CUDA
+      updateMemPPAL();
 #endif
       return getPointer();
     }
@@ -569,11 +708,14 @@ namespace april_math {
 
 #ifdef USE_CUDA
     const T *getGPUForRead() const {
-      if (!getUpdatedGPU())
-        ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+      /*
+	if (!getUpdatedGPU())
+	ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+      */
+      updateMemGPU();
       return reinterpret_cast<T*>(mem_gpu);
     }
-
+    
     const T *getGPUForRead() {
       updateMemGPU();
       return reinterpret_cast<T*>(mem_gpu);
@@ -594,7 +736,7 @@ namespace april_math {
     T *getGPUForWrite() {
       if (isConst())
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
-      if (allocMemGPU()) copyPPALtoGPU();
+      allocMemGPU();
       setUpdatedGPU();
       unsetUpdatedPPAL();
       return reinterpret_cast<T*>(mem_gpu);
@@ -654,13 +796,13 @@ namespace april_math {
       return other;
     }
   };
-
+  
   // typedef for referring to float memory blocks
   typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
-} // namespace april_math
+} // namespace AprilMath
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H

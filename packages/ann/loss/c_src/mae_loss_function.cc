@@ -18,12 +18,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
+#include "cmath_overloads.h"
 #include "mae_loss_function.h"
-#include "wrapper.h"
+#include "matrix_operations.h"
+#include "loss_kernels.h"
+#include "token_matrix.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilMath::MatrixExt::LossOperations;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -39,14 +43,15 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
-    doMAELossFunction(input_mat->getRawDataAccess(),
-		      target_mat->getRawDataAccess(),
-		      loss_output->getRawDataAccess(),
-		      0.0f,
-		      input_mat->getDimSize(1),
-		      input_mat->getDimSize(0),
-		      input_mat->getCudaFlag());
-    loss_output->scal(1.0f/input_mat->getDimSize(1));
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
+    const int N = input_mat->size() / input_mat->getDimSize(0);
+    AprilUtils::SharedPtr<MatrixFloat>
+      aux_output( matSubstraction(input_mat, target_mat) );
+    matAbs(aux_output.get());
+    matSum(aux_output.get(), 1, loss_output);
+    if (N > 1) matScal(loss_output, 1.0f/N );
     return loss_output;
   }
 
@@ -56,13 +61,8 @@ namespace ANN {
     MatrixFloat *error_mat = input_mat->cloneOnlyDims();
     TokenMatrixFloat *error_mat_block = new TokenMatrixFloat(error_mat);
     AssignRef<Token>(error_output, error_mat_block);
-    doComputeMAEGradient(input_mat->getRawDataAccess(),
-			 target_mat->getRawDataAccess(),
-			 error_mat->getRawDataAccess(),
-			 NEAR_ZERO,
-			 input_mat->getDimSize(1),
-			 input_mat->getDimSize(0),
-			 input_mat->getCudaFlag());
+    const int N = input_mat->size() / input_mat->getDimSize(0);
+    matMAEGradient(error_mat, input_mat, target_mat, NEAR_ZERO, 1.0f/N);
     return error_output;
   }
 

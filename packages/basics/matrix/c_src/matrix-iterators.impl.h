@@ -25,7 +25,7 @@
 #include "matrix.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   /***** ITERATORS *****/
 
@@ -706,7 +706,7 @@ namespace basics {
           coords[i] = 0;
           order[i] = i;
         }
-        april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
+        AprilUtils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
       }
       else {
         // take given dim as the best and sort other dimensions
@@ -718,13 +718,30 @@ namespace basics {
           coords[i] = 0;
           order[i] = i;
         }
-        april_utils::Sort(order, 1, m->numDim-1, inverse_sort_compare(m));
+        AprilUtils::Sort(order, 1, m->numDim-1, inverse_sort_compare(m));
         coords[0] = 0;
         order[0]  = dim;
       }
       num_iterations = 1;
-      for (int i=1; i<m->numDim; ++i)
+      for (int i=1; i<m->numDim; ++i) {
         num_iterations *= m->matrixSize[order[i]];
+      }
+    }
+  }
+
+  template <typename T>
+  Matrix<T>::span_iterator::span_iterator(const Matrix<T> *m, const int *order) {
+    this->m       = m;
+    this->raw_pos = m->offset;
+    this->coords  = new int[m->numDim];
+    this->order   = new int[m->numDim];
+    for (int i=0; i<m->numDim; ++i) {
+      this->order[i]  = order[i];
+      this->coords[i] = 0;
+    }
+    this->num_iterations = 1;
+    for (int i=1; i<m->numDim; ++i) {
+      this->num_iterations *= m->matrixSize[order[i]];
     }
   }
 
@@ -854,6 +871,64 @@ namespace basics {
   }
 
   /////////////////////////////////////////////////////////////////////////////
+
+  template <typename T>
+  Matrix<T>::pos_iterator::pos_iterator(const Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
+    if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
+      coords = new int[m->getNumDim()];
+      for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
+    }
+    else coords = 0;
+    raw_pos = m->getOffset();
+  }
+  
+  template <typename T>
+  Matrix<T>::pos_iterator::pos_iterator() : m(0), idx(0), raw_pos(0), coords(0) { }
+
+  template <typename T>
+  Matrix<T>::pos_iterator::~pos_iterator() {
+    delete[] coords;
+  }
+
+  template <typename T>
+  typename Matrix<T>::pos_iterator &Matrix<T>::pos_iterator::
+  operator=(const Matrix<T>::pos_iterator &other) {
+    m = other.m;
+    idx = other.idx;
+    raw_pos = other.raw_pos;
+    if (other.coords != 0) {
+      if (coords==0 || m->numDim != other.m->numDim) {
+        delete[] coords;
+        coords = new int[other.m->getNumDim()];
+      }
+      for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+    }
+    else {
+      delete[] coords;
+      coords = 0;
+    }
+    return *this;
+  }
+
+  template <typename T>
+  bool Matrix<T>::pos_iterator::operator==(const Matrix<T>::pos_iterator &other) const {
+    return m==other.m && raw_pos == other.raw_pos;
+  }
+
+  template <typename T>
+  bool Matrix<T>::pos_iterator::operator!=(const Matrix<T>::pos_iterator &other) const {
+    return !( (*this) == other );
+  }
+
+  template <typename T>
+  typename Matrix<T>::pos_iterator &Matrix<T>::pos_iterator::operator++() {
+    ++idx;
+    if (coords != 0) m->nextCoordVectorRowOrder(coords, raw_pos);
+    else ++raw_pos;
+    return *this;
+  }
+
+  /*******************************************************************/
 
   template <typename T>
   Matrix<T>::sliding_window::sliding_window() : Referenced(),
@@ -1120,6 +1195,6 @@ namespace basics {
   int Matrix<T>::sliding_window::getNumDim() const {
     return m->getNumDim();
   }
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_ITERATORS_IMPL_H

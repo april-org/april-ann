@@ -5,8 +5,8 @@
 //BIND_END
 
 //BIND_HEADER_C
-using namespace basics;
-using namespace imaging;
+using namespace Basics;
+using namespace Imaging;
 //BIND_END
 
 

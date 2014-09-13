@@ -30,7 +30,7 @@
 #include "referenced.h"
 #include "table_of_token_codes.h"
 
-namespace basics {
+namespace Basics {
 
   /// A pure abstract class with interface of Token. A Token represents the
   /// concept of a datatype throught Dataflow architectures (even Artificial
@@ -43,15 +43,15 @@ namespace basics {
     /// This method implements a deep copy
     virtual Token *clone() const = 0;
     /// FOR DEBUG PURPOSES
-    virtual april_utils::buffer_list* debugString(const char *prefix,
+    virtual AprilUtils::buffer_list* debugString(const char *prefix,
                                                   int debugLevel)=0;
     /// Abstract method which indicates the TokenCode of child Token classes
     virtual TokenCode    getTokenCode() const = 0;
     /// Abstract method for serialization purposes
-    virtual april_utils::buffer_list* toString()=0;
+    virtual AprilUtils::buffer_list* toString()=0;
 
     // ALL TOKENS MUST IMPLEMENT THIS STATIC METHOD FOR SERIALIZATION PURPOSES
-    // Token *fromString(april_utils::constString &cs);
+    // Token *fromString(AprilUtils::constString &cs);
   
     /// Templatized method which returns true if a Token pointer could be
     /// transformed to a given Token child class
@@ -76,6 +76,6 @@ namespace basics {
     }
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // TOKEN_BASE_H

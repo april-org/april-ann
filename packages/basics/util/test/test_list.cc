@@ -7,7 +7,7 @@
 
 using std::cout;
 using std::endl;
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define N 10u
 

@@ -1,8 +1,8 @@
 //BIND_HEADER_C
 #include "interest_points.h"
-using namespace april_utils;
-using namespace basics;
-using namespace imaging;
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
 //BIND_END
 
 //BIND_HEADER_H
@@ -21,7 +21,7 @@ using namespace InterestPoints;
 
 //BIND_FUNCTION interest_points.extract_points_from_image_old
 {
-  using april_utils::vector;
+  using AprilUtils::vector;
 
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
@@ -47,7 +47,7 @@ using namespace InterestPoints;
 
 //BIND_FUNCTION interest_points.extract_points_from_image
 {
-  using april_utils::vector;
+  using AprilUtils::vector;
 
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;

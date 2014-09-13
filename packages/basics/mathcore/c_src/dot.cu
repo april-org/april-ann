@@ -19,81 +19,79 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
+#include "cblas_headers.h"
 #include "cuda_utils.h"
+#include "dot.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const float *x_mem,
-                                  unsigned int x_inc,
-                                  const float *y_mem,
-                                  unsigned int y_inc,
-                                  float *ret) {
-    return cublasSdot(handle,
-                      size,
-                      x_mem, x_inc,
-                      y_mem, y_inc,
-                      ret);
-  }
-
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const double *x_mem,
-                                  unsigned int x_inc,
-                                  const double *y_mem,
-                                  unsigned int y_inc,
-                                  double *ret) {
-    return cublasDdot(handle,
-                      size,
-                      x_mem, x_inc,
-                      y_mem, y_inc,
-                      ret);
-  }
-
-  cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-                                  unsigned int size,
-                                  const ComplexF *x_mem,
-                                  unsigned int x_inc,
-                                  const ComplexF *y_mem,
-                                  unsigned int y_inc,
-                                  ComplexF *ret) {
-    ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
-    return CUBLAS_STATUS_INTERNAL_ERROR;
-  }
-
+    template<>
+    cublasStatus_t wrapperCublasDot<float>(cublasHandle_t &handle,
+                                           unsigned int size,
+                                           const float *x_mem,
+                                           unsigned int x_inc,
+                                           const float *y_mem,
+                                           unsigned int y_inc,
+                                           float *ret) {
+      return cublasSdot(handle,
+                        size,
+                        x_mem, x_inc,
+                        y_mem, y_inc,
+                        ret);
+    }
+    
+    template<>
+    cublasStatus_t wrapperCublasDot<double>(cublasHandle_t &handle,
+                                            unsigned int size,
+                                            const double *x_mem,
+                                            unsigned int x_inc,
+                                            const double *y_mem,
+                                            unsigned int y_inc,
+                                            double *ret) {
+      return cublasDdot(handle,
+                        size,
+                        x_mem, x_inc,
+                        y_mem, y_inc,
+                        ret);
+    }
+    
+  } // namespace CUDA
 #endif
 
   /***************************************
    ************* CBLAS SECTION ***********
    ***************************************/
 
-  float wrapperCblasDot(unsigned int size,
-                        const float *x_mem, unsigned int x_inc,
-                        const float *y_mem, unsigned int y_inc) {
+  template<>
+  float wrapperCblasDot<float>(unsigned int size,
+                               const float *x_mem, unsigned int x_inc,
+                               const float *y_mem, unsigned int y_inc) {
     return cblas_sdot(size,
                       x_mem, x_inc,
                       y_mem, y_inc);
   }
 
-  double wrapperCblasDot(unsigned int size,
-                         const double *x_mem, unsigned int x_inc,
-                         const double *y_mem, unsigned int y_inc) {
+  template<>
+  double wrapperCblasDot<double>(unsigned int size,
+                                 const double *x_mem, unsigned int x_inc,
+                                 const double *y_mem, unsigned int y_inc) {
     return cblas_ddot(size,
                       x_mem, x_inc,
                       y_mem, y_inc);
   }
 
-  ComplexF wrapperCblasDot(unsigned int size,
-                           const ComplexF *x_mem, unsigned int x_inc,
-                           const ComplexF *y_mem, unsigned int y_inc) {
+  template<>
+  ComplexF wrapperCblasDot<ComplexF>(unsigned int size,
+                                     const ComplexF *x_mem, unsigned int x_inc,
+                                     const ComplexF *y_mem, unsigned int y_inc) {
     ComplexF ret;
     cblas_zdotu_sub(size,
                     x_mem, x_inc,
@@ -101,131 +99,5 @@ namespace april_math {
                     &ret);
     return ret;
   }
-
-  /***************************************
-   *********** TEMPLATE SECTION **********
-   ***************************************/
-
-  template <typename T>
-  T doDot(unsigned int size,
-          const GPUMirroredMemoryBlock<T> *x,
-          unsigned int x_shift,
-          unsigned int x_inc,
-          const GPUMirroredMemoryBlock<T> *y,
-          unsigned int y_shift,
-          unsigned int y_inc,
-          bool use_gpu) {
-    const T *x_mem;
-    const T *y_mem;
-    T ret;
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_gpu);
-#endif
-#ifdef USE_CUDA
-    if (use_gpu) {
-      cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
-      x_mem = x->getGPUForRead() + x_shift;
-      y_mem = y->getGPUForRead() + y_shift;
-    
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-      checkCublasError(status);
-      status = wrapperCublasDot(handle, size, x_mem, x_inc, y_mem, y_inc, &ret);
-      checkCublasError(status);
-    }
-    else {
-#endif
-      x_mem = x->getPPALForRead() + x_shift;
-      y_mem = y->getPPALForRead() + y_shift;
-    
-      ret = wrapperCblasDot(size,
-                            x_mem, x_inc,
-                            y_mem, y_inc);
-#ifdef USE_CUDA
-    }
-#endif
-    return ret;
-  }
-
-  template<typename T>
-  T doSparseDot(int NNZ,
-                const GPUMirroredMemoryBlock<T> *x_values,
-                const Int32GPUMirroredMemoryBlock *x_indices,
-                const GPUMirroredMemoryBlock<T> *y,
-                int y_shift,
-                int y_inc,
-                bool use_gpu) {
-    const T *x_values_mem;
-    const int *x_indices_mem;
-    const T *y_mem;
-    T ret;
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_gpu);
-#endif
-#ifdef USE_CUDA
-    if (use_gpu)
-      ERROR_PRINT("CUDA sparse DOT not implemented\n");
-#endif
-    x_values_mem  = x_values->getPPALForRead();
-    x_indices_mem = x_indices->getPPALForRead();
-    y_mem = y->getPPALForRead() + y_shift;
-    ret = cblas_sparse_dot(NNZ,
-                           x_values_mem,
-                           x_indices_mem,
-                           y_mem,
-                           y_inc);
-    return ret;
-  }
-
-  template float doDot<float>(unsigned int size,
-                              const GPUMirroredMemoryBlock<float> *x,
-                              unsigned int x_shift,
-                              unsigned int x_inc,
-                              const GPUMirroredMemoryBlock<float> *y,
-                              unsigned int y_shift,
-                              unsigned int y_inc,
-                              bool use_gpu);
-
-  template double doDot<double>(unsigned int size,
-                                const GPUMirroredMemoryBlock<double> *x,
-                                unsigned int x_shift,
-                                unsigned int x_inc,
-                                const GPUMirroredMemoryBlock<double> *y,
-                                unsigned int y_shift,
-                                unsigned int y_inc,
-                                bool use_gpu);
-
-  template ComplexF doDot<ComplexF>(unsigned int size,
-                                    const GPUMirroredMemoryBlock<ComplexF> *x,
-                                    unsigned int x_shift,
-                                    unsigned int x_inc,
-                                    const GPUMirroredMemoryBlock<ComplexF> *y,
-                                    unsigned int y_shift,
-                                    unsigned int y_inc,
-                                    bool use_gpu);
-
-  template float doSparseDot(int NNZ,
-                             const GPUMirroredMemoryBlock<float> *x_values,
-                             const Int32GPUMirroredMemoryBlock *x_indices,
-                             const GPUMirroredMemoryBlock<float> *y,
-                             int y_shift,
-                             int y_inc,
-                             bool use_gpu);
-
-  template double doSparseDot(int NNZ,
-                              const GPUMirroredMemoryBlock<double> *x_values,
-                              const Int32GPUMirroredMemoryBlock *x_indices,
-                              const GPUMirroredMemoryBlock<double> *y,
-                              int y_shift,
-                              int y_inc,
-                              bool use_gpu);
-
-  template ComplexF doSparseDot(int NNZ,
-                                const GPUMirroredMemoryBlock<ComplexF> *x_values,
-                                const Int32GPUMirroredMemoryBlock *x_indices,
-                                const GPUMirroredMemoryBlock<ComplexF> *y,
-                                int y_shift,
-                                int y_inc,
-                                bool use_gpu);
-
-} // namespace april_math
+  
+} // namespace AprilMath

@@ -24,11 +24,11 @@
 #include "matrixInt32.h"
 #include "matrixFloat.h"
 
-namespace basics {
+namespace Basics {
   
   MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
                                                    bool col_major);
   
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILMATRIXINT32_H

@@ -28,7 +28,7 @@
 #include "error_print.h"
 #include "hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   /// Plantilla para implementar un Trie generico, que guarda
   /// transiciones entre estados con el tipo int, y da como salida el tipo
@@ -37,11 +37,11 @@ namespace april_utils {
   class TrieHash {
   public:
     // una transicion va de (estado, int) => (dest)
-    typedef april_utils::hash<int_pair, int> transitions_t;
+    typedef AprilUtils::hash<int_pair, int> transitions_t;
   
   private:
     // tabla de finales
-    april_utils::hash<int, O> outputs_tbl;
+    AprilUtils::hash<int, O> outputs_tbl;
     
     // nodos y transiciones
     transitions_t  transitions_tbl;
@@ -53,7 +53,7 @@ namespace april_utils {
     
     /////////////////////////////////////////////////////////////////////////////
     
-    typedef typename april_utils::hash<int, O>::iterator outputs_iterator;
+    typedef typename AprilUtils::hash<int, O>::iterator outputs_iterator;
     
     // iterador sencillo
     class iterator {
@@ -81,26 +81,26 @@ namespace april_utils {
       }
       
       int  get_node() {
-	// typedef april_utils::hash<(estado,word), int,
+	// typedef AprilUtils::hash<(estado,word), int,
 	return hash_it->first.first;
       }
       int    get_tr_value() {
-	// typedef april_utils::hash<(estado,word), int,
+	// typedef AprilUtils::hash<(estado,word), int,
 	return hash_it->first.second;
       }
       int  get_dest() {
-	// typedef april_utils::hash<(estado,word), int,
+	// typedef AprilUtils::hash<(estado,word), int,
 	return hash_it->second;
       }
       int get_level() {
-	// typedef april_utils::hash<(estado,word), int,
+	// typedef AprilUtils::hash<(estado,word), int,
 	return trie->levels_tbl[hash_it->first.first];
       }
       pair<const int_pair, int> & get_transition() {
 	return *hash_it;
       }
       const O *get_outputs() {
-	// typedef april_utils::hash<(estado,word), int,
+	// typedef AprilUtils::hash<(estado,word), int,
 	return trie->outputs_tbl.find(hash_it->first.first);
       }
       

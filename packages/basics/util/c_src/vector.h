@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // Be careful! It's not std::vector :)
   template<typename T> class vector {
@@ -167,9 +167,9 @@ namespace april_utils {
     void clear() { used_size = 0; }
 
     void swap(vector &other) {
-      april_utils::swap(vec,         other.vec);
-      april_utils::swap(vector_size, other.vector_size);
-      april_utils::swap(used_size,   other.used_size);
+      AprilUtils::swap(vec,         other.vec);
+      AprilUtils::swap(vector_size, other.vector_size);
+      AprilUtils::swap(used_size,   other.used_size);
     }
 
     iterator begin() { return vec; }
@@ -178,7 +178,7 @@ namespace april_utils {
     const_iterator end() const { return vec+used_size; }
 
   };
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif
 

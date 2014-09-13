@@ -21,7 +21,7 @@
 #include <cstdio>
 #include "april_print.h"
 
-namespace april_utils {
+namespace AprilUtils {
   void aprilPrint(const float &v) {
     printf("%f", v);
   }

@@ -46,6 +46,10 @@
        --flags = "-std=c99", not valid for c++!!!
        dest_dir = "build",
      },
+     object{ 
+       file = "c_src/*.cu",
+       dest_dir = "build",
+     },
      luac{
        orig_dir = "lua_src",
        dest_dir = "build",

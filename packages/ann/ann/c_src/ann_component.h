@@ -35,6 +35,10 @@
 #include "unused_variable.h"
 #include "vector.h"
 
+using AprilUtils::hash;    // required for build
+using AprilUtils::string;
+using AprilUtils::vector;
+
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {						\
     april_assert( (m)->getMajorOrder() == CblasColMajor );		\
@@ -78,10 +82,10 @@ namespace ANN {
    * weights_name will share also the same weight parameters after the build
    * call.
    *
-   * ANNComponent's work majorly over basics::MatrixFloat and
-   * basics::SparseMatrixFloat classes. Both objects can be put together by
-   * using basics::Token instances, and the methods defined here receive and
-   * produce always basics::Token references.
+   * ANNComponent's work majorly over Basics::MatrixFloat and
+   * Basics::SparseMatrixFloat classes. Both objects can be put together by
+   * using Basics::Token instances, and the methods defined here receive and
+   * produce always Basics::Token references.
    */
   class ANNComponent : public Functions::FunctionInterface {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ANNComponent);
@@ -107,23 +111,23 @@ namespace ANN {
     ANNComponent(const char *name, const char *weights_name=0,
                  unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
-      use_cuda(false) {
-      if (name) this->name = april_utils::string(name);
+      use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT) {
+      if (name) this->name = AprilUtils::string(name);
       else generateDefaultName();
-      if (weights_name) this->weights_name = april_utils::string(weights_name);
+      if (weights_name) this->weights_name = AprilUtils::string(weights_name);
     }
     
     /// Destructor of ANNComponent.
     virtual ~ANNComponent() { }
     
     /// Returns the name of the component.
-    const april_utils::string &getName() const { return name; }
+    const AprilUtils::string &getName() const { return name; }
     /**
      * Returns the name of the component weight parameters.
      *
      * @note The weights_name string can be an empty string (NULL string).
      */
-    const april_utils::string &getWeightsName() const { return weights_name; }
+    const AprilUtils::string &getWeightsName() const { return weights_name; }
     /// Indicates if the weights_name string is valid, i.e., it is not empty.
     bool hasWeightsName() const { return !weights_name.empty(); }
     
@@ -156,7 +160,7 @@ namespace ANN {
       char default_prefix[2] = "w";
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
-      weights_name = april_utils::string(str_id);
+      weights_name = AprilUtils::string(str_id);
       ++next_weights_id;
     }
     
@@ -167,7 +171,7 @@ namespace ANN {
     virtual unsigned int getOutputSize() const {
       return output_size;
     }
-    virtual basics::Token *calculate(basics::Token *input) {
+    virtual Basics::Token *calculate(Basics::Token *input) {
       return this->doForward(input, false);
     }
     /////////////////////////////////////////////
@@ -175,50 +179,50 @@ namespace ANN {
     /**
      * @brief Computes the output size given a vector of dimension sizes.
      *
-     * @param input_size - A april_utils::vector with a list of input dimension
+     * @param input_size - A AprilUtils::vector with a list of input dimension
      * sizes.
      *
-     * @param[out] output_size - A april_utils::vector reference which will
+     * @param[out] output_size - A AprilUtils::vector reference which will
      * contain the output dimension sizes for the current ANNComponent with the
      * given @c input_size vector.
      *
      * This method is useful to compute output size of convolutional components.
      *
      * @note The given @c output_size reference is cleared before appending the
-     * result, i.e., april_utils::vector::clear() method is called as first
+     * result, i.e., AprilUtils::vector::clear() method is called as first
      * instruction.
      *
      * @note Identity function is implemented by default in the ANNComponent
      * virtual class.
      */
-    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
-				      april_utils::vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
+				      AprilUtils::vector<unsigned int> &output_size) {
       output_size.clear();
       if (getOutputSize()>0) output_size.push_back(getOutputSize());
       else if (getInputSize() > 0) output_size.push_back(getInputSize());
       else output_size = input_size;
     }
     
-    /// Returns a basics::Token with the last given input.
-    virtual basics::Token *getInput() { return 0; }
-    /// Returns a basics::Token with the last produced output.
-    virtual basics::Token *getOutput() { return 0; }
-    /// Returns a basics::Token with the last given deltas (error input)
-    virtual basics::Token *getErrorInput() { return 0; }
-    /// Returns a basics::Token with the last produced deltas (error output)
-    virtual basics::Token *getErrorOutput() { return 0; }
+    /// Returns a Basics::Token with the last given input.
+    virtual Basics::Token *getInput() { return 0; }
+    /// Returns a Basics::Token with the last produced output.
+    virtual Basics::Token *getOutput() { return 0; }
+    /// Returns a Basics::Token with the last given deltas (error input)
+    virtual Basics::Token *getErrorInput() { return 0; }
+    /// Returns a Basics::Token with the last produced deltas (error output)
+    virtual Basics::Token *getErrorOutput() { return 0; }
 
     /**
      * @brief Computes the forward step of the ANNComponent.
      *
-     * @param input - A basics::Token with the input given to the ANNComponent.
+     * @param input - A Basics::Token with the input given to the ANNComponent.
      *
      * @param during_training - A bool which allows to indicate if the
      * forward step is during training phase or not. Some ANNComponent's need
      * this information to modify its behavior, e.g., DropoutANNComponent uses
      * it to implement dropout technique.
      *
-     * @return A new basics::Token reference with the forward step result.
+     * @return A new Basics::Token reference with the forward step result.
      *
      * This method executes the set of operations required for each block of
      * connections when performing the forward step of the Backpropagation
@@ -227,7 +231,7 @@ namespace ANN {
      * @note Identity function is implemented by default in the ANNComponent
      * virtual class.
      */
-    virtual basics::Token *doForward(basics::Token* input, bool during_training) {
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training) {
       UNUSED_VARIABLE(during_training);
       return input;
     }
@@ -235,25 +239,25 @@ namespace ANN {
     /**
      * @brief Computes the back-propagation of delta errors step.
      *
-     * @param input_error - A basics::Token with the delta errors of the
+     * @param input_error - A Basics::Token with the delta errors of the
      * ANNComponent outputs.
      *
-     * @return A basics::Token reference with the delta errors of the
+     * @return A Basics::Token reference with the delta errors of the
      * ANNComponent inputs (@c output_error).
      *
      * This method back-propagates error derivatives, i.e., delta
      * errors. Receives input error gradients, and returns its output error
-     * gradients basics::Token.
+     * gradients Basics::Token.
      *
      * @note By default the identity function is implemented by ANNComponent
      * virtual class.
      */
-    virtual basics::Token *doBackprop(basics::Token *input_error) {
+    virtual Basics::Token *doBackprop(Basics::Token *input_error) {
       return input_error;
     }
     
     /**
-     * @brief Releases the references of basics::Token acquired at doForward()
+     * @brief Releases the references of Basics::Token acquired at doForward()
      * and doBackprop() methods.
      *
      * This method receives a counter of the number of times it is sequentially
@@ -274,22 +278,22 @@ namespace ANN {
     /**
      * @brief Computation of gradient of all ANNComponent's is done here.
      *
-     * @param[in,out] weight_grads_dict - A basics::MatrixFloatSet reference where
+     * @param[in,out] weight_grads_dict - A Basics::MatrixFloatSet reference where
      * gradient matrices will be stored.
      *
      * This method traverses all the ANNComponent's using the given
-     * basics::MatrixFloatSet. If hasWeightsName() is true, the method
-     * computeGradients() will be executed with the shared basics::MatrixFloat
-     * reference (i.e. april_utils::SharedPtr) related to the @c weights_name
+     * Basics::MatrixFloatSet. If hasWeightsName() is true, the method
+     * computeGradients() will be executed with the shared Basics::MatrixFloat
+     * reference (i.e. AprilUtils::SharedPtr) related to the @c weights_name
      * property.
      *
      * @note The @c weight_grads_dict[weights_name] can be an empty reference,
      * in this case, the called method has the responsability of its proper
      * initialization.
      */
-    virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict){
+    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict){
       if (!weights_name.empty()) {
-	computeGradients( (*weight_grads_dict)[weights_name] );
+        computeGradients( (*weight_grads_dict)[weights_name].getDense() );
       }
     }
     
@@ -300,7 +304,7 @@ namespace ANN {
      *
      * @note The returned ANNComponent is in non-built state and its weight
      * parameters are set to an NULL reference. It is needed to call built
-     * method with a proper weight parameters basics::MatrixFloat.
+     * method with a proper weight parameters Basics::MatrixFloat.
      */
     virtual ANNComponent *clone() {
       return new ANNComponent(name.c_str(), weights_name.c_str(),
@@ -344,7 +348,7 @@ namespace ANN {
      * @param _output_size - The output size given to the method. It can be @c
      * _input_size=0 to indicate that it is unknown or don't care.
      *
-     * @param[in,out] weights_dict - A pointer to basics::MatrixFloatSet where
+     * @param[in,out] weights_dict - A pointer to Basics::MatrixFloatSet where
      * weight matrices are stored.
      *
      * @param[out] components_dict - A dictionary of ANNComponent's which are
@@ -354,16 +358,16 @@ namespace ANN {
      * necessary when input/output sizes have unexpected values, and calling to
      * the parent method before doing anything.
      *
-     * @note The @c weights_dict param contains weight basics::MatrixFloat
-     * references (i.e. april_utils::SharedPtr) indexed by @c weights_name
+     * @note The @c weights_dict param contains weight Basics::MatrixFloat
+     * references (i.e. AprilUtils::SharedPtr) indexed by @c weights_name
      * property. The reference can be empty and the derived class is responsible
      * to initialize it properly. If it is not empty, the derived class is
      * responsible to check its size correctness.
      */
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict) {
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
       is_built = true;
@@ -389,7 +393,7 @@ namespace ANN {
     }
     
     /// Retrieve matrix weights from ANNComponent's.
-    virtual void copyWeights(basics::MatrixFloatSet *weights_dict) {
+    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 
@@ -399,7 +403,7 @@ namespace ANN {
      * @note All derived classes which rewrite this method must call parent
      * method before doing anything.
      */
-    virtual void copyComponents(april_utils::hash<april_utils::string,ANNComponent*> &components_dict) {
+    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict) {
       components_dict[name] = this;
     }
     
@@ -426,7 +430,7 @@ namespace ANN {
      * @note All derived classes which rewrite this method must call the parent
      * method before doing anything.
      */
-    virtual ANNComponent *getComponent(april_utils::string &name) {
+    virtual ANNComponent *getComponent(AprilUtils::string &name) {
       if (this->name == name) return this;
       return 0;
     }
@@ -441,10 +445,10 @@ namespace ANN {
      * method.
      */
     virtual char *toLuaString() {
-      april_utils::buffer_list buffer;
+      AprilUtils::buffer_list buffer;
       buffer.printf("ann.components.base{ name='%s', weights='%s', size=%d }",
 		    name.c_str(), weights_name.c_str(), input_size);
-      return buffer.to_string(april_utils::buffer_list::NULL_TERMINATED);
+      return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
     }
 
   private:
@@ -466,7 +470,7 @@ namespace ANN {
       char str_id[MAX_NAME_STR+1];
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
-      name = april_utils::string(str_id);
+      name = AprilUtils::string(str_id);
       ++next_name_id;
     }
     
@@ -476,9 +480,9 @@ namespace ANN {
     /// The counter for automatic weights_name generation.
     static unsigned int next_weights_id;
     /// The name which identifies the ANNComponent.
-    april_utils::string name;
+    AprilUtils::string name;
     /// The name which identifies the ANNComponent weight parameters.
-    april_utils::string weights_name;
+    AprilUtils::string weights_name;
     /// The input size (or domain) of the ANNComponent.
     unsigned int input_size;
     /// The output size (or range) of the ANNComponent.
@@ -492,8 +496,8 @@ namespace ANN {
      * This method is rewritten only by ANNComponent's which contain trainable
      * weight matrices, and therefore it is needed to compute its gradients.
      *
-     * @param weight_grads - A shared reference (i.e. april_utils::SharedPtr) to
-     * a basics::MatrixFloat pointer.
+     * @param weight_grads - A shared reference (i.e. AprilUtils::SharedPtr) to
+     * a Basics::MatrixFloat pointer.
      *
      * @note The default implementation in ANNComponent does nothing.
      *
@@ -501,7 +505,7 @@ namespace ANN {
      * class is responsible to initialize it properly, or to check the
      * correctness of sizes and dimensions.
      */
-    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> &weight_grads) {
+    virtual void computeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> &weight_grads) {
       UNUSED_VARIABLE(weight_grads);
     }
     

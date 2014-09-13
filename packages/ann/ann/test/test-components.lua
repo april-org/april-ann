@@ -1,3 +1,7 @@
+-- forces the use of CUDA
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
+
 local check   = utest.check
 local T       = utest.test
 local verbose = false
@@ -10,7 +14,6 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
   ann.components.reset_id_counters()
   local c = component_builder_func()
-  if util.is_cuda_available() then c:set_use_cuda(true) end
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
@@ -23,27 +26,52 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     target = matrix.col_major(b, o):uniformf(0,1,rnd)
   end
   if norm then
-    apply(function(m) m:scal(1/m:sum()) end,
+    apply(function(m) m:exp() m:scal(1/m:sum()) end,
       target:sliding_window():iterate())
   end
-  result = trainer:grad_check_step(input,
-                                   target,
-                                   verbose)
+  result = trainer:grad_check_step(input, target, verbose)
   if not result then
+    print("---- WEIGHTS ----")
+    for wname,w in pairs(trainer:get_weights_table()) do
+      print(wname:upper())
+      print(w)
+    end
     print("---- INPUT ----")
     print(input)
     print("---- TARGET ----")
     print(target)
     for name,c in trainer:iterate_components() do
       print("---- " .. name .. " ----")
+      print("Input matrix")
       print(c:get_input():get_matrix())
+      print("Output matrix")
       print(c:get_output():get_matrix())
+      print("Error input matrix")
       print(c:get_error_input():get_matrix())
+      print("Error output matrix")
       print(c:get_error_output():get_matrix())
     end
     error(string.format("Error at %s (%d,%d,%d,%s) !!!",desc,i,o,b,loss_name))
   end
 end
+
+----------
+-- BIAS --
+----------
+T("BIAS TEST",
+  function()
+    check(function()
+        for o=2,4 do
+          for b=1,4 do
+            check_component(function()
+                return ann.components.bias{ size=o }
+                            end,
+              "mse", o, o, b, "BIAS")
+          end
+        end
+        return true
+    end)
+end)
 
 ------------------------
 -- DOT PRODUCT + BIAS --
@@ -94,7 +122,7 @@ end)
 -- DOT PRODUCT + BIAS + FMEASURE --
 -----------------------------------
 
-T("DOTPRODUCT + BIAS + FM_MICRO_AVG TEST",
+T("DOTPRODUCT + BIAS + LOGISTIC + FM_MICRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -113,7 +141,7 @@ T("DOTPRODUCT + BIAS + FM_MICRO_AVG TEST",
     end)
 end)
 
-T("DOTPRODUCT + BIAS + FM_MACRO_AVG TEST",
+T("DOTPRODUCT + BIAS + LOGISTIC + FM_MACRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -132,7 +160,7 @@ T("DOTPRODUCT + BIAS + FM_MACRO_AVG TEST",
     end)
 end)
 
-T("DOTPRODUCT + BIAS + FM_MACRO_AVG + SOFTMAX TEST",
+T("DOTPRODUCT + BIAS + SOFTMAX + FM_MACRO_AVG TEST",
   function()
     check(function()
         for i=2,4 do
@@ -186,7 +214,7 @@ end)
 -- AUTO-ENCODER --
 ------------------
 
-T("AUTO-ENCODER TEST",
+T("LOGISTIC AUTO-ENCODER TEST",
   function()
     check(function()
         for i=2,4 do
@@ -216,7 +244,7 @@ end)
 -- CONVOLUTION + ACTF + MAX POOLING --
 --------------------------------------
 
-T("REWRAP + CONVOLUTION + ACTF + MAXPOOLING TEST + FLATTEN TEST",
+T("REWRAP + CONVOLUTION + LOGISTIC + MAXPOOLING TEST + FLATTEN TEST",
   function()
     check(function()
         for n=1,4 do
@@ -337,6 +365,29 @@ T("DOTPRODUCT + TANH TEST",
     end)
 end)
 
+---------------
+-- HARD TANH --
+---------------
+
+T("DOTPRODUCT + HARDTANH TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.hardtanh() )
+                              end,
+                "mse", i, o, b, "HARDTANH")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 --------------
 -- SOFTPLUS --
 --------------
@@ -398,7 +449,7 @@ T("DOTPRODUCT + SOFTMAX TEST",
                     push( ann.components.dot_product{ input=i, output=o } ):
                     push( ann.components.actf.softmax() )
                               end,
-                "mse", i, o, b, "SOFTMAX")
+                "mse", i, o, b, "SOFTMAX", true)
             end
           end
         end
@@ -429,3 +480,28 @@ T("DOTPRODUCT + LOG_SOFTMAX TEST",
         return true
     end)
 end)
+
+-----------------
+-- DOT PRODUCT --
+-----------------
+T("DOTPRODUCT TEST",
+  function()
+    check(
+      function()
+        for i=2,4 do
+          for o=2,4 do
+            for b=1,4 do
+              check_component(
+                function()
+                  return ann.components.dot_product{ input=i, output=o }
+                end,
+                "mse", i, o, b, "DOTPRODUCT"
+              )
+            end
+          end
+        end
+        return true
+    end
+    )
+end
+)

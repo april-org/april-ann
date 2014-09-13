@@ -23,12 +23,14 @@
 #include <cmath>
 #include <cstring>
 #include <csignal>
-#include <errno.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdio>
+extern "C" {
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+}
 #ifndef NO_OMP
 #include <omp.h>
 #endif
@@ -69,7 +71,7 @@ FILE **newfile (lua_State *L) {
 #include <cstdlib>
 #include "mmapped_data.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
 
@@ -114,7 +116,7 @@ extern const char *__COMMIT_NUMBER__;
 
 //BIND_FUNCTION util.omp_get_num_threads
 {
-  LUABIND_RETURN(int, omp_utils::get_num_threads());
+  LUABIND_RETURN(int, OMPUtils::get_num_threads());
 }
 //BIND_END
 
@@ -508,7 +510,7 @@ extern const char *__COMMIT_NUMBER__;
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(stopwatch, new april_utils::stopwatch());
+  LUABIND_RETURN(stopwatch, new AprilUtils::stopwatch());
 }
 //BIND_END
 
@@ -576,7 +578,7 @@ extern const char *__COMMIT_NUMBER__;
 //BIND_METHOD stopwatch clone
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(stopwatch, new april_utils::stopwatch(*obj));
+  LUABIND_RETURN(stopwatch, new AprilUtils::stopwatch(*obj));
 }
 //BIND_END
 
@@ -593,7 +595,10 @@ extern const char *__COMMIT_NUMBER__;
   struct timespec req;
   req.tv_sec  = static_cast<time_t>(seconds);
   req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
-  nanosleep(&req, 0);
+  if (nanosleep(&req, 0) == 1) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, strerror(errno));
+  }
 }
 //BIND_END
 
@@ -828,7 +833,7 @@ extern const char *__COMMIT_NUMBER__;
 
 //BIND_FUNCTION util.options.test
 {
-  april_utils::SharedPtr<stopwatch> clock = new stopwatch();
+  AprilUtils::SharedPtr<stopwatch> clock = new stopwatch();
   // stack: nil
   lua_newtable(L);
   // stack: table
@@ -836,8 +841,8 @@ extern const char *__COMMIT_NUMBER__;
   // stack: table stopwatch
   lua_setfield(L,-2,"clock1");
   // stack: table
-  april_utils::UniquePtr<april_utils::LuaTableOptions>
-    opt(new april_utils::LuaTableOptions(L,1));
+  AprilUtils::UniquePtr<AprilUtils::LuaTableOptions>
+    opt(new AprilUtils::LuaTableOptions(L,1));
   opt->putReferenced("clock2", clock.get());
   //
   stopwatch *opt_clock1 = opt->getReferenced<stopwatch>("clock1");

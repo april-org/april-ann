@@ -21,7 +21,7 @@
 #ifndef CLAMP_H
 #define CLAMP_H
 
-namespace april_utils {
+namespace AprilUtils {
   template <typename T>
   T clamp(T val, T lower, T upper)
   {

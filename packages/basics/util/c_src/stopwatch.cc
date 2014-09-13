@@ -23,7 +23,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-namespace april_utils {
+namespace AprilUtils {
   
   double stopwatch::get_cpu_clock() const {
     struct rusage wop;

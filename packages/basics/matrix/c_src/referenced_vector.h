@@ -25,7 +25,7 @@
 #include "referenced.h"
 #include "vector.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T> 
   class ReferencedVector : public Referenced, public vector<T> {

@@ -33,7 +33,7 @@ extern "C" {
 #include "error_print.h"
 #include "ignore_result.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   class MMappedDataReader : public Referenced {
     int commit_number;

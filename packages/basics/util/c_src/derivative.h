@@ -21,7 +21,7 @@
 #ifndef DERIVATIVE_H
 #define DERIVATIVE_H
 
-namespace april_utils {
+namespace AprilUtils {
   void derivative1(float *v, float *v_dest, int n);
   void derivative2(float *v, float *v_dest, int n);
 }

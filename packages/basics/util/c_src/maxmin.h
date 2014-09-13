@@ -23,7 +23,7 @@
 
 #include "april_assert.h"
 
-namespace april_utils {
+namespace AprilUtils {
   template<typename T>
   T max(T a, T b) {
     return (a<b) ? b : a;
@@ -100,12 +100,12 @@ namespace april_utils {
 
   template<typename T>
   typename T::value_type max(T& container) {
-      return *april_utils::argmax(container.begin(), container.end());
+      return *AprilUtils::argmax(container.begin(), container.end());
   }
   
   template<typename T>
   typename T::value_type min(T& container) {
-      return *april_utils::argmin(container.begin(), container.end());
+      return *AprilUtils::argmin(container.begin(), container.end());
   }
 
 }

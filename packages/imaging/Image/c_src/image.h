@@ -29,20 +29,20 @@
 #include "matrix.h"
 #include "referenced.h"
 
-namespace imaging {
+namespace Imaging {
 
   template <typename T>
   class Image : public Referenced {
     APRIL_DISALLOW_ASSIGN(Image);
 
-    basics::Matrix<T> *matrix; // dimension 2 is assumed
+    Basics::Matrix<T> *matrix; // dimension 2 is assumed
     // int offset;
     // int width,height;
   
   public:
     //Constructors
-    Image(basics::Matrix<T> *mat);
-    Image(basics::Matrix<T> *mat, 
+    Image(Basics::Matrix<T> *mat);
+    Image(Basics::Matrix<T> *mat, 
           int width, int height,
           int offset_w, int offset_h);
     Image(int width, int height, T value=T()); // Image with a new Matrix, filled with value
@@ -50,8 +50,8 @@ namespace imaging {
     //Destructor...
     virtual ~Image();
     //Methods
-    basics::Matrix<T> *getMatrix() { return matrix; }
-    const basics::Matrix<T> *getMatrix() const { return matrix; }
+    Basics::Matrix<T> *getMatrix() { return matrix; }
+    const Basics::Matrix<T> *getMatrix() const { return matrix; }
     T& operator () (int x, int y) { 
       return (*matrix)(y, x);
     }
@@ -96,9 +96,9 @@ namespace imaging {
                                 int offset_w, int offset_h,
                                 T default_color) const;  
     void projection_v(T *v) const ; // v is not created here
-    void projection_v(basics::Matrix<T> **m) const; // creates matrix m
+    void projection_v(Basics::Matrix<T> **m) const; // creates matrix m
     void projection_h(T *v) const ; // v is not created here
-    void projection_h(basics::Matrix<T> **m) const; // creates matrix m
+    void projection_h(Basics::Matrix<T> **m) const; // creates matrix m
     Image<T> *shear_h(double radians, T default_color) const;
     void shear_h_inplace(double radians, T default_color);
   
@@ -111,13 +111,13 @@ namespace imaging {
     Image<T> *invert_colors() const; // Invert the color of every pixel, new image
 
     Image<T> *convolution5x5(float *k, T default_color=T()) const;
-    Image<T> *affine_transform(basics::AffineTransform2D *trans, T default_value, int *offset_x=0, int *offset_y=0) const;
+    Image<T> *affine_transform(Basics::AffineTransform2D *trans, T default_value, int *offset_x=0, int *offset_y=0) const;
   
     Image<T> *remove_blank_columns() const;
     Image<T> *add_rows(int top_rows, int bottom_rows, T value) const;
     Image<T> *substract_image(Image<T> *img, T low, T high) const;
 
-    basics::Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, basics::LinearCombConf<T> *cl);
+    Basics::Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, Basics::LinearCombConf<T> *cl);
     void threshold_image(T low, T high, T value_low, T value_high);
   };
 

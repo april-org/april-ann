@@ -18,12 +18,18 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_H
+#include "gpu_mirrored_memory_block.h"
+
+using namespace AprilMath;
+//BIND_END
+
 //BIND_HEADER_C
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "error_print.h"
 
-namespace april_math {
+namespace AprilMath {
   
 #define FUNCTION_NAME "Constructor"
   template<typename T>
@@ -71,14 +77,8 @@ namespace april_math {
   }
 #undef FUNCTION_NAME
 
-} // namespace april_math
+} // namespace AprilMath
 
-//BIND_END
-
-//BIND_HEADER_H
-#include "gpu_mirrored_memory_block.h"
-
-using namespace april_math;
 //BIND_END
 
 //BIND_FUNCTION mathcore.set_mmap_allocation
@@ -99,6 +99,15 @@ using namespace april_math;
   GPUMirroredMemoryBlockBase::
     changeMaxPoolSize(static_cast<size_t>(max_pool_size));
 #endif
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.set_use_cuda_default
+{
+  bool v;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, bool, v);
+  GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = v;
 }
 //BIND_END
 

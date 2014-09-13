@@ -34,23 +34,32 @@
 #include "gpu_mirrored_memory_block.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
+#include "logbase.h"
 #include "qsort.h"
 #include "serializable.h"
 #include "smart_ptr.h"
 #include "swap.h"
 #include "unused_variable.h"
-#include "wrapper.h"
+#include "mathcore.h"
 
-namespace basics {
+namespace Basics {
   
   namespace MatrixIO {
-    const char * const TAB_OPTION = "tab";
+    /// Boolean option key for read/write using tabulated format.
+    const char * const TAB_OPTION   = "tab";
+    /// Boolean option key for read/write using ascii format.
     const char * const ASCII_OPTION = "ascii";
+    /// String option key for read/write in 'col_major' or 'row_major'.
     const char * const ORDER_OPTION = "order";
+    /// String option key with a delimitiers list.
     const char * const DELIM_OPTION = "delim";
+    /// Boolean option key indicating if empty fields are allowed during read.
     const char * const EMPTY_OPTION = "read_empty";
+    /// T option key indicating the default value for empty fields.
     const char * const DEFAULT_OPTION = "default";
+    /// T option key indicating the expected number of columns.
     const char * const NCOLS_OPTION = "ncols";
+    /// T option key indicating the expected number of rows.
     const char * const NROWS_OPTION = "nrows";
   }
 
@@ -59,14 +68,9 @@ namespace basics {
   class SparseMatrix;
 
   /**
-   * Multidimensional matrix class.
+   * @brief Multidimensional matrix class.
    * 
-   * It implements basic linear algebra routines and other math operations. By
-   * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
-   * T(-1.0f) and T(-nan) constructors must be available with correct math
-   * values. In case of char buffer or integer matrices these constructors are
-   * needed but not operational because math methods are forbidden for these
-   * data types.
+   * It implements basic tensor operations.
    */
   template <typename T>
   class Matrix : public AprilIO::Serializable {
@@ -94,8 +98,8 @@ namespace basics {
     int total_size;
     int last_raw_pos;
     /// Pointer to data
-    april_utils::SharedPtr< april_math::GPUMirroredMemoryBlock<T> > data;
-    april_utils::SharedPtr< april_utils::MMappedDataReader > mmapped_data;
+    AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > data;
+    AprilUtils::SharedPtr< AprilUtils::MMappedDataReader > mmapped_data;
     /// Major type (only when numDim=2)
     CBLAS_ORDER major_order;
     /// For CUDA purposes
@@ -114,6 +118,11 @@ namespace basics {
     const T *getData() const { return data->getPPALForRead(); }
   
     int getLastRawPos() const { return last_raw_pos; }
+    
+  public:
+    class sliding_window;
+    friend class sliding_window;
+  
     /// Returns if the matrix is a vector
     bool isVector() const { return (numDim==1 ||
                                     (numDim==2 &&
@@ -126,13 +135,11 @@ namespace basics {
       return (numDim == 1) ? stride[0] :
         ( (matrixSize[0]!=1) ? (stride[0]) : (stride[1]) );
     }
-  
-  public:
-    class sliding_window;
-    friend class sliding_window;
-  
+
     /// Computes the position at data array given it coordinates
     int  computeRawPos(const int *coords) const;
+    /// Computes the position at data array given it coordinates
+    int  computeRawPos(const int *coords, const int *offset) const;
     /// Computes the coordinates given the raw data position
     void computeCoords(const int raw_pos, int *coords) const;
     /// Updates with the following coordinates vector
@@ -155,6 +162,33 @@ namespace basics {
                                         const int numDim,
                                         const int last_raw_pos);
     /********* Iterators for Matrix traversal *********/
+    /**
+     * @brief This iterator only traverses the Matrix positions, but doesn't
+     * have access to the memory.
+     *
+     * @todo Implement other iterators as wrappers or derived class from
+     * pos_iterator, allowing to share a lot of code.
+     */
+    class pos_iterator {
+      friend class Matrix;
+      const Matrix<T> *m; ///< A weak reference.
+      int idx;
+      int raw_pos;
+      /// The coords array is only used when the matrix is not congiuous
+      /// or it is in col_major order, otherwise it is NULL
+      int *coords;
+    public:
+      pos_iterator(const Matrix<T> *m);
+      pos_iterator();
+      ~pos_iterator();
+      pos_iterator &operator=(const pos_iterator &other);
+      bool      operator==(const pos_iterator &other) const;
+      bool      operator!=(const pos_iterator &other) const;
+      pos_iterator &operator++();
+      int getRawPos() const { return raw_pos; }
+      int getIdx() const { return idx; }
+      bool isEnd() const { return raw_pos == m->last_raw_pos+1; }
+    };
     // forward declaration
     class const_iterator;
     class col_major_iterator;
@@ -284,6 +318,7 @@ namespace basics {
       int getRawPos() const;
       int getIdx() const { return idx; }
     };
+    
 
     /********************************************************/
     /**
@@ -293,7 +328,7 @@ namespace basics {
      */
     class sliding_window : public Referenced {
       /// A reference to the matrix
-      april_utils::SharedPtr< Matrix<T> > m;
+      AprilUtils::SharedPtr< Matrix<T> > m;
       /// Offset coordinates
       int *offset;
       /// subPattern size.
@@ -375,6 +410,7 @@ namespace basics {
       //
       span_iterator(const Matrix<T> *m, int raw_pos, int dim);
     public:
+      span_iterator(const Matrix<T> *m, const int *order);
       span_iterator(const Matrix<T> *m, int dim = -1);
       span_iterator();
       span_iterator(const span_iterator &other);
@@ -388,6 +424,8 @@ namespace basics {
       span_iterator &operator++();
       int numberOfIterations() const;
       void setAtIteration(int idx);
+      const int *getDimOrder() const { return order; }
+      const int *getCoordinates() const { return coords; }
     };
 
     /********************************************************/
@@ -508,7 +546,7 @@ namespace basics {
     mutable iterator end_iterator;
     mutable const_iterator end_const_iterator;
     mutable span_iterator end_span_iterator_;
-  
+    
     // NULL constructor
     Matrix() : is_contiguous(NONE),
                end_iterator(), end_const_iterator(),
@@ -516,9 +554,9 @@ namespace basics {
     //
     Matrix(int numDim, const int *stride, const int offset,
            const int *matrixSize, const int total_size, const int last_raw_pos,
-           april_math::GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
+           AprilMath::GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
            const bool use_cuda, const bool transposed,
-           april_utils::MMappedDataReader *mmapped_data = 0);
+           AprilUtils::MMappedDataReader *mmapped_data = 0);
 
     /// Modifies the offset of the matrix. WARNING, this method doesn't check the
     /// new data position, so be sure that it fits in the data pointer size
@@ -535,11 +573,11 @@ namespace basics {
     /// Full constructor given numDim, dim, and major_order
     Matrix(int numDim, const int* dim,
            CBLAS_ORDER major_order = CblasRowMajor,
-           april_math::GPUMirroredMemoryBlock<T> *data = 0,
+           AprilMath::GPUMirroredMemoryBlock<T> *data = 0,
            int offset = 0,
            bool transposed = false);
   
-    /// Constructor with T() values and CblasRowMajor order
+    /// Constructor for CblasRowMajor order
     Matrix(int numDim, int d1, ...);
   
     /// Constructor given other matrix, it does a shallow or deep copy (clone). By
@@ -559,10 +597,10 @@ namespace basics {
     virtual ~Matrix();
   
     /// Constructor from a MMAP file
-    static Matrix<T> *fromMMappedDataReader(april_utils::MMappedDataReader
+    static Matrix<T> *fromMMappedDataReader(AprilUtils::MMappedDataReader
                                             *mmapped_data);
     /// Writes to a file
-    void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
+    void toMMappedDataWriter(AprilUtils::MMappedDataWriter *mmapped_data) const;
   
     /// For DEBUG purposes
     void print() const;
@@ -692,8 +730,8 @@ namespace basics {
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
     /// you are losing sub-matrix abstraction, and the major order.
-    april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
-    const april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
+    AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
+    const AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
   
     bool getCol(int col, T* vec, int vecsize);
     bool putCol(int col, T *vec, int vecsize);
@@ -710,161 +748,24 @@ namespace basics {
     /// dimension. WARNING, the matrix is not check to be correct, so be careful.
     Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
-    ////////////////////////////////////////////////////////////////////////////
-
-    void clamp(T lower, T upper);
-    void fill(T value);
-    void zeros();
-    void ones();
-  
-    // Set the diagonal to current value
-    void diag(T value);
-
-    // Returns a new matrix with the sum, assuming they have the same dimension
-    // Crashes otherwise
-    Matrix<T>* addition(const Matrix<T> *other) const;
-
-    // The same as addition but substracting
-    Matrix<T>* substraction(const Matrix<T> *other) const;
-  
-    // Matrices must be NxK and KxM, the result is NxM
-    Matrix<T>* multiply(const Matrix<T> *other) const;
-
-    T sum() const;
-
-    // the argument indicates over which dimension the sum must be performed
-    Matrix<T>* sum(int dim, Matrix<T> *dest=0);
-
-    /**** COMPONENT WISE OPERATIONS ****/
-    bool equals(const Matrix<T> *other, float epsilon) const;
-    void plogp();
-    void log();
-    void log1p();
-    void exp();
-    void sqrt();
-    void pow(T value);
-    void tan();
-    void tanh();
-    void atan();
-    void atanh();
-    void sin();
-    void sinh();
-    void asin();
-    void asinh();
-    void cos();
-    void cosh();
-    void acos();
-    void acosh();
-    void abs();
-    void complement();
-    void sign();
-    void cmul(const Matrix<T> *other);
-    void adjustRange(T rmin, T rmax);
-  
-    /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
-       matrix, depending in the truth of the given condition */
-    // less than
-    void LTCondition(T value);
-    void LTCondition(Matrix<T> *value);
-    // greater than
-    void GTCondition(T value);
-    void GTCondition(Matrix<T> *value);
-    // equals to
-    void EQCondition(T value);
-    void EQCondition(Matrix<T> *value);
-    // not equals to
-    void NEQCondition(T value);
-    void NEQCondition(Matrix<T> *value);
-  
-    /**** BLAS OPERATIONS ****/
-    void scalarAdd(T s);
-  
-    // SCOPY BLAS operation this = other
-    void copy(const Matrix<T> *other);
-  
-    // AXPY BLAS operation this = this + alpha * other
-    void axpy(T alpha, const Matrix<T> *other);
-
-    // AXPY Sparse BLAS operation this = this + alpha * other
-    void axpy(T alpha, const SparseMatrix<T> *other);
-  
-    // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
-    void gemm(CBLAS_TRANSPOSE trans_A,
-              CBLAS_TRANSPOSE trans_B,
-              T alpha,
-              const Matrix<T> *otherA,
-              const Matrix<T> *otherB,
-              T beta);
-
-    // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
-    void sparseMM(CBLAS_TRANSPOSE trans_A,
-                  CBLAS_TRANSPOSE trans_B,
-                  CBLAS_TRANSPOSE trans_C,
-                  T alpha,
-                  const SparseMatrix<T> *otherA,
-                  const Matrix<T> *otherB,
-                  T beta);
-
-    // GEMV BLAS operation this = alpha * op(A)*X + beta*this
-    void gemv(CBLAS_TRANSPOSE trans_A,
-              T alpha,
-              const Matrix<T> *otherA,
-              const Matrix<T> *otherX,
-              T beta);
-
-    // GEMV Sparse BLAS operation this = alpha * op(A)*X + beta*this
-    void gemv(CBLAS_TRANSPOSE trans_A,
-              T alpha,
-              const SparseMatrix<T> *otherA,
-              const Matrix<T> *otherX,
-              T beta);
-  
-    // GER BLAS operation this = alpha * X*Y' + this
-    void ger(T alpha,
-             const Matrix<T> *otherX,
-             const Matrix<T> *otherY);
-
-    // DOT BLAS operation value = dot(this, other)
-    T dot(const Matrix<T> *other) const;
-
-    // DOT Sparse BLAS operation value = dot(this, other)
-    T dot(const SparseMatrix<T> *other) const;
-  
-    void scal(T value);
-
-    void div(T value);
-  
-    float norm2() const;
-    T min(int &arg_min, int &arg_min_raw_pos) const;
-    T max(int &arg_max, int &arg_max_raw_pos) const;
-    void minAndMax(T &min, T &max) const;
-  
-    // Min and max over given dimension, be careful, argmin and argmax matrices
-    // contains the min/max index at the given dimension, but starting in 1 (not
-    // in 0)
-    Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
-    Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
-
-    Matrix<T> *maxSelDim(const int dim,
-                         april_math::Int32GPUMirroredMemoryBlock *raw_positions=0,
-                         int shift = 0) const;
-  
     // Expands current matrix to a diagonal matrix
     Matrix<T> *diagonalize() const;
   
     /**** LAPACK OPERATIONS ****/
-    Matrix<T> *inv();
-    void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
-
+    
     // UPDATE GPU OR PPAL IF NEEDED
     void update() {
 #ifdef USE_CUDA
       data->forceUpdate(use_cuda);
 #endif
     }
+
+    void update() const {
+#ifdef USE_CUDA
+      data->forceUpdate(use_cuda);
+#endif
+    }
   
-    Matrix<T> *convolution(int D, const int *step,
-                           Matrix<T> *kernel, Matrix<T> *result=0);
     /*Matrix<T> **unrolled_kernel=0,
       Matrix<T> **unrolled_this=0);*/
     Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T()) const;
@@ -883,11 +784,11 @@ namespace basics {
      *
      * - MatrixIO::ASCII_OPTION if @c TAB_OPTION=false this key contains a bool
      *   value indicating if the data has to be binary or not. It uses
-     *   april_utils::binarizer for binarization purposes. By default it is
+     *   AprilUtils::binarizer for binarization purposes. By default it is
      *   true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const april_utils::GenericOptions *options);
+                       const AprilUtils::GenericOptions *options);
     
     /**
      * @brief Reads the Matrix from a stream.
@@ -935,14 +836,14 @@ namespace basics {
      * @note This method throws different kind of errors.
      */
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const april_utils::GenericOptions *options);
+                           const AprilUtils::GenericOptions *options);
     
   private:
     void allocate_memory(int size);
     void release_memory();
     void initialize(const int *dim);
 
-    static april_utils::constString readULine(AprilIO::StreamInterface *stream,
+    static AprilUtils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest,
                                               bool read_empty = false) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
@@ -951,28 +852,30 @@ namespace basics {
     }
 
     void writeNormal(AprilIO::StreamInterface *stream,
-                     const april_utils::GenericOptions *options);
+                     const AprilUtils::GenericOptions *options);
     
     void writeTab(AprilIO::StreamInterface *stream,
-                  const april_utils::GenericOptions *options);
+                  const AprilUtils::GenericOptions *options);
 
     static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
-                                 const april_utils::GenericOptions *options);
+                                 const AprilUtils::GenericOptions *options);
     
     static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const april_utils::GenericOptions *options);
+                              const AprilUtils::GenericOptions *options);
     
-    static T getTemplateOption(const april_utils::GenericOptions *options,
+    static T getTemplateOption(const AprilUtils::GenericOptions *options,
                                const char *name, T default_value);
   };
 
-} // namespace basics
+} // namespace Basics
 
 #include "sparse_matrix.h"
 
+// must be defined here
+#include "matrix_operations.h"
+
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
-#include "matrix-math.impl.h"
 #include "matrix-serialization.impl.h"
 
 #endif // MATRIX_H
