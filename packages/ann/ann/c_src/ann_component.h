@@ -175,7 +175,9 @@ namespace ANN {
       return output_size;
     }
     virtual Basics::Token *calculate(Basics::Token *input) {
-      return this->doForward(input, false);
+      Basics::Token *out = this->doForward(input, false);
+      reset();
+      return out;
     }
     /////////////////////////////////////////////
     

@@ -510,11 +510,11 @@ public:
 
 //BIND_LUACLASSNAME FunctionInterface functions
 
-//BIND_LUACLASSNAME SkipFunction functions.skip
-//BIND_CPP_CLASS SkipFunction
-//BIND_SUBCLASS_OF SkipFunction FunctionInterface
+//BIND_LUACLASSNAME DiceSkipFunction functions.dice_skip
+//BIND_CPP_CLASS DiceSkipFunction
+//BIND_SUBCLASS_OF DiceSkipFunction FunctionInterface
 
-//BIND_CONSTRUCTOR SkipFunction
+//BIND_CONSTRUCTOR DiceSkipFunction
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
@@ -525,7 +525,7 @@ public:
   LUABIND_GET_TABLE_PARAMETER(1, dice, Dice, dice);
   LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
   LUABIND_GET_TABLE_PARAMETER(1, mask_value, uint, mask_value);
-  obj = new SkipFunction(dice, random, mask_value);
-  LUABIND_RETURN(SkipFunction, obj);
+  obj = new DiceSkipFunction(dice, random, mask_value);
+  LUABIND_RETURN(DiceSkipFunction, obj);
 }
 //BIND_END

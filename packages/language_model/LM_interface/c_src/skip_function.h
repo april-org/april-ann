@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
+ * Copyright 2014, Salvador España-Boquera, Adrian Palacios Corella, Francisco
  * Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
@@ -26,54 +26,48 @@
 #include "function_interface.h"
 #include "dice.h"
 #include "LM_interface.h"
+#include "smart_ptr.h"
+#include "token_vector.h"
 
 namespace Functions {
   
-  class SkipFunction : public FunctionInterface {
-    Basics::Dice *dice;
-    Basics::MTRand *random;
-    LanguageModels::WordType mask_value;
+  /**
+   * @brief Applies a stochastic skip mask using a Basics::Dice to a sequence of
+   * words.
+   *
+   * @note The dice size is \f$ 2^N \f$ being \f$N\f$ the number of expected
+   * words.
+   *
+   * @note This function operates **in-place**
+   */
+  class DiceSkipFunction : public FunctionInterface {
+    AprilUtils::SharedPtr<Basics::Dice> dice; ///< Binomial distribution.
+    AprilUtils::SharedPtr<Basics::MTRand> random; ///< For stochastic purposes.
+    LanguageModels::WordType mask_value; ///< The value used to replace masked words.
+    unsigned int num_ctxt_words; ///< Number of expected words.
   public:
-    SkipFunction(Basics::Dice *dice, Basics::MTRand *random, LanguageModels::WordType mask_value) :
-      FunctionInterface(),
-      dice(dice),
-      random(random),
-      mask_value(mask_value) {
-      IncRef(dice);
-      IncRef(random);
-    }
+    /// Takes all given values.
+    DiceSkipFunction(Basics::Dice *dice, Basics::MTRand *random,
+                     LanguageModels::WordType mask_value);
 
-    virtual ~SkipFunction() {
-      DecRef(dice);
-      DecRef(random);
-    }
-    /// It returns the input (or domain) size of the function.
-    virtual unsigned int getInputSize() const {
-      return 0;
-    }
-    /// It returns the output (or range) size of the function.
-    virtual unsigned int getOutputSize() const {
-      return 0;
-    }
-    virtual Basics::Token *calculate(Basics::Token *input) {
-      if (input->getTokenCode() != Basics::table_of_token_codes::vector_Tokens)
-        ERROR_EXIT(128, "Input token should be a collection of tokens!\n");
-      Basics::TokenBunchVector *bunch_of_tokens = input->convertTo<Basics::TokenBunchVector*>();
+    virtual ~DiceSkipFunction();
 
-      for (unsigned int i = 0; i < bunch_of_tokens->size(); i++) {
-        if ((*bunch_of_tokens)[i]->getTokenCode() != Basics::table_of_token_codes::vector_uint32)
-          ERROR_EXIT(128, "Tokens from input token should be a collection of uint tokens!\n");
-        Basics::TokenVectorUint32 *word_tokens = (*bunch_of_tokens)[i]->convertTo<Basics::TokenVectorUint32*>();
-        int size = word_tokens->size();
-        int skip_mask = dice->thrown(random);
-        for (int j = size-1; j >= 0; j--) {
-          if (skip_mask % 2)
-            (*word_tokens)[j] = mask_value;
-          skip_mask /= 2;
-        }
-      }
-      return input;
-    }
+    /// Returns the number of expected words.
+    virtual unsigned int getInputSize() const;
+
+    /// Returns the number of expected words.
+    virtual unsigned int getOutputSize() const;
+
+    /**
+     * @brief Applies the stochastic skip mask operation given a Basics::Token
+     * instance.
+     *
+     * @see LanguageModels::FeatureBasedLMInterface::executeQueries() method for
+     * a description of the expected input.
+     *
+     * @note This function operates **in-place**
+     */
+    virtual Basics::Token *calculate(Basics::Token *input);
   };
 }
 

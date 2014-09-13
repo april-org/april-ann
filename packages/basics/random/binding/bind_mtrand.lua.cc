@@ -359,7 +359,7 @@ using Basics::Dice;
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(number,obj->get_outcomes());
+  LUABIND_RETURN(number,obj->getOutcomes());
 }
 //BIND_END
 

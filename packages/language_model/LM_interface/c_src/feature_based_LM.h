@@ -29,6 +29,7 @@
 #include "function_interface.h"
 #include "history_based_LM.h"
 #include "logbase.h"
+#include "smart_ptr.h"
 #include "token_vector.h"
 #include "trie_vector.h"
 #include "unused_variable.h"
@@ -40,79 +41,125 @@ namespace LanguageModels {
   class FeatureBasedLM;
 
   template <typename Key, typename Score>
-  class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>, public BunchHashedLMInterface <Key, Score> {
+  class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>,
+                                  public BunchHashedLMInterface <Key, Score> {
     friend class FeatureBasedLM<Key,Score>;
 
-    Functions::FunctionInterface *filter;
+    AprilUtils::SharedPtr<Functions::FunctionInterface> filter;
 
   protected:
     FeatureBasedLMInterface(FeatureBasedLM<Key,Score>* model) :
       HistoryBasedLMInterface<Key,Score>(model),
-      BunchHashedLMInterface<Key,Score>(model) {
-      filter = model->getFilter();
-      IncRef(filter);
-    }
+      BunchHashedLMInterface<Key,Score>(model),
+      filter(model->getFilter()) { }
 
     typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
     typedef typename BunchHashedLMInterface<Key,Score>::KeyScoreMultipleBurdenTuple KeyScoreMultipleBurdenTuple;
 
-    virtual void executeQueries(Basics::Token *ctxts, Basics::Token *words, AprilUtils::vector<Score> &scores) = 0;
-
+    /**
+     * @brief Computes the scores for all the given queries.
+     *
+     * The @c queries_bunch_token is an instance of Basics::TokenBunchVector
+     * which contains several instances of Basics::TokenBunchVector, as many
+     * as size of the bunch. Every instance has two components:
+     *   1. A Basics::TokenVectorUint32 for the context words.
+     *   2. A Basics::TokenVectorUint32 for the next words. All the words in
+     *      this vector share the previous context words.
+     *
+     * @param queries_bunch_token - An input Token with all the queries.
+     * @param[out] scores - A vector where computes scores will be stored.
+     *
+     * @note The @c scores vector is only updated by calling to
+     * AprilUtils::vector::push_back() method, allowing to chain multiple calls
+     * into the same @c scores vector.
+     */
+    virtual void executeQueries(Basics::Token *queries_bunch_token,
+                                AprilUtils::vector<Score> &scores) = 0;
+    
+    /**
+     * @brief Generates the input expected by executeQueries() method.
+     */
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       april_assert(sizeof(WordType) == sizeof(uint32_t));
-      Basics::TokenBunchVector *bunch_of_tokens = new Basics::TokenBunchVector();
-      Basics::TokenVectorUint32 *word_tokens = new Basics::TokenVectorUint32();
-      unsigned int cur_bunch = 0;
+      const int order = getLMModel()->ngramOrder();
+      april_assert(order != -1);
+      AprilUtils::SharedPtr<Basics::TokenBunchVector> 
+        queries_bunch_token( new Basics::TokenBunchVector() );
       AprilUtils::vector<Score> scores;
 
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
-        it != ctxt_hash.end(); ++it) {
+           it != ctxt_hash.end(); ++it) {
         Key context_key = it->first;
         WordResultHash &word_hash = it->second;
         // offset init'd to 0
         unsigned int offset = 0;
-        Basics::TokenVectorUint32 *context_tokens = new Basics::TokenVectorUint32();
-        WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
+        
+        // The procedure needs to create a token where context words will be
+        // stored. This token has a vector container which needs to resized
+        // before call to getContextProperties().
+        AprilUtils::SharedPtr<Basics::TokenVectorUint32>
+          context_words_token( new Basics::TokenVectorUint32() );
+        AprilUtils::vector<WordType> &context_words_vector =
+          context_words_token->getContainer();
+        context_words_vector.resize( order - 1 );
+        // the next pointer will be given to getContextProperties() as output
+        WordType *context_words = context_words_vector.begin();
         const unsigned int context_size = this->getContextProperties(context_key,
                                                                      context_words,
                                                                      offset);
-        for (unsigned int i = 0; i < context_size; i++)
-          context_tokens->push_back(context_words[i]);
 
+        AprilUtils::SharedPtr<Basics::TokenVectorUint32>
+          next_words_token( new Basics::TokenVectorUint32() );
         // For each word entry
         for (typename WordResultHash::iterator it2 = word_hash.begin();
-          it2 != word_hash.end(); ++it2) {
+             it2 != word_hash.end(); ++it2) {
           WordType word = it2->first;
           KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
-
+          
           // First pass we get the next key
           // collect context and word tokens
-          result_tuple.key_score.key = HistoryBasedLMInterface<Key,Score>::getDestinationKey(context_words,
-                                                                                             offset,
-                                                                                             context_size,
-                                                                                             word);
-          bunch_of_tokens->push_back(context_tokens);
-          word_tokens->push_back(word);
-          cur_bunch = (cur_bunch + 1) % bunch_size;
+          result_tuple.key_score.key =
+            this->getDestinationKey(context_words,
+                                    offset,
+                                    context_size,
+                                    word);
+          
+          next_words_token->push_back(word);
+        }
 
-          // If we have a full bunch, process it
-          if (cur_bunch == 0) {
-            Basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
-            executeQueries(filtered_input, word_tokens, scores);
-            bunch_of_tokens->clear();
-            word_tokens->clear();
-          }
+        // Put together context and next word tokens
+        AprilUtils::SharedPtr<Basics::TokenBunchVector>
+          query_token( new Basics::TokenBunchVector() );
+        query_token->getContainer().reserve(2); // 2 items
+        query_token->push_back(context_words_token.get()); // [0]
+        query_token->push_back(next_words_token.get());    // [1]
+        
+        // Put the current query into the bunch of queries
+        queries_bunch_token->push_back(query_token.get());
+        
+        // If we have a full bunch, process it
+        if (query_token->size() % bunch_size == 0) {
+          AprilUtils::SharedPtr<Basics::Token>
+            filtered_queries_bunch_token( filter->calculate(queries_bunch_token.get()) );
+          executeQueries(filtered_queries_bunch_token.get(), scores);
+          queries_bunch_token->clear();
         }
       }
+      
       // If there is something left in the bunch, process it
-      if (cur_bunch >= 0) {
-        Basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
-        executeQueries(filtered_input, word_tokens, scores);
+      if (queries_bunch_token->size() > 0) {
+        AprilUtils::SharedPtr<Basics::Token>
+          filtered_queries_bunch_token( filter->calculate(queries_bunch_token.get()) );
+        executeQueries(filtered_queries_bunch_token.get(), scores);
+        queries_bunch_token->clear();
       }
+      
+      // FIXME: find a way to store scores into hash table during the first pass
 
+      // Second pass to store scores at table
       unsigned int k = 0;
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
         it != ctxt_hash.end(); ++it) {
@@ -122,18 +169,14 @@ namespace LanguageModels {
         for (typename WordResultHash::iterator it2 = word_hash.begin();
           it2 != word_hash.end(); ++it2) {
           KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
-
-          // Second pass to store scores at table
           result_tuple.key_score.score = scores[k++];
         }
       }
     }
 
   public:
-    virtual ~FeatureBasedLMInterface() {
-      DecRef(filter);
-    }
-
+    virtual ~FeatureBasedLMInterface() { }
+    
     void incRef() {
       HistoryBasedLMInterface<Key,Score>::incRef();
       BunchHashedLMInterface<Key,Score>::incRef();
@@ -148,12 +191,17 @@ namespace LanguageModels {
     Basics::Token* applyFilter(Basics::Token* token) {
       return filter->calculate(token);
     }
+
+    virtual LMModel<Key, Score>* getLMModel() {
+      return HistoryBasedLMInterface<Key,Score>::model;
+    }
   };
 
   template <typename Key, typename Score>
-  class FeatureBasedLM : public HistoryBasedLM <Key,Score>, public BunchHashedLM <Key,Score> {
+  class FeatureBasedLM : public HistoryBasedLM <Key,Score>,
+                         public BunchHashedLM <Key,Score> {
   private:
-    Functions::FunctionInterface *filter;
+    AprilUtils::SharedPtr<Functions::FunctionInterface> filter;
 
   public:
     FeatureBasedLM(int ngram_order,
@@ -166,15 +214,13 @@ namespace LanguageModels {
                                 trie_vector),
       BunchHashedLM<Key,Score>(bunch_size),
       filter(filter) {
-      IncRef(filter);
     }
 
     virtual ~FeatureBasedLM() {
-      DecRef(filter);
     }
 
     Functions::FunctionInterface* getFilter() {
-      return filter;
+      return filter.get();
     }
 
     void incRef() {

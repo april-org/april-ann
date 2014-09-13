@@ -32,7 +32,7 @@ namespace Basics {
   public:
     Dice(int outcom, double *prob);
     ~Dice();
-    int get_outcomes() const { return outcomes; }
+    int getOutcomes() const { return outcomes; }
     int thrown(MTRand *generator);
   };
 

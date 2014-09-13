@@ -23,11 +23,11 @@
 	    depends = "provide",
 	    use_timestamp = true,
 	    -- does not need to compile because implemented methods are defined in a template
-	    -- object{ 
-	    --   file = "c_src/*.cc",
-	    --   include_dirs = "${include_dirs}",
-	    --   dest_dir = "build",
-	    -- },
+            object{ 
+              file = "c_src/*.cc",
+              include_dirs = "${include_dirs}",
+              dest_dir = "build",
+            },
 	    luac{
 	      orig_dir = "lua_src",
 	      dest_dir = "build",

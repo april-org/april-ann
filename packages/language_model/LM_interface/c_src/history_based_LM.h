@@ -147,7 +147,6 @@ namespace LanguageModels {
                      Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
-      const int order = this->model->ngramOrder();
       unsigned int offset;
       const unsigned int context_size = getContextProperties(key,
                                                              context_words,
@@ -213,8 +212,9 @@ namespace LanguageModels {
       // Compute score with the retrieved context. In case of fail, return
       // zero probability
       Score score;
-      if (!privateBestProb(k, context_words+offset, context_size, score))
+      if (!privateBestProb(k, context_words+offset, context_size, score)) {
         score = Score::zero();
+      }
       return score;
     }
 
