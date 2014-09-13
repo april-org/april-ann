@@ -41,7 +41,7 @@ namespace LanguageModels {
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
     friend class HistoryBasedLM<Key,Score>;
     
-    april_utils::TrieVector *trie;
+    AprilUtils::TrieVector *trie;
     WordType *context_words;
   
   protected:
@@ -145,7 +145,7 @@ namespace LanguageModels {
 
     virtual void get(Key key, WordType word,
                      Burden burden,
-                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
       const int order = this->model->ngramOrder();
       unsigned int offset;
@@ -166,7 +166,7 @@ namespace LanguageModels {
     }
 
     virtual void getNextKeys(Key key, WordType word,
-                             april_utils::vector<Key> &result) {
+                             AprilUtils::vector<Key> &result) {
       unsigned int offset;
       const unsigned int context_size = getContextProperties(key,
                                                              context_words,
@@ -226,13 +226,13 @@ namespace LanguageModels {
   private:
     int ngram_order;
     WordType init_word;
-    april_utils::TrieVector *trie_vector;
+    AprilUtils::TrieVector *trie_vector;
 
   public:
 
     HistoryBasedLM(int ngram_order,
                    WordType init_word,
-                   april_utils::TrieVector *trie_vector) :
+                   AprilUtils::TrieVector *trie_vector) :
       LMModel<Key,Score>(),
       ngram_order(ngram_order),
       init_word(init_word),
@@ -262,7 +262,7 @@ namespace LanguageModels {
       return init_word;
     }
 
-    april_utils::TrieVector* getTrieVector() {
+    AprilUtils::TrieVector* getTrieVector() {
       return trie_vector;
     }
 
@@ -271,9 +271,9 @@ namespace LanguageModels {
     // virtual LMInterface<Key,Score>* getInterface() = 0;
   };
 
-  typedef HistoryBasedLMInterface<uint32_t, april_utils::log_float>
+  typedef HistoryBasedLMInterface<uint32_t, AprilUtils::log_float>
   HistoryBasedLMInterfaceUInt32LogFloat;
-  typedef HistoryBasedLM<uint32_t, april_utils::log_float>
+  typedef HistoryBasedLM<uint32_t, AprilUtils::log_float>
   HistoryBasedLMUInt32LogFloat;
 }; // closes namespace
 

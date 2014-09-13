@@ -24,8 +24,8 @@
 #include "bind_LM_interface.h"
 #include "LM_interface.h"
 
-using namespace april_utils;
-using namespace basics;
+using namespace AprilUtils;
+using namespace Basics;
 //BIND_END
 
 //BIND_HEADER_H
@@ -39,7 +39,7 @@ using namespace Functions;
 
 class QueryResultUInt32LogFloat : public Referenced {
   LMInterfaceUInt32LogFloat *lm_interface;
-  const april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
+  const AprilUtils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
 public:
   QueryResultUInt32LogFloat(LMInterfaceUInt32LogFloat *lm_interface) :
     lm_interface(lm_interface),
@@ -56,10 +56,10 @@ public:
 };
 
 class GetResultUInt32LogFloat : public Referenced {
-  april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> result;
+  AprilUtils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> result;
 public:
   GetResultUInt32LogFloat() {}
-  april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &getVector() {
+  AprilUtils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &getVector() {
     return result;
   }
   size_t size() const { return result.size(); }
@@ -72,10 +72,10 @@ public:
 };
 
 class NextKeysResultUInt32 : public Referenced {
-  april_utils::vector<uint32_t> result;
+  AprilUtils::vector<uint32_t> result;
 public:
   NextKeysResultUInt32() {}
-  april_utils::vector<uint32_t> &getVector() {
+  AprilUtils::vector<uint32_t> &getVector() {
     return result;
   }
   size_t size() const { return result.size(); }

@@ -22,6 +22,6 @@
 #include "bunch_hashed_LM.h"
 
 namespace LanguageModels {
-  template<> class BunchHashedLMInterface<uint32_t,april_utils::log_float>;
-  template<> class BunchHashedLM<uint32_t,april_utils::log_float>;
+  template<> class BunchHashedLMInterface<uint32_t,AprilUtils::log_float>;
+  template<> class BunchHashedLM<uint32_t,AprilUtils::log_float>;
 }

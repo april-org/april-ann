@@ -22,6 +22,6 @@
 #include "feature_based_LM.h"
 
 namespace LanguageModels {
-  template<> class FeatureBasedLMInterface<uint32_t,april_utils::log_float>;
-  template<> class FeatureBasedLM<uint32_t,april_utils::log_float>;
+  template<> class FeatureBasedLMInterface<uint32_t,AprilUtils::log_float>;
+  template<> class FeatureBasedLM<uint32_t,AprilUtils::log_float>;
 }

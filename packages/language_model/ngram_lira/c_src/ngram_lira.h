@@ -33,15 +33,15 @@ namespace LanguageModels {
 
   struct NgramLiraTransition {
     unsigned int state;
-    april_utils::log_float prob;
+    AprilUtils::log_float prob;
   };
 
   /// lambda backoff transition:
   struct NgramBackoffInfo {
     unsigned int bo_dest_state; // estado al que se baja
-    april_utils::log_float bo_prob; // probabilidad de bajar al estado bo_dest_state
+    AprilUtils::log_float bo_prob; // probabilidad de bajar al estado bo_dest_state
     NgramBackoffInfo() : bo_dest_state(0),
-                         bo_prob(april_utils::log_float::zero()) { }
+                         bo_prob(AprilUtils::log_float::zero()) { }
   };
 
   /// states are sorted by fan_out in .lira format
@@ -65,7 +65,7 @@ namespace LanguageModels {
     unsigned int fan_out_threshold;
     unsigned int first_state_binary_search;
     unsigned int size_first_transition;
-    april_utils::log_float best_prob;
+    AprilUtils::log_float best_prob;
     size_t       size_first_transition_vector;
     size_t       offset_vocabulary_vector;
     size_t       size_vocabulary_vector;
@@ -86,7 +86,7 @@ namespace LanguageModels {
   public:
     
     typedef uint32_t Key;
-    typedef april_utils::log_float Score;
+    typedef AprilUtils::log_float Score;
     
     // allows the dictionary used to check the model to be larger than
     // the actual list of words in the model
@@ -199,7 +199,7 @@ namespace LanguageModels {
     }
     
     virtual void get(Key key, WordType word, Burden burden,
-                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);
     
     virtual void clearQueries();
@@ -228,7 +228,7 @@ namespace LanguageModels {
       return static_cast<NgramLiraModel*>(model)->initial_state;
     }
     virtual Score getFinalScore(Key k, Score threshold) {
-      april_utils::vector<KeyScoreBurdenTuple> aux;
+      AprilUtils::vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
       get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux,
           threshold);

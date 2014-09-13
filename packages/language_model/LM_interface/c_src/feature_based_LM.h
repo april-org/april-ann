@@ -57,15 +57,15 @@ namespace LanguageModels {
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
     typedef typename BunchHashedLMInterface<Key,Score>::KeyScoreMultipleBurdenTuple KeyScoreMultipleBurdenTuple;
 
-    virtual void executeQueries(basics::Token *ctxts, basics::Token *words, april_utils::vector<Score> &scores) = 0;
+    virtual void executeQueries(Basics::Token *ctxts, Basics::Token *words, AprilUtils::vector<Score> &scores) = 0;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       april_assert(sizeof(WordType) == sizeof(uint32_t));
-      basics::TokenBunchVector *bunch_of_tokens = new basics::TokenBunchVector();
-      basics::TokenVectorUint32 *word_tokens = new basics::TokenVectorUint32();
+      Basics::TokenBunchVector *bunch_of_tokens = new Basics::TokenBunchVector();
+      Basics::TokenVectorUint32 *word_tokens = new Basics::TokenVectorUint32();
       unsigned int cur_bunch = 0;
-      april_utils::vector<Score> scores;
+      AprilUtils::vector<Score> scores;
 
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
@@ -74,7 +74,7 @@ namespace LanguageModels {
         WordResultHash &word_hash = it->second;
         // offset init'd to 0
         unsigned int offset = 0;
-        basics::TokenVectorUint32 *context_tokens = new basics::TokenVectorUint32();
+        Basics::TokenVectorUint32 *context_tokens = new Basics::TokenVectorUint32();
         WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
         const unsigned int context_size = this->getContextProperties(context_key,
                                                                      context_words,
@@ -100,7 +100,7 @@ namespace LanguageModels {
 
           // If we have a full bunch, process it
           if (cur_bunch == 0) {
-            basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
+            Basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
             executeQueries(filtered_input, word_tokens, scores);
             bunch_of_tokens->clear();
             word_tokens->clear();
@@ -109,7 +109,7 @@ namespace LanguageModels {
       }
       // If there is something left in the bunch, process it
       if (cur_bunch >= 0) {
-        basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
+        Basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
         executeQueries(filtered_input, word_tokens, scores);
       }
 
@@ -145,7 +145,7 @@ namespace LanguageModels {
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
     }
 
-    basics::Token* applyFilter(basics::Token* token) {
+    Basics::Token* applyFilter(Basics::Token* token) {
       return filter->calculate(token);
     }
   };
@@ -158,7 +158,7 @@ namespace LanguageModels {
   public:
     FeatureBasedLM(int ngram_order,
                    WordType init_word,
-                   april_utils::TrieVector *trie_vector,
+                   AprilUtils::TrieVector *trie_vector,
                    unsigned int bunch_size,
                    Functions::FunctionInterface *filter) :
       HistoryBasedLM<Key,Score>(ngram_order,
@@ -189,9 +189,9 @@ namespace LanguageModels {
     }
   };
 
-  typedef FeatureBasedLMInterface<uint32_t, april_utils::log_float>
+  typedef FeatureBasedLMInterface<uint32_t, AprilUtils::log_float>
   FeatureBasedLMInterfaceUInt32LogFloat;
-  typedef FeatureBasedLM<uint32_t, april_utils::log_float>
+  typedef FeatureBasedLM<uint32_t, AprilUtils::log_float>
   FeatureBasedLMUInt32LogFloat;
 }; // closes namespace
 

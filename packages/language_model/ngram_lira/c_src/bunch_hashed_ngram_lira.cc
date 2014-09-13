@@ -23,7 +23,7 @@
 #include "bunch_hashed_ngram_lira.h"
 #include "unused_variable.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace LanguageModels {
   

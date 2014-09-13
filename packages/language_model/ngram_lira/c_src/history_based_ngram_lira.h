@@ -82,7 +82,7 @@ namespace LanguageModels {
 
   public:
     HistoryBasedNgramLiraLM(WordType init_word,
-                            april_utils::TrieVector *trie_vector,
+                            AprilUtils::TrieVector *trie_vector,
                             NgramLiraModel *lira_model);
 
     virtual ~HistoryBasedNgramLiraLM();

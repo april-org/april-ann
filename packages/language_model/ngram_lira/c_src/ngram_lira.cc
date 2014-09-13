@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <cstdio>
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace LanguageModels {
 

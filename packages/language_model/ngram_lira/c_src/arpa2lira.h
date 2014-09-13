@@ -38,7 +38,7 @@ namespace LanguageModels {
     ///   - estado destino, palabra, probabilidad
     struct Transition {
       uint32_t  state, word;
-      april_utils::log_float prob;
+      AprilUtils::log_float prob;
       /// oprdena por ID de las palabras
       bool operator<(const Transition &other) const {
         return word < other.word;
@@ -46,15 +46,15 @@ namespace LanguageModels {
     };
   
     /// tipos utiles
-    typedef april_utils::vector<Transition> TransitionsType;
-    typedef april_utils::hash<uint32_t,TransitionsType> HashType;
+    typedef AprilUtils::vector<Transition> TransitionsType;
+    typedef AprilUtils::hash<uint32_t,TransitionsType> HashType;
 
     /// permite tener los vectores de transiciones en Lua
     struct VectorReferenced : public Referenced {
       TransitionsType &v;
       VectorReferenced(TransitionsType &v) : v(v) { }
       void sortByWordId() {
-        april_utils::Sort(v.begin(), v.size());
+        AprilUtils::Sort(v.begin(), v.size());
       }
     };
 
@@ -73,7 +73,7 @@ namespace LanguageModels {
       }
       /// OJO: idx empieza en 0
       void set(uint32_t idx, uint32_t state, uint32_t word,
-               april_utils::log_float prob) {
+               AprilUtils::log_float prob) {
         it->second[idx].state = state;
         it->second[idx].word  = word;
         it->second[idx].prob  = prob;
@@ -99,7 +99,7 @@ namespace LanguageModels {
       void insert(uint32_t  orig_state,
                   uint32_t  dest_state,
                   uint32_t  word,
-                  april_utils::log_float prob) {
+                  AprilUtils::log_float prob) {
         Transition t;
         t.state = dest_state;
         t.word  = word;

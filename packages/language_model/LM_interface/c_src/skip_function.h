@@ -30,11 +30,11 @@
 namespace Functions {
   
   class SkipFunction : public FunctionInterface {
-    basics::Dice *dice;
-    basics::MTRand *random;
+    Basics::Dice *dice;
+    Basics::MTRand *random;
     LanguageModels::WordType mask_value;
   public:
-    SkipFunction(basics::Dice *dice, basics::MTRand *random, LanguageModels::WordType mask_value) :
+    SkipFunction(Basics::Dice *dice, Basics::MTRand *random, LanguageModels::WordType mask_value) :
       FunctionInterface(),
       dice(dice),
       random(random),
@@ -55,15 +55,15 @@ namespace Functions {
     virtual unsigned int getOutputSize() const {
       return 0;
     }
-    virtual basics::Token *calculate(basics::Token *input) {
-      if (input->getTokenCode() != basics::table_of_token_codes::vector_Tokens)
+    virtual Basics::Token *calculate(Basics::Token *input) {
+      if (input->getTokenCode() != Basics::table_of_token_codes::vector_Tokens)
         ERROR_EXIT(128, "Input token should be a collection of tokens!\n");
-      basics::TokenBunchVector *bunch_of_tokens = input->convertTo<basics::TokenBunchVector*>();
+      Basics::TokenBunchVector *bunch_of_tokens = input->convertTo<Basics::TokenBunchVector*>();
 
       for (unsigned int i = 0; i < bunch_of_tokens->size(); i++) {
-        if ((*bunch_of_tokens)[i]->getTokenCode() != basics::table_of_token_codes::vector_uint32)
+        if ((*bunch_of_tokens)[i]->getTokenCode() != Basics::table_of_token_codes::vector_uint32)
           ERROR_EXIT(128, "Tokens from input token should be a collection of uint tokens!\n");
-        basics::TokenVectorUint32 *word_tokens = (*bunch_of_tokens)[i]->convertTo<basics::TokenVectorUint32*>();
+        Basics::TokenVectorUint32 *word_tokens = (*bunch_of_tokens)[i]->convertTo<Basics::TokenVectorUint32*>();
         int size = word_tokens->size();
         int skip_mask = dice->thrown(random);
         for (int j = size-1; j >= 0; j--) {

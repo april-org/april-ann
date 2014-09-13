@@ -23,7 +23,7 @@
 #include "history_based_ngram_lira.h"
 #include "unused_variable.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace LanguageModels {
   
@@ -93,7 +93,7 @@ namespace LanguageModels {
   
   HistoryBasedNgramLiraLM::
   HistoryBasedNgramLiraLM(WordType init_word,
-			  april_utils::TrieVector *trie_vector,
+			  AprilUtils::TrieVector *trie_vector,
 			  NgramLiraModel *lira_model) :
     HistoryBasedLM(lira_model->ngramOrder(), init_word, trie_vector),
     lira_model(lira_model) {

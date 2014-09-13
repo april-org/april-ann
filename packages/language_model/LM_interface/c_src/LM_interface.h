@@ -56,7 +56,7 @@ namespace LanguageModels {
    * Two modes are available to query the language models:
    *
    * - One-by-one: get() based methods query the language model and store its
-   *   result into an april_utils::vector.
+   *   result into an AprilUtils::vector.
    *
    * - Bunch-mode: insertQuery(), getQueries(), clearQueries() methods allow to
    *   list a bunch of queries into a temporary data structure using
@@ -69,9 +69,9 @@ namespace LanguageModels {
    * interface methods produce lists of (key,score) pairs with @c size()>=0.
    *
    * @note In history based LMs this class contains a history manager, usually a
-   * april_utils::TrieVector instance.
+   * AprilUtils::TrieVector instance.
    *
-   * @note Score is usually april_utils::log_float.
+   * @note Score is usually AprilUtils::log_float.
    *
    * @note Key is usually WordType (uint32_t).
    */
@@ -132,7 +132,7 @@ namespace LanguageModels {
     
   protected:
     /// Auxiliary result vector.
-    april_utils::vector<KeyScoreBurdenTuple> result;
+    AprilUtils::vector<KeyScoreBurdenTuple> result;
     
     /// The model reference.
     LMModel<Key,Score>* model;
@@ -174,16 +174,16 @@ namespace LanguageModels {
      *
      * @param word - The transition word.
      *
-     * @param[in,out] result - An april_utils::vector with all the destination
+     * @param[in,out] result - An AprilUtils::vector with all the destination
      * states.
      *
      * @param threshold - The threshold for the beam pruning.
      *
      * @note The result vector is not cleared, so all the resulting states will
-     * be appended using april_utils::vector::push_back() method.
+     * be appended using AprilUtils::vector::push_back() method.
      */
     virtual void get(Key key, WordType word, Burden burden,
-                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) = 0;
     
     /**
@@ -193,17 +193,17 @@ namespace LanguageModels {
      * and Score
      *
      * @note The result vector is not cleared, so all the resulting states will
-     * be appended using april_utils::vector::push_back() method.
+     * be appended using AprilUtils::vector::push_back() method.
      *
      * @param key - The context or state from where the transition starts.
      *
-     * @param[in,out] result - An april_utils::vector of Key's.
+     * @param[in,out] result - An AprilUtils::vector of Key's.
      */
     virtual void getNextKeys(Key key, WordType word,
-                             april_utils::vector<Key> &result) {
-      april_utils::vector<KeyScoreBurdenTuple> aux_result;
+                             AprilUtils::vector<Key> &result) {
+      AprilUtils::vector<KeyScoreBurdenTuple> aux_result;
       get(key, word, Burden(-1,-1), aux_result, Score::zero());
-      for (typename april_utils::vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
+      for (typename AprilUtils::vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
            it != aux_result.end(); ++it)
         result.push_back(it->key_score.key);
     }
@@ -251,7 +251,7 @@ namespace LanguageModels {
      *
      * @param id_key - A half part of the Burden.
      *
-     * @param words - An april_utils::vector of WordIdScoreTuple.
+     * @param words - An AprilUtils::vector of WordIdScoreTuple.
      *
      * @param is_sorted - Indicates if the words vector is sorted by word.
      *
@@ -263,11 +263,11 @@ namespace LanguageModels {
      * for loop.
      */
     virtual void insertQueries(Key key, int32_t id_key,
-                               april_utils::vector<WordIdScoreTuple> words,
+                               AprilUtils::vector<WordIdScoreTuple> words,
                                bool is_sorted=false) {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
-      for (typename april_utils::vector<WordIdScoreTuple>::iterator it = words.begin();
+      for (typename AprilUtils::vector<WordIdScoreTuple>::iterator it = words.begin();
         it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
@@ -282,11 +282,11 @@ namespace LanguageModels {
      * may perform the LM queries in the insert method so that here they only
      * have to return the result vector.
      *
-     * @return An april_utils::vector of KeyScoreBurdenTuple with the language
+     * @return An AprilUtils::vector of KeyScoreBurdenTuple with the language
      * model computation result for all the queries inserted with insertQuery()
      * or insertQueries() from the last call to clearQueries().
      */
-    virtual const april_utils::vector<KeyScoreBurdenTuple> &getQueries() {
+    virtual const AprilUtils::vector<KeyScoreBurdenTuple> &getQueries() {
       return result;
     }
 
@@ -344,7 +344,7 @@ namespace LanguageModels {
    * This class is where the model data is stored, it is thread-safe and
    * therefore can be shared between multiples threads.
    *
-   * @note Score is usually a april_utils::log_float.
+   * @note Score is usually a AprilUtils::log_float.
    *
    * @note Key is usually a WordType (uint32_t).
    */
@@ -399,8 +399,8 @@ namespace LanguageModels {
     virtual LMInterface<Key,Score>* getInterface() = 0;
   };
   
-  typedef LMInterface<uint32_t,april_utils::log_float> LMInterfaceUInt32LogFloat;
-  typedef LMModel<uint32_t,april_utils::log_float> LMModelUInt32LogFloat;
+  typedef LMInterface<uint32_t,AprilUtils::log_float> LMInterfaceUInt32LogFloat;
+  typedef LMModel<uint32_t,AprilUtils::log_float> LMModelUInt32LogFloat;
 
 }; // closes namespace
 

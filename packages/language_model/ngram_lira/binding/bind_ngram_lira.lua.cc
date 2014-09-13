@@ -23,7 +23,7 @@
 //BIND_HEADER_C
 #include "bind_LM_interface.h"
 #include "bind_util.h"
-using namespace april_utils;
+using namespace AprilUtils;
 //BIND_END
 
 //BIND_HEADER_H

@@ -44,7 +44,7 @@ namespace LanguageModels {
     virtual bool getZeroKey(Key &k) const;
     virtual Key getInitialKey();
     virtual void get(Key key, WordType word, Burden burden,
-                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);
   protected:
     friend class BunchHashedNgramLiraLM;

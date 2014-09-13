@@ -52,15 +52,15 @@ namespace LanguageModels {
   public:
     struct KeyScoreMultipleBurdenTuple {
       KeyScoreTuple key_score;
-      april_utils::vector<Burden> burden_vector;
+      AprilUtils::vector<Burden> burden_vector;
       KeyScoreMultipleBurdenTuple() {}
     };
 
     virtual ~BunchHashedLMInterface() {
     }
   protected:
-    typedef april_utils::hash<WordType, KeyScoreMultipleBurdenTuple> WordResultHash;
-    typedef april_utils::open_addr_hash_fast_it<Key, WordResultHash> KeyWordHash;
+    typedef AprilUtils::hash<WordType, KeyScoreMultipleBurdenTuple> WordResultHash;
+    typedef AprilUtils::open_addr_hash_fast_it<Key, WordResultHash> KeyWordHash;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) = 0;
@@ -83,7 +83,7 @@ namespace LanguageModels {
       ctxt_word.burden_vector.push_back(burden);
     }
 
-    virtual const april_utils::vector<KeyScoreBurdenTuple> &getQueries() {
+    virtual const AprilUtils::vector<KeyScoreBurdenTuple> &getQueries() {
       BunchHashedLM<Key,Score> *mdl;
       mdl = static_cast<BunchHashedLM<Key,Score>*>(this->model);
       
@@ -159,9 +159,9 @@ namespace LanguageModels {
     }
   };
 
-  typedef BunchHashedLMInterface<uint32_t, april_utils::log_float>
+  typedef BunchHashedLMInterface<uint32_t, AprilUtils::log_float>
   BunchHashedLMInterfaceUInt32LogFloat;
-  typedef BunchHashedLM<uint32_t, april_utils::log_float>
+  typedef BunchHashedLM<uint32_t, AprilUtils::log_float>
   BunchHashedLMUInt32LogFloat;
 
 }; // closes namespace

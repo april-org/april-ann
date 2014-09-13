@@ -8,8 +8,8 @@ using LanguageModels::arpa2lira::VectorReferenced;
 //BIND_END
 
 //BIND_HEADER_C
-using april_utils::vector;
-using april_utils::log_float;
+using AprilUtils::vector;
+using AprilUtils::log_float;
 //BIND_END
 
 ////////////////////////////////////
