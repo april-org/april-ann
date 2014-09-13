@@ -26,6 +26,7 @@
 
 #include "buffered_stream.h"
 
+/// Input/output facilities for GZip files.
 namespace GZIO {
 
   class GZFileStream : public AprilIO::BufferedInputStream {

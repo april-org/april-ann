@@ -28,6 +28,7 @@
 #include "MersenneTwister.h"
 #include "referenced.h"
 
+/// Classes related with statistical functions and distributions.
 namespace Stats {
 
   /**

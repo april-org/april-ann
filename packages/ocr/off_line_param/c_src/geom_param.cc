@@ -294,7 +294,7 @@ namespace OCR {
 	case 'T':
 	  result->putCol(i, v_orig_nstrokes, img->width());
 	  break;
-	case 't': //TODO: Normalizar?
+	case 't': // TODO: Normalizar?
 	  copyNormVector(v_nstrokes, result, i, 0, 0.3);
 	  break;
 	case 'H':

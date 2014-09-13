@@ -31,6 +31,7 @@ extern "C" {
 #include "smart_ptr.h"
 #include "stream.h"
 
+/// Read of ZIP files.
 namespace ZIP {
 
   // forward declaration

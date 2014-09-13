@@ -84,6 +84,9 @@ extern "C" {
     return 0;                                                           \
   }
 
+/**
+ * @brief Declaration of interfaces and generic classes for input/output purposes.
+ */
 namespace AprilIO {
   /**
    * @brief The StreamInterface is the basic public interface needed to

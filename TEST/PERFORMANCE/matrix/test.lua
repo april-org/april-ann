@@ -359,3 +359,17 @@ T("DOT 1D TEST SUBMATRIX", function()
 	     measure_process_time(function() a:dot(b) end))
     end
 end)
+
+-----------------------------------------------------------------------------
+
+T("CONVOLUTION 2D TEST", function()
+    for i=4,6 do
+      local N = 6^i
+      local a = matrix.col_major(root(N,2)):uniformf(-1,1,rnd) a:update()
+      local b = matrix.col_major(17,17):uniformf(-1,1,rnd) b:update()
+      printf("\tsize=%10d  %s  %20.9f  %20.9f\n",a:size(),"1D",
+	     measure_process_time(function()
+		 matrix.ext.convolution(a, { kernel=b, D=2 })
+      end))
+    end
+end)

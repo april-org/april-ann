@@ -1,6 +1,7 @@
 #ifndef RATES_H
 #define RATES_H
 
+/// Word Error Rate and similar dynamic programming error rate measures.
 namespace Rates {
 
   struct int_sequence {

@@ -1163,7 +1163,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
       return l; 
   }
   line * PointComponent::get_regression_line() {
-      //TODO: Move to geometry
+      // TODO: Move to geometry
       size_t n = this->size();
       if (n <= 1)
           return NULL;

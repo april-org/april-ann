@@ -30,6 +30,7 @@
 #include "stream.h"
 #include "vector.h"
 
+/// Read of TAR files.
 namespace TAR {
 
   // forward declaration

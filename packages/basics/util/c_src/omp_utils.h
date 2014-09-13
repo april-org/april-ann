@@ -26,6 +26,8 @@ extern "C" {
 #include <omp.h>
 }
 #endif
+
+/// Utilities related with Open-MP parallelization.
 namespace OMPUtils {
   int get_num_threads();
 }

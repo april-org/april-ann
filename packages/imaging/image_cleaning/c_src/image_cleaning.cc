@@ -212,10 +212,10 @@ namespace Imaging {
 
     for (int i = 0; i < this->height; ++i) {
 
-      //FIXME: Memory allocation on each line
+      // FIXME: Memory allocation on each line
     
       MatrixFloat *m = getWindowHistogram(max(i - radius,0) ,0, min(height-1, i + radius), width-1);
-      //TODO: Copy on efficient way
+      // TODO: Copy on efficient way
       for (int h = 0; h < this->gray_levels; ++h)
         (*vHist)(i,h) = (*m)(h);
       delete m;
@@ -236,9 +236,9 @@ namespace Imaging {
 
     for (int i = 0; i < this->width; ++i) {
 
-      //FIXME: Memory allocation on each line
+      // FIXME: Memory allocation on each line
       MatrixFloat *m = getWindowHistogram(0,max(0, i-radius), height-1, min(width-1,i+radius));
-      //TODO: Copy on efficient way
+      // TODO: Copy on efficient way
       for (int h = 0; h < this->gray_levels; ++h)
         (*vHist)(i,h) = (*m)(h);
       delete m;

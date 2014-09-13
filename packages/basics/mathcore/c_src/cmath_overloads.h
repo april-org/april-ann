@@ -589,13 +589,18 @@ namespace AprilMath {
       /**
        * @brief Compares @c a=b using @c TH as percentage of relative error.
        * @returns True or false.
+       *
+       * @note This function checks NaN equality, exact equality (==) and
+       * finally computes relative difference between both numbers.
        */
       APRIL_CUDA_EXPORT bool operator()(const T &a,
                                         const T &b,
                                         const float &TH) const {
+        // NaN equality
         if (AprilMath::m_isnan(a) && AprilMath::m_isnan(b)) {
           return true;
         }
+        // Exact equality
         else if (a == b) {
           return true;
         }
@@ -604,9 +609,11 @@ namespace AprilMath {
           float a_abs = AprilMath::m_abs(a);
           float b_abs = AprilMath::m_abs(b);
           if (a_abs < ZERO || b_abs < ZERO) {
-            if (a_abs < ZERO && b_abs < ZERO) {
+            // In case any of both numbers is less than ZERO...
+            if (a_abs < ZERO && b_abs < ZERO) { // both are < ZERO
               return true;
             }
+            // check relative error between any of the numbers and ZERO
             else if (AprilMath::m_abs(a_abs-ZERO)/(a_abs+ZERO) > TH ||
                      AprilMath::m_abs(b_abs-ZERO)/(b_abs+ZERO) > TH) {
               return false;
@@ -616,6 +623,7 @@ namespace AprilMath {
             }
           }
           else {
+            // Relative difference.
             float diff = 2.0f * ( AprilMath::m_abs(a - b) / (a_abs + b_abs) );
             if (diff < TH) {
               return true;
@@ -725,49 +733,75 @@ namespace AprilMath {
 
   
   namespace Functors {
-    
+
+    /// Not equals functor.
     template<typename T>
     struct m_neq {
+      /// It uses AprilMath::m_eq function.
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) {
         if (AprilMath::m_eq(a,b) == T(1.0f)) return T(0.0f);
         else return T(1.0f);
       }
     };
     
+    /// Logistic functor.
     template<typename T>
     struct m_logistic {
+      /**
+       * @brief Computes <tt> AprilMath::m_sigmoid(T(1.0f),value) </tt>
+       * @see AprilMath::m_sigmoid
+       */
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
         return AprilMath::m_sigmoid(T(1.0f), value);
       }
     };
     
+    /// Anti-symmetric logistic functor.
     template<typename T>
     struct m_antisym_logistic {
+      /**
+       * @brief Computes <tt> AprilMath::m_sigmoid(T(2.0f),value) - T(1.0f) </tt>
+       * @see AprilMath::m_sigmoid
+       */
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
         return AprilMath::m_sigmoid(T(2.0f), value) - T(1.0f);
       }
     };
     
+    /// Log-logistic functor.
     template<typename T>
     struct m_log_logistic {
+      /**
+       * @brief Computes \f$ -log1p(exp(-x)) \f$
+       * @note Checks the case when @c value is a negative value large than
+       * @c T(-10.0f) which is approximated by @c value
+       */
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
         // The value of -log1p(exp(x)) when X is negative and large, is
         // approximately X
         return ( (value)<T(-10.0f)) ? (value) : (-AprilMath::m_log1p(AprilMath::m_exp(-(value))));
       }
     };
-    
+
+    /// Softsign functor.
     template<typename T>
     struct m_softsign {
+      /// Computes \f$ \displaystyle{\frac{x}{1.0 + abs(x)}} \f$
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
         return value / (T(1.0f) + AprilMath::m_abs(value));
       }
     };
     
+    /// Softplus functor.
     template<typename T>
     struct m_softplus {
+      /**
+       * @brief Computes \f$ log1p(exp(x)) \f$
+       * @note Checks the case when @c value is a positive value large than
+       * @c T(10.0f) which is approximated by @c value
+       */
       APRIL_CUDA_EXPORT T operator()(const T &value) const {
-        return AprilMath::m_log1p(AprilMath::m_exp(value));
+        return ( (value)>T(10.0f) ) ? (value) : (AprilMath::m_log1p(AprilMath::m_exp(value)));
       }
     };
   } // namespace Functors
@@ -794,24 +828,47 @@ namespace AprilMath {
   // DERIVATIVES
   namespace Functors {  
     
+    /// Logistic derivative functor.
     template<typename T>
     struct m_logistic_der {
+      /**
+       * @brief Computes \f$ x * (1.0 - x) \f$
+       * @note It receives the activation value, it is, the output
+       * of AprilMath::m_logistic function.
+       * @note The value is clamped between  <tt>[ NEAR_ZERO, 1.0 - NEAR_ZERO]</tt>
+       */
       APRIL_CUDA_EXPORT T operator()(const T &after_actf) const {
         float value = AprilMath::m_clamp(after_actf, NEAR_ZERO, T(1.0f) - NEAR_ZERO);
         return value * (T(1.0f) - value);
       }
     };
     
+    /// Logistic derivative functor.
     template<typename T>
     struct m_antisym_logistic_der {
+      /**
+       * @brief Computes \f$ 0.5 * (1.0 - x * x) \f$
+       * @note It receives the activation value, it is, the output
+       * of AprilMath::m_antisym_logistic function.
+       * @note The value is clamped between <tt>[ -1.0 + NEAR_ZERO, 1.0 - NEAR_ZERO]</tt>
+       * before the transformation.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &after_actf) const {
         T value = AprilMath::m_clamp(after_actf, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
         return T(0.5f) * (T(1.0f) - (value*value));
       }
     };
     
+    /// Softsign derivative functor.
     template<typename T>
     struct m_softsign_der {
+      /**
+       * @brief Computes \f$ \displaystyle{ \frac{1.0}{ (1.0 + abs(x))^2 } } \f$
+       * @note It receives the activation value, it is, the output
+       * of AprilMath::m_softsign function.
+       * @note The value is clamped between <tt>[ -1.0 + NEAR_ZERO, 1.0 - NEAR_ZERO]</tt>
+       * before the transformation.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &after_actf) const {
         T value = AprilMath::m_clamp(after_actf, T(-1.0f) + NEAR_ZERO, T(1.0f) - NEAR_ZERO);
         T aux   = T(1.0f) + AprilMath::m_abs(value);
@@ -819,23 +876,41 @@ namespace AprilMath {
       }
     };
     
+    /// Softplus derivative functor.
     template<typename T>
     struct m_softplus_der {
+      /**
+       * @brief Computes <tt> AprilMath::m_logistic(x) </tt>
+       * @note It receives the value before the activation, the input of
+       * AprilMath::m_softplus function.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &before_actf) const {
         T value = AprilMath::m_logistic(before_actf);
         return value;
       }
     };
     
+    /// ReLU derivative functor.
     template<typename T>
     struct m_relu_der {
+      /**
+       * @brief Computes <tt> x > T(0.0f) ? T(1.0f) : T(0.0f) </tt>
+       * @note It receives the value before the activation, the input of
+       * AprilMath::m_relu function.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &before_actf) const {
         return (before_actf > T(0.0f)) ? T(1.0f) : T(0.0f);
       }
     };
     
+    /// Clamp derivative functor.
     template<typename T>
     struct m_clamp_der {
+      /**
+       * @brief Computes <tt> ( x < inf || x > sup ) ? T(0.0f) : T(1.0f) </tt>
+       * @note It receives the value before the activation, the input of
+       * AprilMath::m_clamp function.
+       */
       APRIL_CUDA_EXPORT T operator()(const T &before_actf,
                                      const T &inf,
                                      const T &sup) const {
@@ -866,44 +941,80 @@ namespace AprilMath {
   //////////////// MATH SCALAR REDUCE FUNCTIONS ////////////////
   namespace Functors {
     
+    /**
+     * @brief Unary map and reduce functor.
+     *
+     * It allows to incorporate a unary map operation before another reduce
+     * operation.
+     *
+     * @tparam T - The map input typename.
+     * @tparam O - The reduce output typename.
+     * @tparam MAP_OP - The map operation functor typename.
+     * @tparam RED_OP - The reduce operation functor typename.
+     */
     template<typename T, typename O, typename MAP_OP, typename RED_OP>
     struct r_map1 {
-      MAP_OP map_functor;
-      RED_OP red_functor;
+      MAP_OP map_functor; ///< The instance of MAP_OP typename.
+      RED_OP red_functor; ///< The instance of RED_OP typename.
+      /// The constructor stores the functor instances.
       r_map1(const MAP_OP &map_functor, const RED_OP &red_functor) :
         map_functor(map_functor), red_functor(red_functor) { }
+      /// Computes <tt> red_functor(acc, map_functor(b)) </tt>
       APRIL_CUDA_EXPORT void operator()(O &acc, const T &b) const {
         red_functor(acc, map_functor(b));
       }
     };
 
+    /**
+     * @brief Binray map and reduce functor.
+     *
+     * It allows to incorporate a binary map operation before another reduce
+     * operation.
+     *
+     * @tparam T1 - The map input1 typename.
+     * @tparam T2 - The map input2 typename.
+     * @tparam O - The reduce output typename.
+     * @tparam MAP_OP - The map operation functor typename.
+     * @tparam RED_OP - The reduce operation functor typename.
+     */
     template<typename T1, typename T2, typename O, typename MAP_OP, typename RED_OP>
     struct r_map2 {
-      MAP_OP map_functor;
-      RED_OP red_functor;
+      MAP_OP map_functor; ///< The instance of MAP_OP typename.
+      RED_OP red_functor; ///< The instance of RED_OP typename.
+      /// The constructor stores the functor instances.
       r_map2(const MAP_OP &map_functor, const RED_OP &red_functor) :
         map_functor(map_functor), red_functor(red_functor) { }
+      /// Computes <tt> red_functor(acc, map_functor(b,c)) </tt>
       APRIL_CUDA_EXPORT void operator()(O &acc, const T1 &b, const T2 &c) const {
         red_functor(acc, map_functor(b,c));
       }
     };
-    
+   
+    /// Max reduce functor.
     template<typename T>
     struct r_max {
+      /// Computes \f$ acc = \max(acc,b) \f$
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         if (acc<b) acc = b;
       }
     };
 
+    /// Min reduce functor.
     template<typename T>
     struct r_min {
+      /// Computes \f$ acc = \min(acc,b) \f$
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         if (!(acc < b)) acc = b;
       }
     };
     
+    /// Max reduce with argmax computation functor.
     template<typename T>
     struct r_max2 {
+      /**
+       * @brief Computes \f$ acc = \max(acc,b) \f$ and if @c acc<b also
+       * computes <tt> which_acc = b_idx </tt>
+       */
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b,
                                         int32_t &which_acc,
                                         const int32_t b_idx) const {
@@ -914,8 +1025,13 @@ namespace AprilMath {
       }
     };
 
+    /// Min reduce with argmin computation functor.
     template<typename T>
     struct r_min2 {
+      /**
+       * @brief Computes \f$ acc = \min(acc,b) \f$ and if @c acc>b also
+       * computes <tt> which_acc = b_idx </tt>
+       */
       APRIL_CUDA_EXPORT void operator()(T & acc, const T &b,
                                         int32_t &which_acc,
                                         const int32_t b_idx) const {
@@ -926,56 +1042,46 @@ namespace AprilMath {
       }
     };
 
-    /**
-     * @brief Reduction for @c acc+=v
-     * @note Uses the C++ @c operator+=
-     */
+    /// @brief Reduction for @c acc+=v
     template<typename T, typename O>
     struct r_add {
+      /// Copmputes @c acc+=v using the C++ @c operator+=
       APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
         acc += v;
       }
     };
     
-    /**
-     * @brief Reduction for @c acc*=v
-     * @note Uses the C++ @c operator*=
-     */
+    /// @brief Reduction for @c acc*=v
     template<typename T, typename O>
     struct r_mul {
+      /// Copmputes @c acc*=v using the C++ @c operator*=
       APRIL_CUDA_EXPORT void operator()(O &acc, const T &v) const {
         acc *= v;
       }
     };
 
-    /**
-     * @brief Reduction for @c acc/=v
-     * @note Uses the C++ @c operator/=
-     */
+    /// @brief Reduction for @c acc/=v
     template<typename T, typename O>
     struct r_div {
+      /// Copmputes @c acc/=v using the C++ @c operator/=
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &v) const {
         acc /= v;
       }
     };
     
-    /**
-     * @brief Reduction for @c acc=acc&&v
-     * @note Uses the C++ @c operator&&
-     */
+    /// @brief Reduction for @c acc=acc&&v
     template<typename T>
     struct r_and {
+      /// Computes <tt> acc = acc && v </tt>
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         acc = acc && b;
       }
     };
 
-    /**
-     * @brief Reduction for @c acc=acc||v
-     * @note Uses the C++ @c operator||
-     */
+    /// @brief Reduction for @c acc=acc||v
     template<typename T>
     struct r_or {
+      /// Computes <tt> acc = acc || v </tt>
       APRIL_CUDA_EXPORT void operator()(T &acc, const T &b) const {
         acc = acc || b;
       }
@@ -1029,40 +1135,61 @@ namespace AprilMath {
   // Curried functions //
   ///////////////////////
   
+  /// Curried version of AprilMath::m_clamp function.
   template<typename T> struct m_curried_clamp {
-    const T inf, sup;
+    const T inf, ///< Inferior bound.
+      sup;       ///< superior bound.
+    /// The constructor stores inf and sup values.
     m_curried_clamp(const T &inf, const T &sup) : inf(inf), sup(sup) { }
+    /**
+     * @brief Returns <tt> AprilMath::m_clamp(u, inf, sup) </tt>
+     * @see AprilMath::m_clamp
+     */
     APRIL_CUDA_EXPORT T operator()(const T &u) const { return AprilMath::m_clamp(u, inf, sup); }
   };
 
+  /// Curried version of AprilMath::m_pow function.
   template<typename T> struct m_curried_pow {
-    const T power;
+    const T power; ///< The power curried parameter.
+    /// The constructor stores power value.
     m_curried_pow(const T &power) : power(power) { }
+    /**
+     * @brief Returns <tt> AprilMath::m_pow(a, power) </tt>
+     * @see AprilMath::m_pow
+     */
     APRIL_CUDA_EXPORT T operator()(const T &a) const { return AprilMath::m_pow(a, power); }
   };
   
+  /// Curried version of a mask function.
   template<typename T>
   struct m_curried_mask {
-    const T mask_value;
-    m_curried_mask(const T &mask_value) : mask_value(mask_value) { }
+    const T masked_value; ///< The value result of application of mask.
+    /// The constructor stores the masked_value instance.
+    m_curried_mask(const T &masked_value) : masked_value(masked_value) { }
+    /// Returns <tt> (mask < T(0.5f)) ? masked_value : unit </tt>
     APRIL_CUDA_EXPORT T operator()(const T &unit, const T &mask) const {
-      return (mask < T(0.5f)) ? mask_value : unit;
+      return (mask < T(0.5f)) ? masked_value : unit;
     }
   };
 
+  /// Curried version of AprilMath::m_fill function.
   template<typename T> struct m_curried_fill {
-    const T value;
+    const T value; ///< The fill value.
+    /// The constructor stores the fill value.
     m_curried_fill(const T &value) : value(value) { }
+    /// Returns <tt> value </tt>, ignores the given @c u parameter.
     APRIL_CUDA_EXPORT T operator()(const T &u) const {
       UNUSED_VARIABLE(u);
       return value;
     }
   };
   
+  /// Curried version of AprilMath::m_clamp_der function.
   template<typename T>
   struct m_curried_clamp_der {
     const T inf, sup;
     m_curried_clamp_der(const T &inf, const T &sup) : inf(inf), sup(sup) { }
+    /// Returns <tt> AprilMath::m_clamp_der(before_actf, inf, sup) </tt>
     APRIL_CUDA_EXPORT T operator()(const T &before_actf) const {
       return AprilMath::m_clamp_der(before_actf, inf, sup);
     }

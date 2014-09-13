@@ -51,6 +51,10 @@
 #define DATA_TYPE 0
 #define NUMBER_OF_BYTES 1
 
+/**
+ * @brief Readers of MAT format of Matlab.
+ * @see http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf
+ */
 namespace Matlab {
 
   class MatFileReader : public Referenced {
