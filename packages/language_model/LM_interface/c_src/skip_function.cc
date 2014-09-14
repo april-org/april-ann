@@ -28,78 +28,63 @@ using Basics::TokenBunchVector;
 using Basics::TokenVectorUint32;
 using LanguageModels::WordType;
 
-namespace Functions {
+namespace LanguageModels {
+  namespace QueryFilters {
   
-  DiceSkipFunction::DiceSkipFunction(Dice *dice, MTRand *random,
-                                     WordType mask_value) :
-    FunctionInterface(),
-    dice(dice),
-    random(random),
-    mask_value(mask_value) {
-    num_ctxt_words = 0;
-    int aux = dice->getOutcomes();
-    while(aux > 0) { aux >>= 1; ++num_ctxt_words; }
-  }
-
-  DiceSkipFunction::~DiceSkipFunction() { }
-
-  unsigned int DiceSkipFunction::getInputSize() const {
-    return num_ctxt_words;
-  }
-   
-  unsigned int DiceSkipFunction::getOutputSize() const {
-    return num_ctxt_words;
-  }
-  
-  // Be careful, this function works **in-place**
-  Token *DiceSkipFunction::calculate(Token *input) {
-    if (input->getTokenCode() != Basics::table_of_token_codes::vector_Tokens) {
-      ERROR_EXIT(128, "Input token should be a collection of tokens!\n");
+    DiceSkipFunction::DiceSkipFunction(Dice *dice, MTRand *random,
+                                       WordType mask_value) :
+      FunctionInterface(),
+      dice(dice),
+      random(random),
+      mask_value(mask_value) {
+      num_ctxt_words = 0;
+      int aux = dice->getOutcomes();
+      while(aux > 0) { aux >>= 1; ++num_ctxt_words; }
     }
-    TokenBunchVector *bunch_of_tokens = input->convertTo<TokenBunchVector*>();
-    april_assert(bunch_of_tokens);
-    
-    // For every pattern in the given token.
-    for (unsigned int i = 0; i < bunch_of_tokens->size(); i++) {
-      if ((*bunch_of_tokens)[i]->getTokenCode() != Basics::table_of_token_codes::vector_Tokens) {
-        ERROR_EXIT(128, "Tokens from input token should be a collection "
-                   "with two tokens!\n");
+
+    DiceSkipFunction::~DiceSkipFunction() { }
+
+    unsigned int DiceSkipFunction::getInputSize() const {
+      return num_ctxt_words;
+    }
+   
+    unsigned int DiceSkipFunction::getOutputSize() const {
+      return num_ctxt_words;
+    }
+  
+    // Be careful, this function works **in-place**
+    Token *DiceSkipFunction::calculate(Token *input) {
+      if (input->getTokenCode() != Basics::table_of_token_codes::vector_Tokens) {
+        ERROR_EXIT(128, "Input token should be a collection of tokens!\n");
       }
-      TokenBunchVector *query_token =
-        (*bunch_of_tokens)[i]->convertTo<TokenBunchVector*>();
+      TokenBunchVector *query_token = input->convertTo<TokenBunchVector*>();
       april_assert(query_token);
-      
-      if (query_token->size() != 2) {
-        ERROR_EXIT2(128, "Expected %u tokens, found %u!\n",
-                    2u, query_token->size());
+      if (query_token->size() != 2u) {
+        ERROR_EXIT1(128, "Expected a collection with 2 tokens, found %u\n",
+                    query_token->size());
       }
-      
       if ((*query_token)[0]->getTokenCode() != Basics::table_of_token_codes::vector_uint32) {
         ERROR_EXIT(128, "Expected a collection of uint32_t!\n");
       }
       if ((*query_token)[1]->getTokenCode() != Basics::table_of_token_codes::vector_uint32) {
         ERROR_EXIT(128, "Expected a collection of uint32_t!\n");
       }
-      
       TokenVectorUint32 *ctxt_words_token =
         (*query_token)[0]->convertTo<TokenVectorUint32*>();
       april_assert(ctxt_words_token);
-      
       unsigned int size = ctxt_words_token->size();
       if (size != num_ctxt_words) {
         ERROR_EXIT2(128, "Incorrect number of words, expected %d, found %d\n",
                     num_ctxt_words, size);
       }
-      
       // Compute a mask throwing the dice.
       int skip_mask = dice->thrown(random.get());
       for (int j = static_cast<int>(size)-1; j >= 0; j--) {
         if (skip_mask & 1) (*ctxt_words_token)[j] = mask_value;
         skip_mask >>= 1;
       }
+      return input;
     }
-    
-    return input;
-  }
 
-} // namespace Functions
+  } // namespace QueryFilters
+} // namespace LanguageModels

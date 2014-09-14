@@ -35,7 +35,7 @@ using namespace Basics;
 #include "bunch_hashed_LM.h"
 #include "skip_function.h"
 using namespace LanguageModels;
-using namespace Functions;
+using namespace LanguageModels::QueryFilters;
 
 class QueryResultUInt32LogFloat : public Referenced {
   LMInterfaceUInt32LogFloat *lm_interface;

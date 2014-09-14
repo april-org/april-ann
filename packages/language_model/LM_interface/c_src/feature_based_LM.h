@@ -28,6 +28,7 @@
 #include "error_print.h"
 #include "function_interface.h"
 #include "history_based_LM.h"
+#include "identity_function.h"
 #include "logbase.h"
 #include "smart_ptr.h"
 #include "token_vector.h"
@@ -37,21 +38,48 @@
 
 namespace LanguageModels {
 
+  /**
+   * @brief A LM base class for LMs which depend on a history of words (like
+   * Ngrams) and can work in bunch mode.
+   *
+   * A FeatureBasedLM depends into two function filter instances, both
+   * derived from Functions::FunctionInterface class. The corresponding interface
+   * class is FeatureBasedLMInterface and it is ready to work with a bunch
+   * of queries. Every bunch is traversed and filtered in order to extract
+   * new features from the initial word identifiers. Two different kind of
+   * filters has been defined:
+   *   1. QueryFilters receive a query formed by a context words sequence
+   *      (\f$h\f$) and a list of next words (\đ$w_1 w_2 \ldots\f$). This query
+   *       summarizes the computation of \f$p(w1|h), p(w2|h), \ldots\f$.
+   *   2. BunchFiltes receive a bunch of queries like such above.
+   * The filters can modify the given information in many different ways,
+   * allowing to produce Ngram Skips, ShortLists, FactoreBased approaches, among
+   * others.
+   * 
+   * @see FeatureBasedLM::query_filter and FeatureBasedLM::bunch_filter
+   * properties for more documentation.
+   */  
   template <typename Key, typename Score>
   class FeatureBasedLM;
 
+  /**
+   * @brief Interface part of FeatureBasedLM class.
+   * @see FeatureBasedLM for more documentation.
+   */
   template <typename Key, typename Score>
   class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>,
                                   public BunchHashedLMInterface <Key, Score> {
     friend class FeatureBasedLM<Key,Score>;
 
-    AprilUtils::SharedPtr<Functions::FunctionInterface> filter;
+    AprilUtils::SharedPtr<Functions::FunctionInterface> query_filter;
+    AprilUtils::SharedPtr<Functions::FunctionInterface> bunch_filter;
 
   protected:
     FeatureBasedLMInterface(FeatureBasedLM<Key,Score>* model) :
       HistoryBasedLMInterface<Key,Score>(model),
       BunchHashedLMInterface<Key,Score>(model),
-      filter(model->getFilter()) { }
+      query_filter(model->getQueryFilter()),
+      bunch_filter(model->getBunchFilter()) { }
 
     typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
@@ -137,13 +165,18 @@ namespace LanguageModels {
         query_token->push_back(context_words_token.get()); // [0]
         query_token->push_back(next_words_token.get());    // [1]
         
+        // Apply query filter
+        AprilUtils::SharedPtr<Basics::Token> filtered_query_token;
+        filtered_query_token = query_filter->calculate(query_token.get());
+        
         // Put the current query into the bunch of queries
-        queries_bunch_token->push_back(query_token.get());
+        queries_bunch_token->push_back(filtered_query_token.get());
         
         // If we have a full bunch, process it
         if (query_token->size() % bunch_size == 0) {
+          // Apply bunch filter
           AprilUtils::SharedPtr<Basics::Token>
-            filtered_queries_bunch_token( filter->calculate(queries_bunch_token.get()) );
+            filtered_queries_bunch_token( bunch_filter->calculate(queries_bunch_token.get()) );
           executeQueries(filtered_queries_bunch_token.get(), scores);
           queries_bunch_token->clear();
         }
@@ -151,8 +184,9 @@ namespace LanguageModels {
       
       // If there is something left in the bunch, process it
       if (queries_bunch_token->size() > 0) {
+        // Apply bunch filter
         AprilUtils::SharedPtr<Basics::Token>
-          filtered_queries_bunch_token( filter->calculate(queries_bunch_token.get()) );
+          filtered_queries_bunch_token( bunch_filter->calculate(queries_bunch_token.get()) );
         executeQueries(filtered_queries_bunch_token.get(), scores);
         queries_bunch_token->clear();
       }
@@ -188,39 +222,75 @@ namespace LanguageModels {
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
     }
 
-    Basics::Token* applyFilter(Basics::Token* token) {
-      return filter->calculate(token);
+    Basics::Token* applyQueryFilter(Basics::Token* token) {
+      return query_filter->calculate(token);
+    }
+
+    Basics::Token* applyBunchFilter(Basics::Token* token) {
+      return query_filter->calculate(token);
     }
 
     virtual LMModel<Key, Score>* getLMModel() {
       return HistoryBasedLMInterface<Key,Score>::model;
     }
   };
-
+  
+  // Documentation is in the forward declaration in the top of this file.
   template <typename Key, typename Score>
   class FeatureBasedLM : public HistoryBasedLM <Key,Score>,
                          public BunchHashedLM <Key,Score> {
   private:
-    AprilUtils::SharedPtr<Functions::FunctionInterface> filter;
+    
+    /**
+     * @brief A function which will be used to filter every LM query.
+     *
+     * The @c query_filter expects an instance of Basics::TokenBunchVector
+     * which contains two components:
+     *   1. A Basics::TokenVectorUint32 for the context words.
+     *   2. A Basics::TokenVectorUint32 for the next words. All the words in
+     *      this vector share the previous context words.
+     * The query_filter can modify any of both components **in-place** or return
+     * a new allocated Basics::TokenBunchVector instance.
+     */
+    AprilUtils::SharedPtr<Functions::FunctionInterface> query_filter;
+    
+    /**
+     * @brief A function which will be used to filter a bunch of LM queries.
+     *
+     * @see LanguageModels::FeatureBasedLMInterface::executeQueries() method
+     * for documentation about the expected input token format.
+     */
+    AprilUtils::SharedPtr<Functions::FunctionInterface> bunch_filter;
 
   public:
     FeatureBasedLM(int ngram_order,
                    WordType init_word,
                    AprilUtils::TrieVector *trie_vector,
                    unsigned int bunch_size,
-                   Functions::FunctionInterface *filter) :
+                   Functions::FunctionInterface *query_filter,
+                   Functions::FunctionInterface *bunch_filter=0) :
       HistoryBasedLM<Key,Score>(ngram_order,
                                 init_word,
                                 trie_vector),
       BunchHashedLM<Key,Score>(bunch_size),
-      filter(filter) {
+      query_filter(query_filter),
+      bunch_filter(bunch_filter) {
+      if (this->bunch_filter.empty()) {
+        bunch_filter = new Functions::IdentityFunction();
+      }
+      april_assert(!this->query_filter.empty());
+      april_assert(!this->bunch_filter.empty());
     }
 
     virtual ~FeatureBasedLM() {
     }
 
-    Functions::FunctionInterface* getFilter() {
-      return filter.get();
+    Functions::FunctionInterface* getQueryFilter() {
+      return query_filter.get();
+    }
+
+    Functions::FunctionInterface* getBunchFilter() {
+      return bunch_filter.get();
     }
 
     void incRef() {
