@@ -1,11 +1,12 @@
 get_table_from_dotted_string("ann.mlp.all_all", true)
+get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
 
-local ann_wrapper_methods, ann_wrapper_class_metatable =
-  class("ann.components.wrapper")
+local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
+ann.components.wrapper = ann_wrapper -- global environment
 
-function ann_wrapper_class_metatable:__call(t)
+function ann_wrapper:constructor(t)
   local params = get_table_fields(
     {
       input = { mandatory = true, type_match="number", default=0 },
@@ -17,19 +18,16 @@ function ann_wrapper_class_metatable:__call(t)
       reset = { mandatory=false, type_match="function" },
       state = { mandatory=false },
     }, t)
-  local obj = {
-    forward_function = params.forward,
-    backprop_function = params.backprop or
-    function() error"Not implemented for THIS wrapper component" end,
-    compute_gradients_function = params.compute_gradients or
-    function() error"Not implemented for THIS wrapper component" end,
-    reset_function = params.reset or function() end,
-    input = params.input,
-    output = params.output,
-    weights = params.weights,
-    state = params.state,
-  }
-  return class_instance(obj, self)
+  self.forward_function = params.forward
+  self.backprop_function = params.backprop or
+  function() error"Not implemented for THIS wrapper component" end
+  self.compute_gradients_function = params.compute_gradients or
+  function() error"Not implemented for THIS wrapper component" end
+  self.reset_function = params.reset or function() end
+  self.input = params.input
+  self.output = params.output
+  self.weights = params.weights
+  self.state = params.state
 end
 
 function ann_wrapper_methods:has_weights_name()
