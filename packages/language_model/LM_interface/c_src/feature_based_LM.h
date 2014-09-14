@@ -38,27 +38,6 @@
 
 namespace LanguageModels {
 
-  /**
-   * @brief A LM base class for LMs which depend on a history of words (like
-   * Ngrams) and can work in bunch mode.
-   *
-   * A FeatureBasedLM depends into two function filter instances, both
-   * derived from Functions::FunctionInterface class. The corresponding interface
-   * class is FeatureBasedLMInterface and it is ready to work with a bunch
-   * of queries. Every bunch is traversed and filtered in order to extract
-   * new features from the initial word identifiers. Two different kind of
-   * filters has been defined:
-   *   1. QueryFilters receive a query formed by a context words sequence
-   *      (\f$h\f$) and a list of next words (\đ$w_1 w_2 \ldots\f$). This query
-   *       summarizes the computation of \f$p(w1|h), p(w2|h), \ldots\f$.
-   *   2. BunchFiltes receive a bunch of queries like such above.
-   * The filters can modify the given information in many different ways,
-   * allowing to produce Ngram Skips, ShortLists, FactoreBased approaches, among
-   * others.
-   * 
-   * @see FeatureBasedLM::query_filter and FeatureBasedLM::bunch_filter
-   * properties for more documentation.
-   */  
   template <typename Key, typename Score>
   class FeatureBasedLM;
 
@@ -234,8 +213,28 @@ namespace LanguageModels {
       return HistoryBasedLMInterface<Key,Score>::model;
     }
   };
-  
-  // Documentation is in the forward declaration in the top of this file.
+
+  /**
+   * @brief A LM base class for LMs which depend on a history of words (like
+   * Ngrams) and can work in bunch mode.
+   *
+   * A FeatureBasedLM depends into two function filter instances, both
+   * derived from Functions::FunctionInterface class. The corresponding interface
+   * class is FeatureBasedLMInterface and it is ready to work with a bunch
+   * of queries. Every bunch is traversed and filtered in order to extract
+   * new features from the initial word identifiers. Two different kind of
+   * filters has been defined:
+   *   1. QueryFilters receive a query formed by a context words sequence
+   *      (\f$h\f$) and a list of next words (\f$w_1 w_2 \ldots\f$). This query
+   *       summarizes the computation of \f$p(w1|h), p(w2|h), \ldots\f$.
+   *   2. BunchFilters receive a bunch of queries like such above.
+   * The filters can modify the given information in many different ways,
+   * allowing to produce Ngram Skips, ShortLists, FactoreBased approaches, among
+   * others.
+   * 
+   * @see FeatureBasedLM::query_filter and FeatureBasedLM::bunch_filter
+   * properties for more documentation.
+   */
   template <typename Key, typename Score>
   class FeatureBasedLM : public HistoryBasedLM <Key,Score>,
                          public BunchHashedLM <Key,Score> {
