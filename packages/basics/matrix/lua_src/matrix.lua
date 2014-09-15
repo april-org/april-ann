@@ -65,11 +65,14 @@ end
 matrix.meta_instance.__mul = function(op1, op2)
   if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
     if class.is_a(op2,matrix.sparse) then
-      local op1,op2 = op2:transpose(),op1:transpose()
+      local res = matrix[op1:get_major_order()](op1:dim(1),op2:dim(2))
+      res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+		     trans_A=true, trans_B=true, trans_C=true }
+      return res
+    else
       local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
-      return res:transpose()
-    else
+      return res
     end
   else
     if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
