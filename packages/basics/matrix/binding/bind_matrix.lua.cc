@@ -2339,6 +2339,14 @@ namespace Basics {
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloatSet to_lua_string
+{
+  char *str = obj->toLuaString();
+  LUABIND_RETURN(string, str);
+  delete[] str;
+}
+//BIND_END
+
 //BIND_LUACLASSNAME MatrixFloatSetIteratorWrapper matrix.dict.__iterator__
 //BIND_CPP_CLASS    MatrixFloatSetIteratorWrapper
 

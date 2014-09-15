@@ -343,6 +343,29 @@ namespace Basics {
       return result;
     }
 
+    char *toLuaString() {
+      AprilUtils::SharedPtr<AprilIO::CStringStream> stream(new AprilIO::CStringStream());
+      AprilUtils::HashTableOptions options;
+      options.putBoolean("ascii", false);
+      stream->put("matrix.dict{ ");
+      for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
+        stream->printf("[\"%s\"] = ", it->first.c_str());
+        Value &a = it->second;
+        if (a.isSparse()) {
+          stream->put("matrix.sparse.fromString[[");
+          a.getSparse()->write(stream.get(), &options);
+          stream->put("]],");
+        }
+        else {
+          stream->put("matrix.fromString[[");
+          a.getDense()->write(stream.get(), &options);
+          stream->put("]],");
+        }
+      }
+      stream->put(" }\0", 3); // forces a \0 at the end of the buffer
+      return stream->releaseString();
+    }
+    
   };
 
 } // namespace Basics

@@ -74,6 +74,7 @@ namespace ANN {
 
 //BIND_HEADER_H
 #include "ann_component.h"
+#include "const_component.h"
 #include "dot_product_component.h"
 #include "bias_component.h"
 #include "hyperplane_component.h"
@@ -1587,7 +1588,7 @@ using namespace ANN;
   int takeN;
   Basics::MatrixFloat *U;
   Basics::SparseMatrixFloat *S;
-  check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
+  check_table_fields(L, 1, "name", "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
   LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
@@ -1623,7 +1624,7 @@ using namespace ANN;
   int takeN;
   Basics::MatrixFloat *U;
   Basics::SparseMatrixFloat *S;
-  check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
+  check_table_fields(L, 1, "name", "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
   LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
@@ -1639,5 +1640,35 @@ using namespace ANN;
 {
   LUABIND_RETURN(ZCAWhiteningANNComponent,
 		 dynamic_cast<ZCAWhiteningANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+//////////////////////////////////////////////
+//           ConstANNComponent              //
+//////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ConstANNComponent ann.components.const
+//BIND_CPP_CLASS    ConstANNComponent
+//BIND_SUBCLASS_OF  ConstANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ConstANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  ANNComponent *component;
+  check_table_fields(L, 1, "name", "component", (const char *)0);
+  LUABIND_GET_TABLE_PARAMETER(1, component, ANNComponent, component);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  //
+  obj = new ConstANNComponent(component, name);
+  LUABIND_RETURN(ConstANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ConstANNComponent clone
+{
+  LUABIND_RETURN(ConstANNComponent,
+		 dynamic_cast<ConstANNComponent*>(obj->clone()));
 }
 //BIND_END
