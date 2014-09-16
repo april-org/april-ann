@@ -2,114 +2,116 @@
 
 // FIXME MACROS ELIMINAR ESTA FUNCION DE AQUI
 
-namespace Rates {
+namespace Metrics {
+  namespace Rates {
 
-  int_sequence read_int_sequence(lua_State *L) {
-    // recibe una tabla en el tope de la pila y la consume
-    // stack: vector-table]
-    // meter los elementos en un vector de enteros
-    int i,j,k;
-    int maxlength = 1024;
-    int *aux_seq = new int[maxlength];
-    // stack: j-component table
-    k = 0;
-    for (j=1;
-         lua_rawgeti(L, -1, j), !lua_isnil(L,-1);
-         j++) {
+    int_sequence read_int_sequence(lua_State *L) {
+      // recibe una tabla en el tope de la pila y la consume
+      // stack: vector-table]
+      // meter los elementos en un vector de enteros
+      int i,j,k;
+      int maxlength = 1024;
+      int *aux_seq = new int[maxlength];
       // stack: j-component table
+      k = 0;
+      for (j=1;
+           lua_rawgeti(L, -1, j), !lua_isnil(L,-1);
+           j++) {
+        // stack: j-component table
 
-      if (j == maxlength) { // resize
-        int *aux = new int[2*maxlength];
-        for (i=0;i<maxlength;i++) 
-          aux[i] = aux_seq[i];
-        delete[] aux_seq; aux_seq = aux;
-        maxlength *= 2;
+        if (j == maxlength) { // resize
+          int *aux = new int[2*maxlength];
+          for (i=0;i<maxlength;i++) 
+            aux[i] = aux_seq[i];
+          delete[] aux_seq; aux_seq = aux;
+          maxlength *= 2;
+        }
+
+        aux_seq[k] = (int)luaL_checknumber(L, -1);
+        lua_pop(L,1); // stack: table
+        k++;
       }
-
-      aux_seq[k] = (int)luaL_checknumber(L, -1);
-      lua_pop(L,1); // stack: table
-      k++;
+      // stack: nil table
+      lua_pop(L,2); // delete nil value and table
+      int_sequence resul;
+      resul.size   = k;
+      resul.symbol = new int[k];
+      for (j=0;j<k;j++) 
+        resul.symbol[j] = aux_seq[j];
+      delete[] aux_seq;
+      return resul;
     }
-    // stack: nil table
-    lua_pop(L,2); // delete nil value and table
-    int_sequence resul;
-    resul.size   = k;
-    resul.symbol = new int[k];
-    for (j=0;j<k;j++) 
-      resul.symbol[j] = aux_seq[j];
-    delete[] aux_seq;
-    return resul;
-  }
 
-  // FIXME MACROS ELIMINAR ESTA FUNCION DE AQUI????
+    // FIXME MACROS ELIMINAR ESTA FUNCION DE AQUI????
 
-  pairs_int_sequences* read_pairs_int_sequences(lua_State *L) {
+    pairs_int_sequences* read_pairs_int_sequences(lua_State *L) {
 
-    // stack: data-table]
-
-    pairs_int_sequences *data = 0;
-    pairs_int_sequences **tail_data = &data;
-    pairs_int_sequences *nextpair;
-
-    for (int i=1;
-         lua_rawgeti(L, -1, i), !lua_isnil(L,-1);
-         i++) {
-      // stack: i-pair-table data-table]
-
-      // desplegar la tabla en el tope de la pila
-    
-      // creamos un nuevo par de secuencias
-      nextpair = new pairs_int_sequences;
-      nextpair->next = 0;
-
-      // primera entrada
-      lua_rawgeti(L,-1,1);
-      // stack: 1st-component i-pair-table data-table]
-      nextpair->correct = read_int_sequence(L);
-      // stack: i-pair-table data-table]
-
-      // segunda entrada
-      lua_rawgeti(L,-1,2);
-      // stack: 2nd-component i-pair-table data-table]
-      nextpair->test = read_int_sequence(L);
-      // stack: i-pair-table data-table]
-
-      // añadir nextpair en la lista "data", al final
-      *tail_data = nextpair;
-      tail_data = &(nextpair->next);
-
-      // nos cargamos la ref. al par de tablas que acabamos de read
-      lua_pop(L,1);
       // stack: data-table]
+
+      pairs_int_sequences *data = 0;
+      pairs_int_sequences **tail_data = &data;
+      pairs_int_sequences *nextpair;
+
+      for (int i=1;
+           lua_rawgeti(L, -1, i), !lua_isnil(L,-1);
+           i++) {
+        // stack: i-pair-table data-table]
+
+        // desplegar la tabla en el tope de la pila
+    
+        // creamos un nuevo par de secuencias
+        nextpair = new pairs_int_sequences;
+        nextpair->next = 0;
+
+        // primera entrada
+        lua_rawgeti(L,-1,1);
+        // stack: 1st-component i-pair-table data-table]
+        nextpair->correct = read_int_sequence(L);
+        // stack: i-pair-table data-table]
+
+        // segunda entrada
+        lua_rawgeti(L,-1,2);
+        // stack: 2nd-component i-pair-table data-table]
+        nextpair->test = read_int_sequence(L);
+        // stack: i-pair-table data-table]
+
+        // añadir nextpair en la lista "data", al final
+        *tail_data = nextpair;
+        tail_data = &(nextpair->next);
+
+        // nos cargamos la ref. al par de tablas que acabamos de read
+        lua_pop(L,1);
+        // stack: data-table]
+      }
+      lua_pop(L,2); // delete nil value and data-table
+      // stack: ]
+      return data;
     }
-    lua_pop(L,2); // delete nil value and data-table
-    // stack: ]
-    return data;
-  }
 
-  // FIXME posiblemente estaria mejor en otra parte:
+    // FIXME posiblemente estaria mejor en otra parte:
 
-  void delete_pairs_int_sequences (pairs_int_sequences *data) {
-    pairs_int_sequences *aux;
-    while (data != 0) {
-      aux = data;
-      data = data->next;
-      delete[] aux->correct.symbol;
-      delete[] aux->test.symbol;
-      delete aux;
+    void delete_pairs_int_sequences (pairs_int_sequences *data) {
+      pairs_int_sequences *aux;
+      while (data != 0) {
+        aux = data;
+        data = data->next;
+        delete[] aux->correct.symbol;
+        delete[] aux->test.symbol;
+        delete aux;
+      }
     }
-  }
 
-} // namespace Rates
+  } // namespace Rates
+} // namespace Metrics
 //BIND_END
 
 //BIND_HEADER_H
 #include "rates.h"
 
-using namespace Rates;
+using namespace Metrics::Rates;
 //BIND_END
 
-//BIND_FUNCTION rates.ints
+//BIND_FUNCTION metrics.rates.ints
 {
   // recibe como argumentos: 
   // la tabla con los ints, 
@@ -220,7 +222,7 @@ using namespace Rates;
 }
 //BIND_END
 
-//BIND_FUNCTION rates.raw
+//BIND_FUNCTION metrics.rates.raw
 {
   // recibe como argumentos: 
   // la tabla con los ints, 

@@ -1,4 +1,8 @@
-rates = rates or {}
+-- global environment
+metrics = metrics or {}
+metrics.rates = metrics.rates or {}
+--
+local rates = metrics.rates
 april_set_doc(rates,
 	      {
 		class="function",
@@ -182,7 +186,7 @@ end
 local m = getmetatable(rates)
 function m.__call(x,tbl)
   if (tbl == nil) then
-    april_help("rates")
+    april_help(rates)
   else
     return rates.rates(tbl)
   end
