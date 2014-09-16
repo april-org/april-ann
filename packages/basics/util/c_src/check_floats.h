@@ -27,7 +27,7 @@
 // aunque para en cuanto detecta un NaN o inf, en cuyo caso
 // devolveria false. Si todo esta bien devuelve true.
 
-namespace april_utils {
+namespace AprilUtils {
   
   bool check_floats(float *v, unsigned int sz);
 

@@ -24,11 +24,11 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "copy_component.h"
-#include "wrapper.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -130,7 +130,7 @@ namespace ANN {
 #endif
     TokenMatrixFloat *error_output_token = new TokenMatrixFloat(error_output_mat);
     AssignRef<Token>(error_output, error_output_token);
-    error_output_mat->copy(current_mat);
+    matCopy(error_output_mat, current_mat);
     
     // The rest of tokens
     for (unsigned int i=1; i<times; ++i) {
@@ -144,7 +144,7 @@ namespace ANN {
       current_mat->setUseCuda(use_cuda);
 #endif
       ASSERT_MATRIX(current_mat);
-      error_output_mat->axpy(1.0f, current_mat);
+      matAxpy(error_output_mat, 1.0f, current_mat);
     }
     return error_output;
   }

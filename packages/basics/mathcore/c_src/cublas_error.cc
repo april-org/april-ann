@@ -20,26 +20,38 @@
  *
  */
 #include "cublas_error.h"
+#include "error_print.h"
 
 #ifdef USE_CUDA
 
 void checkCublasError(cublasStatus_t status) {
-  if (status == CUBLAS_STATUS_SUCCESS)
+  if (status == CUBLAS_STATUS_SUCCESS) {
     return;
-  else if (status == CUBLAS_STATUS_NOT_INITIALIZED)
+  }
+  else if (status == CUBLAS_STATUS_NOT_INITIALIZED) {
     ERROR_EXIT(152, "Cublas is not initialized!\n");
-  else if (status == CUBLAS_STATUS_ALLOC_FAILED)
+  }
+  else if (status == CUBLAS_STATUS_ALLOC_FAILED) {
     ERROR_EXIT(153, "Cublas resource allocation failed!\n");
-  else if (status == CUBLAS_STATUS_INVALID_VALUE)
+  }
+  else if (status == CUBLAS_STATUS_INVALID_VALUE) {
     ERROR_EXIT(154, "Cublas detected an unsupported parameter.\n");
-  else if (status == CUBLAS_STATUS_ARCH_MISMATCH)
+  }
+  else if (status == CUBLAS_STATUS_ARCH_MISMATCH) {
     ERROR_EXIT(155, "Cublas and architecture not compatible.\n");
-  else if (status == CUBLAS_STATUS_MAPPING_ERROR)
+  }
+  else if (status == CUBLAS_STATUS_MAPPING_ERROR) {
     ERROR_EXIT(156, "Cublas accessed to a wrong GPU memory space!\n");
-  else if (status == CUBLAS_STATUS_EXECUTION_FAILED)
+  }
+  else if (status == CUBLAS_STATUS_EXECUTION_FAILED) {
     ERROR_EXIT(157, "Cublas failed to execute the operation\n");
-  else if (status == CUBLAS_STATUS_INTERNAL_ERROR)
+  }
+  else if (status == CUBLAS_STATUS_INTERNAL_ERROR) {
     ERROR_EXIT(158, "Cublas failed to execute an internal operation!\n");
+  }
+  else {
+    ERROR_EXIT(128, "Uknown Cublas error\n");
+  }
 }
 
 #endif

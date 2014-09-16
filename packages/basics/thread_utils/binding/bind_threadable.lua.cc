@@ -21,7 +21,7 @@
 //BIND_HEADER_H
 #include "threadable.h"
 #include "sig_int_handler.h"
-using namespace april_thread_utils;
+using namespace AprilThreadUtils;
 //BIND_END
 
 //BIND_HEADER_C

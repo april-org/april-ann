@@ -26,7 +26,7 @@
 //BIND_HEADER_H
 #include "function_interface.h"
 using namespace Functions;
-using basics::Token;
+using Basics::Token;
 //BIND_END
 
 //BIND_LUACLASSNAME FunctionInterface functions

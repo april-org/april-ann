@@ -31,15 +31,16 @@
 #include <cstdio>
 #include <cstdlib>
 #include "clamp.h"
+#include "floatrgb.h"
 #include "image.h"
 #include "maxmin.h"
+#include "smart_ptr.h"
 #include "unused_variable.h"
-#include "floatrgb.h"
 
-namespace imaging {
+namespace Imaging {
 
   template <typename T>
-  Image<T>::Image(basics::Matrix<T> *mat) {
+  Image<T>::Image(Basics::Matrix<T> *mat) {
     if (!mat->isSimple())
       ERROR_EXIT(128, "Image only works with simple matrices "
                  "(contiguous, and in row-major\n");
@@ -49,12 +50,12 @@ namespace imaging {
   }
 
   template <typename T>
-  Image<T>::Image(basics::Matrix<T> *mat, 
+  Image<T>::Image(Basics::Matrix<T> *mat, 
                   int width, int height,
                   int offset_w, int offset_h) {
     int pos[2] = { offset_h, offset_w };
     int sizes[2] = { height, width };
-    matrix = new basics::Matrix<T>(mat, pos, sizes);
+    matrix = new Basics::Matrix<T>(mat, pos, sizes);
     IncRef(matrix);
   }
 
@@ -70,8 +71,8 @@ namespace imaging {
     int dims[2];
     dims[0] = height;
     dims[1] = width;
-    matrix = new basics::Matrix<T>(2, dims);
-    matrix->fill(value);
+    matrix = new Basics::Matrix<T>(2, dims);
+    AprilMath::MatrixExt::Operations::matFill(matrix, value);
     IncRef(matrix);
   }
 
@@ -100,11 +101,11 @@ namespace imaging {
     int dims[2];
     dims[0] = h;
     dims[1] = w;
-    basics::Matrix<T> *mat = new basics::Matrix<T>(2, dims,
+    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims,
                                                    matrix->getMajorOrder());
     Image<T>  *img = new Image<T>(mat);
 
-    mat->fill(default_color);
+    AprilMath::MatrixExt::Operations::matFill(mat, default_color);
 
     // averiguar tamanyo subimage a copiar:
     int x_dest=0,        y_dest=0;
@@ -155,7 +156,7 @@ namespace imaging {
   template <typename T>
   int Image<T>::count_black_pixels(T threshold) const{
     int count = 0;
-    typename basics::Matrix<T>::random_access_iterator mat_it(matrix);
+    typename Basics::Matrix<T>::random_access_iterator mat_it(matrix);
     for (int y = 0; y < this->height(); ++y) {
       for (int x = 0; x < this->width(); x++) {
         if(mat_it(y,x) < threshold) {
@@ -171,7 +172,7 @@ namespace imaging {
     // v has size width
     for (int x=0;x<width();x++)
       v[x] = 0;
-    typename basics::Matrix<T>::const_iterator mat_it(matrix->begin());
+    typename Basics::Matrix<T>::const_iterator mat_it(matrix->begin());
     for (int y=0;y<height();y++) {
       for (int x=0;x<width();x++) {
         v[x] += (*mat_it);
@@ -181,17 +182,17 @@ namespace imaging {
   }
 
   template <typename T>
-  void Image<T>::projection_v(basics::Matrix<T> **m) const {
+  void Image<T>::projection_v(Basics::Matrix<T> **m) const {
     int dims[1];
     dims[0] = width();
-    *m = new basics::Matrix<T>(1, dims, matrix->getMajorOrder());
+    *m = new Basics::Matrix<T>(1, dims, matrix->getMajorOrder());
     projection_v((*m)->getRawDataAccess()->getPPALForWrite());
   }
 
   template <typename T>
   void Image<T>::projection_h(T *v) const {
     // v has size height
-    typename basics::Matrix<T>::const_iterator mat_it(matrix->begin());
+    typename Basics::Matrix<T>::const_iterator mat_it(matrix->begin());
     for (int y=0;y<height();y++) {
       T aux = 0;
       for (int x=0;x<width();x++) {
@@ -203,10 +204,10 @@ namespace imaging {
   }
 
   template <typename T>
-  void Image<T>::projection_h(basics::Matrix<T> **m) const {
+  void Image<T>::projection_h(Basics::Matrix<T> **m) const {
     int dims[1];
     dims[0] = height();
-    *m = new basics::Matrix<T>(1, dims, matrix->getMajorOrder());
+    *m = new Basics::Matrix<T>(1, dims, matrix->getMajorOrder());
     projection_h((*m)->getRawDataAccess()->getPPALForWrite());
   }
 
@@ -236,14 +237,14 @@ namespace imaging {
 
     //printf("dims = %dfilas x %dcolumnas\n", dims[0], dims[1]);
 	
-    basics::Matrix<T> *mat = new basics::Matrix<T>(2, dims,
+    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims,
                                                    matrix->getMajorOrder());
     Image<T>  *img = new Image<T>(mat);
   
     if (angle > 0) {
       // Angle > 0
-      typename basics::Matrix<T>::const_iterator source_it(matrix->begin());
-      typename basics::Matrix<T>::iterator dest_it(mat->begin());
+      typename Basics::Matrix<T>::const_iterator source_it(matrix->begin());
+      typename Basics::Matrix<T>::iterator dest_it(mat->begin());
       for (int line=0; line<height(); line++){
         float x = line*tan(angle);
         float izq = x-int(x);
@@ -285,9 +286,9 @@ namespace imaging {
       angle=-angle;
     
       for (int line= 0 ; line < height(); line++){
-        typename basics::Matrix<T>::const_iterator
+        typename Basics::Matrix<T>::const_iterator
           source_it(matrix->iteratorAt(height()-line-1,0));
-        typename basics::Matrix<T>::iterator
+        typename Basics::Matrix<T>::iterator
           dest_it(mat->iteratorAt(height()-line-1,0));
       
         float x = line*tan(angle);
@@ -451,7 +452,7 @@ namespace imaging {
     // Desde arriba
     found = false;
     row = 0;
-    typename basics::Matrix<T>::const_random_access_iterator mat_it(matrix);
+    typename Basics::Matrix<T>::const_random_access_iterator mat_it(matrix);
     while (row < height() && !found) {
       for (col = 0; col < width(); ++col) {
         T val = mat_it(row,col);
@@ -537,20 +538,15 @@ namespace imaging {
       src_pos[1] = 0;
       dst_pos[1] = dst_x;
     }
-    sizes[0] = april_utils::min(src->height() - src_pos[0], this->height() - dst_y);
-    sizes[1] = april_utils::min(src->width()  - src_pos[1], this->width()  - dst_x);
+    sizes[0] = AprilUtils::min(src->height() - src_pos[0], this->height() - dst_y);
+    sizes[1] = AprilUtils::min(src->width()  - src_pos[1], this->width()  - dst_x);
   
-    basics::Matrix<T> *src_submat = new basics::Matrix<T>(src->getMatrix(),
-                                                          src_pos, sizes, false);
-    basics::Matrix<T> *dst_submat = new basics::Matrix<T>(this->getMatrix(),
-                                                          dst_pos, sizes, false);
-    const basics::Matrix<T> *const_src_submat = src_submat;
-    IncRef(src_submat);
-    IncRef(dst_submat);
-    dst_submat->copy(const_src_submat);
-    DecRef(src_submat);
-    DecRef(dst_submat);
-  
+    AprilUtils::SharedPtr< Basics::Matrix<T> > src_submat =
+      new Basics::Matrix<T>(src->getMatrix(), src_pos, sizes, false);
+    AprilUtils::SharedPtr< Basics::Matrix<T> > dst_submat =
+      new Basics::Matrix<T>(this->getMatrix(), dst_pos, sizes, false);
+    AprilMath::MatrixExt::Operations::matCopy(dst_submat.get(), src_submat.get());
+    
     /*
       int x0=0, y0=0;
     
@@ -571,13 +567,13 @@ namespace imaging {
     dimensions[0] = width();
     dimensions[1] = height();
 
-    basics::Matrix<T> *new_mat = new basics::Matrix<T>(2, dimensions,
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
                                                        matrix->getMajorOrder());
     Image<T> *result = new Image<T>(new_mat);
   
-    typename basics::Matrix<T>::const_random_access_iterator
+    typename Basics::Matrix<T>::const_random_access_iterator
       src_it(this->getMatrix());
-    typename basics::Matrix<T>::random_access_iterator
+    typename Basics::Matrix<T>::random_access_iterator
       dst_it(new_mat);
     for (int y=0; y < height(); ++y) {
       for (int x=0; x < width(); ++x) {
@@ -596,13 +592,13 @@ namespace imaging {
     dimensions[0] = width();
     dimensions[1] = height();
 
-    basics::Matrix<T> *new_mat = new basics::Matrix<T>(2, dimensions,
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
                                                        matrix->getMajorOrder());
     Image<T> *result = new Image<T>(new_mat);
   
-    typename basics::Matrix<T>::const_random_access_iterator
+    typename Basics::Matrix<T>::const_random_access_iterator
       src_it(this->getMatrix());
-    typename basics::Matrix<T>::random_access_iterator
+    typename Basics::Matrix<T>::random_access_iterator
       dst_it(new_mat);
     for (int y=0; y < height(); ++y) {
       for (int x=0; x < width(); ++x) {
@@ -619,9 +615,9 @@ namespace imaging {
   template<typename T>
   Image<T> *Image<T>::invert_colors() const
   {
-    basics::Matrix<T> *new_mat = matrix->clone();
+    Basics::Matrix<T> *new_mat = matrix->clone();
     Image<T> *result = new Image<T>(new_mat);
-    new_mat->complement();
+    AprilMath::MatrixExt::Operations::matComplement(new_mat);
     return result;
   }
 
@@ -632,7 +628,7 @@ namespace imaging {
     const float UMBRAL_BINARIZADO = 0.5f;
     // Contamos las columnas en blanco de la imagen original
     int nblanco=0;
-    typename basics::Matrix<T>::const_random_access_iterator
+    typename Basics::Matrix<T>::const_random_access_iterator
       src_it(this->getMatrix());
     for (int x=0; x<width(); ++x) {
       bool blanco=true;
@@ -650,11 +646,11 @@ namespace imaging {
     dimensions[0]=height();
     dimensions[1]=width() - nblanco;
 	
-    basics::Matrix<T> *new_mat = new basics::Matrix<T>(2, dimensions,
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
                                                        matrix->getMajorOrder());
     Image<T> *result = new Image<T>(new_mat);
   
-    typename basics::Matrix<T>::random_access_iterator dst_it(new_mat);
+    typename Basics::Matrix<T>::random_access_iterator dst_it(new_mat);
     // Copy column by column
     int xdest=0;
     for (int x=0; x<width(); ++x) {
@@ -676,7 +672,7 @@ namespace imaging {
   template<typename T>
   Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const {
     int begin_padding[2] = { top_rows, 0 }, end_padding[2] = { bottom_rows, 0 };
-    basics::Matrix<T> *new_mat = matrix->padding(begin_padding, end_padding, value);
+    Basics::Matrix<T> *new_mat = matrix->padding(begin_padding, end_padding, value);
     Image<T> *result = new Image<T>(new_mat);
     return result;
   }
@@ -702,19 +698,20 @@ namespace imaging {
     dimensions[3] = 5;
     int rewrap_dims[2] = { height(), width() };
     // prepare kernel memory block
-    april_math::GPUMirroredMemoryBlock<float> *k_mem_block =
-      new april_math::GPUMirroredMemoryBlock<float>(25, k);
+    AprilMath::GPUMirroredMemoryBlock<float> *k_mem_block =
+      new AprilMath::GPUMirroredMemoryBlock<float>(25, k);
     // prepare kernel matrix
-    basics::Matrix<T> *kernel_mat = new basics::Matrix<T>(4, dimensions,
+    Basics::Matrix<T> *kernel_mat = new Basics::Matrix<T>(4, dimensions,
                                                           matrix->getMajorOrder(),
                                                           k_mem_block);
     // add padding to image
-    basics::Matrix<T> *padded_this_mat = matrix->padding(2, default_color);
+    Basics::Matrix<T> *padded_this_mat = matrix->padding(2, default_color);
     // execute convolution (D=2, step=NULL)
-    basics::Matrix<T> *conv_result_mat = padded_this_mat->convolution(2, 0,
-                                                                      kernel_mat);
+    Basics::Matrix<T> *conv_result_mat =
+      AprilMath::MatrixExt::Operations::matConvolution(padded_this_mat,
+                                                       2, 0, kernel_mat);
     // rewrap conv_result_mat to be a 2-dimensional matrix
-    basics::Matrix<T> *result_mat = conv_result_mat->rewrap(rewrap_dims, 2);
+    Basics::Matrix<T> *result_mat = conv_result_mat->rewrap(rewrap_dims, 2);
     Image<T> *result = new Image<T>(result_mat);
     // 
     delete kernel_mat;
@@ -732,9 +729,9 @@ namespace imaging {
     dimensions[0] = dst_height;
     dimensions[1] = dst_width;
 
-    basics::Matrix<T> *new_mat = new basics::Matrix<T>(2, dimensions);
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
     Image<T> *result = new Image<T>(new_mat);
-    typename basics::Matrix<T>::random_access_iterator result_it(new_mat);
+    typename Basics::Matrix<T>::random_access_iterator result_it(new_mat);
 
     // we go through the destination image
     for (int y=0; y<dst_height; y++) {
@@ -830,18 +827,18 @@ namespace imaging {
    */
 
   template <typename T>
-  Image<T> *Image<T>::affine_transform(basics::AffineTransform2D *trans,
+  Image<T> *Image<T>::affine_transform(Basics::AffineTransform2D *trans,
                                        T default_value, 
                                        int *offset_x, int *offset_y) const
   {
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
 
     float c[6];
-    basics::MatrixFloat *inverse_mat = trans->inv();
-    IncRef(inverse_mat);
+    AprilUtils::SharedPtr<Basics::MatrixFloat> inverse_mat =
+      AprilMath::MatrixExt::Operations::matInv(trans);
     if (!inverse_mat->getIsContiguous()) {
-      AssignRef(inverse_mat, inverse_mat->clone());
+      inverse_mat = inverse_mat->clone();
     }
     const float *inverse = inverse_mat->getRawDataAccess()->getPPALForRead();
     /*
@@ -870,7 +867,6 @@ namespace imaging {
     int x3 = int(roundf((width()-1) *inverse[0] + (height()-1)*inverse[1] + inverse[2]));
     int y3 = int(roundf((width()-1) *inverse[3] + (height()-1)*inverse[4] + inverse[5]));
 
-    DecRef(inverse_mat);
     inverse = 0;
   
     int xmax = int(roundf(max(x0, max(x1, max(x2, x3)))));
@@ -891,9 +887,9 @@ namespace imaging {
     dimensions[0] = dst_height;
     dimensions[1] = dst_width;
 
-    basics::Matrix<T> *new_mat = new basics::Matrix<T>(2, dimensions);
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
     Image<T> *result = new Image<T>(new_mat);
-    typename basics::Matrix<T>::random_access_iterator result_it(new_mat);
+    typename Basics::Matrix<T>::random_access_iterator result_it(new_mat);
 
     for (int y=ymin; y<=ymax; y++) {
       for (int x=xmin; x<=xmax; x++) {
@@ -912,22 +908,22 @@ namespace imaging {
   }
 
   template <typename T>
-  basics::Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto,
+  Basics::Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto,
                                                     int miniancho, int minialto,
-                                                    basics::LinearCombConf<T> *conf) {
+                                                    Basics::LinearCombConf<T> *conf) {
     
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int output_size = miniancho*minialto;
 
     //  printf("Preparing Combination %d\n", conf->patternsize);
-    basics::Matrix<T> *mat = new basics::Matrix<T>(1, output_size);
-    typename basics::Matrix<T>::random_access_iterator mat_it(mat);
-    typename basics::Matrix<T>::const_random_access_iterator this_it(this->getMatrix());
+    Basics::Matrix<T> *mat = new Basics::Matrix<T>(1, output_size);
+    typename Basics::Matrix<T>::random_access_iterator mat_it(mat);
+    typename Basics::Matrix<T>::const_random_access_iterator this_it(this->getMatrix());
  
-    mat->fill(T(0.0));
+    AprilMath::MatrixExt::Operations::matFill(mat, T(0.0));
 
-    //FIXME: This is not working correctly if ancho y alto are not multiples of 2
+    // FIXME: This is not working correctly if ancho y alto are not multiples of 2
     int miny = max(sy-alto/2,0);
     int maxy = min(sy+alto/2-1, this->height());
     int minx = max(sx-ancho/2,0);
@@ -954,16 +950,18 @@ namespace imaging {
   }
   template <typename T>
   Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
-    basics::Matrix<T> *mat = getMatrix()->substraction(img->getMatrix());
+    Basics::Matrix<T> *mat;
+    mat = AprilMath::MatrixExt::Operations::
+      matSubstraction(getMatrix(), img->getMatrix());
     Image<T>  *res = new Image<T>(mat);
-    mat->clamp(low, high);
+    AprilMath::MatrixExt::Operations::matClamp(mat, low, high);
     return res;
   }
 
   template <typename T>
   void Image<T>::threshold_image(T threshold_low, T threshold_high,
                                  T value_low, T value_high ){
-    typename basics::Matrix<T>::iterator it(getMatrix()->begin());
+    typename Basics::Matrix<T>::iterator it(getMatrix()->begin());
     for (int y = 0; y < this->height(); y++){
       for (int x = 0; x < this->width(); x++, ++it){
         T value = (*it);
@@ -973,6 +971,6 @@ namespace imaging {
     }
   }
 
-} // namespace imaging
+} // namespace Imaging
 
 #endif // IMAGE_CC

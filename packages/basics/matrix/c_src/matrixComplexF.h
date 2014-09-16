@@ -25,73 +25,46 @@
 #include "complex_number.h"
 #include "matrix.h"
 
-namespace basics {
+namespace Basics {
 
   namespace MatrixIO {
 
     /* Especialization of MatrixComplexF ascii and binary extractors, sizers and
        coders */
     template<>
-    bool AsciiExtractor<april_math::ComplexF>::operator()(april_utils::constString &line,
-                                                          april_math::ComplexF &destination);
+    bool AsciiExtractor<AprilMath::ComplexF>::operator()(AprilUtils::constString &line,
+                                                          AprilMath::ComplexF &destination);
   
     template<>
-    bool BinaryExtractor<april_math::ComplexF>::operator()(april_utils::constString &line,
-                                                           april_math::ComplexF &destination);
+    bool BinaryExtractor<AprilMath::ComplexF>::operator()(AprilUtils::constString &line,
+                                                           AprilMath::ComplexF &destination);
   
     template<>
-    int AsciiSizer<april_math::ComplexF>::operator()(const Matrix<april_math::ComplexF> *mat);
+    int AsciiSizer<AprilMath::ComplexF>::operator()(const Matrix<AprilMath::ComplexF> *mat);
 
     template<>
-    int BinarySizer<april_math::ComplexF>::operator()(const Matrix<april_math::ComplexF> *mat);
+    int BinarySizer<AprilMath::ComplexF>::operator()(const Matrix<AprilMath::ComplexF> *mat);
 
     template<>
-    void AsciiCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
+    void AsciiCoder<AprilMath::ComplexF>::operator()(const AprilMath::ComplexF &value,
                                                       AprilIO::StreamInterface *stream);
   
     template<>
-    void BinaryCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
+    void BinaryCoder<AprilMath::ComplexF>::operator()(const AprilMath::ComplexF &value,
                                                        AprilIO::StreamInterface *stream);
   
   } // namespace MatrixIO
 
   template<>
-  april_math::ComplexF Matrix<april_math::ComplexF>::
-  getTemplateOption(const april_utils::GenericOptions *options,
+  AprilMath::ComplexF Matrix<AprilMath::ComplexF>::
+  getTemplateOption(const AprilUtils::GenericOptions *options,
                     const char *name,
-                    april_math::ComplexF default_value);
-
-  template<>
-  void Matrix<april_math::ComplexF>::fill(april_math::ComplexF value);
-
-  template<>
-  april_math::ComplexF Matrix<april_math::ComplexF>::sum() const;
-
-  template<>
-  void Matrix<april_math::ComplexF>::scalarAdd(april_math::ComplexF s);
-
-  template<>
-  bool Matrix<april_math::ComplexF>::equals(const Matrix<april_math::ComplexF> *other,
-                                            float epsilon) const;
-
-  template<>
-  void Matrix<april_math::ComplexF>::cmul(const Matrix<april_math::ComplexF> *other);
-
-  /**** BLAS OPERATIONS ****/
-
-  template<>
-  void Matrix<april_math::ComplexF>::copy(const Matrix<april_math::ComplexF> *other);
-
-  template<>
-  void Matrix<april_math::ComplexF>::scal(april_math::ComplexF value);
-
-  template<>
-  float Matrix<april_math::ComplexF>::norm2() const;
+                    AprilMath::ComplexF default_value);
 
   //////////////////////////////////////////////////////////////////////////////
 
-  typedef Matrix<april_math::ComplexF> MatrixComplexF;
+  typedef Matrix<AprilMath::ComplexF> MatrixComplexF;
 
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIXCOMPLEXF_H

@@ -2,7 +2,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "APRIL-ANN toolkit"
-PROJECT_NUMBER         = 0.3.1
+PROJECT_NUMBER         = 0.4.0
 OUTPUT_DIRECTORY       = 
 CREATE_SUBDIRS         = NO
 DOXYFILE_ENCODING      = UTF-8
@@ -151,7 +151,7 @@ EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             = 
-INPUT_FILTER           = 
+INPUT_FILTER           = "sed -e 's/\/\/.*SUPERFIXME:\?/\/\/\/ \\todo/'" "sed -e 's/\/\/.*FIXME:\?/\/\/\/ \\todo/'" "sed -e 's/\/\/.*TODO:\?/\/\/\/ \\todo/'"
 FILTER_PATTERNS        = 
 FILTER_SOURCE_FILES    = NO
 
@@ -207,7 +207,7 @@ DISABLE_INDEX          = NO
 ENUM_VALUES_PER_LINE   = 4
 GENERATE_TREEVIEW      = NONE
 TREEVIEW_WIDTH         = 250
-FORMULA_FONTSIZE       = 10
+FORMULA_FONTSIZE       = 14
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
@@ -274,8 +274,34 @@ EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
-PREDEFINED             = 
-EXPAND_AS_DEFINED      = METHODS
+PREDEFINED             = USE_CUDA
+EXPAND_AS_DEFINED      = METHODS ARRAY_UNIQUE_PTR \
+                         HEADER_MAP1_WRAPPER HEADER_MAP2_WRAPPER \
+                         DECL_MAP1_WRAPPER DECL_MAP2_WRAPPER \
+                         DECL_MAP1_FUNCTOR DECL_MAP2_FUNCTOR \
+                         INSTANTIATE_TEMPLATE_MAP1_WRAPPER \
+                         INSTANTIATE_TEMPLATE_MAP2_WRAPPER \
+			 INSTANTIATE_MATRIX_SCALAR_MAP1 \
+			 INSTANTIATE_MATRIX_SCALAR_MAP2 \
+			 INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP1 \
+			 INSTANTIATE_SPARSE_MATRIX_SCALAR_MAP2 \
+			 MAKE_N0_OPERATOR \
+			 MAKE_N1_OPERATOR \
+			 MAKE_N2_OPERATOR \
+			 MAKE_OPERATOR \
+ 			 SCALAR_MAP_TEMPLATE \
+			 SCALAR_STD_CMATH_MAP_TEMPLATE \
+			 METHODS_IMPLEMENTATION \
+			 UNARY_SCALAR_CAST \
+			 BINARY_SCALAR_CAST \
+			 BINARY_MINMAX_SCALAR_CAST \
+			 UNARY_SPAN_CAST \
+			 BINARY_MINMAX_SCALAR_CAST \
+			 SPAN_REDUCE_CAST \
+			 SPAN_REDUCE2_CAST \
+			 INSTANTIATE_MATRIX_SCALAR_REDUCE1 \
+			 INSTANTIATE_MATRIX_SPAN_REDUCE1 \
+			 INSTANTIATE_MATRIX_SPAN_REDUCE2
 SKIP_FUNCTION_MACROS   = YES
 
 #---------------------------------------------------------------------------

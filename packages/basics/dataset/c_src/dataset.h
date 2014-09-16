@@ -32,7 +32,7 @@
 #include "sparse_matrix.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
 
   /// A pure abstract templatized class that serves as interface.
   /**
@@ -486,9 +486,9 @@ namespace basics {
     /// The indexed DataSet.
     DataSet<T> *ds;
     /// The vector of indexes.
-    april_utils::ReferencedVectorUint *indexes;
+    AprilUtils::ReferencedVectorUint *indexes;
   public:
-    IndexFilterDataSet(DataSet<T> *ds, april_utils::ReferencedVectorUint *indexes);
+    IndexFilterDataSet(DataSet<T> *ds, AprilUtils::ReferencedVectorUint *indexes);
     virtual ~IndexFilterDataSet();
     int numPatterns() { return (int)indexes->size(); }
     int patternSize() { return ds->patternSize(); }

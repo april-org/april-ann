@@ -21,11 +21,11 @@
 #include "sparse_matrix_component.h"  
 #include "unused_variable.h"
 #include "token_sparse_matrix.h"
-#include "wrapper.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 

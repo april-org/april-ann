@@ -1,4 +1,140 @@
 get_table_from_dotted_string("ann.mlp.all_all", true)
+get_table_from_dotted_string("ann.components", true)
+
+----------------------------------------------------------------------
+
+local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
+ann.components.wrapper = ann_wrapper -- global environment
+
+function ann_wrapper:constructor(t)
+  local params = get_table_fields(
+    {
+      input = { mandatory = true, type_match="number", default=0 },
+      output = { mandatory = true, type_match="number", default=0 },
+      weights = { mandatory = true },
+      forward = { mandatory = true, type_match="function" },
+      backprop = { mandatory = false, type_match="function" },
+      compute_gradients = { mandatory=false, type_match="function" },
+      reset = { mandatory=false, type_match="function" },
+      state = { mandatory=false },
+    }, t)
+  self.forward_function = params.forward
+  self.backprop_function = params.backprop or
+  function() error"Not implemented for THIS wrapper component" end
+  self.compute_gradients_function = params.compute_gradients or
+  function() error"Not implemented for THIS wrapper component" end
+  self.reset_function = params.reset or function() end
+  self.input = params.input
+  self.output = params.output
+  self.weights = params.weights
+  self.state = params.state
+end
+
+function ann_wrapper_methods:has_weights_name()
+  return false
+end
+
+function ann_wrapper_methods:get_is_built()
+  return true
+end
+
+function ann_wrapper_methods:debug_info()
+end
+
+function ann_wrapper_methods:get_input_size()
+  return self.input_size
+end
+
+function ann_wrapper_methods:get_output_size()
+  return self.output_size
+end
+
+function ann_wrapper_methods:get_input()
+  return self.input
+end
+
+function ann_wrapper_methods:get_output()
+  return self.output
+end
+
+function ann_wrapper_methods:get_error_input()
+  return self.input
+end
+
+function ann_wrapper_methods:get_error_output()
+  return self.output
+end
+
+function ann_wrapper_methods:forward(input, during_training)
+  self.input  = input
+  self.output = self:forward_function(input, during_training)
+  return self.output
+end
+
+function ann_wrapper_methods:backprop(input)
+  self.error_input  = input
+  self.error_output = self:backprop_function(input)
+  return self.error_output
+end
+
+function ann_wrapper_methods:reset(n)
+  self:reset_function(n)
+  self.input = nil
+  self.output = nil
+  self.error_input = nil
+  self.error_output = nil
+end
+
+function ann_wrapper_methods:compute_gradients(dict)
+  local dict = wrap_matrices(dict or {})
+  self:compute_gradients_function(dict)
+  return dict
+end
+
+function ann_wrapper_methods:build()
+  -- already built
+  return self,self.weights,matrix.dict()
+end
+
+function ann_wrapper_methods:copy_weights()
+  return self.weights
+end
+
+function ann_wrapper_methods:copy_components()
+  return matrix.dict()
+end
+
+function ann_wrapper_methods:to_lua_string()
+  error("Impossible to serialize a wrapper component")
+end
+
+function ann_wrapper_methods:get_name()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:get_weights_name()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:precompute_output_size()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:clone()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:set_use_cuda()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:get_use_cuda()
+  error("Not implemented in wrapper component")
+end
+
+function ann_wrapper_methods:get_component(name)
+  error("Not implemented in wrapper component")
+end
 
 ----------------------------------------------------------------------
 

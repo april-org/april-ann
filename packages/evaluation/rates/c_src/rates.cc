@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdio> // debug
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 namespace Rates {
 
@@ -459,7 +459,7 @@ namespace Rates {
       rrate = rate_iap(counted);
     }
     else {
-      // TODO REPORT ERROR???
+      // TODO: REPORT ERROR???
       rrate = -1;
     }
     return rrate;

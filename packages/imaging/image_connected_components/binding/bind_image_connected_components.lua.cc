@@ -24,8 +24,8 @@
 #include "matrixInt32.h"
 #include "matrixFloat.h"
 #include "utilImageFloat.h"
-using namespace basics;
-using namespace april_utils;
+using namespace Basics;
+using namespace AprilUtils;
 //BIND_END
 
 //BIND_HEADER_H
@@ -39,7 +39,7 @@ using namespace april_utils;
 #include "utilImageFloat.h"
 #include "utilMatrixFloat.h"
 
-using namespace imaging;
+using namespace Imaging;
 //BIND_END
 
 //BIND_FUNCTION image.test_connected_components

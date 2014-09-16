@@ -30,13 +30,13 @@ namespace ANN {
     CrossEntropyLossFunction(CrossEntropyLossFunction *other) :
     LossFunction(other) { }
   protected:
-    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
-                                                  basics::Token *target);
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
   public:
     CrossEntropyLossFunction(unsigned int size);
     virtual ~CrossEntropyLossFunction();
-    virtual basics::Token *computeGradient(basics::Token *input,
-                                           basics::Token *target);
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
     virtual float getAccumLoss();
     virtual LossFunction *clone() {
       return new CrossEntropyLossFunction(this);

@@ -3,7 +3,7 @@
 
 #include "utilImageFloat.h"
 
-namespace imaging {
+namespace Imaging {
   ImageFloat* medianFilter(ImageFloat *img, int radio);
 }
 

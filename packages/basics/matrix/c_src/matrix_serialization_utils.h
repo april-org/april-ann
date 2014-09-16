@@ -26,7 +26,7 @@
 #include "stream.h"
 #include "unused_variable.h"
 
-namespace basics {
+namespace Basics {
   
   template<typename T> class Matrix; // forward declaration
   template<typename T> class SparseMatrix; // forward declaration
@@ -42,7 +42,7 @@ namespace basics {
     template<typename T>
     struct AsciiExtractor {
       // returns true if success, false otherwise
-      bool operator()(april_utils::constString &line, T &destination) {
+      bool operator()(AprilUtils::constString &line, T &destination) {
         UNUSED_VARIABLE(line);
         UNUSED_VARIABLE(destination);
         ERROR_EXIT(128, "NOT IMPLEMENTED\n");
@@ -57,7 +57,7 @@ namespace basics {
     template<typename T>
     struct BinaryExtractor {
       // returns true if success, false otherwise
-      bool operator()(april_utils::constString &line, T &destination) {
+      bool operator()(AprilUtils::constString &line, T &destination) {
         UNUSED_VARIABLE(line);
         UNUSED_VARIABLE(destination);
         ERROR_EXIT(128, "NOT IMPLEMENTED\n");
@@ -151,6 +151,6 @@ namespace basics {
       }
     };
   } // namespace MatrixIO
-} // namespace basics
+} // namespace Basics
 
 #endif // MATRIX_SERIALIZATION_UTILS_H

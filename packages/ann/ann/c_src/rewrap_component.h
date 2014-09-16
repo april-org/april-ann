@@ -38,10 +38,10 @@ namespace ANN {
     
     int *rewrap_dims, n;
     
-    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat* input,
+    virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat* input,
                                           bool during_training);
     
-    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
+    virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
     
     virtual void privateReset(unsigned int it=0);
     
@@ -49,8 +49,8 @@ namespace ANN {
     RewrapANNComponent(const int *rewrap_dims, int n, const char *name=0);
     virtual ~RewrapANNComponent();
     
-    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
-				      april_utils::vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
+				      AprilUtils::vector<unsigned int> &output_size) {
       UNUSED_VARIABLE(input_size);
       output_size.clear();
       for (int i=0; i<n-1; ++i)
@@ -61,8 +61,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       basics::MatrixFloatSet *weights_dict,
-		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

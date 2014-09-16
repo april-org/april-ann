@@ -21,7 +21,7 @@
 #include "derivative.h"
 #include "clamp.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // Explicacion de las formulas en:
   // http://legacy.ncsu.edu/classes-a/mat310_info/DiffInt/NumDeriv.html

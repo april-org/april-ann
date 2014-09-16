@@ -19,57 +19,58 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
-#include "cuda_utils.h"
+#include "mathcore.h"
 #include "unused_variable.h"
 
-namespace april_math {
+namespace AprilMath {
 
 #ifdef USE_CUDA
-  /***************************************
-   ************** CUDA SECTION ***********
-   ***************************************/
+  namespace CUDA {
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-                                  unsigned int m, unsigned int n,
-                                  float *alpha,
-                                  const float *x_mem,
-                                  unsigned int x_inc,
-                                  const float *y_mem,
-                                  unsigned int y_inc,
-                                  float *a_mem,
-                                  unsigned int a_inc) {
-    return cublasSger(handle, m, n, alpha, x_mem, x_inc,
-                      y_mem, y_inc,
-                      a_mem, a_inc);
-  }
+    cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                    unsigned int m, unsigned int n,
+                                    float *alpha,
+                                    const float *x_mem,
+                                    unsigned int x_inc,
+                                    const float *y_mem,
+                                    unsigned int y_inc,
+                                    float *a_mem,
+                                    unsigned int a_inc) {
+      return cublasSger(handle, m, n, alpha, x_mem, x_inc,
+                        y_mem, y_inc,
+                        a_mem, a_inc);
+    }
 
-  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-                                  unsigned int m, unsigned int n,
-                                  double *alpha,
-                                  const double *x_mem,
-                                  unsigned int x_inc,
-                                  const double *y_mem,
-                                  unsigned int y_inc,
-                                  double *a_mem,
-                                  unsigned int a_inc) {
-    return cublasDger(handle, m, n, alpha, x_mem, x_inc,
-                      y_mem, y_inc,
-                      a_mem, a_inc);
-  }
+    cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                    unsigned int m, unsigned int n,
+                                    double *alpha,
+                                    const double *x_mem,
+                                    unsigned int x_inc,
+                                    const double *y_mem,
+                                    unsigned int y_inc,
+                                    double *a_mem,
+                                    unsigned int a_inc) {
+      return cublasDger(handle, m, n, alpha, x_mem, x_inc,
+                        y_mem, y_inc,
+                        a_mem, a_inc);
+    }
 
-  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-                                  unsigned int m, unsigned int n,
-                                  ComplexF *alpha,
-                                  const ComplexF *x_mem,
-                                  unsigned int x_inc,
-                                  const ComplexF *y_mem,
-                                  unsigned int y_inc,
-                                  ComplexF *a_mem,
-                                  unsigned int a_inc) {
-    ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
-    return CUBLAS_STATUS_INTERNAL_ERROR;
-  }
+    cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                    unsigned int m, unsigned int n,
+                                    ComplexF *alpha,
+                                    const ComplexF *x_mem,
+                                    unsigned int x_inc,
+                                    const ComplexF *y_mem,
+                                    unsigned int y_inc,
+                                    ComplexF *a_mem,
+                                    unsigned int a_inc) {
+      ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
+      return CUBLAS_STATUS_INTERNAL_ERROR;
+    }
+  } // namespace CUDA
 #endif
 
   /***************************************
@@ -143,21 +144,21 @@ namespace april_math {
 #ifdef USE_CUDA
     if (use_gpu) {
       cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
       assert(major_type == CblasColMajor);
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForRead() + y_shift;
       a_mem = a->getGPUForReadAndWrite() + a_shift;
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
-      status = wrapperCublasGer(handle,
-                                m, n,
-                                &alpha,
-                                x_mem, x_inc,
-                                y_mem, y_inc,
-                                a_mem, a_inc);
+      status = CUDA::wrapperCublasGer(handle,
+                                      m, n,
+                                      &alpha,
+                                      x_mem, x_inc,
+                                      y_mem, y_inc,
+                                      a_mem, a_inc);
     
       checkCublasError(status);
     }
@@ -222,4 +223,4 @@ namespace april_math {
                                 unsigned int a_shift,
                                 unsigned int a_inc,
                                 bool use_gpu);
-} // namespace april_math
+} // namespace AprilMath

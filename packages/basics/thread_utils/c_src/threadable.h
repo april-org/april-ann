@@ -27,7 +27,7 @@
 #include "referenced.h"
 
 
-using april_thread_utils::SigIntHandler;
+using AprilThreadUtils::SigIntHandler;
 
 class Threadable : public Referenced {
   // controla la ejecucion del bucle

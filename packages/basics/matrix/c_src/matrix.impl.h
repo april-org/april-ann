@@ -30,8 +30,12 @@
 #include "error_print.h"
 #include "ignore_result.h"
 #include "matrix.h"
+#include "omp_utils.h"
 
-namespace basics {
+// Must be defined in this order.
+#include "matrix_operations.h"
+
+namespace Basics {
 
   template<typename T>
   const unsigned int Matrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
@@ -65,7 +69,7 @@ namespace basics {
   /// Allocation of memory for data pointer. It is Referenced for sharing.
   template <typename T>
   void Matrix<T>::allocate_memory(int size) {
-    data.reset( new april_math::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
+    data.reset( new AprilMath::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
   }
 
   /// Release of the memory allocated for data pointer.
@@ -80,11 +84,11 @@ namespace basics {
                     const int *matrixSize,
                     const int total_size,
                     const int last_raw_pos,
-                    april_math::GPUMirroredMemoryBlock<T> *data,
+                    AprilMath::GPUMirroredMemoryBlock<T> *data,
                     const CBLAS_ORDER major_order,
                     const bool use_cuda,
                     const bool transposed,
-                    april_utils::MMappedDataReader *mmapped_data) :
+                    AprilUtils::MMappedDataReader *mmapped_data) :
     AprilIO::Serializable(), shared_count(0), transposed(transposed),
     numDim(numDim), stride(new int[numDim]), offset(offset),
     matrixSize(new int[numDim]), total_size(total_size),
@@ -97,6 +101,7 @@ namespace basics {
       this->stride[i] = stride[i];
       this->matrixSize[i] = matrixSize[i];
     }
+    april_assert(offset >= 0);
   }
 
   /// Default constructor
@@ -104,7 +109,7 @@ namespace basics {
   Matrix<T>::Matrix(int numDim,
                     const int* dim,
                     CBLAS_ORDER major_order,
-                    april_math::GPUMirroredMemoryBlock<T> *data,
+                    AprilMath::GPUMirroredMemoryBlock<T> *data,
                     int offset,
                     bool transposed) :
     AprilIO::Serializable(), shared_count(0), transposed(transposed),
@@ -112,7 +117,7 @@ namespace basics {
     offset(offset),
     data(data),
     major_order(major_order),
-    use_cuda(false),
+    use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride     = new int[numDim];
@@ -125,6 +130,7 @@ namespace basics {
         ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
                     size(), data->getSize());
     }
+    april_assert(offset >= 0);
   }
 
   /// Constructor for sub-matrix building
@@ -152,30 +158,25 @@ namespace basics {
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
-      int other_raw_pos = other->computeRawPos(coords);
-      const T *other_data = other->data->getPPALForRead();
-      int *aux_coords = new int[numDim];
-      for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-      if (major_order == CblasRowMajor) {
-        for (iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorRowOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
-        }
+      span_iterator it(this);
+      const int *dims_order = it.getDimOrder();
+      const int first_dim = dims_order[0];
+      const int this_stride = it.getStride();
+      const int other_stride = other->getStrideSize(first_dim);
+      const int N = it.numberOfIterations();
+      for (int i=0; i<N; ++i) {
+        april_assert(it != this->end_span_iterator());
+        const int other_raw_pos = other->computeRawPos(it.getCoordinates(), coords);
+        doCopy(it.getSize(),
+               other->data.get(), other_stride, other_raw_pos,
+               this->data.get(), this_stride, it.getOffset(),
+               this->getCudaFlag());
+        ++it;
       }
-      else {
-        for (col_major_iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorColOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
-        }
-      }
-      delete[] aux_coords;
-    }
-    else {
-      int *aux_coords = new int[numDim];
+      april_assert(it == this->end_span_iterator());
+    } // if (clone)
+    else { // !clone
+      AprilUtils::UniquePtr<int []> aux_coords( new int[numDim] );
       total_size = 1;
       for (int i=0; i<numDim; i++) {
         stride[i]     = other->stride[i];
@@ -185,9 +186,9 @@ namespace basics {
       }
       offset = other->computeRawPos(coords);
       data = other->data;
-      last_raw_pos = computeRawPos(aux_coords);
-      delete[] aux_coords;
-    }
+      last_raw_pos = computeRawPos(aux_coords.get());
+    } // !clone
+    april_assert(offset >= 0);
   }
 
   // Constructor for sub-matrix building from a CONST matrix
@@ -215,27 +216,62 @@ namespace basics {
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
-      int other_raw_pos = other->computeRawPos(coords);
-      const T *other_data = other->data->getPPALForRead();
-      int *aux_coords = new int[numDim];
-      for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-      if (major_order == CblasRowMajor) {
-        for (iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorRowOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+      span_iterator it(this), it_other(other, it.getDimOrder());
+      const int *dims_order = it_other.getDimOrder();
+      const int first_dim = dims_order[0];
+      int diff_raw_pos = other->getStrideSize(first_dim) * coords[first_dim];
+      int other_first_iteration = 0;
+      if (numDim > 1) {
+        // compute it_other traversal length until the coordinates of the slice
+        // (except first_dim)
+        AprilUtils::UniquePtr<int []> aux_stride( new int[numDim] );
+        aux_stride[dims_order[0]] = 1;
+        aux_stride[dims_order[1]] = 1;
+        for (int i=2; i<numDim; ++i) {
+          aux_stride[dims_order[i]] = aux_stride[dims_order[i-1]] * other->matrixSize[i-1];
+        }
+        other_first_iteration = 0;
+        for (int i=1; i<numDim; ++i){ 
+          other_first_iteration += aux_stride[dims_order[i]] * coords[dims_order[i]];
+        }
+      }
+      const int N = it.numberOfIterations();
+#ifndef NO_OMP
+      if (N > OMPUtils::get_num_threads()) {
+#pragma omp parallel for firstprivate(it) firstprivate(it_other)
+        for (int i=0; i<N; ++i) {
+          it.setAtIteration(i);
+          it_other.setAtIteration(other_first_iteration + i);
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(),
+                 it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(),
+                 it.getStride(),
+                 it.getOffset(),
+                 this->getCudaFlag());
         }
       }
       else {
-        for (col_major_iterator it(begin()); it!=end(); ++it) {
-          *it = other_data[other_raw_pos];
-          nextCoordVectorColOrder(aux_coords, other_raw_pos,
-                                  sizes, other->stride, numDim,
-                                  other->last_raw_pos);
+#else
+        it_other.setAtIteration(other_first_iteration);
+        for (int i=0; i<N; ++i) {
+          april_assert(it != this->end_span_iterator());
+          april_assert(it_other != other->end_span_iterator());
+          doCopy(it.getSize(),
+                 other->data.get(), it_other.getStride(),
+                 diff_raw_pos + it_other.getOffset(),
+                 this->data.get(), it.getStride(), it.getOffset(),
+                 this->getCudaFlag());
+          ++it;
+          ++it_other;
         }
+#endif
+#ifndef NO_OMP
       }
-      delete[] aux_coords;
+#endif
     }
     else {
       int *aux_coords = new int[numDim];
@@ -247,12 +283,13 @@ namespace basics {
         aux_coords[i] = sizes[i]-1;
       }
       offset = other->computeRawPos(coords);
-      data.reset( new april_math::
+      data.reset( new AprilMath::
                   GPUMirroredMemoryBlock<T>(other->size(),
                                             other->data->getPPALForRead()) );
       last_raw_pos = computeRawPos(aux_coords);
       delete[] aux_coords;
     }
+    april_assert(offset >= 0);
   }
 
   /// Constructor with variable arguments
@@ -300,7 +337,7 @@ namespace basics {
       transposed = false;
       initialize(other->matrixSize);
       allocate_memory(total_size);
-      copy(other);
+      AprilMath::MatrixExt::Operations::matCopy(this, other);
       is_contiguous = CONTIGUOUS;
     }
     else {
@@ -311,14 +348,15 @@ namespace basics {
         matrixSize[i] = other->matrixSize[i];
       }
     }
+    april_assert(offset >= 0);
   }
 
   template <typename T>
-  Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
+  Matrix<T> *Matrix<T>::fromMMappedDataReader(AprilUtils::MMappedDataReader
                                               *mmapped_data) {
     Matrix<T> *obj = new Matrix();
     //
-    obj->data.reset( april_math::GPUMirroredMemoryBlock<T>::
+    obj->data.reset( AprilMath::GPUMirroredMemoryBlock<T>::
                      fromMMappedDataReader(mmapped_data) );
     //
     unsigned int binary_version = *(mmapped_data->get<unsigned int>());
@@ -336,17 +374,18 @@ namespace basics {
     obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
     obj->transposed    = *(mmapped_data->get<bool>());
     // NON MAPPED DATA
-    obj->use_cuda      = false;
+    obj->use_cuda      = AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT;
     obj->shared_count  = 0;
     obj->is_contiguous = NONE;
     // THE MMAP POINTER
     obj->mmapped_data.reset( mmapped_data );
     //
+    april_assert(obj->offset >= 0);
     return obj;
   }
 
   template <typename T>
-  void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
+  void Matrix<T>::toMMappedDataWriter(AprilUtils::MMappedDataWriter
                                       *mmapped_data) const {
     data->toMMappedDataWriter(mmapped_data);
     mmapped_data->put(&MATRIX_BINARY_VERSION);
@@ -372,7 +411,7 @@ namespace basics {
   template <typename T>
   void Matrix<T>::print() const {
     for (Matrix<T>::const_iterator it(begin()); it != end(); ++it) {
-      april_utils::aprilPrint(*it);
+      AprilUtils::aprilPrint(*it);
       printf(" ");
     }
     printf("\n");
@@ -404,12 +443,12 @@ namespace basics {
                   size(), new_size);
     }
     if (need_clone) {
-      april_math::GPUMirroredMemoryBlock<T> *new_data =
-        new april_math::GPUMirroredMemoryBlock<T>(new_size);
+      AprilMath::GPUMirroredMemoryBlock<T> *new_data =
+        new AprilMath::GPUMirroredMemoryBlock<T>(new_size);
       obj = new Matrix<T>(len, new_dims, major_order, new_data);
-      april_utils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
+      AprilUtils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
-      aux->copy(this);
+      AprilMath::MatrixExt::Operations::matCopy(aux.get(),this);
     }
     else {
       obj = new Matrix<T>(len, new_dims, major_order, data.get(), offset);
@@ -498,7 +537,7 @@ namespace basics {
   template <typename T>
   Matrix<T>* Matrix<T>::clone() const {
     Matrix<T> *result = this->cloneOnlyDims();
-    result->copy(this);
+    AprilMath::MatrixExt::Operations::matCopy(result,this);
     return result;
   }
 
@@ -728,6 +767,7 @@ namespace basics {
       //
       result = dest;
     }
+    april_assert(result->offset >= 0);
     return result;
   }
 
@@ -893,6 +933,29 @@ namespace basics {
   }
 
   template <typename T>
+  int Matrix<T>::computeRawPos(const int *coords, const int *offset) const {
+    int raw_pos;
+    switch(numDim) {
+    case 1:
+      april_assert(coords[0]+offset[0] < matrixSize[0]);
+      raw_pos = (coords[0]+offset[0])*stride[0];
+      break;
+    case 2:
+      april_assert(coords[0]+offset[0] < matrixSize[0]);
+      april_assert(coords[1]+offset[1] < matrixSize[1]);
+      raw_pos = (coords[0]+offset[0])*stride[0]+(coords[1]+offset[1])*stride[1];
+      break;
+    default:
+      raw_pos=0;
+      for(int i=0; i<numDim; i++) {
+        april_assert(coords[i]+offset[i] < matrixSize[i]);
+        raw_pos += stride[i]*(coords[i]+offset[i]);
+      }
+    }
+    return raw_pos + this->offset;
+  }
+
+  template <typename T>
   void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
     int R = raw_pos - offset;
     switch(numDim) {
@@ -968,8 +1031,8 @@ namespace basics {
                                           resul->major_order,
                                           resul->use_cuda,
                                           resul->transposed);
-    resul->zeros();
-    resul_diag->copy(this);
+    AprilMath::MatrixExt::Operations::matZeros(resul);
+    AprilMath::MatrixExt::Operations::matCopy(resul_diag, this);
     delete resul_diag;
     return resul;
   }
@@ -978,6 +1041,56 @@ namespace basics {
   void Matrix<T>::pruneSubnormalAndCheckNormal() {
     ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   }
-} // namespace basics
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
+                                T default_value) const {
+    int *result_sizes = new int[getNumDim()];
+    int *matrix_pos = new int[getNumDim()];
+    for (int i=0; i<getNumDim(); ++i) {
+      result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
+      matrix_pos[i] = begin_padding[i];
+    }
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    // FIXME: implement fill by several submatrices for large matrix sizes with
+    // small padding sizes
+    AprilMath::MatrixExt::Operations::matFill(result, default_value);
+    // take submatrix where data will be located
+    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                           false);
+    // copy data to the submatrix
+    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
+    //
+    delete result_data;
+    delete[] result_sizes;
+    delete[] matrix_pos;
+    return result;
+  }
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) const {
+    int *result_sizes = new int[getNumDim()];
+    int *matrix_pos = new int[getNumDim()];
+    for (int i=0; i<getNumDim(); ++i) {
+      result_sizes[i] = getDimSize(i) + pad_value*2;
+      matrix_pos[i] = pad_value;
+    }
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    // FIXME: implement fill by several submatrices for large matrix sizes with
+    // small padding sizes
+    AprilMath::MatrixExt::Operations::matFill(result, default_value);
+    // take submatrix where data will be located
+    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                           false);
+    // copy data to the submatrix
+    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
+    //
+    delete result_data;
+    delete[] result_sizes;
+    delete[] matrix_pos;
+    return result;
+  }
+  
+} // namespace Basics
 
 #endif // MATRIX_IMPL_H

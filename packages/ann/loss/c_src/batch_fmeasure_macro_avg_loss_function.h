@@ -24,6 +24,7 @@
 #include "referenced.h"
 #include "token_base.h"
 #include "loss_function.h"
+#include "smart_ptr.h"
 
 namespace ANN {
   /// A multi-class version of the F-Measure loss function as described in: Joan
@@ -36,26 +37,25 @@ namespace ANN {
   class BatchFMeasureMacroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
-    basics::MatrixFloat *Gs, *Hs;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> Gs, Hs;
     bool complement_output;
     
     BatchFMeasureMacroAvgLossFunction(BatchFMeasureMacroAvgLossFunction *other) :
     LossFunction(other), beta(other->beta), beta2(other->beta2),
-    Gs(0), Hs(0),
     complement_output(other->complement_output) {
-      if (other->Gs) Gs = other->Gs->clone();
-      if (other->Hs) Hs = other->Hs->clone();
+      if (!other->Gs.empty()) Gs = other->Gs->clone();
+      if (!other->Hs.empty()) Hs = other->Hs->clone();
     }
     
   protected:
-    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
-                                                  basics::Token *target);
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
   public:
     BatchFMeasureMacroAvgLossFunction(unsigned int size, float beta=1.0f,
 				      bool complement_output=false);
     virtual ~BatchFMeasureMacroAvgLossFunction();
-    virtual basics::Token *computeGradient(basics::Token *input,
-                                           basics::Token *target);
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
     virtual LossFunction *clone() {
       return new BatchFMeasureMacroAvgLossFunction(this);
     }

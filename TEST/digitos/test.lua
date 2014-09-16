@@ -71,10 +71,12 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
+mathcore.set_use_cuda_default(util.is_cuda_available())
+
 thenet = ann.mlp.all_all.generate(description)
-if util.is_cuda_available() then thenet:set_use_cuda(true) end
+
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(10),
+				       ann.loss.multi_class_cross_entropy(),
 				       bunch_size)
 trainer:build()
 

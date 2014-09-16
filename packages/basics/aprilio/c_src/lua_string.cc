@@ -135,6 +135,13 @@ namespace AprilIO {
       ERROR_EXIT(256, "Needs a Lua string argument\n");
     }
     total_size = static_cast<size_t>(luaL_len(L, pos));
+    /*
+      FIXME: check this issue in future Lua versions
+      if (total_size < 15u) {
+      ERROR_EXIT(128, "Strings larger than 15 bytes are needed to "
+      "avoid fast string optimization of modern Lua versions\n");
+      }
+    */
     lua_pushvalue(L, pos);
     ref = luaL_ref(L, LUA_REGISTRYINDEX);
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);

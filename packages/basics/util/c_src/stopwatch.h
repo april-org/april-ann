@@ -23,7 +23,7 @@
 
 #include "referenced.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   class stopwatch : public Referenced {
     double cpu_elapsed; ///< tiempo acumulado de cpu

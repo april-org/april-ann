@@ -23,7 +23,7 @@
 
 #include "null_types.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   template <typename T1, typename T2>
   struct pair {

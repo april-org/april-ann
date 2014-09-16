@@ -40,22 +40,22 @@ namespace ANN {
                                           public ComponentPropertiesAndAsserts {
     APRIL_DISALLOW_COPY_AND_ASSIGN(VirtualSparseMatrixANNComponent);
     
-    basics::TokenSparseMatrixFloat *input, *error_output;
-    basics::TokenMatrixFloat *output, *error_input;
+    Basics::TokenSparseMatrixFloat *input, *error_output;
+    Basics::TokenMatrixFloat *output, *error_input;
     
   protected:
     // Auxiliary methods
     
-    basics::SparseMatrixFloat *getInputMatrix() {
+    Basics::SparseMatrixFloat *getInputMatrix() {
       return input->getMatrix();
     }
-    basics::MatrixFloat *getOutputMatrix() {
+    Basics::MatrixFloat *getOutputMatrix() {
       return output->getMatrix();
     }
-    basics::MatrixFloat *getErrorInputMatrix() {
+    Basics::MatrixFloat *getErrorInputMatrix() {
       return error_input->getMatrix();
     }
-    basics::SparseMatrixFloat *getErrorOutputMatrix() {
+    Basics::SparseMatrixFloat *getErrorOutputMatrix() {
       return error_output->getMatrix();
     }
     
@@ -68,7 +68,7 @@ namespace ANN {
      * @param during_training - Indicates if it is training or not.
      * @return A MatrixFloat with the forward computation result.
      */
-    virtual basics::MatrixFloat *privateDoForward(basics::SparseMatrixFloat *input,
+    virtual Basics::MatrixFloat *privateDoForward(Basics::SparseMatrixFloat *input,
                                                   bool during_training) = 0;
     /**
      * Backprop computation using SparseMatrixFloat and MatrixFloat
@@ -76,7 +76,7 @@ namespace ANN {
      * @param input_error - The MatrixFloat received as input_error.
      * @return A SparseMatrixFloat with the backprop computation result.
      */
-    virtual basics::SparseMatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error) = 0;
+    virtual Basics::SparseMatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error) = 0;
     
     /**
      * Reset of intermediate data
@@ -85,19 +85,19 @@ namespace ANN {
      */
     virtual void privateReset(unsigned int it=0) = 0;
     
-    // virtual void computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) = 0;
+    // virtual void computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) = 0;
     
   public:
     VirtualSparseMatrixANNComponent(const char *name, const char *weights_name,
                                     unsigned int input_size,
                                     unsigned int output_size);
     virtual ~VirtualSparseMatrixANNComponent();
-    virtual basics::Token *getInput() { return input; }
-    virtual basics::Token *getOutput() { return output; }
-    virtual basics::Token *getErrorInput() { return error_input; }
-    virtual basics::Token *getErrorOutput() { return error_output; }
-    virtual basics::Token *doForward(basics::Token* input, bool during_training);
-    virtual basics::Token *doBackprop(basics::Token *input_error);
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     virtual void   reset(unsigned int it=0);
     
     // The following methods are not implemented, derived classes had to

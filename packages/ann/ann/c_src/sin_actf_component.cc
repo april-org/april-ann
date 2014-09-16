@@ -21,11 +21,11 @@
 #include "unused_variable.h"
 #include "cblas_headers.h"
 #include "sin_actf_component.h"
-#include "wrapper.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -33,30 +33,18 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   SinActfANNComponent::~SinActfANNComponent() { }
 
-  void SinActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-					    FloatGPUMirroredMemoryBlock *output_units,
-					    unsigned int size,
-					    unsigned int bunch_size) {
-    doApplySinActivation(input_units,
-			 output_units,
-			 size,
-			 bunch_size,
-			 use_cuda);
+  void SinActfANNComponent::applyActivation(MatrixFloat *input_units,
+					    MatrixFloat *output_units) {
+    matSin(input_units, output_units);
   }
 
-  void SinActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						FloatGPUMirroredMemoryBlock *output_units,
-						FloatGPUMirroredMemoryBlock *input_errors,
-						FloatGPUMirroredMemoryBlock *output_errors,
-						unsigned int size,
-						unsigned int bunch_size) {
+  void SinActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+                                                MatrixFloat *output_units,
+                                                MatrixFloat *input_errors,
+                                                MatrixFloat *output_errors) {
     UNUSED_VARIABLE(output_units);
-    doMultiplySinDerivatives(input_units,
-			     input_errors,
-			     output_errors,
-			     size,
-			     bunch_size,
-			     use_cuda);
+    matCos(input_units, output_errors);
+    matCmul(output_errors, input_errors);
   }
 
   ANNComponent *SinActfANNComponent::clone() {

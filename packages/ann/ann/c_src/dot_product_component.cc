@@ -19,22 +19,20 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
-#include "swap.h"
 #include "dot_product_component.h"
-#include "wrapper.h"
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
+#include "swap.h"
 #include "token_base.h"
 #include "token_matrix.h"
-#include "token_sparse_matrix.h"
 #include "table_of_token_codes.h"
+#include "token_sparse_matrix.h"
+#include "unused_variable.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
-
-using april_utils::swap;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -78,19 +76,21 @@ namespace ANN {
 #endif
     if (bunch_size == 1) {
       // vector x matrix product
-      output_mat->gemv(transpose_weights,
-                       1.0f, weights_mat,
-                       input_mat,
-                       0.0f);
+      matGemv(output_mat,
+                transpose_weights,
+                1.0f, weights_mat,
+                input_mat,
+                0.0f);
     } // if bunch_size==1
     else {
       // matrix x matrix product
       // C = \alpha op(A) op(B) + \beta C
       // input * weights = output
-      output_mat->gemm(CblasNoTrans,
-                       NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-                       1.0f, input_mat, weights_mat,
-                       0.0f);
+      matGemm(output_mat,
+                CblasNoTrans,
+                NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                1.0f, input_mat, weights_mat,
+                0.0f);
     } // if bunch_size==1 ... else
     return output_mat;
   }
@@ -108,11 +108,12 @@ namespace ANN {
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
 #endif
-    output_mat->sparseMM(CblasNoTrans,
-                         NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-                         CblasNoTrans,
-                         1.0f, input_mat, weights_mat,
-                         0.0f);
+    matSparseMM(output_mat,
+                  CblasNoTrans,
+                  NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                  CblasNoTrans,
+                  1.0f, input_mat, weights_mat,
+                  0.0f);
     return output_mat;
   }
   
@@ -132,16 +133,18 @@ namespace ANN {
     MatrixFloat *weights_mat = weights_matrix;
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
-      error_output_mat->gemm(CblasNoTrans, transpose_weights,
-			     1.0f, error_input_mat,
-			     weights_mat,
-			     0.0f);
+      matGemm(error_output_mat,
+              CblasNoTrans, transpose_weights,
+              1.0f, error_input_mat,
+              weights_mat,
+              0.0f);
     }
     else {
-      error_output_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-			     1.0f, weights_mat,
-			     error_input_mat,
-			     0.0f);
+      matGemv(error_output_mat,
+              NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+              1.0f, weights_mat,
+              error_input_mat,
+              0.0f);
     }
     return error_output_mat;
   }
@@ -167,62 +170,69 @@ namespace ANN {
   }
 
   void DotProductANNComponent::
-  initializeComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  initializeComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     weights_matrix->addToSharedCount();
     if (grads_mat.empty()) {
       grads_mat = weights_matrix->cloneOnlyDims();
-      grads_mat->zeros();
+      matZeros(grads_mat.get());
     }
     else if (!grads_mat->sameDim(weights_matrix)) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
   }
   
   void DotProductANNComponent::
-  privateDenseComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  privateDenseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     initializeComputeGradients(grads_mat);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     MatrixFloat *input_mat = getInputMatrix();
     if (bunch_size > 1) {
-      grads_mat->gemm(CblasTrans, CblasNoTrans,
-                      1.0f,
-                      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
-                      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
-                      1.0f);
+      matGemm(grads_mat.get(),
+              CblasTrans, CblasNoTrans,
+              1.0f,
+              (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
+              (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
+              1.0f);
     } // if bunch_size > 1 ... else
     else {
-      grads_mat->ger(1.0f,
-                     (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
-                     (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
+      matGer(grads_mat.get(),
+             1.0f,
+             (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
+             (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
     } // if bunch_size > 1 ... else
   }
   
   void DotProductANNComponent::
-  privateSparseComputeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+  privateSparseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
     initializeComputeGradients(grads_mat);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
     SparseMatrixFloat *input_mat;
     input_mat = getSparseInputMatrix();
     if (transpose_weights == CblasNoTrans) {
-      grads_mat->sparseMM(CblasTrans,
-                          CblasNoTrans,
-                          CblasTrans,
-                          1.0f,
-                          input_mat,
-                          error_input_mat,
-                          1.0f);
+      matSparseMM(grads_mat.get(),
+                  CblasTrans,
+                  CblasNoTrans,
+                  CblasTrans,
+                  1.0f,
+                  input_mat,
+                  error_input_mat,
+                  1.0f);
     }
     else {
-      grads_mat->sparseMM(CblasTrans,
-                          CblasNoTrans,
-                          CblasNoTrans,
-                          1.0f,
-                          input_mat,
-                          error_input_mat,
-                          1.0f);
+      matSparseMM(grads_mat.get(),
+                  CblasTrans,
+                  CblasNoTrans,
+                  CblasNoTrans,
+                  1.0f,
+                  input_mat,
+                  error_input_mat,
+                  1.0f);
     }
   }
   
@@ -250,7 +260,7 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()];
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -281,7 +291,7 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()];
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

@@ -1,6 +1,6 @@
 -- OVERWRITTING TOSTRING FUNCTION
 local function get_operands(op1,op2)
-  if not isa(op1,complex) then op1,op2=op2,op1 end
+  if not class.is_a(op1,complex) then op1,op2=op2,op1 end
   local t2 = type(op2)
   if t2 == "number" then op2 = complex(op2, 0.0)
   elseif t2 == "string" then op2 = complex(op2) end  

@@ -21,11 +21,11 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "join_component.h"
-#include "wrapper.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -196,7 +196,7 @@ namespace ANN {
       sizes[1] = sz;
       // Destination data sub-matrix (references original data matrix)
       MatrixFloat *submat = new MatrixFloat(full_mat, coords, sizes, false);
-      submat->copy(aux_mat);
+      matCopy(submat, aux_mat);
       delete submat;
       coords[1] += sz;
     }

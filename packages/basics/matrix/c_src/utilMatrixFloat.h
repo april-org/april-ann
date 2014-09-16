@@ -24,14 +24,14 @@
 #include "constString.h"
 #include "matrixFloat.h"
 
-namespace basics {
+namespace Basics {
 
   Matrix<float>* readMatrixFloatHEX(int width, int height,
-                                    april_utils::constString cs);
+                                    AprilUtils::constString cs);
   
   const float CTENEGRO  = 1.0f;
   const float CTEBLANCO = 0.0f;
-  Matrix<float>* readMatrixFloatPNM(april_utils::constString cs,
+  Matrix<float>* readMatrixFloatPNM(AprilUtils::constString cs,
                                     bool forcecolor=false, 
                                     bool forcegray=false);
   
@@ -43,6 +43,6 @@ namespace basics {
                          int *height);
   
   //////////////////////////////////////////////////////////////////////////////
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILMATRIXFLOAT_H

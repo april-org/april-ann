@@ -21,16 +21,16 @@
 #include <cstdio>
 #include "complex_number.h"
 
-namespace april_math {
+namespace AprilMath {
   template struct Complex<float>;
   template struct Complex<double>;
 }
 
-namespace april_utils {
-  void aprilPrint(const april_math::ComplexF &v) {
+namespace AprilUtils {
+  void aprilPrint(const AprilMath::ComplexF &v) {
     printf("%f%c%fi", v.real(), (v.img()>+0.0f)?'+':' ', v.img());
   }
-  void aprilPrint(const april_math::ComplexD &v) {
+  void aprilPrint(const AprilMath::ComplexD &v) {
     printf("%f%c%fi", v.real(), (v.img()>+0.0)?'+':' ', v.img());
   }
 }

@@ -23,7 +23,7 @@
 #include "utilMatrixFloat.h"
 #include "bind_matrix.h"
 
-using namespace basics;
+using namespace Basics;
 //BIND_END
 
 

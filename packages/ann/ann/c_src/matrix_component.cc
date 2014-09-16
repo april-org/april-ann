@@ -19,13 +19,12 @@
  *
  */
 #include "matrix_component.h"  
-#include "unused_variable.h"
 #include "token_sparse_matrix.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 
-using namespace basics;
-using namespace april_utils;
-using namespace april_math;
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
 

@@ -21,7 +21,7 @@
 #include "threadable.h"
 #include "sig_int_handler.h"
 
-namespace april_thread_utils {
+namespace AprilThreadUtils {
   bool SigIntHandler::installed = false;
   list<Threadable *> SigIntHandler::objects;
 

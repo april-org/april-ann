@@ -65,11 +65,14 @@ end
 matrix.meta_instance.__mul = function(op1, op2)
   if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
     if class.is_a(op2,matrix.sparse) then
-      local op1,op2 = op2:transpose(),op1:transpose()
+      local res = matrix[op1:get_major_order()](op1:dim(1),op2:dim(2))
+      res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+		     trans_A=true, trans_B=true, trans_C=true }
+      return res
+    else
       local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
-      return res:transpose()
-    else
+      return res
     end
   else
     if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
@@ -158,13 +161,18 @@ end
 
 function matrix.dict.wrap_matrices(m)
   local tt = type(m)
+  local unwrap
   if tt == "table" then
     m = matrix.dict(m)
+    unwrap = function(m) return iterator(pairs(m)):table() end
   elseif tt == "matrix" then
     m = matrix.dict():insert("1",m)
+    unwrap = function(m) return m("1") end
+  else
+    unwrap = function(m) return m end
   end
   assert(class.is_a(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
-  return m
+  return m,unwrap
 end
 
 function matrix.dict.meta_instance.__index:to_lua_string(format)

@@ -24,9 +24,10 @@
 #include "maxmin.h"
 #include "image_cleaning.h"
 
-using namespace basics;
+using AprilMath::MatrixExt::Operations::matZeros;
+using namespace Basics;
 
-namespace imaging {
+namespace Imaging {
 
   MatrixFloat *ImageHistogram::getHistogram(const ImageFloat *img, int gray_levels) {
 
@@ -38,7 +39,7 @@ namespace imaging {
     dims[0] = gray_levels;
 
     MatrixFloat *matrix = new MatrixFloat(1,dims);
-    matrix->zeros();
+    matZeros(matrix);
     int total = height*width;
 
     for (int i = 0; i < height; ++i) {
@@ -104,12 +105,12 @@ namespace imaging {
     dims[1] = width;
     dims[2] = gray_levels;
 
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
 
     MatrixFloat *matrix = new MatrixFloat(3,dims);
     april_assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
-    matrix->zeros();
+    matZeros(matrix);
 
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
@@ -163,7 +164,7 @@ namespace imaging {
     dims[0] = this->gray_levels;
   
     MatrixFloat *matrix = new MatrixFloat(1, dims);
-    matrix->zeros();
+    matZeros(matrix);
 
     // Normalize by size
     int size = (bottom - top + 1)*(right-left + 1);
@@ -201,8 +202,8 @@ namespace imaging {
 
   MatrixFloat * ImageHistogram::getHorizontalHistogram(int radius) {
   
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[2];
     dims[0] = this->height;
     dims[1] = this->gray_levels;
@@ -211,10 +212,10 @@ namespace imaging {
 
     for (int i = 0; i < this->height; ++i) {
 
-      //FIXME: Memory allocation on each line
+      // FIXME: Memory allocation on each line
     
       MatrixFloat *m = getWindowHistogram(max(i - radius,0) ,0, min(height-1, i + radius), width-1);
-      //TODO: Copy on efficient way
+      // TODO: Copy on efficient way
       for (int h = 0; h < this->gray_levels; ++h)
         (*vHist)(i,h) = (*m)(h);
       delete m;
@@ -225,8 +226,8 @@ namespace imaging {
 
   MatrixFloat * ImageHistogram::getVerticalHistogram(int radius) {
 
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[2];
     dims[0] = this->width;
     dims[1] = this->gray_levels;
@@ -235,9 +236,9 @@ namespace imaging {
 
     for (int i = 0; i < this->width; ++i) {
 
-      //FIXME: Memory allocation on each line
+      // FIXME: Memory allocation on each line
       MatrixFloat *m = getWindowHistogram(0,max(0, i-radius), height-1, min(width-1,i+radius));
-      //TODO: Copy on efficient way
+      // TODO: Copy on efficient way
       for (int h = 0; h < this->gray_levels; ++h)
         (*vHist)(i,h) = (*m)(h);
       delete m;
@@ -247,8 +248,8 @@ namespace imaging {
   }
 
   MatrixFloat * ImageHistogram::getIntegralHistogram(){
-    using april_utils::max;
-    using april_utils::min;
+    using AprilUtils::max;
+    using AprilUtils::min;
     int dims[3];
     dims[0] = height;
     dims[1] = width;
@@ -265,4 +266,4 @@ namespace imaging {
     return matrix;
   }
 
-} // namespace imaging
+} // namespace Imaging

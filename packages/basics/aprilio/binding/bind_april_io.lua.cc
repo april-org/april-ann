@@ -309,7 +309,7 @@ namespace AprilIO {
 
 //BIND_METHOD StreamInterface get
 {
-  april_utils::SharedPtr<StreamInterface> dest;
+  AprilUtils::SharedPtr<StreamInterface> dest;
   OutputLuaStringStream *aux_lua_string = 0;
   size_t size = SIZE_MAX;
   const char *delim = 0;
@@ -345,7 +345,7 @@ namespace AprilIO {
 
 //BIND_METHOD StreamInterface put
 {
-  april_utils::SharedPtr<StreamInterface> ptr;
+  AprilUtils::SharedPtr<StreamInterface> ptr;
   const char *buffer;
   size_t len;
   if (lua_isStreamInterface(L,1)) {
@@ -537,18 +537,18 @@ namespace AprilIO {
 {
   OutputLuaStringStream *aux_lua_string;
   StreamInterface *ptr;
-  april_utils::SharedPtr<StreamInterface> dest;
+  AprilUtils::SharedPtr<StreamInterface> dest;
   int options_pos;
   if (!lua_istable(L,1)) {
-    LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
+    LUABIND_GET_OPTIONAL_PARAMETER(1, AuxStreamInterface<StreamInterface>, ptr, 0);
     options_pos = 2;
-    april_utils::LuaTableOptions options(L,2);
+    AprilUtils::LuaTableOptions options(L,2);
   }
   else {
     options_pos = 1;
     ptr = 0;
   }
-  april_utils::LuaTableOptions options(L,options_pos);
+  AprilUtils::LuaTableOptions options(L,options_pos);
   if (ptr == 0) {
     aux_lua_string = new OutputLuaStringStream(L);
     dest = aux_lua_string;
@@ -558,6 +558,5 @@ namespace AprilIO {
   }
   obj->write(dest.get(), &options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
-  else LUABIND_RETURN(StreamInterface, ptr);
 }
 //BIND_END

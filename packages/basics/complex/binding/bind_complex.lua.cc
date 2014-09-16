@@ -64,8 +64,8 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number) {
 #include "error_print.h"
 #include "constString.h"
 
-using april_math::ComplexF;
-using april_math::LuaComplexFNumber;
+using AprilMath::ComplexF;
+using AprilMath::LuaComplexFNumber;
 
 // This function is to be used with LUABIND_GET_.... macros
 ComplexF lua_toComplexF(lua_State *L, int n);

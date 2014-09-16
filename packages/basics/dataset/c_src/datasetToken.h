@@ -26,15 +26,16 @@
 #include "datasetFloat.h"
 #include "function_interface.h"
 #include "matrixFloat.h"
+#include "matrix_operations.h"
+#include "smart_ptr.h"
 #include "token_base.h"
 #include "token_matrix.h"
 #include "token_vector.h"
 #include "table_of_token_codes.h"
 #include "unused_variable.h"
 #include "vector.h"
-#include "wrapper.h"
 
-namespace basics {
+namespace Basics {
 
   class DataSetToken : public Referenced {
   public:
@@ -74,7 +75,7 @@ namespace basics {
           IncRef(aux_mat_rewrapped);
 	
           submat = output_mat->select(0, i, submat);
-          submat->copy(aux_mat_rewrapped);
+          AprilMath::MatrixExt::Operations::matCopy(submat,aux_mat_rewrapped);
 	
           DecRef(aux_mat_rewrapped);
           DecRef(aux_mat);
@@ -107,7 +108,7 @@ namespace basics {
   };
 
   class DataSetTokenVector : public DataSetToken {
-    april_utils::vector<Token*> data;
+    AprilUtils::vector<Token*> data;
     int pattern_size;
   public:
     DataSetTokenVector(int pattern_size) : pattern_size(pattern_size) { }
@@ -144,8 +145,8 @@ namespace basics {
   };
 
   class UnionDataSetToken : public DataSetToken {
-    april_utils::vector<DataSetToken*> ds_array;
-    april_utils::vector<int>           sum_patterns;
+    AprilUtils::vector<DataSetToken*> ds_array;
+    AprilUtils::vector<int>           sum_patterns;
     int pattern_size;
 
   public:
@@ -206,26 +207,25 @@ namespace basics {
   };
 
   class DataSetFloat2TokenWrapper : public DataSetToken {
-    MatrixFloat  *aux_mat;
-    DataSetFloat *ds;
+    AprilUtils::SharedPtr<MatrixFloat> aux_mat;
+    AprilUtils::SharedPtr<DataSetFloat> ds;
   public:
     DataSetFloat2TokenWrapper(DataSetFloat *ds) :
       ds(ds) {
-      IncRef(ds);
       int dims[2] = { 1, ds->patternSize() };
       aux_mat = new MatrixFloat(2, dims, CblasColMajor);
+#ifdef USE_CUDA
+      aux_mat->setUseCuda(false);
+#endif
     }
-    virtual ~DataSetFloat2TokenWrapper() {
-      DecRef(ds);
-      delete aux_mat;
-    }
+    virtual ~DataSetFloat2TokenWrapper() { }
     int numPatterns() { return ds->numPatterns(); }
     int patternSize() { return ds->patternSize(); }
     Token *getPattern(int index) {
       int dims[2] = { 1, patternSize() };
       MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
-      april_math::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
       float *mem_ptr = mem_block->getPPALForWrite();
       ds->getPattern(index, mem_ptr);
       return token;
@@ -234,24 +234,28 @@ namespace basics {
       int dims[2], major_dim=0;
       dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
       MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
+#ifdef USE_CUDA
+      bool old_use_cuda = mat->getCudaFlag();
+      mat->setUseCuda(false);
+#endif
       // The TokenMatrixFloat takes increases reference counter of Matrix.
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
       // The memory block given to ds->getPattern(...).
-      april_math::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
       float *aux_mem = aux_mem_block->getPPALForWrite();
       // int pattern_size = patternSize();
       int num_patterns = numPatterns();
       dims[major_dim] = 1;
-      MatrixFloat::sliding_window window(mat, dims, 0, dims, 0, 0);
+      AprilUtils::SharedPtr<MatrixFloat> submat;
       for (unsigned int i=0; i<bunch_size; ++i) {
-        april_assert(!window.isEnd());
         april_assert(0 <= indexes[i] && indexes[i] < num_patterns);
         ds->getPattern(indexes[i], aux_mem);
-        MatrixFloat *submat = window.getMatrix();
-        submat->copy(aux_mat);
-        delete submat;
-        window.next();
+        submat = mat->select(0, i, submat.get());
+        AprilMath::MatrixExt::Operations::matCopy(submat.get(),aux_mat.get());
       }
+#ifdef USE_CUDA
+      mat->setUseCuda(old_use_cuda);
+#endif
       return token;
     }
     void putPattern(int index, Token *pat) {
@@ -259,7 +263,7 @@ namespace basics {
         ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
       TokenMatrixFloat *token_matrix = pat->convertTo<TokenMatrixFloat*>();
       MatrixFloat *mat = token_matrix->getMatrix();
-      april_math::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
       const float *v = mem_block->getPPALForRead();
       ds->putPattern(index, v);
     }
@@ -270,9 +274,13 @@ namespace basics {
         ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
       TokenMatrixFloat *token_matrix = pat->convertTo<TokenMatrixFloat*>();
       MatrixFloat *mat = token_matrix->getMatrix();
+#ifdef USE_CUDA
+      bool old_use_cuda = mat->getCudaFlag();
+      mat->setUseCuda(false);
+#endif
       if (mat->getNumDim() != 2)
         ERROR_EXIT(128, "Only allowed for 2-dim matrices\n");
-      april_math::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+      AprilMath::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
       float *aux_mem = aux_mem_block->getPPALForWrite();
       int pattern_size = patternSize();
       int coords[2], major_dim;
@@ -281,13 +289,16 @@ namespace basics {
       coords[1] = 0;
       sizes[0]  = 1;
       sizes[1]  = pattern_size;
+      AprilUtils::SharedPtr<MatrixFloat> submat;
       for (unsigned int i=0; i<bunch_size; ++i) {
         coords[major_dim] = static_cast<int>(i);
-        MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
-        aux_mat->copy(submat);
-        delete submat;
+        submat = mat->select(0, i, submat.get());
+        AprilMath::MatrixExt::Operations::matCopy(aux_mat.get(),submat.get());
         ds->putPattern(indexes[i], aux_mem);
       }
+#ifdef USE_CUDA
+      mat->setUseCuda(old_use_cuda);
+#endif
     }
   };
 
@@ -338,6 +349,6 @@ namespace basics {
     }
   };
 
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILDATASETFLOAT_H

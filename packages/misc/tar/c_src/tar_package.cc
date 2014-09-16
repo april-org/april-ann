@@ -33,8 +33,8 @@ extern "C" {
 using AprilIO::FileStream;
 using AprilIO::HandledStreamInterface;
 using AprilIO::StreamInterface;
-using april_utils::constString;
-using april_utils::string;
+using AprilUtils::constString;
+using AprilUtils::string;
 
 namespace TAR {
 
@@ -95,7 +95,7 @@ namespace TAR {
     while(true) {
       size_t nbytes = tar_file->get(block, BLOCK_SIZE);
       constString block_str(block, BLOCK_SIZE);
-      if (nbytes == 0 || !april_utils::strncchr(block, '\0', BLOCK_SIZE)) break;
+      if (nbytes == 0 || !AprilUtils::strncchr(block, '\0', BLOCK_SIZE)) break;
       Header header;
       decode(block, BLOCK_SIZE, header);
       if (header.typeflag == 0) {
@@ -143,7 +143,7 @@ namespace TAR {
   StreamInterface *TARPackage::openFile(const char *name, int flags) {
     april_assert(!tar_file.empty());
     size_t *index = name2index.find(name);
-    // TODO: make an error code
+    // TODO make an error code
     if (index == 0) return 0;
     return openFile(*index, flags);
   }
@@ -188,6 +188,7 @@ namespace TAR {
 
   void TARPackage::decode(const char *block, size_t block_size,
                           Header &header) {
+    UNUSED_VARIABLE(block_size);
     // sanity check
     april_assert(sizeof(Header) - 9*sizeof(size_t) - sizeof(header.pathname) <= block_size);
     size_t pos=0;

@@ -28,7 +28,7 @@
 #include <iterator>
 #endif
 
-namespace april_utils {
+namespace AprilUtils {
 
   namespace list_aux_templates{
     class _true_type {};
@@ -471,11 +471,11 @@ namespace april_utils {
       first_l = l.sentinel.next;
       last    = sentinel.prev;
       last_l  = l.sentinel.prev;
-      april_utils::swap(first->prev, first_l->prev);
-      april_utils::swap(last->next, last_l->next);
-      april_utils::swap(sentinel.prev, l.sentinel.prev);
-      april_utils::swap(sentinel.next, l.sentinel.next);
-      april_utils::swap(list_size, l.list_size);
+      AprilUtils::swap(first->prev, first_l->prev);
+      AprilUtils::swap(last->next, last_l->next);
+      AprilUtils::swap(sentinel.prev, l.sentinel.prev);
+      AprilUtils::swap(sentinel.next, l.sentinel.next);
+      AprilUtils::swap(list_size, l.list_size);
     }
 
     /// Inserts x before pos.
@@ -717,7 +717,7 @@ namespace april_utils {
 
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif
 

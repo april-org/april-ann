@@ -32,6 +32,7 @@
 #include "qsort.h"
 #include "referenced.h"
 
+/// K-Nearest-Neighbors.
 namespace KNN {
 
   /// KDTree class for KNN search. It is not a complete KDTree, it isn't allow
@@ -41,7 +42,7 @@ namespace KNN {
   class KDTree : public Referenced {
     APRIL_DISALLOW_COPY_AND_ASSIGN(KDTree);
     
-    typedef april_utils::vector< Point<T> > PointsList;
+    typedef AprilUtils::vector< Point<T> > PointsList;
     static const size_t MEDIAN_APPROX_SIZE=40;
     
     // For median computation
@@ -132,8 +133,8 @@ namespace KNN {
     
     /// Less functor for min_heap for KBestSearcher
     struct KbestPairLess {
-      bool operator()(const april_utils::pair<int,double> &a,
-		      const april_utils::pair<int,double> &b) {
+      bool operator()(const AprilUtils::pair<int,double> &a,
+		      const AprilUtils::pair<int,double> &b) {
 	// we use > instead of < to convert the min_heap into a max_heap
 	return a.second > b.second;
       }
@@ -145,8 +146,8 @@ namespace KNN {
     class KBestSearcher : public Searcher {
       APRIL_DISALLOW_COPY_AND_ASSIGN(KBestSearcher);
       
-      typedef april_utils::pair<int,double> HeapNode;
-      typedef april_utils::min_heap<HeapNode,KbestPairLess> MaxHeapType;
+      typedef AprilUtils::pair<int,double> HeapNode;
+      typedef AprilUtils::min_heap<HeapNode,KbestPairLess> MaxHeapType;
       Point<T> &X;
       double kbest_distance;
       const int D, K;
@@ -181,8 +182,8 @@ namespace KNN {
 	const double intersection_distance = diff*diff;
 	return !(intersection_distance > kbest_distance) || !(X[axis]<split_value);
       }
-      void getBestData(april_utils::vector<int> &indices,
-		       april_utils::vector<double> &distances) {
+      void getBestData(AprilUtils::vector<int> &indices,
+		       AprilUtils::vector<double> &distances) {
 	indices.resize(max_heap.size());
 	distances.resize(max_heap.size());
 	for (int i=max_heap.size()-1; i>=0; --i) {
@@ -200,12 +201,12 @@ namespace KNN {
     const int D; ///< The number of dimensions
     int N; ///< The number of points
     /// A vector with matrices which contains the data
-    april_utils::vector< basics::Matrix<T>* > matrix_vector;
+    AprilUtils::vector< Basics::Matrix<T>* > matrix_vector;
     /// A vector with indices of first point index in matrix_vector
-    april_utils::vector<int> first_index;
+    AprilUtils::vector<int> first_index;
     /// The root node of the KDTree
     KDNode *root;
-    basics::MTRand *random; ///< A random number generator
+    Basics::MTRand *random; ///< A random number generator
     
     // for stats
     int number_of_processed_points;
@@ -215,18 +216,18 @@ namespace KNN {
     /// Builds a point given its index
     Point<T> makePoint(int index) {
       int row;
-      basics::Matrix<T> *m = getMatrixAndRow(index,row);
+      Basics::Matrix<T> *m = getMatrixAndRow(index,row);
       return Point<T>(m, row, index);
     }
     
     /// Returns the position of the median given a list of point indices and the
     /// axis where to compare
     Point<T> computeMedian(const PointsList *points, const int axis) const {
-      const size_t size = april_utils::min(MEDIAN_APPROX_SIZE, points->size());
+      const size_t size = AprilUtils::min(MEDIAN_APPROX_SIZE, points->size());
       PointsList aux( static_cast<typename PointsList::size_type>(size) );
       for (size_t i=0; i<size; ++i) aux[i] = (*points)[random->randInt(size-1)];
       MedianCompare predicate(axis);
-      return april_utils::Selection(aux.begin(), size, size/2, predicate);
+      return AprilUtils::Selection(aux.begin(), size, size/2, predicate);
     }
     
     /// Splits into two PointsList using the given pivot (excluding it)
@@ -307,7 +308,7 @@ namespace KNN {
     
   public:
 
-    KDTree(const int D, basics::MTRand *random) :
+    KDTree(const int D, Basics::MTRand *random) :
       D(D), N(0), root(0), random(random) {
       IncRef(random);
       first_index.push_back(0);
@@ -315,14 +316,14 @@ namespace KNN {
     
     ~KDTree() {
       DecRef(random);
-      for (typename april_utils::vector< basics::Matrix<T>* >::iterator it=matrix_vector.begin();
+      for (typename AprilUtils::vector< Basics::Matrix<T>* >::iterator it=matrix_vector.begin();
 	   it != matrix_vector.end(); ++it)
 	DecRef(*it);
       delete root;
     }
     
     /// Returns a matrix and a row from an index point
-    basics::Matrix<T> *getMatrixAndRow(int index, int &row) {
+    Basics::Matrix<T> *getMatrixAndRow(int index, int &row) {
       april_assert(index >= 0 && index < N);
       int izq,der,m;
       izq = 0; der = static_cast<int>(first_index.size());
@@ -337,7 +338,7 @@ namespace KNN {
       return matrix_vector[izq];
     }
     
-    void pushMatrix(basics::Matrix<T> *m) {
+    void pushMatrix(Basics::Matrix<T> *m) {
       if (m->getNumDim() != 2)
 	ERROR_EXIT(256,
 		   "Incorrect number of dimensions, expected bi-dimensional\n");
@@ -360,7 +361,7 @@ namespace KNN {
       PointsList *points_list = new PointsList(N);
       int i=0;
       for (size_t j=0; j<matrix_vector.size(); ++j) {
-	basics::Matrix<T> *m = matrix_vector[j];
+	Basics::Matrix<T> *m = matrix_vector[j];
 	for (int row=0; row<m->getDimSize(0); ++row, ++i) {
 	  april_assert(i<N);
 	  (*points_list)[i] = Point<T>(m, row, i);
@@ -374,9 +375,9 @@ namespace KNN {
     /// the best point index (in the order of they were pushed), the distance to
     /// the best, and a matrix with the best point (if needed, that is, result
     /// pointer != 0).
-    int searchNN(basics::Matrix<T> *point_matrix,
+    int searchNN(Basics::Matrix<T> *point_matrix,
 		 double &distance,
-		 basics::Matrix<T> **result) {
+		 Basics::Matrix<T> **result) {
       if (root == 0)
 	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (point_matrix->getNumDim() != 2 || point_matrix->getDimSize(0) != 1)
@@ -392,10 +393,10 @@ namespace KNN {
       distance = one_best.getOneBestDistance();
       if (result != 0) {
 	int best_row;
-	basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	Basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	int coords[2] = { best_row, 0 };
 	int sizes[2]  = { 1, D };
-	*result = new basics::Matrix<T>(best_matrix, coords, sizes, false);
+	*result = new Basics::Matrix<T>(best_matrix, coords, sizes, false);
       }
       return best_id;
     }
@@ -404,15 +405,15 @@ namespace KNN {
     /// and the K value, and returns a vector of indices, a vector of distances,
     /// and a vector of matrices (if needed, that is, result pointer != 0).
     void searchKNN(int K,
-		   basics::Matrix<T> *point_matrix,
-		   april_utils::vector<int> &indices,
-		   april_utils::vector<double> &distances,
-		   april_utils::vector< basics::Matrix<T> *> *result=0) {
+		   Basics::Matrix<T> *point_matrix,
+		   AprilUtils::vector<int> &indices,
+		   AprilUtils::vector<double> &distances,
+		   AprilUtils::vector< Basics::Matrix<T> *> *result=0) {
       if (root == 0)
 	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (K == 1) {
 	double distance;
-	basics::Matrix<T> *resultM;
+	Basics::Matrix<T> *resultM;
 	int best_id = searchNN(point_matrix,distance,(result!=0)?(&resultM):0);
 	indices.push_back(best_id);
 	distances.push_back(distance);
@@ -434,10 +435,10 @@ namespace KNN {
 	  for (size_t i=0; i<indices.size(); ++i) {
 	    int best_id = indices[i];
 	    int best_row;
-	    basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	    Basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	    int coords[2] = { best_row, 0 };
 	    int sizes[2]  = { 1, D };
-	    result->push_back(new basics::Matrix<T>(best_matrix, coords,
+	    result->push_back(new Basics::Matrix<T>(best_matrix, coords,
                                                     sizes, false));
 	  }
 	}

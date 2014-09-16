@@ -38,47 +38,47 @@ namespace ANN {
   class Connections : public Referenced {
   public:
     static const double weightnearzero;
-    static basics::MatrixFloat *build(unsigned int num_inputs,
+    static Basics::MatrixFloat *build(unsigned int num_inputs,
                                       unsigned int num_outputs);
     //
-    static unsigned int getInputSize(const basics::MatrixFloat *weights) {
+    static unsigned int getInputSize(const Basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(1));
     }
-    static unsigned int getNumInputs(const basics::MatrixFloat *weights) {
+    static unsigned int getNumInputs(const Basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(1));
     }
-    static unsigned int getOutputSize(const basics::MatrixFloat *weights) {
+    static unsigned int getOutputSize(const Basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(0));
     }
-    static unsigned int getNumOutputs(const basics::MatrixFloat *weights) {
+    static unsigned int getNumOutputs(const Basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(0));
     }
     
-    static bool checkInputOutputSizes(const basics::MatrixFloat *weights,
+    static bool checkInputOutputSizes(const Basics::MatrixFloat *weights,
 				      unsigned int input_size,
 				      unsigned int output_size);
 
-    static void randomizeWeights(basics::MatrixFloat *weights,
-				 basics::MTRand *rnd, float low, float high);
-    static void randomizeWeightsAtColumn(basics::MatrixFloat *weights,
+    static void randomizeWeights(Basics::MatrixFloat *weights,
+				 Basics::MTRand *rnd, float low, float high);
+    static void randomizeWeightsAtColumn(Basics::MatrixFloat *weights,
 					 unsigned int col,
-					 basics::MTRand *rnd,
+					 Basics::MTRand *rnd,
 					 float low, float high);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
     // abortara el programa con un ERROR_EXIT
-    static unsigned int loadWeights(basics::MatrixFloat *weights,
-				    basics::MatrixFloat *data,
+    static unsigned int loadWeights(Basics::MatrixFloat *weights,
+				    Basics::MatrixFloat *data,
 				    unsigned int first_weight_pos,
 				    unsigned int column_size);
     
-    static unsigned int copyWeightsTo(basics::MatrixFloat *weights,
-				      basics::MatrixFloat *data,
+    static unsigned int copyWeightsTo(Basics::MatrixFloat *weights,
+				      Basics::MatrixFloat *data,
 				      unsigned int first_weight_pos,
 				      unsigned int column_size);
     
-    static char *toLuaString(basics::MatrixFloat *weights);
+    static char *toLuaString(Basics::MatrixFloat *weights);
   };
 }
 #endif

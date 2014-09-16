@@ -23,8 +23,8 @@
 
 #include "matrixChar.h"
 
-namespace basics {
+namespace Basics {
   
-} // namespace basics
+} // namespace Basics
 
 #endif // UTILMATRIXCHAR_H

@@ -31,13 +31,13 @@
 
 //BIND_FUNCTION libpng.read
 {
-  april_utils::constString cs;
+  AprilUtils::constString cs;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, string);
   LUABIND_GET_PARAMETER(1,constString,cs);
   const char *filename = (const char *)cs;
 
-  ImageFloatRGB *res = imaging::LibPNG::readPNG(filename);
+  ImageFloatRGB *res = Imaging::LibPNG::readPNG(filename);
 
   if (res == NULL) {
     LUABIND_ERROR("libpng.read failed");
@@ -50,7 +50,7 @@
 //BIND_FUNCTION libpng.write
 {
   ImageFloatRGB *img;
-  april_utils::constString cs;
+  AprilUtils::constString cs;
   LUABIND_CHECK_ARGN(==, 2);
   
   LUABIND_CHECK_PARAMETER(2, string);
@@ -58,7 +58,7 @@
   LUABIND_GET_PARAMETER(2,constString,cs);
   const char *filename = (const char *)cs;
 
-  bool ok = imaging::LibPNG::writePNG(img, filename);
+  bool ok = Imaging::LibPNG::writePNG(img, filename);
   
   if (!ok) {
     LUABIND_ERROR("libpng.write failed");

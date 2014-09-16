@@ -24,7 +24,7 @@
 #include "april_assert.h"
 #include <cstddef>
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T> class tuple {
 
@@ -98,7 +98,7 @@ namespace april_utils {
 
   };  
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif
 

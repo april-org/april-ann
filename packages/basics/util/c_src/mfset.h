@@ -37,7 +37,7 @@ extern "C" {
 
 #define DEFAULT_MFSET_SIZE 524288 // 512*1024
 
-namespace april_utils {
+namespace AprilUtils {
   
   class MFSet : public Referenced {
   private:
@@ -98,15 +98,15 @@ namespace april_utils {
       if (value1 >= max_vector_size ||
 	  value2 >= max_vector_size) {
 	int32_t old_max_vector_size = max_vector_size;
-	max_vector_size = april_utils::max(value1,value2) << 1;
+	max_vector_size = AprilUtils::max(value1,value2) << 1;
 	data.resize(max_vector_size);
 	for (int32_t i=old_max_vector_size;
 	     i<max_vector_size;
 	     ++i)
 	  data[i] = i;
       }
-      vector_size = april_utils::max(value1+1, vector_size);
-      vector_size = april_utils::max(value2+1, vector_size);
+      vector_size = AprilUtils::max(value1+1, vector_size);
+      vector_size = AprilUtils::max(value2+1, vector_size);
       int32_t r1 = find(value1);
       int32_t r2 = find(value2);
       if (r1 != r2)
@@ -162,6 +162,6 @@ namespace april_utils {
     }
   };
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif //MFSET_H

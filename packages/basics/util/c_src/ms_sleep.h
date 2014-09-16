@@ -24,7 +24,7 @@
 #include<ctime>
 #include<csignal>
 
-namespace april_utils {
+namespace AprilUtils {
   void msleep(unsigned long milisec);
 }
 

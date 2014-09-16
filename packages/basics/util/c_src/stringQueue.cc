@@ -27,7 +27,7 @@
 
 #include "maxmin.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   StringQueue::StringQueue() {
     firstNode = lastNode = 0;
@@ -207,4 +207,4 @@ namespace april_utils {
     }
   }
 
-} // namespace april_utils
+} // namespace AprilUtils

@@ -24,7 +24,7 @@
 #include "function_interface.h"
 #include "mutexed_fifo.h"
 
-using april_thread_utils::MutexedFIFO;
+using AprilThreadUtils::MutexedFIFO;
 using namespace Functions;
 
 class ProducerFifoWrapper : public DataProducer<double> {

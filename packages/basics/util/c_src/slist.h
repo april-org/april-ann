@@ -25,7 +25,7 @@
 #include "swap.h"
 //#include <iterator>
 
-namespace april_utils {
+namespace AprilUtils {
 
   // Be careful! It's not std::slist :)
   // Implements Container and Front Insertion Sequence  
@@ -198,9 +198,9 @@ namespace april_utils {
     }
 
     void swap(slist &l){
-      april_utils::swap(first, l.first);
-      april_utils::swap(last, l.last);
-      april_utils::swap(list_size, l.list_size);
+      AprilUtils::swap(first, l.first);
+      AprilUtils::swap(last, l.last);
+      AprilUtils::swap(list_size, l.list_size);
     }
 
     // These 2 functions have precondition = !empty()

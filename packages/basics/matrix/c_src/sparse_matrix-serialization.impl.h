@@ -34,7 +34,7 @@
 #include "smart_ptr.h"
 #include "stream.h"
 
-namespace basics {
+namespace Basics {
 
   /////////////////////////////////////////////////////////////////////////////
 
@@ -43,7 +43,7 @@ namespace basics {
   template <typename T>
   SparseMatrix<T>*
   SparseMatrix<T>::read(AprilIO::StreamInterface *stream,
-                        const april_utils::GenericOptions *options) {
+                        const AprilUtils::GenericOptions *options) {
     UNUSED_VARIABLE(options);
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     MatrixIO::BinaryExtractor<T> bin_extractor;
@@ -51,10 +51,10 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<AprilIO::CStringStream>
+    AprilUtils::SharedPtr<AprilIO::CStringStream>
       c_str(new AprilIO::CStringStream());
     april_assert(!c_str.empty());
-    april_utils::constString line,format,sparse,token;
+    AprilUtils::constString line,format,sparse,token;
     // First we read the matrix dimensions
     line = readULine(stream, c_str.get());
     if (!line) {
@@ -82,20 +82,20 @@ namespace basics {
       return 0;
     }
     sparse = line.extract_token();
-    april_math::GPUMirroredMemoryBlock<T> *values = new april_math::GPUMirroredMemoryBlock<T>(NZ);
-    april_math::Int32GPUMirroredMemoryBlock *indices = new april_math::Int32GPUMirroredMemoryBlock(NZ);
-    april_math::Int32GPUMirroredMemoryBlock *first_index = 0;
+    AprilMath::GPUMirroredMemoryBlock<T> *values = new AprilMath::GPUMirroredMemoryBlock<T>(NZ);
+    AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(NZ);
+    AprilMath::Int32GPUMirroredMemoryBlock *first_index = 0;
     if (!sparse || sparse=="csr") {
-      first_index = new april_math::Int32GPUMirroredMemoryBlock(dims[0]+1);
+      first_index = new AprilMath::Int32GPUMirroredMemoryBlock(dims[0]+1);
     }
     else if (sparse=="csc") {
-      first_index = new april_math::Int32GPUMirroredMemoryBlock(dims[1]+1);
+      first_index = new AprilMath::Int32GPUMirroredMemoryBlock(dims[1]+1);
     }
     else {
       ERROR_PRINT("Impossible to determine the sparse format\n");
       return 0;
     }
-    float *values_ptr = values->getPPALForWrite();
+    T *values_ptr = values->getPPALForWrite();
     int32_t *indices_ptr = indices->getPPALForWrite();
     int32_t *first_index_ptr = first_index->getPPALForWrite();
     if (format == "ascii") {
@@ -177,7 +177,7 @@ namespace basics {
   
   template <typename T>
   void SparseMatrix<T>::write(AprilIO::StreamInterface *stream,
-                              const april_utils::GenericOptions *options) {
+                              const AprilUtils::GenericOptions *options) {
     bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
     //
     MatrixIO::SparseAsciiSizer<T> ascii_sizer;
@@ -195,19 +195,19 @@ namespace basics {
     }
     else {
       sizedata = bin_sizer(this) +
-        april_utils::binarizer::buffer_size_32(this->nonZeroSize()) +
-        april_utils::binarizer::buffer_size_32(this->getDenseCoordinateSize()) +
+        AprilUtils::binarizer::buffer_size_32(this->nonZeroSize()) +
+        AprilUtils::binarizer::buffer_size_32(this->getDenseCoordinateSize()) +
         3;
     }
-    size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
-    UNUSED_VARIABLE(expected_size);
+    // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
+    // UNUSED_VARIABLE(expected_size);
     if (!stream->isOpened()) {
       ERROR_EXIT(256, "The stream is not prepared\n");
     }
     stream->printf("%d ",this->getDimSize(0));
     stream->printf("%d ",this->getDimSize(1));
     stream->printf("%d\n",this->nonZeroSize());
-    const float *values_ptr = this->getRawValuesAccess()->getPPALForRead();
+    const T *values_ptr = this->getRawValuesAccess()->getPPALForRead();
     const int32_t *indices_ptr = this->getRawIndicesAccess()->getPPALForRead();
     const int32_t *first_index_ptr = this->getRawFirstIndexAccess()->getPPALForRead();
     if (is_ascii) {
@@ -252,13 +252,13 @@ namespace basics {
       }
       if ((i % columns) != 0) stream->printf("\n"); 
       for (i=0; i<this->nonZeroSize(); ++i) {
-        april_utils::binarizer::code_int32(indices_ptr[i], b);
+        AprilUtils::binarizer::code_int32(indices_ptr[i], b);
         stream->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
         if ((i+1) % columns == 0) stream->printf("\n");
       }
       if ((i % columns) != 0) stream->printf("\n"); 
       for (i=0; i<=this->getDenseCoordinateSize(); ++i) {
-        april_utils::binarizer::code_int32(first_index_ptr[i], b);
+        AprilUtils::binarizer::code_int32(first_index_ptr[i], b);
         stream->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
         if ((i+1) % columns == 0) stream->printf("\n");
       }
@@ -266,6 +266,6 @@ namespace basics {
     }
   }
 
-} // namespace basics
+} // namespace Basics
 
 #endif // SPARSE_MATRIX_SERIALIZATION_H

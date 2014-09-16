@@ -32,15 +32,19 @@
 #include "maxmin.h"
 #include "april_assert.h"
 
-namespace basics {
+namespace Basics {
 
   // ---------------------------------------------------------------------
 
   template <typename T>
   MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m) : DataSet<T>() {
-    if (!m->isSimple())
+    if (!m->isSimple()) {
       ERROR_EXIT(128, "Matrix need to be simple (contiguous "
                  "and in row-major)\n");
+    }
+#ifdef USE_CUDA
+    m->setUseCuda(false); // never use CUDA with this dataset
+#endif
     // numdim debe ser siempre >0
     int d        = m->getNumDim();	
     matrix       = m;
@@ -126,7 +130,7 @@ namespace basics {
       const T *data = matrix->getRawDataAccess()->getPPALForRead() + offsetmatrix*t;
       if (circular[d]) {
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-          pattern[offsetpat++] = data[april_utils::mod(c,t)];
+          pattern[offsetpat++] = data[AprilUtils::mod(c,t)];
         }
       } else {
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
@@ -138,7 +142,7 @@ namespace basics {
       if (circular[d]) {
         // caso no base, es circular
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-          auxGetPattern(offsetmatrix*matrix->getDimSize(d+1)+april_utils::mod(c,t),d+1);
+          auxGetPattern(offsetmatrix*matrix->getDimSize(d+1)+AprilUtils::mod(c,t),d+1);
         } // cierra for caso base no circular
       } else { // caso no base, no circular
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
@@ -177,7 +181,7 @@ namespace basics {
       T *data = matrix->getRawDataAccess()->getPPALForWrite() + offsetmatrix*t;    
       if (circular[d]) {
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-          data[april_utils::mod(c,t)] = const_pattern[offsetpat++];
+          data[AprilUtils::mod(c,t)] = const_pattern[offsetpat++];
         }
       } else {
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
@@ -191,7 +195,7 @@ namespace basics {
       if (circular[d]) {
         // caso no base, es circular
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-          auxPutPattern(offsetmatrix*matrix->getDimSize(d+1)+(april_utils::mod(c,t)),d+1);
+          auxPutPattern(offsetmatrix*matrix->getDimSize(d+1)+(AprilUtils::mod(c,t)),d+1);
         } // cierra for caso base no circular
       } else { // caso no base, no circular
         for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
@@ -638,7 +642,7 @@ namespace basics {
     //     return 0;
     int offset = index*patternsize;
     for (int i=0; i<patternsize; i++)
-      data[offset+i] = (unsigned char)april_utils::clamp((int)round((pat[i]-b)/a),0,255);
+      data[offset+i] = (unsigned char)AprilUtils::clamp((int)round((pat[i]-b)/a),0,255);
     return patternsize;
   }
 
@@ -771,7 +775,7 @@ namespace basics {
   template <typename T>
   IndexFilterDataSet<T>::
   IndexFilterDataSet(DataSet<T> *ds,
-                     april_utils::ReferencedVectorUint *indexes) :
+                     AprilUtils::ReferencedVectorUint *indexes) :
     DataSet<T>(),
     ds(ds), indexes(indexes) {
     IncRef(ds);
@@ -802,7 +806,7 @@ namespace basics {
 
   template <typename T>
   PerturbationDataSet<T>::PerturbationDataSet(DataSet<T> *ds,
-                                              basics::MTRand *random,
+                                              Basics::MTRand *random,
                                               double mean,
                                               double variance) :
     DataSet<T>(),
@@ -838,7 +842,7 @@ namespace basics {
 
   template <typename T>
   SaltNoiseDataSet<T>::SaltNoiseDataSet(DataSet<T> *ds,
-                                        basics::MTRand *random,
+                                        Basics::MTRand *random,
                                         double vd,
                                         T zero) :
     DataSet<T>(),
@@ -877,7 +881,7 @@ namespace basics {
 
   template <typename T>
   SaltPepperNoiseDataSet<T>::SaltPepperNoiseDataSet(DataSet<T> *ds,
-                                                    basics::MTRand *random,
+                                                    Basics::MTRand *random,
                                                     double vd,
                                                     T zero,
                                                     T one) :
@@ -976,10 +980,10 @@ namespace basics {
   template<typename T>
   int DerivDataSet<T>::getPattern(int index, T *pat) {
 
-    ds->getPattern(april_utils::clamp(index-2,0,numpatterns-1),left2);
-    ds->getPattern(april_utils::clamp(index-1,0,numpatterns-1),left1);
-    ds->getPattern(april_utils::clamp(index+1,0,numpatterns-1),right1);
-    ds->getPattern(april_utils::clamp(index+2,0,numpatterns-1),right2);
+    ds->getPattern(AprilUtils::clamp(index-2,0,numpatterns-1),left2);
+    ds->getPattern(AprilUtils::clamp(index-1,0,numpatterns-1),left1);
+    ds->getPattern(AprilUtils::clamp(index+1,0,numpatterns-1),right1);
+    ds->getPattern(AprilUtils::clamp(index+2,0,numpatterns-1),right2);
 
     T *aux_pat = pat;
     if (deriv0) {
@@ -1171,7 +1175,7 @@ namespace basics {
     const int sz  = ds->patternSize();
     april_assert(ret==sz);
     for (int i=0; i<sz; ++i)
-      pat[i] = april_utils::clamp(pat[i], lower, upper);
+      pat[i] = AprilUtils::clamp(pat[i], lower, upper);
     return ret;
   }
 
@@ -1185,6 +1189,6 @@ namespace basics {
 
   //----------------------------------------------------------
 
-} // namespace basics
+} // namespace Basics
 
 #endif // DATASET_CC_H

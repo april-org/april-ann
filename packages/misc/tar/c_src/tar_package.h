@@ -30,6 +30,7 @@
 #include "stream.h"
 #include "vector.h"
 
+/// Read of TAR files.
 namespace TAR {
 
   // forward declaration
@@ -67,7 +68,7 @@ namespace TAR {
     
     /// The position and size of the file inside the package.
     struct FileInfo {
-      april_utils::string pathname; ///< The filename.
+      AprilUtils::string pathname; ///< The filename.
       size_t offset; ///< Offset from package stream begin.
       size_t size;   ///< Size of the file.
       FileInfo() { }
@@ -99,12 +100,12 @@ namespace TAR {
       char pathname[260];
     };
     
-    typedef april_utils::hash<april_utils::string, size_t> Name2IndexHash;
-    typedef april_utils::vector<FileInfo> FileInfoList;
+    typedef AprilUtils::hash<AprilUtils::string, size_t> Name2IndexHash;
+    typedef AprilUtils::vector<FileInfo> FileInfoList;
     
     Name2IndexHash name2index;
     FileInfoList   list;
-    april_utils::SharedPtr<AprilIO::StreamInterface> tar_file;
+    AprilUtils::SharedPtr<AprilIO::StreamInterface> tar_file;
     int num_open_files;
     bool is_closed;
     

@@ -46,9 +46,9 @@ namespace ANN {
     unsigned int last_reset_it;
     uint32_t *random_frozen_state;
   protected:
-    basics::MTRand   *random;
+    Basics::MTRand   *random;
   public:
-    StochasticANNComponent(basics::MTRand *random,
+    StochasticANNComponent(Basics::MTRand *random,
 			   const char *name=0,
 			   const char *weights=0,
 			   unsigned int input_size=0,
@@ -59,14 +59,14 @@ namespace ANN {
       random(random) {
       april_assert(random != 0 && "Needs a random object\n");
       IncRef(random);
-      random_frozen_state = new uint32_t[basics::MTRand::SAVE];
+      random_frozen_state = new uint32_t[Basics::MTRand::SAVE];
     }
     virtual ~StochasticANNComponent() {
       DecRef(random);
       delete[] random_frozen_state;
     }
 
-    virtual basics::Token *doForward(basics::Token* input,
+    virtual Basics::Token *doForward(Basics::Token* input,
                                      bool during_training) {
       if (!during_training) stochastic_state = NORMAL;
       return input;
@@ -95,7 +95,7 @@ namespace ANN {
     }
     
     /// Method to restore previously serialized random object
-    virtual void setRandom(basics::MTRand *random) {
+    virtual void setRandom(Basics::MTRand *random) {
       DecRef(this->random);
       this->random = random;
       IncRef(this->random);
@@ -103,10 +103,10 @@ namespace ANN {
     }
     
     /// Method to serialize the underlying random object
-    virtual basics::MTRand *getRandom() { return random; }
+    virtual Basics::MTRand *getRandom() { return random; }
     
     /// Method to serialize the underlying random object
-    virtual const basics::MTRand *getRandom() const { return random; }
+    virtual const Basics::MTRand *getRandom() const { return random; }
   };
 }
 

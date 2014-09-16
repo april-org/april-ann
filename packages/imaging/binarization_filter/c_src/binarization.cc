@@ -21,7 +21,7 @@
 #include <cmath>
 #include "binarization.h"
 
-namespace imaging {
+namespace Imaging {
 
   ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, float minThreshold, float maxThreshold)
   {
@@ -386,4 +386,4 @@ namespace imaging {
     return result;
   }
 
-} // namespace imaging
+} // namespace Imaging

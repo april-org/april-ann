@@ -24,7 +24,7 @@
 #include "utilImageFloat.h"
 #include <cstdio>
 
-namespace imaging {
+namespace Imaging {
   namespace LibPNG {
     ImageFloatRGB* readPNG(const char *filename); // returns NULL if error
     bool writePNG(ImageFloatRGB *img, const char *filename);

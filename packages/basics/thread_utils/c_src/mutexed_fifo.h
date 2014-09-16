@@ -25,9 +25,9 @@
 #include <unistd.h>
 #include "fifo.h"
 
-using april_utils::fifo;
+using AprilUtils::fifo;
 
-namespace april_thread_utils {
+namespace AprilThreadUtils {
 
 
   template<typename T>

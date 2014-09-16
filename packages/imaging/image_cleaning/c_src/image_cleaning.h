@@ -28,7 +28,7 @@
 #include "utilImageFloat.h"
 #include "matrix.h"
 
-namespace imaging {
+namespace Imaging {
 
   /**
      Class that contains the counters for calculate the histogram of a given image
@@ -78,22 +78,22 @@ namespace imaging {
 
     /// Given a radius gets for each pixel the histogram of these window
     // centered pixel
-    basics::Matrix<float> * generateWindowHistogram(int radius);
+    Basics::Matrix<float> * generateWindowHistogram(int radius);
     //// Return a new copy of the integral matrix
-    basics::Matrix<float> * getIntegralHistogram();
+    Basics::Matrix<float> * getIntegralHistogram();
 
     /// Compute all the image Histogram
-    basics::Matrix<float> * getImageHistogram();
+    Basics::Matrix<float> * getImageHistogram();
 
-    basics::Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
+    Basics::Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
         
     /// Returns a matrix of size Height*Levels
-    basics::Matrix<float> *getVerticalHistogram(int radius = 0);
+    Basics::Matrix<float> *getVerticalHistogram(int radius = 0);
     /// Returns a matrix of size width*levels
-    basics::Matrix<float> *getHorizontalHistogram(int radius = 0);
+    Basics::Matrix<float> *getHorizontalHistogram(int radius = 0);
 
     ///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
-    static basics::Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);
+    static Basics::Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);
     /*{
       int width = img->width;
       int height = img->height;
@@ -133,6 +133,6 @@ namespace imaging {
     // ImageHistogram* clone();
   };
 
-} // namespace imaging
+} // namespace Imaging
 
 #endif

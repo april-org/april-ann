@@ -19,22 +19,21 @@
  *
  */
 #include "matrixChar.h"
-#include "matrix_not_implemented.h"
 
-namespace basics {
+namespace Basics {
 
   namespace MatrixIO {
     /////////////////////////////////////////////////////////////////////////
   
     template<>
-    bool AsciiExtractor<char>::operator()(april_utils::constString &line,
+    bool AsciiExtractor<char>::operator()(AprilUtils::constString &line,
                                           char &destination) {
       if (!line.extract_char(&destination)) return false;
       return true;
     }
   
     template<>
-    bool BinaryExtractor<char>::operator()(april_utils::constString &line,
+    bool BinaryExtractor<char>::operator()(AprilUtils::constString &line,
                                            char &destination) {
       UNUSED_VARIABLE(line);
       UNUSED_VARIABLE(destination);
@@ -75,20 +74,12 @@ namespace basics {
   } // namespace MatrixIO
 
   template<>
-  char Matrix<char>::getTemplateOption(const april_utils::GenericOptions *options,
+  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
                                        const char *name, char default_value) {
     return options->getOptionalChar(name, default_value);
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  
-  NOT_IMPLEMENT_AXPY(char)
-  NOT_IMPLEMENT_GEMM(char)
-  NOT_IMPLEMENT_GEMV(char)
-  NOT_IMPLEMENT_GER(char)
-  NOT_IMPLEMENT_DOT(char)
-
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<char>;
 
-} // namespace basics
+} // namespace Basics

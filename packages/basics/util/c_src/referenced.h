@@ -28,8 +28,8 @@
 #define ReleaseRef(x) (x)->decRef()
 
 /**
- * The class Referenced is used as base class for binded to Lua classes. It
- * implements reference counting interface.
+ * @brief The class Referenced is used as base class for binded to Lua
+ * classes. It implements reference counting interface.
  */
 class Referenced {
  protected:

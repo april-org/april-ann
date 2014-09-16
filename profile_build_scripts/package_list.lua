@@ -1,15 +1,16 @@
 return { 
-  -- BASIC PACAKGES
-  --  "plotter",
+  -- UNIT TESTING
   "util",
   "gtest",
   "utest",
+  
+  -- BASIC PACAKGES
+  --  "plotter",
   "stats",
   "dataset",
   "matrix",
   "random",
   "cmdOpt",
-  "profiler",
   "complex",
   "mathcore",
   "matlab",
@@ -28,11 +29,13 @@ return {
   "knn.kdtree",
   "trainable",
   -- "function_interface",
+  
   -- NEURAL NETWORKS
   "ann",
   "ann.loss",
   "trainable",
   "ann.autoencoders",
+  "bayesian",
 
   -- LANGUAGE MODELS
   --  "fnnlm",
@@ -52,7 +55,11 @@ return {
   --   --"libtiff",
   "ocr.off_line.param",
   "ocr.off_line_text_preprocessing",
+  
   -- HMMs
   "hmm_trainer",
   "rates",
+
+  -- MISC
+  "profiler",
 }
