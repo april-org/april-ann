@@ -20,27 +20,32 @@
  *
  */
 
-#include "ngram_lira.h"
 #include "april_assert.h"
-#include <cstdio> // print_model for testing
-#include "uncommented_line.h" // read data
+#include "c_string.h"
 #include "error_print.h"        // print errors
+#include "ngram_lira.h"
+#include "smart_ptr.h"
+#include "uncommented_line.h" // read data
+
+#include <cstdio>
 #include <cstdlib> // exit
 #include <cstring> // strcmp
 
+extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>           // mmap() is defined in this header
 #include <fcntl.h>
 #include <unistd.h>
-#include <cstdio>
+}
 
 using namespace AprilUtils;
+using namespace AprilIO;
 
 namespace LanguageModels {
 
   // format errors are NOT checked!!!
-  NgramLiraModel::NgramLiraModel(FILE *fd,
+  NgramLiraModel::NgramLiraModel(StreamInterface *fd,
                                  unsigned int expected_vocabulary_size,
                                  const char *expected_vocabulary[],
                                  WordType final_word,
@@ -59,15 +64,14 @@ namespace LanguageModels {
     max_out_prob              = 0;
     first_state_binary_search = 0;
 
-    const int bufferSize = 2048; // fixme: attention to buffer overflow
-    char buffer[bufferSize];
+    AprilUtils::SharedPtr<CStringStream> buffer( new CStringStream() );
     float aux;
     //NgramLiraTransition emptyTransition;
     
     //----------------------------------------------------------------------
     // # number of words and words
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%u",&vocabulary_size);
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%u",&vocabulary_size);
 
     // TODO:
     //     if (vocabulary_size > emptyTransition.maxWordIndex()) {
@@ -88,12 +92,12 @@ namespace LanguageModels {
     for (unsigned int i=0;i<vocabulary_size;++i) {
       // we read without allowing comments because the '#' symbol may
       // be part of the lexicon
-      get_line(buffer,bufferSize,fd);
+      extractULineFromStream(fd, buffer.get());
       if (expected_vocabulary_size) {
-        buffer[strlen(buffer)-1] = '\0'; // quitamos el \n
-        if (strcmp(buffer,expected_vocabulary[i])!=0) {
+        // buffer[strlen(buffer)-1] = '\0'; // quitamos el \n
+        if (strcmp(buffer->c_str(),expected_vocabulary[i])!=0) {
           ERROR_PRINT3("word %u is '%s' instead of '%s'\n",
-                       i,buffer,expected_vocabulary[i]);
+                       i,buffer->c_str(),expected_vocabulary[i]);
           exit(1);
         }
       }
@@ -101,33 +105,33 @@ namespace LanguageModels {
 
     //----------------------------------------------------------------------
     // # max order of n-gram
-    get_uncommented_line(buffer,bufferSize,fd);
+    extractULineFromStream(fd, buffer.get());
     unsigned int n;
-    sscanf(buffer,"%u",&n);  
+    sscanf(buffer->c_str(),"%u",&n);  
     ngram_value = n;
 
     //----------------------------------------------------------------------
     // # number of states
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%u",&num_states);  
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%u",&num_states);  
   
     //----------------------------------------------------------------------
     // # number of transitions
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%u",&num_transitions);
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%u",&num_transitions);
     transition_words_table = new WordType[num_transitions];
     transition_table       = new NgramLiraTransition[num_transitions];
 
     //----------------------------------------------------------------------
     // # bound max trans prob
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%f",&aux);
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%f",&aux);
     best_prob = Score(aux);
 
     //----------------------------------------------------------------------
     // # how many different number of transitions
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%u",&different_number_of_trans);
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%u",&different_number_of_trans);
     linear_search_table = new LinearSearchInfo[different_number_of_trans+1];
 
     // # "x y" means x states have y transitions
@@ -138,8 +142,8 @@ namespace LanguageModels {
     int how_many_states;
     int state_fan_out;
     for (unsigned int i=0;i<different_number_of_trans; ++i) {
-      get_uncommented_line(buffer,bufferSize,fd);
-      sscanf(buffer,"%u%u",&how_many_states,&state_fan_out);
+      extractULineFromStream(fd, buffer.get());
+      sscanf(buffer->c_str(),"%u%u",&how_many_states,&state_fan_out);
       if (state_fan_out <= fan_out_threshold) { // anyadimos otra entrada en la tabla
         linear_search_table[lss].first_state = aux_first_state;
         linear_search_table[lss].fan_out     = state_fan_out;
@@ -162,8 +166,8 @@ namespace LanguageModels {
 
     //----------------------------------------------------------------------
     // # initial state, final state and lowest state
-    get_uncommented_line(buffer,bufferSize,fd);
-    sscanf(buffer,"%u%u%u",&initial_state,&final_state,&lowest_state);
+    extractULineFromStream(fd, buffer.get());
+    sscanf(buffer->c_str(),"%u%u%u",&initial_state,&final_state,&lowest_state);
 
     //----------------------------------------------------------------------
     // # state backoff_st 'weight(state->backoff_st)' [max_transition_prob]
@@ -180,8 +184,8 @@ namespace LanguageModels {
       unsigned int orig;
       int   bo_dest;
       float dbackoff,maxOutProb;
-      get_uncommented_line(buffer,bufferSize,fd);
-      leidos = sscanf(buffer,"%u%d%f%f",
+      extractULineFromStream(fd, buffer.get());
+      leidos = sscanf(buffer->c_str(),"%u%d%f%f",
                       &orig,&bo_dest,&dbackoff,&maxOutProb);
       Score backoff;
       if (bo_dest >= 0) {
@@ -201,8 +205,8 @@ namespace LanguageModels {
       // # orig dest word prob
       unsigned int orig,dest,word;
       float prob;
-      get_uncommented_line(buffer,bufferSize,fd);
-      sscanf(buffer,"%u%u%u%f",&orig,&dest,&word,&prob);
+      extractULineFromStream(fd, buffer.get());
+      sscanf(buffer->c_str(),"%u%u%u%f",&orig,&dest,&word,&prob);
       if ((i==0 || orig > last_state) && // new or state is changed
           orig >= first_state_binary_search) {
         first_transition[orig] = i;

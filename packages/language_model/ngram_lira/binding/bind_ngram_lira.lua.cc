@@ -21,9 +21,11 @@
  */
 
 //BIND_HEADER_C
+#include "bind_april_io.h"
 #include "bind_LM_interface.h"
 #include "bind_util.h"
 using namespace AprilUtils;
+using namespace AprilIO;
 //BIND_END
 
 //BIND_HEADER_H
@@ -60,7 +62,7 @@ using namespace LanguageModels;
   LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, 
 		     "binary", // boolean
-		     "command", // open file command, i.e. "zcat blah.gz"
+                     "stream", // opens a stream
 		     "filename",
 		     "vocabulary",
 		     "final_word", 
@@ -74,12 +76,13 @@ using namespace LanguageModels;
   bool ignore_extra_words_in_dictionary = false;
   bool binary = false;
   const char *filename;
-  const char *command;
+  SharedPtr<StreamInterface> stream;
   NgramLiraModel *obj=0;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, binary,
 				       bool,
 				       binary, false);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, filename, string, filename, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, stream, AuxStreamInterface<StreamInterface>, stream, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, ignore_extra_words_in_dictionary,
 				       bool,
 				       ignore_extra_words_in_dictionary, false);
@@ -101,30 +104,20 @@ using namespace LanguageModels;
 			   final_word,
 			   ignore_extra_words_in_dictionary);
   } else {
-    FILE *fd;
     int fan_out_threshold;
     LUABIND_GET_TABLE_PARAMETER(1, fan_out_threshold, int, fan_out_threshold);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, command, string, command, 0);
-    if (command) {
-      fd = popen(command,"r");
-      if (fd == 0) {
-	LUABIND_FERROR1("unable to popen %s\n",command);
+    if (stream.empty()) {
+      stream = new FileStream(filename, "r");
+      if (stream->hasError()) {
+        LUABIND_FERROR1("unable to open %s\n",filename);
       }
     }
-    else {
-      fd = fopen(filename, "r");
-      if (fd == 0) {
-	LUABIND_FERROR1("unable to fopen %s\n",filename);
-      }
-    }
-    obj=new NgramLiraModel(fd,
+    obj=new NgramLiraModel(stream.get(),
 			   (unsigned int)vocabulary_size,
 			   vocabulary_vector,
 			   final_word,
 			   fan_out_threshold,
 			   ignore_extra_words_in_dictionary);
-    if (command) pclose(fd);
-    else fclose(fd);
   }
   delete[] vocabulary_vector;
   LUABIND_RETURN(NgramLiraModel, obj);    

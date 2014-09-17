@@ -23,8 +23,9 @@
 #ifndef NGRAM_LIRA_H
 #define NGRAM_LIRA_H
 
-#include "LM_interface.h"
 #include "binary_search.h"
+#include "LM_interface.h"
+#include "stream.h"
 #include <cmath>
 #include <climits> // UINT_MAX
 #include "logbase.h"
@@ -158,7 +159,7 @@ namespace LanguageModels {
     /// looking for their transitions
     /// expectedVocabularySize is an array of char* strings, the
     /// vocabulary is not checked when this argument is NULL
-    NgramLiraModel(FILE *fd,
+    NgramLiraModel(AprilIO::StreamInterface *fd,
                    unsigned int expected_vocabulary_size,
                    const char *expected_vocabulary[],
                    WordType final_word,

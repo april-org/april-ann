@@ -38,9 +38,6 @@ namespace LanguageModels {
     typedef NgramLiraModel::Score Score;
     
     virtual ~HistoryBasedNgramLiraLMInterface();
-    
-    virtual Score getBestProb() const;
-    
 
   protected:
     friend class HistoryBasedNgramLiraLM;
@@ -51,6 +48,8 @@ namespace LanguageModels {
                                  const WordType *context_words,
                                  unsigned int context_size,
                                  Score &score);
+
+    virtual Score privateBestProb() const;
     
     virtual bool privateGetFinalScore(Key key,
                                       const WordType *context_words,

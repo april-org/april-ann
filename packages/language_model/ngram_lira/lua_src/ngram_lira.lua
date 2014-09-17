@@ -5,7 +5,7 @@ local function lira_gz_load_function(filename,
 				     extra)
   -- estadistico
   lm_model = ngram.lira.model{
-    command="zcat ".. filename,
+    stream=gzio.open(filename),
     vocabulary=dictionary:getWordVocabulary(),
     final_word=dictionary:getWordId(final_ngram_word),
     fan_out_threshold=extra.fant_out_threshold or 10,

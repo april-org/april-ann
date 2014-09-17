@@ -132,6 +132,9 @@ namespace LanguageModels {
                                  const WordType *context_words,
                                  unsigned int context_size,
                                  Score &score) = 0;
+    
+    /// Returns the best probability of the model.
+    virtual Score privateBestProb() const = 0;
 
     typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
     typedef typename LMInterface<Key,Score>::Burden Burden;
@@ -185,7 +188,7 @@ namespace LanguageModels {
       HistoryBasedLM<Key,Score> *mdl;
       mdl = static_cast<HistoryBasedLM<Key,Score>* >(this->model);
       WordType init_word = mdl->getInitWord();
-      int context_length = this->model->ngramOrder() - 1;
+      unsigned int context_length = static_cast<unsigned int>(this->model->ngramOrder() - 1);
       Key k = trie->rootNode();
       for (unsigned int i = 0; i < context_length; i++)
         k = trie->getChild(k, init_word);
@@ -218,7 +221,9 @@ namespace LanguageModels {
       return score;
     }
 
-    // virtual Score getBestProb() const = 0;
+    virtual Score getBestProb() const {
+      return privateBestProb();
+    }
   };
 
   template <typename Key, typename Score>

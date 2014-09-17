@@ -85,7 +85,7 @@ namespace LanguageModels {
   }
   
   Score HistoryBasedNgramLiraLMInterface::
-  getBestProb() const {
+  privateBestProb() const {
     return lira_interface->getBestProb();
   }
 
