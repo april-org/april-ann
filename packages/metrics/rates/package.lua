@@ -1,4 +1,4 @@
- package{ name = "rates",
+ package{ name = "metrics.rates",
    version = "1.0",
    depends = { "util", },
    keywords = { "rates" },

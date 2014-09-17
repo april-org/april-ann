@@ -1,5 +1,5 @@
-
-lineas = [[
+local rates = metrics.rates
+local lineas = [[
 a * b b b b
 a a a * b
 a b c * b
@@ -10,12 +10,12 @@ de un fichero de palabras*de un fichero de muchas palabras
 para probar tasas*para probar el programa tasas
 ]]
 
-lineas = string.tokenize(lineas,"\n")
+local lineas = string.tokenize(lineas,"\n")
 for _,line in ipairs(lineas) do
   print("->"..line)
 end
 
-resul = rates{
+local resul = rates{
   datatype = "lines", -- no hace falta, es valor por defecto
   line_sep = "%*",    -- no hace falta, es valor por defecto
   words_width = 1,
@@ -39,7 +39,7 @@ print"----------------------------------\n"
 
 print"SIN MATRIZ DE CONFUSION"
 
-resul = rates{
+local resul = rates{
   rate = "pra",
   data = lineas,
 }
@@ -52,11 +52,11 @@ end
 
 print"CON ENTEROS"
 
-enteros = {
+local enteros = {
   {{1,1,2,3},{1,3,2,2,4}},
   {{1,1,2,3},{1,1,2,3,4}}
 }
-resul = rates{
+local resul = rates{
   rate = "pra",
   data = enteros,
   datatype = "pairs_int",
@@ -79,11 +79,11 @@ end
 print"\n-----------------------------------------"
 print"MODO RAW"
 
-enteros = {
+local enteros = {
   {{1,1,2,3},{1,3,2,2,4}},
   {{1,1,2,3},{1,1,2,3,4}}
 }
-resul = rates{
+local resul = rates{
   rate = "raw",
   data = enteros,
   datatype = "pairs_int",

@@ -58,7 +58,10 @@ return {
   
   -- HMMs
   "hmm_trainer",
-  "rates",
+  
+  -- Metrics
+  "metrics.rates",
+  "metrics.roc",
 
   -- MISC
   "profiler",
