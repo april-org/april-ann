@@ -235,9 +235,11 @@ function cmdopt_methods:search_long_option(str)
   return found
 end
 
--- main method, returns a table with positinal and rest of arguments
--- actions are simply executed before return, or throws an error
-function cmdopt_methods:parse_without_check(arguments)
+-- main method, throws an error in case of fail, or returns
+-- or a table with positinal and rest of arguments
+-- actions are simply executed before return
+function cmdopt_methods:parse_without_check(arguments, verbose)
+  if verbose == nil then verbose = true end
   local arguments = arguments or arg -- arg is the global variable
   local opt_list = {} -- list of options to process
   local result   = {} -- result table
@@ -316,32 +318,42 @@ function cmdopt_methods:parse_without_check(arguments)
     local opt   = optvalue[1]
     local value = optvalue[2]
     value = value or opt.default_value
-    printf("# ARG %s = %s\n", opt.index_name or "nil", tostring(value or "nil"))
-    if type(opt.filter) == "function" then value = opt.filter(value) end
+    if verbose then printf("# ARG %s = %s\n", opt.index_name or "nil", tostring(value or "nil")) end
+    if type(opt.filter) == "function" then
+      value = opt.filter(value)
+      april_assert(value ~= nil, "Filter fails for option %s", opt.index_name)
+    end
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
   end
   return result
 end
 
-function cmdopt_methods:check_args(optargs,initial_values)
+function cmdopt_methods:check_args(optargs,initial_values,verbose)
+  if verbose==nil then verbose=true end
   local initial_values = initial_values or {}
   for _,opt in pairs(self.options) do
     local idx = opt.index_name
     if idx then
       if not optargs[idx] and initial_values[idx] then
 	local value = initial_values[idx]
-        printf("# INITIAL %s = %s\n", idx, tostring(value or "nil"))
-        if type(opt.filter) == "function" then value = opt.filter(value) end
+        if verbose then printf("# INITIAL %s = %s\n", idx, tostring(value or "nil")) end
+	if type(opt.filter) == "function" then
+          value = opt.filter(value)
+          april_assert(value ~= nil, "Filter fails for option %s", idx)
+        end
 	if type(opt.action) == "function" then opt.action(value) end
 	optargs[idx] = value
       elseif opt.mode == 'always' and optargs[idx] == nil then
 	local value = opt.default_value
-        printf("# DEFAULT %s = %s\n", idx, tostring(value or "nil"))
+        if verbose then printf("# DEFAULT %s = %s\n", idx, tostring(value or "nil")) end
 	assert(value ~= nil,
 	       (table.concat(opt.short_options or opt.long_options)..
 		  " option is mandatory!!"))
-	if type(opt.filter) == "function" then value = opt.filter(value) end
+	if type(opt.filter) == "function" then
+          value = opt.filter(value)
+          april_assert(value ~= nil, "Filter fails for option %s", idx)
+        end
 	if type(opt.action) == "function" then opt.action(value) end
 	optargs[idx] = value
       end
@@ -350,13 +362,14 @@ function cmdopt_methods:check_args(optargs,initial_values)
   return optargs
 end
 
-function cmdopt_methods:parse_args(arguments,defopt)
-  local result = self:parse_without_check(arguments)
+function cmdopt_methods:parse_args(arguments, defopt, verbose)
+  local defopt_func = defopt_func or function(v) return v end
+  local result = self:parse_without_check(arguments, verbose)
   local initial_values
   if defopt and result[defopt] then
     initial_values = result[defopt]
     result[defopt] = nil
   end
-  self:check_args(result, initial_values)
+  self:check_args(result, initial_values, verbose)
   return result
 end

@@ -25,6 +25,7 @@
 
 //BIND_HEADER_H
 #include "function_interface.h"
+#include "identity_function.h"
 using namespace Functions;
 using Basics::Token;
 //BIND_END
@@ -58,5 +59,19 @@ using Basics::Token;
   Token *input;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_RETURN(Token, obj->calculate(input));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME IdentityFunction functions
+//BIND_CPP_CLASS IdentityFunction
+//BIND_SUBCLASS_OF IdentityFunction FunctionInterface
+
+//BIND_CONSTRUCTOR IdentityFunction
+{
+  LUABIND_CHECK_ARGN(==,0);
+  obj = new IdentityFunction();
+  LUABIND_RETURN(IdentityFunction, obj);
 }
 //BIND_END

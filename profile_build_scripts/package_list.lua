@@ -38,7 +38,8 @@ return {
   "bayesian",
 
   -- LANGUAGE MODELS
-  --  "fnnlm",
+  "language_models",
+  "ngram.lira",
   
   -- IMAGE HANDLERS
   "Image",

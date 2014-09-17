@@ -3,7 +3,6 @@
 
 #include <cstring>
 #include "vector.h"
-#include "aux_hash_table.h"
 
 namespace AprilUtils {
 
@@ -52,6 +51,7 @@ namespace AprilUtils {
     char *end();
     const char *begin() const;
     const char *end() const;
+    size_type len() const;
     size_type size() const;
     size_type max_size() const;
     void resize(size_type size);
@@ -67,17 +67,6 @@ namespace AprilUtils {
     char  back() const;
     char &back();
     char *release();
-  };
-  
-  // For hash tables
-  template <> struct default_hash_function<string> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const string &s1) const {
-      unsigned int resul = 1;
-      for (const char *r = s1.begin(); r != s1.end(); r++)
-        resul = (resul+(unsigned int)(*r))*cte_hash;
-      return resul;
-    }
   };
   
 }

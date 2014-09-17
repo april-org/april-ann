@@ -1646,10 +1646,10 @@ namespace AprilMath {
 	AprilUtils::UniquePtr<double []> input(new double[wsize]);
 	AprilUtils::UniquePtr<double []> output(new double[M]);
 	//
-	typename Basics::Matrix<float>::sliding_window swindow(obj,
-							       &wsize,
-							       0, // offset
-							       &wadvance);
+	Basics::Matrix<float>::sliding_window swindow(obj,
+                                                      &wsize,
+                                                      0, // offset
+                                                      &wadvance);
 	AprilUtils::SharedPtr< Matrix<float> > input_slice;
 	AprilUtils::SharedPtr< Matrix<float> > output_slice;
 	int i=0, j;
@@ -1658,7 +1658,7 @@ namespace AprilMath {
 	  input_slice = swindow.getMatrix(input_slice.get());
 	  output_slice = dest->select(0, i);
 	  j=0;
-	  for (typename Basics::Matrix<float>::const_iterator it(input_slice->begin());
+	  for (Basics::Matrix<float>::const_iterator it(input_slice->begin());
 	       it != input_slice->end(); ++it, ++j) {
 	    april_assert(j<wsize);
 	    input[j] = static_cast<double>(*it);
@@ -1666,7 +1666,7 @@ namespace AprilMath {
 	  april_assert(j==wsize);
 	  real_fft(input.get(), output.get());
 	  j=0;
-	  for (typename Basics::Matrix<float>::iterator it(output_slice->begin());
+	  for (Basics::Matrix<float>::iterator it(output_slice->begin());
 	       it != output_slice->end(); ++it, ++j) {
 	    april_assert(j<M);
 	    *it = static_cast<float>(output[j]);
