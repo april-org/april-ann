@@ -1,5 +1,4 @@
 metrics = metrics or {}
-
 --
 
 local function check_matrix(m)
@@ -66,8 +65,11 @@ roc_methods.add =
 roc_methods.compute_curve =
   april_doc{
     class = "method",
-    summary = "",
-    outputs = { "A sorted table of pairs (FPR,TPR)" },
+    summary = "Computes the ROC curve with all added data",
+    outputs = {
+      {"A matrix with N rows and 3 columns, the first column is FPR, second",
+       "is TPR and the last is the value <= threshold"},
+    },
   } ..
   function(self)
     local data = self.data
@@ -76,17 +78,16 @@ roc_methods.compute_curve =
     table.sort(data, function(a,b) return a[1]<b[1] end)
     local result = { }
     local TP,FP = P,N
-    local TPR,FPR=0,0
     for i=1,#data do
       local TPR,FPR = TP/P,FP/N
-      result[#result+1] = { FPR, TPR }
+      result[#result+1] = { FPR, TPR, data[i][1] }
       if data[i][2] > 0 then
         TP = TP - 1
       else
         FP = FP - 1
       end
     end
-    result[#result+1] = { FPR, TPR }
+    result[#result+1] = { 0, 0, 1 }
     table.sort(result,
                function(a,b)
                  if a[1] < b[1] then return true
@@ -94,7 +95,11 @@ roc_methods.compute_curve =
                  else return a[2] < b[2]
                  end
     end)
-    return result
+    local out = matrix(#result,3)
+    for i,v in ipairs(result) do
+      out:set(i,1,v[1]):set(i,2,v[2]):set(i,3,v[3])
+    end
+    return out
   end
 
 roc_methods.compute_area =
@@ -106,8 +111,10 @@ roc_methods.compute_area =
   function(self)
     local cv = self:compute_curve()
     local area = 0
-    for i = 2,#cv do
-      area = area + (cv[i][1] - cv[i-1][1]) * (cv[i][2] + cv[i-1][2])*0.5
+    for i = 2,cv:dim(1) do
+      area = area +
+        (cv:get(i,1) - cv:get(i-1,1)) *
+        (cv:get(i,2) + cv:get(i-1,2))*0.5
     end
     return area
   end
