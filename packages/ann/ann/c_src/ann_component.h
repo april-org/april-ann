@@ -175,9 +175,10 @@ namespace ANN {
       return output_size;
     }
     virtual Basics::Token *calculate(Basics::Token *input) {
-      Basics::Token *out = this->doForward(input, false);
+      AprilUtils::SharedPtr<Basics::Token> out( this->doForward(input, false) );
       reset();
-      return out;
+      Basics::Token *ptr = out.release(); ReleaseRef(ptr);
+      return ptr;
     }
     /////////////////////////////////////////////
     
