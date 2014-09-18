@@ -22,12 +22,44 @@
 #define MATRIX_DOUBLE_H
 #include "matrix.h"
 
-typedef Matrix<double> MatrixDouble;
+namespace Basics {
 
-template<>
-void Matrix<double>::zeros();
+  typedef Matrix<double> MatrixDouble;
 
-template<>
-void Matrix<double>::ones();
+
+  namespace MatrixIO {
+
+    /* Especialization of MatrixDouble ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<double>::operator()(AprilUtils::constString &line,
+                                            double &destination);
+  
+    template<>
+    bool BinaryExtractor<double>::operator()(AprilUtils::constString &line,
+                                             double &destination);
+  
+    template<>
+    int AsciiSizer<double>::operator()(const Matrix<double> *mat);
+
+    template<>
+    int BinarySizer<double>::operator()(const Matrix<double> *mat);
+
+    template<>
+    void AsciiCoder<double>::operator()(const double &value,
+                                        AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<double>::operator()(const double &value,
+                                         AprilIO::StreamInterface *stream);
+    
+  } // namespace MatrixIO
+
+  template<>
+  double Matrix<double>::
+  getTemplateOption(const AprilUtils::GenericOptions *options,
+                    const char *name, double default_value);
+
+}
 
 #endif // MATRIX_DOUBLE_H

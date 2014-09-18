@@ -23,12 +23,12 @@
 
 #include "matrixFloat.h"
 namespace ANN {
-  namespace optimizer {
+  namespace Optimizer {
     class UtilRProp : public Referenced {
     public:
-      static void step(MatrixFloat *steps,
-		       MatrixFloat *old_sign,
-		       MatrixFloat *sign,
+      static void step(Basics::MatrixFloat *steps,
+		       Basics::MatrixFloat *old_sign,
+		       Basics::MatrixFloat *sign,
 		       float eta_minus,
 		       float eta_plus);
     };

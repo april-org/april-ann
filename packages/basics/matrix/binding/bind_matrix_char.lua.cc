@@ -19,54 +19,65 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_matrix.h"
 #include "utilMatrixChar.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+namespace Basics {
 #define FUNCTION_NAME "read_vector"
-static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-  int *v=0;
-  lua_getfield(L, 1, key);
-  if (!lua_isnil(L, -1)) {
-    LUABIND_CHECK_PARAMETER(-1, table);
-    int table_len;
-    LUABIND_TABLE_GETN(-1, table_len);
-    if (table_len != num_dim)
-      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-		      key, num_dim, table_len);
-    v = new int[num_dim];
-    for(int i=0; i < num_dim; i++) {
-      lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-      lua_pop(L,1);
+  static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
+    int *v=0;
+    lua_getfield(L, 1, key);
+    if (!lua_isnil(L, -1)) {
+      LUABIND_CHECK_PARAMETER(-1, table);
+      int table_len;
+      LUABIND_TABLE_GETN(-1, table_len);
+      if (table_len != num_dim)
+        LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+                        key, num_dim, table_len);
+      v = new int[num_dim];
+      for(int i=0; i < num_dim; i++) {
+        lua_rawgeti(L, -1, i+1);
+        v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
+        lua_pop(L,1);
+      }
     }
+    lua_pop(L, 1);
+    return v;
   }
-  lua_pop(L, 1);
-  return v;
-}
 #undef FUNCTION_NAME
 
-int sliding_window_matrixChar_iterator_function(lua_State *L) {
-  SlidingWindowMatrixChar *obj = lua_toSlidingWindowMatrixChar(L,1);
-  if (obj->isEnd()) {
-    lua_pushnil(L);
+  int sliding_window_matrixChar_iterator_function(lua_State *L) {
+    SlidingWindowMatrixChar *obj = lua_toSlidingWindowMatrixChar(L,1);
+    if (obj->isEnd()) {
+      lua_pushnil(L);
+      return 1;
+    }
+    MatrixChar *mat = obj->getMatrix();
+    lua_pushMatrixChar(L, mat);
+    obj->next();
     return 1;
   }
-  MatrixChar *mat = obj->getMatrix();
-  lua_pushMatrixChar(L, mat);
-  obj->next();
-  return 1;
-}
 
+  static char april_optchar(lua_State *L, int i, char opt) {
+    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
+    const char *str = luaL_checkstring(L,i);
+    return str[0];
+  }
+}
 //BIND_END
 
 //BIND_HEADER_H
 #include "matrixChar.h"
+using namespace Basics;
 typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixChar matrixChar
 //BIND_CPP_CLASS MatrixChar
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixChar Serializable
 
 //BIND_LUACLASSNAME SlidingWindowMatrixChar matrixChar.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixChar
@@ -205,50 +216,6 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 	  (void*)obj,
 	  (void*)obj->getRawDataAccess());
   LUABIND_RETURN(string, buff);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixChar fromFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  MatrixChar *obj;
-  if ((obj = readMatrixCharFromFile(filename)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixChar,obj);
-}
-//BIND_END
-
-
-//BIND_CLASS_METHOD MatrixChar fromString
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  constString cs;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  MatrixChar *obj;
-  if ((obj = readMatrixCharFromString(cs)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixChar,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar toFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  writeMatrixCharToFile(obj, filename);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar toString
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  writeMatrixCharToLuaString(obj, L, true);
-  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -417,8 +384,8 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_PARAMETER(1, string);
   const char *value;
   LUABIND_GET_PARAMETER(1,string,value);
-  obj->fill(*value);
-  LUABIND_RETURN(MatrixChar, obj);
+  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+                 matFill(obj, *value));
 }
 //BIND_END
 
@@ -534,8 +501,8 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_ARGN(==,1);
   const char *v;
   LUABIND_GET_PARAMETER(1, string, v);
-  obj->diag(*v);
-  LUABIND_RETURN(MatrixChar, obj);
+  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+                 matDiag(obj, *v));
 }
 //BIND_END
 
@@ -631,8 +598,17 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixChar *mat;
   LUABIND_GET_PARAMETER(1, MatrixChar, mat);
-  obj->copy(mat);
-  LUABIND_RETURN(MatrixChar, obj);
+  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+                 matCopy(obj, mat));
+}
+//BIND_END
+
+//// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD MatrixChar read
+{
+  MAKE_READ_MATRIX_LUA_METHOD(MatrixChar, char);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 

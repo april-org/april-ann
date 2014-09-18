@@ -4,6 +4,8 @@
 
 #define EPSILON 1e-05
 
+using namespace AprilUtils;
+
 namespace test_logbase {
 
   TEST(LogbaseTest,All) {

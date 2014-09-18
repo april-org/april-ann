@@ -23,9 +23,10 @@
   int radio;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, int, radio);
-  if (radio < 1)
+  if (radio < 1) {
     LUABIND_ERROR("median filter, radio must be > 0");
-  LUABIND_RETURN(ImageFloat, medianFilter(obj,radio));
+  }
+  LUABIND_RETURN(ImageFloat, Imaging::medianFilter(obj,radio));
 }
 //BIND_END
 

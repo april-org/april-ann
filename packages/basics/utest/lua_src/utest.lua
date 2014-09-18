@@ -11,6 +11,8 @@
 --
 -- utest.check.fail(function, error_message): the opposite of previous one
 --
+-- utest.check.number_eq(a, b, epsilon, error_message): tests of a == b with epsilon tolerance
+--
 -- utest.check.eq(a, b, error_message): tests of a == b
 --
 -- utest.check.neq(a, b, error_message): tests of a ~= b
@@ -33,6 +35,18 @@ local function write(level,format,...)
   if level>0 or util.stdout_is_a_terminal() then
     fprintf(io.stderr, format,...)
   end
+end
+--
+utest.warning = function(format,...)
+  return fprintf(io.stderr,
+                 table.concat({
+                     "\t",
+                     ansi.fg.bright_yellow,
+                     "Warning: ",
+                     ansi.fg.default,
+                     format
+                 }),
+                 ...)
 end
 --
 local NONAMED = "UNKNOWN"
@@ -107,6 +121,12 @@ local check = function (func,error_msg)
 end
 utest.check = { }
 --
+utest.check.number_eq = function(a, b, epsilon, ...)
+  local epsilon = epsilon or 0.02
+  return check(function()
+                 return math.abs(a-b)/math.abs(a+b) < epsilon
+               end, ...)
+end
 utest.check.eq = function(a, b, ...)
   return check(function() return a == b end, ...)
 end
@@ -141,7 +161,18 @@ utest.test = function(name, test_func)
   assert( type(name) == "string", "Needs a string as first argument" )
   assert( type(test_func) == "function", "Needs a function as second argument")
   test_name = name
-  test_func()
+  local ok,msg = xpcall(test_func,debug.traceback)
+  if not ok then 
+    write(1, "Test %s: %sexecutionfailure%s\n", test_name,
+          ansi.fg.bright_red, ansi.fg.default)
+    write(1, "%s\n", msg)
+    failed = failed + 1
+    if not failed_list[test_name] then
+      table.insert(names_order, test_name)
+      failed_list[test_name] = {}
+    end
+    table.insert(failed_list[test_name], "executionfailure")
+  end
   test_name = NONAMED
 end
 --

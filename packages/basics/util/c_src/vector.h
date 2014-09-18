@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   // Be careful! It's not std::vector :)
   template<typename T> class vector {
@@ -48,6 +48,13 @@ namespace april_utils {
     size_type  capacity() const { return vector_size; }
     size_type  max_size() const { return size_type(-1); }
     bool       empty()    const { return (used_size==0); }
+    
+    pointer    release() {
+      pointer tmp = vec;
+      used_size = vector_size = 0;
+      vec = 0;
+      return tmp;
+    }
 
     vector(size_type n=0) { // Creates a vector with n elements.
       used_size   = n;
@@ -78,7 +85,7 @@ namespace april_utils {
 	vec[i] = l.vec[i];
     }
 
-    // copy range [frist,last)
+    // copy range [first,last)
     vector(const_iterator first, const_iterator last) {
       vector_size = used_size = last - first;
       if (vector_size) vec = new T[vector_size];
@@ -160,9 +167,9 @@ namespace april_utils {
     void clear() { used_size = 0; }
 
     void swap(vector &other) {
-      april_utils::swap(vec,         other.vec);
-      april_utils::swap(vector_size, other.vector_size);
-      april_utils::swap(used_size,   other.used_size);
+      AprilUtils::swap(vec,         other.vec);
+      AprilUtils::swap(vector_size, other.vector_size);
+      AprilUtils::swap(used_size,   other.used_size);
     }
 
     iterator begin() { return vec; }
@@ -171,7 +178,7 @@ namespace april_utils {
     const_iterator end() const { return vec+used_size; }
 
   };
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif
 

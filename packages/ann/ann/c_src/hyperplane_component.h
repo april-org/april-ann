@@ -49,14 +49,14 @@ namespace ANN {
 			   bool transpose_weights=false);
     virtual ~HyperplaneANNComponent();
 
-    virtual Token *getInput();
-    virtual Token *getOutput();
-    virtual Token *getErrorInput();
-    virtual Token *getErrorOutput();
+    virtual Basics::Token *getInput();
+    virtual Basics::Token *getOutput();
+    virtual Basics::Token *getErrorInput();
+    virtual Basics::Token *getErrorOutput();
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
 
-    virtual Token *doBackprop(Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -66,15 +66,15 @@ namespace ANN {
     
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual void copyWeights(MatrixFloatSet *weights_dict);
+    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
 
-    virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
+    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
     
-    virtual ANNComponent *getComponent(string &name);
-    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict);
+    virtual ANNComponent *getComponent(AprilUtils::string &name);
+    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       dot_product->debugInfo();

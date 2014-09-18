@@ -4,7 +4,7 @@
 #include "vector.h"
 #include "max_min_finder.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define N 14
 #define MAXN 2u
@@ -12,7 +12,7 @@ using namespace april_utils;
 namespace test_max_min_finder {
 
   TEST(MaxMinFinderTest,All) {
-    april_utils::vector<int> resultado;
+    AprilUtils::vector<int> resultado;
     const int ci = 6;
     const int cd = 6;
     bool findmax = true;
@@ -25,7 +25,7 @@ namespace test_max_min_finder {
     finder.end_sequence();
     EXPECT_EQ( resultado.size(), MAXN );
     int expected[MAXN] = { 10, 6 }, j=0;
-    for (april_utils::vector<int>::iterator r = resultado.begin(); 
+    for (AprilUtils::vector<int>::iterator r = resultado.begin(); 
          r != resultado.end(); ++r, ++j) {
       EXPECT_EQ( *r, expected[j] );
     }

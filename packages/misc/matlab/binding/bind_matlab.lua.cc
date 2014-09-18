@@ -25,21 +25,28 @@
 #include "bind_matrix_int32.h"
 #include "bind_matrix_double.h"
 
-int elements_iterator_function(lua_State *L) {
-  MatFileReader *obj = lua_toMatFileReader(L,1);
-  MatTaggedDataElement *element = obj->getNextDataElement();
-  if (element == 0) {
-    lua_pushnil(L);
+namespace Matlab {
+  
+  int elements_iterator_function(lua_State *L) {
+    MatFileReader *obj = lua_toMatFileReader(L,1);
+    MatTaggedDataElement *element = obj->getNextDataElement();
+    if (element == 0) {
+      lua_pushnil(L);
+      return 1;
+    }
+    lua_pushMatTaggedDataElement(L, element);
     return 1;
   }
-  lua_pushMatTaggedDataElement(L, element);
-  return 1;
-}
+
+} // namespace Matlab
 
 //BIND_END
 
 //BIND_HEADER_H
 #include "matlab.h"
+
+using namespace Matlab;
+
 typedef MatFileReader::DataElementInterface MatDataElementInterface;
 typedef MatFileReader::TaggedDataElement    MatTaggedDataElement;
 typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
@@ -156,7 +163,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   bool col_major;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
-  MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
+  Basics::MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
   if (m != 0) {
     LUABIND_RETURN(MatrixFloat, m);
     LUABIND_RETURN(string, name);
@@ -169,7 +176,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   bool col_major;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
-  MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE, col_major);
+  Basics::MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE, col_major);
   LUABIND_RETURN(MatrixComplexF, m);
   LUABIND_RETURN(string, name);
 }
@@ -178,7 +185,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 //BIND_METHOD MatTaggedDataElement get_matrix_double
 {
   char name[MAX_NAME_SIZE];
-  MatrixDouble *m = obj->getMatrixDouble(name, MAX_NAME_SIZE);
+  Basics::MatrixDouble *m = obj->getMatrixDouble(name, MAX_NAME_SIZE);
   if (m != 0) {
     LUABIND_RETURN(MatrixDouble, m);
     LUABIND_RETURN(string, name);
@@ -189,7 +196,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 //BIND_METHOD MatTaggedDataElement get_matrix_char
 {
   char name[MAX_NAME_SIZE];
-  MatrixChar *m = obj->getMatrixChar(name, MAX_NAME_SIZE);
+  Basics::MatrixChar *m = obj->getMatrixChar(name, MAX_NAME_SIZE);
   LUABIND_RETURN(MatrixChar, m);
   LUABIND_RETURN(string, name);
 }
@@ -198,7 +205,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 //BIND_METHOD MatTaggedDataElement get_matrix_int32
 {
   char name[MAX_NAME_SIZE];
-  MatrixInt32 *m = obj->getMatrixInt32(name, MAX_NAME_SIZE);
+  Basics::MatrixInt32 *m = obj->getMatrixInt32(name, MAX_NAME_SIZE);
   if (m != 0) {
     LUABIND_RETURN(MatrixInt32, m);
     LUABIND_RETURN(string, name);

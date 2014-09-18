@@ -25,4 +25,11 @@
 //      n*sum(xi^2) - (sum(xi))^2
 //
 // a = sum(yi)/n - b*(sum(xi)/n)
-void least_squares(double x[], double y[], int numPoints, double &a, double &b);
+#ifndef LEAST_SQUARES_H
+#define LEAST_SQUARES_H
+
+namespace AprilUtils {
+  void least_squares(double x[], double y[], int numPoints, double &a, double &b);
+}
+
+#endif // LEAST_SQUARES_H

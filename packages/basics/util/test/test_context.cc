@@ -2,8 +2,9 @@
 #include "context.h"
 #include "gtest.h"
 
-using april_utils::context;
+using AprilUtils::context;
 using namespace std;
+using namespace AprilUtils;
 
 namespace test_context {
   // test suite= ContextTest, test name= All

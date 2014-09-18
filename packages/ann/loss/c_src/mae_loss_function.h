@@ -29,11 +29,13 @@ namespace ANN {
   class MAELossFunction : public LossFunction {
     MAELossFunction(MAELossFunction *other) : LossFunction(other) { }
   protected:
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
   public:
     MAELossFunction(unsigned int size);
     virtual ~MAELossFunction();
-    virtual Token *computeGradient(Token *input, Token *target);
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
     virtual LossFunction *clone() {
       return new MAELossFunction(this);
     }

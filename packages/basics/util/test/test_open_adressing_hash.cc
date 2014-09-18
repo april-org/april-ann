@@ -8,7 +8,7 @@ using std::endl;
 #include "gtest.h"
 #include "open_addressing_hash.h"
 #include "unused_variable.h"
-using namespace april_utils;
+using namespace AprilUtils;
 
 #define NULL_STRING ""
 #define hola "hola"
@@ -97,11 +97,11 @@ namespace test_open_adressing_hash {
     b.data=3;
   
     // Test con tabla con HashFcn y EqualKey genericas" << endl;
-    april_utils::open_addr_hash<X, int> t( zero );
+    AprilUtils::open_addr_hash<X, int> t( zero );
     t[a] = 4;
     t[b] = 99;
 
-    for (april_utils::open_addr_hash<X,int>::iterator i=t.begin();
+    for (AprilUtils::open_addr_hash<X,int>::iterator i=t.begin();
          i!=t.end(); i++) {
       ASSERT_EQ( i->first.data, 3 );
       ASSERT_EQ( i->second, 99 );

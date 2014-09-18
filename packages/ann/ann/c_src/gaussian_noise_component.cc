@@ -22,7 +22,11 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "gaussian_noise_component.h"
-#include "wrapper.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -66,9 +70,10 @@ namespace ANN {
     MatrixFloat *noise_mat  = output_mat->cloneOnlyDims();
     april_assert(output_mat->getMajorOrder() == CblasColMajor);
     for (MatrixFloat::col_major_iterator it=noise_mat->begin();
-	 it!=noise_mat->end(); ++it)
+	 it!=noise_mat->end(); ++it) {
       *it = random->randNorm(mean, variance);
-    output_mat->axpy(1.0f, noise_mat);
+    }
+    matAxpy(output_mat, 1.0f, noise_mat);
     delete noise_mat;
     return output;
   }

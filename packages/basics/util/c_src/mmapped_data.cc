@@ -23,13 +23,16 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>           // mmap() is defined in this header
+#include <cstdlib>
 #include <cstring>
 #include "mmapped_data.h"
 #include "error_print.h"
 
 extern const char *__COMMIT_NUMBER__;
 
-namespace april_utils {
+namespace AprilUtils {
+
+  const int MAGIC_NUMBER = 0x3333;
   
   MMappedDataReader::MMappedDataReader(const char *path,
 				       bool write,

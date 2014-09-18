@@ -8,10 +8,16 @@
 #include "geometry.h"
 //BIND_END
 
+//BIND_HEADER_C
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
+//BIND_END
+
 //BIND_FUNCTION ocr.off_line_text_preprocessing.normalize_image
 {
-  using april_utils::vector;
-  using april_utils::Point2D;
+  using AprilUtils::vector;
+  using AprilUtils::Point2D;
 
   LUABIND_CHECK_ARGN(==,2);
   ImageFloat *img;
@@ -26,8 +32,8 @@
 //BIND_END
 //BIND_FUNCTION ocr.off_line_text_preprocessing.normalize_size
 {
-  using april_utils::vector;
-  using april_utils::Point2D;
+  using AprilUtils::vector;
+  using AprilUtils::Point2D;
 
   LUABIND_CHECK_ARGN(>=,7);
   LUABIND_CHECK_ARGN(<=,9);
@@ -91,8 +97,8 @@
 
 //BIND_FUNCTION ocr.off_line_text_preprocessing.normalize_from_matrix
 {
-  using april_utils::vector;
-  using april_utils::Point2D;
+  using AprilUtils::vector;
+  using AprilUtils::Point2D;
 
   LUABIND_CHECK_ARGN(>=,4);
   LUABIND_CHECK_ARGN(<=,6);

@@ -53,7 +53,7 @@ namespace Functions {
     /// Standard deviations vector, for variance normalization of data
     float *devs;
     /// Context object, it implements the contextualizer logic
-    april_utils::context_of_vectors<float> ctxt;
+    AprilUtils::context_of_vectors<float> ctxt;
   public:
     FloatContextualizerProducerFromDouble(DataProducer<double> *orig_producer,
 					  int input_size,

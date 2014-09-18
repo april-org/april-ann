@@ -12,7 +12,11 @@ debug: debug-no-omp
 test: test-debug-no-omp
 
 document:
+	rm -Rf doxygen_doc build_doc
 	lua profile_build_scripts/build_release_atlas.lua document
+
+performance:
+	april-ann TEST/PERFORMANCE/register_performance.lua TEST/PERFORMANCE/matrix/test.lua
 
 #############################################################################
 

@@ -24,7 +24,10 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "rewrap_component.h"
-#include "wrapper.h"
+
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
   

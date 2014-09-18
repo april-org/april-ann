@@ -24,378 +24,380 @@
 #include <cmath>
 #include <cstdio>
 
-// Esta clase representa valores numéricos en base logarítmica.
-// Por tanto, sólo tiene sentido para representar números >0
-// aunque el 0 se aproxima por un valor muy cercano.
+namespace AprilUtils {
 
-class log_double; // forward declaration
+  // Esta clase representa valores numéricos en base logarítmica.
+  // Por tanto, sólo tiene sentido para representar números >0
+  // aunque el 0 se aproxima por un valor muy cercano.
 
-class log_float {
-  float raw_value;
-  // nota: el minimo numero float no denormal es 1.2e-38
-  static const float floatnearzero;
-  static const float rawscorenearzero;
-  static const float rawscorezero;
-  static const float rawscoreone;
- public:
-  log_float(float x) : raw_value(x) {}
-  log_float() : raw_value(rawscorezero) {}
-  static log_float zero() { return log_float(rawscorezero); }
-  static log_float one()  { return log_float(rawscoreone); }
-  static log_float from_float(float value) { 
-    return log_float((value < floatnearzero) ? 
-		      rawscorezero : ::log(value));
-  }
-  static log_float from_double(double value) { 
-    return log_float((value < floatnearzero) ? 
-		      rawscorezero : ::log(value));
-  }
-  float to_float() const {
-    return expf(raw_value);
-  }
-  double to_double() const {
-    return exp((double)raw_value);
-  }
-  float log() const {
+  class log_double; // forward declaration
+
+  class log_float {
+    float raw_value;
+    // nota: el minimo numero float no denormal es 1.2e-38
+    static const float floatnearzero;
+    static const float rawscorenearzero;
+    static const float rawscorezero;
+    static const float rawscoreone;
+  public:
+    log_float(float x) : raw_value(x) {}
+    log_float() : raw_value(rawscorezero) {}
+    static log_float zero() { return log_float(rawscorezero); }
+    static log_float one()  { return log_float(rawscoreone); }
+    static log_float from_float(float value) { 
+      return log_float((value < floatnearzero) ? 
+                       rawscorezero : ::log(value));
+    }
+    static log_float from_double(double value) { 
+      return log_float((value < floatnearzero) ? 
+                       rawscorezero : ::log(value));
+    }
+    float to_float() const {
+      return expf(raw_value);
+    }
+    double to_double() const {
+      return exp((double)raw_value);
+    }
+    float log() const {
+      return raw_value;
+    }
+
+    log_float raise_to(float exponent) const {
+      return log_float(raw_value*exponent);
+    }
+
+    // arithmetic operations
+
+    friend log_float operator + (const log_float &x,
+                                 const log_float &y);
+
+    friend log_float operator * (const log_float &x,
+                                 const log_float &y);
+
+    friend log_float operator / (const log_float &x,
+                                 const log_float &y);
+
+    friend log_float operator - (const log_float &x,
+                                 const log_float &y);
+
+    log_float operator += (const log_float &y) {
+      return *this = *this + y;
+    }
+    log_float operator += (const log_double &y);
+
+    log_float operator *= (const log_float &y) {
+      return *this = *this * y;
+    }
+    log_float operator *= (const log_double &y);
+
+    log_float operator /= (const log_float &y) {
+      return *this = *this / y;
+    }
+    log_float operator /= (const log_double &y);
+
+    log_float operator -= (const log_float &y) {
+      return *this = *this - y;
+    }
+    log_float operator -= (const log_double &y);
+
+    // comparison operations
+    friend bool operator == (const log_float &x,
+                             const log_float &y);
+  
+    friend bool operator != (const log_float &x,
+                             const log_float &y);
+  
+    friend bool operator >= (const log_float &x,
+                             const log_float &y);
+  
+    friend bool operator <= (const log_float &x,
+                             const log_float &y);
+  
+    friend bool operator > (const log_float &x,
+                            const log_float &y);
+  
+    friend bool operator < (const log_float &x,
+                            const log_float &y);
+  
+    // conversion
+    operator float() const {
+      return raw_value;
+    }
+    operator double() const {
+      return (double)raw_value;
+    }
+    operator unsigned int() const {
+      return (unsigned int)(raw_value);
+    }
+
+    // assignment
+    log_float &operator = (float &value) {
+      raw_value = value;
+      return *this;
+    }
+    log_float &operator = (double &value) {
+      raw_value = value;
+      return *this;
+    }
+    log_float &operator = (const log_double &value);
+
+  };
+
+  class log_double {
+    friend class log_float;
+    double raw_value;
+    // nota: el minimo numero float no denormal es 1.2e-38
+    static const double doublenearzero;
+    static const double rawscorenearzero;
+    static const double rawscorezero;
+    static const double rawscoreone;
+  public:
+    log_double(double x) : raw_value(x) {}
+    log_double(const log_float& f): raw_value(double(f)) {}
+    log_double() : raw_value(rawscorezero) {}
+    static log_double from_double(double value) { 
+      return log_double((value < doublenearzero) ? 
+                        rawscorezero : ::log(value));
+    }
+    static log_double zero() { return log_double(rawscorezero); }
+    static log_double one()  { return log_double(rawscoreone); }
+    double to_double() const {
+      return exp(raw_value);
+    }
+    float to_float() const {
+      return expf((float)raw_value);
+    }
+    double log() const {
+      return raw_value;
+    }
+
+    log_double raise_to(double exponent) {
+      return log_double(raw_value*exponent);
+    }
+
+    // arithmetic operations
+
+    friend log_double operator + (const log_double &x,
+                                  const log_double &y);
+  
+    friend log_double operator * (const log_double &x,
+                                  const log_double &y);
+  
+    friend log_double operator / (const log_double &x,
+                                  const log_double &y);
+  
+    friend log_double operator - (const log_double &x,
+                                  const log_double &y);
+  
+    log_double operator += (const log_double &y) {
+      return *this = *this + y;
+    }
+    log_double operator *= (const log_double &y) {
+      return *this = *this * y;
+    }
+    log_double operator /= (const log_double &y) {
+      return *this = *this / y;
+    }
+    log_double operator -= (const log_double &y) {
+      return *this = *this - y;
+    }
+  
+    // comparison operations
+    friend bool operator == (const log_double &x,
+                             const log_double &y);
+  
+    friend bool operator != (const log_double &x,
+                             const log_double &y);
+  
+    friend bool operator >= (const log_double &x,
+                             const log_double &y);
+  
+    friend bool operator <= (const log_double &x,
+                             const log_double &y);
+  
+    friend bool operator > (const log_double &x,
+                            const log_double &y);
+  
+    friend bool operator < (const log_double &x,
+                            const log_double &y);
+  
+    /*
+    // conversion
+    operator double() const {
     return raw_value;
-  }
+    }
 
-  log_float raise_to(float exponent) const {
-    return log_float(raw_value*exponent);
-  }
-
-  // arithmetic operations
-
-  friend log_float operator + (const log_float &x,
-			       const log_float &y);
-
-  friend log_float operator * (const log_float &x,
-			       const log_float &y);
-
-  friend log_float operator / (const log_float &x,
-			       const log_float &y);
-
-  friend log_float operator - (const log_float &x,
-			       const log_float &y);
-
-  log_float operator += (const log_float &y) {
-    return *this = *this + y;
-  }
-  log_float operator += (const log_double &y);
-
-  log_float operator *= (const log_float &y) {
-    return *this = *this * y;
-  }
-  log_float operator *= (const log_double &y);
-
-  log_float operator /= (const log_float &y) {
-    return *this = *this / y;
-  }
-  log_float operator /= (const log_double &y);
-
-  log_float operator -= (const log_float &y) {
-    return *this = *this - y;
-  }
-  log_float operator -= (const log_double &y);
-
-  // comparison operations
-  friend bool operator == (const log_float &x,
-			   const log_float &y);
-  
-  friend bool operator != (const log_float &x,
-			   const log_float &y);
-  
-  friend bool operator >= (const log_float &x,
-			   const log_float &y);
-  
-  friend bool operator <= (const log_float &x,
-			   const log_float &y);
-  
-  friend bool operator > (const log_float &x,
-			  const log_float &y);
-  
-  friend bool operator < (const log_float &x,
-			  const log_float &y);
-  
-  // conversion
-  operator float() const {
-    return raw_value;
-  }
-  operator double() const {
-    return (double)raw_value;
-  }
-  operator unsigned int() const {
-    return (unsigned int)(raw_value);
-  }
-
-  // assignment
-  log_float &operator = (float &value) {
-    raw_value = value;
-    return *this;
-  }
-  log_float &operator = (double &value) {
-    raw_value = value;
-    return *this;
-  }
-  log_float &operator = (const log_double &value);
-
-};
-
-class log_double {
-  friend class log_float;
-  double raw_value;
-  // nota: el minimo numero float no denormal es 1.2e-38
-  static const double doublenearzero;
-  static const double rawscorenearzero;
-  static const double rawscorezero;
-  static const double rawscoreone;
- public:
-  log_double(double x) : raw_value(x) {}
-  log_double(const log_float& f): raw_value(double(f)) {}
-  log_double() : raw_value(rawscorezero) {}
-  static log_double from_double(double value) { 
-    return log_double((value < doublenearzero) ? 
-		      rawscorezero : ::log(value));
-  }
-  static log_double zero() { return log_double(rawscorezero); }
-  static log_double one()  { return log_double(rawscoreone); }
-  double to_double() const {
-    return exp(raw_value);
-  }
-  float to_float() const {
-    return expf((float)raw_value);
-  }
-  double log() const {
-    return raw_value;
-  }
-
-  log_double raise_to(double exponent) {
-    return log_double(raw_value*exponent);
-  }
-
-  // arithmetic operations
-
-  friend log_double operator + (const log_double &x,
-				const log_double &y);
-  
-  friend log_double operator * (const log_double &x,
-				const log_double &y);
-  
-  friend log_double operator / (const log_double &x,
-				const log_double &y);
-  
-  friend log_double operator - (const log_double &x,
-				const log_double &y);
-  
-  log_double operator += (const log_double &y) {
-    return *this = *this + y;
-  }
-  log_double operator *= (const log_double &y) {
-    return *this = *this * y;
-  }
-  log_double operator /= (const log_double &y) {
-    return *this = *this / y;
-  }
-  log_double operator -= (const log_double &y) {
-    return *this = *this - y;
-  }
-  
-  // comparison operations
-  friend bool operator == (const log_double &x,
-			   const log_double &y);
-  
-  friend bool operator != (const log_double &x,
-			   const log_double &y);
-  
-  friend bool operator >= (const log_double &x,
-			   const log_double &y);
-  
-  friend bool operator <= (const log_double &x,
-			   const log_double &y);
-  
-  friend bool operator > (const log_double &x,
-			  const log_double &y);
-  
-  friend bool operator < (const log_double &x,
-			  const log_double &y);
-  
-  /*
-  // conversion
-  operator double() const {
-  return raw_value;
-  }
-
-  operator float() const {
+    operator float() const {
     return (float)raw_value;
-  }
+    }
 
-  operator log_float() const {
+    operator log_float() const {
     return log_float((float)raw_value);
-  }
-*/
-  // assignment
-  log_double &operator = (double &value) {
-    raw_value = value;
+    }
+    */
+    // assignment
+    log_double &operator = (double &value) {
+      raw_value = value;
+      return *this;
+    }
+    log_double &operator = (float &value) {
+      raw_value = (double)value;
+      return *this;
+    }
+    log_double &operator = (log_float &value) {
+      raw_value = (float)value;
+      return *this;
+    }
+
+  };
+
+  //---------
+
+  // arithmetic operations
+  log_float operator + (const log_float &x, const log_float &y);
+  log_float operator - (const log_float &x, const log_float &y);
+  log_float operator * (const log_float &x, const log_float &y);
+  log_float operator / (const log_float &x, const log_float &y);
+
+  // comparison operations
+  bool operator == (const log_float &x, const log_float &y);
+  bool operator != (const log_float &x, const log_float &y);
+  bool operator >= (const log_float &x, const log_float &y);
+  bool operator <= (const log_float &x, const log_float &y);
+  bool operator >  (const log_float &x, const log_float &y);
+  bool operator <  (const log_float &x, const log_float &y);
+
+  // arithmetic operations
+  log_double operator + (const log_double &x, const log_double &y);
+  log_double operator - (const log_double &x, const log_double &y);
+  log_double operator * (const log_double &x, const log_double &y);
+  log_double operator / (const log_double &x, const log_double &y);
+
+  // comparison operations
+  bool operator == (const log_double &x, const log_double &y);
+  bool operator != (const log_double &x, const log_double &y);
+  bool operator >= (const log_double &x, const log_double &y);
+  bool operator <= (const log_double &x, const log_double &y);
+  bool operator >  (const log_double &x, const log_double &y);
+  bool operator <  (const log_double &x, const log_double &y);
+
+  //---------------------------------------------------------------
+
+  inline log_float& log_float::operator = (const log_double &value) {
+    raw_value = (float)value.raw_value;
     return *this;
   }
-  log_double &operator = (float &value) {
-    raw_value = (double)value;
-    return *this;
+
+  // arithmetic operations
+
+  inline float logadd1(float x) {
+    // invocamos esta función siempre para x<=0
+    return log1p(exp(x));
   }
-  log_double &operator = (log_float &value) {
-    raw_value = (float)value;
-    return *this;
+  inline float log1sub(float x) {
+    return log1p(-exp(x));
   }
 
-};
-
-//---------
-
-// arithmetic operations
-log_float operator + (const log_float &x, const log_float &y);
-log_float operator - (const log_float &x, const log_float &y);
-log_float operator * (const log_float &x, const log_float &y);
-log_float operator / (const log_float &x, const log_float &y);
-
-// comparison operations
-bool operator == (const log_float &x, const log_float &y);
-bool operator != (const log_float &x, const log_float &y);
-bool operator >= (const log_float &x, const log_float &y);
-bool operator <= (const log_float &x, const log_float &y);
-bool operator >  (const log_float &x, const log_float &y);
-bool operator <  (const log_float &x, const log_float &y);
-
-// arithmetic operations
-log_double operator + (const log_double &x, const log_double &y);
-log_double operator - (const log_double &x, const log_double &y);
-log_double operator * (const log_double &x, const log_double &y);
-log_double operator / (const log_double &x, const log_double &y);
-
-// comparison operations
-bool operator == (const log_double &x, const log_double &y);
-bool operator != (const log_double &x, const log_double &y);
-bool operator >= (const log_double &x, const log_double &y);
-bool operator <= (const log_double &x, const log_double &y);
-bool operator >  (const log_double &x, const log_double &y);
-bool operator <  (const log_double &x, const log_double &y);
-
-//---------------------------------------------------------------
-
-inline log_float& log_float::operator = (const log_double &value) {
-  raw_value = (float)value.raw_value;
-  return *this;
-}
-
-// arithmetic operations
-
-inline float logadd1(float x) {
-  // invocamos esta función siempre para x<=0
-  return log1p(exp(x));
-}
-inline float log1sub(float x) {
-  return log1p(-exp(x));
-}
-
-inline log_float operator + (const log_float &x, const log_float &y) {
-  return (x.raw_value > y.raw_value) ?
-    log_float(x.raw_value + logadd1(y.raw_value - x.raw_value)) :
-    log_float(y.raw_value + logadd1(x.raw_value - y.raw_value));
-}
-inline log_float operator - (const log_float &x, const log_float &y) {
-  if (x.raw_value < y.raw_value) {
-    // TODO: report error
+  inline log_float operator + (const log_float &x, const log_float &y) {
+    return (x.raw_value > y.raw_value) ?
+                   log_float(x.raw_value + logadd1(y.raw_value - x.raw_value)) :
+      log_float(y.raw_value + logadd1(x.raw_value - y.raw_value));
   }
-  return log_float(x.raw_value + 
-		   log1sub(y.raw_value - x.raw_value));
-}
-inline log_float operator * (const log_float &x, const log_float &y) {
-  return log_float(x.raw_value + y.raw_value);
-}
-inline log_float operator / (const log_float &x, const log_float &y) {
-  return log_float(x.raw_value - y.raw_value);
-}
-
-// comparison operations
-inline bool operator == (const log_float &x, const log_float &y) {
-  return (x.raw_value == y.raw_value);
-}
-inline bool operator != (const log_float &x, const log_float &y) {
-  return (x.raw_value != y.raw_value);
-}
-inline bool operator <= (const log_float &x, const log_float &y) {
-  return (x.raw_value <= y.raw_value);
-}
-inline bool operator >= (const log_float &x, const log_float &y) {
-  return (x.raw_value >= y.raw_value);
-}
-inline bool operator <  (const log_float &x, const log_float &y) {
-  return (x.raw_value <  y.raw_value);
-}
-inline bool operator >  (const log_float &x, const log_float &y) {
-  return (x.raw_value >  y.raw_value);
-}
-
-inline double logadd1(double x) {
-  return log1p(exp(x));
-}
-inline double log1sub(double x) {
-  return log1p(-exp(x));
-}
-
-inline log_double operator + (const log_double &x, const log_double &y) {
-  return (x.raw_value > y.raw_value) ?
-    log_double(x.raw_value + logadd1(y.raw_value - x.raw_value)) :
-    log_double(y.raw_value + logadd1(x.raw_value - y.raw_value));
-}
-inline log_double operator - (const log_double &x, const log_double &y) {
-  if (x.raw_value < y.raw_value) {
-    // TODO: report error
+  inline log_float operator - (const log_float &x, const log_float &y) {
+    if (x.raw_value < y.raw_value) {
+      // TODO: report error
+    }
+    return log_float(x.raw_value + 
+                     log1sub(y.raw_value - x.raw_value));
   }
-  return log_double(x.raw_value + 
-		   log1sub(y.raw_value - x.raw_value));
-}
-inline log_double operator * (const log_double &x, const log_double &y) {
-  return log_double(x.raw_value + y.raw_value);
-}
-inline log_double operator / (const log_double &x, const log_double &y) {
-  return log_double(x.raw_value - y.raw_value);
-}
+  inline log_float operator * (const log_float &x, const log_float &y) {
+    return log_float(x.raw_value + y.raw_value);
+  }
+  inline log_float operator / (const log_float &x, const log_float &y) {
+    return log_float(x.raw_value - y.raw_value);
+  }
 
-// comparison operations
-inline bool operator == (const log_double &x, const log_double &y) {
-  return (x.raw_value == y.raw_value);
-}
-inline bool operator != (const log_double &x, const log_double &y) {
-  return (x.raw_value != y.raw_value);
-}
-inline bool operator <= (const log_double &x, const log_double &y) {
-  return (x.raw_value <= y.raw_value);
-}
-inline bool operator >= (const log_double &x, const log_double &y) {
-  return (x.raw_value >= y.raw_value);
-}
-inline bool operator <  (const log_double &x, const log_double &y) {
-  return (x.raw_value <  y.raw_value);
-}
-inline bool operator >  (const log_double &x, const log_double &y) {
-  return (x.raw_value >  y.raw_value);
-}
+  // comparison operations
+  inline bool operator == (const log_float &x, const log_float &y) {
+    return (x.raw_value == y.raw_value);
+  }
+  inline bool operator != (const log_float &x, const log_float &y) {
+    return (x.raw_value != y.raw_value);
+  }
+  inline bool operator <= (const log_float &x, const log_float &y) {
+    return (x.raw_value <= y.raw_value);
+  }
+  inline bool operator >= (const log_float &x, const log_float &y) {
+    return (x.raw_value >= y.raw_value);
+  }
+  inline bool operator <  (const log_float &x, const log_float &y) {
+    return (x.raw_value <  y.raw_value);
+  }
+  inline bool operator >  (const log_float &x, const log_float &y) {
+    return (x.raw_value >  y.raw_value);
+  }
 
-// special cases:
-inline log_float log_float::operator += (const log_double &y) {
-  return *this = log_double(*this) + y;
-}
-inline log_float log_float::operator *= (const log_double &y) {
-  return *this = log_double(*this) * y;
-}
-inline log_float log_float::operator /= (const log_double &y) {
-  return *this = log_double(*this) / y;
-}
-inline log_float log_float::operator -= (const log_double &y) {
-  return *this = log_double(*this) - y;
-}
+  inline double logadd1(double x) {
+    return log1p(exp(x));
+  }
+  inline double log1sub(double x) {
+    return log1p(-exp(x));
+  }
 
+  inline log_double operator + (const log_double &x, const log_double &y) {
+    return (x.raw_value > y.raw_value) ?
+      log_double(x.raw_value + logadd1(y.raw_value - x.raw_value)) :
+      log_double(y.raw_value + logadd1(x.raw_value - y.raw_value));
+  }
+  inline log_double operator - (const log_double &x, const log_double &y) {
+    if (x.raw_value < y.raw_value) {
+      // TODO: report error
+    }
+    return log_double(x.raw_value + 
+                      log1sub(y.raw_value - x.raw_value));
+  }
+  inline log_double operator * (const log_double &x, const log_double &y) {
+    return log_double(x.raw_value + y.raw_value);
+  }
+  inline log_double operator / (const log_double &x, const log_double &y) {
+    return log_double(x.raw_value - y.raw_value);
+  }
 
+  // comparison operations
+  inline bool operator == (const log_double &x, const log_double &y) {
+    return (x.raw_value == y.raw_value);
+  }
+  inline bool operator != (const log_double &x, const log_double &y) {
+    return (x.raw_value != y.raw_value);
+  }
+  inline bool operator <= (const log_double &x, const log_double &y) {
+    return (x.raw_value <= y.raw_value);
+  }
+  inline bool operator >= (const log_double &x, const log_double &y) {
+    return (x.raw_value >= y.raw_value);
+  }
+  inline bool operator <  (const log_double &x, const log_double &y) {
+    return (x.raw_value <  y.raw_value);
+  }
+  inline bool operator >  (const log_double &x, const log_double &y) {
+    return (x.raw_value >  y.raw_value);
+  }
+
+  // special cases:
+  inline log_float log_float::operator += (const log_double &y) {
+    return *this = log_double(*this) + y;
+  }
+  inline log_float log_float::operator *= (const log_double &y) {
+    return *this = log_double(*this) * y;
+  }
+  inline log_float log_float::operator /= (const log_double &y) {
+    return *this = log_double(*this) / y;
+  }
+  inline log_float log_float::operator -= (const log_double &y) {
+    return *this = log_double(*this) - y;
+  }
+
+} // namespace AprilUtils
 
 #endif // LOGBASE_STANDARD_H
 

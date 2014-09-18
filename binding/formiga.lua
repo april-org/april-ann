@@ -910,7 +910,8 @@ function formiga.__object__ (t)
 	  if formiga.compiler.global_flags.debug == "yes" then
 	    command[1] = command[1] .. " -g"
           end
-	  local flags = {}
+	  local flags = { }
+	  -- table.insert(flags, "-arch=sm_20")
 	  for _,flag in ipairs(formiga.compiler.extra_flags) do
 	    if not string.match(flag, "arch") and not string.match(flag, "sse") then
   	      if formiga.compiler.global_flags.debug ~= "yes" or not string.match(flag, "%-O[0-9]") then
@@ -1194,7 +1195,8 @@ function formiga.__lua_unit_test(t)
       command = { program_binary, thefile, "> /dev/null" }
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
-      printverbose(2," [lua_unit_test] "..command)
+      printverbose(0," [lua_unit_test] "..thefile)
+      printverbose(2," [lua_unit_test command] "..command)
       local ok,what,error_resul = formiga.os.execute(command, true)
       if not ok then
 	print("Lua unit test '".. thefile .. "' failed: " .. t.target.package.name)
@@ -1304,7 +1306,8 @@ function formiga.__c_unit_test__(t)
 	end
       end
       command = table.concat(command," ")
-      printverbose(2," [c_unit_test] "..command)
+      printverbose(0," [c_unit_test] "..thefile)
+      printverbose(2," [c_unit_test command] "..command)
       os.execute("mkdir -p ".. dest_dir)
       formiga.os.execute(command)
       local ok = formiga.os.execute(exec_name, true)
@@ -2286,8 +2289,6 @@ function manage_specific_global_flags()
     formiga.compiler.Ccompiler = os.getenv("CC") or "gcc"
   elseif t.platform == "unix64+cuda" then
     t.ignore_cuda = false
-    table.insert(formiga.compiler.extra_flags, "-DUSE_CUDA")
-    table.insert(formiga.compiler.extra_libs,"-lcuda -lcudart -L/usr/local/cuda/lib64")
   end
   if t.use_readline=="yes" then
     table.insert(formiga.compiler.extra_libs,

@@ -1,5 +1,7 @@
 -- GENERIC JOIN FUNCTION
-matrix.__make_generic_join__ = function(constructor)
+matrix.__generic__ = matrix.__generic__ or {}
+
+matrix.__generic__.__make_generic_join__ = function(constructor)
   return function(dim, ...)
     local arg  = table.pack(...)
     local size = arg[1]:dim()

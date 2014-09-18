@@ -1,7 +1,7 @@
 #include "gtest.h"
 #include "hash_table.h"
 #include "aux_hash_table.h"
-using namespace april_utils;
+using namespace AprilUtils;
 
 #include <iostream>
 #include <algorithm>
@@ -29,7 +29,7 @@ using std::endl;
 
 namespace test_hash_table {
 
-  typedef april_utils::hash<const char *,const char *> hash_test;
+  typedef AprilUtils::hash<const char *,const char *> hash_test;
 
   void process_pair(hash_test::value_type p) {
     ASSERT_STRNE( p.second, adios );
@@ -100,11 +100,11 @@ namespace test_hash_table {
     b.data=3;
   
     // Test con tabla con HashFcn y EqualKey genericas" << endl;
-    april_utils::hash<X, int> t;
+    AprilUtils::hash<X, int> t;
     t[a] = 4;
     t[b] = 99;
 
-    for (april_utils::hash<X,int>::iterator i=t.begin(); i!=t.end(); i++) {
+    for (AprilUtils::hash<X,int>::iterator i=t.begin(); i!=t.end(); i++) {
       ASSERT_EQ( i->first.data, 3 );
       ASSERT_EQ( i->second, 99 );
     }

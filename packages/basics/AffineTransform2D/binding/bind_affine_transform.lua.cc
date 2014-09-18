@@ -22,6 +22,8 @@
 #include "affine_transform.h"
 #include "utilMatrixFloat.h"
 #include "bind_matrix.h"
+
+using namespace Basics;
 //BIND_END
 
 

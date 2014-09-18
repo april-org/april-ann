@@ -2,6 +2,8 @@
 using namespace std;
 #include "../c_src/qsort.h"
 
+using namespace AprilUtils;
+
 int main() { // Lectura de datos e invocación de la función de sort
   int i,leido,indDat;
   const int maxVec = 1024;
@@ -12,7 +14,7 @@ int main() { // Lectura de datos e invocación de la función de sort
   while (indDat < maxVec && cin >> leido) {
     v[indDat] = leido; indDat++;
   }
-  april_utils::PartQ<int> queue;
+  AprilUtils::PartQ<int> queue;
   queue.configure(v,indDat);
   while (queue.extractMin(leido)) {
     cout << leido << endl;

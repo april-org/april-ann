@@ -23,24 +23,27 @@
 
 #include "matrixFloat.h"
 
-class AffineTransform2D: public MatrixFloat
-{
+namespace Basics {
+  class AffineTransform2D: public MatrixFloat
+  {
   public:
-  AffineTransform2D();
-  AffineTransform2D(MatrixFloat *mat);
-  ~AffineTransform2D() {}
+    AffineTransform2D();
+    AffineTransform2D(MatrixFloat *mat);
+    ~AffineTransform2D() {}
   
-  AffineTransform2D *accumulate(AffineTransform2D *other);
-  AffineTransform2D *rotate(float angle);
-  AffineTransform2D *rotate(float angle, float center_x, float center_y);
-  AffineTransform2D *translate(float x, float y);
-  AffineTransform2D *scale(float x, float y);
-  AffineTransform2D *shear(float angle_x, float angle_y);
+    AffineTransform2D *accumulate(AffineTransform2D *other);
+    AffineTransform2D *rotate(float angle);
+    AffineTransform2D *rotate(float angle, float center_x, float center_y);
+    AffineTransform2D *translate(float x, float y);
+    AffineTransform2D *scale(float x, float y);
+    AffineTransform2D *shear(float angle_x, float angle_y);
 
-  void transform(float x, float y, float *dstx, float *dsty) const;
+    void transform(float x, float y, float *dstx, float *dsty) const;
   private:
-  static const int dimensions[2];
-};
+    static const int dimensions[2];
+  };
+
+} // namespace Basics
 
 #endif
 

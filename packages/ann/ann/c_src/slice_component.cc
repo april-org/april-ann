@@ -24,7 +24,11 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "slice_component.h"
-#include "wrapper.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -68,12 +72,12 @@ namespace ANN {
     MatrixFloat *input_mat = getInputMatrix();
     MatrixFloat *error_output_mat;
     error_output_mat = input_mat->cloneOnlyDims();
-    error_output_mat->zeros();
+    matZeros(error_output_mat);
     MatrixFloat *error_output_mat_slice = new MatrixFloat(error_output_mat,
 							  slice_offset,
 							  slice_size,
 							  false);
-    error_output_mat_slice->copy(error_input_mat);
+    matCopy(error_output_mat_slice, error_input_mat);
     delete error_output_mat_slice;
     return error_output_mat;
   }

@@ -25,35 +25,46 @@
 #include "complex_number.h"
 #include "matrix.h"
 
-template<>
-void Matrix<ComplexF>::fill(ComplexF value);
+namespace Basics {
 
-template<>
-ComplexF Matrix<ComplexF>::sum() const;
+  namespace MatrixIO {
 
-template<>
-void Matrix<ComplexF>::scalarAdd(ComplexF s);
+    /* Especialization of MatrixComplexF ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<AprilMath::ComplexF>::operator()(AprilUtils::constString &line,
+                                                          AprilMath::ComplexF &destination);
+  
+    template<>
+    bool BinaryExtractor<AprilMath::ComplexF>::operator()(AprilUtils::constString &line,
+                                                           AprilMath::ComplexF &destination);
+  
+    template<>
+    int AsciiSizer<AprilMath::ComplexF>::operator()(const Matrix<AprilMath::ComplexF> *mat);
 
-template<>
-bool Matrix<ComplexF>::equals(const Matrix<ComplexF> *other,
-			      float epsilon) const;
+    template<>
+    int BinarySizer<AprilMath::ComplexF>::operator()(const Matrix<AprilMath::ComplexF> *mat);
 
-template<>
-void Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other);
+    template<>
+    void AsciiCoder<AprilMath::ComplexF>::operator()(const AprilMath::ComplexF &value,
+                                                      AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<AprilMath::ComplexF>::operator()(const AprilMath::ComplexF &value,
+                                                       AprilIO::StreamInterface *stream);
+  
+  } // namespace MatrixIO
 
-/**** BLAS OPERATIONS ****/
+  template<>
+  AprilMath::ComplexF Matrix<AprilMath::ComplexF>::
+  getTemplateOption(const AprilUtils::GenericOptions *options,
+                    const char *name,
+                    AprilMath::ComplexF default_value);
 
-template<>
-void Matrix<ComplexF>::copy(const Matrix<ComplexF> *other);
+  //////////////////////////////////////////////////////////////////////////////
 
-template<>
-void Matrix<ComplexF>::scal(ComplexF value);
+  typedef Matrix<AprilMath::ComplexF> MatrixComplexF;
 
-template<>
-float Matrix<ComplexF>::norm2() const;
-
-//////////////////////////////////////////////////////////////////////////////
-
-typedef Matrix<ComplexF> MatrixComplexF;
+} // namespace Basics
 
 #endif // MATRIXCOMPLEXF_H

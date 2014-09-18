@@ -3,10 +3,17 @@
 
 #include <cstring>
 #include "vector.h"
-#include "aux_hash_table.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
+  size_t strnspn(const char *buffer, size_t buffer_length,
+                 const char *accept, size_t accept_length);
+  size_t strncspn(const char *buffer, size_t buffer_length,
+                  const char *reject, size_t reject_length);
+  const char *strnchr(const char *buffer, int c, size_t length);
+  const char *strncchr(const char *buffer, int c, size_t length);
+  int strcmpi(const char *a, const char *b);
+  
   class string {
     static const char *NULL_STRING;
   public:
@@ -44,10 +51,11 @@ namespace april_utils {
     char *end();
     const char *begin() const;
     const char *end() const;
+    size_type len() const;
     size_type size() const;
     size_type max_size() const;
     void resize(size_type size);
-    size_type capacity();
+    size_type capacity() const;
     void reserve(size_type size);
     void clear();
     bool empty() const;
@@ -58,17 +66,7 @@ namespace april_utils {
     char &front();
     char  back() const;
     char &back();
-  };
-  
-  // For hash tables
-  template <> struct default_hash_function<string> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const string &s1) const {
-      unsigned int resul = 1;
-      for (const char *r = s1.begin(); r != s1.end(); r++)
-        resul = (resul+(unsigned int)(*r))*cte_hash;
-      return resul;
-    }
+    char *release();
   };
   
 }

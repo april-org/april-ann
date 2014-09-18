@@ -25,9 +25,9 @@
 #include <cstdio>
 #include <cstring>
 
-using april_utils::clamp;
-using april_utils::derivative1;
-using april_utils::derivative2;
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
 
 namespace OCR {
   namespace OffLineTextPreprocessing {
@@ -294,7 +294,7 @@ namespace OCR {
 	case 'T':
 	  result->putCol(i, v_orig_nstrokes, img->width());
 	  break;
-	case 't': //TODO: Normalizar?
+	case 't': // TODO: Normalizar?
 	  copyNormVector(v_nstrokes, result, i, 0, 0.3);
 	  break;
 	case 'H':

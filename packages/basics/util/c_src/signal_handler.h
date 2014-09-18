@@ -30,7 +30,7 @@ extern "C" {
 
 #define MAX_SIGNALS 32
 
-namespace april_utils {
+namespace AprilUtils {
   /// This class is not thread-safe, so don't use it with threads.
   class SignalHandler {
     static lua_State *globalL;

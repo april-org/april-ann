@@ -40,131 +40,133 @@
 
 */
 
-using april_utils::slist;
+namespace AprilUtils {
 
-template <typename T>
-struct ReservoirPool {
+  template <typename T>
+  struct ReservoirPool {
 #ifdef _OPENMP
-  omp_lock_t lock;
- #endif
-  slist<T*> pool;
-  ReservoirPool() {
-#ifdef _OPENMP
-  omp_init_lock(&lock);
+    omp_lock_t lock;
 #endif
-  }
-  ~ReservoirPool() {
+    slist<T*> pool;
+    ReservoirPool() {
 #ifdef _OPENMP
-  omp_destroy_lock(&lock);
+      omp_init_lock(&lock);
 #endif
-    while (!pool.empty()) { T *aux = pool.front(); pool.pop_front(); delete aux; }
-  }
-  T* get() {
-    T *resul;
-#ifdef _OPENMP
-    omp_set_lock(&lock);
-#endif
-    if (pool.empty()) {
-      resul = new T;
-    } else {
-      resul = pool.front(); pool.pop_front();
     }
+    ~ReservoirPool() {
 #ifdef _OPENMP
-  omp_unset_lock(&lock);
+      omp_destroy_lock(&lock);
 #endif
-  return resul;
-  }
-  void release(T *released) {
-#ifdef _OPENMP
-    omp_set_lock(&lock);
-#endif
-    pool.push_back(released);
-#ifdef _OPENMP
-  omp_unset_lock(&lock);
-#endif
-  }
-};
-
-template <typename T>
-class ReservoirContainer {
-  ReservoirPool<T> *pool;
-  T *val;
-public:
-  T* value() const { return val; }
-  ReservoirContainer(ReservoirPool<T> *pool) {
-    this->pool = pool;
-    val        = pool->get();
-  }
-  ReservoirContainer(const ReservoirContainer &other) {
-    pool = other.pool;
-    val  = pool->get();
-  }
-  ~ReservoirContainer() {
-    pool->release(val);
-  }
-};
-
-template <typename T>
-struct VectorReservoirPool {
-#ifdef _OPENMP
-  omp_lock_t lock;
- #endif
-  slist<T*> pool;
-  int vector_size;
-  VectorReservoirPool(int vector_size) : vector_size(vector_size) {
-#ifdef _OPENMP
-  omp_init_lock(&lock);
-#endif
-  }
-  ~VectorReservoirPool() {
-#ifdef _OPENMP
-  omp_destroy_lock(&lock);
-#endif
-    while (!pool.empty()) { T *aux = pool.front(); pool.pop_front(); delete [] aux; }
-  }
-  T* get() {
-    T *resul;
-#ifdef _OPENMP
-    omp_set_lock(&lock);
-#endif
-    if (pool.empty()) {
-      resul = new T[vector_size];
-    } else {
-      resul = pool.front(); pool.pop_front();
+      while (!pool.empty()) { T *aux = pool.front(); pool.pop_front(); delete aux; }
     }
+    T* get() {
+      T *resul;
 #ifdef _OPENMP
-  omp_unset_lock(&lock);
+      omp_set_lock(&lock);
 #endif
-  return resul;
-  }
-  void release(T *released) {
+      if (pool.empty()) {
+        resul = new T;
+      } else {
+        resul = pool.front(); pool.pop_front();
+      }
 #ifdef _OPENMP
-    omp_set_lock(&lock);
+      omp_unset_lock(&lock);
 #endif
-    pool.push_back(released);
+      return resul;
+    }
+    void release(T *released) {
 #ifdef _OPENMP
-  omp_unset_lock(&lock);
+      omp_set_lock(&lock);
 #endif
-  }
-};
+      pool.push_back(released);
+#ifdef _OPENMP
+      omp_unset_lock(&lock);
+#endif
+    }
+  };
 
-template <typename T>
-class VectorReservoirContainer {
-  VectorReservoirPool<T> *pool;
-  T *val;
-public:
-  T* value() const { return val; }
-  VectorReservoirContainer(VectorReservoirPool<T> *pool) { 
-    this->pool = pool;
-    val        = pool->get();
-  }
-  VectorReservoirContainer(const VectorReservoirContainer &other) {
-    pool = other.pool;
-    val  = pool->get();
-  }
-  ~VectorReservoirContainer() {
-    pool->release(val);
-  }
-};
+  template <typename T>
+  class ReservoirContainer {
+    ReservoirPool<T> *pool;
+    T *val;
+  public:
+    T* value() const { return val; }
+    ReservoirContainer(ReservoirPool<T> *pool) {
+      this->pool = pool;
+      val        = pool->get();
+    }
+    ReservoirContainer(const ReservoirContainer &other) {
+      pool = other.pool;
+      val  = pool->get();
+    }
+    ~ReservoirContainer() {
+      pool->release(val);
+    }
+  };
+
+  template <typename T>
+  struct VectorReservoirPool {
+#ifdef _OPENMP
+    omp_lock_t lock;
+#endif
+    slist<T*> pool;
+    int vector_size;
+    VectorReservoirPool(int vector_size) : vector_size(vector_size) {
+#ifdef _OPENMP
+      omp_init_lock(&lock);
+#endif
+    }
+    ~VectorReservoirPool() {
+#ifdef _OPENMP
+      omp_destroy_lock(&lock);
+#endif
+      while (!pool.empty()) { T *aux = pool.front(); pool.pop_front(); delete [] aux; }
+    }
+    T* get() {
+      T *resul;
+#ifdef _OPENMP
+      omp_set_lock(&lock);
+#endif
+      if (pool.empty()) {
+        resul = new T[vector_size];
+      } else {
+        resul = pool.front(); pool.pop_front();
+      }
+#ifdef _OPENMP
+      omp_unset_lock(&lock);
+#endif
+      return resul;
+    }
+    void release(T *released) {
+#ifdef _OPENMP
+      omp_set_lock(&lock);
+#endif
+      pool.push_back(released);
+#ifdef _OPENMP
+      omp_unset_lock(&lock);
+#endif
+    }
+  };
+
+  template <typename T>
+  class VectorReservoirContainer {
+    VectorReservoirPool<T> *pool;
+    T *val;
+  public:
+    T* value() const { return val; }
+    VectorReservoirContainer(VectorReservoirPool<T> *pool) { 
+      this->pool = pool;
+      val        = pool->get();
+    }
+    VectorReservoirContainer(const VectorReservoirContainer &other) {
+      pool = other.pool;
+      val  = pool->get();
+    }
+    ~VectorReservoirContainer() {
+      pool->release(val);
+    }
+  };
+
+} // namespace AprilUtils
 
 #endif // RESERVOIR_H

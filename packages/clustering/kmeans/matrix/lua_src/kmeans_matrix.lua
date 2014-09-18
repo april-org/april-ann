@@ -13,8 +13,8 @@ local BSIZE=1024
 --@param C centroids, KxD matrix
 --@param T vector de tags de talla N, si este punter val 0 no es fa res
 function funcs.find_clusters(X,C,T,verbose)
-  assert(X and isa(X,matrix), "A matrix needed as 1st argument")
-  assert(C and isa(C,matrix), "A matrix needed as 2nd argument")
+  assert(X and class.is_a(X,matrix), "A matrix needed as 1st argument")
+  assert(C and class.is_a(C,matrix), "A matrix needed as 2nd argument")
   local Xdim = X:dim()
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")
@@ -28,7 +28,7 @@ function funcs.find_clusters(X,C,T,verbose)
 	       "Different columns found between data and centroids: %d ~= %d\n",
 	       D, Cdim[2])
   local T = T or matrixInt32(N,1)
-  april_assert(#T:dim() == 2 and T:dim(1) == N and T:dim(2) == 1 and isa(T,matrixInt32),
+  april_assert(#T:dim() == 2 and T:dim(1) == N and T:dim(2) == 1 and class.is_a(T,matrixInt32),
 	       "The tags matrix must be bi-dimensional matrixInt32 and with size %dx1\n",
 	       N)
   --
@@ -97,8 +97,8 @@ function funcs.basic(X,C,params)
       max_iter = { mandatory=false, type_match="number", default=100 },
       verbose = { mandatory=false },
     }, params)
-  assert(X and isa(X,matrix), "A matrix needed as 1st argument")
-  assert(C and isa(C,matrix), "A matrix needed as 2nd argument")
+  assert(X and class.is_a(X,matrix), "A matrix needed as 1st argument")
+  assert(C and class.is_a(C,matrix), "A matrix needed as 2nd argument")
   local Xdim = X:dim()
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")
@@ -230,8 +230,8 @@ function funcs.refine(X,C,params)
       max_iter = { mandatory=false, type_match="number", default=100 },
       verbose = { mandatory=false },
     }, params)
-  assert(X and isa(X,matrix), "A matrix needed as 1st argument")
-  assert(C and isa(C,matrix), "A matrix needed as 2nd argument")
+  assert(X and class.is_a(X,matrix), "A matrix needed as 1st argument")
+  assert(C and class.is_a(C,matrix), "A matrix needed as 2nd argument")
   local Xdim = X:dim()
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")

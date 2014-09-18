@@ -23,6 +23,11 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
+
 namespace ANN {
 
   ///////////////////////////////////////////
@@ -196,10 +201,11 @@ namespace ANN {
       IncRef(output_flattened);
       
       // COMPUTE MATRIX MULTIPLICATION
-      output_flattened->gemm(CblasNoTrans, CblasTrans,
-			     1.0f, input_flattened,
-			     weights_mat,
-			     0.0f);
+      matGemm(output_flattened,
+              CblasNoTrans, CblasTrans,
+              1.0f, input_flattened,
+              weights_mat,
+              0.0f);
       // COPY TO DESTINATION IF NEEDED
       if (output_w->getRawDataAccess()!=output_flattened->getRawDataAccess()) {
 	// if output_w and output_flattened are pointing to different data
@@ -208,7 +214,7 @@ namespace ANN {
 	conv_output_rewrapped = output_flattened->rewrap(output_w->getDimPtr(),
 							 output_w->getNumDim());
 	IncRef(conv_output_rewrapped);
-	output_w->copy(conv_output_rewrapped);
+	matCopy(output_w, conv_output_rewrapped);
 	DecRef(conv_output_rewrapped);
       }
       
@@ -240,7 +246,7 @@ namespace ANN {
     IncRef(error_output_mat);
     // initialization of error_output_mat is needed because of kernel
     // overlapping
-    error_output_mat->zeros();
+    matZeros(error_output_mat);
 
     // Prepare sliding windows to compute the convolution gradient
     MatrixFloat::sliding_window *error_output_sw =
@@ -275,10 +281,11 @@ namespace ANN {
       IncRef(error_output_flattened);
       
       // COMPUTE MATRIX MULTIPLICATION
-      error_output_flattened->gemm(CblasNoTrans, CblasNoTrans,
-				   1.0f, error_input_flattened,
-				   weights_mat,
-				   1.0f); // accumulative operation
+      matGemm(error_output_flattened,
+              CblasNoTrans, CblasNoTrans,
+              1.0f, error_input_flattened,
+              weights_mat,
+              1.0f); // accumulative operation
       // COPY TO DESTINATION IF NEEDED
       if (error_output_w->getRawDataAccess()!=error_output_flattened->getRawDataAccess()) {
 	// if error_output_w and error_output_flattened are pointing to
@@ -289,7 +296,7 @@ namespace ANN {
 					 error_output_w->getNumDim());
 	IncRef(conv_error_output_rewrapped);
 	// COPY THE RESULT
-	error_output_w->copy(conv_error_output_rewrapped);
+	matCopy(error_output_w, conv_error_output_rewrapped);
 	DecRef(conv_error_output_rewrapped);
       }
       
@@ -309,13 +316,15 @@ namespace ANN {
     return error_output_mat;
   }
   
-  void ConvolutionANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+  void ConvolutionANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
     weights_matrix->addToSharedCount(number_input_windows);
-    if (grads_mat == 0) {
+    if (grads_mat.empty()) {
       grads_mat = weights_matrix->cloneOnlyDims();
-      grads_mat->zeros();
-      IncRef(grads_mat);
+      matZeros(grads_mat.get());
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
     MatrixFloat *input_mat       = getInputMatrix();
     MatrixFloat *error_input_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
@@ -346,11 +355,12 @@ namespace ANN {
       IncRef(error_input_flattened);
       
       // WEIGHTS UPDATE
-      grads_mat->gemm(CblasTrans, CblasNoTrans,
-		      1.0f,
-		      error_input_flattened, // A
-		      input_flattened,       // B
-		      1.0f);
+      matGemm(grads_mat.get(),
+              CblasTrans, CblasNoTrans,
+              1.0f,
+              error_input_flattened, // A
+              input_flattened,       // B
+              1.0f);
       
       // Next iteration
       input_sw.next();
@@ -389,11 +399,11 @@ namespace ANN {
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
-    if (w != 0) {
+    if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w);
+      AssignRef(weights_matrix, w.get());
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
@@ -411,7 +421,6 @@ namespace ANN {
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
-      IncRef(w);
     }
   }
 
@@ -419,15 +428,14 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
-    if (w != 0 && w != weights_matrix)
+    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w == 0) {
+    else if (w.empty()) {
       w = weights_matrix;
-      IncRef(w);
     }
   }  
 

@@ -19,8 +19,28 @@
  *
  */
 
+#include <cmath>
 #include "sparse_matrixFloat.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template class SparseMatrix<float>;
+namespace Basics {
+  
+  namespace MatrixIO {
+    
+    template<>
+    int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat) {
+      return mat->nonZeroSize()*12;
+    }
+    
+    template<>
+    int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat) {
+      return AprilUtils::binarizer::buffer_size_32(mat->nonZeroSize());
+    }
+    
+  }
+  
+  //////////////////////////////////////////////////////////////////////////
+  
+  template class SparseMatrix<float>;
+}

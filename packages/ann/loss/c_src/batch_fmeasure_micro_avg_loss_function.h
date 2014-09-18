@@ -50,12 +50,14 @@ namespace ANN {
     }
     
   protected:
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
   public:
     BatchFMeasureMicroAvgLossFunction(unsigned int size, float beta=1.0f,
 				      bool complement_output=false);
     virtual ~BatchFMeasureMicroAvgLossFunction();
-    virtual Token *computeGradient(Token *input, Token *target);
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
     virtual LossFunction *clone() {
       return new BatchFMeasureMicroAvgLossFunction(this);
     }

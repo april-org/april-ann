@@ -52,7 +52,7 @@ using namespace KNN;
 //BIND_METHOD KDTreeFloat push
 {
   LUABIND_CHECK_ARGN(==,1);
-  MatrixFloat *m;
+  Basics::MatrixFloat *m;
   LUABIND_GET_PARAMETER(1,MatrixFloat,m);
   obj->pushMatrix(m);
   LUABIND_RETURN(KDTreeFloat, obj);
@@ -75,7 +75,7 @@ using namespace KNN;
 
 //BIND_METHOD KDTreeFloat searchNN
 {
-  MatrixFloat *point;
+  Basics::MatrixFloat *point;
   double distance;
   LUABIND_GET_PARAMETER(1,MatrixFloat,point);
   int idx = obj->searchNN(point,distance,0);
@@ -86,12 +86,12 @@ using namespace KNN;
 
 //BIND_METHOD KDTreeFloat searchKNN
 {
-  MatrixFloat *point;
+  Basics::MatrixFloat *point;
   int K;
   LUABIND_GET_PARAMETER(1,int,K);
   LUABIND_GET_PARAMETER(2,MatrixFloat,point);
-  april_utils::vector<int> indices;
-  april_utils::vector<double> distances;
+  AprilUtils::vector<int> indices;
+  AprilUtils::vector<double> distances;
   obj->searchKNN(K,point,indices,distances,0);
   april_assert(indices.size() == distances.size());
   lua_newtable(L);
@@ -119,10 +119,10 @@ using namespace KNN;
 {
   int index, row;
   LUABIND_GET_PARAMETER(1, int, index);
-  MatrixFloat *m = obj->getMatrixAndRow(index-1,row);
+  Basics::MatrixFloat *m = obj->getMatrixAndRow(index-1,row);
   int coords[2] = { row, 0 };
   int sizes[2]  = { 1, obj->getDimSize() };
-  LUABIND_RETURN(MatrixFloat, new MatrixFloat(m, coords, sizes, false));
+  LUABIND_RETURN(MatrixFloat, new Basics::MatrixFloat(m, coords, sizes, false));
   LUABIND_RETURN(MatrixFloat, m);
 }
 //BIND_END

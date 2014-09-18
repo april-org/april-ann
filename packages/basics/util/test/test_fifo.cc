@@ -3,10 +3,12 @@ using namespace std;
 #include "fifo.h"
 #include "gtest.h"
 
+using namespace AprilUtils;
+
 namespace test_fifo {
 
   TEST(FifoTest, All) {
-    april_utils::fifo<int> f;
+    AprilUtils::fifo<int> f;
     EXPECT_TRUE( f.empty() );
     for (int i=10; i>=0; --i) {
       f.put(i);

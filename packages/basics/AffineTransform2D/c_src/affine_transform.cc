@@ -19,97 +19,103 @@
  *
  */
 #include "affine_transform.h"
-#include <cmath>
+#include "cmath_overloads.h"
+#include "smart_ptr.h"
 
-const int AffineTransform2D::dimensions[2] = {3,3};
+using AprilUtils::SharedPtr;
 
-/// Identity transform
-AffineTransform2D::AffineTransform2D():
-  MatrixFloat(2, dimensions)
-{
-  zeros();
-  MatrixFloat::random_access_iterator data(this);
-  data(0,0) = 1.0f;
-  data(1,1) = 1.0f;
-  data(2,2) = 1.0f;
-}
+namespace Basics {
 
-AffineTransform2D::AffineTransform2D(MatrixFloat *mat): MatrixFloat(mat)
-{
-  april_assert("AffineTransform2D: Matrix must be 3x3" && 
-	       numDim == 2 && 
-	       matrixSize[0] == 3 &&
-	       matrixSize[1] == 3);
+  const int AffineTransform2D::dimensions[2] = {3,3};
 
-  april_assert("AffineTransform2D: Last row must be [0 0 1]" &&
-	       (*this)(2,0) == 0 && (*this)(2,1) == 0 && (*this)(2,2) == 1);
+  /// Identity transform
+  AffineTransform2D::AffineTransform2D():
+    MatrixFloat(2, dimensions)
+  {
+    AprilMath::MatrixExt::Operations::matZeros(this);
+    MatrixFloat::random_access_iterator data(this);
+    data(0,0) = 1.0f;
+    data(1,1) = 1.0f;
+    data(2,2) = 1.0f;
+  }
 
-}
+  AffineTransform2D::AffineTransform2D(MatrixFloat *mat): MatrixFloat(mat)
+  {
+    april_assert("AffineTransform2D: Matrix must be 3x3" && 
+                 numDim == 2 && 
+                 matrixSize[0] == 3 &&
+                 matrixSize[1] == 3);
 
-AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
-{
-  MatrixFloat *this_clone = this->clone();
-  IncRef(this_clone);
-  this->gemm(CblasNoTrans, CblasNoTrans,
-	     1.0f, other, this_clone,
-	     0.0f);
-  DecRef(this_clone);
-  return this;
-}
+    april_assert("AffineTransform2D: Last row must be [0 0 1]" &&
+                 (*this)(2,0) == 0 && (*this)(2,1) == 0 && (*this)(2,2) == 1);
 
-AffineTransform2D *AffineTransform2D::rotate(float angle)
-{
-  AffineTransform2D trans; // 3x3 identity
-  trans(0,0) = cosf(angle);
-  trans(0,1) = -sinf(angle);
-  trans(1,0) = sinf(angle);
-  trans(1,1) = cosf(angle);
+  }
+
+  AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
+  {
+    SharedPtr<MatrixFloat> this_clone( this->clone() );
+    AprilMath::MatrixExt::Operations::matGemm(this,
+                                              CblasNoTrans, CblasNoTrans,
+                                              1.0f, other, this_clone.get(),
+                                              0.0f);
+    return this;
+  }
+
+  AffineTransform2D *AffineTransform2D::rotate(float angle)
+  {
+    AffineTransform2D trans; // 3x3 identity
+    trans(0,0) = AprilMath::m_cos(angle);
+    trans(0,1) = -AprilMath::m_sin(angle);
+    trans(1,0) = AprilMath::m_sin(angle);
+    trans(1,1) = AprilMath::m_cos(angle);
   
-  accumulate(&trans);
-  return this;
-}
+    accumulate(&trans);
+    return this;
+  }
 
-AffineTransform2D *AffineTransform2D::rotate(float angle, float center_x, float center_y)
-{
-  translate(-center_x, -center_y);
-  rotate(angle);
-  translate(center_x, center_y);
-  return this;
-}
+  AffineTransform2D *AffineTransform2D::rotate(float angle, float center_x, float center_y)
+  {
+    translate(-center_x, -center_y);
+    rotate(angle);
+    translate(center_x, center_y);
+    return this;
+  }
 
-AffineTransform2D *AffineTransform2D::translate(float x, float y)
-{
-  AffineTransform2D trans; // 3x3 identity
-  trans(0,2) = x;
-  trans(1,2) = y;
-  accumulate(&trans);
-  return this;
-}
+  AffineTransform2D *AffineTransform2D::translate(float x, float y)
+  {
+    AffineTransform2D trans; // 3x3 identity
+    trans(0,2) = x;
+    trans(1,2) = y;
+    accumulate(&trans);
+    return this;
+  }
 
-AffineTransform2D *AffineTransform2D::scale(float x, float y)
-{
-  AffineTransform2D trans; // 3x3 identity
-  trans(0,0) = x;
-  trans(1,1) = y;
-  accumulate(&trans);
-  return this;
-}
+  AffineTransform2D *AffineTransform2D::scale(float x, float y)
+  {
+    AffineTransform2D trans; // 3x3 identity
+    trans(0,0) = x;
+    trans(1,1) = y;
+    accumulate(&trans);
+    return this;
+  }
 
-AffineTransform2D *AffineTransform2D::shear(float x, float y)
-{
-  AffineTransform2D trans; // 3x3 identity
-  trans(0,1) = tanf(x);
-  trans(1,0) = tanf(y);
-  accumulate(&trans);
-  return this;
-}
+  AffineTransform2D *AffineTransform2D::shear(float x, float y)
+  {
+    AffineTransform2D trans; // 3x3 identity
+    trans(0,1) = tanf(x);
+    trans(1,0) = tanf(y);
+    accumulate(&trans);
+    return this;
+  }
 
-void AffineTransform2D::transform(float x, float y, float *dst_x, float *dst_y) const
-{
-  MatrixFloat::const_random_access_iterator data(this);
-  float res_x = data(0,0)*x+data(0,1)*y+data(0,2);
-  float res_y = data(1,0)*x+data(1,1)*y+data(1,2);
+  void AffineTransform2D::transform(float x, float y, float *dst_x, float *dst_y) const
+  {
+    MatrixFloat::const_random_access_iterator data(this);
+    float res_x = data(0,0)*x+data(0,1)*y+data(0,2);
+    float res_y = data(1,0)*x+data(1,1)*y+data(1,2);
   
-  *dst_x=res_x;
-  *dst_y=res_y;
-}
+    *dst_x=res_x;
+    *dst_y=res_y;
+  }
+
+} // namespace Basics

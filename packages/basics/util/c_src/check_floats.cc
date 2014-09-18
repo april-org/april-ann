@@ -21,7 +21,7 @@
 #include "error_print.h"
 #include "check_floats.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   bool check_floats(float *v, unsigned int sz) {
     for (unsigned int i=0; i<sz; ++i) {

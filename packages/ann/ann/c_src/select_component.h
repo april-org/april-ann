@@ -21,12 +21,8 @@
 #ifndef SELECTCOMPONENT_H
 #define SELECTCOMPONENT_H
 
-#include "vector.h"
 #include "matrix_component.h"
-#include "token_vector.h"
 #include "token_matrix.h"
-
-using april_utils::vector;
 
 namespace ANN {
 
@@ -40,10 +36,10 @@ namespace ANN {
     int dimension, index;
     
   protected:
-    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
-                                          bool during_training);
+    virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat* input,
+                                                  bool during_training);
     
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
     
     virtual void privateReset(unsigned int it=0);
     
@@ -55,8 +51,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

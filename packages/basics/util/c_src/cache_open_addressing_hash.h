@@ -45,10 +45,10 @@
 
 #include "aux_hash_table.h"
 #include <cmath> // ceilf
-#include <stddef.h> // ptrdiff_t, size_t...
+#include <cstddef> // ptrdiff_t, size_t...
 #include "pair.h"
 
-namespace april_utils {
+namespace AprilUtils {
   
   // HashFcn es del tipo:
   // struct hash_fcn {
@@ -404,6 +404,6 @@ namespace april_utils {
     return false;
   }
 
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // CACHE_OPEN_ADDR_HASH_H

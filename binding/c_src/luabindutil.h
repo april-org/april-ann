@@ -26,8 +26,8 @@ char  *lua_toNEW_STRING(lua_State *L, int idx);
 char   lua_tochar(lua_State *L, int idx);
 void  *lua_tolightuserdata(lua_State *L, int idx);
 #ifdef CONSTSTRING_H
-inline constString lua_toconstString(lua_State *L, int idx) {
-  return constString(lua_tostring(L, idx),lua_strlen(L, idx));
+inline AprilUtils::constString lua_toconstString(lua_State *L, int idx) {
+  return AprilUtils::constString(lua_tostring(L, idx),lua_strlen(L, idx));
 }
 #endif
 

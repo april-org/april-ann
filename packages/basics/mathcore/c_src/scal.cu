@@ -19,93 +19,117 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
-#include "cuda_utils.h"
+#include "mathcore.h"
 #include "unused_variable.h"
 
+namespace AprilMath {
+
 #ifdef USE_CUDA
-/***************************************
- ************** CUDA SECTION ***********
- ***************************************/
+  namespace CUDA {
+    /***************************************
+     ************** CUDA SECTION ***********
+     ***************************************/
 
-cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
-				 int N,
-				 float *alpha,
-				 float *x_mem,
-				 unsigned int x_inc) {
-  return cublasSscal(handle, N, alpha, x_mem, x_inc);
-}
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     float *alpha,
+                                     float *x_mem,
+                                     unsigned int x_inc) {
+      return cublasSscal(handle, N, alpha, x_mem, x_inc);
+    }
 
-cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
-				 int N,
-				 ComplexF *alpha,
-				 ComplexF *x_mem,
-				 unsigned int x_inc) {
-  return cublasCscal(handle, N, reinterpret_cast<cuComplex*>(alpha),
-                     reinterpret_cast<cuComplex*>(x_mem), x_inc);
-}
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     double *alpha,
+                                     double *x_mem,
+                                     unsigned int x_inc) {
+      return cublasDscal(handle, N, alpha, x_mem, x_inc);
+    }
+
+    cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
+                                     int N,
+                                     ComplexF *alpha,
+                                     ComplexF *x_mem,
+                                     unsigned int x_inc) {
+      return cublasCscal(handle, N, reinterpret_cast<cuComplex*>(alpha),
+                         reinterpret_cast<cuComplex*>(x_mem), x_inc);
+    }
+  }
 #endif
 
-/***************************************
- ************* CBLAS SECTION ***********
- ***************************************/
+  /***************************************
+   ************* CBLAS SECTION ***********
+   ***************************************/
 
-void wrapperCblasScal(int N, float alpha, float *x_mem, unsigned int x_inc) {
-  cblas_sscal(N, alpha, x_mem, x_inc);
-}
+  void wrapperCblasScal(int N, float alpha, float *x_mem, unsigned int x_inc) {
+    cblas_sscal(N, alpha, x_mem, x_inc);
+  }
 
-void wrapperCblasScal(int N, ComplexF alpha,
-		      ComplexF *x_mem, unsigned int x_inc) {
-  cblas_cscal(N, &alpha, x_mem, x_inc);
-}
+  void wrapperCblasScal(int N, double alpha, double *x_mem, unsigned int x_inc) {
+    cblas_dscal(N, alpha, x_mem, x_inc);
+  }
 
-/***************************************
- *********** TEMPLATE SECTION **********
- ***************************************/
+  void wrapperCblasScal(int N, ComplexF alpha,
+                        ComplexF *x_mem, unsigned int x_inc) {
+    cblas_cscal(N, &alpha, x_mem, x_inc);
+  }
 
-template <typename T>
-void doScal(unsigned int size,
-	    GPUMirroredMemoryBlock<T> *x,
-	    unsigned int inc,
-	    unsigned int shift,
-	    T alpha,
-	    bool use_gpu) {
-  T *x_mem;
+  /***************************************
+   *********** TEMPLATE SECTION **********
+   ***************************************/
+
+  template <typename T>
+  void doScal(unsigned int size,
+              GPUMirroredMemoryBlock<T> *x,
+              unsigned int inc,
+              unsigned int shift,
+              T alpha,
+              bool use_gpu) {
+    T *x_mem;
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    cublasStatus_t status;
-    cublasHandle_t handle = GPUHelper::getHandler();
-    x_mem = x->getGPUForReadAndWrite() + shift;
+    if (use_gpu) {
+      cublasStatus_t status;
+      cublasHandle_t handle = CUDA::GPUHelper::getHandler();
+      x_mem = x->getGPUForReadAndWrite() + shift;
 
-    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-    checkCublasError(status);
+      status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
+      checkCublasError(status);
 
-    status = wrapperCublasScal(handle, size, &alpha, x_mem, inc);
+      status = CUDA::wrapperCublasScal(handle, size, &alpha, x_mem, inc);
 
-    checkCublasError(status);
-  }
-  else {
+      checkCublasError(status);
+    }
+    else {
 #endif
-    x_mem = x->getPPALForReadAndWrite() + shift;
-    wrapperCblasScal(size, alpha, x_mem, inc);
+      x_mem = x->getPPALForReadAndWrite() + shift;
+      wrapperCblasScal(size, alpha, x_mem, inc);
 #ifdef USE_CUDA
-  }
+    }
 #endif
-}
+  }
 
-template void doScal<float>(unsigned int size,
-			    GPUMirroredMemoryBlock<float> *x,
-			    unsigned int inc,
-			    unsigned int shift,
-			    float alpha,
-			    bool use_gpu);
+  template void doScal<float>(unsigned int size,
+                              GPUMirroredMemoryBlock<float> *x,
+                              unsigned int inc,
+                              unsigned int shift,
+                              float alpha,
+                              bool use_gpu);
 
-template void doScal<ComplexF>(unsigned int size,
-			       GPUMirroredMemoryBlock<ComplexF> *x,
-			       unsigned int inc,
-			       unsigned int shift,
-			       ComplexF alpha,
-			       bool use_gpu);
+  template void doScal<double>(unsigned int size,
+                               GPUMirroredMemoryBlock<double> *x,
+                               unsigned int inc,
+                               unsigned int shift,
+                               double alpha,
+                               bool use_gpu);
+  
+  template void doScal<ComplexF>(unsigned int size,
+                                 GPUMirroredMemoryBlock<ComplexF> *x,
+                                 unsigned int inc,
+                                 unsigned int shift,
+                                 ComplexF alpha,
+                                 bool use_gpu);
+
+} // namespace AprilMath

@@ -31,15 +31,18 @@
 #include <cstdio>
 #include "linear_least_squares.h"
 
-using namespace april_utils;
+using AprilMath::MatrixExt::Operations::matFill;
+using namespace AprilUtils;
+using namespace Basics;
+using namespace Imaging;
 /*::vector;
-using april_utils::pair;
-using april_utils::min;
-using april_utils::max;
-using april_utils::max_finder;
-using april_utils::min_finder;
-using april_utils::swap;
-using april_utils::Point2D;
+using AprilUtils::pair;
+using AprilUtils::min;
+using AprilUtils::max;
+using AprilUtils::max_finder;
+using AprilUtils::min_finder;
+using AprilUtils::swap;
+using AprilUtils::Point2D;
 */
 
 namespace InterestPoints {
@@ -194,7 +197,7 @@ namespace InterestPoints {
 
     return false xor reverse;
   }
-  april_utils::vector < Point2D >
+  AprilUtils::vector < Point2D >
     *extract_points_from_image_old (
             ImageFloat * pimg, float threshold_white,
             float threshold_black, int local_context,
@@ -557,7 +560,7 @@ namespace InterestPoints {
       MatrixFloat::random_access_iterator mat_it(mat);
 
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
 
       ImageFloat  *result = new ImageFloat(result_mat);
 
@@ -630,7 +633,7 @@ namespace InterestPoints {
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
       ImageFloat  *result = new ImageFloat(result_mat);
       float ipat;
       float *ftag = new float[num_classes];
@@ -642,8 +645,8 @@ namespace InterestPoints {
           ds_out->getPattern(i, ftag);
           int row = index/width;
           int column = index%width; 
-          int tag = april_utils::argmax(ftag, num_classes)+1;
-          float prob = exp(april_utils::max(ftag, num_classes));
+          int tag = AprilUtils::argmax(ftag, num_classes)+1;
+          float prob = exp(AprilUtils::max(ftag, num_classes));
 
           float value = 1.0;
 
@@ -686,7 +689,7 @@ namespace InterestPoints {
       int dims[3] = {height, width, num_classes};
       MatrixFloat *result_mat = new MatrixFloat(3, dims);
       MatrixFloat::random_access_iterator it(result_mat);
-      result_mat->fill(0.0);
+      matFill(result_mat, 0.0f);
       float ipat; 
       float *ftag = new float[num_classes];
       // Get the softmax index
@@ -700,7 +703,7 @@ namespace InterestPoints {
           for (int c = 0; c < num_classes; ++c) {
               it(row, column,c) = exp(ftag[c]);
           }
-          // int tag = april_utils::argmax(ftag, num_classes)+1;
+          // int tag = AprilUtils::argmax(ftag, num_classes)+1;
       }
       delete []ftag;
       return result_mat;
@@ -744,7 +747,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      result_mat->fill(1.0);
+      matFill(result_mat, 1.0f);
       ImageFloat  *result = new ImageFloat(result_mat);
 
       int asc_idx = 0;
@@ -987,13 +990,13 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
   void PointComponent::sort_by_confidence() {
       if (size() > 0)
-          april_utils::Sort(&(*this)[0], (int)size());
+          AprilUtils::Sort(&(*this)[0], (int)size());
 
   }
 
   void PointComponent::sort_by_x() {
 
-      april_utils::Sort(&(*this)[0], size(), interestPointXComparator);
+      AprilUtils::Sort(&(*this)[0], size(), interestPointXComparator);
   }
   void SetPoints::sort_by_confidence() {
 
@@ -1160,7 +1163,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
       return l; 
   }
   line * PointComponent::get_regression_line() {
-      //TODO: Move to geometry
+      // TODO: Move to geometry
       size_t n = this->size();
       if (n <= 1)
           return NULL;

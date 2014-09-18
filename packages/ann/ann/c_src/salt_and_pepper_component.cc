@@ -22,7 +22,11 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "salt_and_pepper_component.h"
-#include "wrapper.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   

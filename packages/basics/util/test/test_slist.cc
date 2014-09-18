@@ -6,9 +6,9 @@
 
 #define N 5u
 
-using april_utils::slist;
 using std::cout;
 using std::endl;
+using namespace AprilUtils;
 
 namespace slist_test {
 
@@ -19,7 +19,7 @@ namespace slist_test {
 
   TEST(SlistTest, All) {
     int data[N] = { 1, 2, 3, 4, 99 };
-    april_utils::slist<int> l;
+    AprilUtils::slist<int> l;
 
     EXPECT_EQ( l.size(), 0u );
     EXPECT_TRUE( l.empty() );
@@ -30,8 +30,8 @@ namespace slist_test {
     EXPECT_EQ( l.size(), N );
     EXPECT_FALSE( l.empty() );
     
-    april_utils::slist<int>::iterator it = l.begin();
-    april_utils::slist<int>::const_iterator c_it = l.begin();
+    AprilUtils::slist<int>::iterator it = l.begin();
+    AprilUtils::slist<int>::const_iterator c_it = l.begin();
     
     EXPECT_TRUE( l.begin() != l.end() );
     EXPECT_TRUE( it != l.end() );
@@ -39,12 +39,12 @@ namespace slist_test {
     
     // iterator traversal
     int j = 0;
-    for (april_utils::slist<int>::iterator i = l.begin(); i != l.end(); i++,j++)
+    for (AprilUtils::slist<int>::iterator i = l.begin(); i != l.end(); i++,j++)
       EXPECT_EQ( *i, data[j] );
     
     // const_iterator traversal
     j=0;
-    for (april_utils::slist<int>::const_iterator i = l.begin();
+    for (AprilUtils::slist<int>::const_iterator i = l.begin();
          i != l.end(); i++,j++)
       EXPECT_EQ( *i, data[j] );
 

@@ -21,7 +21,10 @@
 #include "error_print.h"
 #include "matrix_input_switch_component.h"  
 #include "unused_variable.h"
-#include "wrapper.h"
+
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
 
 namespace ANN {
 
@@ -38,6 +41,12 @@ namespace ANN {
   }
 
   MatrixInputSwitchANNComponent::~MatrixInputSwitchANNComponent() {
+    if (input) DecRef(input);
+    if (output) DecRef(output);
+    if (error_input) DecRef(error_input);
+    if (error_output) DecRef(error_output);
+    if (sparse_input) DecRef(sparse_input);
+    if (sparse_error_output) DecRef(sparse_error_output);
   }
 
   Token *MatrixInputSwitchANNComponent::doDenseForward(Token *_input,
@@ -241,10 +250,8 @@ namespace ANN {
     else privateSparseReset(it);
   }
 
-  void MatrixInputSwitchANNComponent::computeGradients(MatrixFloat*& grads_mat) {
-    if (!is_sparse_input)
-      privateDenseComputeGradients(grads_mat);
-    else
-      privateSparseComputeGradients(grads_mat);
+  void MatrixInputSwitchANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
+    if (!is_sparse_input) privateDenseComputeGradients(grads_mat);
+    else privateSparseComputeGradients(grads_mat);
   }
 }

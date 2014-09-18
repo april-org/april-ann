@@ -1,35 +1,45 @@
-local packages_list = { 
-  -- BASIC PACKAGES
-  --  "plotter",
+return { 
+  -- UNIT TESTING
   "util",
   "gtest",
   "utest",
+  
+  -- BASIC PACAKGES
+  --  "plotter",
   "stats",
   "dataset",
   "matrix",
   "random",
   "cmdOpt",
-  "profiler",
+  "complex",
   "mathcore",
-  "gzio",
   "matlab",
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+
+  -- INPUT/OUTPUT
+  "aprilio",
+  "gzio",
+  "zip",
+  "tar",
   
   -- MACHINE LEARNING
   "clustering.kmeans.matrix",
   "knn.kdtree",
   "trainable",
   -- "function_interface",
+  
   -- NEURAL NETWORKS
   "ann",
   "ann.loss",
   "trainable",
   "ann.autoencoders",
+  "bayesian",
 
   -- LANGUAGE MODELS
-  --  "fnnlm",
+  "language_models",
+  "ngram.lira",
   
   -- IMAGE HANDLERS
   "Image",
@@ -46,9 +56,14 @@ local packages_list = {
   --   --"libtiff",
   "ocr.off_line.param",
   "ocr.off_line_text_preprocessing",
+  
   -- HMMs
   "hmm_trainer",
-  "rates",
-}
+  
+  -- Metrics
+  "metrics.rates",
+  "metrics.roc",
 
-return packages_list
+  -- MISC
+  "profiler",
+}

@@ -1,0 +1,2598 @@
+
+\data\
+ngram 1=431
+ngram 2=1478
+ngram 3=676
+
+\1-grams:
+-3.076897	'avila	-0.1348061
+-3.260593	'ultima
+-2.660491	'ultimo	-0.1904759
+-1.045073	</s>
+-99	<s>	-1.053009
+-2.821397	?	-0.3657223
+-1.486358	a	-0.4627001
+-2.865546	abril	-0.1657389
+-3.260593	acerca
+-3.076897	acercara	-0.1348061
+-3.076897	acuerdo	-0.1348061
+-3.260593	adem'as
+-3.076897	adi'os	-0.1348061
+-2.821397	agosto	-0.1990298
+-3.076897	ahora	-0.1348061
+-2.865546	al	-0.1348061
+-2.660491	alaris	-0.2350942
+-3.076897	albacete	-0.1348061
+-2.660491	alg'un	-0.1348061
+-3.076897	algo	-0.1348061
+-2.821397	alguno	-0.3657223
+-2.865546	alicante	-0.1348061
+-3.076897	all'i	-0.1348061
+-3.076897	almer'ia	-0.1348061
+-3.076897	amable	-0.1348061
+-3.260593	anterior
+-2.048119	antes	-0.8395834
+-3.260593	aprovechar
+-3.260593	aproximadamente
+-3.260593	arco
+-3.076897	as'i	-0.1348061
+-2.865546	ave	-0.2543457
+-3.076897	ay	-0.1348061
+-3.076897	barato	-0.1348061
+-3.076897	baratos	-0.1348061
+-2.543349	barcelona	-0.2019278
+-3.076897	bien	-0.1348061
+-3.260593	bilbao
+-2.821397	billete	-0.1348061
+-3.076897	billetes	-0.1348061
+-2.865546	buenas	-0.1711155
+-3.076897	bueno	-0.1348061
+-2.865546	buenos	-0.2543457
+-2.865546	burgos	-0.2543457
+-3.076897	c'aceres	-0.1348061
+-2.865546	c'adiz	-0.1348061
+-3.076897	c'omodo	-0.1348061
+-2.865546	c'ordoba	-0.1348061
+-3.076897	callado	-0.1348061
+-2.865546	cama	-0.2543457
+-3.076897	castell'o	-0.1348061
+-2.821397	castell'on	-0.1348061
+-2.865546	catorce	-0.1348061
+-2.660491	cinco	-0.3924254
+-3.260593	cincuenta
+-3.076897	ciudad_real	-0.1348061
+-3.260593	claro
+-2.865546	clase	-0.1348061
+-2.543349	coche	-0.3924254
+-3.260593	cogi'endolo
+-3.076897	como	-0.1348061
+-3.260593	comprar
+-3.076897	compro	-0.1348061
+-2.543349	con	-0.2813541
+-3.260593	concierto
+-2.865546	confirmar	-0.1348061
+-2.660491	conocer	-0.3020411
+-2.865546	conseguir	-0.1348061
+-2.865546	consultar	-0.1348061
+-3.076897	corresponde	-0.1348061
+-3.260593	cosita
+-3.076897	costar'ia	-0.1348061
+-3.260593	crem'a
+-2.451185	cu'al	-0.521814
+-3.260593	cu'ando
+-2.865546	cu'anto	-0.1348061
+-2.865546	cu'antos	-0.1348061
+-2.821397	cualquier	-0.2107398
+-3.260593	cuando
+-3.076897	cuarenta	-0.1348061
+-3.260593	cuarto
+-3.076897	cuatro	-0.1348061
+-2.821397	cuenca	-0.1787564
+-3.076897	cuesta	-0.1348061
+-2.375196	d'ia	-0.1432475
+-2.660491	d'ias	-0.1348061
+-2.821397	d'igame	-0.1348061
+-3.076897	dado	-0.1348061
+-3.260593	dame
+-1.287549	de	-0.4391088
+-2.660491	decir	-0.207769
+-2.865546	decirme	-0.1348061
+-2.159805	del	-0.2124231
+-3.260593	demasiado
+-3.076897	des	-0.1348061
+-2.048119	desde	-0.273355
+-3.076897	deseaba	-0.1348061
+-3.076897	desear'ia	-0.1348061
+-2.821397	deseo	-0.2350943
+-3.076897	despu'es	-0.1348061
+-3.076897	destino	-0.1348061
+-3.076897	dices	-0.1348061
+-2.865546	dicho	-0.1348061
+-3.076897	dichos	-0.1348061
+-3.076897	diciembre	-0.1348061
+-2.543349	diecinueve	-0.1787564
+-3.076897	dieciocho	-0.1348061
+-2.865546	diecis'eis	-0.1348061
+-2.451185	diecisiete	-0.4716066
+-3.076897	dieras	-0.1348061
+-2.865546	diez	-0.2543457
+-3.076897	diga	-0.1348061
+-3.076897	digas	-0.1348061
+-2.865546	dime	-0.1348061
+-3.260593	disponible
+-2.821397	doce	-0.1904759
+-2.865546	domingo	-0.1348061
+-3.260593	dormir
+-2.543349	dos	-0.1348061
+-3.076897	dura	-0.1348061
+-3.260593	durmiendo
+-3.260593	efectivamente
+-1.323153	el	-0.5293037
+-1.750878	en	-0.3968298
+-3.076897	enero	-0.1348061
+-3.076897	ense~nara	-0.1348061
+-3.076897	entonces	-0.1348061
+-2.821397	entre	-0.2107398
+-3.260593	era
+-3.076897	error	-0.1348061
+-2.082253	es	-0.2565072
+-3.260593	esa
+-2.159805	ese	-0.1904759
+-2.821397	eso	-0.3657223
+-2.821397	esos	-0.2543457
+-3.076897	est'a	-0.1348061
+-3.076897	estaba	-0.1348061
+-3.076897	estar	-0.1348061
+-2.543349	este	-0.258264
+-3.260593	esto
+-2.865546	estos	-0.1348061
+-3.260593	estrella
+-2.1193	euromed	-0.370984
+-3.076897	exactamente	-0.1348061
+-3.076897	exacto	-0.1348061
+-3.076897	existe	-0.1348061
+-3.076897	favor	-0.1348061
+-3.076897	febrero	-0.1348061
+-3.076897	fin	-0.1348061
+-3.076897	finales	-0.1348061
+-2.821397	fuera	-0.1348061
+-3.260593	fuese
+-3.076897	fumador	-0.1348061
+-3.076897	fumadores	-0.1348061
+-2.375196	gracias	-0.3993658
+-2.821397	granada	-0.1348061
+-3.260593	gustado
+-3.076897	gustar'ia	-0.1348061
+-2.660491	ha	-0.1348061
+-2.865546	hab'ia	-0.1348061
+-3.260593	hab'ias
+-3.076897	habido	-0.1348061
+-3.260593	habr'ia
+-3.076897	hace	-0.1348061
+-3.076897	hacer	-0.1348061
+-3.260593	hacerlo
+-3.076897	hacia	-0.1348061
+-3.076897	haga	-0.1348061
+-3.076897	hagan	-0.1348061
+-3.076897	has	-0.1348061
+-2.821397	hasta	-0.1348061
+-2.375196	hay	-0.174572
+-2.865546	hola	-0.1657389
+-2.660491	hora	-0.1839261
+-2.375196	horario	-0.269488
+-1.95936	horarios	-0.4175912
+-2.821397	horas	-0.3657223
+-3.076897	hotel	-0.1348061
+-2.821397	hoy	-0.1904759
+-3.076897	huelva	-0.1348061
+-3.260593	huesca
+-2.865546	ida	-0.1711155
+-3.076897	igual	-0.1348061
+-2.865546	informaci'on	-0.2543457
+-3.260593	informarme
+-2.543349	intercity	-0.3924254
+-3.076897	intercitys	-0.1348061
+-3.076897	interesa	-0.1348061
+-3.076897	interesado	-0.1348061
+-3.260593	interesar'ia
+-2.375196	ir	-0.3924254
+-3.260593	irme
+-2.865546	jueves	-0.1348061
+-3.076897	julio	-0.1348061
+-3.076897	junio	-0.1348061
+-2.1193	la	-0.328356
+-3.260593	la_coru~na
+-3.076897	laborable	-0.1348061
+-3.076897	laborables	-0.1348061
+-3.076897	lanzadera	-0.1348061
+-2.660491	las	-0.209549
+-2.865546	le	-0.1348061
+-2.821397	le'on	-0.1348061
+-3.260593	litera
+-3.076897	literas	-0.1348061
+-3.260593	llamaba
+-2.821397	llega	-0.1348061
+-3.076897	llegaban	-0.1348061
+-2.865546	llegada	-0.1348061
+-3.076897	llegan	-0.1348061
+-2.543349	llegar	-0.3022757
+-3.260593	llegara
+-3.076897	llegue	-0.1348061
+-3.260593	lleida
+-3.076897	llevar	-0.1348061
+-2.865546	lo	-0.2543457
+-1.885698	los	-0.5063688
+-3.260593	luego
+-2.865546	lunes	-0.1348061
+-3.260593	m'alaga
+-2.375196	m'as	-0.2268234
+-3.076897	m'erida	-0.1348061
+-2.451185	madrid	-0.2366899
+-3.076897	mare_nostrum	-0.1348061
+-2.865546	martes	-0.1348061
+-3.076897	marzo	-0.1348061
+-3.076897	mayo	-0.1348061
+-2.310545	ma~nana	-0.2748526
+-3.260593	ma~nanas
+-2.048119	me	-0.2783509
+-2.865546	mediod'ia	-0.2107398
+-2.865546	mejor	-0.2543457
+-3.260593	menos
+-3.076897	mes	-0.1348061
+-2.821397	mi'ercoles	-0.2107398
+-3.260593	mil
+-3.076897	minutos	-0.1348061
+-3.076897	mira	-0.1348061
+-3.076897	mirar	-0.1348061
+-3.076897	mire	-0.1348061
+-3.076897	misma	-0.1348061
+-3.076897	mismamente	-0.1348061
+-3.076897	mismo	-0.1348061
+-2.660491	muchas	-0.4906611
+-2.660491	murcia	-0.2107398
+-3.076897	muy	-0.1348061
+-2.821397	nada	-0.1904759
+-3.076897	necesito	-0.1348061
+-3.260593	negocios
+-3.076897	ninguno	-0.1348061
+-2.451185	no	-0.1811975
+-3.076897	noche	-0.1348061
+-3.076897	normal	-0.1348061
+-3.076897	noviembre	-0.1348061
+-2.821397	nueve	-0.1904759
+-2.159805	o	-0.271344
+-2.543349	obtener	-0.3151329
+-2.660491	ocho	-0.1711155
+-3.076897	octubre	-0.1348061
+-2.865546	once	-0.1904759
+-3.260593	otra
+-3.076897	otro	-0.1348061
+-3.260593	otros
+-3.260593	oviedo
+-3.260593	palencia
+-3.076897	pamplona	-0.1348061
+-1.635269	para	-0.4228247
+-3.076897	partir	-0.1348061
+-2.660491	pasado	-0.2955154
+-3.076897	paso	-0.1348061
+-3.260593	pedir
+-3.260593	perd'on
+-2.865546	pero	-0.1348061
+-3.260593	poco
+-3.076897	pod'ia	-0.1348061
+-2.821397	podr'ia	-0.2107398
+-3.076897	podr'ias	-0.1348061
+-1.750878	por	-0.7064347
+-3.076897	posibilidad	-0.1348061
+-3.260593	posibilidades
+-2.821397	posible	-0.2107398
+-3.076897	pr'oxima	-0.1348061
+-2.865546	pr'oximo	-0.1348061
+-2.375196	precio	-0.210479
+-2.660491	precios	-0.2398277
+-2.821397	preferente	-0.2107398
+-3.076897	pregunta	-0.1348061
+-2.865546	preguntar	-0.1348061
+-2.865546	pregunto	-0.1348061
+-2.821397	primer	-0.1904759
+-2.660491	primera	-0.1904759
+-3.076897	primero	-0.1348061
+-3.076897	principios	-0.1348061
+-3.260593	pronto
+-2.660491	puede	-0.1904759
+-3.076897	puedes	-0.1348061
+-2.865546	puedo	-0.1348061
+-2.865546	pues	-0.1348061
+-2.375196	qu'e	-0.2909802
+-1.635269	que	-0.3145439
+-3.076897	quedado	-0.1348061
+-2.048119	quer'ia	-0.3545185
+-2.660491	querr'ia	-0.2085772
+-2.204479	quiero	-0.3340386
+-2.865546	quince	-0.1348061
+-2.451185	quisiera	-0.2124231
+-2.660491	r'apido	-0.2909802
+-2.865546	r'apidos	-0.1348061
+-3.260593	realizar
+-3.076897	reconfirmar	-0.1348061
+-3.076897	recorrido	-0.1348061
+-2.865546	regional	-0.2543457
+-3.260593	regionales
+-3.076897	regresar	-0.1348061
+-3.076897	rep'itame	-0.1348061
+-3.260593	repetirme
+-3.076897	repitas	-0.1348061
+-3.076897	ruta	-0.1348061
+-2.451185	s'abado	-0.3661445
+-3.260593	s'e
+-2.660491	s'i	-0.1517156
+-2.159805	saber	-0.3500046
+-2.865546	salamanca	-0.2107398
+-3.260593	saldr'ia
+-2.865546	sale	-0.1348061
+-2.865546	salen	-0.1348061
+-3.076897	salga	-0.1348061
+-3.260593	salgan
+-3.260593	salgo
+-2.821397	salida	-0.1348061
+-2.543349	saliendo	-0.2350942
+-3.076897	saliera	-0.1348061
+-3.260593	salieran
+-2.159805	salir	-0.3550516
+-3.260593	san_sebasti'an
+-3.076897	santander	-0.1348061
+-2.660491	se	-0.1787564
+-2.821397	sea	-0.1348061
+-3.076897	sean	-0.1348061
+-2.821397	segovia	-0.1711155
+-3.076897	segundo	-0.1348061
+-2.821397	seis	-0.1904759
+-2.660491	semana	-0.1657389
+-3.076897	semana_santa	-0.1348061
+-3.076897	septiembre	-0.1348061
+-2.821397	ser	-0.1348061
+-2.660491	sevilla	-0.154234
+-2.082253	si	-0.3180776
+-3.076897	sido	-0.1348061
+-2.375196	siete	-0.3084947
+-2.865546	siguiente	-0.2543457
+-2.310545	sobre	-0.2725809
+-3.076897	solo	-0.1348061
+-2.660491	son	-0.1787564
+-3.076897	su	-0.1348061
+-3.076897	suficiente	-0.1348061
+-2.310545	talgo	-0.3460717
+-3.076897	talgos	-0.1348061
+-2.451185	tambi'en	-0.1711155
+-3.076897	tanto	-0.1348061
+-2.865546	tarde	-0.1348061
+-3.076897	tardes	-0.1348061
+-2.865546	tarragona	-0.1348061
+-3.260593	temprano
+-3.076897	tendr'ia	-0.1348061
+-3.260593	tener
+-3.076897	tenga	-0.1348061
+-2.821397	tengo	-0.2107398
+-3.076897	teruel	-0.1348061
+-2.543349	tiene	-0.1348061
+-3.076897	tienen	-0.1348061
+-2.543349	tipo	-0.4716066
+-3.076897	tipos	-0.1348061
+-2.821397	todo	-0.2955154
+-3.260593	todos
+-3.076897	toledo	-0.1348061
+-3.076897	total	-0.1348061
+-3.076897	trata	-0.1348061
+-3.076897	trayecto	-0.1348061
+-3.076897	trayectos	-0.1348061
+-2.865546	trece	-0.1348061
+-2.821397	treinta	-0.258264
+-2.082253	tren	-0.3032916
+-2.254282	trenes	-0.294049
+-2.821397	tres	-0.2543457
+-3.076897	turista	-0.1348061
+-3.076897	u	-0.1348061
+-1.863682	un	-0.3475333
+-3.076897	una	-0.1348061
+-3.076897	uno	-0.1348061
+-3.260593	va
+-3.076897	vale	-0.1348061
+-2.375196	valencia	-0.2236968
+-2.865546	valladolid	-0.1348061
+-3.260593	vamos
+-3.076897	van	-0.1348061
+-3.076897	vaya	-0.1348061
+-3.076897	veamos	-0.1348061
+-2.660491	veinte	-0.21927
+-2.821397	veinticinco	-0.3657223
+-2.821397	veinticuatro	-0.2955154
+-2.821397	veintid'os	-0.3657223
+-3.076897	veintinueve	-0.1348061
+-3.076897	veintiocho	-0.1348061
+-3.076897	veintis'eis	-0.1348061
+-3.076897	veintitr'es	-0.1348061
+-3.076897	veintiuno	-0.1348061
+-3.076897	vente	-0.1348061
+-2.865546	ver	-0.2107398
+-3.260593	ver'a
+-3.076897	verdad	-0.1348061
+-3.260593	vez
+-3.260593	viaja
+-2.865546	viajando	-0.2543457
+-2.082253	viajar	-0.5754571
+-2.375196	viaje	-0.3741719
+-2.865546	viajes	-0.2543457
+-2.865546	viene	-0.1348061
+-2.451185	viernes	-0.2093392
+-2.821397	vigo	-0.1348061
+-2.660491	volver	-0.1787564
+-3.260593	volver'ia
+-2.865546	volviendo	-0.2107398
+-2.821397	vuelta	-0.2093393
+-3.260593	vuelvo
+-1.661416	y	-0.2360194
+-2.451185	ya	-0.3020411
+-3.076897	yo	-0.1348061
+-3.260593	zamora
+-2.821397	zaragoza	-0.1904759
+-2.865546	zona	-0.1348061
+
+\2-grams:
+-0.4776393	'avila </s>
+-0.5532057	'ultimo </s>
+-1.145012	'ultimo euromed
+-1.142374	'ultimo tren
+-1.562787	<s> a	-0.09786589
+-3.259115	<s> ay
+-2.069201	<s> buenas	-0.2166443
+-3.259115	<s> bueno
+-2.498954	<s> buenos	-0.2698946
+-3.223923	<s> cu'anto
+-3.214635	<s> d'igame
+-2.297438	<s> de
+-2.308995	<s> desear'ia	-0.1772259
+-2.765332	<s> deseo
+-1.366842	<s> el	-0.06121108
+-2.501162	<s> en
+-3.214635	<s> eso
+-3.214635	<s> esos
+-3.259115	<s> exacto
+-3.070791	<s> gracias
+-2.708601	<s> hay
+-1.274334	<s> hola	-0.5284144
+-2.939675	<s> la
+-3.102536	<s> madrid
+-1.847818	<s> ma~nana	-0.3107447
+-1.365248	<s> me	-0.5820792
+-1.578444	<s> nada	-0.7730386
+-2.780622	<s> necesito
+-0.8403309	<s> no	-0.6679882
+-3.173968	<s> pasado
+-2.501162	<s> por	-0.1924034
+-3.223923	<s> pregunto
+-3.223923	<s> puedo
+-1.85748	<s> pues	-0.06545314
+-2.465676	<s> qu'e	-0.1120538
+-2.162106	<s> que
+-1.254712	<s> quer'ia	-0.501179
+-2.06551	<s> querr'ia
+-1.332929	<s> quiero	-0.3254139
+-1.472118	<s> quisiera	-0.229442
+-0.4389499	<s> s'i	-0.5702478
+-2.635365	<s> si
+-3.070791	<s> siete
+-3.259115	<s> solo
+-3.136785	<s> tiene
+-3.259115	<s> una
+-3.259115	<s> vale
+-3.259115	<s> veamos
+-3.214635	<s> veinticinco
+-3.214635	<s> veintid'os
+-2.917611	<s> viajar
+-3.102536	<s> viernes
+-2.618598	<s> y
+-2.473342	<s> ya	-0.2698946
+-0.216074	? </s>
+-2.576728	a albacete	-0.1924034
+-1.292606	a alicante	-0.1701518
+-1.159925	a barcelona	-0.1694168
+-2.548042	a burgos
+-2.089699	a c'aceres
+-2.080143	a c'adiz	-0.1924034
+-2.080143	a c'ordoba	-0.1924033
+-2.576728	a castell'o
+-1.477159	a castell'on	-0.1316056
+-2.089699	a ciudad_real
+-2.540401	a cualquier
+-2.077526	a cuenca	-0.1035958
+-2.540401	a granada
+-1.474132	a las	-0.1097177
+-2.540401	a le'on
+-2.576728	a m'erida
+-1.158465	a madrid	-0.2975827
+-2.080143	a mediod'ia
+-2.065588	a murcia
+-2.576728	a pamplona
+-1.480182	a partir	-0.5709246
+-2.065588	a primera	-0.1924033
+-2.576728	a principios	-0.1924034
+-1.594936	a qu'e	-0.834166
+-1.807402	a salamanca	-0.1924034
+-1.615294	a santander	-0.172914
+-1.374893	a segovia	-0.1079929
+-1.806004	a ser	-0.2698946
+-1.161391	a sevilla	-0.1541422
+-1.807402	a tarragona
+-1.615294	a teruel	-0.2074261
+-2.576728	a toledo	-0.1924034
+-1.365396	a valencia	-0.08173761
+-2.548042	a valladolid
+-2.080143	a ver
+-2.540401	a vigo
+-2.540401	a zaragoza
+-0.7254049	abril </s>
+-1.218959	abril a
+-1.268143	abril para
+-1.298969	abril por
+-1.268143	abril que
+-1.275647	abril y
+-0.5687352	acercara m'as
+-0.4776393	acuerdo </s>
+-0.4776393	adi'os </s>
+-0.6077681	agosto </s>
+-1.29856	agosto a
+-1.452099	agosto desde
+-1.473676	agosto quiero
+-1.496381	agosto quisiera
+-1.496381	agosto tambi'en
+-1.362115	agosto y
+-0.8715255	ahora dime
+-0.8539133	ahora quer'ia
+-0.8570021	al euromed
+-0.8727711	al igual
+-0.4722933	alaris </s>
+-1.314233	alaris o	-0.1924034
+-1.236924	alaris que
+-1.307238	alaris si	-0.1924034
+-0.4776393	albacete </s>
+-1.229589	alg'un euromed
+-1.24826	alg'un horario
+-1.26465	alg'un regional
+-1.244461	alg'un talgo
+-1.225949	alg'un tren
+-0.4776393	algo </s>
+-0.23719	alguno que
+-0.9563923	alicante </s>
+-1.164952	alicante a	-0.1924034
+-1.292112	alicante antes
+-1.100662	alicante el
+-1.211449	alicante para
+-1.218517	alicante y
+-0.5631844	all'i antes
+-0.7000313	almer'ia </s>
+-0.8711802	almer'ia hasta
+-0.4776393	amable </s>
+-0.07380221	antes de	-1.048046
+-1.717111	antes estaba
+-0.563973	as'i es	-0.2698946
+-0.3067626	ave </s>
+-0.4776393	ay </s>
+-0.8768026	barato </s>
+-1.077318	barato para
+-1.077318	barato que
+-1.082497	barato y
+-0.5727373	baratos tanto
+-0.8843892	barcelona </s>
+-1.369212	barcelona a
+-1.555017	barcelona desde
+-0.7640985	barcelona el	-0.05804493
+-1.476445	barcelona en	-0.1924034
+-1.596706	barcelona ma~nana
+-1.434325	barcelona para	-0.1002796
+-1.596706	barcelona sobre
+-1.444479	barcelona y
+-0.5469453	bien para
+-0.922787	billete </s>
+-1.111856	billete a
+-1.040086	billete de	-0.1176825
+-1.233259	billete del
+-1.267736	billete normal
+-0.5530602	billetes por
+-1.300555	buenas es
+-1.296615	buenas me
+-1.296615	buenas quer'ia	-0.08075912
+-1.33773	buenas querr'ia
+-0.8288078	buenas tardes	-0.07733527
+-0.5631844	bueno me
+-0.3521534	buenos d'ias	-0.392148
+-0.3281681	burgos el
+-0.8095642	c'aceres </s>
+-0.9073269	c'aceres el
+-0.9790722	c'aceres y
+-0.8095642	c'adiz </s>
+-0.9073269	c'adiz el	-0.1924034
+-1.006616	c'adiz los	-0.1924034
+-0.5469453	c'omodo para
+-0.8031383	c'ordoba a
+-0.8227418	c'ordoba para
+-0.4776393	callado </s>
+-0.3067626	cama </s>
+-0.4776393	castell'o </s>
+-0.922787	castell'on </s>
+-1.111856	castell'on a	-0.1924034
+-1.054499	castell'on el
+-1.255959	castell'on este
+-1.152741	castell'on para
+-0.8768026	catorce </s>
+-1.168654	catorce horas
+-1.159227	catorce tambi'en
+-1.171816	catorce verdad
+-0.2499447	cinco de	-0.3031587
+-1.202373	cinco que
+-0.7000313	ciudad_real </s>
+-0.7740162	ciudad_real el
+-1.04549	clase preferente
+-1.043104	clase primera
+-1.047869	clase turista
+-0.2659439	coche cama	-0.5709246
+-1.217821	coche en
+-0.5469453	como para
+-0.5577036	compro un
+-1.337507	con coche
+-0.5450983	con destino	-0.1078695
+-0.8281512	con salida	-0.1151171
+-0.7740162	confirmar el
+-0.8570021	confirmar la
+-0.3866844	conocer el	-0.2766568
+-1.395517	conocer horario
+-1.360525	conocer horarios
+-1.350554	conocer los
+-0.7740162	conseguir el	-0.1924034
+-0.8447765	conseguir los
+-0.8648216	consultar horario
+-0.8447765	consultar los
+-0.5721126	corresponde al
+-0.5655546	costar'ia ese
+-0.8985097	cu'al de	-0.1924034
+-0.2284583	cu'al es	-0.2148225
+-1.047869	cu'anto cuesta
+-1.047869	cu'anto dura
+-1.019942	cu'anto me
+-0.8695818	cu'antos d'ias
+-0.7664014	cu'antos de
+-1.044338	cualquier hora
+-0.5268537	cualquier tipo	-0.02890944
+-0.5484659	cuarenta y
+-0.7000313	cuatro </s>
+-0.7664014	cuatro de	-0.3948334
+-0.9465503	cuenca </s>
+-1.12499	cuenca a
+-0.6802963	cuenca el	-0.2698946
+-1.168653	cuenca y
+-0.5577036	cuesta un
+-1.122113	d'ia </s>
+-1.929639	d'ia ?
+-1.466768	d'ia a
+-1.933529	d'ia catorce
+-1.912033	d'ia cinco	-0.2698946
+-1.895113	d'ia diecinueve
+-1.933529	d'ia diecis'eis	-0.2698946
+-1.878827	d'ia diecisiete	-0.2698946
+-1.933529	d'ia diez
+-1.929639	d'ia doce
+-1.947834	d'ia laborable	-0.1924034
+-1.766745	d'ia me
+-1.929639	d'ia nueve	-0.1924034
+-1.912033	d'ia ocho
+-1.933529	d'ia quince
+-1.929639	d'ia seis
+-1.86313	d'ia siete
+-1.438415	d'ia trece
+-1.929639	d'ia treinta
+-1.912033	d'ia veinte	-0.05652791
+-1.929639	d'ia veinticinco
+-1.929639	d'ia veinticuatro
+-1.929639	d'ia veintid'os
+-1.947834	d'ia veintitr'es	-0.2372211
+-1.498284	d'ias diecinueve	-0.2698946
+-1.513584	d'ias diecis'eis
+-1.519074	d'ias laborables
+-1.441143	d'ias me	-0.5709246
+-1.519074	d'ias mira
+-1.512071	d'ias podr'ia
+-1.441143	d'ias quer'ia	-0.06427518
+-1.512071	d'ias tengo
+-1.505123	d'ias veinte	-0.1924034
+-1.038372	d'igame cu'al
+-1.046006	d'igame cu'antos
+-0.9073269	d'igame el
+-0.4776393	dado </s>
+-1.399478	de abril	-0.4199672
+-2.668549	de acuerdo
+-1.909199	de agosto	-0.06908379
+-2.179816	de alicante	-0.1924034
+-1.892189	de barcelona	-0.2698946
+-2.631495	de c'ordoba
+-2.621742	de castell'on	-0.1924034
+-2.176343	de cualquier	-0.1924034
+-2.621742	de cuenca
+-2.471871	de d'ia
+-2.192554	de diciembre	-0.172914
+-1.58713	de enero	-0.2743729
+-2.063885	de ese	-0.1924033
+-2.176343	de esos
+-2.540374	de este
+-1.911072	de estos
+-2.336802	de euromed
+-2.192554	de febrero	-0.108715
+-2.621742	de granada	-0.1924034
+-2.233924	de horarios
+-1.911072	de ida	-0.5218495
+-2.192554	de julio	-0.1924034
+-1.58713	de junio	-0.6378714
+-0.9543149	de la	-0.5246361
+-1.710676	de las	-0.3058063
+-2.179816	de llegada
+-1.42946	de los	-0.5844274
+-1.471681	de madrid	-0.4841584
+-1.58713	de marzo	-0.2431009
+-1.58713	de mayo	-0.2431009
+-2.579155	de murcia	-0.1924034
+-2.192554	de noviembre	-0.1924034
+-2.668549	de octubre	-0.1924034
+-2.668549	de paso
+-2.579155	de primera
+-2.176343	de salida	-0.1148648
+-2.621742	de segovia
+-2.579155	de semana	-0.06762122
+-2.192554	de septiembre	-0.1044038
+-2.579155	de sevilla
+-2.471871	de siete
+-2.631495	de tarragona
+-1.543936	de tren	-0.210913
+-1.684052	de trenes	-0.3656633
+-1.626117	de un	-0.6248511
+-1.210519	de valencia	-0.9005631
+-2.631495	de valladolid
+-2.471871	de viaje
+-2.631495	de viajes
+-2.621742	de vigo
+-1.716202	de vuelta	-0.0766018
+-2.176343	de zaragoza	-0.1924034
+-0.6145747	decir el	-0.2372212
+-1.419474	decir la
+-1.382793	decir los
+-1.321394	decir para
+-1.444079	decir qu'e
+-1.414716	decir si
+-0.9073269	decirme el
+-1.024477	decirme la
+-1.006616	decirme los
+-1.852417	del 'ultimo
+-1.865436	del billete	-0.1107216
+-1.353284	del de
+-1.839776	del diecinueve
+-1.065639	del euromed	-0.2698946
+-1.839776	del intercity
+-1.878745	del mare_nostrum
+-1.868294	del mediod'ia
+-1.878745	del mes
+-1.865436	del primer
+-1.827493	del s'abado
+-1.369281	del segundo	-0.172914
+-1.803922	del talgo
+-1.063548	del tren	-0.2495783
+-1.348727	del viaje	-0.2698946
+-0.560827	des horarios
+-1.279061	desde almer'ia
+-1.270244	desde barcelona	-0.1924034
+-1.782491	desde castell'on
+-1.276118	desde cuenca
+-1.276118	desde le'on	-0.1924034
+-1.773104	desde murcia
+-1.782491	desde segovia
+-0.7917833	desde valencia	-0.2372211
+-1.276118	desde zaragoza
+-0.569534	deseaba tambi'en
+-0.8648216	desear'ia ir
+-0.8585548	desear'ia saber
+-1.236924	deseo que	-0.1924034
+-1.314233	deseo saber
+-0.5396628	deseo salir	-0.117581
+-1.307238	deseo viajar
+-0.4776393	despu'es </s>
+-0.8031383	destino a
+-0.8695818	destino sevilla
+-0.5204459	dices el	-0.1924034
+-0.7000313	dicho </s>
+-0.7664014	dicho de
+-0.567142	dichos trenes
+-0.7000313	diciembre </s>
+-0.7664014	diciembre de
+-0.9465503	diecinueve </s>
+-0.674737	diecinueve de	-0.1924034
+-1.264646	diecinueve horas	-0.1924033
+-1.168653	diecinueve y	-0.2698946
+-0.8970085	dieciocho de
+-1.026762	dieciocho o
+-0.9790722	dieciocho y
+-0.8970085	diecis'eis de	-0.1182679
+-1.026762	diecis'eis o
+-0.9790722	diecis'eis y
+-0.196991	diecisiete de	-0.4275882
+-1.346942	diecisiete horas
+-0.5577036	dieras un
+-0.3260835	diez de	-0.1789823
+-0.5584823	diga los
+-0.7740162	digas el
+-0.8493209	digas horarios
+-0.8695818	dime alg'un
+-0.8493209	dime horarios
+-0.5936424	doce de
+-1.147666	doce ese
+-1.161188	doce no
+-0.7000313	domingo </s>
+-0.8031383	domingo a
+-0.9563923	dos </s>
+-1.084664	dos de
+-1.304964	dos del
+-1.296354	dos es
+-1.279631	dos horarios
+-1.313748	dos trenes
+-0.5204459	dura el
+-2.617413	el 'ultimo
+-2.582834	el coche
+-0.9262275	el d'ia	-0.1984323
+-2.418717	el del
+-2.582834	el diecinueve
+-1.937185	el dieciocho
+-2.550806	el diecisiete
+-2.654985	el doce
+-2.663528	el domingo
+-2.582834	el dos
+-1.489159	el horario	-0.4765887
+-2.582834	el intercity
+-1.602817	el jueves	-0.08291713
+-1.93139	el lunes	-0.1815643
+-1.9012	el m'as	-0.1051278
+-1.602817	el martes	-0.1394276
+-2.654985	el mi'ercoles
+-2.213349	el mismo	-0.2698946
+-1.50001	el nueve	-0.6378714
+-1.922467	el ocho	-0.115453
+-2.663528	el once
+-1.040093	el pr'oximo	-0.4189199
+-1.005915	el precio	-0.6049097
+-1.735724	el primer	-0.2782514
+-2.213349	el primero
+-1.491847	el s'abado	-0.1071047
+-2.199494	el seis	-0.1924034
+-2.147708	el siete	-0.1170709
+-1.726373	el tipo	-0.7470158
+-2.695761	el trayecto
+-1.929795	el treinta	-0.08612798
+-1.395293	el tren	-0.1874012
+-2.695761	el uno
+-2.147708	el valencia	-0.1924034
+-2.185957	el veinte	-0.1924034
+-2.199494	el veinticinco	-0.1924033
+-1.735724	el veinticuatro	-0.1457071
+-2.654985	el veintid'os
+-2.695761	el veintinueve
+-2.695761	el veintiocho
+-2.695761	el veintis'eis
+-2.147708	el viaje	-0.06628788
+-1.491847	el viernes	-0.02129914
+-2.184756	en agosto	-0.1924034
+-2.167088	en alaris
+-2.188659	en ave
+-2.188659	en cama
+-1.693642	en clase	-0.112816
+-1.407887	en coche	-0.2698946
+-2.184756	en cualquier
+-2.167088	en d'ias
+-1.101143	en el	-0.1924034
+-2.0602	en ese
+-2.150111	en este
+-0.9679449	en euromed	-0.08836532
+-2.184756	en preferente
+-1.410912	en primera	-0.2698946
+-2.203016	en semana_santa
+-1.664301	en talgo	-0.2401828
+-1.38442	en tren
+-0.6551889	en un	-0.4095135
+-2.188659	en zona
+-0.8095642	enero </s>
+-0.9915679	enero en
+-1.019942	enero quer'ia
+-0.5584823	ense~nara los
+-0.569534	entonces ya
+-0.4884457	entre el
+-1.046346	entre esos
+-0.569534	error no	-0.1924034
+-0.7157009	es </s>
+-1.136784	es el	-0.2766568
+-1.309859	es m'as	-0.1924034
+-1.323357	es posible	-0.2139501
+-1.225566	es que
+-1.747658	es saber
+-1.838371	es su
+-1.326769	es suficiente
+-1.775868	es talgo
+-1.827385	es todo	-0.2372212
+-1.665001	es un
+-1.626229	ese 'ultimo
+-1.115801	ese d'ia
+-1.602828	ese horario
+-1.125812	ese primer	-0.1924034
+-1.642491	ese recorrido
+-1.5953	ese talgo	-0.1924034
+-1.618287	ese tipo
+-1.101204	ese tren	-0.3948333
+-1.602828	ese viaje
+-0.2420252	eso es	-0.3605106
+-0.6425562	esos horarios
+-0.6483411	esos trenes
+-1.036025	est'a gracias	-0.2698946
+-1.043104	est'a muchas	-0.6378714
+-1.04549	est'a todo	-0.3948333
+-0.5727373	estaba interesado
+-0.5204459	estar el
+-1.263003	este 'ultimo
+-1.237058	este tren
+-0.4641097	este viernes	-0.1079663
+-1.255959	estos dos
+-1.211688	estos horarios
+-1.267736	estos talgos
+-1.267736	estos trayectos
+-1.240695	estos trenes
+-0.4780904	euromed </s>
+-1.432952	euromed el
+-1.761449	euromed entre
+-1.615623	euromed por
+-0.9333697	euromed que	-0.1175789
+-1.694653	euromed si	-0.1924034
+-0.9355205	euromed y
+-0.569534	exactamente cu'al
+-0.4776393	exacto </s>
+-0.5711361	existe alg'un
+-0.922787	favor </s>
+-1.054499	favor el
+-1.263797	favor podr'ia
+-1.22234	favor quer'ia
+-1.25986	favor querr'ia
+-0.7000313	febrero </s>
+-0.8343544	febrero por	-0.1924034
+-0.5161824	fin de	-0.3948333
+-0.5655546	finales del
+-1.177958	fuera en
+-1.177958	fuera por
+-1.263797	fuera posible
+-1.25986	fuera r'apido
+-1.19788	fuera un	-0.08491682
+-0.4776393	fumador </s>
+-0.4776393	fumadores </s>
+-0.3683147	gracias </s>
+-1.641326	gracias eso	-0.2698946
+-1.636226	gracias ha
+-1.532942	gracias por
+-0.8425122	gracias ya	-0.3948333
+-0.8095642	granada </s>
+-0.947408	granada a	-0.1924034
+-1.040732	granada saliendo
+-1.548414	gustar'ia conocer
+-1.557771	gustar'ia consultar
+-1.556097	gustar'ia granada
+-1.526147	gustar'ia ir	-0.1042407
+-1.540864	gustar'ia obtener
+-1.557771	gustar'ia preguntar
+-1.359873	gustar'ia que	-0.1481464
+-1.498129	gustar'ia saber	-0.3867321
+-1.498129	gustar'ia salir	-0.08790953
+-1.484771	gustar'ia viajar	0.01937541
+-1.169339	ha dicho
+-1.171816	ha habido	-0.1924034
+-1.171816	ha quedado
+-1.171816	ha sido
+-0.8711802	hab'ia alguno
+-0.8715255	hab'ia dicho
+-0.5577036	habido un	-0.1924034
+-0.5655546	hace ese
+-0.5577036	hacer un
+-0.5727373	hacia 'avila
+-0.7740162	haga el
+-0.8570021	haga la
+-0.5204459	hagan el
+-0.5727373	has dado
+-1.04549	hasta le'on
+-1.036025	hasta valencia
+-1.04549	hasta vigo	-0.1924034
+-1.072814	hay </s>
+-1.085899	hay alg'un
+-1.597425	hay alguno
+-1.230891	hay de
+-1.442112	hay en
+-1.605209	hay intercitys
+-1.605209	hay ninguno
+-1.090697	hay otro	-0.1924033
+-1.400633	hay para
+-1.40836	hola buenas	-0.2121051
+-0.8942326	hola buenos	-0.7927733
+-1.354258	hola me
+-1.354258	hola quer'ia	-0.4110298
+-1.37279	hola quiero
+-1.392148	hola quisiera	-0.3948333
+-0.802659	hora </s>
+-1.292299	hora a
+-0.8785348	hora de
+-1.513745	hora llega	-0.1924034
+-1.515101	hora sale	-0.1119918
+-1.515101	hora salen
+-1.513745	hora tengo
+-1.150559	horario </s>
+-0.5962557	horario de	-0.2191081
+-1.585716	horario del
+-1.638837	horario ida
+-1.063846	horario para	-0.09508928
+-1.604369	horario sobre
+-1.067522	horario y
+-1.179648	horarios </s>
+-1.657467	horarios a
+-1.887651	horarios antes
+-1.973696	horarios con
+-2.006539	horarios corresponde
+-0.650605	horarios de	-0.4942947
+-1.464613	horarios del
+-0.6048293	horarios para	-0.394105
+-1.787413	horarios por
+-1.392381	horarios que
+-1.488161	horarios son
+-0.216074	horas </s>
+-0.5703343	hotel tiene
+-0.9036154	hoy </s>
+-1.000104	hoy de
+-0.6276537	hoy y
+-0.569534	huelva madrid
+-0.9777291	ida </s>
+-0.7701703	ida a
+-1.100973	ida de	-0.1145099
+-1.296615	ida desde
+-1.227826	ida y	-0.6619517
+-0.5469453	igual que
+-0.3506837	informaci'on sobre	-0.08321481
+-0.2380448	intercity </s>
+-1.202373	intercity que
+-0.4776393	intercitys </s>
+-0.5204459	interesa el
+-0.5647631	interesado euromed
+-0.5843716	ir a	-0.1263837
+-1.74162	ir como
+-0.6959395	ir de	-0.2845289
+-1.669259	ir desde	-0.1924033
+-0.9171103	ir en	-0.1024857
+-1.574728	ir y
+-0.9563923	jueves </s>
+-1.164952	jueves a
+-1.084664	jueves de	-0.1924034
+-1.304964	jueves o
+-1.211449	jueves para
+-1.240439	jueves por
+-0.4776393	julio </s>
+-0.4776393	junio </s>
+-1.893831	la clase
+-1.104335	la hora	-0.1097829
+-1.370664	la ma~nana	-0.2647333
+-1.902299	la misma
+-1.390518	la noche	-0.1032655
+-1.902299	la pr'oxima
+-0.9062335	la semana	-0.3833492
+-1.85052	la siete
+-1.106472	la tarde	-0.7227516
+-0.9073467	la vuelta	-0.1801544
+-0.5161824	laborable de	-0.1924034
+-0.4776393	laborables </s>
+-0.5655546	lanzadera ese
+-1.848213	las catorce
+-1.340325	las cinco	-0.3014631
+-1.858253	las cuatro	-0.3164024
+-1.820768	las diecinueve	-0.1924034
+-1.808927	las diecisiete
+-1.345179	las diez	-0.2698946
+-1.845466	las doce
+-1.820768	las dos
+-1.344314	las nueve
+-1.340325	las ocho
+-1.848213	las once	-0.1247063
+-1.845466	las seis
+-1.055609	las siete	-0.3448621
+-1.845466	las tres	-0.1924033
+-0.8715255	le hab'ia
+-0.8715255	le pregunto
+-0.9915679	le'on en
+-1.04549	le'on hasta	-0.1924034
+-0.9749856	le'on para
+-0.4776393	literas </s>
+-0.922787	llega </s>
+-1.111856	llega a	-0.1924034
+-1.22234	llega antes
+-1.054499	llega el
+-1.233259	llega ese	-0.1924034
+-0.5631844	llegaban antes	-0.1924033
+-0.947408	llegada a
+-0.8970085	llegada de
+-1.026762	llegada del
+-0.5631844	llegan antes
+-1.144925	llegar </s>
+-0.9791388	llegar a
+-1.030984	llegar antes	-0.1924033
+-0.5309888	llegar el	-0.08960089
+-1.535754	llegar sobre
+-0.8539133	llegue antes	-0.3948333
+-0.7664014	llegue de
+-0.5204459	llevar el
+-0.3408909	lo que
+-1.977801	los billetes
+-0.9795591	los d'ias	-0.2239373
+-1.952522	los dos
+-0.3816878	los horarios	-0.6056557
+-1.178109	los precios	-0.3455271
+-1.757447	los que	-0.1924034
+-1.171263	los trenes	-0.2961356
+-1.9711	los viajes
+-0.8768026	lunes </s>
+-1.042699	lunes a
+-1.077318	lunes que
+-1.169339	lunes siguiente	-0.2698946
+-1.004371	m'as barato	-0.2776139
+-1.52076	m'as baratos
+-1.492819	m'as gracias	-0.9389014
+-1.466524	m'as la
+-1.509395	m'as muchas	-0.6958632
+-0.7189009	m'as r'apido	-0.02115276
+-0.5469453	m'erida para
+-0.5841179	madrid </s>
+-1.403974	madrid a	-0.08919593
+-1.653917	madrid barcelona
+-1.589779	madrid desde
+-1.01888	madrid el
+-1.469087	madrid para
+-1.511207	madrid por
+-1.596455	madrid viajar
+-1.479241	madrid y
+-0.4776393	mare_nostrum </s>
+-1.171816	martes mismamente
+-1.098415	martes por	-0.1924034
+-1.077318	martes que	-0.1924034
+-1.082497	martes y
+-0.8095642	marzo </s>
+-0.8970085	marzo de
+-0.9915679	marzo por	-0.1924034
+-0.8095642	mayo </s>
+-0.9915679	mayo en	-0.1924033
+-0.9790722	mayo y
+-0.4580828	ma~nana </s>
+-1.503427	ma~nana a
+-1.382632	ma~nana de
+-1.830666	ma~nana dime
+-1.405838	ma~nana el
+-1.629498	ma~nana en
+-1.734263	ma~nana es
+-1.751527	ma~nana o
+-1.629498	ma~nana por	-0.3948334
+-1.734263	ma~nana si	-0.1924034
+-1.830666	ma~nana viajando
+-1.797953	ma~nana viernes
+-1.591332	ma~nana y
+-2.015789	me costar'ia
+-2.015789	me des
+-1.508487	me dices	-0.1924034
+-2.015789	me dieras
+-2.015789	me diga
+-2.015789	me digas
+-2.015789	me ense~nara
+-0.6350034	me gustar'ia	-0.4935839
+-1.984939	me ha
+-2.015789	me has
+-2.015789	me interesa
+-1.503565	me podr'ia	-0.4917433
+-2.015789	me podr'ias
+-2.015789	me pregunta
+-1.984939	me puede
+-1.508487	me puedes	-0.2698946
+-2.015789	me repitas
+-1.50463	me viene
+-0.4547033	mediod'ia </s>
+-1.00055	mediod'ia en
+-0.3067626	mejor </s>
+-0.5161824	mes de
+-0.8403249	mi'ercoles </s>
+-0.5256386	mi'ercoles siete	-0.09968893
+-0.5161824	minutos de
+-0.5631844	mira me
+-0.5584823	mirar los
+-0.5631844	mire quer'ia
+-0.5727373	misma ruta
+-0.5530602	mismamente por
+-0.5687352	mismo d'ia	-0.2698946
+-0.1686035	muchas gracias	-0.7743903
+-0.6919929	murcia </s>
+-0.7751073	murcia a	-0.118239
+-1.132394	murcia el
+-1.231136	murcia para
+-0.5727373	muy amable
+-1.172293	nada entonces
+-0.6490792	nada m'as	-0.8341659
+-1.166716	nada muchas
+-0.7000313	necesito </s>
+-0.8585548	necesito saber
+-0.5469453	ninguno que
+-1.134086	no </s>
+-1.82279	no deseo
+-1.343401	no el
+-1.710042	no es
+-1.82279	no eso	-0.1924034
+-1.774127	no gracias	-0.6891083
+-1.305958	no hay
+-1.825574	no lo
+-1.810104	no muchas	-1.048046
+-1.321912	no nada	-0.6378714
+-1.825574	no pero
+-1.774127	no precio
+-1.294365	no quiero	-0.1734295
+-1.82279	no sea
+-1.309892	no ya	-0.3977804
+-0.8768026	noche </s>
+-0.993324	noche el
+-1.077318	noche para
+-1.098415	noche por	-0.1924034
+-0.4776393	normal </s>
+-0.4776393	noviembre </s>
+-0.9036154	nueve </s>
+-0.5936424	nueve de	-0.3108884
+-1.092718	nueve y
+-1.617411	o diecisiete
+-0.4757268	o el	-0.05196522
+-1.630649	o pasado
+-1.617411	o s'abado	-0.1924034
+-1.62398	o tiene
+-1.52922	o un	-0.1924034
+-1.637422	o veinticuatro
+-1.617411	o viernes
+-0.4419535	obtener el	-0.1924033
+-0.9350576	obtener horarios	-0.1924034
+-1.468321	obtener informaci'on
+-1.398146	obtener un	-0.2698946
+-0.7386587	ocho de	-0.1924034
+-1.304532	ocho la
+-1.308546	ocho o	-0.1924034
+-1.343004	ocho quince
+-1.346405	ocho tienen
+-0.4776393	octubre </s>
+-0.9036154	once </s>
+-0.5936424	once de	-0.1113208
+-1.092718	once y
+-0.5703343	otro tipo	-0.1924033
+-0.4776393	pamplona </s>
+-2.277371	para abril
+-2.272864	para agosto
+-2.23313	para barcelona
+-2.277371	para burgos
+-2.277371	para c'adiz
+-0.6110651	para el	-0.2077757
+-2.294002	para estar
+-2.23313	para este
+-2.294002	para finales
+-2.294002	para hacer
+-2.272864	para hoy
+-0.9158865	para ir	-0.5799226
+-1.728145	para la
+-2.252543	para las
+-0.987153	para llegar	-0.2328318
+-1.450908	para los	-0.2698946
+-2.179612	para ma~nana
+-2.277371	para salamanca
+-2.131971	para salir
+-2.252543	para sevilla
+-2.163144	para trenes
+-2.002824	para un	-0.2698946
+-1.72225	para viajar
+-1.504203	para volver
+-0.5161824	partir de	-0.5709246
+-0.9493921	pasado </s>
+-0.3671626	pasado ma~nana	-0.2698946
+-0.5719393	paso d'igame
+-0.8447765	pero los
+-0.8664026	pero quisiera
+-0.8715255	pod'ia decirme
+-0.8554549	pod'ia viajar
+-1.044338	podr'ia decir	-0.1187346
+-0.5282039	podr'ia decirme
+-0.5711361	podr'ias decir
+-1.574855	por </s>
+-0.7202924	por favor	-0.3846317
+-1.498814	por horarios
+-0.2530441	por la	-0.7306254
+-2.030372	por precios
+-2.036612	por todo
+-0.5687352	posibilidad hay
+-0.8125126	posible </s>
+-1.229895	posible el
+-0.9608807	posible en
+-0.9478547	posible que
+-1.45913	posible viajar
+-1.365799	posible y
+-0.5711361	pr'oxima semana
+-1.018918	pr'oximo </s>
+-1.513584	pr'oximo domingo
+-1.519074	pr'oximo fin	-0.3948333
+-1.513584	pr'oximo jueves
+-1.513584	pr'oximo lunes
+-1.513584	pr'oximo martes
+-1.512071	pr'oximo mi'ercoles
+-1.491551	pr'oximo s'abado	-0.2718978
+-1.491551	pr'oximo viernes	-0.07907565
+-0.6679858	precio </s>
+-1.446173	precio a
+-1.779207	precio billete
+-1.076162	precio de	-0.422731
+-1.69984	precio del	-0.3619246
+-1.62506	precio los
+-1.523439	precio para	-0.110583
+-1.757965	precio tiene	-0.2698946
+-1.790139	precio total
+-1.682074	precio tren
+-1.78156	precio viajando
+-1.737713	precio viaje
+-1.535692	precio y
+-1.069316	precios </s>
+-0.6141434	precios de	-0.1868789
+-1.360789	precios en
+-0.906065	precios para	-0.1924033
+-1.3381	precios y
+-0.4547033	preferente </s>
+-1.04234	preferente tiene
+-0.5727373	pregunta algo
+-1.006616	preguntar los
+-0.9915679	preguntar por
+-1.033691	preguntar sobre
+-0.8343544	pregunto por
+-0.8227418	pregunto que
+-1.145012	primer euromed	-0.1609992
+-1.163943	primer intercity
+-0.6440402	primer tren
+-0.5532057	primera </s>
+-1.166716	primera hora
+-1.08805	primera para
+-0.7000313	primero </s>
+-0.8648216	primero qu'e
+-0.5161824	principios de	-0.1924034
+-1.166716	puede decir
+-0.6524712	puede ser	-0.1134778
+-1.142374	puede viajar	-0.1924033
+-0.5711361	puedes decir
+-0.8727711	puedo llevar
+-0.8554549	puedo viajar
+-1.16626	pues el
+-1.432476	pues ma~nana
+-1.398825	pues me
+-1.462658	pues nada
+-1.444298	pues no
+-1.398825	pues quer'ia
+-1.456451	pues s'i
+-1.468902	pues tendr'ia
+-1.5119	qu'e hora	-0.3202363
+-0.9971493	qu'e precio	-0.2698946
+-0.51955	qu'e tipo	-0.3948333
+-1.521744	qu'e tipos
+-1.470006	qu'e tren
+-1.320613	que </s>
+-2.073461	que antes
+-1.096528	que el	-0.3591768
+-1.568605	que fuera	-0.2156087
+-2.34569	que hace
+-1.852487	que haga
+-2.34569	que hagan
+-2.211244	que hay
+-2.211244	que ir
+-2.321854	que le
+-2.31546	que llega	-0.1924034
+-2.34569	que llegaban	-0.1924034
+-1.376117	que llegue	-0.2740375
+-1.035516	que me	-0.03116475
+-1.813786	que no
+-1.814447	que para
+-1.778183	que quiero
+-2.28697	que s'i
+-2.321854	que sale	-0.1127431
+-1.844687	que salen	-0.1111941
+-1.573868	que salga
+-1.852487	que saliera
+-1.76972	que salir
+-2.28697	que se
+-1.238289	que sea	-0.1376494
+-2.34569	que sean
+-2.31546	que ser
+-2.090663	que si
+-2.28697	que son
+-1.852487	que tenga	-0.1044038
+-2.31546	que tengo
+-2.34569	que van	-0.3363207
+-1.373497	que viene	-0.2799927
+-2.235048	que ya
+-0.5727373	quedado callado
+-2.022395	quer'ia confirmar
+-2.022395	quer'ia conseguir
+-1.861723	quer'ia horarios
+-1.52067	quer'ia informaci'on	-0.2698946
+-1.502879	quer'ia ir
+-1.834267	quer'ia los
+-2.033142	quer'ia mirar
+-1.23519	quer'ia obtener	-0.1382899
+-2.022395	quer'ia preguntar
+-1.71822	quer'ia que
+-0.5850609	quer'ia saber	-0.6607834
+-1.221997	quer'ia salir	-0.04379164
+-1.200863	quer'ia un
+-1.901259	quer'ia viajar
+-1.352171	querr'ia a
+-1.089187	querr'ia conseguir	-0.1924033
+-1.600291	querr'ia consultar
+-1.584537	querr'ia llegar
+-1.584537	querr'ia obtener
+-0.7971916	querr'ia saber	-0.107351
+-1.544536	querr'ia salir
+-1.485105	querr'ia un
+-2.041007	quiero conocer	-0.08038844
+-1.310836	quiero el	-0.1924034
+-1.923694	quiero es
+-1.880251	quiero horarios
+-0.9419362	quiero ir	-0.1937868
+-1.275139	quiero llegar	-0.09521873
+-1.850302	quiero los
+-2.026294	quiero obtener
+-2.041007	quiero precios
+-1.204276	quiero que	-0.1801383
+-1.069276	quiero saber	-0.4185214
+-1.260011	quiero salir	-0.2350118
+-1.840761	quiero un
+-1.255083	quiero viajar	-0.1924034
+-1.277712	quiero volver
+-0.7000313	quince </s>
+-0.7664014	quince de
+-1.868294	quisiera confirmar
+-1.378381	quisiera el
+-1.815548	quisiera horario
+-1.7113	quisiera horarios	-0.1710416
+-1.348727	quisiera ir	-0.2648656
+-1.839776	quisiera llegar
+-1.080562	quisiera obtener	-0.2698946
+-1.570124	quisiera que	-0.1924034
+-1.067739	quisiera saber	-0.1797398
+-1.33293	quisiera salir
+-1.675725	quisiera un
+-1.868294	quisiera ver
+-1.75005	quisiera viajar
+-1.852417	quisiera volver
+-1.827493	quisiera ya
+-0.4597082	r'apido </s>
+-1.516815	r'apido ?
+-1.497482	r'apido qu'e
+-1.381945	r'apido que
+-0.988278	r'apido si
+-0.7664014	r'apidos de
+-0.8227418	r'apidos para
+-0.5204459	reconfirmar el
+-0.4776393	recorrido </s>
+-0.3067626	regional </s>
+-0.5204459	regresar el
+-0.5584823	rep'itame los
+-0.5204459	repitas el
+-0.4776393	ruta </s>
+-0.4587182	s'abado </s>
+-1.583529	s'abado antes
+-0.8412951	s'abado d'ia	-0.1845844
+-1.088767	s'abado por	-0.2698946
+-1.640417	s'abado tres	-0.1924034
+-1.079541	s'i </s>
+-1.538495	s'i a	-0.1169059
+-2.185707	s'i ahora
+-2.161718	s'i al
+-1.91215	s'i antes
+-2.185707	s'i as'i	-0.2698946
+-2.126626	s'i conocer
+-2.074424	s'i cu'al
+-2.155285	s'i d'igame
+-2.185707	s'i deseaba
+-2.155285	s'i deseo	-0.08077963
+-1.4041	s'i el	-0.145357
+-1.734139	s'i en
+-1.929414	s'i es
+-1.966149	s'i ese
+-2.161718	s'i estos
+-2.185707	s'i existe
+-2.126626	s'i ha	-0.1924034
+-2.050501	s'i hay
+-2.161718	s'i hola	-0.1924034
+-1.864129	s'i horarios
+-2.161718	s'i le
+-2.161718	s'i lo
+-1.354003	s'i me	-0.5763585
+-2.185707	s'i mire
+-2.074424	s'i no
+-1.652454	s'i para	-0.2698946
+-1.734139	s'i por	-0.21976
+-1.652454	s'i que
+-1.91215	s'i quer'ia	-0.8258763
+-2.126626	s'i querr'ia
+-1.985751	s'i quiero	-0.1751152
+-2.074424	s'i quisiera	-0.2215095
+-2.185707	s'i reconfirmar
+-2.185707	s'i rep'itame
+-2.126626	s'i s'i
+-1.966149	s'i saber
+-2.099741	s'i saliendo
+-1.966149	s'i salir	-0.1924034
+-1.929414	s'i si
+-2.074424	s'i tambi'en
+-2.185707	s'i yo
+-1.328496	saber </s>
+-1.084781	saber a	-0.3948333
+-2.134002	saber alguno
+-1.624456	saber cu'al
+-2.137871	saber cu'anto
+-1.527108	saber de
+-0.7853823	saber el	-0.8048566
+-2.010423	saber ese
+-2.152094	saber exactamente
+-1.139094	saber horarios	-0.3476486
+-1.133704	saber los	-0.7696475
+-2.067832	saber precio	-0.1924034
+-1.635655	saber precios	-0.03874364
+-1.618963	saber qu'e
+-1.146387	saber si	-0.03933628
+-2.11649	saber son
+-2.038179	saber trenes
+-1.893298	saber un
+-2.067832	saber viaje
+-0.4547033	salamanca </s>
+-1.036399	salamanca ma~nana	-0.1924034
+-1.042699	sale a
+-0.9807784	sale de
+-0.993324	sale el
+-1.143957	sale ese
+-0.947408	salen a
+-1.047869	salen dichos
+-0.9073269	salen el
+-0.8970085	salga de
+-0.9073269	salga el
+-1.033691	salga sobre
+-1.040086	salida de
+-1.233259	salida del	-0.1924034
+-1.252092	salida diecisiete
+-1.263797	salida mi'ercoles	-0.1924034
+-1.24826	salida valencia
+-1.127897	saliendo de
+-0.5054938	saliendo el
+-1.343397	saliendo hoy
+-1.280334	saliendo un
+-0.8031383	saliera a
+-0.8679892	saliera este
+-0.9024685	salir </s>
+-1.556738	salir a
+-1.844444	salir cinco
+-1.762092	salir desde
+-0.448112	salir el	-0.1241843
+-1.282651	salir en	-0.1924033
+-1.853608	salir entre
+-1.853608	salir hoy
+-1.674116	salir por
+-1.809608	salir sobre
+-0.7000313	santander </s>
+-0.8679892	santander saliendo
+-1.268212	se acercara
+-1.26108	se ha
+-0.7477515	se puede	-0.1924034
+-1.268212	se trata
+-1.400954	sea alaris
+-1.34985	sea antes
+-1.395565	sea con
+-1.359601	sea euromed	-0.1924034
+-1.384982	sea m'as
+-1.400954	sea r'apido	-0.1924034
+-1.317349	sea un	-0.1107127
+-0.5721126	sean r'apidos
+-0.9777291	segovia </s>
+-0.7701703	segovia a	-0.1924034
+-1.296615	segovia desde
+-1.116239	segovia el
+-1.221181	segovia para
+-0.7000313	segundo </s>
+-0.8554549	segundo tren
+-0.9036154	seis </s>
+-1.172293	seis cuarenta
+-0.5936424	seis de	-0.1168783
+-0.7254049	semana </s>
+-1.412366	semana despu'es
+-1.151422	semana el
+-1.268143	semana que	-0.4917434
+-1.392148	semana s'abado
+-1.40836	semana siguiente	-0.1924034
+-0.5204459	semana_santa el
+-0.7000313	septiembre </s>
+-0.8343544	septiembre en
+-0.9807784	ser de
+-1.098415	ser en
+-1.140967	ser la
+-1.168654	ser posible	-0.111439
+-1.058213	sevilla </s>
+-1.580617	sevilla con	-0.1924034
+-1.515211	sevilla desde
+-1.239789	sevilla el
+-1.596594	sevilla entre
+-1.013995	sevilla para
+-1.543072	sevilla quiero
+-1.580617	sevilla saliendo
+-1.572844	sevilla tambi'en
+-1.402888	sevilla y
+-1.920644	si compro
+-1.012838	si el
+-0.598368	si es	-0.834166
+-1.825952	si ese
+-1.909128	si fuera
+-1.911605	si hab'ia
+-1.391789	si hay
+-1.409527	si pod'ia
+-1.402363	si puede	-0.1924034
+-1.911605	si puedo
+-1.897817	si se
+-1.897817	si son
+-0.5727373	sido muy
+-0.927459	siete </s>
+-1.620215	siete cu'al
+-0.6003582	siete de	-0.4459859
+-1.614233	siete qu'e
+-1.64495	siete u
+-0.8152606	siete y	-0.1179999
+-0.3067626	siguiente </s>
+-0.9430252	sobre el
+-1.487489	sobre horarios
+-0.5655493	sobre las
+-1.473265	sobre los
+-1.527867	sobre trenes
+-1.468626	sobre un
+-0.5711361	solo se
+-1.057776	son de
+-1.236904	son del
+-1.233557	son euromed
+-0.7434165	son talgo
+-0.5687352	su precio
+-0.8727711	suficiente adi'os
+-0.8648216	suficiente gracias
+-0.3292034	talgo </s>
+-1.548312	talgo me
+-1.604268	talgo mejor
+-1.459696	talgo que
+-1.548312	talgo quer'ia
+-1.553018	talgo si
+-0.4776393	talgos </s>
+-0.6808113	tambi'en </s>
+-1.33773	tambi'en conocer
+-1.100973	tambi'en de
+-1.343004	tambi'en pero
+-1.296615	tambi'en quer'ia
+-0.5469453	tanto para
+-0.922787	tarde </s>
+-1.177958	tarde en
+-1.233259	tarde o
+-1.177958	tarde por
+-1.158909	tarde y
+-1.019942	tardes quer'ia	-0.1924034
+-1.038372	tardes quisiera
+-1.026762	tardes saber
+-1.042699	tarragona a
+-0.993324	tarragona el
+-1.077318	tarragona para
+-1.153055	tarragona sobre
+-0.5469453	tendr'ia que
+-0.7000313	tenga </s>
+-0.8343544	tenga por
+-0.9862985	tengo para
+-0.5089735	tengo que
+-0.8095642	teruel </s>
+-0.947408	teruel a
+-0.9749856	teruel para
+-1.255959	tiene coche
+-1.054499	tiene el	-0.1173241
+-1.267736	tiene literas
+-1.263797	tiene preferente
+-1.152741	tiene que
+-0.5711361	tienen alg'un
+-1.125483	tipo </s>
+-0.196991	tipo de	-0.6954691
+-0.5161824	tipos de
+-0.3255564	todo </s>
+-1.162118	todo gracias	-0.1924033
+-0.7000313	toledo </s>
+-0.7740162	toledo el	-0.1924034
+-0.5161824	total de
+-0.5161824	trata de
+-0.4776393	trayecto </s>
+-0.5530602	trayectos en
+-1.019942	trece antes
+-1.047869	trece minutos
+-1.026762	trece o
+-0.9867213	treinta </s>
+-0.4318269	treinta de	-0.1924034
+-1.237058	treinta si
+-0.9731681	tren </s>
+-2.166524	tren ?
+-1.651775	tren a
+-1.399071	tren alaris	-0.1154437
+-2.18833	tren c'omodo
+-2.106528	tren cu'al
+-0.8773091	tren de	-0.2565115
+-2.021935	tren del
+-1.992229	tren es	-0.1050082
+-2.006828	tren euromed
+-2.08824	tren hay
+-2.18833	tren hotel
+-2.12562	tren intercity
+-2.18833	tren lanzadera
+-2.166524	tren llega
+-1.388218	tren m'as	-0.6958633
+-2.106528	tren madrid
+-2.145591	tren murcia
+-1.499383	tren para
+-1.53797	tren por	-0.1924034
+-2.145591	tren puede
+-0.9262435	tren que	-0.1124973
+-2.145591	tren r'apido	-0.3886788
+-2.166524	tren sea	-0.1431911
+-2.070691	tren talgo
+-0.812183	trenes </s>
+-0.7828213	trenes a	-0.1863988
+-1.916209	trenes con
+-1.209949	trenes de	-0.08022217
+-1.827448	trenes es
+-1.954693	trenes hacia
+-1.954693	trenes llegan
+-1.892261	trenes m'as
+-1.3258	trenes para	-0.08337863
+-1.705729	trenes por
+-1.096524	trenes que	-0.3883502
+-1.944377	trenes r'apidos
+-1.941555	trenes salida
+-1.662465	trenes y
+-0.5657271	tres </s>
+-0.6014636	tres de	-0.1160294
+-0.7000313	turista </s>
+-0.8343544	turista en
+-0.7740162	u el
+-0.8695818	u ocho
+-1.264848	un alaris	-0.115493
+-2.048117	un ave	-0.1924034
+-1.546967	un billete	-0.2698946
+-2.016615	un coche
+-1.990017	un d'ia	-0.1924033
+-2.059716	un error	-0.1924034
+-1.929879	un euromed
+-1.062955	un horario	-0.1706983
+-1.537763	un intercity	-0.2698946
+-1.990017	un precio
+-2.048117	un regional
+-2.003113	un s'abado
+-1.524313	un talgo	-0.1432727
+-0.9223433	un tren	-0.2702623
+-0.8267967	un viaje	-0.6561471
+-0.5711361	una semana
+-0.5161824	uno de
+-0.5721126	vale pues
+-0.9134657	valencia </s>
+-1.057053	valencia a	-0.2044829
+-1.652931	valencia con
+-1.587125	valencia desde
+-1.600911	valencia la
+-1.152998	valencia madrid	-0.09874673
+-1.086026	valencia para	-0.2698946
+-1.090328	valencia y
+-0.8031383	valladolid a
+-0.7740162	valladolid el
+-0.947408	van a	-0.1136094
+-0.8970085	van de
+-1.019942	van desde
+-0.536447	vaya a
+-0.5663476	veamos quiero
+-1.033725	veinte </s>
+-0.5605534	veinte de	-0.5709246
+-1.413111	veinte posibilidad
+-1.413111	veinte vente
+-1.290027	veinte y	-0.1924034
+-0.228106	veinticinco de	-0.1924034
+-0.3438862	veinticuatro de	-0.1452843
+-1.109274	veinticuatro y
+-0.228106	veintid'os de
+-0.5161824	veintinueve de
+-0.5161824	veintiocho de
+-0.5161824	veintis'eis de
+-0.7664014	veintitr'es de	-0.2698946
+-0.8585548	veintitr'es o
+-0.5161824	veintiuno de	-0.1924034
+-0.5161824	vente de
+-1.024755	ver me
+-0.5220132	ver si
+-0.4776393	verdad </s>
+-0.3437695	viajando en
+-0.9848933	viajar a
+-1.764369	viajar desde
+-1.561386	viajar el
+-0.2221505	viajar en	-0.174241
+-1.792499	viajar ma~nana
+-1.188627	viaje </s>
+-0.3075492	viaje de	-0.7440376
+-1.466191	viaje en
+-1.563484	viaje fuera
+-1.545678	viaje valencia
+-0.3260835	viajes de
+-0.9563923	viene </s>
+-1.345931	viene bien
+-1.292112	viene desde
+-1.240439	viene en
+-1.342238	viene mejor
+-1.240439	viene por
+-0.8065625	viernes </s>
+-1.140866	viernes a	-0.1164426
+-1.790102	viernes all'i
+-1.67316	viernes antes
+-1.737551	viernes d'ia
+-1.322876	viernes de
+-1.67316	viernes desde
+-1.24855	viernes o	-0.1924034
+-1.574201	viernes por
+-1.781502	viernes pr'oximo
+-1.177506	viernes que
+-1.779144	viernes treinta
+-0.8095642	vigo </s>
+-0.947408	vigo a
+-0.9073269	vigo el
+-1.063427	volver </s>
+-1.315996	volver a
+-0.9203283	volver el	-0.1177152
+-0.9982214	volver en
+-1.50486	volver o
+-1.550788	volver pasado
+-1.415175	volver por
+-1.559282	volver tarde
+-0.4884457	volviendo el
+-1.044338	volviendo pasado
+-0.8065625	vuelta </s>
+-1.445532	vuelta a
+-1.781502	vuelta cu'antos
+-1.075731	vuelta de	-0.1124213
+-1.67316	vuelta desde
+-1.088889	vuelta el	-0.1924034
+-1.574201	vuelta en
+-1.790102	vuelta huelva
+-1.177506	vuelta para	-0.1002796
+-1.522896	vuelta que
+-1.75785	vuelta saliendo
+-1.781502	vuelta volviendo
+-1.60414	y a
+-2.142725	y cinco
+-1.445119	y de
+-2.097731	y diecisiete
+-2.119646	y dos
+-1.056686	y el	-0.08411729
+-1.522783	y en
+-1.68842	y llegada	-0.1924034
+-1.402211	y llegar	-0.09521873
+-1.870124	y los
+-1.953573	y me
+-2.076869	y precio
+-1.712655	y que
+-2.019698	y quiero
+-2.192704	y regresar
+-1.624888	y salir	-0.1924034
+-2.142725	y se
+-1.369044	y si	-0.09957653
+-2.097731	y tambi'en
+-2.172538	y trece
+-2.1671	y tres
+-1.857651	y un
+-2.192704	y vaya
+-2.142725	y veinte	-0.09727201
+-2.192704	y veintiuno	-0.1924034
+-1.610733	y viajar	-0.1924033
+-1.211564	y volver	-0.07493377
+-1.68842	y volviendo
+-2.1671	y vuelta	-0.1186894
+-2.172538	y zona
+-1.374185	ya es
+-0.4120455	ya est'a	-0.4617801
+-1.370729	ya quer'ia
+-1.38118	ya salir
+-0.5663476	yo quiero
+-0.6149756	zaragoza a
+-1.011629	zaragoza el
+-1.169507	zaragoza hasta
+-0.8727711	zona fumador
+-0.8727711	zona fumadores
+
+\3-grams:
+-1.306749	<s> a principios
+-0.7574226	<s> a qu'e
+-0.413873	alicante a valencia
+-0.439797	castell'on a c'adiz
+-0.395247	granada a madrid
+-0.7644826	ir a barcelona
+-0.8722462	ir a toledo
+-0.4208342	llega a las
+-0.6165054	madrid a sevilla
+-0.61914	murcia a albacete
+-0.5927542	s'i a qu'e
+-0.216549	saber a qu'e
+-0.4397584	segovia a cuenca
+-0.6585314	trenes a barcelona
+-0.65877	trenes a sevilla
+-1.052185	valencia a alicante
+-1.157735	valencia a barcelona
+-1.448073	valencia a c'aceres
+-0.7307709	valencia a madrid
+-1.444942	valencia a murcia
+-1.400397	valencia a salamanca
+-1.131735	valencia a teruel
+-0.9037766	van a c'adiz
+-0.7819287	van a madrid
+-0.5841955	viernes a partir
+-0.2033561	de abril </s>
+-1.068594	de abril y
+-0.5277403	de agosto </s>
+-0.9840388	de agosto a
+-0.2870679	en agosto </s>
+-0.5666991	tren alaris si
+-0.567534	un alaris o
+-0.2428439	a albacete </s>
+-0.485768	a alicante </s>
+-0.9444389	a alicante para
+-0.3959607	de alicante a
+-0.04592482	llegaban antes de
+-0.04592482	llegar antes de
+-0.02824243	llegue antes de
+-0.215071	s'i as'i es
+-0.1708606	un ave </s>
+-0.2656968	m'as barato </s>
+-0.6535957	a barcelona </s>
+-0.7381623	a barcelona el
+-1.198264	a barcelona en
+-0.9694521	a barcelona para
+-0.3135481	de barcelona a
+-0.3548708	desde barcelona </s>
+-0.4980976	del billete </s>
+-0.2908846	un billete de
+-0.3732097	<s> buenas quer'ia
+-0.6495389	hola buenas querr'ia
+-0.5505514	hola buenas tardes
+-0.153915	<s> buenos d'ias
+-0.04073065	hola buenos d'ias
+-0.5876459	a c'adiz el
+-0.6158386	a c'adiz los
+-0.3424836	a c'ordoba para
+-0.06351215	coche cama </s>
+-0.456362	a castell'on </s>
+-0.3898313	de castell'on a
+-0.1163699	d'ia cinco de
+-0.1071129	las cinco de
+-0.5260111	en clase turista
+-0.1226184	en coche cama
+-0.3436274	sevilla con salida
+-0.2923315	quiero conocer el
+-0.3316627	querr'ia conseguir el
+-0.2606008	de cualquier tipo
+-0.6663721	las cuatro </s>
+-0.3181017	las cuatro de
+-0.424005	a cuenca el
+-1.323169	el d'ia cinco
+-1.326126	el d'ia diecis'eis
+-1.318347	el d'ia diecisiete
+-1.561226	el d'ia nueve
+-1.315956	el d'ia siete
+-1.561226	el d'ia treinta
+-1.113922	el d'ia veinte
+-0.9754722	el d'ia veintitr'es
+-0.2980972	mismo d'ia </s>
+-0.4511649	s'abado d'ia catorce
+-0.4375295	un d'ia laborable
+-0.4553667	buenos d'ias me
+-0.5629907	buenos d'ias quer'ia
+-0.6629073	los d'ias diecinueve
+-0.9187937	los d'ias diecis'eis
+-0.9174986	los d'ias veinte
+-0.03990236	antes de las
+-0.6077904	billete de ida
+-1.128783	cinco de diciembre
+-0.3128511	cinco de la
+-0.4181702	cu'al de los
+-0.1925431	cuatro de la
+-0.4265219	diecinueve de marzo
+-0.619744	diecis'eis de octubre
+-0.1999702	diecisiete de agosto
+-0.385813	diez de la
+-0.2231608	fin de semana
+-1.121241	horario de los
+-1.231002	horario de salida
+-0.7095599	horario de trenes
+-0.9212056	horario de un
+-0.6175163	horarios de los
+-0.4057068	horarios de trenes
+-1.538177	horarios de un
+-1.312039	horarios de vuelta
+-0.917634	ida de granada
+-0.7957813	ida de valencia
+-1.339315	ir de castell'on
+-1.225749	ir de madrid
+-0.3704385	ir de valencia
+-0.3672993	jueves de la
+-0.3672993	laborable de la
+-0.3550898	nueve de abril
+-1.034506	nueve de septiembre
+-0.4162326	ocho de abril
+-0.5057292	once de la
+-0.1327402	partir de las
+-1.264002	precio de ese
+-1.253949	precio de ida
+-1.044121	precio de la
+-1.190732	precio de los
+-0.3664488	precio de un
+-1.013393	precios de estos
+-0.9501287	precios de los
+-0.7300431	precios de trenes
+-0.4265219	principios de junio
+-0.5922362	seis de enero
+-0.7732636	siete de abril
+-0.2778634	siete de la
+-0.0946664	tipo de tren
+-0.7087018	treinta de enero
+-0.7087018	treinta de mayo
+-0.877586	tren de la
+-0.4136448	tren de las
+-1.039787	trenes de murcia
+-0.883374	trenes de valencia
+-0.5768054	tres de abril
+-0.1295234	veinte de abril
+-0.7087018	veinticinco de junio
+-0.7087018	veinticinco de marzo
+-0.8316223	veinticuatro de diciembre
+-0.7956706	veinticuatro de mayo
+-0.3284027	veintitr'es de agosto
+-0.4412551	veintiuno de febrero
+-0.1819371	viaje de ida
+-1.400818	viaje de valencia
+-0.8569664	viaje de vuelta
+-0.8488514	vuelta de madrid
+-0.7957813	vuelta de valencia
+-0.3726299	podr'ia decir el
+-1.105273	precio del billete
+-1.045814	precio del segundo
+-0.3736035	precio del tren
+-1.256468	precio del viaje
+-0.383653	salida del tren
+-0.335718	ir desde valencia
+-0.3694051	<s> desear'ia saber
+-0.6618528	s'i deseo que
+-0.4651147	con destino a
+-0.2583613	me dices el
+-0.3349608	de diciembre </s>
+-0.3016669	d'ias diecinueve y
+-0.4058076	las diecinueve horas
+-0.2749628	d'ia diecis'eis de
+-0.09467877	d'ia diecisiete de
+-0.1448665	las diez de
+-0.8648416	<s> el d'ia
+-1.326469	<s> el jueves
+-0.9246416	<s> el pr'oximo
+-1.024583	<s> el precio
+-1.285477	<s> el viernes
+-0.6884985	barcelona el pr'oximo
+-0.3625041	c'adiz el d'ia
+-0.2812427	conocer el precio
+-0.3754607	conseguir el precio
+-0.278602	cuenca el d'ia
+-0.7906451	decir el horario
+-0.4751722	decir el precio
+-0.3754607	dices el precio
+-0.7378263	en el mismo
+-0.6886804	en el tren
+-0.2812427	es el precio
+-0.7876227	llegar el pr'oximo
+-0.9074566	llegar el viernes
+-0.8513082	o el nueve
+-0.8534971	obtener el horario
+-0.7383958	obtener el precio
+-0.8815384	obtener el tipo
+-0.6081933	para el d'ia
+-0.6314332	para el pr'oximo
+-1.4626	para el viaje
+-0.2363799	que el tren
+-0.3754607	quiero el precio
+-0.5668879	s'i el d'ia
+-0.8963436	s'i el tren
+-0.7246956	saber el horario
+-0.2014361	saber el precio
+-1.306389	saber el tipo
+-0.7799444	salir el d'ia
+-1.199419	salir el jueves
+-0.8266715	salir el pr'oximo
+-1.282915	salir el siete
+-0.6007406	tiene el primer
+-0.3804311	toledo el pr'oximo
+-0.6084439	volver el lunes
+-0.3625041	vuelta el d'ia
+-0.7177063	y el tipo
+-0.4411655	barcelona en agosto
+-0.4146316	ir en un
+-0.3010752	mayo en un
+-0.3010752	salir en un
+-1.232625	viajar en clase
+-0.7675173	viajar en talgo
+-0.5570137	viajar en un
+-0.2590265	de enero </s>
+-0.2749746	un error no
+-0.2470223	as'i es </s>
+-0.361793	cu'al es el
+-0.2437558	eso es todo
+-0.06526976	si es posible
+-0.4366513	tren es </s>
+-0.7093899	de ese talgo
+-0.638619	de ese tren
+-0.3885201	llega ese tren
+-0.1132249	gracias eso es
+-0.139258	no eso es
+-0.8828529	ya est'a gracias
+-0.3807366	ya est'a muchas
+-0.6952813	ya est'a todo
+-0.1928082	del euromed </s>
+-0.4694406	en euromed </s>
+-0.8772492	en euromed si
+-0.2681483	primer euromed </s>
+-0.2430125	sea euromed </s>
+-0.1959814	por favor </s>
+-0.47436	de febrero por
+-0.1427472	pr'oximo fin de
+-0.3666223	que fuera un
+-0.1593475	est'a gracias </s>
+-0.02956633	m'as gracias </s>
+-0.06360036	muchas gracias </s>
+-1.3571	muchas gracias eso
+-0.06867936	no gracias </s>
+-1.231412	no gracias ya
+-0.1986808	todo gracias </s>
+-0.3661439	de granada a
+-1.404192	me gustar'ia conocer
+-1.399253	me gustar'ia ir
+-1.608539	me gustar'ia obtener
+-1.614451	me gustar'ia preguntar
+-0.8762224	me gustar'ia que
+-0.4022652	me gustar'ia saber
+-1.392753	me gustar'ia salir
+-1.200636	me gustar'ia viajar
+-0.3967057	s'i ha habido
+-0.271084	ha habido un
+-0.3811858	le'on hasta vigo
+-0.7331686	<s> hola buenas
+-0.6159675	<s> hola buenos
+-0.7297436	<s> hola quer'ia
+-1.0505	<s> hola quiero
+-1.053054	<s> hola quisiera
+-0.356721	s'i hola buenos
+-0.486661	la hora de
+-0.3852798	qu'e hora llega
+-0.8567832	qu'e hora sale
+-0.3112463	el horario de
+-0.8517776	el horario del
+-0.7979512	el horario para
+-0.5668064	un horario de
+-0.547977	un horario para
+-0.1917167	los horarios de
+-1.557199	los horarios del
+-0.6845338	los horarios para
+-0.286164	obtener horarios para
+-0.3221012	quisiera horarios de
+-0.6448274	saber horarios de
+-0.2705895	saber horarios para
+-0.1259124	diecinueve horas </s>
+-1.215875	de ida </s>
+-0.6712669	de ida de
+-1.343151	de ida desde
+-0.3294044	de ida y
+-0.1534143	quer'ia informaci'on sobre
+-0.1116311	un intercity </s>
+-0.4296744	gustar'ia ir de
+-0.4006912	para ir a
+-0.3675774	para ir de
+-1.424741	para ir desde
+-0.4630743	quiero ir a
+-0.5069184	quiero ir de
+-0.2232381	quisiera ir a
+-0.7544952	el jueves </s>
+-0.8037138	el jueves de
+-0.2428439	de julio </s>
+-0.0724071	de junio </s>
+-0.5076362	de la ma~nana
+-1.532195	de la noche
+-1.022465	de la semana
+-0.4949283	de la tarde
+-1.163924	de la vuelta
+-0.4329543	por la ma~nana
+-1.002475	por la noche
+-0.4252189	por la tarde
+-0.2568593	d'ia laborable de
+-0.8262988	a las diez
+-0.7508149	a las siete
+-0.8736013	de las cinco
+-0.8164312	de las cuatro
+-1.512132	de las diecinueve
+-1.517545	de las doce
+-0.9229248	de las once
+-1.517545	de las seis
+-1.063428	de las siete
+-1.517545	de las tres
+-0.3811858	desde le'on hasta
+-0.7077317	hora llega </s>
+-0.7546362	hora llega el
+-0.8045725	hora llega ese
+-0.3898313	que llega a
+-0.2728952	que llegaban antes
+-0.3661439	y llegada a
+-0.4032807	para llegar a
+-0.5960039	para llegar el
+-0.3631538	quiero llegar el
+-0.3631538	y llegar el
+-0.2656648	que llegue antes
+-0.3713941	c'adiz los d'ias
+-1.395809	de los dos
+-0.1427279	de los trenes
+-0.2847132	para los d'ias
+-0.1773726	saber los horarios
+-1.109993	saber los precios
+-1.641022	saber los que
+-0.7928009	saber los trenes
+-0.4131231	el lunes siguiente
+-0.4377618	el m'as r'apido
+-0.3182462	es m'as r'apido
+-0.2457861	nada m'as gracias
+-0.530295	nada m'as muchas
+-0.0869781	tren m'as barato
+-0.2280436	a madrid </s>
+-1.075318	a madrid el
+-0.1643333	de madrid a
+-0.3862298	valencia madrid </s>
+-0.7093486	el martes por
+-0.7036175	el martes que
+-0.3758679	de marzo </s>
+-0.8106948	de marzo por
+-0.3758679	de mayo </s>
+-0.8106948	de mayo en
+-0.3796574	<s> ma~nana </s>
+-0.5596885	<s> ma~nana por
+-0.2706903	la ma~nana </s>
+-1.425943	la ma~nana es
+-1.425943	la ma~nana si
+-1.164164	la ma~nana y
+-0.1871429	pasado ma~nana </s>
+-0.2354275	salamanca ma~nana </s>
+-0.1279119	<s> me gustar'ia
+-1.206079	<s> me podr'ia
+-0.1003659	d'ias me gustar'ia
+-1.106679	que me digas
+-0.1390823	s'i me gustar'ia
+-1.362074	s'i me podr'ia
+-1.362937	s'i me puedes
+-0.2601777	salida mi'ercoles siete
+-0.2162117	el mismo d'ia
+-0.03342111	est'a muchas gracias
+-0.02910009	m'as muchas gracias
+-0.01269329	no muchas gracias
+-0.3319154	de murcia a
+-0.06088344	<s> nada m'as
+-0.08542671	no nada m'as
+-0.6707429	<s> no </s>
+-1.938978	<s> no eso
+-0.6205967	<s> no gracias
+-0.6931004	<s> no muchas
+-1.205341	<s> no nada
+-1.29494	<s> no quiero
+-1.203622	<s> no ya
+-0.4083679	error no quiero
+-0.6837406	la noche </s>
+-0.7643894	la noche por
+-0.2428439	de noviembre </s>
+-0.3584532	d'ia nueve </s>
+-0.08172472	el nueve de
+-0.4237826	alaris o un
+-0.2421277	ocho o el
+-0.4278214	viernes o s'abado
+-0.520304	quer'ia obtener un
+-0.1824384	quisiera obtener el
+-0.5668561	el ocho o
+-0.2428439	de octubre </s>
+-0.6482521	las once </s>
+-0.5089435	las once de
+-0.2752352	hay otro tipo
+-0.3973273	barcelona para el
+-0.6890507	horario para un
+-0.822978	horarios para el
+-0.2521827	horarios para ir
+-1.3762	horarios para viajar
+-0.4963707	precio para ir
+-0.2880768	precios para el
+-0.2259413	s'i para el
+-0.5609023	trenes para ir
+-0.2259413	valencia para el
+-0.3973273	vuelta para el
+-0.08977847	a partir de
+-0.1507008	me podr'ia decir
+-0.3186009	<s> por favor
+-0.3186009	febrero por favor
+-0.1448073	martes por la
+-0.1448073	marzo por la
+-0.08507676	ma~nana por la
+-0.3186009	noche por favor
+-0.1175913	s'abado por la
+-0.2908074	s'i por favor
+-0.1448073	tren por la
+-0.357733	es posible </s>
+-0.9462603	es posible que
+-0.5072662	ser posible en
+-1.006738	el pr'oximo fin
+-1.436093	el pr'oximo lunes
+-0.4930396	el pr'oximo s'abado
+-0.6773143	el pr'oximo viernes
+-1.161876	el precio </s>
+-1.81517	el precio billete
+-0.3789995	el precio de
+-0.5385861	el precio del
+-1.534674	el precio para
+-1.790492	el precio tren
+-1.744983	el precio y
+-0.3258588	qu'e precio tiene
+-0.3046727	saber precio </s>
+-0.1814949	los precios de
+-0.5118219	saber precios de
+-0.291741	el primer euromed
+-0.2978785	ese primer tren
+-0.3961532	a primera hora
+-0.2124564	en primera </s>
+-0.2568593	a principios de
+-0.3934351	se puede viajar
+-0.3003013	si puede ser
+-0.2167833	me puedes decir
+-0.9012976	<s> pues el
+-0.9867113	<s> pues s'i
+-0.5154406	<s> qu'e precio
+-0.0665083	a qu'e hora
+-0.3879355	deseo que el
+-0.6057318	euromed que tenga
+-0.6677038	gustar'ia que fuera
+-0.7991256	gustar'ia que me
+-0.4427267	los que llegaban
+-0.4144495	martes que viene
+-0.3975289	quiero que me
+-0.4256832	quisiera que fuera
+-0.1603077	semana que viene
+-1.202407	tren que llega
+-1.062628	tren que llegue
+-0.925331	tren que sale
+-1.188624	trenes que salen
+-0.272466	trenes que van
+-1.439689	<s> quer'ia obtener
+-0.1362094	<s> quer'ia saber
+-1.434571	<s> quer'ia salir
+-0.6615427	buenas quer'ia obtener
+-0.7862885	d'ias quer'ia informaci'on
+-0.1470442	hola quer'ia saber
+-0.05085469	s'i quer'ia saber
+-0.2799735	tardes quer'ia saber
+-1.260397	<s> quiero conocer
+-1.153682	<s> quiero ir
+-0.419867	<s> quiero saber
+-0.8341553	<s> quiero salir
+-0.4129388	no quiero saber
+-0.9558643	s'i quiero ir
+-1.085429	s'i quiero que
+-0.5640406	s'i quiero saber
+-1.106001	s'i quiero viajar
+-0.890861	<s> quisiera horarios
+-1.370658	<s> quisiera llegar
+-0.5091012	<s> quisiera saber
+-0.211	hola quisiera ir
+-1.190135	s'i quisiera que
+-0.448401	s'i quisiera saber
+-1.129052	s'i quisiera salir
+-0.4224918	m'as r'apido </s>
+-0.2360518	sea r'apido </s>
+-0.178086	tren r'apido </s>
+-1.062963	tren r'apido que
+-0.668328	el s'abado d'ia
+-0.8714702	el s'abado tres
+-0.2356717	o s'abado </s>
+-0.2304445	pr'oximo s'abado </s>
+-0.9722498	pr'oximo s'abado por
+-0.554707	<s> s'i </s>
+-1.880824	<s> s'i a
+-2.307129	<s> s'i ahora
+-2.085566	<s> s'i as'i
+-2.271614	<s> s'i cu'al
+-1.879619	<s> s'i deseo
+-1.456115	<s> s'i el
+-1.964887	<s> s'i en
+-2.215586	<s> s'i es
+-2.289045	<s> s'i ha
+-2.299992	<s> s'i hola
+-2.186542	<s> s'i horarios
+-1.047171	<s> s'i me
+-1.932405	<s> s'i para
+-1.453059	<s> s'i por
+-1.932405	<s> s'i que
+-0.8073899	<s> s'i quer'ia
+-1.170121	<s> s'i quiero
+-1.205579	<s> s'i quisiera
+-2.280242	<s> s'i saliendo
+-2.23087	<s> s'i salir
+-1.395707	gustar'ia saber cu'anto
+-0.350791	gustar'ia saber el
+-0.6905762	gustar'ia saber los
+-0.4541556	quer'ia saber el
+-1.63892	quer'ia saber horarios
+-0.3693191	quer'ia saber los
+-1.198876	quer'ia saber si
+-0.459645	querr'ia saber el
+-0.2982556	quiero saber el
+-0.8582407	quiero saber horarios
+-1.431612	quiero saber precio
+-1.376642	quiero saber precios
+-0.5850337	quisiera saber el
+-0.8577116	quisiera saber horarios
+-0.9515662	quisiera saber precios
+-0.3932715	a salamanca </s>
+-0.6234204	a salamanca ma~nana
+-0.5146032	hora sale el
+-0.5249779	que sale a
+-0.5040931	que salen a
+-0.5612415	con salida mi'ercoles
+-0.5571107	de salida del
+-0.6057737	deseo salir hoy
+-0.3239425	gustar'ia salir el
+-0.3787248	quer'ia salir el
+-0.9541162	quiero salir desde
+-0.2804464	quiero salir el
+-0.2315661	s'i salir el
+-0.2315661	y salir el
+-0.3349608	a santander </s>
+-0.5132752	que sea un
+-0.765169	tren sea euromed
+-0.7717795	tren sea r'apido
+-0.7237129	a segovia </s>
+-0.8161288	a segovia desde
+-0.3349608	del segundo </s>
+-0.2826846	el seis de
+-0.5153556	de semana </s>
+-0.2955202	la semana que
+-0.9265966	la semana siguiente
+-0.4311359	de septiembre </s>
+-0.301667	a ser posible
+-0.5356066	puede ser en
+-0.6563381	a sevilla </s>
+-1.179454	a sevilla con
+-0.8790707	a sevilla el
+-0.284162	alaris si es
+-0.284162	euromed si es
+-0.284162	ma~nana si es
+-1.008104	saber si se
+-0.3921488	y si es
+-0.5958743	el siete u
+-0.1795069	las siete de
+-0.3929664	mi'ercoles siete de
+-0.1379301	lunes siguiente </s>
+-0.1708606	semana siguiente </s>
+-0.7014601	informaci'on sobre trenes
+-0.1584301	en talgo </s>
+-0.1812537	ese talgo </s>
+-0.2090674	un talgo </s>
+-0.07921126	la tarde </s>
+-0.6143055	buenas tardes quer'ia
+-0.4311359	que tenga </s>
+-0.3224814	a teruel </s>
+-0.2922432	precio tiene el
+-0.1812281	cualquier tipo de
+-0.02932455	el tipo de
+-0.1158519	otro tipo de
+-0.06900489	qu'e tipo de
+-0.2585571	es todo </s>
+-0.7374661	es todo gracias
+-0.1037475	est'a todo </s>
+-0.5127778	a toledo </s>
+-0.542128	a toledo el
+-0.3157735	el treinta de
+-0.7525209	de tren </s>
+-0.9692633	de tren de
+-1.125422	de tren es
+-1.395852	de tren hay
+-1.276782	de tren para
+-0.7367308	de tren que
+-0.9032685	del tren de
+-0.5192564	del tren m'as
+-0.7593295	del tren que
+-0.8986542	el tren de
+-1.113362	el tren m'as
+-0.5778797	el tren sea
+-0.1938315	ese tren </s>
+-1.063984	un tren que
+-0.3521916	un tren r'apido
+-0.5832341	de trenes a
+-1.431001	de trenes con
+-0.7518775	de trenes de
+-0.6632975	de trenes para
+-0.7730983	los trenes a
+-1.072662	los trenes de
+-0.4021173	los trenes que
+-0.2737304	las tres </s>
+-0.2851237	s'abado tres de
+-1.352546	de un billete
+-0.6846399	de un tren
+-0.2349943	de un viaje
+-1.34044	en un d'ia
+-1.035894	en un talgo
+-0.2716511	en un tren
+-0.732919	fuera un ave
+-0.4394897	habido un error
+-0.4242089	o un intercity
+-0.2930216	obtener un horario
+-0.2652977	para un viaje
+-0.4979872	sea un tren
+-0.7359913	a valencia </s>
+-0.8041892	a valencia para
+-0.05291164	de valencia a
+-0.6698983	desde valencia </s>
+-0.4834823	desde valencia a
+-0.3946381	el valencia madrid
+-0.2283721	que van a
+-0.4394404	d'ia veinte de
+-0.4080041	d'ias veinte y
+-0.2720277	el veinte de
+-0.3761918	y veinte de
+-0.1321481	el veinticinco de
+-0.2154409	el veinticuatro de
+-0.4238061	d'ia veintitr'es de
+-0.6509698	d'ia veintitr'es o
+-0.2568593	y veintiuno de
+-0.2355886	gustar'ia viajar en
+-0.129072	puede viajar en
+-0.6100611	quiero viajar a
+-0.7064546	quiero viajar el
+-0.129072	y viajar en
+-0.1382164	del viaje de
+-0.2484262	el viaje de
+-0.05159053	un viaje de
+-0.2731028	que viene </s>
+-0.7066357	el viernes </s>
+-0.4661517	este viernes </s>
+-0.6853423	pr'oximo viernes </s>
+-0.8225269	pr'oximo viernes a
+-0.3396498	hasta vigo </s>
+-0.5857397	y volver el
+-0.755874	de vuelta </s>
+-0.8946148	de vuelta de
+-0.9363329	de vuelta para
+-0.4881503	la vuelta </s>
+-0.8687739	la vuelta en
+-0.8073074	y vuelta </s>
+-0.5751547	y vuelta de
+-0.3309577	diecinueve y veinte
+-0.1058573	ida y vuelta
+-0.6142015	siete y tres
+-0.4412568	veinte y veintiuno
+-0.1733835	<s> ya est'a
+-0.1231317	gracias ya est'a
+-0.12217	no ya est'a
+-0.2892666	de zaragoza a
+
+\end\

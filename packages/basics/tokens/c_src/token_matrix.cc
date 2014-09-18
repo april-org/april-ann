@@ -20,4 +20,6 @@
  */
 #include "token_matrix.h"
 
-template class TokenMatrix<float>;
+namespace Basics {
+  template class TokenMatrix<float>;
+}

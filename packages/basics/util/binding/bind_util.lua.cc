@@ -23,18 +23,22 @@
 #include <cmath>
 #include <cstring>
 #include <csignal>
-#include <errno.h>
-#include <stdio.h>
+#include <cerrno>
+#include <cstdio>
+extern "C" {
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+}
 #ifndef NO_OMP
 #include <omp.h>
 #endif
 #include "binarizer.h"
 #include "error_print.h"
+#include "generic_options.h"
 #include "omp_utils.h"
+#include "smart_ptr.h"
 
 // COPIED FROM liolib.c:168
 static int io_fclose (lua_State *L) {
@@ -51,13 +55,12 @@ FILE **newfile (lua_State *L) {
   luaL_setmetatable(L, LUA_FILEHANDLE);
   return &p->f;
 }
-
 //BIND_END
 
 //BIND_HEADER_H
 #include "mfset.h"
 #include "trie_vector.h"
-#include "trie4lua.h"
+#include "trie_hash_4_lua.h"
 #include "stopwatch.h"
 #include "linear_least_squares.h"
 #include "words_table.h"
@@ -68,7 +71,7 @@ FILE **newfile (lua_State *L) {
 #include <cstdlib>
 #include "mmapped_data.h"
 
-using namespace april_utils;
+using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
 
@@ -113,7 +116,7 @@ extern const char *__COMMIT_NUMBER__;
 
 //BIND_FUNCTION util.omp_get_num_threads
 {
-  LUABIND_RETURN(int, omp_utils::get_num_threads());
+  LUABIND_RETURN(int, OMPUtils::get_num_threads());
 }
 //BIND_END
 
@@ -370,22 +373,22 @@ extern const char *__COMMIT_NUMBER__;
 
 /////////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME Trie4lua util.trie
-//BIND_CPP_CLASS    Trie4lua
+//BIND_LUACLASSNAME TrieHash4Lua util.trie_hash
+//BIND_CPP_CLASS    TrieHash4Lua
 
-//BIND_CONSTRUCTOR Trie4lua
+//BIND_CONSTRUCTOR TrieHash4Lua
 {
-  LUABIND_RETURN(Trie4lua, new Trie4lua());
+  LUABIND_RETURN(TrieHash4Lua, new TrieHash4Lua());
 }
 //BIND_END
 
-//BIND_METHOD Trie4lua reserveId
+//BIND_METHOD TrieHash4Lua reserveId
 {
   LUABIND_RETURN(int, obj->reserveId());
 }
 //BIND_END
 
-//BIND_METHOD Trie4lua find
+//BIND_METHOD TrieHash4Lua find
 {
   int *sequence, length;
   LUABIND_TABLE_GETN(1, length);
@@ -507,7 +510,7 @@ extern const char *__COMMIT_NUMBER__;
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(stopwatch, new april_utils::stopwatch());
+  LUABIND_RETURN(stopwatch, new AprilUtils::stopwatch());
 }
 //BIND_END
 
@@ -575,7 +578,7 @@ extern const char *__COMMIT_NUMBER__;
 //BIND_METHOD stopwatch clone
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(stopwatch, new april_utils::stopwatch(*obj));
+  LUABIND_RETURN(stopwatch, new AprilUtils::stopwatch(*obj));
 }
 //BIND_END
 
@@ -592,7 +595,10 @@ extern const char *__COMMIT_NUMBER__;
   struct timespec req;
   req.tv_sec  = static_cast<time_t>(seconds);
   req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
-  nanosleep(&req, 0);
+  if (nanosleep(&req, 0) == 1) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, strerror(errno));
+  }
 }
 //BIND_END
 
@@ -820,5 +826,50 @@ extern const char *__COMMIT_NUMBER__;
   double a;
   LUABIND_GET_PARAMETER(1,double,a);
   LUABIND_RETURN(double,log1p(a));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION util.options.test
+{
+  AprilUtils::SharedPtr<stopwatch> clock = new stopwatch();
+  // stack: nil
+  lua_newtable(L);
+  // stack: table
+  lua_pushstopwatch(L, clock.get());
+  // stack: table stopwatch
+  lua_setfield(L,-2,"clock1");
+  // stack: table
+  AprilUtils::UniquePtr<AprilUtils::LuaTableOptions>
+    opt(new AprilUtils::LuaTableOptions(L,1));
+  opt->putReferenced("clock2", clock.get());
+  //
+  stopwatch *opt_clock1 = opt->getReferenced<stopwatch>("clock1");
+  stopwatch *opt_clock2 = opt->getReferenced<stopwatch>("clock2");
+  // stack: table
+  lua_getfield(L,-1,"clock1");
+  // stack: table stopwatch
+  stopwatch *tbl_clock1 = lua_tostopwatch(L,-1);
+  // stack: table stopwatch
+  lua_pop(L,1);
+  // stack: table
+  lua_getfield(L,-1,"clock2");
+  if (lua_type(L,-1) != LUA_TUSERDATA) LUABIND_ERROR("TEST 1 FAILED\n");
+  // stack: table stopwatch
+  Referenced **pre_obj = static_cast<Referenced**>(lua_touserdata(L,-1));
+  Referenced *obj = 0;
+  if (pre_obj != 0) obj = (*pre_obj);
+  else LUABIND_ERROR("TEST 2 FAILED\n");
+  stopwatch *tbl_clock2 = dynamic_cast<stopwatch*>(obj);
+  if (tbl_clock2 == 0) LUABIND_ERROR("TEST 3 FAILED\n");
+  // stack: table stopwatch
+  lua_pop(L,1);
+  // stack: table
+  if (opt_clock1 != tbl_clock1) LUABIND_ERROR("TEST 1 FAILED\n");
+  if (opt_clock2 != tbl_clock2) LUABIND_ERROR("TEST 2 FAILED\n");
+  //
+  opt->putString("str", "Hello world!");
+  return 1; // returns the table
 }
 //BIND_END

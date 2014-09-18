@@ -21,50 +21,58 @@
  */
 //BIND_HEADER_C
 #include <cmath>
-#include "fmeasure.h"
+#include "bind_function_interface.h"
 #include "bind_mtrand.h"
-#include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
 #include "bind_tokens.h"
-#include "bind_function_interface.h"
+#include "fmeasure.h"
+#include "matrix_operations.h"
+#include "MersenneTwister.h"
 
-int dataset_iterator_function(lua_State *L) {
-  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
-  // el estado invariante (en este caso el dataset) y _var es var_1 de
-  // iteracion anterior (en este caso el indice)
-  DataSetFloat *obj = lua_toDataSetFloat(L,1);
-  int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
-  if (index > obj->numPatterns()) {
-    lua_pushnil(L); return 1;
-  }
-  lua_pushnumber(L,index);
-  int ps = obj->patternSize();
-  float *buff = new float[ps];
-  obj->getPattern(index-1,buff); // ojito que le RESTAMOS uno
-  lua_newtable(L);
-  for (int i=0; i < ps; i++) {
-    lua_pushnumber(L,buff[i]);
-    lua_rawseti(L,-2,i+1);
-  }
-  delete[] buff;
-  return 2;
-}
+using AprilUtils::constString;
+using namespace AprilMath::MatrixExt::Operations;
 
-int datasetToken_iterator_function(lua_State *L) {
-  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
-  // el estado invariante (en este caso el dataset) y _var es var_1 de
-  // iteracion anterior (en este caso el indice)
-  DataSetToken *obj = lua_toDataSetToken(L,1);
-  int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
-  if (index > obj->numPatterns()) {
-    lua_pushnil(L); return 1;
+namespace Basics {
+
+  int dataset_iterator_function(lua_State *L) {
+    // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
+    // el estado invariante (en este caso el dataset) y _var es var_1 de
+    // iteracion anterior (en este caso el indice)
+    DataSetFloat *obj = lua_toDataSetFloat(L,1);
+    int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
+    if (index > obj->numPatterns()) {
+      lua_pushnil(L); return 1;
+    }
+    lua_pushnumber(L,index);
+    int ps = obj->patternSize();
+    float *buff = new float[ps];
+    obj->getPattern(index-1,buff); // ojito que le RESTAMOS uno
+    lua_newtable(L);
+    for (int i=0; i < ps; i++) {
+      lua_pushnumber(L,buff[i]);
+      lua_rawseti(L,-2,i+1);
+    }
+    delete[] buff;
+    return 2;
   }
-  lua_pushnumber(L,index);
-  int ps = obj->patternSize();
-  Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
-  lua_pushToken(L,tk);
-  return 2;
-}
+
+  int datasetToken_iterator_function(lua_State *L) {
+    // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
+    // el estado invariante (en este caso el dataset) y _var es var_1 de
+    // iteracion anterior (en este caso el indice)
+    DataSetToken *obj = lua_toDataSetToken(L,1);
+    int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
+    if (index > obj->numPatterns()) {
+      lua_pushnil(L); return 1;
+    }
+    lua_pushnumber(L,index);
+    int ps = obj->patternSize();
+    Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
+    lua_pushToken(L,tk);
+    return 2;
+  }
+
+} // namespace Basics
 
 bool lua_isAuxDataSetToken(lua_State *L, int n) {
   return lua_isDataSetFloat(L,n) || lua_isDataSetToken(L,n);
@@ -91,6 +99,8 @@ DataSetToken *lua_toAuxDataSetToken(lua_State *L, int n) {
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
 #include "datasetToken.h"
+
+using namespace Basics;
 //BIND_END
 
 //BIND_LUACLASSNAME LinearCombConfFloat dataset.linear_comb_conf
@@ -795,7 +805,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   float  *patt = new float[psize];
   int histogramlength = 1 << psize;
   MatrixFloat* mat = new MatrixFloat(1,&histogramlength);
-  mat->zeros();
+  matZeros(mat);
   for (int i=1; i < npatt; i++) {
     obj->getPattern(i,patt);
     int index = 0;

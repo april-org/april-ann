@@ -36,7 +36,7 @@ namespace ANN {
   class MaxPoolingANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(MaxPoolingANNComponent);
     
-    Int32GPUMirroredMemoryBlock *argmax_raw_pos;
+    AprilMath::Int32GPUMirroredMemoryBlock *argmax_raw_pos;
     
     // parameters of the convolution
     
@@ -73,13 +73,13 @@ namespace ANN {
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
     
-    MatrixFloat *getRewrappedMatrix(MatrixFloat *w,
-				    const int *rewrap_size,
-				    const int N) const {
-      MatrixFloat *w_flattened;
+    Basics::MatrixFloat *getRewrappedMatrix(Basics::MatrixFloat *w,
+                                            const int *rewrap_size,
+                                            const int N) const {
+      Basics::MatrixFloat *w_flattened;
       if (w->getIsContiguous()) w_flattened = w->rewrap(rewrap_size, N);
       else {
-	MatrixFloat *w_clone = w->clone();
+	Basics::MatrixFloat *w_clone = w->clone();
 	IncRef(w_clone);
 	w_flattened = w_clone->rewrap(rewrap_size, N);
 	DecRef(w_clone);
@@ -89,24 +89,27 @@ namespace ANN {
     
     void initializeArrays(const int *input_dims);
 
-    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
-                                          bool during_training);
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat* input,
+                                                  bool during_training);
+    virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
-
+    
   public:
     MaxPoolingANNComponent(int input_num_dims,
 			   const int *_kernel_dims, // input_num_dims
 			   const int *_kernel_step,
 			   const char *name=0);
     virtual ~MaxPoolingANNComponent();
-    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
-				      vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
+				      AprilUtils::vector<unsigned int> &output_size) {
       output_size.clear();
       for (int i=1; i<=input_num_dims; ++i) {
-	if (kernel_dims[i] == 0) output_size.push_back(1);
-	else
+	if (kernel_dims[i] == 0) {
+          output_size.push_back(1);
+        }
+	else {
 	  output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
+        }
       }
     }
     virtual ANNComponent *clone();

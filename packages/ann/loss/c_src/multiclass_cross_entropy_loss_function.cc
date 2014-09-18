@@ -18,9 +18,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_matrix.h"
+#include "cmath_overloads.h"
 #include "multiclass_cross_entropy_loss_function.h"
-#include "wrapper.h"
+#include "loss_kernels.h"
+#include "token_matrix.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::LossOperations;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
 
@@ -42,29 +49,22 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
-    doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
-					 target_mat->getRawDataAccess(),
-					 loss_output->getRawDataAccess(),
-					 NEAR_ZERO,
-					 input_mat->getDimSize(1),
-					 input_mat->getDimSize(0),
-					 input_mat->getCudaFlag());
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
+    matMultiClassCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
     return loss_output;
   }
 
   Token *MultiClassCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+    MatrixFloat *error_mat = input_mat->clone();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
     AssignRef<Token>(error_output, error_mat_token);
-    doComputeCrossEntropyGradient(input_mat->getRawDataAccess(),
-				  target_mat->getRawDataAccess(),
-				  error_mat->getRawDataAccess(),
-				  NEAR_ZERO,
-				  input_mat->getDimSize(1),
-				  input_mat->getDimSize(0),
-				  input_mat->getCudaFlag());
+    matClamp(error_mat, m_log(NEAR_ZERO), m_log(1.0f - NEAR_ZERO));
+    matExp(error_mat);
+    matAxpy(error_mat, -1.0f, target_mat);
     return error_output;
   }
 

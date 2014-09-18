@@ -18,60 +18,67 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_H
+#include "gpu_mirrored_memory_block.h"
+
+using namespace AprilMath;
+//BIND_END
+
 //BIND_HEADER_C
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "error_print.h"
 
+namespace AprilMath {
+  
 #define FUNCTION_NAME "Constructor"
-template<typename T>
-void GPUMirroredMemoryBlockConstructor(lua_State *L,
-				       GPUMirroredMemoryBlock<T> *&obj) {
-  unsigned int N;
-  if (lua_istable(L,1)) N = lua_rawlen(L,1);
-  else LUABIND_GET_PARAMETER(1,uint,N);
-  obj = new GPUMirroredMemoryBlock<T>(N);
-  if (lua_istable(L,1)) {
-    T *ptr = obj->getPPALForWrite();
-    for (unsigned int i=0; i<N; ++i) {
-      lua_pushinteger(L, i+1);
-      lua_gettable(L, -2);
-      LUABIND_GET_PARAMETER(-1,number,ptr[i]);
-      lua_pop(L,1);
+  template<typename T>
+  void GPUMirroredMemoryBlockConstructor(lua_State *L,
+                                         GPUMirroredMemoryBlock<T> *&obj) {
+    unsigned int N;
+    if (lua_istable(L,1)) N = lua_rawlen(L,1);
+    else LUABIND_GET_PARAMETER(1,uint,N);
+    obj = new GPUMirroredMemoryBlock<T>(N);
+    if (lua_istable(L,1)) {
+      T *ptr = obj->getPPALForWrite();
+      for (unsigned int i=0; i<N; ++i) {
+        lua_pushinteger(L, i+1);
+        lua_gettable(L, -2);
+        LUABIND_GET_PARAMETER(-1,number,ptr[i]);
+        lua_pop(L,1);
+      }
     }
   }
-}
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "set"
-template<typename T>
-void GPUMirroredMemoryBlockSet(lua_State *L,
-			       GPUMirroredMemoryBlock<T> *obj) {
-  T value;
-  unsigned int i;
-  LUABIND_GET_PARAMETER(1,uint,i);
-  LUABIND_GET_PARAMETER(2,number,value);
-  if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
-  T *ptr = obj->getPPALForWrite();
-  ptr[i-1] = value;
-}
+  template<typename T>
+  void GPUMirroredMemoryBlockSet(lua_State *L,
+                                 GPUMirroredMemoryBlock<T> *obj) {
+    T value;
+    unsigned int i;
+    LUABIND_GET_PARAMETER(1,uint,i);
+    LUABIND_GET_PARAMETER(2,number,value);
+    if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+    T *ptr = obj->getPPALForWrite();
+    ptr[i-1] = value;
+  }
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "get"
-template<typename T>
-T GPUMirroredMemoryBlockGet(lua_State *L,
-			    GPUMirroredMemoryBlock<T> *obj) {
-  unsigned int i;
-  LUABIND_GET_PARAMETER(1,uint,i);
-  if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
-  const T *ptr = obj->getPPALForRead();
-  return ptr[i-1];
-}
+  template<typename T>
+  T GPUMirroredMemoryBlockGet(lua_State *L,
+                              GPUMirroredMemoryBlock<T> *obj) {
+    unsigned int i;
+    LUABIND_GET_PARAMETER(1,uint,i);
+    if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+    const T *ptr = obj->getPPALForRead();
+    return ptr[i-1];
+  }
 #undef FUNCTION_NAME
-//BIND_END
 
-//BIND_HEADER_H
-#include "gpu_mirrored_memory_block.h"
+} // namespace AprilMath
+
 //BIND_END
 
 //BIND_FUNCTION mathcore.set_mmap_allocation
@@ -92,6 +99,15 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
   GPUMirroredMemoryBlockBase::
     changeMaxPoolSize(static_cast<size_t>(max_pool_size));
 #endif
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.set_use_cuda_default
+{
+  bool v;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, bool, v);
+  GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = v;
 }
 //BIND_END
 

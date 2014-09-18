@@ -21,7 +21,7 @@
 #ifndef COMPARABLE_PTR_H
 #define COMPARABLE_PTR_H
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T>
   class ComparablePtr {

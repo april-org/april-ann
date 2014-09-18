@@ -33,27 +33,27 @@ namespace ANN {
   class DropoutANNComponent : public StochasticANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(DropoutANNComponent);
     
-    TokenMatrixFloat *input, *output;
-    Token            *error_input, *error_output;
-    MatrixFloat      *dropout_mask;
+    Basics::TokenMatrixFloat *input, *output;
+    Basics::Token            *error_input, *error_output;
+    Basics::MatrixFloat      *dropout_mask;
     float            value;
     float            prob;
     unsigned int     size;
     
   public:
-    DropoutANNComponent(MTRand *random, float value, float prob,
+    DropoutANNComponent(Basics::MTRand *random, float value, float prob,
 			const char *name=0,
 			unsigned int size=0);
     virtual ~DropoutANNComponent();
     
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
+    virtual Basics::Token *getInput() { return input; }
+    virtual Basics::Token *getOutput() { return output; }
+    virtual Basics::Token *getErrorInput() { return error_input; }
+    virtual Basics::Token *getErrorOutput() { return error_output; }
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
-    virtual Token *doBackprop(Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -61,8 +61,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

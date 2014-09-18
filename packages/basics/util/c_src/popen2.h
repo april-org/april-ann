@@ -26,7 +26,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
- 
-pid_t popen2(const char *command, int *infp, int *outfp);
+
+namespace AprilUtils { 
+  pid_t popen2(const char *command, int *infp, int *outfp);
+}
 
 #endif // POPEN2_H

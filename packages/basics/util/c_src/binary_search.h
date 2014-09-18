@@ -29,7 +29,7 @@ REQUIERE QUE EL TIPO T TENGA DEFINIDA LAS OPERACIONES "<" y "==" con el tipo K
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   template<typename T, typename K>
     inline int binary_search(const T *vec, int sz, const K&value) {

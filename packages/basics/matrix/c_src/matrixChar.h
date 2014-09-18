@@ -21,15 +21,45 @@
 #ifndef MATRIX_CHAR_H
 #define MATRIX_CHAR_H
 #include "matrix.h"
-#include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(char)
-NOT_IMPLEMENT_GEMM_HEADER(char)
-NOT_IMPLEMENT_GEMV_HEEADER(char)
-NOT_IMPLEMENT_GER_HEADER(char)
-NOT_IMPLEMENT_DOT_HEADER(char)
+namespace Basics {
 
-///////////////////////////////////////////////////////////////////////////////
-typedef Matrix<char> MatrixChar;
+
+  namespace MatrixIO {
+
+    /* Especialization of MatrixChar ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<char>::operator()(AprilUtils::constString &line,
+                                          char &destination);
+  
+    template<>
+    bool BinaryExtractor<char>::operator()(AprilUtils::constString &line,
+                                           char &destination);
+  
+    template<>
+    int AsciiSizer<char>::operator()(const Matrix<char> *mat);
+
+    template<>
+    int BinarySizer<char>::operator()(const Matrix<char> *mat);
+
+    template<>
+    void AsciiCoder<char>::operator()(const char &value,
+                                      AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<char>::operator()(const char &value,
+                                       AprilIO::StreamInterface *stream);
+
+  } // namespace MatrixIO
+
+  template<>
+  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
+                                       const char *name, char default_value);
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  typedef Matrix<char> MatrixChar;
+
+} // namespace Basics
 
 #endif // MATRIX_CHAR_H

@@ -20,44 +20,48 @@
  */
 #include "utilImageFloat.h"
 
-ImageFloat *RGB_to_grayscale(ImageFloatRGB *src)
-{
-  int dims[2]={src->height(), src->width()};
-  MatrixFloat *m = new MatrixFloat(2, dims);
-  ImageFloat *result = new ImageFloat(m);
+namespace Imaging {
 
-  for (int y=0; y < src->height(); y++) {
-    for (int x=0; x < src->width(); x++) {
-      FloatRGB rgb = (*src)(x,y);
-      (*result)(x,y) = rgb.to_grayscale();
+  ImageFloat *RGB_to_grayscale(ImageFloatRGB *src)
+  {
+    int dims[2]={src->height(), src->width()};
+    Basics::MatrixFloat *m = new Basics::MatrixFloat(2, dims);
+    ImageFloat *result = new ImageFloat(m);
+
+    for (int y=0; y < src->height(); y++) {
+      for (int x=0; x < src->width(); x++) {
+        FloatRGB rgb = (*src)(x,y);
+        (*result)(x,y) = rgb.to_grayscale();
+      }
     }
+
+    return result;
   }
 
-  return result;
-}
+  ImageFloatRGB *grayscale_to_RGB(ImageFloat *src)
+  {
+    int dims[2]={src->height(), src->width()};
+    Basics::Matrix<FloatRGB> *m = new Basics::Matrix<FloatRGB>(2, dims);
+    ImageFloatRGB *result = new ImageFloatRGB(m);
 
-ImageFloatRGB *grayscale_to_RGB(ImageFloat *src)
-{
-  int dims[2]={src->height(), src->width()};
-  Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, dims);
-  ImageFloatRGB *result = new ImageFloatRGB(m);
-
-  for (int y=0; y < src->height(); y++) {
-    for (int x=0; x < src->width(); x++) {
-      float val = (*src)(x,y);
-      (*result)(x,y) = FloatRGB(val);
+    for (int y=0; y < src->height(); y++) {
+      for (int x=0; x < src->width(); x++) {
+        float val = (*src)(x,y);
+        (*result)(x,y) = FloatRGB(val);
+      }
     }
+
+    return result;
   }
 
-  return result;
-}
+  template<>
+  Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
+                                                   FloatRGB default_color) const
+  {
+    UNUSED_VARIABLE(k);
+    UNUSED_VARIABLE(default_color);
+    ERROR_EXIT(256, "Not implemented for RGB images\n");
+    return 0;
+  }
 
-template<>
-Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
-                                                 FloatRGB default_color) const
-{
-  UNUSED_VARIABLE(k);
-  UNUSED_VARIABLE(default_color);
-  ERROR_EXIT(256, "Not implemented for RGB images\n");
-  return 0;
-}
+} // namespace Imaging

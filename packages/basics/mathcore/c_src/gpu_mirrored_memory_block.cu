@@ -21,18 +21,22 @@
  */
 #include "gpu_mirrored_memory_block.h"
 
-bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+namespace AprilMath {
+
+  bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+  bool   GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = false;
 
 #ifndef NO_POOL
-size_t GPUMirroredMemoryBlockBase::MAX_POOL_LIST_SIZE = 200*1024*1024; // 200 Megabytes
-size_t GPUMirroredMemoryBlockBase::MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
-GPUMirroredMemoryBlockBase::PoolFreeBeforeExit GPUMirroredMemoryBlockBase::pool_free_before_exit;
-size_t GPUMirroredMemoryBlockBase::pool_size = 0;
-GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
-  new GPUMirroredMemoryBlockBase::PoolType(1024);
+  size_t GPUMirroredMemoryBlockBase::MAX_POOL_LIST_SIZE = 200*1024*1024; // 200 Megabytes
+  size_t GPUMirroredMemoryBlockBase::MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
+  GPUMirroredMemoryBlockBase::PoolFreeBeforeExit GPUMirroredMemoryBlockBase::pool_free_before_exit;
+  size_t GPUMirroredMemoryBlockBase::pool_size = 0;
+  GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
+    new GPUMirroredMemoryBlockBase::PoolType(1024);
 #endif
 
-template class GPUMirroredMemoryBlock<float>;
-template class GPUMirroredMemoryBlock<double>;
-template class GPUMirroredMemoryBlock<int32_t>;
-template class GPUMirroredMemoryBlock<ComplexF>;
+  template class GPUMirroredMemoryBlock<float>;
+  template class GPUMirroredMemoryBlock<double>;
+  template class GPUMirroredMemoryBlock<int32_t>;
+  template class GPUMirroredMemoryBlock<ComplexF>;
+} // namespace AprilMath

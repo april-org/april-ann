@@ -18,13 +18,18 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
-#include "swap.h"
 #include "maxpooling_component.h"
+#include "swap.h"
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
+#include "unused_variable.h"
 
-using april_utils::swap;
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
+
+using AprilUtils::swap;
 
 namespace ANN {
 
@@ -138,7 +143,9 @@ namespace ANN {
 #endif
     
     /////////////////////////////////////////////////////////////////////////
-    
+    float *aux = input_mat->getRawDataAccess()->getPPALForReadAndWrite();
+    UNUSED_VARIABLE(aux);
+    /////////////////////////////////////////////////////////////////////////
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window *input_sw =
       new MatrixFloat::sliding_window(input_mat, input_window_size,
@@ -171,13 +178,13 @@ namespace ANN {
     while(!input_sw->isEnd() && !output_sw->isEnd()) {
       input_sw->getMatrix(input_w);
       output_sw->getMatrix(output_w);
-      MatrixFloat *max_sel_dim = input_w->maxSelDim(0, argmax_raw_pos, k);
+      MatrixFloat *max_sel_dim = matMaxSelDim(input_w, 0, argmax_raw_pos, k);
       IncRef(max_sel_dim);
       MatrixFloat *max_sel_dim_rewrapped;
       max_sel_dim_rewrapped = max_sel_dim->rewrap(output_w->getDimPtr(),
 						  output_w->getNumDim());
       IncRef(max_sel_dim_rewrapped);
-      output_w->copy(max_sel_dim_rewrapped);
+      matCopy(output_w, max_sel_dim_rewrapped);
       // Next iteration
       input_sw->next();
       output_sw->next();
@@ -200,7 +207,7 @@ namespace ANN {
     MatrixFloat *input_mat = getInputMatrix();
     MatrixFloat *error_output_mat = input_mat->cloneOnlyDims();
     IncRef(error_output_mat);
-    error_output_mat->zeros();
+    matZeros(error_output_mat);
     
     // Prepare sliding windows to compute the convolution gradient
     MatrixFloat::sliding_window *error_output_sw =

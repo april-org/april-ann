@@ -26,47 +26,50 @@
 #include "utilImageFloat.h"
 #include "vector.h"
 
-using namespace april_utils;
+namespace Imaging {
 
-struct bounding_box {
-  int x1, y1;
-  int x2, y2;
+  struct bounding_box {
+    int x1, y1;
+    int x2, y2;
 
-  bounding_box(){};
-  bounding_box(int x1, int y1, int x2, int y2):
+    bounding_box(){};
+    bounding_box(int x1, int y1, int x2, int y2):
       x1(x1),y1(y1),x2(x2),y2(y2){}
-};
+  };
 
-class ImageConnectedComponents: public Referenced{
+  class ImageConnectedComponents: public Referenced{
 
     // Matrix of the size of the image that is used to 
-    vector <int> pixelComponents;
+    AprilUtils::vector <int> pixelComponents;
 
     // Vector that stores the black pixels sorted by components 
-    vector <int> components;
+    AprilUtils::vector <int> components;
 
     // index that delimites the CCs in components
-    vector <int> indexComponents;
+    AprilUtils::vector <int> indexComponents;
 
     //black threshold
     float threshold;
     const ImageFloat *img;
-    public:
+  public:
     int size;
     ImageConnectedComponents(const ImageFloat *img, float threshold = 0.7);
     ~ImageConnectedComponents(){};
 
-    private:
+  private:
     void dfs_component(int x, int y, int current_component, int &current_pixel);
 
-    public:
-    MatrixInt32 *getPixelMatrix();
+  public:
+    Basics::MatrixInt32 *getPixelMatrix();
     bool connected(int x1, int y1, int x2, int y2);
 
     int getComponent(int x, int y);
     ImageFloatRGB  *getColoredImage();
     bounding_box getComponentBoundingBox(int component);
-    vector<bounding_box> *getBoundingBoxes();    
+    AprilUtils::vector<bounding_box> *getBoundingBoxes();    
 
-};
+  };
+
+} // namespace Imaging
+
 #endif

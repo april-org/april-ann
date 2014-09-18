@@ -27,16 +27,15 @@
 #include "referenced.h"
 #include "token_base.h"
 
+/// Generic functions that receive and produce Basics::Token pointers.
 namespace Functions {
   
   /// A virtual class that serves as high level interface.
   /**
      A FunctionInterface is an abstraction of an object which represents a
      mathematical function. It adds to the interface abstract methods which
-     calculates output vector given input vector, and a basic implementation of
-     a method that consumes input vectors (from a DataProducer) and produces
-     output vectros (to a DataConsumer).  Every function is feeded with an input
-     Token and produces an output Token.
+     calculates output vector given input vector. Every function is feeded with
+     an input Token and produces an output Token.
    */
   class FunctionInterface : public Referenced {
   public:
@@ -47,9 +46,21 @@ namespace Functions {
     virtual unsigned int getInputSize()  const = 0;
     /// It returns the output (or range) size of the function.
     virtual unsigned int getOutputSize() const = 0;
-    /// A new abstract method that computes output vector given input vector.
-    // FIXME: const Token *input
-    virtual Token *calculate(Token *input) = 0;
+    
+    /**
+     * @brief A new abstract method that computes output vector given input
+     * vector.
+     *
+     * The function doesn't receive the ownership of the given Basics::Token.
+     *
+     * @note ANN based filters would IncRef and DecRef the given input
+     * Basics::Token, so be careful with this.
+     *
+     * @note Some functions work in-place, so take it into account.
+     *
+     * @todo const Token *input
+     */
+    virtual Basics::Token *calculate(Basics::Token *input) = 0;
   };
 }
 

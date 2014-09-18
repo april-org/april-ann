@@ -20,7 +20,7 @@
  */
 #include "omp_utils.h"
 
-namespace omp_utils {
+namespace OMPUtils {
   int get_num_threads() {
 #ifndef NO_OMP
     int n;

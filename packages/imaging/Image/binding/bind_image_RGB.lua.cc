@@ -20,6 +20,10 @@
  */
 //BIND_HEADER_C
 #include "bind_image.h"
+
+using namespace AprilUtils;
+using namespace AprilMath;
+using namespace Basics;
 //BIND_END
 
 //BIND_HEADER_H
@@ -28,6 +32,8 @@
 #include "bind_matrix.h"
 #include "bind_affine_transform.h"
 #include <cmath>
+
+using namespace Imaging;
 //BIND_END
 
 //BIND_LUACLASSNAME ImageFloatRGB ImageRGB
@@ -37,7 +43,7 @@
 // este constructor recibe una matrix
 {
   LUABIND_CHECK_ARGN(==,1);
-  MatrixFloat      *img;
+  Basics::MatrixFloat      *img;
   LUABIND_GET_PARAMETER(1, MatrixFloat, img);
   if (img->getNumDim() != 3)
     LUABIND_ERROR("Needs a matrix with 3 dimensions");
@@ -48,8 +54,9 @@
   GPUMirroredMemoryBlock<FloatRGB> *float_rgb_mem;
   float_rgb_mem = img->getRawDataAccess()->reinterpretAs<FloatRGB>();
   int dims[2] = { img->getDimSize(0), img->getDimSize(1) };
-  Matrix<FloatRGB> *img_rgb = new Matrix<FloatRGB>(2, dims, CblasRowMajor,
-						   float_rgb_mem);
+  Basics::Matrix<FloatRGB> *img_rgb = new Basics::Matrix<FloatRGB>(2, dims,
+                                                                   CblasRowMajor,
+                                                                   float_rgb_mem);
   //
   obj = new ImageFloatRGB(img_rgb);
   LUABIND_RETURN(ImageFloatRGB, obj);
@@ -63,7 +70,7 @@
     LUABIND_GET_PARAMETER(1, int, w);
     LUABIND_GET_PARAMETER(2, int, h);
 
-    Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, w, h);
+    Basics::Matrix<FloatRGB> *m = new Basics::Matrix<FloatRGB>(2, w, h);
     ImageFloatRGB *result = new ImageFloatRGB(m);
     
     LUABIND_RETURN(ImageFloatRGB, result);
@@ -126,12 +133,13 @@
 //BIND_METHOD ImageFloatRGB matrix
 {
   LUABIND_CHECK_ARGN(==,0);
-  Matrix<FloatRGB> *img_rgb = obj->getMatrix();
-  GPUMirroredMemoryBlock<float> *mat_mem;
+  Basics::Matrix<FloatRGB> *img_rgb = obj->getMatrix();
+  AprilMath::GPUMirroredMemoryBlock<float> *mat_mem;
   mat_mem = img_rgb->getRawDataAccess()->reinterpretAs<float>();
   int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
-  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder(),
-					mat_mem);
+  Basics::MatrixFloat *output = new Basics::MatrixFloat(3, dims,
+                                                        img_rgb->getMajorOrder(),
+                                                        mat_mem);
   LUABIND_RETURN(MatrixFloat, output);
 }
 //BIND_END
@@ -316,7 +324,7 @@
 
 //BIND_METHOD ImageFloatRGB affine_transform
 {
-  AffineTransform2D *trans;
+  Basics::AffineTransform2D *trans;
   float default_r, default_g, default_b;
   int offset_x, offset_y;
   ImageFloatRGB *res;

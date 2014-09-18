@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <limits>
 #include "geometry.h"
-namespace april_utils {
+namespace AprilUtils {
 
   const float infinity = std::numeric_limits<float>::infinity();
 
@@ -42,7 +42,7 @@ namespace april_utils {
       return (Point2D(infinity, infinity));
     }
 
-    //FIXME: Infinite slope
+    // FIXME: Infinite slope
     float m1 = m;
     float m2 = out.m;
     float b1 = b;

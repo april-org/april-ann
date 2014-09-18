@@ -22,7 +22,12 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "dropout_component.h"
-#include "wrapper.h"
+#include "dropout_kernel.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -82,11 +87,11 @@ namespace ANN {
 	  else *it = 1.0f;
 	}
 	// apply mask
-	applyMask(output_mat->getRawDataAccess(),
-		  dropout_mask->getRawDataAccess(), value,
-		  output_mat->size(), 1, use_cuda);
+        Kernels::applyDropoutMask(output_mat, dropout_mask, value);
       }
-      else output_mat->scal(1.0f - prob);
+      else {
+        matScal(output_mat, 1.0f - prob);
+      }
     }
     else AssignRef(output, input);
     return output;
@@ -118,9 +123,7 @@ namespace ANN {
 	ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		    name.c_str());
       // apply mask
-      applyMask(error_output_mat->getRawDataAccess(),
-		dropout_mask->getRawDataAccess(), 0.0f,
-		error_output_mat->size(), 1, use_cuda);
+      Kernels::applyDropoutMask(error_output_mat, dropout_mask, 0.0f);
     }
     else {
       AssignRef(error_input,  _error_input);

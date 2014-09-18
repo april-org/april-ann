@@ -83,7 +83,7 @@ namespace KNN {
       base(other.base), stride(other.stride), id(other.id) { }
     Point(const T *base, int stride, int id) :
       base(base), stride(stride), id(id) { }
-    Point(const Matrix<T> *m, int row, int id) :id(id) {
+    Point(const Basics::Matrix<T> *m, int row, int id) :id(id) {
       april_assert(m->getNumDim() == 2);
       int coords[2] = { row, 0 };
       base = m->getRawDataAccess()->getPPALForRead()+m->computeRawPos(coords);

@@ -26,10 +26,14 @@
 #include "image.h"
 #include "floatrgb.h"
 
-typedef Image<float> ImageFloat;
-typedef Image<FloatRGB> ImageFloatRGB;
+namespace Imaging {
 
-ImageFloat *RGB_to_grayscale(ImageFloatRGB *src);
-ImageFloatRGB *grayscale_to_RGB(ImageFloat *src);
+  typedef Image<float> ImageFloat;
+  typedef Image<FloatRGB> ImageFloatRGB;
+
+  ImageFloat *RGB_to_grayscale(ImageFloatRGB *src);
+  ImageFloatRGB *grayscale_to_RGB(ImageFloat *src);
+
+}
 
 #endif // UTILIMAGEFLOAT

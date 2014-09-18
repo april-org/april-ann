@@ -24,20 +24,23 @@
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 
-int token_bunch_vector_iterator_function(lua_State *L) {
-  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
-  // el estado invariante (en este caso el dataset) y _var es var_1 de
-  // iteracion anterior (en este caso el indice)
-  TokenBunchVector *obj = lua_toTokenBunchVector(L, 1);
-  unsigned int index = static_cast<unsigned int>(lua_tonumber(L, 2)) + 1; // le sumamos uno
-  if (index > obj->size()) {
-    lua_pushnil(L); return 1;
+namespace Basics {
+  int token_bunch_vector_iterator_function(lua_State *L) {
+    // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
+    // el estado invariante (en este caso el dataset) y _var es var_1 de
+    // iteracion anterior (en este caso el indice)
+    TokenBunchVector *obj = lua_toTokenBunchVector(L, 1);
+    unsigned int index = static_cast<unsigned int>(lua_tonumber(L, 2)) + 1; // le sumamos uno
+    if (index > obj->size()) {
+      lua_pushnil(L); return 1;
+    }
+    lua_pushnumber(L, index);
+    Token *token = (*obj)[index-1];
+    lua_pushToken(L, token);
+    return 2;
   }
-  lua_pushnumber(L, index);
-  Token *token = (*obj)[index-1];
-  lua_pushToken(L, token);
-  return 2;
-}
+
+} // namespace Basics
 
 bool lua_isAuxToken(lua_State *L, int n) {
   return lua_isSparseMatrixFloat(L,n) || lua_isMatrixFloat(L,n) || lua_isToken(L,n);
@@ -57,15 +60,17 @@ Token *lua_toAuxToken(lua_State *L, int n) {
   }
   return lua_toToken(L,n);
 }
-
 //BIND_END
 
 //BIND_HEADER_H
 #include "token_base.h"
 #include "token_memory_block.h"
 #include "token_matrix.h"
+#include "token_null.h"
 #include "token_sparse_matrix.h"
 #include "token_vector.h"
+
+using namespace Basics;
 
 bool lua_isAuxToken(lua_State *L, int n);
 Token *lua_toAuxToken(lua_State *L, int n);
@@ -121,6 +126,18 @@ Token *lua_toAuxToken(lua_State *L, int n);
     TokenBunchVector *token_bunch_vector = obj->convertTo<TokenBunchVector*>();
     LUABIND_RETURN(TokenBunchVector, token_bunch_vector);
   }
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TokenNull tokens.null
+//BIND_CPP_CLASS    TokenNull
+//BIND_SUBCLASS_OF  TokenNull Token
+
+//BIND_CONSTRUCTOR TokenNull
+{
+  LUABIND_RETURN(TokenNull, new TokenNull());
 }
 //BIND_END
 

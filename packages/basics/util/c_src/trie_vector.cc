@@ -23,7 +23,7 @@
 #include "error_print.h"
 #include "swap.h"
 
-namespace april_utils {
+namespace AprilUtils {
 
   TrieVector::TrieVector(int logSize) {
     vectorSize       = 1<<logSize;

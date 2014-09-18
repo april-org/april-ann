@@ -18,15 +18,19 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef CHECK_FLOATS_H
+#define CHECK_FLOATS_H
+
 #include <cmath>
 
 // convierte todos los numeros denormales en 0,
 // aunque para en cuanto detecta un NaN o inf, en cuyo caso
 // devolveria false. Si todo esta bien devuelve true.
 
-namespace april_utils {
+namespace AprilUtils {
   
   bool check_floats(float *v, unsigned int sz);
 
 }
 
+#endif // CHECK_FLOATS_H

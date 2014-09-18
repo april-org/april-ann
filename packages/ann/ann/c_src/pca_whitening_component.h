@@ -30,38 +30,36 @@
 #include "dot_product_component.h"
 #include "matrixFloatSet.h"
 
-using april_utils::vector;
-
 namespace ANN {
 
   class PCAWhiteningANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(PCAWhiteningANNComponent);
     
   protected:
-    MatrixFloat *U; //< bi-dimensional
-    SparseMatrixFloat *S; //< sparse diagonal matrix in CSR
-    MatrixFloat *U_S_epsilon; //< matrix for dot_product_component
+    Basics::MatrixFloat *U; //< bi-dimensional
+    Basics::SparseMatrixFloat *S; //< sparse diagonal matrix in CSR
+    Basics::MatrixFloat *U_S_epsilon; //< matrix for dot_product_component
     float epsilon;  //< regularization
     DotProductANNComponent dot_product_encoder; //< Applies the transformation
-    MatrixFloatSet matrix_set; //< Auxiliary for dot_product_encoder build
+    Basics::MatrixFloatSet matrix_set; //< Auxiliary for dot_product_encoder build
     unsigned int takeN;
     
   public:
-    PCAWhiteningANNComponent(MatrixFloat *U,
-			     SparseMatrixFloat *S,
+    PCAWhiteningANNComponent(Basics::MatrixFloat *U,
+			     Basics::SparseMatrixFloat *S,
 			     float epsilon=0.0f,
 			     unsigned int takeN=0,
 			     const char *name=0);
     virtual ~PCAWhiteningANNComponent();
     
-    virtual Token *getInput() { return dot_product_encoder.getInput(); }
-    virtual Token *getOutput() { return dot_product_encoder.getOutput(); }
-    virtual Token *getErrorInput() { return dot_product_encoder.getErrorInput(); }
-    virtual Token *getErrorOutput() { return dot_product_encoder.getErrorOutput(); }
+    virtual Basics::Token *getInput() { return dot_product_encoder.getInput(); }
+    virtual Basics::Token *getOutput() { return dot_product_encoder.getOutput(); }
+    virtual Basics::Token *getErrorInput() { return dot_product_encoder.getErrorInput(); }
+    virtual Basics::Token *getErrorOutput() { return dot_product_encoder.getErrorOutput(); }
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
-    virtual Token *doBackprop(Token *input_error);
+    virtual Basics::Token *doBackprop(Basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -69,8 +67,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       Basics::MatrixFloatSet *weights_dict,
+		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
     unsigned int getTakeN() const { return takeN; }

@@ -23,6 +23,11 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
+
 namespace ANN {
 
   ////////////////////////////////////////////////
@@ -55,12 +60,12 @@ namespace ANN {
     // first pattern is done out of the loop
     MatrixFloat *dest = bias_matrix_2d->select(0, 0);
     IncRef(dest);
-    dest->copy(bias_vec);
+    matCopy(dest,bias_vec);
     // for the rest of patterns at the bunch
     for (int b=1; b<window_size[0]; ++b) {
       // select the row b at the output bias matrix
       bias_matrix_2d->select(0, b, dest);
-      dest->copy(bias_vec);
+      matCopy(dest,bias_vec);
     }
     DecRef(dest);
     if (bias_matrix) DecRef(bias_matrix);
@@ -151,7 +156,7 @@ namespace ANN {
       input_sw->getMatrix(input_w);
       output_sw->getMatrix(output_w);
       // ADD BIAS
-      output_w->axpy(1.0f, bias_matrix);
+      matAxpy(output_w, 1.0f, bias_matrix);
       // Next iteration
       input_sw->next();
       output_sw->next();
@@ -171,14 +176,16 @@ namespace ANN {
     return error_mat;
   }
      
-  void ConvolutionBiasANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+  void ConvolutionBiasANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
     // reset shared counter
     bias_vector->addToSharedCount(number_input_windows);
-    if (grads_mat == 0) {
+    if (grads_mat.empty()) {
       grads_mat = bias_vector->cloneOnlyDims();
-      grads_mat->zeros();
-      IncRef(grads_mat);
+      matZeros(grads_mat.get());
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
     MatrixFloat *input_error_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window error_sw(input_error_mat, window_size,
@@ -232,9 +239,9 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&b = (*weights_dict)[weights_name];
-    if (b != 0) {
-      AssignRef(bias_vector, b);
+    AprilUtils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
+    if (!b.empty()) {
+      AssignRef(bias_vector, b.get());
       if (!Connections::checkInputOutputSizes(bias_vector,1,hidden_size))
 	ERROR_EXIT2(256,"The bias vector input/output sizes are not correct, "
 		    "expected 1x%d [%s]\n", hidden_size, name.c_str());
@@ -245,7 +252,6 @@ namespace ANN {
 	IncRef(bias_vector);
       }
       b = bias_vector;
-      IncRef(b);
     }
   }
 
@@ -253,15 +259,14 @@ namespace ANN {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&b = (*weights_dict)[weights_name];
-    if (b != 0 && b != bias_vector)
+    AprilUtils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
+    if (!b.empty() && b.get() != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s bias name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (b == 0) {
+    else if (b.empty()) {
       b = bias_vector;
-      IncRef(b);
     }
   }  
 

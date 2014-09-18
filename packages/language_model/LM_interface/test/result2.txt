@@ -1,0 +1,406 @@
+# ARG test = best100.filt
+# ARG langmodel_filename = lm3gram.lira
+# ARG vocabfilename = lm3gram.voc
+# ARG debug = 1
+Darkness had descended like a Curtain by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -0.8876 ppl= 1.255 ppl1= 1.291
+
+Darkness had descended like a Certain by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.1375 ppl= 1.338 ppl1= 1.387
+
+Darkness had descended Like a Curtain by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.9639 ppl= 1.653 ppl1= 1.760
+
+Derek unless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -2.0250 ppl= 1.594 ppl1= 1.679
+
+Darkness had descended Like a Certain by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.1858 ppl= 1.749 ppl1= 1.876
+
+Darkness had descended like a Cecil an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -2.4251 ppl= 1.748 ppl1= 1.860
+
+Derek unless had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -2.2748 ppl= 1.688 ppl1= 1.790
+
+Darkness had descended like a Cuban by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.1241 ppl= 1.722 ppl1= 1.843
+
+Darkness had descended like a Curtain by he 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.8218 ppl= 1.594 ppl1= 1.689
+
+Darkness had descended like a Curtain lay the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.0771 ppl= 1.701 ppl1= 1.818
+
+Darkness had descended like a Curtain by The 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.8218 ppl= 1.594 ppl1= 1.689
+
+Derek was s had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -2.7754 ppl= 1.788 ppl1= 1.895
+
+Derek mess had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -2.4744 ppl= 1.768 ppl1= 1.883
+
+Darkness had descended like a Certain by he 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.8498 ppl= 1.605 ppl1= 1.703
+
+Darkness had descended like a Curtain way the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.0559 ppl= 1.692 ppl1= 1.807
+
+Darkness had descended like a Certain lay the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.2300 ppl= 1.769 ppl1= 1.900
+
+Darkness had descended like a Certain by The 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1.8498 ppl= 1.605 ppl1= 1.703
+
+Darkness had descended like a Clurman by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.1241 ppl= 1.722 ppl1= 1.843
+
+Derek was s had descended like a Certain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -3.0253 ppl= 1.884 ppl1= 2.007
+
+Derek mess had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -2.7243 ppl= 1.873 ppl1= 2.008
+
+Darkness had descended like a Ceuta by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Derek Ness had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.3635 ppl= 3.438 ppl1= 3.944
+
+, Darkness had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.2945 ppl= 3.384 ppl1= 3.875
+
+Darkness had descended like a Cecil arm by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4012 ppl= 3.468 ppl1= 3.982
+
+Derek is less had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.5914 ppl= 4.899 ppl1= 5.743
+
+Derek no less had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.5914 ppl= 4.899 ppl1= 5.743
+
+Dave lawless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Darkness had descended like a Certain way the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -4.3907 ppl= 3.075 ppl1= 3.539
+
+Darkness had descended like a Clerk an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.5310 ppl= 4.499 ppl1= 5.317
+
+Darkness had descended like a Curtain by He 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0983 ppl= 3.685 ppl1= 4.338
+
+Darkness had descended like a Ceuta us by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Curtain by she 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0983 ppl= 3.685 ppl1= 4.338
+
+Dusk was s had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.0062 ppl= 4.334 ppl1= 5.019
+
+Darkness had descended like a Clerk arm by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Court an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.5310 ppl= 4.499 ppl1= 5.317
+
+Derek Ness had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.6134 ppl= 3.642 ppl1= 4.204
+
+, Darkness had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.5443 ppl= 3.585 ppl1= 4.131
+
+Derek us less had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.5914 ppl= 4.899 ppl1= 5.743
+
+Dave Lawless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Derek is less had descended like a Certain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.8412 ppl= 5.162 ppl1= 6.083
+
+Darkness had descended like a Cecil aims by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4012 ppl= 3.468 ppl1= 3.982
+
+Darkness had descended like a Cecil arms by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4012 ppl= 3.468 ppl1= 3.982
+
+Darkness had descended like a Cecil aim by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4012 ppl= 3.468 ppl1= 3.982
+
+Darkness had descended like a Court arm by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Derek no less had descended like a Certain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.8412 ppl= 5.162 ppl1= 6.083
+
+Darkness had descended like a Curtain boy the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0156 ppl= 3.608 ppl1= 4.236
+
+Dave lawless had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.6266 ppl= 5.790 ppl1= 7.037
+
+Darkness had descended like a Certain by He 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.1263 ppl= 3.712 ppl1= 4.373
+
+Darkness had descended like a Curtain , by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.1562 ppl= 3.278 ppl1= 3.740
+
+Darkness had descended like a Certain by she 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.1263 ppl= 3.712 ppl1= 4.373
+
+Dusk was s had descended like a Certain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.2561 ppl= 4.567 ppl1= 5.316
+
+Darkness had descended like a Curtain way he 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -4.0913 ppl= 2.848 ppl1= 3.246
+
+Plazek unless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.4318 ppl= 4.397 ppl1= 5.184
+
+Darkness had descended like a Curtain May the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0156 ppl= 3.608 ppl1= 4.236
+
+Darkness had descended like a Curtain Lay the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0156 ppl= 3.608 ppl1= 4.236
+
+Darkness had descended like a Certainly the 
+1 sentences, 7 words, 0 OOVs
+0 zeroprobs, logprob= -4.9133 ppl= 4.113 ppl1= 5.034
+
+Derek was 5 had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -5.6723 ppl= 3.278 ppl1= 3.692
+
+Darkness had descended like a Cecil arm lay the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.4279 ppl= 4.393 ppl1= 5.179
+
+Derek unless had descended Like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -3.1013 ppl= 2.042 ppl1= 2.211
+
+Darkness had descended like a Clint an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.5310 ppl= 4.499 ppl1= 5.317
+
+Darkness had descended like a Clerk aims by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Dusky less had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Darkness had descended like a Clerk arms by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Curtain lay The 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -4.2674 ppl= 2.980 ppl1= 3.415
+
+Darkness had descended like a Clerk aim by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Cherian by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Derek us less had descended like a Certain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.8412 ppl= 5.162 ppl1= 6.083
+
+Dave Lawless had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.6266 ppl= 5.790 ppl1= 7.037
+
+Darkness had descended like a Kaukau by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Darkness had descended like a Curan by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Darkness had descended like an Curtain by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.5497 ppl= 4.137 ppl1= 4.940
+
+' Darkness had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.2945 ppl= 3.384 ppl1= 3.875
+
+Darkness had descended like a Cecil am by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4012 ppl= 3.468 ppl1= 3.982
+
+Darkness had descended like a Caetani by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Darkness had descended like a Curran by the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0539 ppl= 3.644 ppl1= 4.283
+
+Darkness had descended like a Certain boy the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.1714 ppl= 3.755 ppl1= 4.430
+
+Darkness had descended like a Clint arm by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Dave caress had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Darkness had descended like a , Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.4140 ppl= 3.479 ppl1= 3.995
+
+Due lawless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Dave kv less had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -9.6046 ppl= 7.467 ppl1= 9.130
+
+Darkness had descended like a Curtain buy the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0156 ppl= 3.608 ppl1= 4.236
+
+Darkness had descended like a Court aims by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Court arms by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness , had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.1788 ppl= 3.295 ppl1= 3.762
+
+Darkness had descended like a Clark an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.5310 ppl= 4.499 ppl1= 5.317
+
+Darkness had descended like a Court aim by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.2817 ppl= 5.348 ppl1= 6.443
+
+Darkness had descended like a Curtain by She 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.0983 ppl= 3.685 ppl1= 4.338
+
+D merciless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -7.3768 ppl= 5.466 ppl1= 6.601
+
+Dark unless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.4318 ppl= 4.397 ppl1= 5.184
+
+" Darkness had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.2945 ppl= 3.384 ppl1= 3.875
+
+Dusk unless had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.4318 ppl= 4.397 ppl1= 5.184
+
+Darkness had descended like a Clerk arm lay the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -8.3085 ppl= 6.774 ppl1= 8.378
+
+Darkness " had descended like a Curtain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -5.1788 ppl= 3.295 ppl1= 3.762
+
+Derek we ss had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -7.5914 ppl= 4.899 ppl1= 5.743
+
+Darkness had descended Like a Cecil an by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -3.4277 ppl= 2.202 ppl1= 2.404
+
+Dave kw less had descended like a Curtain by the 
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -9.6046 ppl= 7.467 ppl1= 9.130
+
+Darkness had descended like a Certain way he 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -6.4261 ppl= 5.176 ppl1= 6.357
+
+Plazek unless had descended like a Certain by the 
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -6.6817 ppl= 4.658 ppl1= 5.526
+
+Darkness had descended like a Certain May the 
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -5.1714 ppl= 3.755 ppl1= 4.430
+
+file best100.filt: 100 sentences, 877 words, 0 OOVs
+0 zeroprobs, logprob= -536.837259 ppl= 3.543849 ppl1= 4.093824

@@ -1,6 +1,6 @@
-local learning_rate  = 0.1
+local learning_rate  = 0.01
 local momentum       = 0.1
-local weight_decay   = 1e-04
+local weight_decay   = 1e-01
 local semilla        = 1234
 local rnd            = random(semilla)
 local H1             = 256
@@ -83,8 +83,8 @@ b2:set_broadcast(false, true)
 b3:set_broadcast(false, true)
 
 -- ANN
-local net_h1  = AD.ann.relu(b1 + w1 * x)       -- first layer
-local net_h2  = AD.ann.relu(b2 + w2 * net_h1)  -- second layer
+local net_h1  = AD.ann.tanh(b1 + w1 * x)       -- first layer
+local net_h2  = AD.ann.tanh(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
 					    -- is added to the loss function)
 
@@ -134,7 +134,10 @@ local function train_dataset(in_ds,out_ds)
 					      bunch_size=bunch_size,
 					      shuffle = rnd, } do
     local loss
-    loss = opt:execute(function()
+    loss = opt:execute(function(params)
+                         if params ~= weights then
+                           dw_func:set_shared(params)
+                         end
 			 local loss,b1,w1,b2,w2,
 			 b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
 					 output_bunch:get_matrix():transpose())

@@ -29,7 +29,7 @@ namespace OCR {
   namespace OffLineTextPreprocessing {
     
     template <typename T> 
-    void RLSA(Image<T> *img, int threshold) {
+    void RLSA(Imaging::Image<T> *img, int threshold) {
       const float BINARIZING_THRESHOLD = 0.5f;
       // for each image row, seek white pixel runs between two blacks. If the
       // run length is inferior to a threshold, the run will be filled with
@@ -59,7 +59,7 @@ namespace OCR {
       }
     }
     
-    template<typename T> void baseLinesRLSA(const Image<T> *img,
+    template<typename T> void baseLinesRLSA(const Imaging::Image<T> *img,
 					    int *lower, int *upper,
 					    const float projection_th=0.5f) {
       // if the projection is inferior to this threshold, it won't be placed
@@ -67,7 +67,7 @@ namespace OCR {
       const int RLSA_TH=30;
       
       // work copy
-      Image<T> *i2=img->clone();
+      Imaging::Image<T> *i2=img->clone();
       
       RLSA(i2, RLSA_TH);
       T *projection = new T[img->height()];
@@ -101,14 +101,15 @@ namespace OCR {
       /// Threshold which defines when the pixel energy is considered ink
       static const float THRESHOLD;
 
-      static MatrixFloat *extract (const ImageFloat *i, const char *params);
+      static Basics::MatrixFloat *extract (const Imaging::ImageFloat *i,
+                                           const char *params);
       
     private:
-      static void contours(const ImageFloat *img, int col,
+      static void contours(const Imaging::ImageFloat *img, int col,
 			   float text_center, float *sup, float *inf);
       
       
-      static void copyNormVector(float *v, MatrixFloat *mat, int ncol,
+      static void copyNormVector(float *v, Basics::MatrixFloat *mat, int ncol,
 				 float base, float scal);
     };
     

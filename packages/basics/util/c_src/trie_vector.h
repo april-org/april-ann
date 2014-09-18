@@ -21,7 +21,9 @@
 #ifndef TRIE_VECTOR_H
 #define TRIE_VECTOR_H
 
+extern "C" {
 #include <stdint.h>
+}
 #include "referenced.h"
 
 /*
@@ -48,7 +50,7 @@ antecesores de un nodo persistente tambien lo son.
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   class TrieVector : public Referenced {
     unsigned int max_allowed_size;

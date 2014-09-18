@@ -29,7 +29,7 @@ luapkg{
       "-lcblas",
       "-latlas",
       "-L/opt/lib",
-      "-lgfortran",
+--      "-lgfortran",
       "-rdynamic",
       "-llapack_atlas",
       "-llapacke",

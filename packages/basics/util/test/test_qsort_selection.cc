@@ -2,6 +2,8 @@
 using namespace std;
 #include "../c_src/qsort.h"
 
+using namespace AprilUtils;
+
 int main() { // Lectura de datos e invocación de la función de sort
   int i,leido,indDat;
   const int maxVec = 1024;
@@ -14,7 +16,7 @@ int main() { // Lectura de datos e invocación de la función de sort
   while (indDat < maxVec && cin >> leido) {
     v[indDat] = leido; indDat++;
   }
-  int valor = april_utils::Selection(v,indDat,k-1);
+  int valor = AprilUtils::Selection(v,indDat,k-1);
   cout << "El " << k << "-esimo menor es " << valor << endl;
   cout << "Los " << k << " menores elementos (desordenados) son:\n";
   for (int i=0; i<k; ++i)

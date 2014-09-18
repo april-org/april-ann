@@ -23,6 +23,9 @@
 #include "bind_tokens.h"
 #include "bind_matrix.h"
 #include "token_matrix.h"
+
+using namespace AprilMath::MatrixExt::Operations;
+using namespace Basics;
 //BIND_END
 
 //BIND_HEADER_H
@@ -63,7 +66,7 @@ using namespace ANN;
   IncRef(target);
   MatrixFloat *loss = obj->computeLoss(input, target);
   if (loss) {
-    LUABIND_RETURN(float, loss->sum()/loss->getDimSize(0));
+    LUABIND_RETURN(float, matSum(loss)/loss->getDimSize(0));
     LUABIND_RETURN(MatrixFloat, loss);
   }
   else

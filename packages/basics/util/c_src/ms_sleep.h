@@ -21,9 +21,11 @@
 #ifndef MILISECOND_SLEEP_H
 #define MILISECOND_SLEEP_H
 
-#include<time.h>
-#include<signal.h>
+#include<ctime>
+#include<csignal>
 
-void msleep(unsigned long milisec);
+namespace AprilUtils {
+  void msleep(unsigned long milisec);
+}
 
 #endif // MILISECOND_SLEEP_H

@@ -25,7 +25,8 @@
 #include "cblas_headers.h"
 #include "error_print.h"
 
-using april_utils::swap;
+using AprilUtils::swap;
+using AprilMath::ComplexF;
 
 #ifdef ADHOC_BLAS
 
@@ -130,17 +131,7 @@ float cblas_snrm2(unsigned int N, const float *x, unsigned int inc) {
   return sqrtf(sum2);
 }
 
-void cblas_ssbmv(CBLAS_ORDER order,
-		 CBLAS_UPLO uplo,
-		 int n, int k,
-		 float alpha, const float *a, unsigned int a_lda,
-		 const float *x, unsigned int x_inc,
-		 float beta, float *y, unsigned int y_inc) {
-  ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-}
-
 #endif // ADHOC_BLAS
-
 
 // FIXME: MKL version is not working properly
 //#ifndef USE_MKL

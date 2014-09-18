@@ -1,6 +1,8 @@
 #include <iostream>
 #include "../c_src/stringQueue.cc"
 
+using namespace AprilUtils;
+
 int main() {
   StringQueue s;
   for (int i=0; i<10; ++i)

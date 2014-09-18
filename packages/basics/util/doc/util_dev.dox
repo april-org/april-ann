@@ -1,0 +1,9 @@
+/**
+ * @namespace AprilUtils
+ * @brief C/C++ utilities are defined here, as STL-like containers.
+ */
+
+/**
+ * @namespace Basics
+ * @brief APRIL-ANN basic classes as datasets, matrix, tokens, etc.
+ */

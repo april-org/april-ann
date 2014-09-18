@@ -23,18 +23,18 @@
 
 #include "aux_hash_table.h"
 #include <cmath> // ceilf
-#include <stddef.h> // ptrdiff_t, size_t...
+#include <cstddef> // ptrdiff_t, size_t...
 #include "pair.h"
 //#include <iterator>
 #include "vector.h"
 
-/** \namespace april_utils 
+/** \namespace AprilUtils 
 
     esto es una prueba
 
 */
 
-namespace april_utils {
+namespace AprilUtils {
 
   // HashFcn es del tipo:
   // struct hash_fcn {
@@ -219,7 +219,7 @@ namespace april_utils {
       int index;
       const node *ptr;
         
-      const_iterator(hash *h, int index, node *ptr):
+      const_iterator(const hash *h, int index, const node *ptr):
 	h(h), index(index), ptr(ptr) {}
 
     public:
@@ -316,11 +316,24 @@ namespace april_utils {
       return iterator(this, i, ptr);
     }
 
+    const_iterator begin() const {
+      int i=0;
+      const node *ptr = buckets[0];
+      while (ptr == 0) {
+	i++;
+	if (i < num_buckets)
+	  ptr = buckets[i];
+	else break;
+      }
+
+      return const_iterator(this, i, ptr);
+    }
+
   private:
     iterator end_iterator;
     
   public:
-    iterator end() { return end_iterator; }
+    iterator end() const { return end_iterator; }
   };
 
   template <typename ky, typename dt, 
@@ -557,6 +570,6 @@ namespace april_utils {
     
   }
   
-} // namespace april_utils
+} // namespace AprilUtils
 
 #endif // HASH_TABLE_H

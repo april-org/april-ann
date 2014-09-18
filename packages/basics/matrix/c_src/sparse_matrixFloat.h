@@ -26,6 +26,24 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef SparseMatrix<float> SparseMatrixFloat;
+namespace Basics {
+  
+  namespace MatrixIO {
+    
+    /* Especialization of SparseMatrixFloat ascii and binary sizers */
+    
+    template<>
+    int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat);
+    
+    template<>
+    int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
+    
+  }
+  
+  /////////////////////////////////////////////////////////////////////////
+  
+  typedef SparseMatrix<float> SparseMatrixFloat;
+
+}
 
 #endif // SPARSEMATRIXFLOAT_H

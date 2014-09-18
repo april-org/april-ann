@@ -22,6 +22,10 @@
 #include "unused_variable.h"
 #include "stack_component.h"
 
+using namespace Basics;
+using namespace AprilUtils;
+using namespace AprilMath;
+
 namespace ANN {
 
   StackANNComponent::StackANNComponent(const char *name) :

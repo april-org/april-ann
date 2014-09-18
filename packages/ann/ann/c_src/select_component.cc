@@ -24,7 +24,11 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "select_component.h"
-#include "wrapper.h"
+
+using namespace AprilMath;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilUtils;
+using namespace Basics;
 
 namespace ANN {
   
@@ -59,10 +63,10 @@ namespace ANN {
       ERROR_EXIT1(128, "Error input token has incorrect dimensions [%s]\n",
 		  name.c_str());
     MatrixFloat *error_output_mat = input_mat->cloneOnlyDims();
-    error_output_mat->zeros();
+    matZeros(error_output_mat);
     MatrixFloat *select_error_output_mat;
     select_error_output_mat = error_output_mat->select(dimension+1, index);
-    select_error_output_mat->copy(error_input_mat);
+    matCopy(select_error_output_mat, error_input_mat);
 #ifdef USE_CUDA
     select_error_output_mat->setUseCuda(use_cuda);
 #endif

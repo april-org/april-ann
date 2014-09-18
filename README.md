@@ -11,6 +11,9 @@ package `basics/utest`, and for C++ unit testing the package `basics/gtest`.
 At the end of this document there are information about Doxygen documentation
 which can be useful for C/C++ developing. For Lua developing use the wiki.
 
+It is possible to make a pull request directly to `master` branch for bug or
+memory leak solving.
+
 Requirements
 ------------
 
@@ -26,14 +29,19 @@ with older and newer versions whenver the API was compatible.
 - OpenMP
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
 - LAPACKE library when compiling with ATLAS
-- libz: support for open of GZIPPED files
 
-The following libreries are recommended, but optional:
-- [OPTIONAL] libpng: if you want to open PNG images
-- [OPTIONAL] libtiff: if you want to open TIFF images
+The following libreries are recommended, but optional, you will need to remove
+its package from the path `profile_build_scripts/package_list.lua`:
 
-For perform computation on GPU, this optional library:
-- [OPTIONAL] CUDA and CUBLAS: release 4.2.6
+- [OPTIONAL] libpng: if you want to open PNG images, package `libpng`.
+- [OPTIONAL] libtiff: if you want to open TIFF images, package `libtiff`.
+- [OPTIONAL] libz: support for open of GZIPPED files, package `gzio`.
+- [OPTIONAL] libzip: support for open ZIP packages, package `zip`.
+
+For perform computation on GPU, this optional library, which has an specific
+make target:
+
+- [OPTIONAL] CUDA and CUBLAS: release 4.2.6.
 
 Dependencies setup
 ------------------
@@ -41,7 +49,7 @@ Dependencies setup
 The first time, you need to install dependencies in Linux (via apt-get) and in
 MacOS X (via MacPorts) running:
 
-```$ sudo ./DEPENDENCIES-INSTALLER.sh```
+```$ ./DEPENDENCIES-INSTALLER.sh```
 
 Compilation
 -----------
@@ -253,11 +261,11 @@ Wiki documentation
 Doxygen documentation
 ---------------------
 
-The documentation of the master branch will be mantained as updated as possible
+The documentation of the devel branch will be mantained as updated as possible
 in the following links:
 
-- [Developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
-- [Reference manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
+- [C/C++ developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
+- [C/C++ binding manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
 
 However, you can produce the Doxygen documentation of the branch where
 you are working by using the makefile's `document` target. Please, note that
@@ -272,21 +280,24 @@ $ open doxygen_doc/developer/html/index.html
 The last command can be substituted by you opening the indicated
 location in your prefered web browser ;)
 
-LINUX installation
-------------------
+LINUX dependencies installation
+-------------------------------
 
-Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
-libopenmp-dev or execute: `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+Execute: `$ ./DEPENDENCIES-INSTALLER.sh`
 
-MAC OS X installation
----------------------
+If your distribution is not supported (currently only Ubuntu has support), then
+install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
+libopenmp-dev, libzip-dev, liblua5.2-dev.
+
+MAC OS X dependencies installation
+----------------------------------
 
 Via MacPorts:
 
 - Install [MacPorts](http://www.macports.org/)
-- Execute `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`
 
-Or manually:
+Or via HomeBrew:
 
-- Install libpng, from [sourceforge](http://sourceforge.net/projects/libpng/files/). Follow INSTALL information.
-- Install findutils, from [GNU](http://ftp.gnu.org/pub/gnu/findutils/). Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
+- Install [Homebrew](http://brew.sh/)
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`

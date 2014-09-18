@@ -20,4 +20,6 @@
  */
 #include "token_sparse_matrix.h"
 
-template class TokenSparseMatrix<float>;
+namespace Basics {
+  template class TokenSparseMatrix<float>;
+}

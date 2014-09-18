@@ -19,13 +19,67 @@
  *
  */
 #include "matrixChar.h"
-#include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY(char)
-NOT_IMPLEMENT_GEMM(char)
-NOT_IMPLEMENT_GEMV(char)
-NOT_IMPLEMENT_GER(char)
-NOT_IMPLEMENT_DOT(char)
+namespace Basics {
 
-///////////////////////////////////////////////////////////////////////////////
-template class Matrix<char>;
+  namespace MatrixIO {
+    /////////////////////////////////////////////////////////////////////////
+  
+    template<>
+    bool AsciiExtractor<char>::operator()(AprilUtils::constString &line,
+                                          char &destination) {
+      if (!line.extract_char(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    bool BinaryExtractor<char>::operator()(AprilUtils::constString &line,
+                                           char &destination) {
+      UNUSED_VARIABLE(line);
+      UNUSED_VARIABLE(destination);
+      ERROR_EXIT(128, "Char type has not binary option\n");
+      return false;
+
+    }
+  
+    template<>
+    int AsciiSizer<char>::operator()(const Matrix<char> *mat) {
+      return mat->size()*2;
+    }
+
+    template<>
+    int BinarySizer<char>::operator()(const Matrix<char> *mat) {
+      UNUSED_VARIABLE(mat);
+      ERROR_EXIT(128, "Char type has not binary option\n");
+      return 0;
+    }
+
+    template<>
+    void AsciiCoder<char>::operator()(const char &value,
+                                      AprilIO::StreamInterface *stream) {
+      stream->printf("%c", value);
+    }
+  
+    template<>
+    void BinaryCoder<char>::operator()(const char &value,
+                                       AprilIO::StreamInterface *stream) {
+      UNUSED_VARIABLE(value);
+      UNUSED_VARIABLE(stream);
+      ERROR_EXIT(128, "Char type has not binary option\n");
+
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+
+  } // namespace MatrixIO
+
+  template<>
+  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
+                                       const char *name, char default_value) {
+    return options->getOptionalChar(name, default_value);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  template class Matrix<char>;
+
+} // namespace Basics
