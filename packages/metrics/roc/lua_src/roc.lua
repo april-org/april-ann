@@ -54,9 +54,9 @@ roc_methods.add =
     check_matrix(outputs)
     check_matrix(targets)
     local data,P,N = self.data,0,0
-    outputs:map(targets, function(x,y)
-                  data[#data+1] = {x,y}
-                  if y > 0 then P=P+1 else N=N+1 end
+    outputs:map(targets, function(out,tgt)
+                  data[#data+1] = {out,tgt}
+                  if tgt > 0.5 then P=P+1 else N=N+1 end
     end) -- output,target
     self.P = self.P + P
     self.N = self.N + N
@@ -67,37 +67,29 @@ roc_methods.compute_curve =
     class = "method",
     summary = "Computes the ROC curve with all added data",
     outputs = {
-      {"A matrix with N rows and 3 columns, the first column is FPR, second",
-       "is TPR and the last is the value <= threshold"},
+      {"A matrix with N rows and 4 columns, the first column is FPR, second",
+       "is TPR, the third is the threshold, and the last is the true value"},
     },
   } ..
   function(self)
     local data = self.data
     local P = self.P
     local N = self.N
-    table.sort(data, function(a,b) return a[1]<b[1] end)
-    local result = { }
-    local TP,FP = P,N
+    local out = matrix(#data,4)
+    table.sort(data, function(a,b) return a[1]>b[1] end)
+    local result = { 0, 0, 1, -1 }
+    local TP,FP = 0,0
     for i=1,#data do
-      local TPR,FPR = TP/P,FP/N
-      result[#result+1] = { FPR, TPR, data[i][1] }
-      if data[i][2] > 0 then
-        TP = TP - 1
+      if data[i][2] > 0.5 then
+        TP = TP + 1
       else
-        FP = FP - 1
+        FP = FP + 1
       end
-    end
-    result[#result+1] = { 0, 0, 1 }
-    table.sort(result,
-               function(a,b)
-                 if a[1] < b[1] then return true
-                 elseif a[1] > b[1] then return false
-                 else return a[2] < b[2]
-                 end
-    end)
-    local out = matrix(#result,3)
-    for i,v in ipairs(result) do
-      out:set(i,1,v[1]):set(i,2,v[2]):set(i,3,v[3])
+      local TPR,FPR = TP/P,FP/N
+      out:set(i,1,FPR)
+      out:set(i,2,TPR)
+      out:set(i,3,data[i][1])
+      out:set(i,4,data[i][2])
     end
     return out
   end
