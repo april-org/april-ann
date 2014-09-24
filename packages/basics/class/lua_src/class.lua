@@ -122,6 +122,7 @@ function class.is_a(object_instance, base_class_table)
   local _is_a           = false
   while not _is_a and object_table do
     local index = has_instance_index_metamethod(object_table)
+    if rawequal(index, object_table) then break end
     if index then _is_a = rawequal(index, base_class_meta) end
     object_table = index
   end
