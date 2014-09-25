@@ -438,8 +438,8 @@ train_holdout_methods.execute =
     -- update with the best model
     if ( state.validation_error < state.best_val_error or
          state.current_epoch <= params.epochs_wo_validation ) then
-      local abs_error = state.best_val_error - state.validation_error
-      local rel_error = abs_error / state.best_val_error
+      local abs_error = math.abs(state.best_val_error - state.validation_error)
+      local rel_error = abs_error / math.abs(state.best_val_error)
       if state.best_val_error == math.huge or rel_error > params.tolerance then
         state.best_epoch     = state.current_epoch
         state.best_val_error = state.validation_error
