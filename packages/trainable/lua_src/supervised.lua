@@ -80,7 +80,7 @@ trainable_supervised_trainer.constructor =
       local loss        = t.loss
       local bunch_size  = t.bunch_size
       local optimizer   = t.optimizer
-      local smooth_gradients = t.smooth_gradients or true
+      local smooth_gradients = (t.smooth_gradients==nil or t.smooth_gradients)
       trainable.supervised_trainer.constructor(self,
                                                model, loss, bunch_size,
                                                optimizer, smooth_gradients)
@@ -104,7 +104,7 @@ trainable_supervised_trainer.constructor =
       -- Constructor of a new object
       local ann_component,loss_function,bunch_size,optimizer,smooth_gradients = ...
       local optimizer = optimizer or ann.optimizer.sgd()
-      local smooth_gradients = smooth_gradients or true
+      local smooth_gradients = (smooth_gradients==nil or smooth_gradients)
       if loss_function and not is_a(loss_function, ann.loss) then
         error("The second parameter must be an instance of ann.loss")
       end
@@ -784,7 +784,7 @@ trainable_supervised_trainer_methods.train_step =
     local loss       = loss or self.loss_function or error("Needs a loss object")
     local optimizer  = optimizer or self.optimizer or error("Needs an optimizer object")
     local bunch_size = bunch_size or self.bunch_size or 1
-    local smooth_gradients = smooth_gradients or self.smooth_gradients
+    local smooth_gradients = (smooth_gradients==nil or smooth_gradients)
     if mask then
       if not is_a(mask,matrix) then mask = mask:get_matrix() end
       if not is_a(target,matrix) then
