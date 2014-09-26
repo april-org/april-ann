@@ -659,7 +659,7 @@ local function boot(self,params)
   if type(data) == "table" then
     N = #data
     get_row = function(i) return data[i] end
-  elseif isa(data, "matrix") or isa(data, "matrixInt32") or isa(data, "matrixComplex") then
+  elseif class.is_a(data, matrix) or class.is_a(data, matrixInt32) or class.is_a(data, matrixComplex) then
     N = data:dim(1)
     local row
     get_row = function(i) row=data:select(1,i,row) return row end
