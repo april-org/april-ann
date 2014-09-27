@@ -75,23 +75,31 @@ roc_methods.compute_curve =
     local data = self.data
     local P = self.P
     local N = self.N
-    local out = matrix(#data,4)
     table.sort(data, function(a,b) return a[1]>b[1] end)
-    local result = { 0, 0, 1, -1 }
+    local result = { }
     local TP,FP = 0,0
+    local prev_th,j = -math.huge,0
     for i=1,#data do
+      if data[i][1] ~= prev_th then
+        local TPR,FPR = TP/P,FP/N
+	table.insert(result, FPR)        -- 1
+	table.insert(result, TPR)        -- 2
+	table.insert(result, data[i][1]) -- 3
+	table.insert(result, data[i][2]) -- 4
+        j=j+1
+        prev_th = data[i][1]
+      end
       if data[i][2] > 0.5 then
         TP = TP + 1
       else
         FP = FP + 1
       end
-      local TPR,FPR = TP/P,FP/N
-      out:set(i,1,FPR)
-      out:set(i,2,TPR)
-      out:set(i,3,data[i][1])
-      out:set(i,4,data[i][2])
     end
-    return out
+    table.insert(result, 1)
+    table.insert(result, 1)
+    table.insert(result, -1)
+    table.insert(result, -1)
+    return matrix(j+1,4,result)
   end
 
 roc_methods.compute_area =

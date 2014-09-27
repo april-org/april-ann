@@ -780,10 +780,12 @@ ann.autoencoders.greedy_layerwise_pretraining =
         end
       end
       if input_actf=="linear" or cod_actf=="linear" then
-        -- if activation is linear, the derivative slope is so high, so we use
-        -- learning_rate to reduce its impact
-        local ratio = 1/math.sqrt(cod_size+input_size)
-        trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
+        if trainer:has_option("learning_rate") then
+          -- if activation is linear, the derivative slope is so high, so we use
+          -- learning_rate to reduce its impact
+          local ratio = 1/math.sqrt(cod_size+input_size)
+          trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
+ 	end
       end
       -- printf("BEFORE TRAIN %d\n", i)
       local train_func = trainable.train_wo_validation{
