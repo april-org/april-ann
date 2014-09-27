@@ -28,6 +28,7 @@ v0.4.0
 
 ### API Changes
 
+- Added `metrics.roc` for ROC computation.
 - Added new `class` behavior taken from
   [Lua OOP-iter](https://github.com/pakozm/lua-oop-iter), in order to introduce
   more modularity in APRIL-ANN.
@@ -39,6 +40,15 @@ v0.4.0
 
 ### Bugs removed
 
+- Solved bug in `stats.boot()` function, it wasn't correctly updated to new
+  `class` functions.
+- Solve bug in `trainable.supervised_trainer`, problem with smooth_gradients
+  flag.
+- Solved bug in trainable.lua `train_holdout:execute()` method, the pocket
+  algorithm wasn't work with negative loss functions.
+- Solved bug at class.lua, inifite loop when calling `class.is_a()`.
+- Solved bug at autoencoder training.
+- Solved bug in ROC computation.
 - CUDA is working, time performance of convolutions needs a review.
 - Solved bug in `constString` extract numeric methods which returns `false` when
   the extraction procedure ends up to the character after the last valid number.
