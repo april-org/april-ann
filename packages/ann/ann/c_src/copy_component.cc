@@ -128,6 +128,9 @@ namespace ANN {
         TokenMatrixFloat *aux = input->convertTo<TokenMatrixFloat*>();
         april_assert(aux != 0);
         MatrixFloat *input_mat = aux->getMatrix();
+        if (input_mat->getDimSize(0) != static_cast<int>(bunch_size)) {
+          ERROR_EXIT(128, "Different bunch size between forward and backprop\n");
+        }
         error_output_mat = new MatrixFloat(input_mat->getNumDim(),
                                            input_mat->getDimPtr(),
                                            CblasColMajor);

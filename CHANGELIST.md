@@ -40,6 +40,9 @@ v0.4.0
 
 ### Bugs removed
 
+- Solved bug at `CopyANNComponent::doBackprop()` method, incorrect behavior for
+  multi-dimensional matrices.
+- Solved bug at `ZCAWhiteningANNComponent::doBackprop()` method was wrong.
 - Solved bug in `stats.boot()` function, it wasn't correctly updated to new
   `class` functions.
 - Solve bug in `trainable.supervised_trainer`, problem with smooth_gradients
