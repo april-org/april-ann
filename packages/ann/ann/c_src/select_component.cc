@@ -24,6 +24,7 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "select_component.h"
+#include "smart_ptr.h"
 
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt::Operations;
@@ -49,9 +50,9 @@ namespace ANN {
       ERROR_EXIT2(128, "At least 3 dimensional matrix is expected, found %d. "
 		  "First dimension is bunch-size, and the rest are pattern data "
 		  "[%s]", input_mat->getNumDim(), name.c_str());
-    MatrixFloat *aux_output_mat = input_mat->select(dimension+1, index);
-    MatrixFloat *output_mat     = aux_output_mat->clone();
-    delete aux_output_mat;
+    AprilUtils::SharedPtr<MatrixFloat>
+      aux_output_mat( input_mat->select(dimension+1, index) );
+    MatrixFloat *output_mat = aux_output_mat->clone();
     return output_mat;
   }
 
@@ -64,9 +65,9 @@ namespace ANN {
 		  name.c_str());
     MatrixFloat *error_output_mat = input_mat->cloneOnlyDims();
     matZeros(error_output_mat);
-    MatrixFloat *select_error_output_mat;
-    select_error_output_mat = error_output_mat->select(dimension+1, index);
-    matCopy(select_error_output_mat, error_input_mat);
+    AprilUtils::SharedPtr<MatrixFloat>
+      select_error_output_mat( error_output_mat->select(dimension+1, index) );
+    matCopy(select_error_output_mat.get(), error_input_mat);
 #ifdef USE_CUDA
     select_error_output_mat->setUseCuda(use_cuda);
 #endif

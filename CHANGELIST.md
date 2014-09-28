@@ -40,6 +40,7 @@ v0.4.0
 
 ### Bugs removed
 
+- Removed memory leak at `SelectANNComponent::doBackprop()` method.
 - Solved bug at `CopyANNComponent::doBackprop()` method, incorrect behavior for
   multi-dimensional matrices.
 - Solved bug at `ZCAWhiteningANNComponent::doBackprop()` method was wrong.
