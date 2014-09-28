@@ -75,7 +75,7 @@ namespace ANN {
   ANNComponent *ZCAWhiteningANNComponent::clone() {
     ZCAWhiteningANNComponent *component = new ZCAWhiteningANNComponent(U, S,
 								       epsilon,
-								       0,
+								       takeN,
 								       name.c_str());
     return component;
   }
