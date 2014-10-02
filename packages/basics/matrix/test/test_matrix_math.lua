@@ -425,6 +425,11 @@ T("MaxTest", function()
     check.eq(m:max(1), matrix(1, 3, {6, 4, 5}), "max(1)")
     check.eq(m:max(2), matrix(2, 1, {4, 6}), "max(2)")
 
+    local m = m - 10
+    check.eq(m:max(), -4, "max()")
+    check.eq(m:max(1), matrix(1, 3, {-4, -6, -5}), "max(1)")
+    check.eq(m:max(2), matrix(2, 1, {-6, -4}), "max(2)")
+
     local m = matrix(2, 4, 3, { 12, 14, 18,   8,  5, 6,    7, 16,  9,   10, 24, 1,
                                 13,  2, 15,   4, 17, 3,   19, 20, 21,   22, 23, 11})
     check.eq(m:max(), 24, "max() 2")
@@ -490,6 +495,11 @@ T("MinTest", function()
     check.eq(m:min(), 1, "min()")
     check.eq(m:min(1), matrix(1, 3, {1, 3, 2}), "min(1)")
     check.eq(m:min(2), matrix(2, 1, {1, 3}), "min(2)")
+
+    local m = m - 10
+    check.eq(m:min(), -9, "min()")
+    check.eq(m:min(1), matrix(1, 3, {-9, -7, -8}), "min(1)")
+    check.eq(m:min(2), matrix(2, 1, {-9, -7}), "min(2)")
 
     local m = matrix(2, 4, 3, { 12, 14, 18,   8,  5, 6,    7, 16,  9,   10, 24, 1,
                                 13,  2, 15,   4, 17, 3,   19, 20, 21,   22, 23, 11})

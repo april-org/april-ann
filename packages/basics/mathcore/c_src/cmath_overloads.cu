@@ -25,28 +25,43 @@
 
 namespace AprilMath {
   
+  template<> char Limits<char>::lowest() { return CHAR_MIN; }
   template<> char Limits<char>::min() { return CHAR_MIN; }
   template<> char Limits<char>::max() { return CHAR_MAX; }
 
+  template<> int32_t Limits<int32_t>::lowest() { return INT_MIN; }
   template<> int32_t Limits<int32_t>::min() { return INT_MIN; }
   template<> int32_t Limits<int32_t>::max() { return INT_MAX; }
   
+  template<> float Limits<float>::lowest() { return -FLT_MAX; }
   template<> float Limits<float>::min() { return FLT_MIN; }
   template<> float Limits<float>::max() { return FLT_MAX; }
   template<> float Limits<float>::epsilon() { return FLT_EPSILON; }
+  template<> bool Limits<float>::hasInfinity() { return true; }
+  template<> float Limits<float>::infinity() { return HUGE_VALF; }
   
+  template<> double Limits<double>::lowest() { return -DBL_MAX; }
   template<> double Limits<double>::min() { return DBL_MIN; }
   template<> double Limits<double>::max() { return DBL_MAX; }
   template<> double Limits<double>::epsilon() { return DBL_EPSILON; }
+  template<> bool Limits<double>::hasInfinity() { return true; }
+  template<> double Limits<double>::infinity() { return HUGE_VAL; }
   
+  template<> ComplexF Limits<ComplexF>::lowest() {
+    return ComplexF(Limits<float>::lowest(),Limits<float>::lowest());
+  }
   template<> ComplexF Limits<ComplexF>::min() {
-    return ComplexF(FLT_MIN,FLT_MIN);
+    return ComplexF(Limits<float>::min(),Limits<float>::min());
   }
   template<> ComplexF Limits<ComplexF>::max() {
-    return ComplexF(FLT_MAX,FLT_MAX);
+    return ComplexF(Limits<float>::max(),Limits<float>::max());
   }
   template<> ComplexF Limits<ComplexF>::epsilon() {
-    return ComplexF(FLT_EPSILON,FLT_EPSILON);
+    return ComplexF(Limits<float>::epsilon(),Limits<float>::epsilon());
+  }
+  template<> bool Limits<ComplexF>::hasInfinity() { return true; }
+  template<> ComplexF Limits<ComplexF>::infinity() {
+    return ComplexF(Limits<float>::infinity(),Limits<float>::infinity());
   }
   
 } // namespace AprilMath
