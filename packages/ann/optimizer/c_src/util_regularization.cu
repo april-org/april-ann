@@ -33,28 +33,22 @@ namespace ANN {
       struct L1NormKernel {
         float value;
         L1NormKernel(float value) : value(value) { }
-        APRIL_CUDA_EXPORT float operator()(const float &x,
-                                           const float &y) {
-          float result = x;
-          if (y > 0.0f) result = AprilMath::m_max(-y, x-value);
-          else if (y < 0.0f) result = AprilMath::m_min(-y, x+value);
-          else if (AprilMath::m_abs(x) < value) result = 0.0f;          
+        APRIL_CUDA_EXPORT float operator()(const float &w) {
+          float result = w;
+          if (w > 0.0f) result = AprilMath::m_max(0.0f, w-value);
+          else if (w < 0.0f) result = AprilMath::m_min(0.0f, w+value);
           return result;
         }
       };
 
     }
     
-    void UtilRegularization::L1NormMap(MatrixFloat *dest,
-				       float value,
-				       MatrixFloat *w) {
-      april_assert(dest->sameDim(w));
-      april_assert(dest->getNumDim() == 2);
-      april_assert(dest->getMajorOrder() == CblasColMajor);
+    void UtilRegularization::L1NormMap(MatrixFloat *w,
+				       float value) {
+      april_assert(w->getNumDim() == 2);
+      april_assert(w->getMajorOrder() == CblasColMajor);
       //
-      AprilMath::MatrixExt::MatrixScalarMap2(dest, w,
-                                             Kernels::L1NormKernel(value),
-                                             dest);
+      AprilMath::MatrixExt::MatrixScalarMap1(w,Kernels::L1NormKernel(value),w);
     }
   }
 }

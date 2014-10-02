@@ -28,16 +28,16 @@ ann.optimizer.utils = nil
 
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.weight_decay(dest, wd, w)
+function ann.optimizer.regularizations.weight_decay(w, wd)
   if wd > 0.0 then
-    dest:axpy(-wd, w)
+    w:scal(1.0 - wd)
   end
 end
 
 -- This regularization term must be applied the last
-function ann.optimizer.regularizations.L1_norm(dest, value, w)
+function ann.optimizer.regularizations.L1_norm(w, value)
   if value > 0.0 then
-    ann_optimizer_utils.regularization.L1_norm_map(dest, value, w)
+    ann_optimizer_utils.regularization.L1_norm_map(w, value)
   end
 end
 
@@ -122,7 +122,7 @@ function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
   table.insert(self.constraints_order, hyperparameter_name)
 end
 
-local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
+local function ann_optimizer_apply_regularizations(opt, wname, w)
   for _,hypname in ipairs(opt.regularizations_order) do
     local func = opt.regularizations[hypname]
     local v = opt:get_option_of(wname, hypname)
@@ -133,7 +133,7 @@ local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
 		"# WARNING!!! Possible %s > 0 in bias connection: %s\n",
 		hypname, wname)
       end
-      func(dest, v, w)
+      func(w, v)
     end
   end
 end
@@ -287,10 +287,10 @@ function sgd_methods:execute(eval, weights)
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
     update:axpy(-lr, grad)
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
     w:axpy(1.0, update)
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
@@ -517,7 +517,7 @@ function cg_methods:execute(eval, weights)
   local apply_regularization_and_penalties = function(x)
     for name,w in pairs(x) do
       -- regularizations
-      ann_optimizer_apply_regularizations(self, name, w, w)
+      ann_optimizer_apply_regularizations(self, name, w)
       -- constraints
       ann_optimizer_apply_constraints(self, name, w)
     end
@@ -861,10 +861,10 @@ function quickprop_methods:execute(eval, weights)
     --
     self.update[name] = update
     self.lastg[name]  = lastg
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
     w:axpy(-lr, update)
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
@@ -967,8 +967,6 @@ function asgd_methods:execute(eval, weights)
     local mu_t        = 1.0 / math.max(1, t - t0)        -- average factor
     -- apply back-propagation learning rule
     update:axpy(-lr, grad)
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, update, w)
     -- compute averaged weights
     if mu_t > 1 or mu_t < 1 then
       update:axpy(1.0,w)
@@ -976,6 +974,8 @@ function asgd_methods:execute(eval, weights)
     else
       w:axpy(1.0, update)
     end
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       w:prune_subnormal_and_check_normal()
