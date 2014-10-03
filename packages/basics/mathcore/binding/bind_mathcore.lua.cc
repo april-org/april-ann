@@ -244,7 +244,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_FUNCTION mathcore.limits.complex.quiet_NaN
+//BIND_FUNCTION mathcore.limits.float.quiet_NaN
 {
   LUABIND_RETURN(float,Limits<float>::quiet_NaN());
 }
@@ -282,7 +282,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_FUNCTION mathcore.limits.complex.quiet_NaN
+//BIND_FUNCTION mathcore.limits.double.quiet_NaN
 {
   LUABIND_RETURN(double,Limits<double>::quiet_NaN());
 }
