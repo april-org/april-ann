@@ -28,22 +28,25 @@ ann.optimizer.utils = nil
 
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.weight_decay(w, wd)
+function ann.optimizer.regularizations.weight_decay(w, wd, update)
   if wd > 0.0 then
-    w:scal(1.0 - wd)
-  end
-end
-
--- This regularization term must be applied the last
-function ann.optimizer.regularizations.L1_norm(w, value)
-  if value > 0.0 then
-    ann_optimizer_utils.regularization.L1_norm_map(w, value)
+    assert(wd < 1.0, "Incorrect weight decay value")
+    if update then update:axpy(wd, w)
+    else w:scal(1-wd)
+    end
   end
 end
 
 ------------------------------------------------------------------------------
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
+
+-- This regularization term must be applied the last
+function ann.optimizer.constraints.L1_norm(value, w)
+  if value > 0.0 then
+    ann_optimizer_utils.regularization.L1_norm_map(w, value)
+  end
+end
 
 -- The penalty is computed and applied on w
 function ann.optimizer.constraints.max_norm_penalty(mp, w)
@@ -122,7 +125,7 @@ function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
   table.insert(self.constraints_order, hyperparameter_name)
 end
 
-local function ann_optimizer_apply_regularizations(opt, wname, w)
+local function ann_optimizer_apply_regularizations(opt, wname, w, update)
   for _,hypname in ipairs(opt.regularizations_order) do
     local func = opt.regularizations[hypname]
     local v = opt:get_option_of(wname, hypname)
@@ -133,7 +136,7 @@ local function ann_optimizer_apply_regularizations(opt, wname, w)
 		"# WARNING!!! Possible %s > 0 in bias connection: %s\n",
 		hypname, wname)
       end
-      func(w, v)
+      func(w, v, update)
     end
   end
 end
@@ -260,7 +263,7 @@ function sgd:constructor(g_options, l_options, count, update)
   self.update = wrap_matrices(update or matrix.dict())
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -287,10 +290,10 @@ function sgd_methods:execute(eval, weights)
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
     update:axpy(-lr, grad)
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w, update)
     -- apply update matrix to the weights
     w:axpy(1.0, update)
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, w)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
@@ -497,7 +500,7 @@ function cg:constructor(g_options, l_options, count,
   self:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -799,7 +802,7 @@ function quickprop:constructor(g_options, l_options, count,
   self.lastg  = wrap_matrices(lastg  or matrix.dict())
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -861,10 +864,10 @@ function quickprop_methods:execute(eval, weights)
     --
     self.update[name] = update
     self.lastg[name]  = lastg
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w, update)
     -- apply update matrix to the weights
     w:axpy(-lr, update)
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, w)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
@@ -967,6 +970,8 @@ function asgd_methods:execute(eval, weights)
     local mu_t        = 1.0 / math.max(1, t - t0)        -- average factor
     -- apply back-propagation learning rule
     update:axpy(-lr, grad)
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, w, update)
     -- compute averaged weights
     if mu_t > 1 or mu_t < 1 then
       update:axpy(1.0,w)
@@ -974,8 +979,6 @@ function asgd_methods:execute(eval, weights)
     else
       w:axpy(1.0, update)
     end
-    -- regularizations
-    ann_optimizer_apply_regularizations(self, name, w)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       w:prune_subnormal_and_check_normal()
