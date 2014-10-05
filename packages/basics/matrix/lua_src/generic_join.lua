@@ -4,6 +4,11 @@ matrix.__generic__ = matrix.__generic__ or {}
 matrix.__generic__.__make_generic_join__ = function(constructor)
   return function(dim, ...)
     local arg  = table.pack(...)
+    if type(arg[1]) == "table" then
+      assert(#arg == 1, "Use one table argument or multiple matrix arguments")
+      arg = arg[1]
+    end
+    assert(#arg > 0, "At least one matrix is needed")
     local size = arg[1]:dim()
     -- ERROR CHECK
     assert(dim >= 1 and dim <= #size,
