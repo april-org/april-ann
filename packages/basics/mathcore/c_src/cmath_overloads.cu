@@ -39,13 +39,15 @@ namespace AprilMath {
   template<> float Limits<float>::epsilon() { return FLT_EPSILON; }
   template<> bool Limits<float>::hasInfinity() { return true; }
   template<> float Limits<float>::infinity() { return HUGE_VALF; }
-  
+  template<> float Limits<float>::quiet_NaN() { return float(NAN); }
+
   template<> double Limits<double>::lowest() { return -DBL_MAX; }
   template<> double Limits<double>::min() { return DBL_MIN; }
   template<> double Limits<double>::max() { return DBL_MAX; }
   template<> double Limits<double>::epsilon() { return DBL_EPSILON; }
   template<> bool Limits<double>::hasInfinity() { return true; }
   template<> double Limits<double>::infinity() { return HUGE_VAL; }
+  template<> double Limits<double>::quiet_NaN() { return double(NAN); }
   
   template<> ComplexF Limits<ComplexF>::lowest() {
     return ComplexF(Limits<float>::lowest(),Limits<float>::lowest());
@@ -62,6 +64,9 @@ namespace AprilMath {
   template<> bool Limits<ComplexF>::hasInfinity() { return true; }
   template<> ComplexF Limits<ComplexF>::infinity() {
     return ComplexF(Limits<float>::infinity(),Limits<float>::infinity());
+  }
+  template<> ComplexF Limits<ComplexF>::quiet_NaN() {
+    return ComplexF(Limits<float>::quiet_NaN(), Limits<float>::quiet_NaN());
   }
   
 } // namespace AprilMath

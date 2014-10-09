@@ -28,6 +28,10 @@
 #include "error_print.h"
 #include "unused_variable.h"
 
+#ifndef NAN
+#define NAN 0.0/0.0
+#endif
+
 /// Constant for values close to zero.
 #define NEAR_ZERO             1e-6f
 /**
@@ -68,6 +72,8 @@ namespace AprilMath {
     static T min() { return T(); }
     /// Returns the maximum finite value of a typename T.
     static T max() { return T(); }
+    /// Returns a NaN value.
+    static T quiet_NaN() { return T(); }
   };
   
   template<> char Limits<char>::lowest();
@@ -84,6 +90,7 @@ namespace AprilMath {
   template<> float Limits<float>::epsilon();
   template<> bool Limits<float>::hasInfinity();
   template<> float Limits<float>::infinity();
+  template<> float Limits<float>::quiet_NaN();
   
   template<> double Limits<double>::lowest();
   template<> double Limits<double>::min();
@@ -91,6 +98,7 @@ namespace AprilMath {
   template<> double Limits<double>::epsilon();
   template<> bool Limits<double>::hasInfinity();
   template<> double Limits<double>::infinity();
+  template<> double Limits<double>::quiet_NaN();
   
   template<> ComplexF Limits<ComplexF>::lowest();
   template<> ComplexF Limits<ComplexF>::min();
@@ -98,6 +106,7 @@ namespace AprilMath {
   template<> ComplexF Limits<ComplexF>::epsilon();
   template<> bool Limits<ComplexF>::hasInfinity();
   template<> ComplexF Limits<ComplexF>::infinity();
+  template<> ComplexF Limits<ComplexF>::quiet_NaN();
 
   ///////////////// NAN CHECK /////////////////
 
