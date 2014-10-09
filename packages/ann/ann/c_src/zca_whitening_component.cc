@@ -68,14 +68,14 @@ namespace ANN {
   }
   
   Token *ZCAWhiteningANNComponent::doBackprop(Token *_error_input) {
-    Token *rotated_error = PCAWhiteningANNComponent::doBackprop(_error_input);
-    return dot_product_decoder.doBackprop(rotated_error);
+    Token *rotated_error = dot_product_decoder.doBackprop(_error_input);
+    return PCAWhiteningANNComponent::doBackprop(rotated_error);
   }
   
   ANNComponent *ZCAWhiteningANNComponent::clone() {
     ZCAWhiteningANNComponent *component = new ZCAWhiteningANNComponent(U, S,
 								       epsilon,
-								       0,
+								       takeN,
 								       name.c_str());
     return component;
   }

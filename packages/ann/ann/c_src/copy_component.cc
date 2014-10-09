@@ -122,9 +122,32 @@ namespace ANN {
     
     // output token
     MatrixFloat *error_output_mat;
-    int dims[2] = { static_cast<int>(bunch_size),
-		    static_cast<int>(input_size) };
-    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
+    switch(input->getTokenCode()) {
+    case table_of_token_codes::token_matrix:
+      {
+        TokenMatrixFloat *aux = input->convertTo<TokenMatrixFloat*>();
+        april_assert(aux != 0);
+        MatrixFloat *input_mat = aux->getMatrix();
+        if (input_mat->getDimSize(0) != static_cast<int>(bunch_size)) {
+          ERROR_EXIT(128, "Different bunch size between forward and backprop\n");
+        }
+        error_output_mat = new MatrixFloat(input_mat->getNumDim(),
+                                           input_mat->getDimPtr(),
+                                           CblasColMajor);
+        break;
+      }
+    case table_of_token_codes::vector_Tokens:
+      {
+        int dims[2] = { static_cast<int>(bunch_size),
+                        static_cast<int>(input_size) };
+        error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
+        break;
+      }
+    default:
+      error_output_mat = 0;
+      ERROR_EXIT2(128, "Incorrect input token type %d [%s]\n",
+		  input->getTokenCode(), name.c_str());
+    }
 #ifdef USE_CUDA
     error_output_mat->setUseCuda(use_cuda);
 #endif

@@ -53,34 +53,51 @@ namespace AprilMath {
   template<typename T>
   class Limits {
   public:
-    /// Returns the minimum finite value of a typename T.
-    static T min() { return T(); }
-    /// Returns the maximum finite value of a typename T.
-    static T max() { return T(); }
+    /// Indicates if infinity() method can be used.
+    static bool hasInfinity() { return false; }
+    /// Returns the positive infinity representation, if hasInfinity() == true.
+    static T infinity() { return T(); }
     /**
      * @brief Machine the difference between 1 and the least value greater
      * than 1 that is representable for typename T.
      */
     static T epsilon() { return T(); }
+    /// Returns the lowest finite value of a typename T.
+    static T lowest() { return T(); }
+    /// Returns the minimum finite value of a typename T.
+    static T min() { return T(); }
+    /// Returns the maximum finite value of a typename T.
+    static T max() { return T(); }
   };
   
+  template<> char Limits<char>::lowest();
   template<> char Limits<char>::min();
   template<> char Limits<char>::max();
 
+  template<> int32_t Limits<int32_t>::lowest();
   template<> int32_t Limits<int32_t>::min();
   template<> int32_t Limits<int32_t>::max();
   
+  template<> float Limits<float>::lowest();
   template<> float Limits<float>::min();
   template<> float Limits<float>::max();
   template<> float Limits<float>::epsilon();
+  template<> bool Limits<float>::hasInfinity();
+  template<> float Limits<float>::infinity();
   
+  template<> double Limits<double>::lowest();
   template<> double Limits<double>::min();
   template<> double Limits<double>::max();
   template<> double Limits<double>::epsilon();
+  template<> bool Limits<double>::hasInfinity();
+  template<> double Limits<double>::infinity();
   
+  template<> ComplexF Limits<ComplexF>::lowest();
   template<> ComplexF Limits<ComplexF>::min();
   template<> ComplexF Limits<ComplexF>::max();
   template<> ComplexF Limits<ComplexF>::epsilon();
+  template<> bool Limits<ComplexF>::hasInfinity();
+  template<> ComplexF Limits<ComplexF>::infinity();
 
   ///////////////// NAN CHECK /////////////////
 

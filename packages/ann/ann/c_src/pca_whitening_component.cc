@@ -42,7 +42,7 @@ namespace ANN {
 						     unsigned int takeN,
 						     const char *name) :
     ANNComponent(name, 0,
-		 static_cast<unsigned int>(S->getDimSize(0)),
+		 static_cast<unsigned int>(U->getDimSize(0)),
 		 (takeN==0)?(static_cast<unsigned int>(S->getDimSize(0))):(takeN)),
     U(U), S(S), epsilon(epsilon),
     dot_product_encoder(0, WEIGHTS_NAME,
@@ -102,7 +102,7 @@ namespace ANN {
   ANNComponent *PCAWhiteningANNComponent::clone() {
     PCAWhiteningANNComponent *component = new PCAWhiteningANNComponent(U, S,
 								       epsilon,
-								       0,
+								       takeN,
 								       name.c_str());
     return component;
   }

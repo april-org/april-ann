@@ -53,6 +53,7 @@ namespace Basics {
       TokenCode token_code = aux_token->getTokenCode();
       switch(token_code) {
       case table_of_token_codes::token_matrix: {
+        // FIXME: Check this shape to be consistent when getPattern() returns a multi-dimensional matrix.
         int dims[2]   = { static_cast<int>(bunch_size),
                           patternSize() };
         MatrixFloat *output_mat = new MatrixFloat(2, dims, CblasColMajor);

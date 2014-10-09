@@ -28,6 +28,7 @@ v0.4.0
 
 ### API Changes
 
+- Added new methods to `AprilMath::Limits` class.
 - Added `metrics.roc` for ROC computation.
 - Added new `class` behavior taken from
   [Lua OOP-iter](https://github.com/pakozm/lua-oop-iter), in order to introduce
@@ -40,6 +41,11 @@ v0.4.0
 
 ### Bugs removed
 
+- Solved bug at `matrix:max()` and `matrix:min()` methods.
+- Removed memory leak at `SelectANNComponent::doBackprop()` method.
+- Solved bug at `CopyANNComponent::doBackprop()` method, incorrect behavior for
+  multi-dimensional matrices.
+- Solved bug at `ZCAWhiteningANNComponent::doBackprop()` method was wrong.
 - Solved bug in `stats.boot()` function, it wasn't correctly updated to new
   `class` functions.
 - Solve bug in `trainable.supervised_trainer`, problem with smooth_gradients

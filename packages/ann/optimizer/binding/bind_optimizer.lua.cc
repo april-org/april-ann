@@ -66,12 +66,11 @@ using namespace ANN::Optimizer;
 
 //BIND_CLASS_METHOD UtilRegularization L1_norm_map
 {
-  LUABIND_CHECK_ARGN(>=,3);
-  MatrixFloat *destw, *w;
+  LUABIND_CHECK_ARGN(==,2);
+  MatrixFloat *w;
   float value;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, destw);
+  LUABIND_GET_PARAMETER(1, MatrixFloat, w);
   LUABIND_GET_PARAMETER(2, float,       value);
-  LUABIND_GET_PARAMETER(3, MatrixFloat, w);
-  UtilRegularization::L1NormMap(destw, value, w);
+  UtilRegularization::L1NormMap(w, value);
 }
 //BIND_END

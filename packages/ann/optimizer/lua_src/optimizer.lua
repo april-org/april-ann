@@ -28,22 +28,25 @@ ann.optimizer.utils = nil
 
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.weight_decay(dest, wd, w)
+function ann.optimizer.regularizations.weight_decay(update, wd, w)
   if wd > 0.0 then
-    dest:axpy(-wd, w)
-  end
-end
-
--- This regularization term must be applied the last
-function ann.optimizer.regularizations.L1_norm(dest, value, w)
-  if value > 0.0 then
-    ann_optimizer_utils.regularization.L1_norm_map(dest, value, w)
+    assert(wd < 1.0, "Incorrect weight decay value")
+    if rawequal(update, w) then w:scal(1-wd)
+    else update:axpy(-wd, w)
+    end
   end
 end
 
 ------------------------------------------------------------------------------
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
+
+-- This regularization term must be applied the last
+function ann.optimizer.constraints.L1_norm(value, w)
+  if value > 0.0 then
+    ann_optimizer_utils.regularization.L1_norm_map(w, value)
+  end
+end
 
 -- The penalty is computed and applied on w
 function ann.optimizer.constraints.max_norm_penalty(mp, w)
@@ -122,7 +125,7 @@ function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
   table.insert(self.constraints_order, hyperparameter_name)
 end
 
-local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
+local function ann_optimizer_apply_regularizations(opt, wname, update, w)
   for _,hypname in ipairs(opt.regularizations_order) do
     local func = opt.regularizations[hypname]
     local v = opt:get_option_of(wname, hypname)
@@ -133,7 +136,7 @@ local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
 		"# WARNING!!! Possible %s > 0 in bias connection: %s\n",
 		hypname, wname)
       end
-      func(dest, v, w)
+      func(update, v, w)
     end
   end
 end
@@ -260,7 +263,7 @@ function sgd:constructor(g_options, l_options, count, update)
   self.update = wrap_matrices(update or matrix.dict())
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -360,6 +363,9 @@ function rprop:constructor(g_options, l_options, count,
 			    count)
   self.steps    = wrap_matrices(steps or matrix.dict())
   self.old_sign = wrap_matrices(old_sign or matrix.dict())
+  self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   self:set_option("initial_step",  0.1)
   self:set_option("eta_plus",      1.2)
   self:set_option("eta_minus",     0.5)
@@ -405,6 +411,10 @@ function rprop_methods:execute(eval, weights)
       end
       steps(name):clamp(min_step, max_step)
       w:axpy(-1.0, sign:clone():cmul(steps(name)))
+      -- regularizations
+      ann_optimizer_apply_regularizations(self, name, w, w)
+      -- constraints
+      ann_optimizer_apply_constraints(self, name, w)
       -- keep the sign for the next iteration
       old_sign[name] = sign
       --
@@ -497,7 +507,7 @@ function cg:constructor(g_options, l_options, count,
   self:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -799,7 +809,7 @@ function quickprop:constructor(g_options, l_options, count,
   self.lastg  = wrap_matrices(lastg  or matrix.dict())
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
@@ -936,6 +946,8 @@ function asgd:constructor(g_options, l_options, count, update)
   self.update = wrap_matrices(update or matrix.dict())
   -- standard regularization and constraints
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   -- default values
   self:set_option("lr_decay", 0.75)
   self:set_option("t0", 0)
@@ -976,6 +988,8 @@ function asgd_methods:execute(eval, weights)
     else
       w:axpy(1.0, update)
     end
+    -- constraints
+    ann_optimizer_apply_constraints(self, name, w)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       w:prune_subnormal_and_check_normal()

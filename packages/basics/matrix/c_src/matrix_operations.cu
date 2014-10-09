@@ -766,12 +766,12 @@ namespace AprilMath {
           return MatrixScalarReduce1OverDimension(obj, dim,
                                                   AprilMath::Functors::r_min<T>(),
                                                   AprilMath::Functors::r_min<T>(),
-                                                  Limits<T>::max(), dest);
+                                                  Limits<T>::infinity(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
                                                        AprilMath::Functors::r_min2<T>(),
-                                                       Limits<T>::max(), argmin, dest);
+                                                       Limits<T>::infinity(), argmin, dest);
         }
       }
 
@@ -840,12 +840,12 @@ namespace AprilMath {
           return MatrixScalarReduce1OverDimension(obj, dim,
                                                   AprilMath::Functors::r_max<T>(),
                                                   AprilMath::Functors::r_max<T>(),
-                                                  Limits<T>::min(), dest);
+                                                  -Limits<T>::infinity(), dest);
         }
         else {
           return MatrixScalarReduceMinMaxOverDimension(obj, dim,
                                                        AprilMath::Functors::r_max2<T>(),
-                                                       Limits<T>::min(), argmax, dest);
+                                                       -Limits<T>::infinity(), argmax, dest);
         }
       }
 
