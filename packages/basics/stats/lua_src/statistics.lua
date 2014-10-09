@@ -704,7 +704,7 @@ stats.boot.ci =
     summary = "Returns the extremes of a confidence interval",
     description= {
       "This function returns the extremes of a confidence interval",
-      "given a table of sorted values and the confidence value.",
+      "given the result of stats.boot function and the confidence value.",
       "It could compute the interval over a slice of the table.",
     },
     params = {
@@ -717,7 +717,7 @@ stats.boot.ci =
       "The right limit of the interval",
     },
   } ..
-  -- returns the extremes of the interval, the table data must be sorted
+  -- returns the extremes of the interval
   function(data, confidence, index)
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
@@ -730,6 +730,43 @@ stats.boot.ci =
     local aux = iterator(ipairs(data)):select(2):field(index):table()
     table.sort(aux)
     return aux[a_pos],aux[b_pos]
+  end
+
+stats.boot.percentil =
+  april_doc{
+    class = "function",
+    summary = "Returns a percentil value",
+    description= {
+      "This function returns a percentil value",
+      "given the result of stats.boot function and the confidence value.",
+      "It could compute the percentil over a slice of the table.",
+    },
+    params = {
+      "The result of stats.boot function.",
+      "The percentil [optional], by default it is 0.5. It can be a table of several percentils",
+      "The statistic index for which you want compute the percentil [optional], by default it is 1",
+    },
+    outputs = {
+      "The percentil value",
+      "Another pecentil value",
+      "..."
+    },
+  } ..
+  -- returns the percentil
+  function(data, percentil, index)
+    local percentil,index  = percentil or 0.95, index or 1
+    if type(percentil) ~= "table" then percentil = { percentil } end
+    local aux = iterator(ipairs(data)):select(2):field(index):table()
+    table.sort(aux)
+    local pos_tbl = {}
+    for _,v in ipairs{percentil} do
+      assert(v > 0 and v < 1,
+             "Incorrect percentil value, it must be in range (0,1)")
+      local N = #data
+      assert(index > 0 and index <= N)
+      pos_tbl[#pos_tbl + 1] = math.round(N*v)
+    end
+    return table.unpack(pos_tbl)
   end
 
 -----------------------------------------------------------------------------
