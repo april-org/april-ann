@@ -23,5 +23,5 @@ T("BootstrapTest",
           check.lt(math.abs(tonumber(t[2]) - boot_result[i][2]), 1e-03)
       end)
     local a,b = stats.boot.ci(boot_result, 0.95)
-    local m = stats.boot.ci(boot_result, 0.5)
+    local m = stats.boot.percentil(boot_result, 0.5)
 end)

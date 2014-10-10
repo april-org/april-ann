@@ -758,15 +758,19 @@ stats.boot.percentil =
     if type(percentil) ~= "table" then percentil = { percentil } end
     local aux = iterator(ipairs(data)):select(2):field(index):table()
     table.sort(aux)
-    local pos_tbl = {}
-    for _,v in ipairs{percentil} do
+    local result_tbl = {}
+    for _,v in ipairs(percentil) do
       assert(v > 0 and v < 1,
              "Incorrect percentil value, it must be in range (0,1)")
       local N = #data
       assert(index > 0 and index <= N)
-      pos_tbl[#pos_tbl + 1] = math.round(N*v)
+      local pos = N*v
+      local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
+      local ratio = pos - pos_floor
+      local result = aux[pos_floor]*(1-ratio) + aux[pos_ceil]*ratio
+      result_tbl[#result_tbl + 1] = result
     end
-    return table.unpack(pos_tbl)
+    return table.unpack(result_tbl)
   end
 
 -----------------------------------------------------------------------------
