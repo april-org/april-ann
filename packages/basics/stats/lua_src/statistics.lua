@@ -627,6 +627,8 @@ april_set_doc(stats.boot,
                     "statistics (k>=1 statistics) over all the iterator results.",
                     "The iterator produces a key which is a row in data",
                     "and a value which is the corresponding row.",
+                    "If k>1, statistic must return a table with the desired",
+                    "k statistics."
 		  },
 		  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
@@ -677,7 +679,8 @@ local function boot(self,params)
   local resample = function(i, id)
     collectgarbage("collect")
     local rnd = random(seed + i - 1)
-    local r = statistic(make_iterator(rnd))
+    local r,_ = statistic(make_iterator(rnd))
+    assert(not _, "statistic must return one value (it can be a table")
     assert(type(r) == "number" or type(r) == "table",
            "statistic function must return a number or a table")
     if id == 0 and params.verbose and i % 20 == 0 then
@@ -781,10 +784,11 @@ local pearson,pearson_methods = class("stats.correlation.pearson")
 get_table_from_dotted_string("stats.correlation", true)
 stats.correlation.pearson = pearson
 
-function pearson:constructor()
+function pearson:constructor(x,y)
   self.mean_var_x  = stats.mean_var()
   self.mean_var_y  = stats.mean_var()
   self.xy_sum      = 0
+  if x then self:add(x,y) end
 end
 
 function pearson_methods:clear()
