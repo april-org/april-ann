@@ -256,6 +256,7 @@ function sgd:constructor(g_options, l_options, count, update)
                             {
 			      {"learning_rate", "Learning speed factor (0.1)"},
 			      {"momentum", "Learning inertia factor (0.1)"},
+                              {"decay", "Decay of hyper-parameters (0.0), global option"},
 			    },
 			    g_options,
 			    l_options,
@@ -265,6 +266,7 @@ function sgd:constructor(g_options, l_options, count, update)
   self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
   self:add_constraint("L1_norm", nil, "Weight L1 regularization (1e-05)")
   self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
+  self:set_option("decay", 0.0)
 end
 
 function sgd_methods:execute(eval, weights)
@@ -280,12 +282,17 @@ function sgd_methods:execute(eval, weights)
   -- this into account
   if not gradients then return nil end
   gradients = wrap_matrices(gradients)
+  --
+  local gamma = self:get_option("decay")
+  local decay = 1.0 / (1.0 + gamma * self:get_count())
   for name,w in pairs(weights) do
     local update      = self.update(name) or w:clone():zeros()
     local grad        = gradients(name)
     local lr          = assert(self:get_option_of(name, "learning_rate"),
 			       "The learning_rate parameter needs to be set")
     local mt          = self:get_option_of(name, "momentum") or 0.0
+    assert(self:get_option_of(name, "decay") == gamma,
+           "decay option cannot be defined layerwise, only globally")
     --
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
@@ -293,7 +300,7 @@ function sgd_methods:execute(eval, weights)
     -- regularizations
     ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
-    w:axpy(1.0, update)
+    w:axpy(decay, update)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
