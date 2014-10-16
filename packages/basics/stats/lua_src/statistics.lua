@@ -1,4 +1,81 @@
 stats = stats or {} -- global environment
+
+-----------------------------------------------------------------------------
+
+stats.mstats = {}
+
+local mop = matrix.op
+local limits_float = mathcore.limits.float
+
+-- arithmetic mean of a matrix
+stats.mstats.amean =
+  april_doc{
+    class = "function",
+    summary = "Computes the arithmetic mean over a given dimension",
+    params = {
+      "A matrix",
+      "A dimension number [optional]",
+    },
+    outputs = {
+      "A matrix if given a dimension, a number otherwise",
+    },
+  } ..
+  function(m, D)
+    local r = m:sum(D)
+    if D then
+      return r:scal(m:dim(D))
+    else
+      return r/m:size()
+    end
+  end
+
+-- geometric mean of a matrix with positive elements
+stats.mstats.gmean =
+  april_doc{
+    class = "function",
+    summary = "Computes the geometric mean over a given dimension",
+    params = {
+      "A matrix with positive elements",
+      "A dimension number [optional]",
+    },
+    outputs = {
+      "A matrix if given a dimension, a number otherwise",
+    },
+  } ..
+  function(m, D)
+    local z = mop.eq(m, 0.0):sum(D)
+    local r = mop.log(m):sum(D)
+    if D then
+      return z:cmul( r:scal(1.0/m:dim(D)):exp() )
+    else
+      return z * math.exp(r / m:size())
+    end
+  end
+
+-- harmonic mean of a matrix with non-zero elements
+stats.mstats.hmean =
+  april_doc{
+    class = "function",
+    summary = "Computes the harmonic mean over a given dimension",
+    params = {
+      "A matrix with non-zero elements",
+      "A dimension number [optional]",
+    },
+    outputs = {
+      "A matrix if given a dimension, a number otherwise",
+    },
+  } ..
+  function(m, D)
+    local r = (1 / m):sum(D)
+    if D then
+      return r:div( r:dim(D) )
+    else
+      return m:size() / r
+    end
+  end
+
+-----------------------------------------------------------------------------
+
 local mean_var,mean_var_methods = class("stats.mean_var")
 stats.mean_var = mean_var -- global environment
 
