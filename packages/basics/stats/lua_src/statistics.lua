@@ -23,7 +23,7 @@ stats.mstats.amean =
   function(m, D)
     local r = m:sum(D)
     if D then
-      return r:scal(m:dim(D))
+      return r:scal(1/m:dim(D))
     else
       return r/m:size()
     end
@@ -43,7 +43,7 @@ stats.mstats.gmean =
     },
   } ..
   function(m, D)
-    local z = mop.eq(m, 0.0):sum(D)
+    local z = mop.neq(m, 0.0):sum(D):clamp(0,1)
     local r = mop.log(m):sum(D)
     if D then
       return z:cmul( r:scal(1.0/m:dim(D)):exp() )
