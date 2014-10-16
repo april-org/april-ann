@@ -21,6 +21,21 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+-- static methods which return a new matrix instead of operate in-place
+for _,method in ipairs{"adjust_range", "clamp", "cmul",
+                       "plogp", "log", "log1p", "exp",
+                       "sqrt", "pow",
+                       "tan", "tanh", "atan",
+                       "sin", "sinh", "asin", "asinh",
+                       "cos", "cosh", "acos", "acosh",
+                       "abs", "complement", "sign", "scal", "div",
+                       "lt", "gt", "eq", "neq" } do
+  matrix[method] = function(self,...)
+    local clone = self:clone()
+    return clone[method](clone,...)
+  end
+end
+
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrix)
 

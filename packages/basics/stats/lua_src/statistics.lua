@@ -627,6 +627,8 @@ april_set_doc(stats.boot,
                     "statistics (k>=1 statistics) over all the iterator results.",
                     "The iterator produces a key which is a row in data",
                     "and a value which is the corresponding row.",
+                    "If k>1, statistic must return a table with the desired",
+                    "k statistics."
 		  },
 		  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
@@ -677,7 +679,8 @@ local function boot(self,params)
   local resample = function(i, id)
     collectgarbage("collect")
     local rnd = random(seed + i - 1)
-    local r = statistic(make_iterator(rnd))
+    local r,_ = statistic(make_iterator(rnd))
+    assert(not _, "statistic must return one value (it can be a table")
     assert(type(r) == "number" or type(r) == "table",
            "statistic function must return a number or a table")
     if id == 0 and params.verbose and i % 20 == 0 then
@@ -704,7 +707,7 @@ stats.boot.ci =
     summary = "Returns the extremes of a confidence interval",
     description= {
       "This function returns the extremes of a confidence interval",
-      "given a table of sorted values and the confidence value.",
+      "given the result of stats.boot function and the confidence value.",
       "It could compute the interval over a slice of the table.",
     },
     params = {
@@ -717,7 +720,7 @@ stats.boot.ci =
       "The right limit of the interval",
     },
   } ..
-  -- returns the extremes of the interval, the table data must be sorted
+  -- returns the extremes of the interval
   function(data, confidence, index)
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
@@ -732,6 +735,47 @@ stats.boot.ci =
     return aux[a_pos],aux[b_pos]
   end
 
+stats.boot.percentil =
+  april_doc{
+    class = "function",
+    summary = "Returns a percentil value",
+    description= {
+      "This function returns a percentil value",
+      "given the result of stats.boot function and the confidence value.",
+      "It could compute the percentil over a slice of the table.",
+    },
+    params = {
+      "The result of stats.boot function.",
+      "The percentil [optional], by default it is 0.5. It can be a table of several percentils",
+      "The statistic index for which you want compute the percentil [optional], by default it is 1",
+    },
+    outputs = {
+      "The percentil value",
+      "Another pecentil value",
+      "..."
+    },
+  } ..
+  -- returns the percentil
+  function(data, percentil, index)
+    local percentil,index  = percentil or 0.95, index or 1
+    if type(percentil) ~= "table" then percentil = { percentil } end
+    local aux = iterator(ipairs(data)):select(2):field(index):table()
+    table.sort(aux)
+    local result_tbl = {}
+    for _,v in ipairs(percentil) do
+      assert(v > 0 and v < 1,
+             "Incorrect percentil value, it must be in range (0,1)")
+      local N = #data
+      assert(index > 0 and index <= N)
+      local pos = N*v
+      local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
+      local ratio = pos - pos_floor
+      local result = aux[pos_floor]*(1-ratio) + aux[pos_ceil]*ratio
+      result_tbl[#result_tbl + 1] = result
+    end
+    return table.unpack(result_tbl)
+  end
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -740,10 +784,11 @@ local pearson,pearson_methods = class("stats.correlation.pearson")
 get_table_from_dotted_string("stats.correlation", true)
 stats.correlation.pearson = pearson
 
-function pearson:constructor()
+function pearson:constructor(x,y)
   self.mean_var_x  = stats.mean_var()
   self.mean_var_y  = stats.mean_var()
   self.xy_sum      = 0
+  if x then self:add(x,y) end
 end
 
 function pearson_methods:clear()

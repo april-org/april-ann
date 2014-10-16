@@ -244,6 +244,12 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_FUNCTION mathcore.limits.float.quiet_NaN
+{
+  LUABIND_RETURN(float,Limits<float>::quiet_NaN());
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_FUNCTION mathcore.limits.double.max
@@ -273,6 +279,12 @@ namespace AprilMath {
 //BIND_FUNCTION mathcore.limits.double.infinity
 {
   LUABIND_RETURN(double,Limits<double>::infinity());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.quiet_NaN
+{
+  LUABIND_RETURN(double,Limits<double>::quiet_NaN());
 }
 //BIND_END
 
@@ -357,5 +369,11 @@ namespace AprilMath {
 //BIND_FUNCTION mathcore.limits.complex.infinity
 {
   LUABIND_RETURN(ComplexF,Limits<ComplexF>::infinity());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.quiet_NaN
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::quiet_NaN());
 }
 //BIND_END
