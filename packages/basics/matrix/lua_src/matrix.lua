@@ -22,6 +22,7 @@ matrix.row_major = function(...)
 end
 
 -- static methods which return a new matrix instead of operate in-place
+matrix.op = {}
 for _,method in ipairs{"adjust_range", "clamp", "cmul",
                        "plogp", "log", "log1p", "exp",
                        "sqrt", "pow",
@@ -30,7 +31,7 @@ for _,method in ipairs{"adjust_range", "clamp", "cmul",
                        "cos", "cosh", "acos", "acosh",
                        "abs", "complement", "sign", "scal", "div",
                        "lt", "gt", "eq", "neq" } do
-  matrix[method] = function(self,...)
+  matrix.op[method] = function(self,...)
     local clone = self:clone()
     return clone[method](clone,...)
   end
