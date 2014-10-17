@@ -27,6 +27,7 @@
 	 "test/test_comb.lua",
 	 "test/test_distributions.lua",
 	 "test/test-gs-pca.lua",
+	 "test/test_mstats.lua",
 	 "test/test-zca-whitening.lua",
        },
      },
