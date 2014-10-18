@@ -12,8 +12,12 @@ matrix.__generic__.__make_generic_call__ = function()
       local a,b
       if tt == "table" then
 	a,b = table.unpack(t)
-	april_assert(tonumber(a) and tonumber(b),
-		     "The table for component %d must contain two numbers",i)
+        if not a and not b then
+          a,b = 1,dims[i]
+        else
+          april_assert(tonumber(a) and tonumber(b),
+                       "The table for component %d must contain two numbers or none",i)
+        end
       elseif tt == "string" then
 	a = t:match("^(%d+)%:.*$") or 1
 	b = t:match("^.*%:(%d+)$") or dims[i]
