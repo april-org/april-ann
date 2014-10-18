@@ -4,7 +4,7 @@ matrix.__generic__.__make_all_serialization_methods__(matrixDouble)
 matrixDouble.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
-matrix.meta_instance.__newindex =
+matrixDouble.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixDouble)
 
 matrixDouble.meta_instance.__tostring =
