@@ -48,8 +48,9 @@ matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
          "Needs a class table as argument")
   return function(self,key,value)
     assert(type(key) == "table", "Needs a table as key")
-    local m = self(table.unpack(key))
-    if type(value) == "number" then
+    local m  = self(table.unpack(key))
+    local tv = type(value)
+    if tv == "number" or tv == "complex" then
       m:fill(value)
     else
       assert(class.is_a(m, matrix_class), "Needs a number or a matrix as value")
