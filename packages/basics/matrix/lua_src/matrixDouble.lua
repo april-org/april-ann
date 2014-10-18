@@ -7,7 +7,7 @@ matrixDouble.meta_instance.__call =
 matrixDouble.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixDouble",
                                             function(value)
-                                              return string.format("% -11.6g", value)
+                                              return string.format("% -15.6g", value)
   end)
 
 matrixDouble.join =
