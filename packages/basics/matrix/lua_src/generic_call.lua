@@ -38,3 +38,18 @@ matrix.__generic__.__make_generic_call__ = function()
     return self:slice(pos,size)
   end
 end
+
+matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
+  assert(matrix_class and class.is_class(matrix_class),
+         "Needs a class table as argument")
+  return function(self,key,value)
+    assert(type(key) == "table")
+    local m = self(table.unpack(key))
+    if type(value) == "number" then
+      m:fill(value)
+    else
+      assert(class.is_a(m, matrix_class))
+      m:squeeze():copy(value:squeeze())
+    end
+  end
+end

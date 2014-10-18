@@ -468,20 +468,24 @@ namespace Basics {
   template <typename T>
   Matrix<T> *Matrix<T>::squeeze() {
     int len = 0;
-    int *sizes = new int[getNumDim()];
+    AprilUtils::UniquePtr<int []> sizes(new int[getNumDim()]);
     for (int i=0; i<getNumDim(); ++i) {
       int sz = getDimSize(i);
       if (sz > 1) {
         sizes[len++] = sz;
       }
     }
-    Matrix<T> *obj = (len==numDim) ?
-      this : new Matrix<T>(len, sizes, major_order, data.get(), offset);
+    if (len == getNumDim()) {
+      return this;
+    }
+    else {
+      Matrix<T> *obj = (len==numDim) ?
+        this : new Matrix<T>(len, sizes.get(), major_order, data.get(), offset);
 #ifdef USE_CUDA
-    obj->setUseCuda(use_cuda);
+      obj->setUseCuda(use_cuda);
 #endif
-    delete[] sizes;
-    return obj;
+      return obj;
+    }
   }
 
   template<typename T>
