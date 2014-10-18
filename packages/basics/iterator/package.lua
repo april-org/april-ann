@@ -1,6 +1,6 @@
-package{ name = "util",
+package{ name = "iterator",
    version = "1.0",
-   depends = { "class", "iterator" },
+   depends = { "base" },
    keywords = { },
    description = "",
    -- targets como en ant
@@ -17,35 +17,31 @@ package{ name = "util",
    target{
      name = "provide",
      depends = "init",
-     copy{ file= "c_src/*.h", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_util.lua.cc" , dest_dir = "include" },
+     --copy{ file= "c_src/*.h", dest_dir = "include" },
+     --provide_bind{ file = "binding/bind_util.lua.cc" , dest_dir = "include" },
    },
    target{
      name = "test",
      lua_unit_test{
        file={
-	 "test/test-functional-programming.lua",
-	 "test/test.lua",
+	 "test/test-iterator.lua",
        },
-     },
-     c_unit_test{
-       file = { "test/all_util_unit_test.cc" },
      },
    },
    target{
      name = "build",
      depends = "provide",
      use_timestamp = true,
-     object{ 
-       file = "c_src/*.cc",
-       dest_dir = "build",
-       --       flags = "-std=c99",
-     },
+     -- object{ 
+     --   file = "c_src/*.cc",
+     --   dest_dir = "build",
+     --   --       flags = "-std=c99",
+     -- },
      luac{
        orig_dir = "lua_src",
        dest_dir = "build",
      },
-     build_bind{ file = "binding/bind_util.lua.cc", dest_dir = "build" },
+     --build_bind{ file = "binding/bind_util.lua.cc", dest_dir = "build" },
    },
    target{
      name = "document",
