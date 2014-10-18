@@ -199,6 +199,12 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
+//BIND_METHOD MatrixDouble squeeze
+{
+  LUABIND_RETURN(MatrixDouble,obj->squeeze());
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble get_reference_string
 {
   char buff[128];
