@@ -2,13 +2,10 @@ stats = stats or {} -- global environment
 
 -----------------------------------------------------------------------------
 
-stats.mstats = {}
-
 local mop = matrix.op
-local limits_float = mathcore.limits.float
 
 -- arithmetic mean of a matrix
-stats.mstats.amean =
+stats.amean =
   april_doc{
     class = "function",
     summary = "Computes the arithmetic mean over a given dimension",
@@ -30,7 +27,7 @@ stats.mstats.amean =
   end
 
 -- geometric mean of a matrix with positive elements
-stats.mstats.gmean =
+stats.gmean =
   april_doc{
     class = "function",
     summary = "Computes the geometric mean over a given dimension",
@@ -52,7 +49,7 @@ stats.mstats.gmean =
   end
 
 -- harmonic mean of a matrix with non-zero elements
-stats.mstats.hmean =
+stats.hmean =
   april_doc{
     class = "function",
     summary = "Computes the harmonic mean over a given dimension",

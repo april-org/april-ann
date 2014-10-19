@@ -273,6 +273,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
+//BIND_METHOD MatrixComplexF squeeze
+{
+  LUABIND_RETURN(MatrixComplexF,obj->squeeze());
+}
+//BIND_END
+
 //BIND_METHOD MatrixComplexF get_reference_string
 {
   char buff[128];

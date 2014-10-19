@@ -45,10 +45,13 @@ matrix.__generic__.__make_all_serialization_methods__(matrix)
 matrix.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+matrix.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrix)
+
 matrix.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("Matrix",
                                             function(value)
-                                              return string.format("% -11.6g", value)
+                                              return string.format("% -13.6g", value)
   end)
 
 matrix.join =

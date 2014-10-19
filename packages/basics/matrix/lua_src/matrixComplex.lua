@@ -4,10 +4,13 @@ matrix.__generic__.__make_all_serialization_methods__(matrixComplex)
 matrixComplex.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+matrixComplex.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrixComplex)
+
 matrixComplex.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixComplex",
                                             function(value)
-                                              return string.format("%12s",tostring(value))
+                                              return string.format("%26s",tostring(value))
   end)
 
 matrixComplex.join =

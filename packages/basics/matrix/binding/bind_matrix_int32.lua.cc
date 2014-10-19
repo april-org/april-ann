@@ -207,6 +207,12 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
+//BIND_METHOD MatrixInt32 squeeze
+{
+  LUABIND_RETURN(MatrixInt32,obj->squeeze());
+}
+//BIND_END
+
 //BIND_METHOD MatrixInt32 get_reference_string
 {
   char buff[128];
