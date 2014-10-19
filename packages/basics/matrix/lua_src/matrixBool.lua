@@ -1,5 +1,5 @@
 -- serialization
-matrix.__generic__.__make_all_serialization_methods__(matrixBool)
+matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")
 
 matrixBool.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()

@@ -9,12 +9,13 @@ end
 
 matrix.__generic__ = matrix.__generic__ or {}
 
-matrix.__generic__.__make_generic_to_lua_string__ = function(matrix_class)
+matrix.__generic__.__make_generic_to_lua_string__ = function(matrix_class,
+                                                             defmode)
   local name = matrix_class.meta_instance.id
   class.extend(matrix_class, "to_lua_string",
                function(self, format)
                  return string.format("%s.fromString[[%s]]",
-                                      name, self:toString(format or "binary"))
+                                      name, self:toString(format or defmode))
   end)
 end
 
@@ -67,9 +68,11 @@ matrix.__generic__.__make_generic_fromString__ = function(matrix_class)
 end
 
 -- GENERIC TO FILENAME
-matrix.__generic__.__make_generic_toFilename__ = function(matrix_class)
+matrix.__generic__.__make_generic_toFilename__ = function(matrix_class,
+                                                          defmode)
   class.extend(matrix_class, "toFilename",
                function(self,filename,mode)
+                 local mode = mode or defmode
                  local f = april_assert(io.open(filename,"w"),
                                         "Unable to open %s", filename)
                  local ret = table.pack(self:write(f,
@@ -94,20 +97,23 @@ matrix.__generic__.__make_generic_toTabFilename__ = function(matrix_class)
 end
 
 -- GENERIC TO STRING
-matrix.__generic__.__make_generic_toString__ = function(matrix_class)
+matrix.__generic__.__make_generic_toString__ = function(matrix_class, defmode)
   class.extend(matrix_class, "toString",
                function(self,mode)
+                 local mode = mode or defmode
                  return self:write({ [matrix.options.ascii] = (mode=="ascii") })
   end)
 end
 
-function matrix.__generic__.__make_all_serialization_methods__(matrix_class)
+function matrix.__generic__.__make_all_serialization_methods__(matrix_class,
+                                                               defmode)
+  local defmode = defmode or "binary"
   matrix.__generic__.__make_generic_fromFilename__(matrix_class)
   matrix.__generic__.__make_generic_fromTabFilename__(matrix_class)
   matrix.__generic__.__make_generic_fromString__(matrix_class)
   matrix.__generic__.__make_generic_fromCSVFilename__(matrix_class)
-  matrix.__generic__.__make_generic_toFilename__(matrix_class)
+  matrix.__generic__.__make_generic_toFilename__(matrix_class, defmode)
   matrix.__generic__.__make_generic_toTabFilename__(matrix_class)
-  matrix.__generic__.__make_generic_toString__(matrix_class)
-  matrix.__generic__.__make_generic_to_lua_string__(matrix_class)
+  matrix.__generic__.__make_generic_toString__(matrix_class, defmode)
+  matrix.__generic__.__make_generic_to_lua_string__(matrix_class, defmode)
 end
