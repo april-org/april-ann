@@ -1,6 +1,6 @@
 package{ name = "iterator",
    version = "1.0",
-   depends = { "base" },
+   depends = { "base", "class" },
    keywords = { },
    description = "",
    -- targets como en ant
