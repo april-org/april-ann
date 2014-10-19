@@ -541,6 +541,52 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   }
 //BIND_END
 
+//BIND_METHOD MatrixInt32 map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixInt32 **v = 0;
+  MatrixInt32::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixInt32*[N];
+    list_it = new MatrixInt32::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixInt32);
+    LUABIND_GET_PARAMETER(i+1, MatrixInt32, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixInt32::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushint(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushint(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isint(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or INT\n");
+      *it = lua_toint(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixInt32, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixInt32 sliding_window
 {
   int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;

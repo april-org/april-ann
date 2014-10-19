@@ -533,6 +533,52 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
   }
 //BIND_END
 
+//BIND_METHOD MatrixDouble map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixDouble **v = 0;
+  MatrixDouble::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixDouble*[N];
+    list_it = new MatrixDouble::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixDouble);
+    LUABIND_GET_PARAMETER(i+1, MatrixDouble, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixDouble::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushdouble(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushdouble(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isdouble(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or DOUBLE\n");
+      *it = lua_todouble(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixDouble, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble sliding_window
 {
   int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;

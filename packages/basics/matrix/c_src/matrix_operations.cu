@@ -2015,6 +2015,13 @@ namespace AprilMath {
       template Matrix<char> *matZeros(Matrix<char> *);
       template Matrix<char> *matOnes(Matrix<char> *);
       template Matrix<char> *matDiag(Matrix<char> *, const char);
+
+      // INSTANTIATIONS (bool type, dense matrix)
+      template Matrix<bool> *matCopy(Matrix<bool> *, const Matrix<bool> *);
+      template Matrix<bool> *matFill(Matrix<bool> *, const bool);
+      template Matrix<bool> *matZeros(Matrix<bool> *);
+      template Matrix<bool> *matOnes(Matrix<bool> *);
+      template Matrix<bool> *matDiag(Matrix<bool> *, const bool);
       
       // INSTANTIATIONS (int32_t type, dense matrix)
       template Matrix<int32_t> *matCopy(Matrix<int32_t> *, const Matrix<int32_t> *);

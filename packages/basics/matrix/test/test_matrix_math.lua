@@ -1,3 +1,5 @@
+-- TODO: implement unit tests for index, indexCopy, indexFill, operator [{}]
+
 -- forces the use of CUDA
 mathcore.set_use_cuda_default(util.is_cuda_available())
 --

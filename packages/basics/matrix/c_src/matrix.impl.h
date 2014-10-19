@@ -475,17 +475,15 @@ namespace Basics {
         sizes[len++] = sz;
       }
     }
-    if (len == getNumDim()) {
-      return this;
-    }
-    else {
-      Matrix<T> *obj = (len==numDim) ?
-        this : new Matrix<T>(len, sizes.get(), major_order, data.get(), offset);
+    // matrices with 1x1x1x...x1 dimensions need the following sanity check
+    if (len == 0) sizes[len++] = 1;
+    // return this in case len==numDim, rewrap in other case
+    Matrix<T> *obj = (len==numDim) ?
+      this : this->rewrap(sizes.get(), len);
 #ifdef USE_CUDA
-      obj->setUseCuda(use_cuda);
+    obj->setUseCuda(use_cuda);
 #endif
-      return obj;
-    }
+    return obj;
   }
 
   template<typename T>
