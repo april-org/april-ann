@@ -1,4 +1,4 @@
--- ADDING PSEUDO-INVERSE METHOD
+-- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
                local u,s,vt = self:svd()
@@ -16,15 +16,47 @@ class.extend(matrix, "pinv",
                  }
 end)
 
-class.extend(matrix, "index_fill",
-             function(self,dim,idx,val)
-               if not idx then return self end
+class.extend(matrix, "index",
+             function(self,dim,idx)
                if class.is_a(idx, matrixBool) then idx = idx:to_index() end
+               if not idx then return nil end
                assert(class.is_a(idx, matrixInt32),
-                      "Needs a matrixInt32 third argument (index)")
+                      "Needs a matrixInt32 second argument (index)")
+               local idx = idx:squeeze()
+               assert(#idx:dim() == 1, "Needs a rank 1 matrix as second argument (index)")
+               local d = self:dim()
+               assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
+               local dim_bound = d[dim]
+               d[dim] = idx:size()
+               local constructor = class.of(self)
+               local result = constructor[self:get_major_order()](table.unpack(d))
+               d[dim] = 1
+               local self_sw = self:sliding_window{ size=d, step=d }
+               local dest_sw   = result:sliding_window{ size=d, step=d }
+               local result_submat,self_submat
+               idx:map(function(p)
+                   april_assert(p >= 1 and p <= dim_bound,
+                                "Index number %d out-of-bounds", i)
+                   assert(not dest_sw:is_end())
+                   self_sw:set_at_window(p)
+                   result_submat = dest_sw:get_matrix(result_submat)      
+                   self_submat = self_sw:get_matrix(self_submat)
+                   result_submat:copy(self_submat)
+                   dest_sw:next()
+               end)
+               return result
+end)
+
+
+class.extend(matrix, "indexed_fill",
+             function(self,dim,idx,val)
+               if class.is_a(idx, matrixBool) then idx = idx:to_index() end
+               if not idx then return self end
+               assert(class.is_a(idx, matrixInt32),
+                      "Needs a matrixInt32 second argument (index)")
                local idx = idx:squeeze()
                assert(#idx:dim() == 1,
-                      "Needs a rank 1 matrix as third argument (index)")
+                      "Needs a rank 1 matrix as second argument (index)")
                local d = self:dim()
                assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
                local dim_bound = d[dim]
@@ -41,17 +73,17 @@ class.extend(matrix, "index_fill",
                return self
 end)
 
-class.extend(matrix, "index_copy",
+class.extend(matrix, "indexed_copy",
              function(self,dim,idx,other)
-               if not idx then return self end
                if class.is_a(idx, matrixBool) then idx = idx:to_index() end
+               if not idx then return self end
                assert(class.is_a(idx, matrixInt32),
-                      "Needs a matrixInt32 third argument (index)")
+                      "Needs a matrixInt32 second argument (index)")
                assert(class.of(self) == class.of(other),
                       "Self and other must be same matrix type")
                local idx = idx:squeeze()
                assert(#idx:dim() == 1,
-                      "Needs a rank 1 matrix as third argument (index)")
+                      "Needs a rank 1 matrix as second argument (index)")
                local d = self:dim()
                assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
                local dim_bound = d[dim]
@@ -86,42 +118,11 @@ for _,method in ipairs{"adjust_range", "clamp", "cmul",
                        "tan", "tanh", "atan",
                        "sin", "sinh", "asin", "asinh",
                        "cos", "cosh", "acos", "acosh",
-                       "abs", "complement", "sign", "scal", "div",
-                       "lt", "gt", "eq", "neq" } do
+                       "abs", "complement", "sign", "scal", "div" } do
   matrix.op[method] = function(self,...)
     local clone = self:clone()
     return clone[method](clone,...)
   end
-end
-
-matrix.op.index = function(self,dim,idx)
-  if not idx then return nil end
-  if class.is_a(idx, matrixBool) then idx = idx:to_index() end
-  assert(class.is_a(idx, matrixInt32),
-         "Needs a matrixInt32 third argument (index)")
-  local idx = idx:squeeze()
-  assert(#idx:dim() == 1, "Needs a rank 1 matrix as third argument (index)")
-  local d = self:dim()
-  assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
-  local dim_bound = d[dim]
-  d[dim] = idx:size()
-  local constructor = class.of(self)
-  local result = constructor[self:get_major_order()](table.unpack(d))
-  d[dim] = 1
-  local self_sw = self:sliding_window{ size=d, step=d }
-  local dest_sw   = result:sliding_window{ size=d, step=d }
-  local result_submat,self_submat
-  idx:map(function(p)
-      april_assert(p >= 1 and p <= dim_bound,
-                   "Index number %d out-of-bounds", i)
-      assert(not dest_sw:is_end())
-      self_sw:set_at_window(p)
-      result_submat = dest_sw:get_matrix(result_submat)      
-      self_submat = self_sw:get_matrix(self_submat)
-      result_submat:copy(self_submat)
-      dest_sw:next()
-  end)
-  return result
 end
 
 -- serialization
@@ -132,6 +133,7 @@ matrix.__generic__.__make_all_serialization_methods__(matrix)
 matrix.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+-- define left side operator [{}]
 matrix.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrix)
 

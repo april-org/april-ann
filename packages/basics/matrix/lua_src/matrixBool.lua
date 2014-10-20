@@ -23,11 +23,12 @@ class.extend(matrixBool, "to_index",
                local ones = self:count_ones()
                if ones == 0 then return nil end
                local result = matrixInt32(ones)
-               local idx,pos=1,1
+               local idx,pos=0,0
                self:map(function(x)
-                   if x == 1 then result:set(pos,idx) pos=pos+1 end
                    idx=idx+1
+                   if x then pos=pos+1 result:set(pos,idx) end
                end)
+               assert(pos == ones)
                return result
 end)
 
@@ -63,4 +64,16 @@ matrixBool.meta_instance.__mul = function(op1, op2)
   assert(class.is_a(op1, matrixBool), "Needs two matrixBool arguments")
   assert(class.is_a(op2, matrixBool), "Needs two matrixBool arguments")
   return op1:clone():land(op2)
+end
+
+matrixBool.meta_instance.__eq = function(op1, op2)
+  if class.is_a(op1, matrix) then op1 = matrixBool(op1)
+  elseif class.is_a(op2, matrix) then op2 = matrixBool(op2) end
+  assert(class.is_a(op1, matrixBool) and class.is_a(op2, matrixBool),
+         "Needs two matrixBool arguments")
+  local equals = true
+  op1:map(op2,function(x,y)
+            equals = equals and (x == y)
+  end)
+  return equals
 end

@@ -138,44 +138,61 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 
 //BIND_CONSTRUCTOR MatrixBool
 {
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+  if (lua_isMatrixFloat(L,1)) {
+    MatrixFloat *m;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, m);
+    MatrixBool *obj = new MatrixBool(m->getNumDim(), m->getDimPtr());
+    MatrixBool::iterator bool_it(obj->begin());
+    MatrixFloat::const_iterator float_it(m->begin());
+    while(bool_it != obj->end()) {
+      if (*float_it == 0.0f) *bool_it = false;
+      else if (*float_it == 1.0f) *bool_it = true;
+      else LUABIND_ERROR("Needs a 0/1 matrix argument\n");
+      ++bool_it;
+      ++float_it;
     }
+    LUABIND_RETURN(MatrixBool, obj);
   }
-  MatrixBool* obj;
-  obj = new MatrixBool(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int i=1;
-    for (MatrixBool::iterator it(obj->begin()); it != obj->end(); ++it) {
-      lua_rawgeti(L,argn,i);
-      if (!lua_isboolean(L,-1))
-	LUABIND_FERROR1("The given table has a no boolean value at position %d, "
-			"the table could be smaller than matrix size", i);
-      *it = lua_toboolean(L,-1);
-      lua_remove(L,-1);
-      ++i;
+  else {
+    int i,argn;
+    argn = lua_gettop(L); // number of arguments
+    int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
+    int *dim;
+    if (ndims == 0) { // caso matrix{valores}
+      ndims = 1;
+      dim = new int[ndims];
+      LUABIND_TABLE_GETN(1, dim[0]);
+    } else {
+      dim = new int[ndims];
+      for (i=1; i <= ndims; i++) {
+        if (!lua_isnumber(L,i))
+          // TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
+          LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
+                          " be a number and is a %s)",
+                          i, lua_typename(L,i));
+        dim[i-1] = (int)lua_tonumber(L,i);
+        if (dim[i-1] <= 0)
+          LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+      }
     }
+    MatrixBool* obj;
+    obj = new MatrixBool(ndims,dim);
+    if (lua_istable(L,argn)) {
+      int i=1;
+      for (MatrixBool::iterator it(obj->begin()); it != obj->end(); ++it) {
+        lua_rawgeti(L,argn,i);
+        if (!lua_isboolean(L,-1))
+          LUABIND_FERROR1("The given table has a no boolean value at position %d, "
+                          "the table could be smaller than matrix size", i);
+        *it = lua_toboolean(L,-1);
+        lua_remove(L,-1);
+        ++i;
+      }
+    }
+    delete[] dim;
+    LUABIND_RETURN(MatrixBool,obj);
   }
-  delete[] dim;
-  LUABIND_RETURN(MatrixBool,obj);
 }
 //BIND_END
 
