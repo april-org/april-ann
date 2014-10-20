@@ -464,22 +464,29 @@ namespace Basics {
 #endif
     return obj;
   }
-
+  
   template <typename T>
   Matrix<T> *Matrix<T>::squeeze() {
     int len = 0;
     AprilUtils::UniquePtr<int []> sizes(new int[getNumDim()]);
+    AprilUtils::UniquePtr<int []> strides(new int[getNumDim()]);
     for (int i=0; i<getNumDim(); ++i) {
       int sz = getDimSize(i);
       if (sz > 1) {
+        strides[len] = getStrideSize(i);
         sizes[len++] = sz;
       }
     }
     // matrices with 1x1x1x...x1 dimensions need the following sanity check
-    if (len == 0) sizes[len++] = 1;
+    if (len == 0) {
+      strides[len] = 1;
+      sizes[len++] = 1;
+    }
     // return this in case len==numDim, rewrap in other case
     Matrix<T> *obj = (len==numDim) ?
-      this : this->rewrap(sizes.get(), len);
+      this : new Matrix<T>(len, strides.get(), getOffset(), sizes.get(),
+                           size(), last_raw_pos, data.get(), getMajorOrder(),
+                           use_cuda, transposed, mmapped_data.get());
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif

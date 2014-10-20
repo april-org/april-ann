@@ -628,29 +628,6 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 }
 //BIND_END
 
-//BIND_METHOD MatrixBool to_index
-{
-  const char *major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-  CBLAS_ORDER order=CblasRowMajor;
-  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-  else if (strcmp(major, "row_major") != 0)
-    LUABIND_FERROR1("Incorrect major order string %s", major);
-
-  MatrixFloat *result = new MatrixFloat(obj->getNumDim(),
-                                        obj->getDimPtr(),
-                                        order);
-  MatrixBool::const_iterator bool_it(obj->begin());
-  MatrixFloat::iterator float_it(result->begin());
-  while(bool_it != obj->end()) {
-    *float_it = (*bool_it) ? (1.0f) : (0.0f);
-    ++bool_it;
-    ++float_it;
-  }
-  LUABIND_RETURN(MatrixFloat, result);
-}
-//BIND_END
-
 //BIND_METHOD MatrixBool copy
 {
   int argn;

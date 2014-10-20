@@ -16,41 +16,108 @@ class.extend(matrix, "pinv",
                  }
 end)
 
+class.extend(matrix, "order",
+             april_doc{
+               class = "method",
+               summary = "Returns a permutation of the matrix which sorts its data",
+               outputs = { "A matrixInt32 instance" },
+             } ..
+               function(self)
+                 local self = self:squeeze()
+                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
+                 local t = iterator(range(1,self:size())):table()
+                 table.sort(t, function(a,b)
+                              return self:get(a) < self:get(b)
+                 end)
+                 return matrixInt32(t)
+end)
+
+class.extend(matrix, "rank",
+             april_doc{
+               class = "method",
+               summary = "Returns the sorted rank of the matrix values",
+               outputs = { "A matrixInt32 instance" },
+             } ..
+               function(self)
+                 local self = self:squeeze()
+                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
+                 local t = iterator(range(1,self:size())):table()
+                 table.sort(t, function(a,b)
+                              return self:get(a) < self:get(b)
+                 end)
+                 return matrixInt32(table.invert(t))
+end)
+
 class.extend(matrix, "index",
-             function(self,dim,idx)
-               if class.is_a(idx, matrixBool) then idx = idx:to_index() end
-               if not idx then return nil end
-               assert(class.is_a(idx, matrixInt32),
-                      "Needs a matrixInt32 second argument (index)")
-               local idx = idx:squeeze()
-               assert(#idx:dim() == 1, "Needs a rank 1 matrix as second argument (index)")
-               local d = self:dim()
-               assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
-               local dim_bound = d[dim]
-               d[dim] = idx:size()
-               local constructor = class.of(self)
-               local result = constructor[self:get_major_order()](table.unpack(d))
-               d[dim] = 1
-               local self_sw = self:sliding_window{ size=d, step=d }
-               local dest_sw   = result:sliding_window{ size=d, step=d }
-               local result_submat,self_submat
-               idx:map(function(p)
-                   april_assert(p >= 1 and p <= dim_bound,
-                                "Index number %d out-of-bounds", i)
-                   assert(not dest_sw:is_end())
-                   self_sw:set_at_window(p)
-                   result_submat = dest_sw:get_matrix(result_submat)      
-                   self_submat = self_sw:get_matrix(self_submat)
-                   result_submat:copy(self_submat)
-                   dest_sw:next()
-               end)
-               return result
+             april_doc{
+               class = "method",
+               summary = {
+                 "Returns new allocated matrix filtered by the given dim and",
+                 "index matrix parameters.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+               },
+               outputs = {
+                 { "A new allocated matrix instance, or nil if 2nd argument",
+                   "has zero selected components", },
+               },
+             } ..
+               function(self,dim,idx)
+                 if type(idx) == "table" then idx = matrixInt32(idx)
+                 elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+                 end
+                 if not idx then return nil end
+                 assert(class.is_a(idx, matrixInt32),
+                        "Needs a matrixInt32 second argument (index)")
+                 local idx = idx:squeeze()
+                 assert(#idx:dim() == 1, "Needs a rank 1 matrix as second argument (index)")
+                 local d = self:dim()
+                 assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
+                 local dim_bound = d[dim]
+                 d[dim] = idx:size()
+                 local constructor = class.of(self)
+                 local result = constructor[self:get_major_order()](table.unpack(d))
+                 d[dim] = 1
+                 local self_sw = self:sliding_window{ size=d, step=d }
+                 local dest_sw   = result:sliding_window{ size=d, step=d }
+                 local result_submat,self_submat
+                 idx:map(function(p)
+                     april_assert(p >= 1 and p <= dim_bound,
+                                  "Index number %d out-of-bounds", i)
+                     assert(not dest_sw:is_end())
+                     self_sw:set_at_window(p)
+                     result_submat = dest_sw:get_matrix(result_submat)      
+                     self_submat = self_sw:get_matrix(self_submat)
+                     result_submat:copy(self_submat)
+                     dest_sw:next()
+                 end)
+                 return result
 end)
 
 
 class.extend(matrix, "indexed_fill",
+             april_doc{
+               class = "method",
+               summary = {
+                 "Fills the indexed dim,index components of the caller matrix.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+                 "A number value for filling.",
+               },
+               outputs = {
+                 "The caller matrix.",
+               },
+             } ..
              function(self,dim,idx,val)
-               if class.is_a(idx, matrixBool) then idx = idx:to_index() end
+               if type(idx) == "table" then idx = matrixInt32(idx)
+               elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+               end
                if not idx then return self end
                assert(class.is_a(idx, matrixInt32),
                       "Needs a matrixInt32 second argument (index)")
@@ -74,8 +141,25 @@ class.extend(matrix, "indexed_fill",
 end)
 
 class.extend(matrix, "indexed_copy",
+             april_doc{
+               class = "method",
+               summary = {
+                 "Copies a matrix into the indexed dim,index components of the caller matrix.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+                 "A matrix with data to be copied.",
+               },
+               outputs = {
+                 "The caller matrix.",
+               },
+             } ..
              function(self,dim,idx,other)
-               if class.is_a(idx, matrixBool) then idx = idx:to_index() end
+               if type(idx) == "table" then idx = matrixInt32(idx)
+               elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+               end
                if not idx then return self end
                assert(class.is_a(idx, matrixInt32),
                       "Needs a matrixInt32 second argument (index)")
@@ -1289,21 +1373,21 @@ april_set_doc(matrix.."map",
 april_set_doc(matrix.."lt",
 	      {
 		class = "method",
-		summary = "Returns a 0/1 matrix where values are less than given param. IN-PLACE operation",
+		summary = "Returns a matrixBool with true where values are less than given param.",
 		params = {
 		  "A matrix or a number",
 		},
-		outputs = { "The caller matrix" },
+		outputs = { "A matrixBool instance" },
 	      })
 
 april_set_doc(matrix.."gt",
 	      {
 		class = "method",
-		summary = "Returns a 0/1 matrix where values are greater than given param. IN-PLACE operation",
+		summary = "Returns a  matrixBool with true where values are greater than given param.",
 		params = {
 		  "A matrix or a number",
 		},
-		outputs = { "The caller matrix" },
+		outputs = { "A matrixBool instance" },
 	      })
 
 -------------------------------------------------------------------------
