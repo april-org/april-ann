@@ -10,7 +10,7 @@ matrixBool.meta_instance.__newindex =
 matrixBool.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixBool",
                                             function(value)
-                                              return string.format("%d", value and 1 or 0)
+                                              return string.format("%c", value and "T" or "F")
   end)
 
 matrixBool.join =
