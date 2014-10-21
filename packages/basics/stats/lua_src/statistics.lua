@@ -3,14 +3,19 @@ stats = stats or {} -- global environment
 -----------------------------------------------------------------------------
 
 local mop = matrix.op
+local sdiag = matrix.sparse.diag
 
 -- x must be a 2D matrix
 local function center(x)
-  local N = x:dim(1)
-  local x = x:clone()
-  local x_mu,x_row = x:sum(1)/N
-  for i=1,N do x_row=x:select(1,i,x_row):axpy(-1.0, x_mu) end
-  return x
+  local x_dim = x:dim()
+  local N = x_dim[1]
+  local x_mu
+  if #x_dim == 1 then
+    x_mu = x:sum()/N
+  else
+    x_mu = mop.repmat(x:sum(1):scal(1/N),N,1)
+  end
+  return x - x_mu
 end
 
 stats.cov =
@@ -19,20 +24,23 @@ stats.cov =
     summary = "Compute covariance matrix of two matrices.",
     description = "Data is ordered by rows, features by columns.",
     params = {
-      "A 2D matrix (x)",
-      "Another 2D matrix (y)",
-      "An optional table with 'centered' boolean",
+      "A 2D matrix or a vector (x)",
+      "Another 2D matrix or a vector (y)",
+      "An optional table with 'centered' boolean, 'true_mean' boolean",
     },
     outputs = { "Covariance matrix" }
   } ..
   function(x,y,params)
-    assert(x and y, "Needs at least two arguments")
+    collectgarbage("collect")
+    assert(class.is_a(x,matrix) and class.is_a(y,matrix),
+           "Needs at least two matrix arguments")
     local params = get_table_fields(
       {
         centered = { type_match = "boolean", default = nil },
+        true_mean = { type_match = "boolean", default =nil },
       }, params)
     local x_dim,y_dim = x:dim(),y:dim()
-    assert(#x_dim == 2 and #y_dim == 2, "Needs 2D matrices")
+    assert((#x_dim <= 2) and (#y_dim <= 2), "Needs 2D matrices or vectors")
     assert(x_dim[1] == y_dim[1] and x_dim[2] == y_dim[2],
            "Require same shape matrices")
     local N,M = table.unpack(x_dim)
@@ -41,11 +49,9 @@ stats.cov =
       x = center(x)
       y = rawequal(oldx,y) and x or center(y)
     end
-    local s = matrix[x:get_major_order()](M,M)
-    return s:gemm{ A=x, B=y,
-                   trans_A=true, trans_B=false,
-                   alpha=1/(N-1),
-                   beta=0 }
+    local sz = N-1
+    if params.true_mean then sz = N end
+    return (x:transpose() * y):scal(1/sz):rewrap(M or 1,M or 1)
   end
 
 stats.cor =
@@ -54,25 +60,70 @@ stats.cor =
     summary = "Compute correlation matrix of two matrices.",
     description = "Data is ordered by rows, features by columns.",
     params = {
-      "A 2D matrix (x)",
-      "Another 2D matrix (y)",
+      "A 2D matrix or a vector (x)",
+      "Another 2D matrix or a vector (y)",
       "An optional table with 'centered' boolean",
     },
     outputs = { "Correlation matrix" }
   } ..
   function(x,y,params)
-    local sigma = stats.cov(x,y,params)
-    local N = sigma:dim(1)
-    local get_and_sqrt_map = function(i) return math.sqrt(sigma:get(i,i)) end
-    local stddevs = iterator(range(1,N)):map(get_and_sqrt_map):table()
-    for x=1,N do
-      for y=1,N do
-        local sx = stddevs[x]
-        local sy = stddevs[y]
-        sigma:set( x, y, sigma:get(x,y) / ( sx * sy ) )
+    local params = params or {}
+    if not params.centered then
+      local xold = x
+      x = center(x)
+      if rawequal(xold,y) then y = x else y = center(y) end
+    end
+    local function cstd(m) return sdiag((m^2):sum(1):scal(1/(m:dim(1)-1)):sqrt():div(1):squeeze()) end
+    local sigma = stats.cov(x,y,{ centered=true })
+    local sx = cstd(x)
+    local sy = rawequal(x,y) and sx or cstd(y)
+    return sx * sigma * sy
+  end
+
+stats.acf =
+  april_doc{
+    class = "function",
+    summary = "Compute auto-correlation of one or more series.",
+    description = "Data is ordered by rows, series by columns.",
+    params = {
+      "A 2D matrix or a vector (x)",
+      { "An optional table with 'lag_max' number,",
+        "'lag_step' number, 'lag_start' number,",
+        "'cor' function (one of stats.cor [default], stats.cov)." },
+    },
+    outputs = { "A matrix with auto-correlation of the series",
+                "A matrixInt32 with lag values" },
+  } ..
+  function(x,params)
+    assert(class.is_a(x, matrix), "Needs a matrix argument")
+    local x_dim = x:dim()
+    assert(x_dim[1] > 1, "Needs two or more rows")
+    assert(#x_dim <= 2, "Requires 2D matrix or a vector")
+    local params = get_table_fields(
+      {
+        lag_max = { type_match = "number", default = x_dim[1]-2 },
+        lag_step = { type_match = "number", default = 1 },
+        lag_start = { type_match = "number", default = 1 },
+        cor = { type_match = "function", default = stats.cor },
+      }, params)
+    local lag_start,lag_max,lag_step = params.lag_start,params.lag_max,params.lag_step
+    if #x_dim == 1 then x = x:rewrap(x:size(),1) end
+    local N,M = x_dim[1],x:dim(2)
+    local ctor = matrix[x:get_major_order()]
+    local result = ctor(math.floor((lag_max + 1 - lag_start) / lag_step), M)
+    local acf_func = params.cor
+    for j=1,M do
+      local i=1
+      for lag = lag_start, lag_max, lag_step do
+        local a,b = x({1,N-lag},j), x({lag+1,N},j)
+        local join = matrix.join(2,a,b)
+        local y = acf_func(join,join)
+        result[{i,j}] = y(1,2)
+        i=i+1
       end
     end
-    return sigma
+    local lags = matrixInt32(iterator(range(lag_start,lag_max,lag_step)):table())
+    return result,lags
   end
 
 -- arithmetic mean of a matrix
@@ -882,10 +933,10 @@ stats.boot.ci =
 stats.boot.percentil =
   april_doc{
     class = "function",
-    summary = "Returns a percentil value",
+    summary = "Returns a percentil value from bootstrap output",
     description= {
       "This function returns a percentil value",
-      "given the result of stats.boot function and the confidence value.",
+      "given the result of stats.boot function and the percentil number.",
       "It could compute the percentil over a slice of the table.",
     },
     params = {

@@ -24,7 +24,7 @@ class.extend(matrix, "order",
              } ..
                function(self)
                  local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
+                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
                  local t = iterator(range(1,self:size())):table()
                  table.sort(t, function(a,b)
                               return self:get(a) < self:get(b)
@@ -40,7 +40,7 @@ class.extend(matrix, "order_rank",
              } ..
                function(self)
                  local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
+                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
                  local t = iterator(range(1,self:size())):table()
                  table.sort(t, function(a,b)
                               return self:get(a) < self:get(b)
@@ -73,7 +73,7 @@ class.extend(matrix, "index",
                  assert(class.is_a(idx, matrixInt32),
                         "Needs a matrixInt32 second argument (index)")
                  local idx = idx:squeeze()
-                 assert(#idx:dim() == 1, "Needs a rank 1 matrix as second argument (index)")
+                 assert(#idx:dim() == 1, "Needs a rank 1 tensor as second argument (index)")
                  local d = self:dim()
                  assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
                  local dim_bound = d[dim]
@@ -123,7 +123,7 @@ class.extend(matrix, "indexed_fill",
                       "Needs a matrixInt32 second argument (index)")
                local idx = idx:squeeze()
                assert(#idx:dim() == 1,
-                      "Needs a rank 1 matrix as second argument (index)")
+                      "Needs a rank 1 tensor as second argument (index)")
                local d = self:dim()
                assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
                local dim_bound = d[dim]
@@ -167,7 +167,7 @@ class.extend(matrix, "indexed_copy",
                       "Self and other must be same matrix type")
                local idx = idx:squeeze()
                assert(#idx:dim() == 1,
-                      "Needs a rank 1 matrix as second argument (index)")
+                      "Needs a rank 1 tensor as second argument (index)")
                local d = self:dim()
                assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
                local dim_bound = d[dim]
@@ -188,7 +188,6 @@ class.extend(matrix, "indexed_copy",
                return self
 end)
 
-
 -- the constructor
 matrix.row_major = function(...)
   return matrix(...)
@@ -207,6 +206,33 @@ for _,method in ipairs{"adjust_range", "clamp", "cmul",
     local clone = self:clone()
     return clone[method](clone,...)
   end
+end
+
+function matrix.op.repmat(x, ...)
+  local arg = table.pack(...)
+  local dim = x:dim()
+  local result_dim = {}
+  assert(#arg >= #dim, "Underflow given number of dimensions")
+  for i=1,#arg do dim[i] = dim[i] or 1 result_dim[i] = dim[i] * arg[i] end
+  local x = x:rewrap(table.unpack(dim))
+  local result = matrix[x:get_major_order()](table.unpack(result_dim))
+  local result_sw = result:sliding_window{ size=dim, step=dim }
+  local mat
+  while not result_sw:is_end() do
+    mat = result_sw:get_matrix(mat)
+    mat:copy(x)
+    result_sw:next()
+  end
+  return result
+end
+
+function matrix.op.diag(m)
+  local dim = m:dim()
+  assert(#dim == 2, "Needs a 2D matrix")
+  local N = dim[1]
+  assert(dim[2] == N, "Needs a square matrix")
+  local get_map = function(i) return m:get(i,i) end
+  return matrix.sparse.diag(iterator(range(1,N)):map(get_map):table())
 end
 
 -- serialization
