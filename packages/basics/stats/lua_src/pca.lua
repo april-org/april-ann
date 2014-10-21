@@ -17,7 +17,7 @@ function stats.mean_centered_by_pattern(X)
   local dim = X:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N = table.unpack(dim)
-  -- U is the mean over all rows
+  -- U is the mean over all columns
   local U,auxX = X:sum(2):rewrap(M):scal(1/N)
   -- X is centered subtracting by -U
   for i=1,X:dim(2) do auxX=X:select(2,i,auxX):axpy(-1, U) end
@@ -45,48 +45,83 @@ function stats.zca_whitening(X,U,S,epsilon)
 end
 
 -- compute PCA mass
-function stats.pca_mass(S,mass)
-  local acc = 0
-  local acc_mat = matrix.col_major(S:size())
-  for v,i in S:iterate() do
-    acc=acc + v
-    acc_mat:set(i, acc)
+stats.pca_mass =
+  april_doc{
+    class = "function",
+    summary = "Computes PCA mass probability given S diagonal sparse matrix",
+    params = { "S diagonal sparse matrix" },
+    outputs = { "A matrix with probability mass" },
+  } ..
+  function(S)
+    local acc = 0
+    local acc_mat = S:clone()
+    for v,i in S:iterate() do acc=acc + v end
+    acc_mat:scal(1.0/acc)
+    return acc_mat
   end
-  acc_mat:scal(1.0/acc)
-  return acc_mat
-end
 
 -- show PCA threshold
-function stats.pca_threshold(S,mass)
-  local mass = mass or 0.99
-  local acc = 0
-  local sum = S:sum()
-  local acc_th,th,vth = 0,1
-  for v,i in S:iterate() do
-    acc=acc + v
-    if acc/sum < mass then vth,acc_th,th=v,acc,i end
+stats.pca_threshold =
+  april_doc{
+    class = "function",
+    summary = "Computes the PCA threshold for a given mass probability",
+    params = {
+      "The S diagonal sparse matrix with singular values",
+      "A number in [0,1] range indicating the mass probability [optional]. 0.99 by default",
+    },
+    outputs = {
+      "The number of components",
+      "The threshold singular value",
+      "The accumulated probability",
+    },
+  } ..
+  function(S,mass)
+    local mass = mass or 0.99
+    local acc = 0
+    local sum = S:sum()
+    local acc_th,th,vth = 0,1
+    for v,i in S:iterate() do
+      acc=acc + v
+      vth,acc_th,th=v,acc,i
+      if acc/sum > mass then break end
+    end
+    assert(acc_th > 0, "The probability mass needs to be larger")
+    return th,vth,acc_th/sum
   end
-  assert(acc_th > 0, "The probability mass needs to be larger")
-  return th,vth,acc_th/sum
-end
 
 -------------------------------------------------------------------------------
 
 -- PCA algorithm based on covariance matrix and SVD decomposition the matrix Xc
 -- must be zero mean centerd for each pattern. Patterns are ordered by rows.
-function stats.pca(Xc)
-  local dim    = Xc:dim()
-  assert(#dim == 2, "Expected a bi-dimensional matrix")
-  local aux = Xc:sum(2):scal(1/Xc:dim(2)):rewrap(Xc:dim(1))
-  local M,N    = table.unpack(dim)
-  local sigma  = matrix.col_major(N,N)
-  sigma:gemm{ A=Xc, B=Xc,
-	      trans_A=true,
-	      trans_B=false,
-	      alpha=1/M,
-	      beta=0, }
-  local U,S,VT = sigma:svd()
-  return U,S,VT
+stats.pca =
+  april_doc{
+    class = "function",
+    summary = "Computes PCA using SVD decomposition of covariance matrix",
+    description = { "Data is ordered by rows, features by columns.",
+                    "If not centered, the data is centered by columns instead",
+                    "that by rows (using mean_centered_by_pattern function)." },
+    params = {
+      "A 2D matrix",
+      "An [optional] table with 'centered' boolean",
+    },
+    outputs = {
+      "U matrix with left singular vectors",
+      "S diagonal sparse matrix with  singular values",
+      "VT transpose of right singular vectors",
+    },
+  }..
+  function(Xc, params)
+    local params = get_table_fields(
+      {
+        centered = { type_match = "boolean", default = nil },
+      }, params)
+    assert(#Xc:dim() == 2, "Expected a bi-dimensional matrix")
+    if not params.centered then
+      Xc = stats.mean_centered_by_pattern(Xc)
+    end
+    local sigma = stats.cov(Xc,Xc,{ centered=true })
+    local U,S,VT = sigma:svd()
+    return U,S,VT
 end
 
 -------------------------------------------------------------------------------

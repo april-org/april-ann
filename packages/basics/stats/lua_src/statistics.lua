@@ -18,6 +18,40 @@ local function center(x)
   return x - x_mu
 end
 
+stats.center =
+  april_doc{
+    class = "function",
+    summary = "Centers data by rows, computing mean of every column",
+    description = "Data is ordered by rows, features by columns.",
+    params = { "A 2D matrix" },
+    outputs = { "Another new allocated matrix" },
+  } ..
+  function(x)
+    assert(#x:dim() == 2, "Needs a 2D matrix")
+    return center(x)
+  end
+
+stats.var =
+  april_doc{
+    class = "function",
+    summary = "Computes variance over a dimension",
+    params = { "A matrix",
+               "A dimension number [optional].", },
+    outputs = { "A new allocated matrix or a number if not dim given" },
+  } ..
+  function(x,dim)
+    local mean = stats.amean(x,dim)
+    local x,x_row,sz = x:clone()
+    if dim then
+      sz = x:dim(dim)
+      for i=1,sz do x_row=x:select(dim,i,x_row):axpy(-1.0, mean) end
+    else
+      x:scalar_add(-mean)
+      sz = x:size()
+    end
+    return x:pow(2):sum(dim)/(sz-1)
+  end
+
 stats.cov =
   april_doc{
     class = "function",
@@ -26,7 +60,7 @@ stats.cov =
     params = {
       "A 2D matrix or a vector (x)",
       "Another 2D matrix or a vector (y)",
-      "An optional table with 'centered' boolean, 'true_mean' boolean",
+      "An [optional] table with 'centered' boolean, 'true_mean' boolean",
     },
     outputs = { "Covariance matrix" }
   } ..

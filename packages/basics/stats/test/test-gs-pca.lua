@@ -3,15 +3,6 @@ local T = utest.test
 --
 local base_dir = string.get_path(arg[0])
 
-function compute_cov(X,dim)
-  local other = 3 - dim
-  local major_order = X:get_major_order()
-  return matrix[major_order](X:dim(dim),X:dim(dim)):gemm{ A=X, B=X,
-							  trans_A=true,
-							  alpha=1/X:dim(other),
-							  beta=0 }
-end
-
 --------------------------------------------------------------------------
 
 local ok,m = pcall(matrix.fromTabFilename, "/tmp/sample.txt.gz")
@@ -41,7 +32,7 @@ T("PCATest",
     local aU,aS,aVT = stats.pca(aR)
 
     -- check regeneration of original covariance matrix
-    local cov = compute_cov(aR, 2)
+    local cov = stats.cov(aR, aR, { centered=true })
     check(function()
         return cov:equals(aU * aS:to_dense("col_major") * aVT)
     end, "Regeneration of covariance matrix")
@@ -49,12 +40,12 @@ T("PCATest",
     -- ROTATION
     local amRot = aR * aU
     -- check covariance of rotated data
-    local cov = compute_cov(amRot, 2)
+    local cov = stats.cov(amRot, amRot, { centered=true })
     -- adjusting the data to be between 0 and 1
     for sw in cov:sliding_window():iterate() do sw:adjust_range(0,1) end
     -- the adjusted covariance must be an identity matrix
     -- assert(cov:equals( cov:clone():zeros():diag(1), 0.1 ))
-
+    
     -- U matrix orthogonality check
     local aUmul = aU:clone():gemm{ A=aU, B=aU, trans_B=true,
                                    alpha=1.0, beta=0.0, }
@@ -104,7 +95,7 @@ T("GS-PCATest",
     check(function() return aR:equals( bT * bP:transpose() + bR ) end)
 
     -- check covariance of rotated data
-    local cov = compute_cov(bT, 2)
+    local cov = stats.cov(bT, bT, { centered=true })
     -- adjusting the data to be between 0 and 1
     for sw in cov:sliding_window():iterate() do sw:adjust_range(0,1) end
     -- the adjusted covariance must be an identity matrix
