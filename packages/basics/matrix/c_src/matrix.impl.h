@@ -503,6 +503,7 @@ namespace Basics {
         result->stride[j]     = this->stride[i];
         result->matrixSize[j] = this->matrixSize[i];
       }
+      result->is_contiguous = NONE;
     }
     else result = this;
     return result;
