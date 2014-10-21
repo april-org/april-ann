@@ -63,10 +63,12 @@ stats.cor =
   function(x,y,params)
     local sigma = stats.cov(x,y,params)
     local N = sigma:dim(1)
+    local get_and_sqrt_map = function(i) return math.sqrt(sigma:get(i,i)) end
+    local stddevs = iterator(range(1,N)):map(get_and_sqrt_map):table()
     for x=1,N do
       for y=1,N do
-        local sx = math.sqrt(sigma:get(x,x))
-        local sy = math.sqrt(sigma:get(y,y))
+        local sx = stddevs[x]
+        local sy = stddevs[y]
         sigma:set( x, y, sigma:get(x,y) / ( sx * sy ) )
       end
     end

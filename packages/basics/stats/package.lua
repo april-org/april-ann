@@ -25,6 +25,7 @@
        file={
 	 "test/test_bootstrap.lua",
 	 "test/test_comb.lua",
+	 "test/test_covariance.lua",
 	 "test/test_distributions.lua",
 	 "test/test-gs-pca.lua",
 	 "test/test_means.lua",
