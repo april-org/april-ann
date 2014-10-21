@@ -68,6 +68,13 @@ ascii
                                     3, 6, 9,
                                  }),
             "transpose")
+
+      check(d:transpose():clone(), matrix(3,3,{
+                                            1, 4, 7,
+                                            2, 5, 8,
+                                            3, 6, 9,
+                                         }),
+            "transpose clone")
       
       local e = d * d 
       check(e, matrix(3,3,{
@@ -134,6 +141,20 @@ ascii
                                     2, 4, 6,
                                  }),
             "transpose")
+
+      check(g:transpose():clone(), matrix(2,3,{
+                                            1, 3, 5,
+                                            2, 4, 6,
+                                         }),
+            "transpose clone")
+
+      local h = matrix(table.unpack(g:transpose():dim()))
+      
+      check(h:copy(g:transpose()), matrix(2,3,{
+                                            1, 3, 5,
+                                            2, 4, 6,
+                                         }),
+            "copy transposed")
       
       local j = g:transpose() * g
       check(j, matrix(2,2,{
