@@ -1056,3 +1056,15 @@ stats.dist.bernoulli = function(p)
   end
 end
 
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
+april_set_doc(stats.comb,{
+                class = "function", 
+                summary = "Computes k-combination",
+                params = {
+                  "Total number of elements (n)",
+                  "How many selected elements (k)",
+                },
+                outputs = { "A number with (n over k)" },
+})
