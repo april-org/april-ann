@@ -32,7 +32,7 @@ class.extend(matrix, "order",
                  return matrixInt32(t)
 end)
 
-class.extend(matrix, "rank",
+class.extend(matrix, "order_rank",
              april_doc{
                class = "method",
                summary = "Returns the sorted rank of the matrix values",

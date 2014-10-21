@@ -4,6 +4,75 @@ stats = stats or {} -- global environment
 
 local mop = matrix.op
 
+-- x must be a 2D matrix
+local function center(x)
+  local N = x:dim(1)
+  local x = x:clone()
+  local x_mu,x_row = x:sum(1)/N
+  for i=1,N do x_row=x:select(1,i,x_row):axpy(-1.0, x_mu) end
+  return x
+end
+
+stats.cov =
+  april_doc{
+    class = "function",
+    summary = "Compute covariance matrix of two matrices.",
+    description = "Data is ordered by rows, features by columns.",
+    params = {
+      "A 2D matrix (x)",
+      "Another 2D matrix (y)",
+      "An optional table with 'centered' boolean",
+    },
+    outputs = { "Covariance matrix" }
+  } ..
+  function(x,y,params)
+    assert(x and y, "Needs at least two arguments")
+    local params = get_table_fields(
+      {
+        centered = { type_match = "boolean", default = nil },
+      }, params)
+    local x_dim,y_dim = x:dim(),y:dim()
+    assert(#x_dim == 2 and #y_dim == 2, "Needs 2D matrices")
+    assert(x_dim[1] == y_dim[1] and x_dim[2] == y_dim[2],
+           "Require same shape matrices")
+    local N,M = table.unpack(x_dim)
+    if not params.centered then
+      local oldx = x
+      x = center(x)
+      y = rawequal(oldx,y) and x or center(y)
+    end
+    local s = matrix[x:get_major_order()](M,M)
+    return s:gemm{ A=x, B=y,
+                   trans_A=true, trans_B=false,
+                   alpha=1/(N-1),
+                   beta=0 }
+  end
+
+stats.cor =
+  april_doc{
+    class = "function",
+    summary = "Compute correlation matrix of two matrices.",
+    description = "Data is ordered by rows, features by columns.",
+    params = {
+      "A 2D matrix (x)",
+      "Another 2D matrix (y)",
+      "An optional table with 'centered' boolean",
+    },
+    outputs = { "Correlation matrix" }
+  } ..
+  function(x,y,params)
+    local sigma = stats.cov(x,y,params)
+    local N = sigma:dim(1)
+    for x=1,N do
+      for y=1,N do
+        local sx = math.sqrt(sigma:get(x,x))
+        local sy = math.sqrt(sigma:get(y,y))
+        sigma:set( x, y, sigma:get(x,y) / ( sx * sy ) )
+      end
+    end
+    return sigma
+  end
+
 -- arithmetic mean of a matrix
 stats.amean =
   april_doc{
