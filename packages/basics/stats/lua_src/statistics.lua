@@ -116,9 +116,8 @@ stats.acf =
       local i=1
       for lag = lag_start, lag_max, lag_step do
         local a,b = x({1,N-lag},j), x({lag+1,N},j)
-        local join = matrix.join(2,a,b)
-        local y = acf_func(join,join)
-        result[{i,j}] = y(1,2)
+        local y = acf_func(a,b)
+        result[{i,j}] = y
         i=i+1
       end
     end

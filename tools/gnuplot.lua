@@ -107,6 +107,34 @@ function gnuplot_methods:plot(params, range)
   return self
 end
 
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:rawplot(data, line)
+  if type(data) ~= "table" then data = { data } end
+  -- remove previous temporal files
+  for _,tmpname in pairs(self.tmpnames) do
+    self:writeln(string.format("!rm -f %s", tmpname))
+  end
+  self.tmpnames = {}
+  local tmpnames = self.tmpnames
+  local dict = {}
+  for i,m in ipairs(data) do
+    local aux_tmpname = tmpnames[m]
+    if not aux_tmpname then
+      assert(m.toTabFilename,
+	     "The matrix object needs the method toTabFilename")
+      aux_tmpname = os.tmpname()
+      tmpnames[m] = aux_tmpname
+      m:toTabFilename(aux_tmpname)
+    end
+    dict["#"..i] = aux_tmpname
+  end
+  local line = line:gsub("(#%d*)",dict)
+  print(line)
+  self:writeln(line)
+  self:flush()
+  return self
+end
+
 -- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   -- remove previous temporal files
