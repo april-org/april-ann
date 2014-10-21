@@ -96,7 +96,7 @@ stats.cor =
     params = {
       "A 2D matrix or a vector (x)",
       "Another 2D matrix or a vector (y)",
-      "An optional table with 'centered' boolean",
+      "An [optional] table with 'centered' boolean",
     },
     outputs = { "Correlation matrix" }
   } ..
@@ -121,7 +121,7 @@ stats.acf =
     description = "Data is ordered by rows, series by columns.",
     params = {
       "A 2D matrix or a vector (x)",
-      { "An optional table with 'lag_max' number,",
+      { "An [optional] table with 'lag_max' number,",
         "'lag_step' number, 'lag_start' number,",
         "'cor' function (one of stats.cor [default], stats.cov)." },
     },
