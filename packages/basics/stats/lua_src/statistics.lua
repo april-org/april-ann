@@ -64,7 +64,19 @@ stats.cov =
     },
     outputs = { "Covariance matrix" }
   } ..
-  function(x,y,params)
+  april_doc{
+    class = "function",
+    summary = "Compute covariance matrix.",
+    description = "Data is ordered by rows, features by columns.",
+    params = {
+      "A 2D matrix or a vector (x)",
+      "An [optional] table with 'centered' boolean, 'true_mean' boolean",
+    },
+    outputs = { "Covariance matrix" }
+  } ..
+  function(x,...)
+    local y,params = ...
+    if type(y) == "table" or not y then y,params = x,y end
     collectgarbage("collect")
     assert(class.is_a(x,matrix) and class.is_a(y,matrix),
            "Needs at least two matrix arguments")
@@ -100,7 +112,19 @@ stats.cor =
     },
     outputs = { "Correlation matrix" }
   } ..
-  function(x,y,params)
+  april_doc{
+    class = "function",
+    summary = "Compute correlation matrix.",
+    description = "Data is ordered by rows, features by columns.",
+    params = {
+      "A 2D matrix or a vector (x)",
+      "An [optional] table with 'centered' boolean",
+    },
+    outputs = { "Correlation matrix" }
+  } ..
+  function(x,...)
+    local y,params = ...
+    if type(y) == "table" or not y then y,params = x,y end
     local params = params or {}
     if not params.centered then
       local xold = x

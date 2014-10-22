@@ -119,7 +119,7 @@ stats.pca =
     if not params.centered then
       Xc = stats.mean_centered_by_pattern(Xc)
     end
-    local sigma = stats.cov(Xc,Xc,{ centered=true })
+    local sigma = stats.cov(Xc,{ centered=true })
     local U,S,VT = sigma:svd()
     return U,S,VT
 end
