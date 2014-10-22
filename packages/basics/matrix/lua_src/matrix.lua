@@ -1,4 +1,4 @@
--- ADDING PSEUDO-INVERSE METHOD
+-- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
                local u,s,vt = self:svd()
@@ -16,6 +16,178 @@ class.extend(matrix, "pinv",
                  }
 end)
 
+class.extend(matrix, "order",
+             april_doc{
+               class = "method",
+               summary = "Returns a permutation of the matrix which sorts its data",
+               outputs = { "A matrixInt32 instance" },
+             } ..
+               function(self)
+                 local self = self:squeeze()
+                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
+                 local t = iterator(range(1,self:size())):table()
+                 table.sort(t, function(a,b)
+                              return self:get(a) < self:get(b)
+                 end)
+                 return matrixInt32(t)
+end)
+
+class.extend(matrix, "order_rank",
+             april_doc{
+               class = "method",
+               summary = "Returns the sorted rank of the matrix values",
+               outputs = { "A matrixInt32 instance" },
+             } ..
+               function(self)
+                 local self = self:squeeze()
+                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
+                 local t = iterator(range(1,self:size())):table()
+                 table.sort(t, function(a,b)
+                              return self:get(a) < self:get(b)
+                 end)
+                 return matrixInt32(table.invert(t))
+end)
+
+class.extend(matrix, "index",
+             april_doc{
+               class = "method",
+               summary = {
+                 "Returns new allocated matrix filtered by the given dim and",
+                 "index matrix parameters.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+               },
+               outputs = {
+                 { "A new allocated matrix instance, or nil if 2nd argument",
+                   "has zero selected components", },
+               },
+             } ..
+               function(self,dim,idx)
+                 if type(idx) == "table" then idx = matrixInt32(idx)
+                 elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+                 end
+                 if not idx then return nil end
+                 assert(class.is_a(idx, matrixInt32),
+                        "Needs a matrixInt32 second argument (index)")
+                 local idx = idx:squeeze()
+                 assert(#idx:dim() == 1, "Needs a rank 1 tensor as second argument (index)")
+                 local d = self:dim()
+                 assert(dim >= 1 and dim <= #d, "Dimension argument out-of-bounds")
+                 local dim_bound = d[dim]
+                 d[dim] = idx:size()
+                 local constructor = class.of(self)
+                 local result = constructor[self:get_major_order()](table.unpack(d))
+                 d[dim] = 1
+                 local self_sw = self:sliding_window{ size=d, step=d }
+                 local dest_sw   = result:sliding_window{ size=d, step=d }
+                 local result_submat,self_submat
+                 idx:map(function(p)
+                     april_assert(p >= 1 and p <= dim_bound,
+                                  "Index number %d out-of-bounds", i)
+                     assert(not dest_sw:is_end())
+                     self_sw:set_at_window(p)
+                     result_submat = dest_sw:get_matrix(result_submat)      
+                     self_submat = self_sw:get_matrix(self_submat)
+                     result_submat:copy(self_submat)
+                     dest_sw:next()
+                 end)
+                 return result
+end)
+
+
+class.extend(matrix, "indexed_fill",
+             april_doc{
+               class = "method",
+               summary = {
+                 "Fills the indexed dim,index components of the caller matrix.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+                 "A number value for filling.",
+               },
+               outputs = {
+                 "The caller matrix.",
+               },
+             } ..
+             function(self,dim,idx,val)
+               if type(idx) == "table" then idx = matrixInt32(idx)
+               elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+               end
+               if not idx then return self end
+               assert(class.is_a(idx, matrixInt32),
+                      "Needs a matrixInt32 second argument (index)")
+               local idx = idx:squeeze()
+               assert(#idx:dim() == 1,
+                      "Needs a rank 1 tensor as second argument (index)")
+               local d = self:dim()
+               assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
+               local dim_bound = d[dim]
+               d[dim] = 1
+               local sw = self:sliding_window{ size=d, step=d }
+               local mat
+               idx:map(function(p)
+                   april_assert(p >= 1 and p <= dim_bound,
+                                "Index number %d out-of-bounds", i)
+                   sw:set_at_window(p)
+                   mat = sw:get_matrix(mat)
+                   mat:fill(val)
+               end)
+               return self
+end)
+
+class.extend(matrix, "indexed_copy",
+             april_doc{
+               class = "method",
+               summary = {
+                 "Copies a matrix into the indexed dim,index components of the caller matrix.",
+               },
+               params = {
+                 "A dimension number",
+                 { "A table, matrixBool or matrixInt32 indicating which",
+                   "indices will be taken." },
+                 "A matrix with data to be copied.",
+               },
+               outputs = {
+                 "The caller matrix.",
+               },
+             } ..
+             function(self,dim,idx,other)
+               if type(idx) == "table" then idx = matrixInt32(idx)
+               elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
+               end
+               if not idx then return self end
+               assert(class.is_a(idx, matrixInt32),
+                      "Needs a matrixInt32 second argument (index)")
+               assert(class.of(self) == class.of(other),
+                      "Self and other must be same matrix type")
+               local idx = idx:squeeze()
+               assert(#idx:dim() == 1,
+                      "Needs a rank 1 tensor as second argument (index)")
+               local d = self:dim()
+               assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
+               local dim_bound = d[dim]
+               d[dim] = 1
+               local other_sw = other:sliding_window{ size=d, step=d }
+               local self_sw = self:sliding_window{ size=d, step=d }
+               local other_submat,self_submat
+               idx:map(function(p)
+                   april_assert(p >= 1 and p <= dim_bound,
+                                "Index number %d out-of-bounds", i)
+                   assert(not other_sw:is_end())
+                   self_sw:set_at_window(p)
+                   other_submat = other_sw:get_matrix(other_submat)
+                   self_submat = self_sw:get_matrix(self_submat)
+                   self_submat:copy(other_submat)
+                   other_sw:next()
+               end)
+               return self
+end)
+
 -- the constructor
 matrix.row_major = function(...)
   return matrix(...)
@@ -29,12 +201,38 @@ for _,method in ipairs{"adjust_range", "clamp", "cmul",
                        "tan", "tanh", "atan",
                        "sin", "sinh", "asin", "asinh",
                        "cos", "cosh", "acos", "acosh",
-                       "abs", "complement", "sign", "scal", "div",
-                       "lt", "gt", "eq", "neq" } do
+                       "abs", "complement", "sign", "scal", "div" } do
   matrix.op[method] = function(self,...)
     local clone = self:clone()
     return clone[method](clone,...)
   end
+end
+
+function matrix.op.repmat(x, ...)
+  local arg = table.pack(...)
+  local dim = x:dim()
+  local result_dim = {}
+  assert(#arg >= #dim, "Underflow given number of dimensions")
+  for i=1,#arg do dim[i] = dim[i] or 1 result_dim[i] = dim[i] * arg[i] end
+  local x = x:rewrap(table.unpack(dim))
+  local result = matrix[x:get_major_order()](table.unpack(result_dim))
+  local result_sw = result:sliding_window{ size=dim, step=dim }
+  local mat
+  while not result_sw:is_end() do
+    mat = result_sw:get_matrix(mat)
+    mat:copy(x)
+    result_sw:next()
+  end
+  return result
+end
+
+function matrix.op.diag(m)
+  local dim = m:dim()
+  assert(#dim == 2, "Needs a 2D matrix")
+  local N = dim[1]
+  assert(dim[2] == N, "Needs a square matrix")
+  local get_map = function(i) return m:get(i,i) end
+  return matrix.sparse.diag(iterator(range(1,N)):map(get_map):table())
 end
 
 -- serialization
@@ -45,6 +243,7 @@ matrix.__generic__.__make_all_serialization_methods__(matrix)
 matrix.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+-- define left side operator [{}]
 matrix.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrix)
 
@@ -1200,21 +1399,21 @@ april_set_doc(matrix.."map",
 april_set_doc(matrix.."lt",
 	      {
 		class = "method",
-		summary = "Returns a 0/1 matrix where values are less than given param. IN-PLACE operation",
+		summary = "Returns a matrixBool with true where values are less than given param.",
 		params = {
 		  "A matrix or a number",
 		},
-		outputs = { "The caller matrix" },
+		outputs = { "A matrixBool instance" },
 	      })
 
 april_set_doc(matrix.."gt",
 	      {
 		class = "method",
-		summary = "Returns a 0/1 matrix where values are greater than given param. IN-PLACE operation",
+		summary = "Returns a  matrixBool with true where values are greater than given param.",
 		params = {
 		  "A matrix or a number",
 		},
-		outputs = { "The caller matrix" },
+		outputs = { "A matrixBool instance" },
 	      })
 
 -------------------------------------------------------------------------

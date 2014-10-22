@@ -366,40 +366,40 @@ namespace AprilMath {
          ZERO/ONE matrix, depending in the truth of the given condition */
     
       template <typename T>
-      Basics::Matrix<T> *matLT(Basics::Matrix<T> *obj, const T &value,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matLT(Basics::Matrix<T> *obj, const T &value,
+                                  Basics::Matrix<bool> *dest=0);
 
       template <typename T>
-      Basics::Matrix<T> *matLT(Basics::Matrix<T> *obj,
-                               const Basics::Matrix<T> *other,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matLT(Basics::Matrix<T> *obj,
+                                  const Basics::Matrix<T> *other,
+                                  Basics::Matrix<bool> *dest=0);
 
       template <typename T>
-      Basics::Matrix<T> *matGT(Basics::Matrix<T> *obj, const T &value,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matGT(Basics::Matrix<T> *obj, const T &value,
+                                  Basics::Matrix<bool> *dest=0);
 
       template <typename T>
-      Basics::Matrix<T> *matGT(Basics::Matrix<T> *obj,
-                               const Basics::Matrix<T> *other,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matGT(Basics::Matrix<T> *obj,
+                                  const Basics::Matrix<T> *other,
+                                  Basics::Matrix<bool> *dest=0);
 
       template <typename T>
-      Basics::Matrix<T> *matEQ(Basics::Matrix<T> *obj, const T &value,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matEQ(Basics::Matrix<T> *obj, const T &value,
+                                  Basics::Matrix<bool> *dest=0);
     
       template <typename T>
-      Basics::Matrix<T> *matEQ(Basics::Matrix<T> *obj,
-                               const Basics::Matrix<T> *other,
-                               Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matEQ(Basics::Matrix<T> *obj,
+                                  const Basics::Matrix<T> *other,
+                                  Basics::Matrix<bool> *dest=0);
     
       template <typename T>
-      Basics::Matrix<T> *matNEQ(Basics::Matrix<T> *obj, const T &value,
-                                Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matNEQ(Basics::Matrix<T> *obj, const T &value,
+                                   Basics::Matrix<bool> *dest=0);
     
       template <typename T>
-      Basics::Matrix<T> *matNEQ(Basics::Matrix<T> *obj,
-                                const Basics::Matrix<T> *other,
-                                Basics::Matrix<T> *dest=0);
+      Basics::Matrix<bool> *matNEQ(Basics::Matrix<T> *obj,
+                                   const Basics::Matrix<T> *other,
+                                   Basics::Matrix<bool> *dest=0);
     
       //////////////////// OTHER MATH OPERATIONS ////////////////////
     

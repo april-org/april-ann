@@ -878,4 +878,11 @@ namespace Basics {
 #include "matrix-iterators.impl.h"
 #include "matrix-serialization.impl.h"
 
+#include "matrixFloat.h"
+#include "matrixDouble.h"
+#include "matrixComplexF.h"
+#include "matrixInt32.h"
+#include "matrixChar.h"
+#include "matrixBool.h"
+
 #endif // MATRIX_H

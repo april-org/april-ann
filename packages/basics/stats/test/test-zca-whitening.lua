@@ -19,9 +19,9 @@ local aU,aS,aVT = stats.pca(aux)
 T("PCAThresholdTest",
   function()
     local takeN,eigen_value,prob_mass=stats.pca_threshold(aS, 0.99)
-    check.eq(takeN, 192)
-    check.lt(math.abs(eigen_value-0.01752162), 1e-03)
-    check.lt(math.abs(prob_mass-0.9897367), 1e-03)
+    check.eq(takeN, 193)
+    check.number_eq(eigen_value,0.017318)
+    check.number_eq(prob_mass,0.990025)
 end)
 
 local zca_whitening,new
@@ -30,13 +30,13 @@ if ann.components.zca_whitening then
     U=aU,
     S=aS,
     epsilon=0.017,
-    takeN=192,
+    takeN=193,
   }
   new = zca_whitening:forward(aux):get_matrix()
 end
 
-local new2 = stats.zca_whitening(aux:clone(), aU(':','1:192'),
-				 aS('1:192','1:192'), 0.017)
+local new2 = stats.zca_whitening(aux:clone(), aU(':','1:193'),
+				 aS('1:193','1:193'), 0.017)
 
 if new then
   T("ZCAWhiteningTest",

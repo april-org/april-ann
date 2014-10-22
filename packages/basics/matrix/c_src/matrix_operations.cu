@@ -1112,77 +1112,101 @@ namespace AprilMath {
          ZERO/ONE matrix, depending in the truth of the given condition */
     
       template <typename T>
-      Matrix<T> *matLT(Matrix<T> *obj, const T &value,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_curried_lt<T>(value), dest);
+      Matrix<bool> *matLT(Matrix<T> *obj, const T &value,
+                          Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap1<T,bool>(obj, m_curried_lt<T>(value), dest);
       }
 
       template <typename T>
-      Matrix<T> *matLT(Matrix<T> *obj,
+      Matrix<bool> *matLT(Matrix<T> *obj,
+                          const Matrix<T> *other,
+                          Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap2<T,T,bool>(obj, other,
+                                          AprilMath::Functors::m_lt<T>(), dest);
+      }
+
+      template <typename T>
+      Matrix<bool> *matGT(Matrix<T> *obj, const T &value,
+                          Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap1<T,bool>(obj, m_curried_gt<T>(value), dest);
+      }
+
+      template <typename T>
+      Matrix<bool> *matGT(Matrix<T> *obj,
                        const Matrix<T> *other,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T,T>(obj, other,
-                                       AprilMath::Functors::m_lt<T>(), dest);
+                       Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap2<T,T,bool>(obj, other,
+                                          AprilMath::Functors::m_gt<T>(), dest);
       }
 
       template <typename T>
-      Matrix<T> *matGT(Matrix<T> *obj, const T &value,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap1<T,T>(obj, m_curried_gt<T>(value), dest);
-      }
-
-      template <typename T>
-      Matrix<T> *matGT(Matrix<T> *obj,
-                       const Matrix<T> *other,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T,T>(obj, other,
-                                       AprilMath::Functors::m_gt<T>(), dest);
-      }
-
-      template <typename T>
-      Matrix<T> *matEQ(Matrix<T> *obj, const T &value,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+      Matrix<bool> *matEQ(Matrix<T> *obj, const T &value,
+                          Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
         if (m_isnan(value)) {
-          return MatrixScalarMap1<T,T>(obj, m_curried_eq_nan<T>(), dest);
+          return MatrixScalarMap1<T,bool>(obj, m_curried_eq_nan<T>(), dest);
         }
         else {
-          return MatrixScalarMap1<T,T>(obj, m_curried_eq<T>(value), dest);
+          return MatrixScalarMap1<T,bool>(obj, m_curried_eq<T>(value), dest);
         }
       }
     
       template <typename T>
-      Matrix<T> *matEQ(Matrix<T> *obj,
-                       const Matrix<T> *other,
-                       Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T>(obj, other,
-                                     AprilMath::Functors::m_eq<T>(), dest);
+      Matrix<bool> *matEQ(Matrix<T> *obj,
+                          const Matrix<T> *other,
+                          Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap2<T,T,bool>(obj, other,
+                                          AprilMath::Functors::m_eq<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matNEQ(Matrix<T> *obj, const T &value,
-                        Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+      Matrix<bool> *matNEQ(Matrix<T> *obj, const T &value,
+                           Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
         if (m_isnan(value)) {
-          return MatrixScalarMap1<T,T>(obj, m_curried_neq_nan<T>(), dest);
+          return MatrixScalarMap1<T,bool>(obj, m_curried_neq_nan<T>(), dest);
         }
         else {
-          return MatrixScalarMap1<T,T>(obj, m_curried_neq<T>(value), dest);
+          return MatrixScalarMap1<T,bool>(obj, m_curried_neq<T>(value), dest);
         }
       }
     
       template <typename T>
-      Matrix<T> *matNEQ(Matrix<T> *obj,
-                        const Matrix<T> *other,
-                        Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
-        return MatrixScalarMap2<T,T>(obj, other,
-                                     AprilMath::Functors::m_neq<T>(), dest);
+      Matrix<bool> *matNEQ(Matrix<T> *obj,
+                           const Matrix<T> *other,
+                           Matrix<bool> *dest) {
+        if (dest == 0) {
+          dest = new Matrix<bool>(obj->getNumDim(),
+                                  obj->getDimPtr());
+        }
+        return MatrixScalarMap2<T,T,bool>(obj, other,
+                                          AprilMath::Functors::m_neq<T>(), dest);
       }
     
       //////////////////// OTHER MATH OPERATIONS ////////////////////
@@ -1763,24 +1787,24 @@ namespace AprilMath {
                                            Int32GPUMirroredMemoryBlock *,
                                            const int,
                                            Basics::Matrix<float> *);
-      template Matrix<float> *matLT(Matrix<float> *, const float &,
-                                    Matrix<float> *);
+      template Matrix<bool> *matLT(Matrix<float> *, const float &,
+                                   Matrix<bool> *);
 
-      template Matrix<float> *matLT(Matrix<float> *,
+      template Matrix<bool> *matLT(Matrix<float> *,
+                                   const Matrix<float> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matGT(Matrix<float> *, const float &, Matrix<bool> *);
+      template Matrix<bool> *matGT(Matrix<float> *,
+                                   const Matrix<float> *, Matrix<bool> *);
+      template Matrix<bool> *matEQ(Matrix<float> *, const float &, Matrix<bool> *);
+      template Matrix<bool> *matEQ(Matrix<float> *,
+                                   const Matrix<float> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matNEQ(Matrix<float> *, const float &,
+                                    Matrix<bool> *);
+      template Matrix<bool> *matNEQ(Matrix<float> *,
                                     const Matrix<float> *,
-                                    Matrix<float> *);
-      template Matrix<float> *matGT(Matrix<float> *, const float &, Matrix<float> *);
-      template Matrix<float> *matGT(Matrix<float> *,
-                                    const Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matEQ(Matrix<float> *, const float &, Matrix<float> *);
-      template Matrix<float> *matEQ(Matrix<float> *,
-                                    const Matrix<float> *,
-                                    Matrix<float> *);
-      template Matrix<float> *matNEQ(Matrix<float> *, const float &,
-                                     Matrix<float> *);
-      template Matrix<float> *matNEQ(Matrix<float> *,
-                                     const Matrix<float> *,
-                                     Matrix<float> *);
+                                    Matrix<bool> *);
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
@@ -1834,85 +1858,85 @@ namespace AprilMath {
       template Matrix<double> *matComplement(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matSign(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matClamp(Matrix<double> *, const double,
-                                       const double, Matrix<double> *);
+                                        const double, Matrix<double> *);
       template Matrix<double> *matFill(Matrix<double> *, const double);
       template Matrix<double> *matZeros(Matrix<double> *);
       template Matrix<double> *matOnes(Matrix<double> *);
       template Matrix<double> *matDiag(Matrix<double> *, const double);
       template Matrix<double> *matCopy(Matrix<double> *, const Matrix<double> *);
       template Matrix<double> *matAxpy(Matrix<double> *, const double,
-                                      const Matrix<double> *);
+                                       const Matrix<double> *);
       template Matrix<double> *matAxpy(Matrix<double> *, const double,
-                                      const SparseMatrix<double> *);
+                                       const SparseMatrix<double> *);
       template Matrix<double> *matGemm(Matrix<double> *,
-                                      CBLAS_TRANSPOSE,
-                                      CBLAS_TRANSPOSE,
-                                      const double,
-                                      const Matrix<double> *otherA,
-                                      const Matrix<double> *otherB,
-                                      double beta);
+                                       CBLAS_TRANSPOSE,
+                                       CBLAS_TRANSPOSE,
+                                       const double,
+                                       const Matrix<double> *otherA,
+                                       const Matrix<double> *otherB,
+                                       double beta);
       template Matrix<double> *matSparseMM(Matrix<double> *,
-                                          CBLAS_TRANSPOSE,
-                                          CBLAS_TRANSPOSE,
-                                          CBLAS_TRANSPOSE,
-                                          const double,
-                                          const SparseMatrix<double> *,
-                                          const Matrix<double> *,
-                                          double);
+                                           CBLAS_TRANSPOSE,
+                                           CBLAS_TRANSPOSE,
+                                           CBLAS_TRANSPOSE,
+                                           const double,
+                                           const SparseMatrix<double> *,
+                                           const Matrix<double> *,
+                                           double);
       template Matrix<double> *matGemv(Matrix<double> *Y,
-                                      CBLAS_TRANSPOSE,
-                                      const double,
-                                      const Matrix<double> *,
-                                      const Matrix<double> *,
-                                      const double);
+                                       CBLAS_TRANSPOSE,
+                                       const double,
+                                       const Matrix<double> *,
+                                       const Matrix<double> *,
+                                       const double);
       template Matrix<double> *matGemv(Matrix<double> *Y,
-                                      CBLAS_TRANSPOSE,
-                                      const double,
-                                      const SparseMatrix<double> *,
-                                      const Matrix<double> *,
-                                      const double);
+                                       CBLAS_TRANSPOSE,
+                                       const double,
+                                       const SparseMatrix<double> *,
+                                       const Matrix<double> *,
+                                       const double);
       template Matrix<double> *matGer(Matrix<double> *,
-                                     const double,
-                                     const Matrix<double> *,
-                                     const Matrix<double> *);
+                                      const double,
+                                      const Matrix<double> *,
+                                      const Matrix<double> *);
       template double matDot(const Matrix<double> *, const Matrix<double> *);
       template double matDot(const Matrix<double> *, const SparseMatrix<double> *);
       template Matrix<double> *matScal(Matrix<double> *, const double);
       template float matNorm2(Matrix<double> *);
       template Matrix<double> *matMin(Matrix<double> *,
-                                     int,
-                                     Matrix<double> *,
-                                     Matrix<int32_t> *);
+                                      int,
+                                      Matrix<double> *,
+                                      Matrix<int32_t> *);
       template Matrix<double> *matMax(Matrix<double> *,
-                                     int,
-                                     Matrix<double> *,
-                                     Matrix<int32_t> *);
+                                      int,
+                                      Matrix<double> *,
+                                      Matrix<int32_t> *);
       template double matMin(const Matrix<double> *, int &, int &);
       template double matMax(const Matrix<double> *, int &, int &);
       template void matMinAndMax(const Matrix<double> *, double &, double &);
       template Matrix<double> *matMaxSelDim(const Matrix<double> *,
-                                           const int,
-                                           Int32GPUMirroredMemoryBlock *,
-                                           const int,
-                                           Basics::Matrix<double> *);
-      template Matrix<double> *matLT(Matrix<double> *, const double &,
-                                    Matrix<double> *);
+                                            const int,
+                                            Int32GPUMirroredMemoryBlock *,
+                                            const int,
+                                            Basics::Matrix<double> *);
+      template Matrix<bool> *matLT(Matrix<double> *, const double &,
+                                   Matrix<bool> *);
 
-      template Matrix<double> *matLT(Matrix<double> *,
+      template Matrix<bool> *matLT(Matrix<double> *,
+                                   const Matrix<double> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matGT(Matrix<double> *, const double &, Matrix<bool> *);
+      template Matrix<bool> *matGT(Matrix<double> *,
+                                   const Matrix<double> *, Matrix<bool> *);
+      template Matrix<bool> *matEQ(Matrix<double> *, const double &, Matrix<bool> *);
+      template Matrix<bool> *matEQ(Matrix<double> *,
+                                   const Matrix<double> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matNEQ(Matrix<double> *, const double &,
+                                    Matrix<bool> *);
+      template Matrix<bool> *matNEQ(Matrix<double> *,
                                     const Matrix<double> *,
-                                    Matrix<double> *);
-      template Matrix<double> *matGT(Matrix<double> *, const double &, Matrix<double> *);
-      template Matrix<double> *matGT(Matrix<double> *,
-                                    const Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matEQ(Matrix<double> *, const double &, Matrix<double> *);
-      template Matrix<double> *matEQ(Matrix<double> *,
-                                    const Matrix<double> *,
-                                    Matrix<double> *);
-      template Matrix<double> *matNEQ(Matrix<double> *, const double &,
-                                     Matrix<double> *);
-      template Matrix<double> *matNEQ(Matrix<double> *,
-                                     const Matrix<double> *,
-                                     Matrix<double> *);
+                                    Matrix<bool> *);
       template Matrix<double> *matAddition(const Matrix<double> *,
                                           const Matrix<double> *,
                                           Matrix<double> *);
@@ -2015,6 +2039,13 @@ namespace AprilMath {
       template Matrix<char> *matZeros(Matrix<char> *);
       template Matrix<char> *matOnes(Matrix<char> *);
       template Matrix<char> *matDiag(Matrix<char> *, const char);
+
+      // INSTANTIATIONS (bool type, dense matrix)
+      template Matrix<bool> *matCopy(Matrix<bool> *, const Matrix<bool> *);
+      template Matrix<bool> *matFill(Matrix<bool> *, const bool);
+      template Matrix<bool> *matZeros(Matrix<bool> *);
+      template Matrix<bool> *matOnes(Matrix<bool> *);
+      template Matrix<bool> *matDiag(Matrix<bool> *, const bool);
       
       // INSTANTIATIONS (int32_t type, dense matrix)
       template Matrix<int32_t> *matCopy(Matrix<int32_t> *, const Matrix<int32_t> *);

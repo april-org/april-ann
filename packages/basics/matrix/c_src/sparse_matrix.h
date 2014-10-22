@@ -450,4 +450,6 @@ namespace Basics {
 #include "sparse_matrix-iterators.impl.h"
 #include "sparse_matrix-serialization.impl.h"
 
+#include "sparse_matrixFloat.h"
+
 #endif // SPARSE_MATRIX_H

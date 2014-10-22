@@ -3,6 +3,7 @@ matrix.__generic__ = matrix.__generic__ or {}
 
 matrix.__generic__.__make_generic_call__ = function()
   return function(self,...)
+    if ... == nil then return self end
     local arg      = table.pack(...)
     local dims     = self:dim()
     local pos,size = {},{}

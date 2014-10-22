@@ -23,6 +23,7 @@
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
 #include "bind_matrix_int32.h"
+#include "bind_matrix_bool.h"
 #include "bind_sparse_matrix.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
@@ -1700,13 +1701,13 @@ namespace Basics {
   if (lua_isMatrixFloat(L, 1)) {
     MatrixFloat *value;
     LUABIND_GET_PARAMETER(1, MatrixFloat, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matLT(obj, value));
   }
   else {
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matLT(obj, value));
   }
 }
@@ -1717,13 +1718,13 @@ namespace Basics {
   if (lua_isMatrixFloat(L, 1)) {
     MatrixFloat *value;
     LUABIND_GET_PARAMETER(1, MatrixFloat, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matGT(obj, value));
   }
   else {
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matGT(obj, value));
   }
 }
@@ -1734,13 +1735,13 @@ namespace Basics {
   if (lua_isMatrixFloat(L, 1)) {
     MatrixFloat *value;
     LUABIND_GET_PARAMETER(1, MatrixFloat, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matEQ(obj, value));
   }
   else {
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matEQ(obj, value));
   }
 }
@@ -1751,13 +1752,13 @@ namespace Basics {
   if (lua_isMatrixFloat(L, 1)) {
     MatrixFloat *value;
     LUABIND_GET_PARAMETER(1, MatrixFloat, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matNEQ(obj, value));
   }
   else {
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+    LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                    matNEQ(obj, value));
     
   }

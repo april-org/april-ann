@@ -20,12 +20,10 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
-#include "utilMatrixInt32.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
 namespace Basics {
-
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
     int *v=0;
@@ -49,148 +47,162 @@ namespace Basics {
   }
 #undef FUNCTION_NAME
 
-  int sliding_window_matrixInt32_iterator_function(lua_State *L) {
-    SlidingWindowMatrixInt32 *obj = lua_toSlidingWindowMatrixInt32(L,1);
+  int sliding_window_matrixBool_iterator_function(lua_State *L) {
+    SlidingWindowMatrixBool *obj = lua_toSlidingWindowMatrixBool(L,1);
     if (obj->isEnd()) {
       lua_pushnil(L);
       return 1;
     }
-    MatrixInt32 *mat = obj->getMatrix();
-    lua_pushMatrixInt32(L, mat);
+    MatrixBool *mat = obj->getMatrix();
+    lua_pushMatrixBool(L, mat);
     obj->next();
     return 1;
   }
-
-  static int32_t april_optint(lua_State *L, int i, int32_t opt) {
-    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
-    return lua_toint(L,i);
-  }
-
+  
 }
-
 //BIND_END
 
 //BIND_HEADER_H
-#include "matrixInt32.h"
+#include "matrixBool.h"
 using namespace Basics;
-typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
+typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 //BIND_END
 
-//BIND_LUACLASSNAME MatrixInt32 matrixInt32
-//BIND_CPP_CLASS MatrixInt32
+//BIND_LUACLASSNAME MatrixBool matrixBool
+//BIND_CPP_CLASS MatrixBool
 //BIND_LUACLASSNAME Serializable aprilio.serializable
-//BIND_SUBCLASS_OF MatrixInt32 Serializable
+//BIND_SUBCLASS_OF MatrixBool Serializable
 
-//BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrixInt32.__sliding_window__
-//BIND_CPP_CLASS SlidingWindowMatrixInt32
+//BIND_LUACLASSNAME SlidingWindowMatrixBool matrixBool.__sliding_window__
+//BIND_CPP_CLASS SlidingWindowMatrixBool
 
-//BIND_CONSTRUCTOR SlidingWindowMatrixInt32
+//BIND_CONSTRUCTOR SlidingWindowMatrixBool
 {
-  LUABIND_ERROR("Use matrixInt32.sliding_window");
+  LUABIND_ERROR("Use matrixBool.sliding_window");
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 get_matrix
+//BIND_METHOD SlidingWindowMatrixBool get_matrix
 {
-  MatrixInt32 *dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixInt32, dest, 0);
-  LUABIND_RETURN(MatrixInt32, obj->getMatrix(dest));
+  MatrixBool *dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixBool, dest, 0);
+  LUABIND_RETURN(MatrixBool, obj->getMatrix(dest));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 next
+//BIND_METHOD SlidingWindowMatrixBool next
 {
-  LUABIND_RETURN(SlidingWindowMatrixInt32, obj->next());
+  LUABIND_RETURN(SlidingWindowMatrixBool, obj->next());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 set_at_window
+//BIND_METHOD SlidingWindowMatrixBool set_at_window
 {
   int windex;
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, int, windex);
   if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
   obj->setAtWindow(windex-1);
-  LUABIND_RETURN(SlidingWindowMatrixInt32, obj);
+  LUABIND_RETURN(SlidingWindowMatrixBool, obj);
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 num_windows
+//BIND_METHOD SlidingWindowMatrixBool num_windows
 {
   LUABIND_RETURN(int, obj->numWindows());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 coords
+//BIND_METHOD SlidingWindowMatrixBool coords
 {
   LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
   LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 is_end
+//BIND_METHOD SlidingWindowMatrixBool is_end
 {
   LUABIND_RETURN(bool, obj->isEnd());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowMatrixInt32 iterate
+//BIND_METHOD SlidingWindowMatrixBool iterate
 {
   LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sliding_window_matrixInt32_iterator_function);
-  LUABIND_RETURN(SlidingWindowMatrixInt32,obj);
+  LUABIND_RETURN(cfunction,sliding_window_matrixBool_iterator_function);
+  LUABIND_RETURN(SlidingWindowMatrixBool,obj);
 }
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixInt32
+//BIND_CONSTRUCTOR MatrixBool
 {
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+  if (lua_isMatrixFloat(L,1)) {
+    MatrixFloat *m;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, m);
+    MatrixBool *obj = new MatrixBool(m->getNumDim(), m->getDimPtr());
+    MatrixBool::iterator bool_it(obj->begin());
+    MatrixFloat::const_iterator float_it(m->begin());
+    while(bool_it != obj->end()) {
+      if (*float_it == 0.0f) *bool_it = false;
+      else if (*float_it == 1.0f) *bool_it = true;
+      else LUABIND_ERROR("Needs a 0/1 matrix argument\n");
+      ++bool_it;
+      ++float_it;
     }
+    LUABIND_RETURN(MatrixBool, obj);
   }
-  MatrixInt32* obj;
-  obj = new MatrixInt32(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int i=1;
-    for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
-      lua_rawgeti(L,argn,i);
-      int32_t v = luaL_checkint(L,-1);
-      *it = v;
-      lua_remove(L,-1);
+  else {
+    int i,argn;
+    argn = lua_gettop(L); // number of arguments
+    int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
+    int *dim;
+    if (ndims == 0) { // caso matrix{valores}
+      ndims = 1;
+      dim = new int[ndims];
+      LUABIND_TABLE_GETN(1, dim[0]);
+    } else {
+      dim = new int[ndims];
+      for (i=1; i <= ndims; i++) {
+        if (!lua_isnumber(L,i))
+          // TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
+          LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
+                          " be a number and is a %s)",
+                          i, lua_typename(L,i));
+        dim[i-1] = (int)lua_tonumber(L,i);
+        if (dim[i-1] <= 0)
+          LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+      }
     }
+    MatrixBool* obj;
+    obj = new MatrixBool(ndims,dim);
+    if (lua_istable(L,argn)) {
+      int i=1;
+      for (MatrixBool::iterator it(obj->begin()); it != obj->end(); ++it) {
+        lua_rawgeti(L,argn,i);
+        if (!lua_isboolean(L,-1))
+          LUABIND_FERROR1("The given table has a no boolean value at position %d, "
+                          "the table could be smaller than matrix size", i);
+        *it = lua_toboolean(L,-1);
+        lua_remove(L,-1);
+        ++i;
+      }
+    }
+    delete[] dim;
+    LUABIND_RETURN(MatrixBool,obj);
   }
-  delete[] dim;
-  LUABIND_RETURN(MatrixInt32,obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 size
+//BIND_METHOD MatrixBool size
 {
   LUABIND_RETURN(int, obj->size());
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 rewrap
+//BIND_METHOD MatrixBool rewrap
 {
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims;
@@ -201,19 +213,19 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
     if (dims[i-1] <= 0)
       LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
   }
-  MatrixInt32 *new_obj = obj->rewrap(dims, ndims);
+  MatrixBool *new_obj = obj->rewrap(dims, ndims);
   delete[] dims;
-  LUABIND_RETURN(MatrixInt32,new_obj);
+  LUABIND_RETURN(MatrixBool,new_obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 squeeze
+//BIND_METHOD MatrixBool squeeze
 {
-  LUABIND_RETURN(MatrixInt32,obj->squeeze());
+  LUABIND_RETURN(MatrixBool,obj->squeeze());
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 get_reference_string
+//BIND_METHOD MatrixBool get_reference_string
 {
   char buff[128];
   sprintf(buff,"%p data= %p",
@@ -223,13 +235,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 copy_from_table
-//DOC_BEGIN
-// void copy_from_table(table matrix_values)
-/// Permite dar valores a una matriz. Require una tabla con un numero
-/// de argumentos igual al numero de elementos de la matriz.
-///@param matrix_values Tabla con los elementos de la matriz.
-//DOC_END
+//BIND_METHOD MatrixBool copy_from_table
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
@@ -238,19 +244,22 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   if (veclen != obj->size())
     LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size());
   int i=1;
-  for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
+  for (MatrixBool::iterator it(obj->begin()); it != obj->end(); ++it) {
     lua_rawgeti(L,1,i);
-    int32_t v = luaL_checkint(L,-1);
-    *it = v;
+    if (!lua_isboolean(L,-1))
+      LUABIND_FERROR1("The given table has a no boolean value at position %d, "
+                      "the table could be smaller than matrix size", i);
+    *it = lua_toboolean(L,-1);
     lua_remove(L,-1);
+    ++i;
   }
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixBool, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 get
+//BIND_METHOD MatrixBool get
 //DOC_BEGIN
-// float get(coordinates)
+// bool get(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
@@ -258,7 +267,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   int argn = lua_gettop(L); // number of arguments
   if (argn != obj->getNumDim())
     LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
-  int32_t ret;
+  bool ret;
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
@@ -295,13 +304,13 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
     ret = (*obj)(coords, obj->getNumDim());
     delete[] coords;
   }
-  LUABIND_RETURN(int, ret);
+  LUABIND_RETURN(boolean, ret);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 set
+//BIND_METHOD MatrixBool set
 //DOC_BEGIN
-// float set(coordinates,value)
+// bool set(coordinates,value)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
 /// tantos indices como dimensiones tenga la matriz y adicionalmente
 /// el valor a cambiar
@@ -311,7 +320,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   int argn = lua_gettop(L); // number of arguments
   if (argn != obj->getNumDim()+1)
     LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+1);
-  int32_t value;
+  bool v;
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
@@ -319,8 +328,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
 		      v1, obj->getDimSize(0));
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,int,value);
-    (*obj)(v1-1) = value;
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,boolean,v);
+    (*obj)(v1-1) = v;
   }
   else if (obj->getNumDim() == 2) {
     int v1, v2;
@@ -334,8 +343,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
 		      v2, obj->getDimSize(1));
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,int,value);
-    (*obj)(v1-1, v2-1) = value;
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,boolean,v);
+    (*obj)(v1-1, v2-1) = v;
   }
   else {
     int *coords = new int[obj->getNumDim()];
@@ -347,69 +356,69 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
       }
       coords[i]--;
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,int,value);
-    (*obj)(coords, obj->getNumDim()) = value;
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,boolean,v);
+    (*obj)(coords, obj->getNumDim()) = v;
     delete[] coords;
   }
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_RETURN(MatrixBool, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 offset
+//BIND_METHOD MatrixBool offset
 {
   LUABIND_RETURN(int, obj->getOffset());
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 raw_get
+//BIND_METHOD MatrixBool raw_get
 {
   int raw_pos;
   LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_RETURN(int, (*obj)[raw_pos]);
+  LUABIND_RETURN(bool, (*obj)[raw_pos]);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 raw_set
+//BIND_METHOD MatrixBool raw_set
 {
   int raw_pos;
-  int value;
+  bool value;
   LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_GET_PARAMETER(2, int, value);
-  (*obj)[raw_pos] = static_cast<int32_t>(value);
-  LUABIND_RETURN(MatrixInt32, obj);
+  LUABIND_GET_PARAMETER(2, boolean, value);
+  (*obj)[raw_pos] = value;
+  LUABIND_RETURN(MatrixBool, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 fill
+//BIND_METHOD MatrixBool fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(bool value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  int value;
-  LUABIND_GET_PARAMETER(1,int,value);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
-                 matFill(obj, static_cast<int32_t>(value)));
+  LUABIND_CHECK_PARAMETER(1, boolean);
+  bool value;
+  LUABIND_GET_PARAMETER(1,boolean,value);
+  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+                 matFill(obj, value));
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 zeros
+//BIND_METHOD MatrixBool zeros
 {
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
-                 matZeros(obj));
+  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+                 matFill(obj, false));
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 ones
+//BIND_METHOD MatrixBool ones
 {
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
-                 matOnes(obj));
+  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+                 matFill(obj, true));
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 dim
+//BIND_METHOD MatrixBool dim
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
@@ -424,7 +433,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 stride
+//BIND_METHOD MatrixBool stride
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
@@ -439,7 +448,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 slice
+//BIND_METHOD MatrixBool slice
 {
   LUABIND_CHECK_ARGN(>=,2);
   LUABIND_CHECK_ARGN(<=,3);
@@ -462,30 +471,30 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 	sizes[i]+coords[i] > obj->getDimSize(i))
       LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
-  MatrixInt32 *obj2 = new MatrixInt32(obj, coords, sizes, clone);
-  LUABIND_RETURN(MatrixInt32, obj2);
+  MatrixBool *obj2 = new MatrixBool(obj, coords, sizes, clone);
+  LUABIND_RETURN(MatrixBool, obj2);
   delete[] coords;
   delete[] sizes;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 select
+//BIND_METHOD MatrixBool select
 {
   LUABIND_CHECK_ARGN(>=,2);
   LUABIND_CHECK_ARGN(<=,3);
   LUABIND_CHECK_PARAMETER(1, int);
   LUABIND_CHECK_PARAMETER(2, int);
   int dim, index;
-  MatrixInt32 *dest;
+  MatrixBool *dest;
   LUABIND_GET_PARAMETER(1, int, dim);
   LUABIND_GET_PARAMETER(2, int, index);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, dest, 0);
-  MatrixInt32 *obj2 = obj->select(dim-1, index-1, dest);
-  LUABIND_RETURN(MatrixInt32, obj2);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixBool, dest, 0);
+  MatrixBool *obj2 = obj->select(dim-1, index-1, dest);
+  LUABIND_RETURN(MatrixBool, obj2);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 clone
+//BIND_METHOD MatrixBool clone
 //DOC_BEGIN
 // matrix *clone()
 /// Devuelve un <em>clon</em> de la matriz.
@@ -495,7 +504,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn;
   argn = lua_gettop(L); // number of arguments
-  MatrixInt32 *obj2;
+  MatrixBool *obj2;
   if (argn == 0) obj2 = obj->clone();
   else {
     const char *major;
@@ -506,88 +515,42 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
       LUABIND_FERROR1("Incorrect major order char %s", major);
     obj2 = obj->clone(order);
   }
-  LUABIND_RETURN(MatrixInt32,obj2);
+  LUABIND_RETURN(MatrixBool,obj2);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 transpose
+//BIND_METHOD MatrixBool transpose
 {
-  LUABIND_RETURN(MatrixInt32, obj->transpose());
+  LUABIND_RETURN(MatrixBool, obj->transpose());
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 diag
+//BIND_METHOD MatrixBool diag
 {
   LUABIND_CHECK_ARGN(==,1);
-  int v;
-  LUABIND_GET_PARAMETER(1, int, v);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
-                 matDiag(obj, static_cast<int32_t>(v)));
+  bool v;
+  LUABIND_GET_PARAMETER(1, boolean, v);
+  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+                 matDiag(obj, v));
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 toTable
+//BIND_METHOD MatrixBool toTable
 // Permite salvar una matriz en una tabla lua
 // TODO: Tener en cuenta las dimensiones de la matriz
   {
     LUABIND_CHECK_ARGN(==, 0);
     lua_createtable(L, obj->size(), 0);
     int index = 1;
-    for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++it) {
-      lua_pushint(L, *it);
+    for (MatrixBool::iterator it(obj->begin()); it != obj->end(); ++it) {
+      lua_pushboolean(L, *it);
       lua_rawseti(L, -2, index++);
     }
     LUABIND_RETURN_FROM_STACK(-1);
   }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 map
-{
-  int argn;
-  int N;
-  argn = lua_gettop(L); // number of arguments
-  N = argn-1;
-  MatrixInt32 **v = 0;
-  MatrixInt32::const_iterator *list_it = 0;
-  if (N > 0) {
-    v = new MatrixInt32*[N];
-    list_it = new MatrixInt32::const_iterator[N];
-  }
-  for (int i=0; i<N; ++i) {
-    LUABIND_CHECK_PARAMETER(i+1, MatrixInt32);
-    LUABIND_GET_PARAMETER(i+1, MatrixInt32, v[i]);
-    if (!v[i]->sameDim(obj))
-      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
-    list_it[i] = v[i]->begin();
-  }
-  LUABIND_CHECK_PARAMETER(argn, function);
-  for (MatrixInt32::iterator it(obj->begin()); it!=obj->end(); ++it) {
-    // copy the Lua function, lua_call will pop this copy
-    lua_pushvalue(L, argn);
-    // push the self matrix value
-    lua_pushint(L, *it);
-    // push the value of the rest of given matrices
-    for (int j=0; j<N; ++j) {
-      lua_pushint(L, *list_it[j]);
-      ++list_it[j];
-    }
-    // CALL
-    lua_call(L, N+1, 1);
-    // pop the result, a number
-    if (!lua_isnil(L, -1)) {
-      if (!lua_isint(L, -1))
-	LUABIND_ERROR("Incorrect returned value type, expected NIL or INT\n");
-      *it = lua_toint(L, -1);
-    }
-    lua_pop(L, 1);
-  }
-  delete[] v;
-  delete[] list_it;
-  LUABIND_RETURN(MatrixInt32, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixInt32 sliding_window
+//BIND_METHOD MatrixBool sliding_window
 {
   int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
   int argn = lua_gettop(L); // number of arguments
@@ -610,13 +573,13 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
     num_steps = read_vector(L, "numSteps", num_dim, 0);
     order_step = read_vector(L, "orderStep", num_dim, -1);
   }
-  SlidingWindowMatrixInt32 *window = new SlidingWindowMatrixInt32(obj,
-								  sub_matrix_size,
-								  offset,
-								  step,
-								  num_steps,
-								  order_step);
-  LUABIND_RETURN(SlidingWindowMatrixInt32, window);
+  SlidingWindowMatrixBool *window = new SlidingWindowMatrixBool(obj,
+								sub_matrix_size,
+								offset,
+								step,
+								num_steps,
+								order_step);
+  LUABIND_RETURN(SlidingWindowMatrixBool, window);
   delete[] sub_matrix_size;
   delete[] offset;
   delete[] step;
@@ -625,37 +588,152 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 is_contiguous
+//BIND_METHOD MatrixBool is_contiguous
 {
   LUABIND_RETURN(bool, obj->getIsContiguous());
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 to_float
+//BIND_METHOD MatrixBool complement
 {
-  bool col_major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
-  LUABIND_RETURN(MatrixFloat,
-		 convertFromMatrixInt32ToMatrixFloat(obj, col_major));
+  for (MatrixBool::iterator it(obj->begin());
+       it != obj->end(); ++it) {
+    if (*it) *it = false;
+    else *it = true;
+  }
+  LUABIND_RETURN(MatrixBool, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 copy
+//BIND_METHOD MatrixBool to_float
+{
+  const char *major;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
+  CBLAS_ORDER order=CblasRowMajor;
+  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+  else if (strcmp(major, "row_major") != 0)
+    LUABIND_FERROR1("Incorrect major order string %s", major);
+
+  MatrixFloat *result = new MatrixFloat(obj->getNumDim(),
+                                        obj->getDimPtr(),
+                                        order);
+  MatrixBool::const_iterator bool_it(obj->begin());
+  MatrixFloat::iterator float_it(result->begin());
+  while(bool_it != obj->end()) {
+    *float_it = (*bool_it) ? (1.0f) : (0.0f);
+    ++bool_it;
+    ++float_it;
+  }
+  LUABIND_RETURN(MatrixFloat, result);
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool copy
 {
   int argn;
   LUABIND_CHECK_ARGN(==, 1);
-  MatrixInt32 *mat;
-  LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  MatrixBool *mat;
+  LUABIND_GET_PARAMETER(1, MatrixBool, mat);
+  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
                  matCopy(obj, mat));
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool count_ones
+{
+  int count=0;
+  for (MatrixBool::const_iterator it(obj->begin());
+       it != obj->end(); ++it) {
+    if (*it) ++count;
+  }
+  LUABIND_RETURN(int, count);
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool count_zeros
+{
+  int count=0;
+  for (MatrixBool::const_iterator it(obj->begin());
+       it != obj->end(); ++it) {
+    if (!(*it)) ++count;
+  }
+  LUABIND_RETURN(int, count);
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool any
+{
+  bool result = false;
+  for (MatrixBool::const_iterator it(obj->begin());
+       it != obj->end() && !result; ++it) {
+    result = result || (*it);
+  }
+  LUABIND_RETURN(boolean, result);
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool all
+{
+  bool result = true;
+  for (MatrixBool::const_iterator it(obj->begin());
+       it != obj->end() && result; ++it) {
+    result = result && (*it);
+  }
+  LUABIND_RETURN(boolean, result);
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixBool **v = 0;
+  MatrixBool::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixBool*[N];
+    list_it = new MatrixBool::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixBool);
+    LUABIND_GET_PARAMETER(i+1, MatrixBool, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixBool::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushboolean(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushboolean(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isboolean(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or COMPLEX\n");
+      *it = lua_toboolean(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixBool, obj);
 }
 //BIND_END
 
 //// MATRIX SERIALIZATION ////
 
-//BIND_CLASS_METHOD MatrixInt32 read
+//BIND_CLASS_METHOD MatrixBool read
 {
-  MAKE_READ_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
+  MAKE_READ_MATRIX_LUA_METHOD(MatrixBool, bool);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END

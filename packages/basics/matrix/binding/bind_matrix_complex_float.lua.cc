@@ -655,6 +655,52 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   }
 //BIND_END
 
+//BIND_METHOD MatrixComplexF map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixComplexF **v = 0;
+  MatrixComplexF::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixComplexF*[N];
+    list_it = new MatrixComplexF::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixComplexF);
+    LUABIND_GET_PARAMETER(i+1, MatrixComplexF, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixComplexF::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushComplexF(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushComplexF(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isComplexF(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or COMPLEX\n");
+      *it = lua_toComplexF(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixComplexF, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixComplexF equals
 {
   MatrixComplexF *other;
