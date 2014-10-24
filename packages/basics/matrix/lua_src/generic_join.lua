@@ -28,12 +28,7 @@ matrix.__generic__.__make_generic_join__ = function(constructor)
       end
     end
     -- JOIN
-    local outm
-    if arg[1].get_major_order and arg[1]:get_major_order() == "col_major" then
-      outm = constructor.col_major(table.unpack(size))
-    else
-      outm = constructor(table.unpack(size))
-    end
+    local outm = constructor(table.unpack(size))
     local first = matrix(#size):ones():toTable()
     for i=1,#arg do
       local m = arg[i]

@@ -421,9 +421,7 @@ namespace AprilMath {
                          const Matrix<T> *otherA,
                          const Matrix<T> *otherB,
                          T beta) {
-        if (C->getTransposedFlag()) {
-          ERROR_EXIT(128, "GEMM method don't work with transposed C matrix\n");
-        }
+        CBLAS_ORDER order = CblasRowMajor;
         if (C == otherA || C == otherB) {
           ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
                      "the C argument\n");
@@ -433,42 +431,48 @@ namespace AprilMath {
             otherB->getNumDim() != 2) {
           ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
         }
-        int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
-        if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
-        if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
-        if (C->getDimSize(0) != otherA->getDimSize(row_idx_A) ||
-            C->getDimSize(1) != otherB->getDimSize(col_idx_B) ||
-            otherA->getDimSize(col_idx_A) != otherB->getDimSize(row_idx_B)) {
-          ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
-                      C->getDimSize(0), C->getDimSize(1),
-                      otherA->getDimSize(row_idx_A), otherA->getDimSize(col_idx_A),
-                      otherB->getDimSize(row_idx_B), otherB->getDimSize(col_idx_B));
-        }
-        if (C->getMajorOrder() != otherA->getMajorOrder() ||
-            otherA->getMajorOrder() != otherB->getMajorOrder()) {
-          ERROR_EXIT(128, "Matrices with different major orders\n");
-        }
-  
-        int M=C->getDimSize(0), N=C->getDimSize(1), K=otherA->getDimSize(col_idx_A);
-        int lda, ldb, ldc;
-        if (C->getMajorOrder() == CblasRowMajor) {
-          lda = (!otherA->getTransposedFlag())?(otherA->getStrideSize(0)):(otherA->getStrideSize(1));
-          ldb = (!otherB->getTransposedFlag())?(otherB->getStrideSize(0)):(otherB->getStrideSize(1));
-          ldc = (!C->getTransposedFlag())?(C->getStrideSize(0)):(C->getStrideSize(1));
-        }
-        else {
-          lda = (!otherA->getTransposedFlag())?(otherA->getStrideSize(1)):(otherA->getStrideSize(0));
-          ldb = (!otherB->getTransposedFlag())?(otherB->getStrideSize(1)):(otherB->getStrideSize(0));
-          ldc = (!C->getTransposedFlag())?(C->getStrideSize(1)  ):(C->getStrideSize(0));
-        }
-        if (otherA->getStrideSize(0) + otherA->getStrideSize(1) != lda+1 ||
-            otherB->getStrideSize(0) + otherB->getStrideSize(1) != ldb+1 ||
-            C->getStrideSize(0)      + C->getStrideSize(1)      != ldc+1) {
+        int row_idx_A = 0, col_idx_A = 1;
+        int row_idx_B = 0, col_idx_B = 1;
+        //
+        const int *A_stride = otherA->getStridePtr();
+        const int *B_stride = otherB->getStridePtr();
+        const int *C_stride = C->getStridePtr();
+        if (C_stride[1] != 1) order = CblasColMajor;
+        //
+        int lda = AprilUtils::max(A_stride[0], A_stride[1]);
+        int ldb = AprilUtils::max(B_stride[0], B_stride[1]);
+        int ldc = AprilUtils::max(C_stride[0], C_stride[1]);
+        if (A_stride[0] + A_stride[1] != lda+1 ||
+            B_stride[0] + B_stride[1] != ldb+1 ||
+            C_stride[0] + C_stride[1] != ldc+1) {
           ERROR_EXIT(128, "Contiguous matrices are needed\n");
         }
-        if (otherA->getTransposedFlag()) trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
-        if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
-        doGemm(C->getMajorOrder(), trans_A, trans_B,
+        //
+        const int *A_dim = otherA->getDimPtr();
+        const int *B_dim = otherB->getDimPtr();
+        const int *C_dim = C->getDimPtr();
+        //
+        if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
+        if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
+        if (C_dim[0] != A_dim[row_idx_A] ||
+            C_dim[1] != B_dim[col_idx_B] ||
+            A_dim[col_idx_A] != B_dim[row_idx_B]) {
+          ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
+                      C_dim[0], C_dim[1],
+                      A_dim[row_idx_A], A_dim[col_idx_A],
+                      B_dim[row_idx_B], B_dim[col_idx_B]);
+        }
+        int M = C_dim[0], N=C_dim[1];
+        int K = A_dim[col_idx_A];
+        if (order == CblasRowMajor) {
+          if (A_stride[1] != 1) trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
+          if (B_stride[1] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+        }
+        else {
+          if (A_stride[0] != 1) trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
+          if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+        }
+        doGemm(order, trans_A, trans_B,
                M, N, K,
                alpha, otherA->getRawDataAccess(), lda,
                otherB->getRawDataAccess(), ldb,
@@ -483,11 +487,11 @@ namespace AprilMath {
       Matrix<T> *matSparseMM(Matrix<T> *C,
                              CBLAS_TRANSPOSE trans_A,
                              CBLAS_TRANSPOSE trans_B,
-                             CBLAS_TRANSPOSE trans_C,
                              const T alpha,
                              const SparseMatrix<T> *otherA,
                              const Matrix<T> *otherB,
                              T beta) {
+        CBLAS_ORDER order = CblasRowMajor;
         if (C == otherB) {
           ERROR_EXIT(128, "Sparse GEMM method couldn't receive as A or B argument "
                      "the C argument\n");
@@ -497,43 +501,47 @@ namespace AprilMath {
             otherB->getNumDim() != 2) {
           ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
         }
-        int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
-        int row_idx_C = 0, col_idx_C = 1;
-        if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
-        if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
-        if (trans_C == CblasTrans) AprilUtils::swap(row_idx_C, col_idx_C);
-        if (C->getDimSize(row_idx_C) != otherA->getDimSize(row_idx_A) ||
-            C->getDimSize(col_idx_C) != otherB->getDimSize(col_idx_B) ||
-            otherA->getDimSize(col_idx_A) != otherB->getDimSize(row_idx_B)) {
-          ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
-                      C->getDimSize(row_idx_C), C->getDimSize(col_idx_C),
-                      otherA->getDimSize(row_idx_A), otherA->getDimSize(col_idx_A),
-                      otherB->getDimSize(row_idx_B), otherB->getDimSize(col_idx_B));
-        }
-        if (C->getMajorOrder() != otherB->getMajorOrder()) {
-          ERROR_EXIT(128, "Matrices with different major orders\n"); 
-        }
-        int M=C->getDimSize(row_idx_C), N=C->getDimSize(col_idx_C), K=otherB->getDimSize(row_idx_B);
-        int ldb, ldc;
-        if (C->getMajorOrder() == CblasRowMajor) {
-          ldb = (!otherB->getTransposedFlag())?(otherB->getStrideSize(0)):(otherB->getStrideSize(1));
-          ldc = (!C->getTransposedFlag())?(C->getStrideSize(0)):(C->getStrideSize(1));
-        }
-        else {
-          ldb = (!otherB->getTransposedFlag())?(otherB->getStrideSize(1)):(otherB->getStrideSize(0));
-          ldc = (!C->getTransposedFlag())?(C->getStrideSize(1)):(C->getStrideSize(0));
-        }
-        if (otherB->getStrideSize(0)+ otherB->getStrideSize(1) != ldb+1 ||
-            C->getStrideSize(0)     + C->getStrideSize(1)      != ldc+1) {
+        int row_idx_A = 0, col_idx_A = 1;
+        int row_idx_B = 0, col_idx_B = 1;
+        //
+        const int *B_stride = otherB->getStridePtr();
+        const int *C_stride = C->getStridePtr();
+        if (C_stride[1] != 1) order = CblasColMajor;
+        //
+        int ldb = AprilUtils::max(B_stride[0], B_stride[1]);
+        int ldc = AprilUtils::max(C_stride[0], C_stride[1]);
+        if (B_stride[0] + B_stride[1] != ldb+1 ||
+            C_stride[0] + C_stride[1] != ldc+1) {
           ERROR_EXIT(128, "Contiguous matrices are needed\n");
         }
-        if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
-        if (C->getTransposedFlag())      trans_C=NEGATE_CBLAS_TRANSPOSE(trans_C);
-        doSparseMM<T>(C->getMajorOrder(),
+        //
+        const int *A_dim = otherA->getDimPtr();
+        const int *B_dim = otherB->getDimPtr();
+        const int *C_dim = C->getDimPtr();
+        //
+        if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
+        if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
+        //
+        if (C_dim[0] != A_dim[row_idx_A] ||
+            C_dim[1] != B_dim[col_idx_B] ||
+            A_dim[col_idx_A] != B_dim[row_idx_B]) {
+          ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
+                      C_dim[0], C_dim[1],
+                      A_dim[row_idx_A], A_dim[col_idx_A],
+                      B_dim[row_idx_B], B_dim[col_idx_B]);
+        }
+        int M=C_dim[0], N=C_dim[1];
+        int K=B_dim[row_idx_B];
+        if (order == CblasRowMajor) {
+          if (B_stride[1] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+        }
+        else {
+          if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+        }
+        doSparseMM<T>(order,
                       otherA->getSparseFormat(),
                       trans_A,
                       trans_B,
-                      trans_C,
                       M, N, K,
                       alpha,
                       otherA->getRawValuesAccess(),
@@ -554,17 +562,24 @@ namespace AprilMath {
                          const Matrix<T> *otherA,
                          const Matrix<T> *otherX,
                          const T beta) {
+        CBLAS_ORDER order = CblasRowMajor;
         if (!Y->isVector() || !otherX->isVector() || otherA->getNumDim() != 2) {
           ERROR_EXIT(128,"Incorrect number of dimensions\n");
         }
-        int M,N;
-        if (otherA->getTransposedFlag()) {
-          trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
-          M=otherA->getDimSize(1);
-          N=otherA->getDimSize(0);
-        }else {
-          M=otherA->getDimSize(0);
-          N=otherA->getDimSize(1);
+        int M, N;
+        const int *A_stride = otherA->getStridePtr();
+        int lda = AprilUtils::max(A_stride[0],A_stride[1]);
+        if (A_stride[0]+A_stride[1] != lda+1) {
+          ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
+        }
+        if (A_stride[1] != 1) order = CblasColMajor;
+        if (trans_A == CblasTrans) {
+          M = otherA->getDimSize(1);
+          N = otherA->getDimSize(0);
+        }
+        else {
+          M = otherA->getDimSize(0);
+          N = otherA->getDimSize(1);
         }
         // SANITY CHECK
         if (trans_A == CblasNoTrans) {
@@ -578,18 +593,10 @@ namespace AprilMath {
             ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
                         Y->size(), N, M, otherX->size());
         }
-        if (Y->getMajorOrder() != otherA->getMajorOrder() ||
-            otherA->getMajorOrder() != otherX->getMajorOrder()) {
-          ERROR_EXIT(128, "Matrices with different major orders\n");
-        }
         //
-        int lda=(otherA->getIsDataRowOrdered())?otherA->getStrideSize(0):otherA->getStrideSize(1);
         int ldx=otherX->getVectorStride();
         int ldy=Y->getVectorStride();
-        if (otherA->getStrideSize(0) + otherA->getStrideSize(1) != lda+1) {
-          ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
-        }
-        doGemv(Y->getMajorOrder(), trans_A,
+        doGemv(order, trans_A,
                M, N,
                alpha, otherA->getRawDataAccess(), lda,
                otherX->getRawDataAccess(), ldx,
@@ -649,25 +656,21 @@ namespace AprilMath {
                         const T alpha,
                         const Matrix<T> *otherX,
                         const Matrix<T> *otherY) {
-        if (A->getTransposedFlag()) {
-          ERROR_EXIT(128, "GER method don't work with transposed A matrix\n");
-        }
+        CBLAS_ORDER order = CblasRowMajor;
         if (!otherX->isVector() || !otherY->isVector() || A->getNumDim()!=2) {
           ERROR_EXIT(128,"Incorrect number of dimensions\n");
         }
+        const int *A_stride = A->getStridePtr();
+        int lda = AprilUtils::max(A_stride[0],A_stride[1]);
+        if (A->getStrideSize(1) != 1) order = CblasColMajor;
         int M=otherX->size(), N=otherY->size();
         if (A->getDimSize(0) != M || A->getDimSize(1) != N) {
           ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx%d + %dx1 * 1x%d\n",
                       A->getDimSize(0), A->getDimSize(1), M, N);
         }
-        if (A->getMajorOrder() != otherX->getMajorOrder() ||
-            otherX->getMajorOrder() != otherY->getMajorOrder()) {
-          ERROR_EXIT(128, "Matrices with different major orders\n");
-        }
-        int lda=(A->getIsDataRowOrdered())?A->getStrideSize(0):A->getStrideSize(1);
         int ldx=otherX->getVectorStride();
         int ldy=otherY->getVectorStride();
-        doGer(A->getMajorOrder(),
+        doGer(order,
               M, N,
               alpha, otherX->getRawDataAccess(), otherX->getOffset(), ldx,
               otherY->getRawDataAccess(), otherY->getOffset(), ldy,
@@ -682,9 +685,6 @@ namespace AprilMath {
         if (X->size() != Y->size()) {
           ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
                       X->size(), Y->size());
-        }
-        if (X->getMajorOrder() != Y->getMajorOrder()) {
-          ERROR_EXIT(128, "Matrices with different major orders\n");
         }
         return MatrixSpanReduce2(X, Y, doDot< T, AprilMath::Functors::r_add<T,T> >,
                                  AprilMath::Functors::r_add<T,T>(),
@@ -948,26 +948,15 @@ namespace AprilMath {
       // FIXME: using WRAPPER
       template<typename T>
       void matMinAndMax(const Matrix<T> *obj, T &min, T &max) {
-        if (obj->getMajorOrder() == CblasRowMajor) {
-          typename Matrix<T>::const_iterator it(obj->begin());
-          min = *it;
-          max = *it;
-          for (; it!=obj->end(); ++it) {
-            if (*it < min) min = *it;
-            if (*it > max) max = *it;
-          }
-        }
-        else {
-          typename Matrix<T>::const_col_major_iterator it(obj->begin());
-          min = *it;
-          max = *it;
-          for (; it!=obj->end(); ++it) {
-            if (*it < min) min = *it;
-            if (*it > max) max = *it;
-          }
+        typename Matrix<T>::const_iterator it(obj->begin());
+        min = *it;
+        max = *it;
+        for (; it!=obj->end(); ++it) {
+          if (*it < min) min = *it;
+          if (*it > max) max = *it;
         }
       }
-    
+      
       template<typename T>
       void matMinAndMax(const SparseMatrix<T> *obj, T &min, T &max) {
         typename SparseMatrix<T>::const_iterator it(obj->begin());
@@ -990,8 +979,7 @@ namespace AprilMath {
                       dim, obj->getNumDim());
         }
         if (result == 0) {
-          result = new Matrix<T>(1, obj->getDimSize(dim),
-                                 obj->getMajorOrder());
+          result = new Matrix<T>(1, obj->getDimSize(dim));
         }
         else {
           if (result->size()!=obj->getDimSize(dim) || result->getNumDim()!=1) {
@@ -1236,7 +1224,7 @@ namespace AprilMath {
             // OUTER product
             int dim[2] = {a->size(),b->size()};
             if (c == 0) {
-              c = new Matrix<T>(2, dim, a->getMajorOrder());
+              c = new Matrix<T>(2, dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -1251,7 +1239,7 @@ namespace AprilMath {
             // Matrix-Vector product
             int dim[2] = {a->getDimSize(0),1};
             if (c == 0) {
-              c = new Matrix<T>(b->getNumDim(), dim, a->getMajorOrder());
+              c = new Matrix<T>(b->getNumDim(), dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -1266,7 +1254,7 @@ namespace AprilMath {
             // DOT product
             int dim[2] = {1,1};
             if (c == 0) {
-              c = new Matrix<T>(a->getNumDim(), dim, a->getMajorOrder());
+              c = new Matrix<T>(a->getNumDim(), dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -1283,7 +1271,7 @@ namespace AprilMath {
           // Matrix-Matrix product
           int dim[2] = {a->getDimSize(0), b->getDimSize(1)};
           if (c == 0) {
-            c = new Matrix<T>(2,dim,a->getMajorOrder());
+            c = new Matrix<T>(2,dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -1468,21 +1456,21 @@ namespace AprilMath {
       
       Matrix<float> *matInv(const Matrix<float> *obj) {
         if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
-          ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
+          ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
         }
-        Matrix<float> *A = obj->clone(CblasColMajor);
+        Matrix<float> *A = obj->clone();
         AprilUtils::UniquePtr<int []> IPIV( new int[obj->getDimSize(0)] );
         int INFO;
-        INFO = clapack_sgetrf(CblasColMajor,
+        INFO = clapack_sgetrf(CblasRowMajor,
                               A->getDimSize(0), A->getDimSize(1),
                               A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
+                              A->getStrideSize(0),
                               IPIV.get());
         checkLapackInfo(INFO);
-        INFO = clapack_sgetri(CblasColMajor,
+        INFO = clapack_sgetri(CblasRowMajor,
                               A->getDimSize(0),
                               A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
+                              A->getStrideSize(0),
                               IPIV.get());
         checkLapackInfo(INFO);
         return A;
@@ -1494,22 +1482,25 @@ namespace AprilMath {
         if (obj->getNumDim() != 2) {
           ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
         }
-        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone(CblasColMajor) );
+        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone() );
+        AprilUtils::SharedPtr< Matrix<float> > AT( A->transpose() );
         int INFO;
         const int m = A->getDimSize(0); // cols
         const int n = A->getDimSize(1); // rows
-        const int lda = A->getStrideSize(1);
         const int numSV = (m<n) ? m : n;
         const int dimsU[2]  = {m, m};
         const int dimsVT[2] = {n, n};
-        *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
+        *U  = new Matrix<float>(2, dimsU);
         *S  = SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
-        *VT = new Matrix<float>(2, dimsVT, CblasColMajor);
-        INFO = clapack_sgesdd(CblasColMajor, m, n, lda,
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              (*U)->getRawDataAccess()->getPPALForWrite(),
+        *VT = new Matrix<float>(2, dimsVT);
+        AprilUtils::SharedPtr< Matrix<float> > UT( (*VT)->transpose() );
+        AprilUtils::SharedPtr< Matrix<float> > V( (*U)->transpose() );
+        // m,n are changed by n,m because the tranposition of the matrices
+        INFO = clapack_sgesdd(CblasColMajor, n, m, AT->getStrideSize(1),
+                              AT->getRawDataAccess()->getPPALForReadAndWrite(),
+                              UT->getRawDataAccess()->getPPALForWrite(),
                               (*S)->getRawValuesAccess()->getPPALForWrite(),
-                              (*VT)->getRawDataAccess()->getPPALForWrite());
+                              V->getRawDataAccess()->getPPALForWrite());
         checkLapackInfo(INFO);
       }
 
@@ -1519,13 +1510,14 @@ namespace AprilMath {
         if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
           ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
         }
-        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone(CblasColMajor) );
+        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone() );
+        AprilUtils::SharedPtr< Matrix<float> > AT( A->transpose() ); // in col major
         AprilUtils::UniquePtr<int []> IPIV( new int[A->getDimSize(0)] );
         int INFO;
         INFO = clapack_sgetrf(CblasColMajor,
-                              A->getDimSize(0), A->getDimSize(1),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
+                              AT->getDimSize(0), AT->getDimSize(1),
+                              AT->getRawDataAccess()->getPPALForReadAndWrite(),
+                              AT->getStrideSize(1),
                               IPIV.get());
         checkLapackInfo(INFO);
         Matrix<float>::const_random_access_iterator it(A.get());
@@ -1563,13 +1555,14 @@ namespace AprilMath {
         if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
           ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
         }
-        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone(CblasColMajor) );
+        AprilUtils::SharedPtr< Matrix<float> > A( obj->clone() );
+        AprilUtils::SharedPtr< Matrix<float> > AT( A->transpose() ); // in col major
         AprilUtils::UniquePtr<int []> IPIV( new int[A->getDimSize(0)] );
         int INFO;
         INFO = clapack_sgetrf(CblasColMajor,
-                              A->getDimSize(0), A->getDimSize(1),
-                              A->getRawDataAccess()->getPPALForReadAndWrite(),
-                              A->getStrideSize(1),
+                              AT->getDimSize(0), AT->getDimSize(1),
+                              AT->getRawDataAccess()->getPPALForReadAndWrite(),
+                              AT->getStrideSize(1),
                               IPIV.get());
         checkLapackInfo(INFO);
         Matrix<float>::const_random_access_iterator it(A.get());
@@ -1610,12 +1603,12 @@ namespace AprilMath {
         if (obj->getNumDim() != 2 || obj->getDimSize(0) != obj->getDimSize(1)) {
           ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
         }
-        Matrix<float> *A = obj->clone(CblasColMajor);
-        int INFO = clapack_spotrf(CblasColMajor,
+        Matrix<float> *A = obj->clone();
+        int INFO = clapack_spotrf(CblasRowMajor,
                                   (uplo == 'U') ? CblasUpper : CblasLower,
                                   A->getDimSize(0),
                                   A->getRawDataAccess()->getPPALForReadAndWrite(),
-                                  A->getStrideSize(1));
+                                  A->getStrideSize(0));
         checkLapackInfo(INFO);
         switch(uplo) {
         case 'U':
@@ -1662,7 +1655,7 @@ namespace AprilMath {
 	  }
 	}
 	else {
-	  dest = new Matrix<float>(N+1, dest_size.get(), obj->getMajorOrder());
+	  dest = new Matrix<float>(N+1, dest_size.get());
 #ifdef USE_CUDA
 	  dest->setUseCuda(obj->getCudaFlag());
 #endif
@@ -1744,7 +1737,6 @@ namespace AprilMath {
                                       const Matrix<float> *otherB,
                                       float beta);
       template Matrix<float> *matSparseMM(Matrix<float> *,
-                                          CBLAS_TRANSPOSE,
                                           CBLAS_TRANSPOSE,
                                           CBLAS_TRANSPOSE,
                                           const float,
@@ -1878,7 +1870,6 @@ namespace AprilMath {
       template Matrix<double> *matSparseMM(Matrix<double> *,
                                            CBLAS_TRANSPOSE,
                                            CBLAS_TRANSPOSE,
-                                           CBLAS_TRANSPOSE,
                                            const double,
                                            const SparseMatrix<double> *,
                                            const Matrix<double> *,
@@ -1982,7 +1973,6 @@ namespace AprilMath {
                                       const Matrix<ComplexF> *otherB,
                                       ComplexF beta);
       template Matrix<ComplexF> *matSparseMM(Matrix<ComplexF> *,
-                                          CBLAS_TRANSPOSE,
                                           CBLAS_TRANSPOSE,
                                           CBLAS_TRANSPOSE,
                                           const ComplexF,

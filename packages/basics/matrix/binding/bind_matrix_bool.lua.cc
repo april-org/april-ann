@@ -500,21 +500,7 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  MatrixBool *obj2;
-  if (argn == 0) obj2 = obj->clone();
-  else {
-    const char *major;
-    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order char %s", major);
-    obj2 = obj->clone(order);
-  }
+  MatrixBool *obj2 = obj->clone();
   LUABIND_RETURN(MatrixBool,obj2);
 }
 //BIND_END
@@ -607,16 +593,8 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 
 //BIND_METHOD MatrixBool to_float
 {
-  const char *major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-  CBLAS_ORDER order=CblasRowMajor;
-  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-  else if (strcmp(major, "row_major") != 0)
-    LUABIND_FERROR1("Incorrect major order string %s", major);
-
   MatrixFloat *result = new MatrixFloat(obj->getNumDim(),
-                                        obj->getDimPtr(),
-                                        order);
+                                        obj->getDimPtr());
   MatrixBool::const_iterator bool_it(obj->begin());
   MatrixFloat::iterator float_it(result->begin());
   while(bool_it != obj->end()) {

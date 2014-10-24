@@ -44,25 +44,11 @@ namespace Basics {
   template <typename T>
   void Matrix<T>::initialize(const int *dim) {
     total_size=1;
-    switch(major_order) {
-    case CblasRowMajor:
-      for(int i=numDim-1; i>=0; --i) {
-        stride[i] = total_size;
-        total_size *= dim[i];
-        matrixSize[i] = dim[i];
-        april_assert(matrixSize[i] > 0);
-      }
-      break;
-    case CblasColMajor:
-      for(int i=0; i<numDim; ++i) {
-        stride[i] = total_size;
-        total_size *= dim[i];
-        matrixSize[i] = dim[i];
-        april_assert(matrixSize[i] > 0);
-      }
-      break;
-    default:
-      ERROR_EXIT(128, "Incorrect major order!!!\n");
+    for(int i=numDim-1; i>=0; --i) {
+      stride[i] = total_size;
+      total_size *= dim[i];
+      matrixSize[i] = dim[i];
+      april_assert(matrixSize[i] > 0);
     }
     last_raw_pos = total_size-1;
   }
@@ -91,15 +77,12 @@ namespace Basics {
                     const int total_size,
                     const int last_raw_pos,
                     AprilMath::GPUMirroredMemoryBlock<T> *data,
-                    const CBLAS_ORDER major_order,
                     const bool use_cuda,
-                    const bool transposed,
                     AprilUtils::MMappedDataReader *mmapped_data) :
-    AprilIO::Serializable(), shared_count(0), transposed(transposed),
+    AprilIO::Serializable(), shared_count(0),
     numDim(numDim), stride(new int[numDim]), offset(offset),
     matrixSize(new int[numDim]), total_size(total_size),
     last_raw_pos(last_raw_pos), data(data), mmapped_data(mmapped_data),
-    major_order(major_order),
     use_cuda(use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -114,15 +97,12 @@ namespace Basics {
   template <typename T>
   Matrix<T>::Matrix(int numDim,
                     const int* dim,
-                    CBLAS_ORDER major_order,
                     AprilMath::GPUMirroredMemoryBlock<T> *data,
-                    int offset,
-                    bool transposed) :
-    AprilIO::Serializable(), shared_count(0), transposed(transposed),
+                    int offset) :
+    AprilIO::Serializable(), shared_count(0),
     numDim(numDim),
     offset(offset),
     data(data),
-    major_order(major_order),
     use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -145,10 +125,9 @@ namespace Basics {
                     const int* coords, const int *sizes,
                     bool clone) :
     AprilIO::Serializable(),
-    shared_count(0), transposed(other->transposed),
+    shared_count(0),
     numDim(other->numDim),
     offset(0),
-    major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -160,7 +139,6 @@ namespace Basics {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
     if (clone) {
-      transposed    = false;
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
@@ -203,10 +181,9 @@ namespace Basics {
                     const int* coords, const int *sizes,
                     bool clone) :
     AprilIO::Serializable(),
-    shared_count(0), transposed(other->transposed),
+    shared_count(0),
     numDim(other->numDim),
     offset(0),
-    major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -218,7 +195,6 @@ namespace Basics {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
     if (clone) {
-      transposed    = false;
       is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
@@ -301,10 +277,9 @@ namespace Basics {
   /// Constructor with variable arguments
   template <typename T>
   Matrix<T>::Matrix(int numDim, int d1, ...) :
-    AprilIO::Serializable(), shared_count(0), transposed(false),
+    AprilIO::Serializable(), shared_count(0),
     numDim(numDim),
     offset(0),
-    major_order(CblasRowMajor),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     int *dim   = new int[numDim];
@@ -328,10 +303,9 @@ namespace Basics {
   template <typename T>
   Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
     AprilIO::Serializable(),
-    shared_count(0), transposed(other->transposed),
+    shared_count(0),
     numDim(other->numDim),
     offset(0),
-    major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(other->is_contiguous),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -340,7 +314,6 @@ namespace Basics {
     total_size   = other->total_size;
     last_raw_pos = other->last_raw_pos;
     if (clone) {
-      transposed = false;
       initialize(other->matrixSize);
       allocate_memory(total_size);
       AprilMath::MatrixExt::Operations::matCopy(this, other);
@@ -377,8 +350,10 @@ namespace Basics {
     obj->matrixSize    = mmapped_data->get<int>(N);
     obj->total_size    = *(mmapped_data->get<int>());
     obj->last_raw_pos  = *(mmapped_data->get<int>());
-    obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
-    obj->transposed    = *(mmapped_data->get<bool>());
+    CBLAS_ORDER dummy1 = *(mmapped_data->get<CBLAS_ORDER>());
+    bool dummy2        = *(mmapped_data->get<bool>()); // legacy transposed flag
+    UNUSED_VARIABLE(dummy1);
+    UNUSED_VARIABLE(dummy2);
     // NON MAPPED DATA
     obj->use_cuda      = AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT;
     obj->shared_count  = 0;
@@ -401,8 +376,10 @@ namespace Basics {
     mmapped_data->put(matrixSize, numDim);
     mmapped_data->put(&total_size);
     mmapped_data->put(&last_raw_pos);
-    mmapped_data->put(&major_order);
-    mmapped_data->put(&transposed);
+    CBLAS_ORDER dummy1=CblasRowMajor;
+    mmapped_data->put(&dummy1);
+    bool dummy2=false; // legacy transposed flag
+    mmapped_data->put(&dummy2);
   }
 
   template <typename T>
@@ -451,13 +428,13 @@ namespace Basics {
     if (need_clone) {
       AprilMath::GPUMirroredMemoryBlock<T> *new_data =
         new AprilMath::GPUMirroredMemoryBlock<T>(new_size);
-      obj = new Matrix<T>(len, new_dims, major_order, new_data);
+      obj = new Matrix<T>(len, new_dims, new_data);
       AprilUtils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
       AprilMath::MatrixExt::Operations::matCopy(aux.get(),this);
     }
     else {
-      obj = new Matrix<T>(len, new_dims, major_order, data.get(), offset);
+      obj = new Matrix<T>(len, new_dims, data.get(), offset);
     }
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
@@ -485,8 +462,8 @@ namespace Basics {
     // return this in case len==numDim, rewrap in other case
     Matrix<T> *obj = (len==numDim) ?
       this : new Matrix<T>(len, strides.get(), getOffset(), sizes.get(),
-                           size(), last_raw_pos, data.get(), getMajorOrder(),
-                           use_cuda, transposed, mmapped_data.get());
+                           size(), last_raw_pos, data.get(),
+                           use_cuda, mmapped_data.get());
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif
@@ -498,7 +475,6 @@ namespace Basics {
     Matrix<T> *result;
     if (this->numDim > 1) {
       result = this->shallow_copy();
-      result->transposed = !result->transposed;
       for (int i=0,j=numDim-1; i<numDim; ++i,--j) {
         result->stride[j]     = this->stride[i];
         result->matrixSize[j] = this->matrixSize[i];
@@ -509,45 +485,13 @@ namespace Basics {
     return result;
   }
 
-  template<typename T>
-  Matrix<T> *Matrix<T>::inMajorOrder(CBLAS_ORDER new_major_order) {
-    Matrix<T> *result;
-    if (new_major_order == major_order) result = this;
-    else {
-      result = this->transpose();
-      result->transposed  = !result->transposed;
-      result->major_order = new_major_order;
-    }
-    return result;
-  }
-
   template <typename T>
   Matrix<T>* Matrix<T>::cloneOnlyDims() const {
-    Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, major_order);
+    Matrix<T> *obj = new Matrix<T>(numDim, matrixSize);
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif
     return obj;
-  }
-
-  template<typename T>
-  Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) const {
-    Matrix<T> *resul;
-    if (this->major_order != major_order) {
-      resul = new Matrix<T>(numDim, matrixSize, major_order);
-#ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
-#endif
-      iterator resul_it(resul->begin());
-      const_iterator this_it(begin());
-      while(resul_it != resul->end()) {
-        *resul_it = *this_it;
-        ++resul_it;
-        ++this_it;
-      }
-    }
-    else resul = this->clone();
-    return resul;
   }
 
   template <typename T>
@@ -746,12 +690,10 @@ namespace Basics {
       result = new Matrix();
       int d = numDim - 1;
       // Data initialization
-      result->transposed   = this->transposed;
       result->use_cuda     = use_cuda;
       result->numDim       = d;
       result->matrixSize   = new int[d];
       result->stride       = new int[d];
-      result->major_order  = major_order;
       result->offset       = offset + index*stride[dim]; // the select implies an offset
       result->last_raw_pos = result->offset;
       result->data         = data;
@@ -971,37 +913,20 @@ namespace Basics {
     return raw_pos + this->offset;
   }
 
+  /// FIXME: Change it to compute coords traversing strides in descending order?
   template <typename T>
   void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
     int R = raw_pos - offset;
     switch(numDim) {
     case 1: coords[0] = R / stride[0]; break;
     case 2:
-      switch(major_order) {
-      case CblasRowMajor:
-        coords[0] =  R / stride[0];
-        coords[1] = (R % stride[0]) / stride[1];
-        break;
-      case CblasColMajor:
-        coords[1] =  R / stride[1];
-        coords[0] = (R % stride[1]) / stride[0];
-        break;
-      }
+      coords[0] =  R / stride[0];
+      coords[1] = (R % stride[0]) / stride[1];
       break;
     default:
-      switch(major_order) {
-      case CblasRowMajor:
-        for (int i=0; i<numDim; ++i) {
-          coords[i] = R / stride[i];
-          R = R % stride[i];
-        }
-        break;
-      case CblasColMajor:
-        for (int i=numDim-1; i>=0; --i) {
-          coords[i] = R / stride[i];
-          R = R % stride[i];
-        }
-        break;
+      for (int i=0; i<numDim; ++i) {
+        coords[i] = R / stride[i];
+        R = R % stride[i];
       }
     }
   }
@@ -1009,25 +934,13 @@ namespace Basics {
   template <typename T>
   bool Matrix<T>::getIsContiguous() const {
     if (is_contiguous != NONE) return (is_contiguous==CONTIGUOUS);
-    if (major_order == CblasRowMajor) {
-      int aux = 1;
-      for (int i=numDim-1; i>=0; --i) {
-        if(stride[i] != aux) {
-          is_contiguous = NONCONTIGUOUS;
-          return false;
-        }
-        else aux *= matrixSize[i];
+    int aux = 1;
+    for (int i=numDim-1; i>=0; --i) {
+      if(stride[i] != aux) {
+        is_contiguous = NONCONTIGUOUS;
+        return false;
       }
-    }
-    else {
-      int aux = 1;
-      for (int i=0; i<numDim; ++i) {
-        if(stride[i] != aux) {
-          is_contiguous = NONCONTIGUOUS;
-          return false;
-        }
-        else aux *= matrixSize[i];
-      }
+      else aux *= matrixSize[i];
     }
     is_contiguous = CONTIGUOUS;
     return true;
@@ -1039,14 +952,12 @@ namespace Basics {
     if (numDim != 1)
       ERROR_EXIT(128, "Only one-dimensional matrix is allowed\n");
     const int dims[2] = { matrixSize[0], matrixSize[0] };
-    Matrix<T> *resul  = new Matrix<T>(2, dims, major_order);
+    Matrix<T> *resul  = new Matrix<T>(2, dims);
     // resul_diag is a submatrix of resul, build to do a diagonal traverse
     const int stride  = matrixSize[0] + 1;
     Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
                                           resul->last_raw_pos, resul->data.get(),
-                                          resul->major_order,
-                                          resul->use_cuda,
-                                          resul->transposed);
+                                          resul->use_cuda);
     AprilMath::MatrixExt::Operations::matZeros(resul);
     AprilMath::MatrixExt::Operations::matCopy(resul_diag, this);
     delete resul_diag;
@@ -1067,7 +978,7 @@ namespace Basics {
       result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
       matrix_pos[i] = begin_padding[i];
     }
-    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
     AprilMath::MatrixExt::Operations::matFill(result, default_value);
@@ -1091,7 +1002,7 @@ namespace Basics {
       result_sizes[i] = getDimSize(i) + pad_value*2;
       matrix_pos[i] = pad_value;
     }
-    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
     AprilMath::MatrixExt::Operations::matFill(result, default_value);

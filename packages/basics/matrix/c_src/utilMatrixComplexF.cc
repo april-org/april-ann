@@ -29,21 +29,13 @@ namespace Basics {
     MatrixFloat *new_mat;
     int N     = mat->getNumDim();
     int *dims = new int[N+1];
-    if (mat->getMajorOrder() == CblasRowMajor) {
-      // the real and imaginary part are the last dimension (they are stored
-      // together in row major)
-      for (int i=0; i<N; ++i) dims[i] = mat->getDimPtr()[i];
-      dims[N] = 2;
-    }
-    else {
-      // the real and imaginary part are the first dimension (they are stored
-      // together in col major)
-      dims[0] = 2;
-      for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
-    }
+    // the real and imaginary part are the last dimension (they are stored
+    // together in row major)
+    for (int i=0; i<N; ++i) dims[i] = mat->getDimPtr()[i];
+    dims[N] = 2;
     AprilMath::FloatGPUMirroredMemoryBlock *new_mat_memory;
     new_mat_memory = mat->getRawDataAccess()->reinterpretAs<float>();
-    new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder(), new_mat_memory);
+    new_mat=new MatrixFloat(N+1, dims, new_mat_memory);
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif
@@ -60,8 +52,7 @@ namespace Basics {
 
   MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-                                           mat->getDimPtr(),
-                                           mat->getMajorOrder());
+                                           mat->getDimPtr());
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif
@@ -77,8 +68,7 @@ namespace Basics {
 
   MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-                                           mat->getDimPtr(),
-                                           mat->getMajorOrder());
+                                           mat->getDimPtr());
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif
@@ -94,8 +84,7 @@ namespace Basics {
 
   MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-                                           mat->getDimPtr(),
-                                           mat->getMajorOrder());
+                                           mat->getDimPtr());
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif
@@ -111,8 +100,7 @@ namespace Basics {
 
   MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-                                           mat->getDimPtr(),
-                                           mat->getMajorOrder());
+                                           mat->getDimPtr());
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif

@@ -29,7 +29,7 @@ end
 -- NOT IN-PLACE
 function stats.pca_whitening(X,U,S,epsilon)
   local epsilon = epsilon or 0.0
-  local result = matrix[X:get_major_order()](X:dim(1), S:dim(1))
+  local result = matrix(X:dim(1), S:dim(1))
   result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
   for v,i in S:iterate() do
     result:select(2,i):scal( 1/math.sqrt(v + epsilon) )
@@ -177,10 +177,9 @@ stats.iterative_pca =
     if M < N then
       print("# Warning, M < N, probably matrix need to be transposed")
     end
-    local major_order = X:get_major_order()
-    local T = matrix[major_order](M,K):zeros() -- left eigenvectors
-    local P = matrix[major_order](N,K):zeros() -- right eigenvectors
-    local L = matrix[major_order](K):zeros()   -- eigenvalues
+    local T = matrix(M,K):zeros() -- left eigenvectors
+    local P = matrix(N,K):zeros() -- right eigenvectors
+    local L = matrix(K):zeros()   -- eigenvalues
     local R = X:clone()
     local U = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
     assert( math.abs(U:sum() / U:size()) < 1e-03,

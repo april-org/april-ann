@@ -5,7 +5,7 @@ local semilla        = 1234
 local rnd            = random(semilla)
 local H1             = 256
 local H2             = 128
-local M              = matrix.col_major
+local M              = matrix
 local bunch_size     = 32
 --
 --------------------------------------------------------------

@@ -29,9 +29,7 @@ T("KDTreeTest", function()
     end
 
     if DO_PCA then
-      local U,S = stats.pca(train_data:clone("col_major"))
-      U=U:clone("row_major")
-      S=S:clone("row_major")
+      local U,S = stats.pca(train_data)
       train_data = stats.pca_whitening(train_data,U,S,PCA_EPSILON)
       -- print(stats.pca_threshold(S,0.99))
       train_data = train_data(':',{1,TOP_PCA})

@@ -22,11 +22,9 @@
 
 namespace Basics {
 
-  MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
-                                                   bool col_major) {
+  MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat) {
     MatrixFloat *new_mat=new MatrixFloat(mat->getNumDim(),
-                                         mat->getDimPtr(),
-                                         (col_major)?CblasColMajor:CblasRowMajor);
+                                         mat->getDimPtr());
 #ifdef USE_CUDA
     new_mat->setUseCuda(mat->getCudaFlag());
 #endif

@@ -167,8 +167,7 @@ stats.acf =
     local lag_start,lag_max,lag_step = params.lag_start,params.lag_max,params.lag_step
     if #x_dim == 1 then x = x:rewrap(x:size(),1) end
     local N,M = x_dim[1],x:dim(2)
-    local ctor = matrix[x:get_major_order()]
-    local result = ctor(math.floor((lag_max + 1 - lag_start) / lag_step), M)
+    local result = matrix(math.floor((lag_max + 1 - lag_start) / lag_step), M)
     local acf_func = params.cor
     for j=1,M do
       local i=1
@@ -1074,7 +1073,7 @@ end
 
 stats.dist.bernoulli = function(p)
   if class.is_a(p, matrix) then
-    return stats.dist.binomial(matrix.col_major(1,{1}),p)
+    return stats.dist.binomial(matrix(1,{1}),p)
   else
     return stats.dist.binomial(1,p)
   end

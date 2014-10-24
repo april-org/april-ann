@@ -248,7 +248,6 @@ namespace AprilMath {
       Basics::Matrix<T> *matSparseMM(Basics::Matrix<T> *C,
                                      CBLAS_TRANSPOSE trans_A,
                                      CBLAS_TRANSPOSE trans_B,
-                                     CBLAS_TRANSPOSE trans_C,
                                      const T alpha,
                                      const Basics::SparseMatrix<T> *otherA,
                                      const Basics::Matrix<T> *otherB,
@@ -504,9 +503,9 @@ namespace AprilMath {
        *
        * @param uplo - A char with 'U' or 'L'.
        */
-      Basics::Matrix<float> *matCholesky(const Basics::Matrix<float> *obj,
-                                         char uplo);
-
+      Basics::Matrix<float> * matCholesky(const Basics::Matrix<float> *obj,
+                                          char uplo);
+      
       Basics::Matrix<float> *matRealFFTwithHamming(Basics::Matrix<float> *obj,
 						   int wsize,
 						   int wadvance,

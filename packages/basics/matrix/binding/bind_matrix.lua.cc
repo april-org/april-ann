@@ -20,6 +20,9 @@
  */
 //BIND_HEADER_C
 #include <cmath> // para isfinite
+extern "C" {
+#include <ctype.h>
+}
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
 #include "bind_matrix_int32.h"
@@ -153,7 +156,6 @@ namespace Basics {
 
 //BIND_STRING_CONSTANT matrix.options.tab Basics::MatrixIO::TAB_OPTION
 //BIND_STRING_CONSTANT matrix.options.ascii Basics::MatrixIO::ASCII_OPTION
-//BIND_STRING_CONSTANT matrix.options.order Basics::MatrixIO::ORDER_OPTION
 //BIND_STRING_CONSTANT matrix.options.delim Basics::MatrixIO::DELIM_OPTION
 //BIND_STRING_CONSTANT matrix.options.empty Basics::MatrixIO::EMPTY_OPTION
 //BIND_STRING_CONSTANT matrix.options.default Basics::MatrixIO::DEFAULT_OPTION
@@ -262,60 +264,6 @@ namespace Basics {
   }
   MatrixFloat* obj;
   obj = new MatrixFloat(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int i=1;
-    int len;
-    LUABIND_TABLE_GETN(argn, len);
-    if (len != obj->size())
-      LUABIND_FERROR2("Incorrect number of elements at the given table, "
-		      "found %d, expected %d", len, obj->size());
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
-      lua_rawgeti(L,argn,i);
-      if (!check_number(L,-1,*it))
-	LUABIND_FERROR1("The given table has a no number value at position %d, "
-			"the table could be smaller than matrix size", i);
-      lua_remove(L,-1);
-    }
-  }
-  delete[] dim;
-  LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat col_major
-//DOC_BEGIN
-// col_major_matrix(int dim1, int dim2, ..., table mat=nil)
-/// Constructor con una secuencia de valores que son las dimensiones de
-/// la matriz el ultimo argumento puede ser una tabla, en cuyo caso
-/// contiene los valores adecuadamente serializados, si solamente
-/// aparece la matriz, se trata de un vector cuya longitud viene dada
-/// implicitamente.
-//DOC_END
-{
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-    }
-  }
-  MatrixFloat* obj;
-  obj = new MatrixFloat(ndims,dim,CblasColMajor);
   if (lua_istable(L,argn)) {
     int i=1;
     int len;
@@ -556,14 +504,6 @@ namespace Basics {
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get_major_order
-{
-  if (obj->getMajorOrder() == CblasRowMajor)
-    LUABIND_RETURN(string, "row_major");
-  else LUABIND_RETURN(string, "col_major");
-}
-//BIND_END
-
 //BIND_METHOD MatrixFloat dim
 {
   LUABIND_CHECK_ARGN(>=, 0);
@@ -646,21 +586,7 @@ namespace Basics {
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  MatrixFloat *obj2;
-  if (argn == 0) obj2 = obj->clone();
-  else {
-    const char *major;
-    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order string %s", major);
-    obj2 = obj->clone(order);
-  }
+  MatrixFloat *obj2 = obj->clone();
   LUABIND_RETURN(MatrixFloat,obj2);
 }
 //BIND_END
@@ -678,21 +604,6 @@ namespace Basics {
 //BIND_METHOD MatrixFloat transpose
 {
   LUABIND_RETURN(MatrixFloat, obj->transpose());
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat in_major_order
-{
-  const char *major;
-  LUABIND_GET_PARAMETER(1, string, major);
-  CBLAS_ORDER order;
-  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-  else if (strcmp(major, "row_major") == 0) order = CblasRowMajor;
-  else {
-    order = CblasRowMajor; // avoids compiler warning
-    LUABIND_FERROR1("Incorrect major order string %s", major);
-  }
-  LUABIND_RETURN(MatrixFloat, obj->inMajorOrder(order));
 }
 //BIND_END
 
@@ -856,14 +767,9 @@ namespace Basics {
     LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
-  if (obj->getIsDataRowOrdered())
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
-    }
-  else
-    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
-    }
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
+    *it = static_cast<float>(random->randInt(upper - lower)) + lower;
+  }
   DecRef(random);
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -880,12 +786,8 @@ namespace Basics {
     LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
-  if (obj->getMajorOrder() == CblasRowMajor)
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
-      *it = random->rand(upper - lower) + lower;
-  else
-    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it)
-      *it = random->rand(upper - lower) + lower;
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
+    *it = random->rand(upper - lower) + lower;
   DecRef(random);
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -977,12 +879,6 @@ namespace Basics {
 //BIND_METHOD MatrixFloat is_contiguous
 {
   LUABIND_RETURN(bool, obj->getIsContiguous());
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat is_transposed
-{
-  LUABIND_RETURN(bool, obj->getTransposedFlag());
 }
 //BIND_END
 
@@ -1496,10 +1392,10 @@ namespace Basics {
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L,1, "trans_A", "trans_B", "trans_C",
+  check_table_fields(L,1, "trans_A", "trans_B",
                      "alpha", "A", "B", "beta",
                      (const char *)0);
-  bool trans_A, trans_B, trans_C;
+  bool trans_A, trans_B;
   float alpha;
   float beta;
   SparseMatrixFloat *matA;
@@ -1508,7 +1404,6 @@ namespace Basics {
   LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_C, bool, trans_C, false);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
   LUABIND_RETURN(MatrixFloat,
@@ -1516,7 +1411,6 @@ namespace Basics {
                  matSparseMM(obj,
                              trans_A ? CblasTrans : CblasNoTrans,
                              trans_B ? CblasTrans : CblasNoTrans,
-                             trans_C ? CblasTrans : CblasNoTrans,
                              alpha, matA, matB,
                              beta));
 }
@@ -1680,6 +1574,10 @@ namespace Basics {
 {
   char uplo;
   LUABIND_GET_OPTIONAL_PARAMETER(1, char, uplo, 'U');
+  uplo = toupper(uplo);
+  if (uplo != 'U' && uplo != 'L') {
+    LUABIND_ERROR("Incorrect argument, expected character L or U");
+  }
   LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
                  matCholesky(obj, uplo));
 }

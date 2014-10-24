@@ -20,6 +20,7 @@
  *
  */
 #include "mathcore.h"
+#include "transpose.h"
 #include "unused_variable.h"
 
 namespace AprilMath {
@@ -30,7 +31,7 @@ namespace AprilMath {
     /***************************************
      ************** CUDA SECTION ***********
      ***************************************/
-
+    
     cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
                                      cublasOperation_t &cublas_a_transpose,
                                      cublasOperation_t &cublas_b_transpose,
@@ -268,9 +269,21 @@ namespace AprilMath {
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
+      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > old_c;
+      int old_c_inc;
+      if (major_type != CblasColMajor) {
+        AprilUtils::swap(m,n);
+        AprilUtils::swap(a,b);
+        AprilUtils::swap(a_inc,b_inc);
+        a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
+        b_transpose = NEGATE_CBLAS_TRANSPOSE(b_transpose);
+        old_c.reset(c);
+        c = new GPUMirroredMemoryBlock<T>(m*n);
+        old_c_inc = c_inc;
+        c_inc = m;
+      }
       cublasStatus_t status;
       cublasHandle_t handle = CUDA::GPUHelper::getHandler();
-      assert(major_type == CblasColMajor);
       //printf("Doing a sgemm with comp=1 & cuda=1\n");
       a_mem = a->getGPUForRead() + a_shift;
       b_mem = b->getGPUForRead() + b_shift;
@@ -289,6 +302,14 @@ namespace AprilMath {
                                        &beta, c_mem, c_inc);
       
       checkCublasError(status);
+      
+      if (order != CblasColMajor) {
+        // transpose the result
+        CUDA::wrapperTranspose(handle, m, n,
+                               c->getGPUForRead(), c_inc,
+                               old_c->getGPUForWrite(), old_c_inc);
+        delete c;
+      }
     }
     else {
       //printf("Doing a sgemm with comp=1 & cuda=0\n");
@@ -323,7 +344,6 @@ namespace AprilMath {
                   SPARSE_FORMAT sparse_format,
                   CBLAS_TRANSPOSE a_transpose,
                   CBLAS_TRANSPOSE b_transpose,
-                  CBLAS_TRANSPOSE c_transpose,
                   int m,
                   int n,
                   int k,
@@ -354,8 +374,8 @@ namespace AprilMath {
       cusparseHandle_t handle = CUDA::GPUHelper::getSparseHandler();
       if (major_order != CblasColMajor)
         ERROR_EXIT(128, "Column major matrices are expected\n");
-      if (b_transpose == CblasTrans || c_transpose == CblasTrans)
-        ERROR_EXIT(128, "Impossible to transpose B or C matrices "
+      if (b_transpose == CblasTrans)
+        ERROR_EXIT(128, "Impossible to transpose B matrix "
                    "when using CUDA\n");
       if (sparse_format != CSR_FORMAT)
         a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
@@ -406,7 +426,7 @@ namespace AprilMath {
       // matrix matrix product: C = \alpha op(A) op(B) + \beta C
       wrapperCblasSparseMM(major_order,
                            sparse_format,
-                           a_transpose, b_transpose, c_transpose,
+                           a_transpose, b_transpose, CblasNoTrans,
                            m,            // num rows of A (before transpose)
                            n,            // num rows at B (before transpose)
                            k,            // Common dimension between A and B
@@ -485,7 +505,6 @@ namespace AprilMath {
                                   SPARSE_FORMAT sparse_format,
                                   CBLAS_TRANSPOSE a_transpose,
                                   CBLAS_TRANSPOSE b_transpose,
-                                  CBLAS_TRANSPOSE c_transpose,
                                   int m,
                                   int n,
                                   int k,
@@ -506,7 +525,6 @@ namespace AprilMath {
                                    SPARSE_FORMAT sparse_format,
                                    CBLAS_TRANSPOSE a_transpose,
                                    CBLAS_TRANSPOSE b_transpose,
-                                   CBLAS_TRANSPOSE c_transpose,
                                    int m,
                                    int n,
                                    int k,
@@ -527,7 +545,6 @@ namespace AprilMath {
                                      SPARSE_FORMAT sparse_format,
                                      CBLAS_TRANSPOSE a_transpose,
                                      CBLAS_TRANSPOSE b_transpose,
-                                     CBLAS_TRANSPOSE c_transpose,
                                      int m,
                                      int n,
                                      int k,

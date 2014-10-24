@@ -79,7 +79,7 @@ class.extend(matrix, "index",
                  local dim_bound = d[dim]
                  d[dim] = idx:size()
                  local constructor = class.of(self)
-                 local result = constructor[self:get_major_order()](table.unpack(d))
+                 local result = constructor(table.unpack(d))
                  d[dim] = 1
                  local self_sw = self:sliding_window{ size=d, step=d }
                  local dest_sw   = result:sliding_window{ size=d, step=d }
@@ -188,10 +188,15 @@ class.extend(matrix, "indexed_copy",
                return self
 end)
 
--- the constructor
-matrix.row_major = function(...)
-  return matrix(...)
+-----------------------------
+-- DEPRECATED CONSTRUCTORS --
+matrix.row_major = function()
+  error("DEPRECATED")
 end
+matrix.col_major = function()
+  error("DEPRECATED")
+end
+-----------------------------
 
 -- static methods which return a new matrix instead of operate in-place
 matrix.op = {}
@@ -215,7 +220,7 @@ function matrix.op.repmat(x, ...)
   assert(#arg >= #dim, "Underflow given number of dimensions")
   for i=1,#arg do dim[i] = dim[i] or 1 result_dim[i] = dim[i] * arg[i] end
   local x = x:rewrap(table.unpack(dim))
-  local result = matrix[x:get_major_order()](table.unpack(result_dim))
+  local result = matrix(table.unpack(result_dim))
   local result_sw = result:sliding_window{ size=dim, step=dim }
   local mat
   while not result_sw:is_end() do
@@ -283,12 +288,12 @@ end
 matrix.meta_instance.__mul = function(op1, op2)
   if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
     if class.is_a(op2,matrix.sparse) then
-      local res = matrix[op1:get_major_order()](op1:dim(1),op2:dim(2))
+      local res = matrix(op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
 		     trans_A=true, trans_B=true, trans_C=true }
       return res
     else
-      local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
+      local res = matrix(op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
       return res
     end
@@ -473,26 +478,6 @@ april_set_doc(matrix, {
 		  "nth dimension size",
 		  { "A table with values [optional]. The values must be",
 		    "in row major order", },
-		},
-		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.col_major, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Constructor of a multidimensional matrix.",
-		  "The data is stored at col_major order, but from",
-		  "outside is viewed as row_major (for compatibility",
-		  "purposes).",
-		},
-		params = {
-		  "First dimension size",
-		  "Second dimension size",
-		  "...",
-		  "ith dimension size",
-		  "...",
-		  "nth dimension size",
-		  { "A table with values [optional]. The values must be",
-		    "in row major order", }
 		},
 		outputs = { "A matrix instantiated object" }, })
 
@@ -705,13 +690,6 @@ april_set_doc(matrix.."set_use_cuda", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc(matrix.."get_major_order", {
-		class = "method",
-		summary = "Returns the major order of internal data.",
-		outputs = {
-		  "A string with the major order",
-		}, })
-
 april_set_doc(matrix.."dim", {
 		class = "method",
 		summary = "Returns a table with the size of each dimension.",
@@ -821,15 +799,6 @@ april_set_doc(matrix.join, {
 april_set_doc(matrix.."clone", {
 		class = "method",
 		summary = "Returns a deep copy (clone) of the caller matrix.",
-		description = {
-		  "Returns a deep copy (clone) of the caller matrix.",
-		  "It has the possibility of indicate the major order,",
-		  "and the data will be reordered if necessary.",
-		},
-		params = {
-		  { "A string: col_major or row_major [optional]. By",
-		    "default it is the same major order as the caller matrix" },
-		},
 		outputs = {
 		  "A matrix object (cloned)",
 		}, })
@@ -1322,10 +1291,6 @@ april_set_doc(matrix.."inv",
 		  "This method computes the inverse of matrix.",
 		  "Check that your matrix is not singular, otherwise",
 		  "the returned matrix won't be correct.",
-		  "It is adapted to work with row_major matrices, but",
-		  "internally they are transformed to col_major, so",
-		  "it is more efficient to compute the inverse over",
-		  "col_major matrices.",
 		},
 		outputs = { "The matrix inverse" },
 	      })
@@ -1336,11 +1301,8 @@ april_set_doc(matrix.."svd",
 		summary = "Computes the SVD of a matrix",
 		description = {
 		  "This method computes the SVD of matrix.",
-		  "It is adapted to work with row_major matrices, but",
-		  "internally they are transformed to col_major, so",
-		  "it is more efficient to compute the SVD over",
-		  "col_major matrices. The computation returns three matrices",
-		  "in col_major, so A=U * S * V'.",
+                  "The computation returns three matrices",
+		  ", so A=U * S * V'.",
 		},
 		outputs = {
 		  "The matrix U",

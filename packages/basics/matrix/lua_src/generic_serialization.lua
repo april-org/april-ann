@@ -21,11 +21,10 @@ end
 
 -- GENERIC FROM FILENAME
 matrix.__generic__.__make_generic_fromFilename__ = function(matrix_class)
-  matrix_class.fromFilename = function(filename,order)
+  matrix_class.fromFilename = function(filename)
     local f = april_assert(io.open(filename),
                            "Unable to open %s", filename)
-    local ret = table.pack(matrix_class.read(archive_wrapper( f ),
-                                             { [matrix.options.order]=order }))
+    local ret = table.pack(matrix_class.read(archive_wrapper( f )))
     f:close()
     return table.unpack(ret)
   end
@@ -33,12 +32,11 @@ end
 
 -- GENERIC FROM TAB FILENAME
 matrix.__generic__.__make_generic_fromTabFilename__ = function(matrix_class)
-  matrix_class.fromTabFilename = function(filename,order)
+  matrix_class.fromTabFilename = function(filename)
     local f = april_assert(io.open(filename),
                            "Unable to open %s", filename)
     local ret = table.pack(matrix_class.read(archive_wrapper( f ),
-                                             { [matrix.options.order] = order,
-                                               [matrix.options.tab] = true }))
+                                             { [matrix.options.tab] = true }))
     f:close()
     return table.unpack(ret)
   end
@@ -47,7 +45,6 @@ end
 matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
   matrix_class.fromCSVFilename = function(filename,args)
     local args = get_table_fields({
-        [matrix.options.order]   = { mandatory=false, type_match="string" },
         [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
         [matrix.options.default] = { mandatory=false } }, args)
     args[matrix.options.empty] = true

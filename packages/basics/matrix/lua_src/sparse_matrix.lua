@@ -59,12 +59,12 @@ matrix.sparse.meta_instance.__mul = function(op1, op2)
   elseif type(op1) == "number" then return op2:clone():scal(op1)
   else
     if class.is_a(op1,matrix) then
-      local res = matrix[op1:get_major_order()](op1:dim(1),op2:dim(2))
+      local res = matrix(op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
 		     trans_A=true, trans_B=true, trans_C=true }
       return res
     elseif class.is_a(op2,matrix) then
-      local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
+      local res = matrix(op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
       return res
     else
