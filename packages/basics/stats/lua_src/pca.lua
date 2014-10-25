@@ -2,6 +2,15 @@ stats = get_table_from_dotted_string("stats", true)
 stats.pca = stats.pca or {}
 stats.zca = stats.zca or {}
 
+april_set_doc(stats.pca,{
+                class = "namespace",
+                summary = "Table with PCA related stuff",
+})
+april_set_doc(stats.zca,{
+                class = "namespace",
+                summary = "Table with ZCA related stuff",
+})
+
 local function normalize(m,norm)
   local norm = norm or m:norm2()
   m:scal(1/norm)

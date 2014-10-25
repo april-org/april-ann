@@ -1,6 +1,11 @@
 stats = stats or {} -- global environment
 stats.running = stats.running or {}
 
+april_set_doc(stats.running,{
+                class = "namespace",
+                summary = "Table with running statistics classes",
+})
+
 -----------------------------------------------------------------------------
 
 local mop = matrix.op
@@ -1019,7 +1024,6 @@ stats.boot.percentil =
 -----------------------------------------------------------------------------
 
 local pearson,pearson_methods = class("stats.running.pearson")
-get_table_from_dotted_string("stats.running.correlation", true)
 stats.running.pearson = pearson
 
 function pearson:constructor(x,y)
@@ -1079,10 +1083,10 @@ april_set_doc(stats.comb,{
                 outputs = { "A number with (n over k)" },
 })
 
-make_deprecated_function("stats.mean_var",
-                         "stats.running.mean_var",
-                         stats.running.mean_var)
+stats.mean_var = make_deprecated_function("stats.mean_var",
+                                          "stats.running.mean_var",
+                                          stats.running.mean_var)
 
-make_deprecated_function("stats.correlation.pearson",
-                         "stats.running.pearson",
-                         stats.running.pearson)
+stats.correlation.pearson = make_deprecated_function("stats.correlation.pearson",
+                                                     "stats.running.pearson",
+                                                     stats.running.pearson)

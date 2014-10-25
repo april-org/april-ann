@@ -1426,6 +1426,6 @@ april_set_doc(matrix.__sliding_window__.."iterate",
 
 -----------------------------
 -- DEPRECATED CONSTRUCTORS --
-make_deprecated_function("matrix.row_major", "matrix", matrix)
-make_deprecated_function("matrix.col_major", "matrix", matrix)
+matrix.row_major = make_deprecated_function("matrix.row_major", "matrix", matrix)
+matrix.col_major = make_deprecated_function("matrix.col_major", "matrix", matrix)
 -----------------------------
