@@ -68,6 +68,8 @@ class.extend(matrix, "index",
                },
              } ..
                function(self,dim,idx)
+                 assert(type(dim) == "number",
+                        "Needs a number as second argument")
                  if type(idx) == "table" then idx = matrixInt32(idx)
                  elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                  end
@@ -189,16 +191,6 @@ class.extend(matrix, "indexed_copy",
                end)
                return self
 end)
-
------------------------------
--- DEPRECATED CONSTRUCTORS --
-matrix.row_major = function()
-  error("DEPRECATED")
-end
-matrix.col_major = function()
-  error("DEPRECATED")
-end
------------------------------
 
 -- static methods which return a new matrix instead of operate in-place
 matrix.op = {}
@@ -1431,3 +1423,9 @@ april_set_doc(matrix.__sliding_window__.."iterate",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",
 		outputs     = { "An iterator function" },
 	      })
+
+-----------------------------
+-- DEPRECATED CONSTRUCTORS --
+make_deprecated_function("matrix.row_major", "matrix", matrix)
+make_deprecated_function("matrix.col_major", "matrix", matrix)
+-----------------------------

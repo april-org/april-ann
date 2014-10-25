@@ -12,13 +12,13 @@ local ds = dataset.matrix(m,
 			    orderStep   = {1,0}
 			  })
 local m = ds:toMatrix()
-local aux = stats.mean_centered_by_pattern(m:clone())
+local aux = stats.pca.center_by_pattern(m:clone())
 local aU,aS,aVT = stats.pca(aux)
 
 -- PCA THRESHOLD STATISTICS
 T("PCAThresholdTest",
   function()
-    local takeN,eigen_value,prob_mass=stats.pca_threshold(aS, 0.99)
+    local takeN,eigen_value,prob_mass=stats.pca.threshold(aS, 0.99)
     check.eq(takeN, 193)
     check.number_eq(eigen_value,0.017318)
     check.number_eq(prob_mass,0.990025)
@@ -35,7 +35,7 @@ if ann.components.zca_whitening then
   new = zca_whitening:forward(aux):get_matrix()
 end
 
-local new2 = stats.zca_whitening(aux:clone(), aU(':','1:193'),
+local new2 = stats.zca.whitening(aux:clone(), aU(':','1:193'),
 				 aS('1:193','1:193'), 0.017)
 
 if new then

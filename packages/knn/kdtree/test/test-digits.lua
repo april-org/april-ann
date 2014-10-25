@@ -30,11 +30,11 @@ T("KDTreeTest", function()
 
     if DO_PCA then
       local U,S = stats.pca(train_data)
-      train_data = stats.pca_whitening(train_data,U,S,PCA_EPSILON)
+      train_data = stats.pca.whitening(train_data,U,S,PCA_EPSILON)
       -- print(stats.pca_threshold(S,0.99))
       train_data = train_data(':',{1,TOP_PCA})
       
-      val_data = stats.pca_whitening(val_data,U,S,PCA_EPSILON)
+      val_data = stats.pca.whitening(val_data,U,S,PCA_EPSILON)
       val_data = val_data(':',{1,TOP_PCA})
     end
 

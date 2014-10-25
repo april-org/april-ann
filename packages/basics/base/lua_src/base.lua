@@ -8,7 +8,8 @@ make_deprecated_function = function(name, new_name, new_func)
       io.stderr:write("\n")
       return new_func(...)
     else
-      error(string.format("%s is in deprecated state", name))
+      error(string.format("%s is in deprecated state%s", name,
+                          new_name and (", currently it is %s"%{new_name}) or ""))
     end
   end
 end

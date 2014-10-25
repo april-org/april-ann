@@ -44,8 +44,8 @@ else
   trainer:build()
 end
 
-local ite_loss_stat = stats.mean_var()
-local sgd_loss_stat = stats.mean_var()
+local ite_loss_stat = stats.running.mean_var()
+local sgd_loss_stat = stats.running.mean_var()
 
 local ite_quartiles = {}
 local sgd_quartiles = {}

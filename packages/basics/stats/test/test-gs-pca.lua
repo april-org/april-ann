@@ -25,7 +25,7 @@ end
 
 --------------------------------------------------------------------------
 
-local aR = stats.mean_centered_by_pattern(m:clone())
+local aR = stats.pca.center_by_pattern(m:clone())
 
 T("PCATest",
   function()
@@ -88,8 +88,8 @@ end)
 
 T("GS-PCATest",
   function()
-    local aR = stats.mean_centered_by_pattern(m:clone())
-    local bT,bP,bR,bV,bS = stats.iterative_pca{ X = aR, K = 144, }
+    local aR = stats.pca.center_by_pattern(m:clone())
+    local bT,bP,bR,bV,bS = stats.pca.gs_pca{ X = aR, K = 144, }
 
     -- check regeneration of original matrix
     check(function() return aR:equals( bT * bP:transpose() + bR ) end)

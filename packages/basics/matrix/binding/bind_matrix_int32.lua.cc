@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_mtrand.h"
 #include "utilMatrixInt32.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
@@ -631,6 +632,27 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
   LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
                  matCopy(obj, mat));
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 uniform
+{
+  int lower, upper;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, int, lower);
+  LUABIND_GET_PARAMETER(2, int, upper);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  
+  if (lower > upper) {
+    LUABIND_ERROR("First argument must be <= second argument");
+  }
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++it) {
+    *it = random->randInt(upper - lower) + lower;
+  }
+  DecRef(random);
+  LUABIND_RETURN(MatrixInt32, obj);
 }
 //BIND_END
 
