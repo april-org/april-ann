@@ -1485,8 +1485,21 @@ namespace AprilMath {
         const int numSV = (m<n) ? m : n;
         const int dimsU[2]  = {m, m};
         const int dimsVT[2] = {n, n};
+        GPUMirroredMemoryBlock<float> *S_values =
+          new GPUMirroredMemoryBlock<float>(numSV);
+        GPUMirroredMemoryBlock<int32_t> *S_indices =
+          new GPUMirroredMemoryBlock<int32_t>(numSV);
+        GPUMirroredMemoryBlock<int32_t> *S_first =
+          new GPUMirroredMemoryBlock<int32_t>(m+1);
+        for (int i=0; i<numSV; ++i) {
+          (*S_indices)[i]=i;
+          (*S_first)[i]=i;
+        }
+        for (int i=numSV; i<=m; ++i) {
+          (*S_first)[i]=numSV;
+        }
         *U  = new Matrix<float>(2, dimsU);
-        *S  = SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
+        *S  = new SparseMatrix<float>(m,n,S_values,S_indices,S_first);
         *VT = new Matrix<float>(2, dimsVT);
         AprilUtils::SharedPtr< Matrix<float> > UT( (*VT)->transpose() );
         AprilUtils::SharedPtr< Matrix<float> > V( (*U)->transpose() );
@@ -1494,7 +1507,7 @@ namespace AprilMath {
         INFO = clapack_sgesdd(CblasColMajor, n, m, AT->getStrideSize(1),
                               AT->getRawDataAccess()->getPPALForReadAndWrite(),
                               UT->getRawDataAccess()->getPPALForWrite(),
-                              (*S)->getRawValuesAccess()->getPPALForWrite(),
+                              S_values->getPPALForWrite(),
                               V->getRawDataAccess()->getPPALForWrite());
         checkLapackInfo(INFO);
       }
