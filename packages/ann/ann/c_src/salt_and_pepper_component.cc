@@ -68,8 +68,7 @@ namespace ANN {
     // new  output to fit the bunch
     AssignRef(output,new TokenMatrixFloat(input->getMatrix()->clone()));
     MatrixFloat *output_mat = output->getMatrix();
-    april_assert(output_mat->getMajorOrder() == CblasColMajor);
-    for (MatrixFloat::col_major_iterator it(output_mat->begin());
+    for (MatrixFloat::iterator it(output_mat->begin());
 	 it != output_mat->end();
 	 ++it) {
       float p = random->rand();

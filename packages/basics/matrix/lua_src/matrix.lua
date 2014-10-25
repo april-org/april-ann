@@ -1,3 +1,5 @@
+class.extend(matrix, "t", function(self) return self:transpose() end)
+
 -- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
@@ -289,8 +291,8 @@ matrix.meta_instance.__mul = function(op1, op2)
   if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
     if class.is_a(op2,matrix.sparse) then
       local res = matrix(op1:dim(1),op2:dim(2))
-      res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
-		     trans_A=true, trans_B=true, trans_C=true }
+      res:transpose():sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+                                 trans_A=true, trans_B=true }
       return res
     else
       local res = matrix(op1:dim(1),op2:dim(2))

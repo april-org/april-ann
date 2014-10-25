@@ -3,16 +3,16 @@ ky=17
 h=10
 -- a matrix of ROWSxCOLUMNSx3
 m = ImageIO.read(string.get_path(arg[0]) .. "photo.png"):matrix()
-m2 = m:rewrap(m:size()):clone("col_major")
+m2 = m:rewrap(m:size())
 
-input = matrix.col_major(2, m2:size())
+input = matrix(2, m2:size())
 input:select(1,1):copy(m2)
 input:select(1,2):copy(m2)
 w,_,thenet = ann.components.stack():
--- converts a flatten image to a matrix in col-major of only 3 planes (RGB)
-push(ann.components.rewrap{ size={ 3, m:dim()[2], m:dim()[1] } }):
+-- converts a flatten image to a matrix of only 3 planes (RGB)
+push(ann.components.rewrap{ size={ m:dim()[1], m:dim()[2], 3 } }):
 -- a kernel over 3 planes and kx,ky sizes, h output neurons
-push(ann.components.convolution{ kernel={3, kx, ky}, n=h }):
+push(ann.components.convolution{ kernel={kx, ky, 3}, n=h, input_planes_dim=3 }):
 -- max pooling over every hidden neuron (planes) with 7x7 kernel
 push(ann.components.max_pooling{ kernel={1,7,7} }):
 push(ann.components.actf.hardtanh()):
@@ -35,7 +35,7 @@ y = output:dim()[4]
 for b=1,output:dim()[1] do
   for i=1,output:dim()[2] do
     aux = output:select(1,b):select(1,i):clone()
-    aux = aux:rewrap(x*y):clone("row_major"):rewrap(y,x):adjust_range(0,1)
+    aux = aux:rewrap(x,y):adjust_range(0,1)
     ImageIO.write(Image(aux), "output-" .. b .. "-" .. i .. ".png")
   end
 end

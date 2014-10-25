@@ -49,7 +49,6 @@ namespace ANN {
 			 float eta_plus) {
       april_assert(steps->sameDim(old_sign) && steps->sameDim(sign));
       april_assert(steps->getNumDim() == 2);
-      april_assert(steps->getMajorOrder() == CblasColMajor);
       AprilUtils::SharedPtr<MatrixFloat> eta_values( steps->cloneOnlyDims() );
       //
       AprilMath::MatrixExt::

@@ -160,7 +160,7 @@ namespace ANN {
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
-    output_mat = new MatrixFloat(input_num_dims+1, output_dims, CblasColMajor);
+    output_mat = new MatrixFloat(input_num_dims+1, output_dims);
     IncRef(output_mat);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);

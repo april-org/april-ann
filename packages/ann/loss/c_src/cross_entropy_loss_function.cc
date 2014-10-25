@@ -41,7 +41,7 @@ namespace ANN {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
-    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim);
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif

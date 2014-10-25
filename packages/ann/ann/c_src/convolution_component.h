@@ -58,7 +58,7 @@ namespace ANN {
     int *input_window_size;
     /// Number of steps of the convolution window, input_num_dims + 1
     int *input_window_num_steps;
-    /// Order for traversing the input data, prepared for col-major order
+    /// Order for traversing the input data
     int *input_window_order_step;
     /// Translates the input window into a bi-dimensional matrix
     int *input_window_rewrap;
@@ -69,7 +69,7 @@ namespace ANN {
     int *output_window_step;
     /// Number of steps of the convolution window, input_num_dims + 1
     int *output_window_num_steps;
-    /// Order for traversing the input data, prepared for col-major order
+    /// Order for traversing the input data
     int *output_window_order_step;
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;

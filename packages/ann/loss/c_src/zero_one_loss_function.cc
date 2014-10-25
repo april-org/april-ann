@@ -42,7 +42,7 @@ namespace ANN {
 				     false);
     int N = input_mat->getDimSize(1);
     int dim = input_mat->getDimSize(0);
-    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim);
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat->getCudaFlag());
     const float *aux = input_mat->getRawDataAccess()->getPPALForRead();

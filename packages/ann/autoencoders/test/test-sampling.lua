@@ -69,7 +69,7 @@ for ipat=1,val_input:numPatterns() do
     end
     output,L = ann.autoencoders.iterative_sampling{
       model   = full_sdae,
-      input   = input:rewrap(1,256):clone("col_major"),
+      input   = input:rewrap(1,256):clone(),
       max     = max_iterations,
       mask    = mask,
       stop    = stop_criterion,
@@ -84,13 +84,13 @@ for ipat=1,val_input:numPatterns() do
     -- tokens.memblock(val_input:getPattern(n))), L)
     loss:reset()
     ite_L = loss:loss(tokens.matrix(output),
-		      tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
+		      tokens.matrix(matrix(1,256,val_input:getPattern(ipat))))
     ite_loss_stat:add(ite_L)
     table.insert(ite_quartiles, ite_L)
     
     output,L = ann.autoencoders.sgd_sampling{
       model   = full_sdae,
-      input   = input:rewrap(1,256):clone("col_major"),
+      input   = input:rewrap(1,256):clone(),
       max     = max_iterations,
       mask    = mask,
       stop    = stop_criterion,
@@ -108,7 +108,7 @@ for ipat=1,val_input:numPatterns() do
     -- tokens.memblock(val_input:getPattern(n))), L)
     loss:reset()
     sgd_L = loss:loss(tokens.matrix(output),
-		      tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
+		      tokens.matrix(matrix(1,256,val_input:getPattern(ipat))))
     sgd_loss_stat:add(sgd_L)
     table.insert(sgd_quartiles, sgd_L)
   end

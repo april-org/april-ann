@@ -173,7 +173,7 @@ for input,idxs in trainable.dataset_multiple_iterator{
   local k = 0
   for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
 			     numSteps={d[1], d[2], 1, 1} }:iterate() do
-    local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+    local img = w:clone():rewrap(d[3],d[4])
     matrix.saveImage(img:adjust_range(0,1), "/tmp/WW-".. idxs[1] .. "-"..k..".pnm")
     k=k+1
   end
@@ -258,7 +258,7 @@ end
 --     local k = 0
 --     for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
 -- 			       numSteps={d[1], d[2], 1, 1} }:iterate() do
---       local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+--       local img = w:clone():rewrap(d[3],d[4])
 --       matrix.saveImage(img:adjust_range(0,1), "/tmp/jajaja-".. idxs[1] .. "-"..k..".pnm")
 --       k=k+1
 --     end

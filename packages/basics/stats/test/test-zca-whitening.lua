@@ -12,7 +12,7 @@ local ds = dataset.matrix(m,
 			    orderStep   = {1,0}
 			  })
 local m = ds:toMatrix()
-local aux = stats.mean_centered_by_pattern(m:clone("col_major"))
+local aux = stats.mean_centered_by_pattern(m:clone())
 local aU,aS,aVT = stats.pca(aux)
 
 -- PCA THRESHOLD STATISTICS
@@ -42,8 +42,8 @@ if new then
   T("ZCAWhiteningTest",
     function()
       for i=1,new:dim(1) do
-        local d = new(i,':'):clone("row_major"):rewrap(16,16):adjust_range(0,1)
-        local d2 = new2(i,':'):clone("row_major"):rewrap(16,16):adjust_range(0,1)
+        local d = new(i,':'):clone():rewrap(16,16):adjust_range(0,1)
+        local d2 = new2(i,':'):clone():rewrap(16,16):adjust_range(0,1)
         check.eq(d, d2)
         -- ImageIO.write(Image(d), "wop-" .. string.format("%03d",i) .. ".png")
       end
@@ -52,6 +52,6 @@ end
 
 -- PCA FILTERS
 -- for i=1,aU:dim(1) do
---   local d = aU:select(2,i):clone("row_major"):rewrap(16,16):adjust_range(0,1)
+--   local d = aU:select(2,i):clone():rewrap(16,16):adjust_range(0,1)
 --   ImageIO.write(Image(d), "filter-" .. string.format("%03d",i) .. ".png")
 -- end

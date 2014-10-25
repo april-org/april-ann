@@ -68,8 +68,7 @@ namespace ANN {
     // get memory blocks for tokens
     MatrixFloat *output_mat = output->getMatrix();
     MatrixFloat *noise_mat  = output_mat->cloneOnlyDims();
-    april_assert(output_mat->getMajorOrder() == CblasColMajor);
-    for (MatrixFloat::col_major_iterator it=noise_mat->begin();
+    for (MatrixFloat::iterator it=noise_mat->begin();
 	 it!=noise_mat->end(); ++it) {
       *it = random->randNorm(mean, variance);
     }

@@ -60,8 +60,8 @@ matrix.sparse.meta_instance.__mul = function(op1, op2)
   else
     if class.is_a(op1,matrix) then
       local res = matrix(op1:dim(1),op2:dim(2))
-      res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
-		     trans_A=true, trans_B=true, trans_C=true }
+      res:transpose():sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+                                 trans_A=true, trans_B=true }
       return res
     elseif class.is_a(op2,matrix) then
       local res = matrix(op1:dim(1),op2:dim(2))

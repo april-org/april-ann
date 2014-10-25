@@ -38,9 +38,6 @@ namespace Stats {
     IncRef(high);
     if (!low->sameDim(high))
       ERROR_EXIT(128, "Expected same sizes in low and high matrices\n");
-    if (low->getMajorOrder() != CblasColMajor ||
-        high->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Expected col_major matrices\n");
     MatrixFloat::const_iterator low_it(low->begin());
     MatrixFloat::const_iterator high_it(high->begin());
     while(low_it != low->end()) {

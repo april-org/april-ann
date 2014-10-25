@@ -42,8 +42,7 @@ namespace Imaging {
   template <typename T>
   Image<T>::Image(Basics::Matrix<T> *mat) {
     if (!mat->isSimple())
-      ERROR_EXIT(128, "Image only works with simple matrices "
-                 "(contiguous, and in row-major\n");
+      ERROR_EXIT(128, "Image only works with contiguous matrices\n");
     // if (mat->numDim != 2) { ... } // <- TODO
     matrix = mat;
     IncRef(matrix); // garbage collection
@@ -101,8 +100,7 @@ namespace Imaging {
     int dims[2];
     dims[0] = h;
     dims[1] = w;
-    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims,
-                                                   matrix->getMajorOrder());
+    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims);
     Image<T>  *img = new Image<T>(mat);
 
     AprilMath::MatrixExt::Operations::matFill(mat, default_color);
@@ -185,7 +183,7 @@ namespace Imaging {
   void Image<T>::projection_v(Basics::Matrix<T> **m) const {
     int dims[1];
     dims[0] = width();
-    *m = new Basics::Matrix<T>(1, dims, matrix->getMajorOrder());
+    *m = new Basics::Matrix<T>(1, dims);
     projection_v((*m)->getRawDataAccess()->getPPALForWrite());
   }
 
@@ -207,7 +205,7 @@ namespace Imaging {
   void Image<T>::projection_h(Basics::Matrix<T> **m) const {
     int dims[1];
     dims[0] = height();
-    *m = new Basics::Matrix<T>(1, dims, matrix->getMajorOrder());
+    *m = new Basics::Matrix<T>(1, dims);
     projection_h((*m)->getRawDataAccess()->getPPALForWrite());
   }
 
@@ -237,8 +235,7 @@ namespace Imaging {
 
     //printf("dims = %dfilas x %dcolumnas\n", dims[0], dims[1]);
 	
-    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims,
-                                                   matrix->getMajorOrder());
+    Basics::Matrix<T> *mat = new Basics::Matrix<T>(2, dims);
     Image<T>  *img = new Image<T>(mat);
   
     if (angle > 0) {
@@ -567,8 +564,7 @@ namespace Imaging {
     dimensions[0] = width();
     dimensions[1] = height();
 
-    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
-                                                       matrix->getMajorOrder());
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
     Image<T> *result = new Image<T>(new_mat);
   
     typename Basics::Matrix<T>::const_random_access_iterator
@@ -592,8 +588,7 @@ namespace Imaging {
     dimensions[0] = width();
     dimensions[1] = height();
 
-    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
-                                                       matrix->getMajorOrder());
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
     Image<T> *result = new Image<T>(new_mat);
   
     typename Basics::Matrix<T>::const_random_access_iterator
@@ -646,8 +641,7 @@ namespace Imaging {
     dimensions[0]=height();
     dimensions[1]=width() - nblanco;
 	
-    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions,
-                                                       matrix->getMajorOrder());
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
     Image<T> *result = new Image<T>(new_mat);
   
     typename Basics::Matrix<T>::random_access_iterator dst_it(new_mat);
@@ -702,7 +696,6 @@ namespace Imaging {
       new AprilMath::GPUMirroredMemoryBlock<float>(25, k);
     // prepare kernel matrix
     Basics::Matrix<T> *kernel_mat = new Basics::Matrix<T>(4, dimensions,
-                                                          matrix->getMajorOrder(),
                                                           k_mem_block);
     // add padding to image
     Basics::Matrix<T> *padded_this_mat = matrix->padding(2, default_color);

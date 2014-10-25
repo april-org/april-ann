@@ -24,6 +24,14 @@ extern "C" {
 }
 
 lua_State *error_print_globalL=0;
+bool silent_errors = false;
+
+void setSilentErrorsValue(bool value) {
+  silent_errors = value;
+}
+bool getSilentErrorsValue() {
+  return silent_errors;
+}
 
 void errorPrintSetLuaState(lua_State *L) {
   error_print_globalL = L;
@@ -43,6 +51,7 @@ void errorPrintSetLuaState(lua_State *L) {
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
 void print_CPP_stacktrace(FILE *out) {
+  if (getSilentErrorsValue()) return;
 #ifdef NDEBUG
   UNUSED_VARIABLE(out);
 #else

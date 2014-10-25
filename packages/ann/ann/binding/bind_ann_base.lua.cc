@@ -138,10 +138,11 @@ using namespace ANN;
 				       input_size);
   //
   Basics::MatrixFloat *obj;
-  if (w && w->getMajorOrder() == CblasColMajor) obj = w->clone();
+  if (w) {
+    obj = w->clone();
+  }
   else {
     obj = Connections::build(input_size, output_size);
-    if (w) Connections::loadWeights(obj, w, first_pos, column_size);
   }
   LUABIND_RETURN(MatrixFloat, obj);
 }

@@ -1,6 +1,6 @@
 local check = utest.check
 local T = utest.test
-local M = matrix.col_major
+local M = matrix
 local EPSILON = 0.001
 local N = 1000
 
@@ -39,7 +39,7 @@ T("NormalDistTest", function()
                                  M(3,3):zeros():diag(2):set(1,2,1):set(2,1,1) )
     check.eq(type(d), "stats.dist.normal.general")
     
-    local pdf_result = M(2, { 0.0175621, 0.00572678 })
+    local pdf_result = M(2, { 0.0151933, 0.00832571 })
     
     check.eq( d:logpdf( M(2,3):uniformf(-1,2,random(9427)) ):exp(), pdf_result )
     

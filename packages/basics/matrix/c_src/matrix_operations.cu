@@ -445,7 +445,7 @@ namespace AprilMath {
         if (A_stride[0] + A_stride[1] != lda+1 ||
             B_stride[0] + B_stride[1] != ldb+1 ||
             C_stride[0] + C_stride[1] != ldc+1) {
-          ERROR_EXIT(128, "Contiguous matrices are needed\n");
+          ERROR_EXIT(128, "Only allowed with contiguous matrices in leading dimension\n");
         }
         //
         const int *A_dim = otherA->getDimPtr();
@@ -512,7 +512,7 @@ namespace AprilMath {
         int ldc = AprilUtils::max(C_stride[0], C_stride[1]);
         if (B_stride[0] + B_stride[1] != ldb+1 ||
             C_stride[0] + C_stride[1] != ldc+1) {
-          ERROR_EXIT(128, "Contiguous matrices are needed\n");
+          ERROR_EXIT(128, "Only allowed with contiguous matrices in leading dimension\n");
         }
         //
         const int *A_dim = otherA->getDimPtr();
@@ -570,28 +570,23 @@ namespace AprilMath {
         const int *A_stride = otherA->getStridePtr();
         int lda = AprilUtils::max(A_stride[0],A_stride[1]);
         if (A_stride[0]+A_stride[1] != lda+1) {
-          ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
+          ERROR_EXIT(128, "Only allowed with contiguous matrices in leading dimension\n");
         }
         if (A_stride[1] != 1) order = CblasColMajor;
+        M = otherA->getDimSize(0);
+        N = otherA->getDimSize(1);
+        // SANITY CHECK
         if (trans_A == CblasTrans) {
-          M = otherA->getDimSize(1);
-          N = otherA->getDimSize(0);
+          if (N != Y->size() || M != otherX->size()) {
+            ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+                        Y->size(), N, M, otherX->size());
+          }
         }
         else {
-          M = otherA->getDimSize(0);
-          N = otherA->getDimSize(1);
-        }
-        // SANITY CHECK
-        if (trans_A == CblasNoTrans) {
           if (M != Y->size() || N != otherX->size()) {
             ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
                         Y->size(), M, N, otherX->size());
           }
-        }
-        else {
-          if (N != Y->size() || M != otherX->size())
-            ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-                        Y->size(), N, M, otherX->size());
         }
         //
         int ldx=otherX->getVectorStride();

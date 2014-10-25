@@ -97,7 +97,6 @@ local check = function (func,error_msg)
               write(1, "%s\n",
                     iterator(ipairs(ret)):select(2):map(tostring):concat(" "))
             end)
-      write(1, "%s\n", debug.traceback())
     end
     write(1, "Test %s %d: %sfail%s", test_name, testn,
           ansi.fg.bright_red, ansi.fg.default)
@@ -109,7 +108,8 @@ local check = function (func,error_msg)
       end
       error_msg = ", msg: %s"%{error_msg}
     end
-    write(1, "%s\n", error_msg or "")
+    write(1, "%s, it follows the traceback\n", error_msg or "")
+    write(1, "%s\n", debug.traceback())
     failed = failed + 1
     if not failed_list[test_name] then
       table.insert(names_order, test_name)
@@ -148,6 +148,12 @@ end
 utest.check.success = check
 utest.check.fail = function(f, ...)
   return check(function() return not f() end, ...)
+end
+utest.check.errored = function(f, ...)
+  util.silent_errors(true)
+  local ok = check(function() local ok=pcall(f) return not ok end, ...)
+  util.silent_errors(false)
+  return ok
 end
 utest.check.TRUE = function(a, ...)
   return check(function() return a end, ...)

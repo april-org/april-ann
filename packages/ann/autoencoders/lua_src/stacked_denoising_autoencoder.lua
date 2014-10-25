@@ -1069,7 +1069,7 @@ ann.autoencoders.iterative_sampling =
       ["noise"] = {"An ANN component for noise generation (not a trainer"},
       ["mask"]   = {"An array with the input positions which",
                     "will be keep untouched [optional]",},
-      ["input"] = {"A col-major matrix with the input values."},
+      ["input"] = {"A matrix with the input values."},
       ["max"] = "Max number of iterations",
       ["stop"] = "Stop when loss difference between iterations is lower than given value",
       ["verbose"] = "Verbosity true or false [optional].",
@@ -1153,7 +1153,7 @@ ann.autoencoders.sgd_sampling =
       ["noise"] = {"An ANN component for noise generation (not a trainer"},
       ["mask"]   = {"An array with the input positions which",
                     "will be keep untouched [optional]",},
-      ["input"] = {"A col-major matrix with the input values."},
+      ["input"] = {"A matrix with the input values."},
       ["max"] = "Max number of iterations",
       ["stop"] = "Stop when loss difference between iterations is lower than given value",
       ["verbose"] = "Verbosity true or false [optional].",
@@ -1226,7 +1226,7 @@ ann.autoencoders.sgd_sampling =
       
       local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
                                                                   params.model:get_input()))
-      -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
+      -- local g = gradient:get_matrix():clone():rewrap(16,16):pow(2):sqrt():clamp(0,1)
       -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
       gradient = gradient:get_matrix()
       output   = output:get_matrix()

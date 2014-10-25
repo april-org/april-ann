@@ -152,7 +152,7 @@ trainable.dataset_multiple_iterator =
             else nump = ds:numPatterns()
             end
             return is_a(ds,dataset) and dataset.token.wrapper(ds,
-                                                             params.bunch_major) or ds
+                                                              params.bunch_major) or ds
 	end):
         table(), nump
     end
