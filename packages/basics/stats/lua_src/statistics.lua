@@ -1087,6 +1087,7 @@ stats.mean_var = make_deprecated_function("stats.mean_var",
                                           "stats.running.mean_var",
                                           stats.running.mean_var)
 
+stats.correlation = {} -- deprecated table
 stats.correlation.pearson = make_deprecated_function("stats.correlation.pearson",
                                                      "stats.running.pearson",
                                                      stats.running.pearson)
