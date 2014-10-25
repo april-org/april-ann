@@ -161,11 +161,13 @@ end
 utest.check.FALSE = function(a, ...)
   return check(function() return not a end, ...)
 end
---_
+--
+local selected_tests
 utest.test = function(name, test_func)
   assert( test_name == NONAMED )
   assert( type(name) == "string", "Needs a string as first argument" )
   assert( type(test_func) == "function", "Needs a function as second argument")
+  if selected_tests and not selected_tests[name] then return end
   test_name = name
   local ok,msg = xpcall(test_func,debug.traceback)
   if not ok then 
@@ -180,6 +182,12 @@ utest.test = function(name, test_func)
     table.insert(failed_list[test_name], "executionfailure")
   end
   test_name = NONAMED
+end
+--
+utest.select_tests = function(arg)
+  if #arg > 0 then selected_tests = table.invert(arg)
+  else selected_tests = nil
+  end
 end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })

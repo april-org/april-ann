@@ -34,8 +34,7 @@ T("SGDTest", function()
 
     --------------------------------------------------------------
 
-    -- added transpose():clone() to be backward compatible
-    m1 = ImageIO.read(string.get_path(arg[0]) .. "../../ann/test/digits.png"):to_grayscale():invert_colors():matrix():transpose():clone()
+    m1 = ImageIO.read(string.get_path(arg[0]) .. "../../ann/test/digits.png"):to_grayscale():invert_colors():matrix()
     train_input = dataset.matrix(m1,
                                  {
                                    patternSize = {16,16},

@@ -492,7 +492,7 @@ namespace Basics {
            int offset = 0);
   
     /// Constructor with variadic arguments.
-    Matrix(int numDim, int d1, ...);
+    explicit Matrix(int numDim, int d1, ...);
   
     /// Constructor given other matrix, it does a shallow or deep copy (clone). By
     /// default is a deep copy, some code pieces expect this behavior, don't
@@ -504,9 +504,9 @@ namespace Basics {
            bool clone=true);
     /// Sub-matrix constructor of a const matrix. WARNING, this matrices don't
     /// allow writes if clone=false
-    Matrix(const Matrix<T> *other,
-           const int* coords, const int *sizes,
-           bool clone=true);
+    explicit Matrix(const Matrix<T> *other,
+                    const int* coords, const int *sizes,
+                    bool clone=true);
     /// Destructor
     virtual ~Matrix();
   

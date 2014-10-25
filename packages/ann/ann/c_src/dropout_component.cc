@@ -76,8 +76,7 @@ namespace ANN {
       if (during_training) {
 	if (dropout_mask == 0 || dropout_mask->size() != input_mat->size()) {
 	  if (dropout_mask) DecRef(dropout_mask);
-	  int dims = { input_mat->size() };
-	  dropout_mask = new MatrixFloat(1, dims);
+	  dropout_mask = new MatrixFloat(1, input_mat->size());
 	  IncRef(dropout_mask);
 	}
 	for (MatrixFloat::iterator it(dropout_mask->begin());

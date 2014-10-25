@@ -280,6 +280,7 @@ namespace Basics {
     AprilIO::Serializable(), shared_count(0),
     numDim(numDim),
     offset(0),
+    use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     int *dim   = new int[numDim];

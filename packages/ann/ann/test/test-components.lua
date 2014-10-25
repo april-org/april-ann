@@ -7,6 +7,8 @@ local T       = utest.test
 local verbose = false
 local rnd     = random(1234)
 
+utest.select_tests(arg)
+
 function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   if verbose then
     fprintf(io.stderr, "\nGradients %s (%d,%d,%d,%s)\n",
@@ -373,7 +375,7 @@ T("DOTPRODUCT + HARDTANH TEST",
   function()
     check(function()
         for i=1,4 do
-          for o=1,4 do
+          for o=1,3 do
             for b=1,4 do
               check_component(function()
                   return ann.components.stack():

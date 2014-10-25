@@ -58,7 +58,7 @@ namespace Basics {
       this->coords = new int[m->getNumDim()];
       for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
     }
-    else coords = 0;
+    else this->coords = 0;
     data = m->getData();
   }
 
@@ -166,10 +166,10 @@ namespace Basics {
   Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m, int raw_pos, int *coords) :
     m(m), idx(0), raw_pos(raw_pos) {
     if (!m->getIsContiguous()) {
-      coords = new int[m->getNumDim()];
+      this->coords = new int[m->getNumDim()];
       for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
     }
-    else coords = 0;
+    else this->coords = 0;
     data = m->getData();
   }
 
