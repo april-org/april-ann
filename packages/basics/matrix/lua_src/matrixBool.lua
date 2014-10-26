@@ -93,9 +93,13 @@ matrixBool.meta_instance.__eq = function(op1, op2)
   elseif class.is_a(op2, matrix) then op2 = matrixBool(op2) end
   assert(class.is_a(op1, matrixBool) and class.is_a(op2, matrixBool),
          "Needs two matrixBool arguments")
-  local equals = true
-  op1:map(op2,function(x,y)
-            equals = equals and (x == y)
-  end)
-  return equals
+  local d1,d2 = op1:dim(),op2:dim()
+  if #d1 ~= #d2 then return false end
+  local eq_size = iterator.zip(iterator(ipairs(d1)):select(2),
+                               iterator(ipairs(d2)):select(2)):
+  reduce(function(acc,a,b) return acc and (a==b) end, true)
+  if not eq_size then return false end
+  local eq = true
+  op1:map(op2,function(x,y) eq = eq and (x == y) end)
+  return eq
 end
