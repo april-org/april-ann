@@ -309,9 +309,9 @@ matrix.op.tril =
     assert(k >= 0 or k > -N, "Out-of-bounds k argument")
     local ctor = class.of(m)
     local triu = ctor(table.unpack(dim)):zeros()
-    local j=math.max(1,k) -- col number
+    local j=math.max(1,k+1) -- col number
     -- for each row
-    for i=math.max(1,-k),N do
+    for i=math.max(1,-k+1),N do
       local cols = { 1, math.min(N,j) } j=j+1
       triu[{ i, cols }] = m(i, cols)
     end
