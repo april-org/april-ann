@@ -17,3 +17,8 @@ matrixInt32.meta_instance.__tostring =
 
 matrixInt32.join =
   matrix.__generic__.__make_generic_join__(matrixInt32)
+
+matrixInt32.meta_instance.__eq = function(op1, op2)
+  if type(op1) == "number" or type(op2) == "number" then return false end
+  return op1:equals(op2)
+end
