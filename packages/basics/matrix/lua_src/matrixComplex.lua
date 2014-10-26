@@ -1,4 +1,4 @@
-class.extend(matrix, "t", matrixComplex.."transpose")
+class.extend(matrixComplex, "t", matrixComplex.."transpose")
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixComplex)

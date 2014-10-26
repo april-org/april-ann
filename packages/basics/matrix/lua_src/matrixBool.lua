@@ -1,4 +1,4 @@
-class.extend(matrix, "t", matrixBool.."transpose")
+class.extend(matrixBool, "t", matrixBool.."transpose")
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")

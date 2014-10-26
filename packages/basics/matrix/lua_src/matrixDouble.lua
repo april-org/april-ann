@@ -1,4 +1,4 @@
-class.extend(matrix, "t", matrixDouble.."transpose")
+class.extend(matrixDouble, "t", matrixDouble.."transpose")
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixDouble)
