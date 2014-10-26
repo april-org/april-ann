@@ -186,7 +186,10 @@ end
 -- function, which allow to keep the iterator state, allowing to write easy
 -- functional operations (map, reduce, filter, ...).
 function iterator:constructor(f, s, v)
-  if type(f) == "table" then
+  if class.is_a(f, iterator) then
+    assert(not s and not v, "Given s and v parameters with an iterator object")
+    f,s,v = f:get()
+  elseif type(f) == "table" then
     if #f == 0 then f,s,v = pairs(f)
     else f,s,v = ipairs(f)
     end
@@ -500,6 +503,7 @@ if aprilann_available then
   _G.iterator = iterator
   _G.iterable_filter = filter
   _G.iterable_map = map
+  _G.range = iterator.range
   _G.reduce = reduce
 end
 

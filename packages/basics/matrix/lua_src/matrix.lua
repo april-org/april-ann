@@ -225,14 +225,98 @@ function matrix.op.repmat(x, ...)
   return result
 end
 
-function matrix.op.diag(m)
-  local dim = m:dim()
-  assert(#dim == 2, "Needs a 2D matrix")
-  local N = dim[1]
-  assert(dim[2] == N, "Needs a square matrix")
-  local get_map = function(i) return m:get(i,i) end
-  return matrix.sparse.diag(iterator(range(1,N)):map(get_map):table())
-end
+matrix.op.diag =
+  april_doc{
+    class = "function",
+    summary = "Returns a matrix with diagonal elements of the given matrix",
+    params = {
+      "A 2D matrix",
+      "The k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    assert(#dim == 2, "Needs a 2D matrix")
+    local N = dim[1]
+    assert(dim[2] == N, "Needs a square matrix")
+    local get_map
+    if k == 0 then
+      get_map = function(i) return m:get(i,i) end
+    elseif k>0 then
+      assert(k < N, "Out-of-bounds k argument")
+      get_map = function(i) return m:get(i,i+k) end
+    else -- k<0
+      assert(k > -N, "Out-of-bounds k argument")
+      get_map = function(i) return m:get(i-k,i) end
+    end
+    local ctor = class.of(m)
+    return ctor(iterator.range(1,N-math.abs(k)):map(get_map):table())
+  end
+
+matrix.op.triu =
+  april_doc{
+    class = "function",
+    summary = "Returns uppper triangular matrix taken from given matrix",
+    params = {
+      "A 2D matrix",
+      "The start k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    local N = dim[1]
+    assert(#dim == 2, "Needs a 2D matrix")
+    assert(dim[2] == N, "Needs a square matrix")
+    assert(k <= 0 or k <  N, "Out-of-bounds k argument")
+    assert(k >= 0 or k > -N, "Out-of-bounds k argument")
+    local ctor = class.of(m)
+    local triu = ctor(table.unpack(dim)):zeros()
+    -- for each row
+    for i=1,math.min(N,N-k) do
+      local cols = { math.max(1,i+k), N }
+      triu[{ i, cols }] = m(i, cols)
+    end
+    return triu
+  end
+
+matrix.op.tril =
+  april_doc{
+    class = "function",
+    summary = "Returns lower triangular matrix taken from given matrix",
+    params = {
+      "A 2D matrix",
+      "The start k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    local N = dim[1]
+    assert(#dim == 2, "Needs a 2D matrix")
+    assert(dim[2] == N, "Needs a square matrix")
+    assert(k <= 0 or k <  N, "Out-of-bounds k argument")
+    assert(k >= 0 or k > -N, "Out-of-bounds k argument")
+    local ctor = class.of(m)
+    local triu = ctor(table.unpack(dim)):zeros()
+    local j=math.max(1,k) -- col number
+    -- for each row
+    for i=math.max(1,-k),N do
+      local cols = { 1, math.min(N,j) } j=j+1
+      triu[{ i, cols }] = m(i, cols)
+    end
+    return triu
+  end
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrix)
