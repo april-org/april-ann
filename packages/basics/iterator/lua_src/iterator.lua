@@ -270,6 +270,25 @@ function iterator_methods:table()
   return t
 end
 
+-- Returns an iterator over multiple iterators at the same time. The iteration
+-- ends if any of the given iterators end.
+function iterator.zip(...)
+  local arg = { ... }
+  for i=1,#arg do assert(class.is_a(arg[i], iterator),
+                         "Needs instances of iterator class") end
+  local finished = false
+  return iterator(function()
+      if finished then return nil end
+      local result = {}
+      for i=1,#arg do
+        local partial = table.pack( arg[i]() )
+        if not partial[1] then finished=true return nil end
+        for k,v in ipairs(partial) do table.insert(result,v) end
+      end
+      return table.unpack(result)
+  end)
+end
+
 -- In APRIL-ANN this module is defined at global environment
 if aprilann_available then
   _G.apply = apply
