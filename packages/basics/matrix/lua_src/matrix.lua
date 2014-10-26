@@ -1,4 +1,4 @@
-class.extend(matrix, "t", function(self) return self:transpose() end)
+class.extend(matrix, "t", matrix.."transpose")
 
 -- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
@@ -804,6 +804,21 @@ april_set_doc(matrix.."transpose", {
 		  "Returns transposition of the caller matrix.",
 		  "The returned matrix is a reference to the original.",
 		},
+		outputs = {
+		  "A matrix object (transposed)",
+		}, })
+
+april_set_doc(matrix.."transpose", {
+		class = "method",
+		summary = "Transposes two dimensions.",
+		description = {
+		  "Transposes two dimensions of the caller matrix.",
+		  "The returned matrix is a reference to the original.",
+		},
+                params = {
+                  "One dimension number",
+                  "Second dimension number",
+                },
 		outputs = {
 		  "A matrix object (transposed)",
 		}, })

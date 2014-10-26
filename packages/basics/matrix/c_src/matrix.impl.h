@@ -104,7 +104,7 @@ namespace Basics {
     offset(offset),
     data(data),
     use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
-    is_contiguous(CONTIGUOUS),
+    is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
@@ -139,7 +139,6 @@ namespace Basics {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
     if (clone) {
-      is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
       span_iterator it(this);
@@ -195,7 +194,6 @@ namespace Basics {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
     if (clone) {
-      is_contiguous = CONTIGUOUS;
       initialize(sizes);
       allocate_memory(total_size);
       span_iterator it(this), it_other(other, it.getDimOrder());
@@ -281,7 +279,7 @@ namespace Basics {
     numDim(numDim),
     offset(0),
     use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
-    is_contiguous(CONTIGUOUS),
+    is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     int *dim   = new int[numDim];
     stride     = new int[numDim];
@@ -308,7 +306,7 @@ namespace Basics {
     numDim(other->numDim),
     offset(0),
     use_cuda(other->use_cuda),
-    is_contiguous(other->is_contiguous),
+    is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride       = new int[numDim];
     matrixSize   = new int[numDim];
@@ -318,7 +316,6 @@ namespace Basics {
       initialize(other->matrixSize);
       allocate_memory(total_size);
       AprilMath::MatrixExt::Operations::matCopy(this, other);
-      is_contiguous = CONTIGUOUS;
     }
     else {
       offset       = other->offset;
@@ -475,7 +472,7 @@ namespace Basics {
   Matrix<T> *Matrix<T>::transpose() {
     Matrix<T> *result;
     if (this->numDim > 1) {
-      result = this->shallow_copy();
+      result = this->shallowCopy();
       for (int i=0,j=numDim-1; i<numDim; ++i,--j) {
         result->stride[j]     = this->stride[i];
         result->matrixSize[j] = this->matrixSize[i];
@@ -486,6 +483,23 @@ namespace Basics {
     return result;
   }
 
+  /// Symbolic transposition, changes strides order
+  template<typename T>
+  Matrix<T>* Matrix<T>::transpose(int dim1, int dim2) {
+    if (dim1 == dim2) return this;
+    if (dim1 < 0 || dim1 >= numDim ||
+        dim2 < 0 || dim2 >= numDim) {
+      ERROR_EXIT4(128, "Incorrect dimensions, exepected to be "
+                  "in range [%d,%d], given dim1=%d, dim2=%d\n",
+                  0, numDim-1, dim1, dim2);
+    }
+    Matrix<T> *result;
+    result = this->shallowCopy();
+    AprilUtils::swap(result->stride[dim1], result->stride[dim2]);
+    AprilUtils::swap(result->matrixSize[dim1], result->matrixSize[dim2]);
+    return result;
+  }
+  
   template <typename T>
   Matrix<T>* Matrix<T>::cloneOnlyDims() const {
     Matrix<T> *obj = new Matrix<T>(numDim, matrixSize);
@@ -503,7 +517,7 @@ namespace Basics {
   }
 
   template <typename T>
-  Matrix<T>* Matrix<T>::shallow_copy() {
+  Matrix<T>* Matrix<T>::shallowCopy() {
     return new Matrix<T>(this,false);
   }
 

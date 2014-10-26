@@ -598,12 +598,14 @@ namespace Basics {
 
     /// Symbolic transposition, changes strides order
     Matrix<T>* transpose();
+    /// Symbolic transposition, changes strides order
+    Matrix<T>* transpose(int dim1, int dim2);
     /// Copy only sizes, but not data
     Matrix<T>* cloneOnlyDims() const;
     /// Deep copy
     Matrix<T>* clone() const;
     /// Shallow copy
-    Matrix<T>* shallow_copy();
+    Matrix<T>* shallowCopy();
   
     /// Number values check
     void pruneSubnormalAndCheckNormal();

@@ -478,7 +478,17 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_METHOD MatrixChar transpose
 {
-  LUABIND_RETURN(MatrixChar, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixChar, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixChar, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 

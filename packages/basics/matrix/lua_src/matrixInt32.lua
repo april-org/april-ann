@@ -1,4 +1,4 @@
-class.extend(matrixInt32, "t", function(self) return self:transpose() end)
+class.extend(matrix, "t", matrixInt32.."transpose")
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixInt32)

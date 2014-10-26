@@ -603,7 +603,17 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat transpose
 {
-  LUABIND_RETURN(MatrixFloat, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixFloat, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixFloat, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 

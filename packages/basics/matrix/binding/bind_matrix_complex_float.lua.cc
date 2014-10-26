@@ -536,7 +536,17 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_METHOD MatrixComplexF transpose
 {
-  LUABIND_RETURN(MatrixComplexF, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixComplexF, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixComplexF, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 
