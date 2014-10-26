@@ -341,8 +341,7 @@ function iterator_methods:nth(nth)
   for i=1,nth-1 do
     if not self() then break end
   end
-  local result = pack( self() )
-  return iterator(function() local v=result result=nil return v and unpack(v) or nil end)
+  return self()
 end
 
 -- Returns the head of the iterator.
