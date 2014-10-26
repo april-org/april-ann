@@ -158,7 +158,7 @@ if check_grandients then
   trainer:grad_check_dataset({
 			       input_dataset  = dataset.slice(val_input, 1, 10),
 			       output_dataset = dataset.slice(val_output, 1, 10),
-			       bunch_size = 1,
+			       bunch_size = 10,
 			       verbose = false,
 			     })
 end

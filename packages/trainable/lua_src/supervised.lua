@@ -960,6 +960,7 @@ trainable_supervised_trainer_methods.grad_check_step =
     local ret      = true
     local bunch_size = tr_loss_matrix:dim(1)
     local it = 1
+    -- local counts = iterator(self:iterate_weights()):map(function(name,cnn) return name,cnn:get_shared_count() end):table()
     for wname,cnn in self:iterate_weights() do
       collectgarbage("collect")
       local w = cnn
