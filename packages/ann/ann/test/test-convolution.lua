@@ -2,17 +2,17 @@ kx=17
 ky=17
 h=10
 -- a matrix of ROWSxCOLUMNSx3
-m = ImageIO.read(string.get_path(arg[0]) .. "photo.png"):matrix()
-m2 = m:rewrap(m:size())
+m = ImageIO.read(string.get_path(arg[0]) .. "photo.png"):matrix():transpose(1,3)
+m2 = m:contiguous():rewrap(m:size())
 
 input = matrix(2, m2:size())
 input:select(1,1):copy(m2)
 input:select(1,2):copy(m2)
-w,_,thenet = ann.components.stack():
+thenet,w,_ = ann.components.stack():
 -- converts a flatten image to a matrix of only 3 planes (RGB)
-push(ann.components.rewrap{ size={ m:dim()[1], m:dim()[2], 3 } }):
+push(ann.components.rewrap{ size={ 3, m:dim()[2], m:dim()[1] } }):
 -- a kernel over 3 planes and kx,ky sizes, h output neurons
-push(ann.components.convolution{ kernel={kx, ky, 3}, n=h, input_planes_dim=3 }):
+push(ann.components.convolution{ kernel={3, kx, ky}, n=h }):
 -- max pooling over every hidden neuron (planes) with 7x7 kernel
 push(ann.components.max_pooling{ kernel={1,7,7} }):
 push(ann.components.actf.hardtanh()):
@@ -23,7 +23,7 @@ push(ann.components.max_pooling{ kernel={1,3,3} }):
 push(ann.components.actf.hardtanh()):
 build()
 rnd=random(1234)
-for name,cnn in pairs(w) do cnn:randomize_weights{inf=-0.1,sup=0.1,random=rnd} end
+for name,cnn in pairs(w) do ann.connections.randomize_weights(cnn,{inf=-0.1,sup=0.1,random=rnd}) end
 clock = util.stopwatch()
 clock:go()
 output = thenet:forward(input):get_matrix()

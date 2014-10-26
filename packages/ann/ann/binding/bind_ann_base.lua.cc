@@ -1012,10 +1012,16 @@ using namespace ANN;
   int *kernel, *step, n, input_planes_dim;
   check_table_fields(L, 1, "name", "weights", "kernel", "input_planes_dim",
 		     "step", "n", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
+				       input_planes_dim, -1);
+  if (input_planes_dim > 1) {
+    LUABIND_ERROR("Deprecated property, new version only allowed for input_planes_dim==1\n");
+  }
+  else if (input_planes_dim == 1) {
+    ERROR_PRINT("Deprecated property, not needed in the new version");
+  }
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
-				       input_planes_dim, 1);
   LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
   //
   lua_getfield(L, 1, "kernel");
@@ -1042,8 +1048,7 @@ using namespace ANN;
     LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
   }
   lua_pop(L, 1);
-  obj = new ConvolutionANNComponent(size, kernel, step,
-				    input_planes_dim, n,
+  obj = new ConvolutionANNComponent(size, kernel, step, n,
 				    name, weights);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;

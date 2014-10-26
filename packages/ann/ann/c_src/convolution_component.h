@@ -37,8 +37,6 @@ namespace ANN {
     
     // parameters of the convolution
     
-    /// Dimension where input planes are located
-    const int input_planes_dim;
     /// The number of convolutions computed during last forward
     int number_input_windows;
     /// The size of one kernel (number of inputs of one hidden neuron)
@@ -58,8 +56,6 @@ namespace ANN {
     int *input_window_size;
     /// Number of steps of the convolution window, input_num_dims + 1
     int *input_window_num_steps;
-    /// Order for traversing the input data
-    int *input_window_order_step;
     /// Translates the input window into a bi-dimensional matrix
     int *input_window_rewrap;
     // OUTPUT SLIDING WINDOW SECTION
@@ -69,8 +65,6 @@ namespace ANN {
     int *output_window_step;
     /// Number of steps of the convolution window, input_num_dims + 1
     int *output_window_num_steps;
-    /// Order for traversing the input data
-    int *output_window_order_step;
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
     
@@ -106,8 +100,6 @@ namespace ANN {
     ConvolutionANNComponent(int input_num_dims,
 			    const int *_kernel_dims,  // input_num_dims
 			    const int *_kernel_step,  // step
-			    const int input_planes_dim, // dimension where input
-						        // planes are located
 			    int num_output_planes,      // hidden layer size
 			    const char *name=0, const char *weights_name=0);
     virtual ~ConvolutionANNComponent();
@@ -115,10 +107,7 @@ namespace ANN {
 				      AprilUtils::vector<unsigned int> &output_size) {
       output_size.clear();
       output_size.push_back(hidden_size);
-      for (int i=1; i<input_planes_dim; ++i) {
-	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
-      }
-      for (int i=input_planes_dim+1; i<=input_num_dims; ++i) {
+      for (int i=2; i<=input_num_dims; ++i) {
 	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
       }
     }
