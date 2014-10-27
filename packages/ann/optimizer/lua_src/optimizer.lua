@@ -13,7 +13,8 @@ local april_assert = april_assert
 
 ------------------------------------------------------------------------------
 
-local MAX_UPDATES_WITHOUT_PRUNE=100
+local FLT_MIN = mathcore.limits.float.min()
+local MAX_UPDATES_WITHOUT_PRUNE = 100
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -589,8 +590,7 @@ function cg_methods:execute(eval, weights)
   i=i+1
   
   -- initial search direction
-  s:copy(df1)
-  s:scal(-1)
+  s:copy(df1):scal(-1)
   
   -- slope
   d1 = -s:dot(s)
@@ -677,7 +677,7 @@ function cg_methods:execute(eval, weights)
       f3=f2
       d3=d2
       z3=-z2
-      z1=z1+z2;
+      z1=z1+z2
       update_weights(x, z2, s)
       
       arg = table.pack( eval(origw, i) )
@@ -700,12 +700,12 @@ function cg_methods:execute(eval, weights)
       -- copy(df1,df2)
       -- copy(df2,tmp)
       d2 = df1:dot(s)
-      if d2> 0 then
+      if d2 > 0 then
 	s:copy(df1)
 	s:scal(-1)
 	d2 = -s:dot(s)
       end
-      z1 = z1 * math.min(ratio, d1/(d2-1e-320))
+      z1 = z1 * math.min(ratio, d1/(d2 - FLT_MIN))
       d1 = d2
       ls_failed = 0
     else
