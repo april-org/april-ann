@@ -254,7 +254,8 @@ matrix.op.diag =
       get_map = function(i) return m:get(i-k,i) end
     end
     local ctor = class.of(m)
-    return ctor(iterator.range(1,N-math.abs(k)):map(get_map):table())
+    if rawequal(ctor,matrix.sparse) then ctor = matrix end
+    return ctor(N-math.abs(k)):linspace():map(get_map)
   end
 
 matrix.op.triu =

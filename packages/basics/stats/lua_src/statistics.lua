@@ -15,14 +15,34 @@ local sdiag = matrix.sparse.diag
 local function center(x)
   local x_dim = x:dim()
   local N = x_dim[1]
-  local x_mu
+  local x_mu,mu
   if #x_dim == 1 then
-    x_mu = x:sum()/N
+    mu   = x:sum()/N
+    x_mu = mu
   else
-    x_mu = mop.repmat(x:sum(1):scal(1/N),N,1)
+    mu = x:sum(1):scal(1/N)
+    x_mu = mop.repmat(mu,N,1)
   end
-  return x - x_mu
+  return x - x_mu,mu
 end
+
+stats.standardize =
+  april_doc{
+    class = "function",
+    summary = "Standardize data to have zero-mean one-variance",
+    description = "Data is ordered by rows, features by columns.",
+    params = { "A 2D matrix" },
+    outputs = { "Another new allocated matrix" },
+  } ..
+  function(x)
+    assert(#x:dim() == 2, "Needs a 2D matrix")
+    local N = x:dim(1)
+    local sigma2,mu = stats.var(x,1)
+    local x = x:clone()
+    x:axpy(-1.0, mop.repmat(mu,N,1))
+    x:cmul(mop.repmat(sigma2:sqrt():div(1),N,1))
+    return x
+  end
 
 stats.center =
   april_doc{
@@ -94,6 +114,8 @@ stats.cov =
         centered = { type_match = "boolean", default = nil },
         true_mean = { type_match = "boolean", default =nil },
       }, params)
+    assert(not params.true_mean or params.centered,
+           "true_mean=true is mandatory of centered=true")
     local x_dim,y_dim = x:dim(),y:dim()
     assert((#x_dim <= 2) and (#y_dim <= 2), "Needs 2D matrices or vectors")
     assert(x_dim[1] == y_dim[1] and x_dim[2] == y_dim[2],

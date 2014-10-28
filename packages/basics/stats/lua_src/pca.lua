@@ -110,7 +110,8 @@ stats.pca =
     summary = "Computes PCA using SVD decomposition of covariance matrix",
     description = { "Data is ordered by rows, features by columns.",
                     "If not centered, the data is centered by columns instead",
-                    "that by rows (using stats.pca.center_by_pattern function)." },
+                    "that by rows (using stats.pca.center_by_pattern function",
+                    "instead of stats.center function)." },
     params = {
       "A 2D matrix",
       "An [optional] table with 'centered' boolean",
