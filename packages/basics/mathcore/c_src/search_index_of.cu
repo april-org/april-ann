@@ -45,9 +45,10 @@ namespace AprilMath {
     const int *first_index_ptr = first_index->getPPALForRead();
     if (c1 == 0) return first_index_ptr[c2];
     else {
-      return binary_search(indices_ptr + first_index_ptr[c2],
-                           first_index_ptr[c2+1] - first_index_ptr[c2],
-                           c1);
+      int idx = binary_search(indices_ptr + first_index_ptr[c2],
+                              first_index_ptr[c2+1] - first_index_ptr[c2],
+                              c1);
+      return (idx >= 0) ? (idx + first_index_ptr[c2]) : idx;
     }
 #ifdef USE_CUDA
     // }
@@ -72,9 +73,10 @@ namespace AprilMath {
     const int *first_index_ptr = first_index->getPPALForRead();
     if (c2 == 0) return first_index_ptr[c1];
     else {
-      return binary_search(indices_ptr + first_index_ptr[c1],
-                           first_index_ptr[c1+1] - first_index_ptr[c1],
-                           c2);
+      int idx = binary_search(indices_ptr + first_index_ptr[c1],
+                              first_index_ptr[c1+1] - first_index_ptr[c1],
+                              c2);
+      return (idx >= 0) ? (idx + first_index_ptr[c1]) : idx;
     }
 #ifdef USE_CUDA
     // }
@@ -105,7 +107,7 @@ namespace AprilMath {
                                            first_index_ptr[c2+1] - first_index_ptr[c2],
                                            c1);
       if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
-      return *aux;
+      return (*aux > 0) ? (*aux + first_index_ptr[c2]) : *aux;
     }
 #ifdef USE_CUDA
     // }
@@ -134,7 +136,7 @@ namespace AprilMath {
                                            first_index_ptr[c1+1] - first_index_ptr[c1],
                                            c2);
       if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
-      return *aux;
+      return (*aux > 0) ? (*aux + first_index_ptr[c1]) : *aux;
     }
 #ifdef USE_CUDA
     // }
