@@ -190,9 +190,9 @@ function iterator:constructor(f, s, v)
     assert(not s and not v, "Given s and v parameters with an iterator object")
     f,s,v = f:get()
   elseif type(f) == "table" then
-    if #f == 0 then f,s,v = pairs(f)
-    else f,s,v = ipairs(f)
-    end
+    if #f == 0 then f,s,v = iterator(pairs(f)):select(2):get()
+    else f,s,v = iterator(ipairs(f)):select(2):get()
+    end    
   end
   self.f,self.s,self.v = f,s,v
 end
@@ -348,12 +348,12 @@ function iterator_methods:nth(nth)
 end
 
 -- Returns the head of the iterator.
-function iterator_methods:head(nth)
+function iterator_methods:head()
   return self:nth(1)
 end
 
 -- Returns the tail of the iterator.
-function iterator_methods:tail(nth)
+function iterator_methods:tail()
   self() -- skip first value
   return self
 end
@@ -427,8 +427,7 @@ function iterator_methods:index(...)
   return nil
 end
 
--- Returns the position of the first iterator index which is equals to the given
--- arguments.
+-- Returns an iterator to positions which are equal to the given arguments.
 function iterator_methods:indices(...)
   local arg = pack(...)
   return iterator(function(self, idx)
@@ -445,12 +444,12 @@ function iterator_methods:indices(...)
 end
 
 -- Filters by using a regular expression.
-function iterator_methods:grep(match_string)
-  assert(type(match_string) == "string", "Only valid with string vlaues")
+function iterator_methods:grep(regexp_string)
+  assert(type(regexp_string) == "string", "Only valid with string values")
   return self:filter(function(str,...)
       assert(not ..., "Only valid for unary iterators")
       assert(type(str) == "string", "Only valid with string values")
-      return str:match(match_string)
+      return str:find(regexp_string) ~= nil
   end)
 end
 
@@ -473,7 +472,7 @@ function iterator_methods:all(pred)
 end
 
 -- Returns true if at least one return value satisfies the predicate.
-function iterator_methods:all(pred)
+function iterator_methods:any(pred)
   return self:reduce(function(acc,...) return acc or pred(...) end, false)
 end
 
