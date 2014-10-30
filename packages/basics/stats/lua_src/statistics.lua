@@ -40,8 +40,8 @@ stats.standardize =
     local sigma2,mu = stats.var(x,1)
     local x = x:clone()
     x:axpy(-1.0, mop.repmat(mu,N,1))
-    x:cmul(mop.repmat(sigma2:sqrt():div(1),N,1))
-    return x
+    x:cmul(mop.repmat(1/sigma2:sqrt(),N,1))
+    return x,mu,sigma2
   end
 
 stats.center =
@@ -101,7 +101,9 @@ stats.cov =
       "A 2D matrix or a vector (x)",
       "An [optional] table with 'centered' boolean, 'true_mean' boolean",
     },
-    outputs = { "Covariance matrix" }
+    outputs = { "Covariance matrix",
+                "The x center vector if not centered flag [optional]",
+                "The y center vector if not centered flag [optional]" }
   } ..
   function(x,...)
     local y,params = ...
@@ -120,15 +122,16 @@ stats.cov =
     assert((#x_dim <= 2) and (#y_dim <= 2), "Needs 2D matrices or vectors")
     assert(x_dim[1] == y_dim[1] and x_dim[2] == y_dim[2],
            "Require same shape matrices")
+    local mu_x,mu_y
     local N,M = table.unpack(x_dim)
     if not params.centered then
       local oldx = x
-      x = center(x)
-      y = rawequal(oldx,y) and x or center(y)
+      x,mu_x = center(x)
+      if rawequal(xold,y) then y,mu_y = x,mu_x else y,mu_y = center(y) end
     end
     local sz = N-1
     if params.true_mean then sz = N end
-    return (x:transpose() * y):scal(1/sz):rewrap(M or 1,M or 1)
+    return (x:transpose() * y):scal(1/sz):rewrap(M or 1,M or 1),mu_x,mu_y
   end
 
 stats.cor =
@@ -151,22 +154,25 @@ stats.cor =
       "A 2D matrix or a vector (x)",
       "An [optional] table with 'centered' boolean",
     },
-    outputs = { "Correlation matrix" }
+    outputs = { "Correlation matrix",
+                "The x center vector if not centered flag [optional]",
+                "The y center vector if not centered flag [optional]" }
   } ..
   function(x,...)
     local y,params = ...
     if type(y) == "table" or not y then y,params = x,y end
     local params = params or {}
+    local mu_x,mu_y
     if not params.centered then
       local xold = x
-      x = center(x)
-      if rawequal(xold,y) then y = x else y = center(y) end
+      x,mu_x = center(x)
+      if rawequal(xold,y) then y,mu_y = x,mu_x else y,mu_y = center(y) end
     end
     local function cstd(m) return sdiag((m^2):sum(1):scal(1/(m:dim(1)-1)):sqrt():div(1):squeeze()) end
     local sigma = stats.cov(x,y,{ centered=true })
     local sx = cstd(x)
     local sy = rawequal(x,y) and sx or cstd(y)
-    return sx * sigma * sy
+    return sx * sigma * sy,mu_x,mu_y
   end
 
 stats.acf =

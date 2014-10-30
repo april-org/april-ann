@@ -25,6 +25,7 @@ end
 
 -- WARNING IN PLACE OPERATION
 function stats.pca.center_by_pattern(X)
+  local X=X:clone()
   local dim = X:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N = table.unpack(dim)
@@ -114,12 +115,13 @@ stats.pca =
                     "instead of stats.center function)." },
     params = {
       "A 2D matrix",
-      "An [optional] table with 'centered' boolean",
+      "An [optional] table with 'centered' boolean, by default centered=false",
     },
     outputs = {
       "U matrix with left singular vectors",
       "S diagonal sparse matrix with  singular values",
       "VT transpose of right singular vectors",
+      "In case centered=false, fourth result is the center vector [optional]",
     },
   }..
   setmetatable(stats.pca, {
@@ -129,12 +131,13 @@ stats.pca =
                        centered = { type_match = "boolean", default = nil },
                      }, params)
                    assert(#Xc:dim() == 2, "Expected a bi-dimensional matrix")
+                   local center
                    if not params.centered then
-                     Xc = stats.pca.center_by_pattern(Xc)
+                     Xc,center = stats.pca.center_by_pattern(Xc)
                    end
                    local sigma = stats.cov(Xc,{ centered=true })
                    local U,S,VT = sigma:svd()
-                   return U,S,VT
+                   return U,S,VT,center
                  end
   })
 
