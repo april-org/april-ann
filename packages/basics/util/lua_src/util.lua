@@ -311,16 +311,6 @@ function fprintf(file,...)
   file:write(string.format(...))
 end
 
-function range(...)
-  local arg = table.pack(...)
-  local inf,sup,step = arg[1],arg[2],arg[3] or 1
-  local i = inf - step
-  return function()
-    i = i + step
-    if i <= sup then return i end
-  end
-end
-
 function check_mandatory_table_fields(fields, t)
   for _,name in ipairs(fields) do
     table.insert(ret, t[name] or error("The "..name.." field is mandatory"))
