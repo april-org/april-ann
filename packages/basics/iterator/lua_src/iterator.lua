@@ -44,6 +44,26 @@ local unpack = table.unpack
 local wrap = coroutine.wrap
 local yield = coroutine.yield
 
+-- Clones the function and its upvalues
+local function clone_function(func)
+  -- clone by using a string dump
+  local ok,func_dump = pcall(string.dump, func)
+  local func_clone = (ok and loadstring(func_dump)) or func
+  if func_clone ~= func then
+    -- copy upvalues
+    local i = 1
+    while true do
+      local name,value = debug.getupvalue(func,i)
+      if not name then break end
+      -- TODO: implement cone (deep copy) of tables
+      if type(value) == "function" then value = clone_function(value) end
+      debug.setupvalue(func_clone, i, value)
+      i = i + 1
+    end
+  end
+  return func_clone
+end
+
 -- Filters a Lua iterator function output using a given predicate function. The
 -- predicate returns true when a value must be taken, false when it must be
 -- removed. The predicate function is called as f(...) where ... are the values
@@ -406,7 +426,9 @@ end
 
 -- Only works properly with pure functional iterators.
 function iterator_methods:clone()
-  return iterator(self:get())
+  local f,s,v = self:get()
+  local f = clone_function(f)
+  return iterator(f,s,v)
 end
 
 -- Returns the position of the first iterator index which is equals to the given
