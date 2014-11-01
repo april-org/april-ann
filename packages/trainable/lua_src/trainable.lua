@@ -414,11 +414,11 @@ train_holdout_methods.execute =
         "A function which trains a model and returns the trained model,",
         "the training loss and the validation loss",
       },
-      first_epoch = "The first epoch number",
+      "Variadic list of arguments for the function [optional]",
     },
     outputs = { "True or false, indicating if the training continues or not" },
   } ..
-  function(self, epoch_function)
+  function(self, epoch_function, ...)
     local params = self.params
     local state  = self.state
     -- check max epochs
@@ -432,7 +432,7 @@ train_holdout_methods.execute =
     end
     -- compute one training step by using epoch_function
     state.current_epoch = state.current_epoch + 1
-    state.last, state.train_error, state.validation_error = epoch_function()
+    state.last, state.train_error, state.validation_error = epoch_function(...)
     assert(state.last and state.train_error and state.validation_error,
            "Needs a function which returns three values: a model, training error and validation error")
     -- update with the best model
@@ -693,11 +693,11 @@ train_wo_validation_methods.execute =
         "A function which trains a model and returns the trained model",
         "and the training loss",
       },
-      first_epoch = "The first epoch number",
+      "Variadic list of arguments for the function [optional]",
     },
     outputs = { "True or false, indicating if the training continues or not" },
   } ..
-  function(self, epoch_function)
+  function(self, epoch_function, ...)
     local params = self.params
     local state  = self.state
     -- stopping criterion
@@ -711,7 +711,7 @@ train_wo_validation_methods.execute =
     end
     -- compute one training step by using epoch_function
     state.current_epoch = state.current_epoch + 1
-    local model,tr_err = epoch_function()
+    local model,tr_err = epoch_function(...)
     assert(model and tr_err,
            "Needs a function which returns two values: a model and training error")
     --

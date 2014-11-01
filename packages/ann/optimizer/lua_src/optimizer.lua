@@ -805,6 +805,7 @@ function quickprop:constructor(g_options, l_options, count,
                               {"mu", "Maximum growth factor (1.75)"},
                               {"epsilon", "Bootstrap factor (1e-04)"},
 			      {"max_step", "Maximum step value (1000)"},
+                              {"decay", "Decay of hyper-parameters (0.0), global option"},
 			    },
 			    g_options,
 			    l_options,
@@ -812,6 +813,7 @@ function quickprop:constructor(g_options, l_options, count,
   self:set_option("mu", 1.75)
   self:set_option("epsilon", 1e-04)
   self:set_option("max_step", 1000)
+  self:set_option("decay", 0.0)
   self.update = wrap_matrices(update or matrix.dict())
   self.lastg  = wrap_matrices(lastg  or matrix.dict())
   -- standard regularization and constraints
@@ -834,6 +836,8 @@ function quickprop_methods:execute(eval, weights)
   -- this into account
   if not gradients then return nil end
   gradients = wrap_matrices(gradients)
+  local gamma = self:get_option("decay")
+  local decay = 1.0 / (1.0 + gamma * self:get_count())
   for name,w in pairs(weights) do
     local update      = self.update(name)
     local lastg       = self.lastg(name)
@@ -843,6 +847,8 @@ function quickprop_methods:execute(eval, weights)
     local mu          = self:get_option_of(name, "mu")
     local epsilon     = self:get_option_of(name, "epsilon")
     local max_step    = self:get_option_of(name, "max_step")
+    assert(self:get_option_of(name, "decay") == gamma,
+           "decay option cannot be defined layerwise, only globally")
     if not update then
       -- compute standard back-propagation learning rule
       update = w:clone()
@@ -881,7 +887,7 @@ function quickprop_methods:execute(eval, weights)
     -- regularizations
     ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
-    w:axpy(-lr, update)
+    w:axpy(-decay*lr, update)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --
