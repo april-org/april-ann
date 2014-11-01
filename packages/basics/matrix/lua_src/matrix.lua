@@ -1528,4 +1528,7 @@ april_set_doc(matrix.__sliding_window__.."iterate",
 -- DEPRECATED CONSTRUCTORS --
 matrix.row_major = make_deprecated_function("matrix.row_major", "matrix", matrix)
 matrix.col_major = make_deprecated_function("matrix.col_major", "matrix", matrix)
+class.extend(matrix, "get_major_order",
+             make_deprecated_function("matrix.get_major_order", nil,
+                                      function(self) return "row_major" end))
 -----------------------------
