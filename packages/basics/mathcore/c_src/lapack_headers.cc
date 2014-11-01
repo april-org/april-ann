@@ -123,6 +123,7 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
 }
 int clapack_spotrf(int Order, int Uplo, int N, float *A,
                    int LDA) {
+  int info = 0;
   if (Order == CblasRowMajor) {
     char uplo = (Uplo == CblasLower) ? 'U' : 'L';
     spotrf_(&uplo, &N, A, &LDA, &info);
