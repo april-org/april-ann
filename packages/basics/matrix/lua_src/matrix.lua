@@ -18,6 +18,42 @@ class.extend(matrix, "pinv",
                  }
 end)
 
+matrix.ext.iterate =
+  april_doc{
+    class = "method",
+    summary = "Returns an iterator which traverses a dimension",
+    description = {
+      "The iterator uses m:select() method to traverse the given",
+      "dimension number. The iterator returns the pair pos,slice",
+      "where pos is the position inside the dimension and slice",
+      "is a matrix with the result of m:select(dim,pos).",
+      "Note that slice is reused between different iterations.",
+      "Note that slice is a reference to the original matrix, any",
+      "change to slice will be reflected into m."
+    },
+    params = {
+      "A matrix instance (any kind of matrix type)",
+      "A dimension number [optional], by default it is 1 (row traversal)",
+    },
+    outputs = {
+      "An instance of iterator class",
+    },
+  } ..
+  function(self,dim)
+    local dim = dim or 1
+    local d = self:dim()
+    assert(dim > 0 and dim < #d, "Out-of-bounds dimension number")
+    local slice = self:select(dim,1)
+    return iterator(function(state,pos)
+        local self,slice,dim,sz = table.unpack(state)
+        pos = pos + 1
+        if pos <= d[dim] then
+          slice = (pos == 1 and slice) or self:select(dim,pos)
+          return pos,slice
+        end
+                    end, {self,slice,dim,d[dim]}, 0)
+  end
+
 class.extend(matrix, "order",
              april_doc{
                class = "method",

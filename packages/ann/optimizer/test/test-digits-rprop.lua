@@ -115,11 +115,14 @@ ascii
     clock:go()
 
     -- print("Epoch Training  Validation")
+    local tmp = os.tmpname()
     for epoch = 1,max_epochs do
       collectgarbage("collect")
       totalepocas = totalepocas+1
       errortrain,vartrain  = trainer:train_dataset(datosentrenar)
       errorval,varval      = trainer:validate_dataset(datosvalidar)
+      trainer:save(tmp)
+      trainer = trainable.supervised_trainer.load(tmp)
       printf("%4d  %.7f %.7f :: %.7f %.7f :: %f\n",
              totalepocas,errortrain,errorval,vartrain,varval,trainer:norm2("w.*"))
       check.number_eq(errortrain, errors:get(epoch,1), epsilon,
@@ -131,6 +134,7 @@ ascii
                                       "reference error %g",
                                     errorval, errors:get(epoch,2)))
     end
+    os.remove(tmp)
     clock:stop()
     cpu,wall = clock:read()
     --printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)

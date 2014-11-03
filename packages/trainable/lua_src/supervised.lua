@@ -788,8 +788,9 @@ trainable_supervised_trainer_methods.train_step =
       end
       target = target:clone():cmul(mask)
     end
+    local has_average = optimizer:has_property("average")
     local needs_gradient = optimizer:needs_property("gradient")
-    local tr_loss, _, tr_loss_matrix =
+    local tr_loss, _, tr_loss_matrix, average =
       optimizer:execute(function(weights, it)
           if weights ~= self.weights_table then
             self:build{ weights = weights }
@@ -1529,7 +1530,8 @@ trainable_supervised_trainer_methods.clone =
     local obj = trainable.supervised_trainer(self.ann_component:clone(),
                                              nil,
                                              self.bunch_size,
-                                             nil)
+                                             nil,
+                                             self.smooth_gradients)
     if self.loss_function then
       obj:set_loss_function(self.loss_function:clone())
     end

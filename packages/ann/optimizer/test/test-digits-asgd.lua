@@ -12,24 +12,23 @@ T("ASGDTest", function()
     inf            = -1
     sup            =  1
     shuffle_random = random(5678)
-    learning_rate  = 0.08
-    lr_decay       = 0.75
-    weight_decay   = 1e-04
-    t0             = 5*math.ceil(800/bunch_size) -- five epochs
+    learning_rate  = 0.1
+    weight_decay   = 0.001
+    t0             = 5*800/bunch_size -- five epochs
     max_epochs     = 10
 
     -- training and validation
     errors = {
-      {2.2776384, 2.0342729},
-      {1.6926836, 1.2635630},
-      {0.9429189, 0.6279044},
-      {0.5317102, 0.3881207},
-      {0.3188521, 0.3284208},
-      {0.2210947, 0.2336490},
-      {0.1844755, 0.2313963},
-      {0.1819354, 0.2304380},
-      {0.1808625, 0.2299282},
-      {0.1803160, 0.2298454},
+      {2.2425103, 1.8482420},
+      {1.5127832, 1.2634643},
+      {0.7906535, 0.4813936},
+      {0.4786904, 0.3513147},
+      {0.2625008, 0.2448429},
+      {0.2053493, 0.1754262},
+      {0.1336887, 0.1607038},
+      {0.1040219, 0.1502100},
+      {0.0896987, 0.1430567},
+      {0.0798418, 0.1375536},
     }
     epsilon = 0.01
 
@@ -87,7 +86,6 @@ T("ASGDTest", function()
     trainer:build()
 
     trainer:set_option("learning_rate", learning_rate)
-    trainer:set_option("lr_decay", lr_decay)
     trainer:set_option("t0", t0)
     trainer:set_option("weight_decay",  weight_decay)
     -- bias has weight_decay of ZERO
@@ -121,11 +119,18 @@ T("ASGDTest", function()
     clock:go()
 
     -- print("Epoch Training  Validation")
+    local val_trainer = trainer:clone()
+    local tmp = os.tmpname()
     for epoch = 1,max_epochs do
       collectgarbage("collect")
       totalepocas = totalepocas+1
       errortrain,vartrain  = trainer:train_dataset(datosentrenar)
-      errorval,varval      = trainer:validate_dataset(datosvalidar)
+      val_trainer:build{
+        weights = trainer:get_optimizer():get_averaged_weights()
+      }
+      errorval,varval = val_trainer:validate_dataset(datosvalidar)
+      trainer:save(tmp)
+      trainer = trainable.supervised_trainer.load(tmp)
       printf("%4d  %.7f %.7f :: %.7f %.7f\n",
              totalepocas,errortrain,errorval,vartrain,varval)
       check.number_eq(errortrain, errors[epoch][1], epsilon,
@@ -137,11 +142,10 @@ T("ASGDTest", function()
                                       "reference error %g",
                                     errorval, errors[epoch][2]))
     end
-
+    os.remove(tmp)
     clock:stop()
     cpu,wall = clock:read()
-    --printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
-    --printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
+    -- printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
+    -- printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
     -- print("Test passed! OK!")
 end)
-
