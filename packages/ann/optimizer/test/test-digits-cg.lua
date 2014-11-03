@@ -12,9 +12,7 @@ T("ConjugateGradientTest", function()
     inf            = -1
     sup            =  1
     shuffle_random = random(5678)
-    rho            = 0.01
-    sig            = 0.8
-    weight_decay   = 1e-05
+    weight_decay   = 0.001
     max_epochs     = 10
 
     -- training and validation
@@ -86,8 +84,6 @@ ascii
                                            ann.optimizer.cg())
     trainer:build()
 
-    trainer:set_option("rho", rho)
-    trainer:set_option("sig", sig)
     trainer:set_option("weight_decay",  weight_decay)
     -- bias has weight_decay of ZERO
     trainer:set_layerwise_option("b.", "weight_decay", 0)
@@ -120,8 +116,7 @@ ascii
     clock:go()
 
     -- print("Epoch Training  Validation")
-    trainer:save(tmp)
-    trainer = trainable.supervised_trainer.load(tmp)
+    local tmp = os.tmpname()
     for epoch = 1,max_epochs do
       collectgarbage("collect")
       totalepocas = totalepocas+1
