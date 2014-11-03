@@ -3,13 +3,13 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 local bunch_size       = tonumber(arg[1]) or 64
 local semilla          = 1234
 local weights_random   = random(semilla)
-local inf              = -0.6
-local sup              =  0.6
+local inf              = -2.4
+local sup              =  2.4
 local shuffle_random   = random(5678)
 local learning_rate    = 0.1
 local momentum         = 0.2
-local weight_decay     = 1e-04
-local L1_norm          = 0.00001
+local weight_decay     = 0.01
+local L1_norm          = 0.0
 local max_norm_penalty = 4
 local max_epochs       = 100
 local check_grandients = false
