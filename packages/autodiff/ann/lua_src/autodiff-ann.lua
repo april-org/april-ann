@@ -4,6 +4,50 @@
 local AD = autodiff
 AD.ann   = AD.ann or {}
 
+-- Make a model wrapper, receives a symbol with the operation, the input symbol,
+-- weight symbols, shared table with matrices, input size, output size,
+function AD.ann.model(f, i, symbols, shared, isize, osize)
+  assert(type(f) == "table", "Needs a symbol as first argument")
+  assert(type(i) == "table", "Needs a symbol as second argument")
+  assert(type(symbols) == "table",
+         "Needs a symbols or a table of symbols as third argument")
+  local diff,func,M = AD.diff,AD.func,AD.matrix
+  local seed = M("seed")
+  local df_dw_tbl = table.pack( diff(f, symbols, seed) )
+  local compiled_f = func(f, { i }, shared)
+  local compiled_df_dw = func(df_dw_tbl, { i, f, seed }, shared)
+  local model = ann.components.wrapper{
+    input = isize,
+    output = osize,
+    weights = matrix.dict(shared),
+    state = { f = f, df_dw_tbl = df_dw_tbl, symbols = symbols, cache = {} },
+    forward = function(self, input, during_training)
+      self.state.cache  = {}
+      self.state.input  = input.get_matrix and input:get_matrix() or input
+      self.state.output = compiled_f(self.state.input, self.state.cache)
+      return tokens.matrix(self.state.output)
+    end,
+    backprop = function(self, seed)
+      self.state.seed = seed.get_matrix and seed:get_matrix() or seed
+    end,
+    compute_gradients = function(self,dict)
+      local dw = table.pack( compiled_df_dw(self.state.input,
+                                            self.state.output,
+                                            self.state.seed,
+                                            self.state.cache) )
+      for i,s in ipairs(symbols) do dict[s.name] = dw[i] end
+      return dict
+    end,
+    reset = function(self)
+      self.state.input  = nil
+      self.state.output = nil
+      self.state.seed   = nil
+      self.state.cache  = {}
+    end,
+  }
+  return model
+end
+
 -- RECTIFIED LINER
 function AD.ann.relu(a)
   return AD.op.cmul(a, AD.op.gt(a,0))

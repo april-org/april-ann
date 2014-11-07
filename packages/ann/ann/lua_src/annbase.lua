@@ -2,6 +2,8 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
+local wrap_matrices = matrix.dict.wrap_matrices
+----------------------------------------------------------------------
 
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
