@@ -22,13 +22,9 @@
 #define ERROR_PRINT_H
 
 #include <cstdio>
-extern "C" {
-#include "lua.h"
-}
 
 bool getSilentErrorsValue();
 void setSilentErrorsValue(bool value);
-void errorPrintSetLuaState(lua_State *L);
 void print_CPP_LUA_stacktrace_and_exit(int errorcode);
 void print_CPP_stacktrace(FILE *out = stderr);
 

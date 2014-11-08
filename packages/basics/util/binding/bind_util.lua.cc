@@ -75,13 +75,20 @@ using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
 
+int lua_isLuaTable(lua_State *L, int idx) {
+  return lua_istable(L, idx);
+}
+
+LuaTable lua_toLuaTable(lua_State *L, int idx) {
+  
+}
+
 //BIND_END
 
 //BIND_STATIC_CONSTRUCTOR utils_static_constructor
 {
   binarizer::init();
   SignalHandler::initialize(L);
-  errorPrintSetLuaState(L);
 }
 //BIND_END
 
