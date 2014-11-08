@@ -87,8 +87,8 @@ namespace Basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    AprilUtils::LuaTableOptions options(L,2);
-    return SparseMatrix<T>::read(ptr.get(), &options);
+    AprilUtils::LuaTable options(L,2);
+    return SparseMatrix<T>::read(ptr.get(), options);
   }
 
 } // namespace Basics

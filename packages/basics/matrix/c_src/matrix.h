@@ -692,7 +692,7 @@ namespace Basics {
      *   true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const AprilUtils::GenericOptions *options);
+                       const AprilUtils::LuaTable &options);
     
     /**
      * @brief Reads the Matrix from a stream.
@@ -734,7 +734,7 @@ namespace Basics {
      * @note This method throws different kind of errors.
      */
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const AprilUtils::GenericOptions *options);
+                           const AprilUtils::LuaTable &options);
     
   private:
     void allocate_memory(int size);
@@ -750,19 +750,16 @@ namespace Basics {
     }
 
     void writeNormal(AprilIO::StreamInterface *stream,
-                     const AprilUtils::GenericOptions *options);
+                     const AprilUtils::LuaTable &options);
     
     void writeTab(AprilIO::StreamInterface *stream,
-                  const AprilUtils::GenericOptions *options);
+                  const AprilUtils::LuaTable &options);
 
     static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
-                                 const AprilUtils::GenericOptions *options);
+                                 const AprilUtils::LuaTable &options);
     
     static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const AprilUtils::GenericOptions *options);
-    
-    static T getTemplateOption(const AprilUtils::GenericOptions *options,
-                               const char *name, T default_value);
+                              const AprilUtils::LuaTable &options);
   };
 
 } // namespace Basics

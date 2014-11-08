@@ -52,10 +52,6 @@ namespace Basics {
                                        AprilIO::StreamInterface *stream);
 
   } // namespace MatrixIO
-
-  template<>
-  bool Matrix<bool>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                       const char *name, bool default_value);
   
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<bool> MatrixBool;

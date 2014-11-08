@@ -55,11 +55,6 @@ namespace Basics {
     
   } // namespace MatrixIO
 
-  template<>
-  double Matrix<double>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name, double default_value);
-
 }
 
 #endif // MATRIX_DOUBLE_H

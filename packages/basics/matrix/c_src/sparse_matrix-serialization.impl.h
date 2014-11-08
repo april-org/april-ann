@@ -43,7 +43,7 @@ namespace Basics {
   template <typename T>
   SparseMatrix<T>*
   SparseMatrix<T>::read(AprilIO::StreamInterface *stream,
-                        const AprilUtils::GenericOptions *options) {
+                        const AprilUtils::LuaTable &options) {
     UNUSED_VARIABLE(options);
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     MatrixIO::BinaryExtractor<T> bin_extractor;
@@ -177,8 +177,8 @@ namespace Basics {
   
   template <typename T>
   void SparseMatrix<T>::write(AprilIO::StreamInterface *stream,
-                              const AprilUtils::GenericOptions *options) {
-    bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
+                              const AprilUtils::LuaTable &options) {
+    bool is_ascii = options.opt(MatrixIO::ASCII_OPTION, false);
     //
     MatrixIO::SparseAsciiSizer<T> ascii_sizer;
     MatrixIO::SparseBinarySizer<T> bin_sizer;

@@ -22,6 +22,7 @@
 #ifndef MATRIXFLOAT_H
 #define MATRIXFLOAT_H
 
+#include "lua_table.h"
 #include "matrix.h"
 
 namespace Basics {
@@ -55,11 +56,7 @@ namespace Basics {
     /**************************************************************************/
  
   } // namespace MatrixIO
-  
-  template<>
-  float Matrix<float>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                         const char *name, float default_value);
-  
+    
   //////////////////////////////////////////////////////////////////////////
   
   template <>
@@ -69,6 +66,17 @@ namespace Basics {
 
   typedef Matrix<float> MatrixFloat;
 
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::MatrixFloat *LuaTable::
+  convertTo<Basics::MatrixFloat *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixFloat *>(lua_State *L, Basics::MatrixFloat *value);
 }
 
 #endif // MATRIXFLOAT_H

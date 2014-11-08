@@ -21,8 +21,8 @@
 #ifndef SERIALIZABLE_H
 #define SERIALIZABLE_H
 
-#include "generic_options.h"
 #include "error_print.h"
+#include "lua_table.h"
 #include "referenced.h"
 #include "stream.h"
 #include "unused_variable.h"
@@ -39,11 +39,11 @@ namespace AprilIO {
     
     // The read method needs to be implemented in derived classes.
     // Whatever *read(StreamInterface *dest,
-    //                const AprilUtils::GenericOptions *options);
+    //                const AprilUtils::LuaTable &options);
 
     /// Writes the object data into dest, and it could be retrieved by read.
     virtual void write(StreamInterface *dest,
-                       const AprilUtils::GenericOptions *options) = 0;
+                       const AprilUtils::LuaTable &options) = 0;
     
     /**
      * @brief Writes a Lua string which can be instantiated to get the object.
@@ -54,7 +54,7 @@ namespace AprilIO {
      * @note THIS METHOD IS A FUTURE FEATURE, IT IS NOT BEEN USED ANYWHERE.
      */
     virtual void toLuaString(StreamInterface *dest,
-                             const AprilUtils::GenericOptions *options) {
+                             const AprilUtils::LuaTable &options) {
       UNUSED_VARIABLE(dest);
       UNUSED_VARIABLE(options);
       ERROR_EXIT(128, "Unable to instantiate into a Lua string\n");

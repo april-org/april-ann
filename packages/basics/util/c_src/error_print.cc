@@ -132,7 +132,7 @@ void print_CPP_LUA_stacktrace_and_exit(int errorcode) {
   print_CPP_stacktrace();
   if (Base::getGlobalLuaState() != 0) {
     lua_pushstring(Base::getGlobalLuaState(), "");
-    lua_error(Base::getGlobalLuaState();
+    lua_error(Base::getGlobalLuaState());
   }
   else {
     exit(errorcode);

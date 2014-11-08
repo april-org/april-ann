@@ -55,12 +55,6 @@ namespace Basics {
   
   } // namespace MatrixIO
 
-  template<>
-  AprilMath::ComplexF Matrix<AprilMath::ComplexF>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name,
-                    AprilMath::ComplexF default_value);
-
   //////////////////////////////////////////////////////////////////////////////
 
   typedef Matrix<AprilMath::ComplexF> MatrixComplexF;
