@@ -4,7 +4,7 @@ local weight_decay   = 1e-05
 local semilla        = 1234
 local rnd            = random(semilla)
 --
-local M = matrix.col_major
+local M = matrix
 
 m_xor = matrix.fromString[[
     4 3
@@ -20,7 +20,7 @@ ds_output = dataset.matrix(m_xor,{offset={0,2},patternSize={1,1}})
 
 m = matrix.fromString[[
     3 3
-    ascii col_major
+    ascii
       -0.5 -1.2 1.0
       -2.0 4.0 -4.0
       -1.0 2.0 2.0

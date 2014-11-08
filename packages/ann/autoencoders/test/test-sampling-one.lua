@@ -59,7 +59,7 @@ noise:build{ input=256, output=256 }
 output,L,chain = ann.autoencoders.iterative_sampling{
   model   = full_sdae,
   noise   = noise,
-  input   = input:rewrap(1,256):clone("col_major"),
+  input   = input:rewrap(1,256):clone(),
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
@@ -68,18 +68,18 @@ output,L,chain = ann.autoencoders.iterative_sampling{
   loss    = loss,
 }
 for i,output in ipairs(chain) do
-  matrix.saveImage(output:clone("row_major"):rewrap(16,16),
+  matrix.saveImage(output:clone():rewrap(16,16),
 		   "wop1-"..string.format("%04d",i)..".pnm")
 end
 if log then output:log() end
 ite_L = loss:loss(tokens.matrix(output:rewrap(1,256)),
-		  tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
+		  tokens.matrix(matrix(1,256,val_input:getPattern(ipat))))
 print(ite_L)
 
 output,L,chain = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
   noise   = noise,
-  input   = input:rewrap(1,256):clone("col_major"),
+  input   = input:rewrap(1,256):clone(),
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
@@ -91,10 +91,10 @@ output,L,chain = ann.autoencoders.sgd_sampling{
   loss    = loss,
 }
 for i,output in ipairs(chain) do
-  matrix.saveImage(output:clone("row_major"):rewrap(16,16),
+  matrix.saveImage(output:clone():rewrap(16,16),
 		   "wop2-"..string.format("%04d",i)..".pnm")
 end
 if log then output:log() end
 sgd_L = loss:loss(tokens.matrix(output:rewrap(1,256)),
-		  tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
+		  tokens.matrix(matrix(1,256,val_input:getPattern(ipat))))
 print(sgd_L)

@@ -40,8 +40,6 @@ namespace Stats {
     lambda(lambda), inv_lambda(0) {
     if (lambda->getNumDim() != 1)
       ERROR_EXIT(128, "Expected one-dimensional lambda matrix\n");
-    if (lambda->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Expected col_major matrix\n");
     IncRef(lambda);
     updateParams();
   }

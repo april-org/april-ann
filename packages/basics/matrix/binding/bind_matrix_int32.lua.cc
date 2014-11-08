@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_mtrand.h"
 #include "utilMatrixInt32.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
@@ -491,28 +492,24 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  MatrixInt32 *obj2;
-  if (argn == 0) obj2 = obj->clone();
-  else {
-    const char *major;
-    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order char %s", major);
-    obj2 = obj->clone(order);
-  }
+  MatrixInt32 *obj2 = obj->clone();
   LUABIND_RETURN(MatrixInt32,obj2);
 }
 //BIND_END
 
 //BIND_METHOD MatrixInt32 transpose
 {
-  LUABIND_RETURN(MatrixInt32, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixInt32, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixInt32, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 
@@ -633,10 +630,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //BIND_METHOD MatrixInt32 to_float
 {
-  bool col_major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
-  LUABIND_RETURN(MatrixFloat,
-		 convertFromMatrixInt32ToMatrixFloat(obj, col_major));
+  LUABIND_RETURN(MatrixFloat, convertFromMatrixInt32ToMatrixFloat(obj));
 }
 //BIND_END
 
@@ -648,6 +642,27 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
   LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
                  matCopy(obj, mat));
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 uniform
+{
+  int lower, upper;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, int, lower);
+  LUABIND_GET_PARAMETER(2, int, upper);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  
+  if (lower > upper) {
+    LUABIND_ERROR("First argument must be <= second argument");
+  }
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++it) {
+    *it = random->randInt(upper - lower) + lower;
+  }
+  DecRef(random);
+  LUABIND_RETURN(MatrixInt32, obj);
 }
 //BIND_END
 

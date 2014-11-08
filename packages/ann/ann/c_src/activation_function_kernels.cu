@@ -144,22 +144,16 @@ namespace ANN {
       }
       else {
 #endif
-        AprilMath::FloatGPUMirroredMemoryBlock *input_units =
-          input->getRawDataAccess();
-        AprilMath::FloatGPUMirroredMemoryBlock *output_units =
-          output->getRawDataAccess();
-        const float *input_units_ptr = input_units->getPPALForRead();
-        float *output_units_ptr      = output_units->getPPALForWrite();
-
         for (unsigned int b = 0; b < bunch_size; ++b) {
-          float minimum = input_units_ptr[0];
-          float maximum = input_units_ptr[0];
-          unsigned int cur_pos = bunch_size;
+          Basics::MatrixFloat::const_iterator input_it(input->iteratorAt(b,0));
+          float minimum = *input_it;
+          float maximum = *input_it;
+          ++input_it;
           for (unsigned int i = 2; i < size; i += 2) {
-            float prev_unit = input_units_ptr[cur_pos];
-            cur_pos += bunch_size;
-            float cur_unit = input_units_ptr[cur_pos];
-            cur_pos += bunch_size;
+            float prev_unit = *input_it;
+            ++input_it;
+            float cur_unit = *input_it;
+            ++input_it;
             if (prev_unit < cur_unit) {
               if (prev_unit < minimum) minimum = prev_unit;
               if (cur_unit > maximum) maximum = cur_unit;
@@ -169,25 +163,26 @@ namespace ANN {
             }
           }
           if ((size & 1) == 0) { // si es impar
-            unsigned int last_pos = (size - 1) * bunch_size;
-            if (input_units_ptr[last_pos] < minimum)
-              minimum = input_units_ptr[last_pos];
-            if (input_units_ptr[last_pos] > maximum)
-              maximum = input_units_ptr[last_pos];
+            if (*input_it < minimum) minimum = *input_it;
+            if (*input_it > maximum) maximum = *input_it;
           }
           if ((maximum - minimum) > 30.0f) minimum = maximum - 30.0f;
           double addition = 0;
-          cur_pos = 0;
+          input_it = input->iteratorAt(b,0);
+          Basics::MatrixFloat::iterator output_it(output->iteratorAt(b,0));
           for (unsigned int i = 0; i < size; i++) {
-            double e = exp(input_units_ptr[cur_pos] - minimum);
-            output_units_ptr[cur_pos] = e;
+            double e = exp(*input_it - minimum);
+            *output_it = e;
             addition += e;
-            cur_pos  += bunch_size;
+            ++input_it;
+            ++output_it;
           }
           float ratio = 1.0f/addition;
-          cblas_sscal(size, ratio, output_units_ptr, bunch_size);
-          output_units_ptr++;
-          input_units_ptr++;
+          output_it = output->iteratorAt(b,0);
+          for (unsigned int i = 0; i < size; i++) {
+            *output_it *= ratio;
+            ++output_it;
+          }
         }
 #ifdef USE_CUDA
       }
@@ -229,50 +224,42 @@ namespace ANN {
       }
       else {
 #endif
-        AprilMath::FloatGPUMirroredMemoryBlock *input_units =
-          input->getRawDataAccess();
-        AprilMath::FloatGPUMirroredMemoryBlock *output_units =
-          output->getRawDataAccess();
-        const float *input_units_ptr = input_units->getPPALForRead();
-        float *output_units_ptr      = output_units->getPPALForWrite();
-
         for (unsigned int b = 0; b < bunch_size; ++b) {
-          float maximum = input_units_ptr[0];
-          unsigned int cur_pos = bunch_size;
+          Basics::MatrixFloat::const_iterator input_it(input->iteratorAt(b,0));
+          float maximum = *input_it;
+          ++input_it;
           for (unsigned int i = 2; i < size; i += 2) {
-            float prev_unit = input_units_ptr[cur_pos];
-            cur_pos += bunch_size;
-            float cur_unit = input_units_ptr[cur_pos];
+            float prev_unit = *input_it;
+            ++input_it;
+            float cur_unit = *input_it;
+            ++input_it;
             if (prev_unit < cur_unit) {
               if (cur_unit > maximum) maximum = cur_unit;
             } else {
               if (prev_unit > maximum) maximum = prev_unit;
             }
-            cur_pos += bunch_size;
           }
           if ((size & 1) == 0) { // si es par
-            unsigned int last_pos = (size - 1) * bunch_size;
-            if (input_units_ptr[last_pos] > maximum)
-              maximum = input_units_ptr[last_pos];
+            if (*input_it > maximum) maximum = *input_it;
           }
+          input_it = input->iteratorAt(b,0);
+          Basics::MatrixFloat::iterator output_it(output->iteratorAt(b,0));
           double addition = 0.0f;
-          cur_pos = 0;
           for (unsigned int i = 0; i < size; i++) {
-            output_units_ptr[cur_pos] = input_units_ptr[cur_pos] - maximum;
-            double exp_output = AprilMath::m_exp(static_cast<double>(output_units_ptr[cur_pos]));
+            *output_it = *input_it - maximum;
+            double exp_output = AprilMath::m_exp(static_cast<double>(*output_it));
             addition += exp_output;
-            cur_pos  += bunch_size;
+            ++input_it;
+            ++output_it;
           }
+          output_it = output->iteratorAt(b,0);
           float ratio = static_cast<float>(log(addition));
-          cur_pos = 0;
           for (unsigned int i = 0; i < size; i++) {
-            output_units_ptr[cur_pos] -= ratio;
-            april_assert(!(output_units_ptr[cur_pos] > 0.0f) &&
+            *output_it -= ratio;
+            april_assert(!(*output_it > 0.0f) &&
                          "Numerical inestability at log-softmax activation function");
-            cur_pos += bunch_size;
+            ++output_it;
           }
-          output_units_ptr++;
-          input_units_ptr++;
         }
 #ifdef USE_CUDA
       }

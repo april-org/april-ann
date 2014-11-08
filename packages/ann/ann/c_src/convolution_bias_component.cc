@@ -54,8 +54,7 @@ namespace ANN {
     MatrixFloat *bias_vec = bias_vector->select(1,0);
     IncRef(bias_vec);
     // the output bias as a 2d matrix of BUNCHxN
-    MatrixFloat *bias_matrix_2d = new MatrixFloat(2, window_size,
-						  CblasColMajor);
+    MatrixFloat *bias_matrix_2d = new MatrixFloat(2, window_size);
     IncRef(bias_matrix_2d);
     // first pattern is done out of the loop
     MatrixFloat *dest = bias_matrix_2d->select(0, 0);

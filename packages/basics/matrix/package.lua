@@ -17,7 +17,10 @@
      name = "test",
      lua_unit_test{
        file={
+         "test/test_gemm.lua",
+         "test/test_gemv.lua",
 	 "test/test_matrix_inv_solve.lua",
+	 "test/test_matrix_fft.lua",
 	 "test/test_matrix_math.lua",
 	 "test/test_sparse_matrix.lua",
 	 "test/test_convolution.lua",

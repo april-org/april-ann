@@ -25,7 +25,7 @@ end
 
 --------------------------------------------------------------------------
 
-local aR = stats.mean_centered_by_pattern(m:clone("col_major"))
+local aR = stats.pca.center_by_pattern(m:clone())
 
 T("PCATest",
   function()
@@ -34,7 +34,7 @@ T("PCATest",
     -- check regeneration of original covariance matrix
     local cov = stats.cov(aR, aR, { centered=true })
     check(function()
-        return cov:equals(aU * aS:to_dense("col_major") * aVT)
+        return cov:equals(aU * aS:to_dense() * aVT)
     end, "Regeneration of covariance matrix")
 
     -- ROTATION
@@ -60,24 +60,24 @@ T("PCATest",
     end, "V orthogonality test")
 
     -- check U matrix with octave computation
-    local refU = matrix.fromTabFilename(base_dir.."data/U.gz", "col_major"):
+    local refU = matrix.fromTabFilename(base_dir.."data/U.gz"):
       abs()
     check(function() return refU:equals(aU:clone():abs(), 0.06) end,
       "U matrix comparison with octave")
 
     -- check V matrix with octave computation
-    local refV = matrix.fromTabFilename(base_dir.."data/V.gz", "col_major"):
+    local refV = matrix.fromTabFilename(base_dir.."data/V.gz"):
       transpose():abs()
     check(function() return refV:equals(aVT:clone():abs(), 0.06) end,
       "V matrix comparison with octave")
 
     -- check S matrix with octave computation
-    local refS = matrix.fromFilename(base_dir.."data/S.gz", "col_major")
+    local refS = matrix.fromFilename(base_dir.."data/S.gz")
     check(function()
         -- FIXME: the last value is weird... we need to remove it for pass the
         -- test (both matrices are of (1:144,1:144)
         return refS:diagonalize()('1:143','1:143'):
-          equals(aS:to_dense("col_major")('1:143','1:143') )
+          equals(aS:to_dense()('1:143','1:143') )
     end,
     "S matrix comparison with octave")
 end)
@@ -88,8 +88,8 @@ end)
 
 T("GS-PCATest",
   function()
-    local aR = stats.mean_centered_by_pattern(m:clone("col_major"))
-    local bT,bP,bR,bV,bS = stats.iterative_pca{ X = aR, K = 144, }
+    local aR = stats.pca.center_by_pattern(m:clone())
+    local bT,bP,bR,bV,bS = stats.pca.gs_pca{ X = aR, K = 144, }
 
     -- check regeneration of original matrix
     check(function() return aR:equals( bT * bP:transpose() + bR ) end)

@@ -52,7 +52,7 @@ namespace ANN {
 				  unsigned int num_outputs) {
     int dims[2] = { static_cast<int>(num_outputs),
 		    static_cast<int>(num_inputs) };
-    MatrixFloat *weights = new MatrixFloat(2, dims, CblasColMajor);
+    MatrixFloat *weights = new MatrixFloat(2, dims);
     if (weights == 0)
       ERROR_EXIT(130, "Impossible to allocate memory\n");
     return weights;
@@ -123,9 +123,9 @@ namespace ANN {
     if (min_size > static_cast<unsigned int>(data->size()))
       ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
 		  data->size(), min_size);
-    if (!data->isSimple())
-      ERROR_EXIT(128, "Matrices need to be simple (contiguous "
-		 "and in row-major)\n");
+    if (!data->getIsContiguous()) {
+      ERROR_EXIT(128, "Matrices need to be contiguous\n");
+    }
     unsigned int current_w_pos = first_weight_pos;
     MatrixFloat::iterator w_it(weights->begin());
     for (unsigned int j=0; j<num_outputs; ++j) {
@@ -152,9 +152,8 @@ namespace ANN {
     if (min_size > static_cast<unsigned int>(data->size()))
       ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
 		  data->size(), min_size);
-    if (!data->isSimple())
-      ERROR_EXIT(128, "Matrices need to be simple (contiguous "
-		 "and in row-major)\n");    
+    if (!data->getIsContiguous())
+      ERROR_EXIT(128, "Matrices need to contiguous\n");
     unsigned int current_w_pos = first_weight_pos;
     MatrixFloat::const_iterator w_it(weights->begin());
     for (unsigned int j=0; j<num_outputs; ++j) {

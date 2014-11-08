@@ -92,11 +92,7 @@ trainable_supervised_trainer.constructor =
           if not is_a(m, matrix) then
             m = wdata.w:rewrap(wdata.output,wdata.input)
           end
-          if m:get_major_order() == "col_major" then
-            weights:insert(name,m)
-          else
-            weights:insert(name,m:clone("col_major"))
-          end
+          weights:insert(name,m:clone())
         end
       end
       self:build{ weights = weights }
@@ -778,9 +774,9 @@ trainable_supervised_trainer_methods.train_step =
   } ..
   function(self, input, target, loss, optimizer,
            bunch_size, smooth_gradients, mask)
-    if type(input)  == "table" then input  = matrix.col_major(input)  end
-    if type(target) == "table" then target = matrix.col_major(target) end
-    if type(mask)   == "table" then mask   = matrix.col_major(mask) end
+    if type(input)  == "table" then input  = matrix(input)  end
+    if type(target) == "table" then target = matrix(target) end
+    if type(mask)   == "table" then mask   = matrix(mask) end
     local loss       = loss or self.loss_function or error("Needs a loss object")
     local optimizer  = optimizer or self.optimizer or error("Needs an optimizer object")
     local bunch_size = bunch_size or self.bunch_size or 1
@@ -792,8 +788,9 @@ trainable_supervised_trainer_methods.train_step =
       end
       target = target:clone():cmul(mask)
     end
+    local has_average = optimizer:has_property("average")
     local needs_gradient = optimizer:needs_property("gradient")
-    local tr_loss, _, tr_loss_matrix =
+    local tr_loss, _, tr_loss_matrix, average =
       optimizer:execute(function(weights, it)
           if weights ~= self.weights_table then
             self:build{ weights = weights }
@@ -866,9 +863,9 @@ trainable_supervised_trainer_methods.validate_step =
     },
   } ..
   function(self, input, target, loss, mask)
-    if type(input)  == "table" then input  = matrix.col_major(input)  end
-    if type(target) == "table" then target = matrix.col_major(target) end
-    if type(mask)   == "table" then mask   = matrix.col_major(mask) end
+    if type(input)  == "table" then input  = matrix(input)  end
+    if type(target) == "table" then target = matrix(target) end
+    if type(mask)   == "table" then mask   = matrix(mask) end
     local model = self.ann_component
     local loss  = loss or self.loss_function
     model:reset()
@@ -910,8 +907,8 @@ trainable_supervised_trainer_methods.compute_gradients_step =
     },
   } ..
   function(self, input, target, loss, weight_grads)
-    if type(input)  == "table" then input  = matrix.col_major(input)  end
-    if type(target) == "table" then target = matrix.col_major(target) end
+    if type(input)  == "table" then input  = matrix(input)  end
+    if type(target) == "table" then target = matrix(target) end
     local loss         = loss or self.loss_function
     local weight_grads = weight_grads or matrix.dict()
     local tr_loss,tr_loss_matrix,gradient
@@ -948,8 +945,8 @@ trainable_supervised_trainer_methods.grad_check_step =
     },
   } ..
   function(self, input, target, verbose, loss)
-    if type(input)  == "table" then input  = matrix.col_major(input)  end
-    if type(target) == "table" then target = matrix.col_major(target) end
+    if type(input)  == "table" then input  = matrix(input)  end
+    if type(target) == "table" then target = matrix(target) end
     local loss = loss or self.loss_function
     self.ann_component:reset()
     loss:reset()
@@ -964,6 +961,7 @@ trainable_supervised_trainer_methods.grad_check_step =
     local ret      = true
     local bunch_size = tr_loss_matrix:dim(1)
     local it = 1
+    -- local counts = iterator(self:iterate_weights()):map(function(name,cnn) return name,cnn:get_shared_count() end):table()
     for wname,cnn in self:iterate_weights() do
       collectgarbage("collect")
       local w = cnn
@@ -1031,14 +1029,14 @@ trainable_supervised_trainer_methods.calculate =
         "the computed output for the given input.",
       }, 
     params = {
-      "A table with one input pattern, a col-major matrix or a token (with one or more patterns)",
+      "A table with one input pattern, a matrix or a token (with one or more patterns)",
     },
     outputs = {
-      "A col-major matrix with the computed output",
+      "A matrix with the computed output",
     },
   } ..
   function(self,input)
-    if type(input) == "table" then input = matrix.col_major(input) end
+    if type(input) == "table" then input = matrix(input) end
     self.ann_component:reset()
     return self.ann_component:forward(input):get_matrix()
   end
@@ -1532,7 +1530,8 @@ trainable_supervised_trainer_methods.clone =
     local obj = trainable.supervised_trainer(self.ann_component:clone(),
                                              nil,
                                              self.bunch_size,
-                                             nil)
+                                             nil,
+                                             self.smooth_gradients)
     if self.loss_function then
       obj:set_loss_function(self.loss_function:clone())
     end

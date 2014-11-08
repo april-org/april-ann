@@ -89,6 +89,7 @@ tmpname = os.tmpname()
 while train_func:execute(function()
 			   local tr = trainer:train_dataset(training_data)
 			   local va = trainer:validate_dataset(validation_data)
+                           print(tr,va)
 			   return trainer,tr,va
 			 end) do
   train_func:save(tmpname, "binary", { shuffle = training_data.shuffle })

@@ -3,13 +3,13 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 local bunch_size       = tonumber(arg[1]) or 64
 local semilla          = 1234
 local weights_random   = random(semilla)
-local inf              = -0.6
-local sup              =  0.6
+local inf              = -2.4
+local sup              =  2.4
 local shuffle_random   = random(5678)
 local learning_rate    = 0.1
 local momentum         = 0.2
-local weight_decay     = 1e-04
-local L1_norm          = 0.00001
+local weight_decay     = 0.01
+local L1_norm          = 0.0
 local max_norm_penalty = 4
 local max_epochs       = 100
 local check_grandients = false
@@ -158,7 +158,7 @@ if check_grandients then
   trainer:grad_check_dataset({
 			       input_dataset  = dataset.slice(val_input, 1, 10),
 			       output_dataset = dataset.slice(val_output, 1, 10),
-			       bunch_size = 1,
+			       bunch_size = 10,
 			       verbose = false,
 			     })
 end
@@ -173,7 +173,7 @@ for input,idxs in trainable.dataset_multiple_iterator{
   local k = 0
   for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
 			     numSteps={d[1], d[2], 1, 1} }:iterate() do
-    local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+    local img = w:clone():rewrap(d[3],d[4])
     matrix.saveImage(img:adjust_range(0,1), "/tmp/WW-".. idxs[1] .. "-"..k..".pnm")
     k=k+1
   end
@@ -258,7 +258,7 @@ end
 --     local k = 0
 --     for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
 -- 			       numSteps={d[1], d[2], 1, 1} }:iterate() do
---       local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+--       local img = w:clone():rewrap(d[3],d[4])
 --       matrix.saveImage(img:adjust_range(0,1), "/tmp/jajaja-".. idxs[1] .. "-"..k..".pnm")
 --       k=k+1
 --     end

@@ -5,7 +5,7 @@ local a,w,w2 = AD.matrix('a w w2')
 local b,c = AD.matrix('b c')
 
 local rnd = random(1234)
-local M   = matrix.col_major
+local M   = matrix
 
 weights = {
   w  = M(3,4):uniformf(0,1,rnd),
@@ -69,7 +69,7 @@ L = autodiff.op.sum( (f - target)^2 )
 
 -- INSTANTIATION
 local rnd = random(1234)
-local M   = matrix.col_major
+local M   = matrix
 
 weights = {
   wx  = M(12,3):uniformf(-0.1, 0.1, rnd),

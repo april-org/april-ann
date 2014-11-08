@@ -1,4 +1,10 @@
 stats = stats or {} -- global environment
+stats.running = stats.running or {}
+
+april_set_doc(stats.running,{
+                class = "namespace",
+                summary = "Table with running statistics classes",
+})
 
 -----------------------------------------------------------------------------
 
@@ -9,14 +15,34 @@ local sdiag = matrix.sparse.diag
 local function center(x)
   local x_dim = x:dim()
   local N = x_dim[1]
-  local x_mu
+  local x_mu,mu
   if #x_dim == 1 then
-    x_mu = x:sum()/N
+    mu   = x:sum()/N
+    x_mu = mu
   else
-    x_mu = mop.repmat(x:sum(1):scal(1/N),N,1)
+    mu = x:sum(1):scal(1/N)
+    x_mu = mop.repmat(mu,N,1)
   end
-  return x - x_mu
+  return x - x_mu,mu
 end
+
+stats.standardize =
+  april_doc{
+    class = "function",
+    summary = "Standardize data to have zero-mean one-variance",
+    description = "Data is ordered by rows, features by columns.",
+    params = { "A 2D matrix" },
+    outputs = { "Another new allocated matrix" },
+  } ..
+  function(x)
+    assert(#x:dim() == 2, "Needs a 2D matrix")
+    local N = x:dim(1)
+    local sigma2,mu = stats.var(x,1)
+    local x = x:clone()
+    x:axpy(-1.0, mop.repmat(mu,N,1))
+    x:cmul(mop.repmat(1/sigma2:sqrt(),N,1))
+    return x,mu,sigma2
+  end
 
 stats.center =
   april_doc{
@@ -37,7 +63,10 @@ stats.var =
     summary = "Computes variance over a dimension",
     params = { "A matrix",
                "A dimension number [optional].", },
-    outputs = { "A new allocated matrix or a number if not dim given" },
+    outputs = {
+      "A new allocated matrix or a number if not dim given",
+      "The mean used to center the data"
+    },
   } ..
   function(x,dim)
     local mean = stats.amean(x,dim)
@@ -49,7 +78,7 @@ stats.var =
       x:scalar_add(-mean)
       sz = x:size()
     end
-    return x:pow(2):sum(dim)/(sz-1)
+    return x:pow(2):sum(dim)/(sz-1),mean
   end
 
 stats.cov =
@@ -72,7 +101,9 @@ stats.cov =
       "A 2D matrix or a vector (x)",
       "An [optional] table with 'centered' boolean, 'true_mean' boolean",
     },
-    outputs = { "Covariance matrix" }
+    outputs = { "Covariance matrix",
+                "The x center vector if not centered flag [optional]",
+                "The y center vector if not centered flag [optional]" }
   } ..
   function(x,...)
     local y,params = ...
@@ -85,19 +116,22 @@ stats.cov =
         centered = { type_match = "boolean", default = nil },
         true_mean = { type_match = "boolean", default =nil },
       }, params)
+    assert(not params.true_mean or params.centered,
+           "true_mean=true is mandatory of centered=true")
     local x_dim,y_dim = x:dim(),y:dim()
     assert((#x_dim <= 2) and (#y_dim <= 2), "Needs 2D matrices or vectors")
     assert(x_dim[1] == y_dim[1] and x_dim[2] == y_dim[2],
            "Require same shape matrices")
+    local mu_x,mu_y
     local N,M = table.unpack(x_dim)
     if not params.centered then
       local oldx = x
-      x = center(x)
-      y = rawequal(oldx,y) and x or center(y)
+      x,mu_x = center(x)
+      if rawequal(xold,y) then y,mu_y = x,mu_x else y,mu_y = center(y) end
     end
     local sz = N-1
     if params.true_mean then sz = N end
-    return (x:transpose() * y):scal(1/sz):rewrap(M or 1,M or 1)
+    return (x:transpose() * y):scal(1/sz):rewrap(M or 1,M or 1),mu_x,mu_y
   end
 
 stats.cor =
@@ -120,22 +154,25 @@ stats.cor =
       "A 2D matrix or a vector (x)",
       "An [optional] table with 'centered' boolean",
     },
-    outputs = { "Correlation matrix" }
+    outputs = { "Correlation matrix",
+                "The x center vector if not centered flag [optional]",
+                "The y center vector if not centered flag [optional]" }
   } ..
   function(x,...)
     local y,params = ...
     if type(y) == "table" or not y then y,params = x,y end
     local params = params or {}
+    local mu_x,mu_y
     if not params.centered then
       local xold = x
-      x = center(x)
-      if rawequal(xold,y) then y = x else y = center(y) end
+      x,mu_x = center(x)
+      if rawequal(xold,y) then y,mu_y = x,mu_x else y,mu_y = center(y) end
     end
     local function cstd(m) return sdiag((m^2):sum(1):scal(1/(m:dim(1)-1)):sqrt():div(1):squeeze()) end
     local sigma = stats.cov(x,y,{ centered=true })
     local sx = cstd(x)
     local sy = rawequal(x,y) and sx or cstd(y)
-    return sx * sigma * sy
+    return sx * sigma * sy,mu_x,mu_y
   end
 
 stats.acf =
@@ -167,8 +204,7 @@ stats.acf =
     local lag_start,lag_max,lag_step = params.lag_start,params.lag_max,params.lag_step
     if #x_dim == 1 then x = x:rewrap(x:size(),1) end
     local N,M = x_dim[1],x:dim(2)
-    local ctor = matrix[x:get_major_order()]
-    local result = ctor(math.floor((lag_max + 1 - lag_start) / lag_step), M)
+    local result = matrix(math.floor((lag_max + 1 - lag_start) / lag_step), M)
     local acf_func = params.cor
     for j=1,M do
       local i=1
@@ -251,10 +287,10 @@ stats.hmean =
 
 -----------------------------------------------------------------------------
 
-local mean_var,mean_var_methods = class("stats.mean_var")
-stats.mean_var = mean_var -- global environment
+local mean_var,mean_var_methods = class("stats.running.mean_var")
+stats.running.mean_var = mean_var -- global environment
 
-april_set_doc(stats.mean_var, {
+april_set_doc(stats.running.mean_var, {
 		class       = "class",
 		summary     = "Class to compute mean and variance",
 		description ={
@@ -264,7 +300,7 @@ april_set_doc(stats.mean_var, {
 
 -----------------------------------------------------------------------------
 
-april_set_doc(stats.mean_var, {
+april_set_doc(stats.running.mean_var, {
 		class = "method", summary = "Constructor",
 		description ={
 		  "Constructor of a mean_var object",
@@ -866,25 +902,24 @@ april_set_doc(stats.boot,
 		description= {
 		  "This function is useful to compute confidence intervals",
 		  "by using bootstrapping technique. The function receives",
-		  "a data table or matrix, a function which returns statistics",
-                  "of a sample given an iterator.",
+		  "the population size and a function which returns statistics",
+                  "of a sample.",
 		  "A table with the computation of the post-process function",
 		  "for every repetition will be returned.",
 		},
 		params = {
-		  data = "A table with the data",
+		  size = "Population size",
 		  R = "Number of repetitions, recommended minimum of 1000",
 		  statistic = {
-		    "A function witch receives an iterator and computes",
-                    "statistics (k>=1 statistics) over all the iterator results.",
-                    "The iterator produces a key which is a row in data",
-                    "and a value which is the corresponding row.",
+		    "A function witch receives a matrixInt32 with sample indices and computes",
+                    "statistics (k>=1 statistics) over the sample.",
                     "If k>1, statistic must return a table with the desired",
                     "k statistics."
 		  },
 		  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
                   seed = "A random seed [optional], by default it is os.time()",
+                  [2] = "As second parameter it accepts extra arguments for statistic function.",
 		},
 		outputs = {
 		  "A table with the k statistics for every repetition."
@@ -892,10 +927,10 @@ april_set_doc(stats.boot,
 })
 
 -- self is needed because of __call metamethod, but it will be ignored
-local function boot(self,params)
+local function boot(self,params,...)
   local params = get_table_fields(
     {
-      data        = { mandatory = true },
+      size        = { type_match = "number",   mandatory = true, },
       R           = { type_match = "number",   mandatory = true },
       statistic   = { type_match = "function", mandatory = true },
       verbose     = { mandatory = false },
@@ -903,35 +938,19 @@ local function boot(self,params)
       seed        = { mandatory = false, type_match = "number", default = os.time() },
     },
     params)
-  local data        = params.data
+  local extra       = table.pack(...)
+  local size        = params.size
   local repetitions = params.R
   local statistic   = params.statistic
   local ncores      = params.ncores
   local seed        = params.seed
   local get_row,N
-  -- prepare N and get_row function depending in the type of data parameter
-  if type(data) == "table" then
-    N = #data
-    get_row = function(i) return data[i] end
-  elseif class.is_a(data, matrix) or class.is_a(data, matrixInt32) or class.is_a(data, matrixComplex) then
-    N = data:dim(1)
-    local row
-    get_row = function(i) row=data:select(1,i,row) return row end
-  else
-    errro("Incorrect type, needs a table, a matrix, matrixInt32 or matrixComplex")
-  end
-  -- returns an iterator of random samples using rnd random object
-  local make_iterator = function(rnd)
-    local p=0
-    return function()
-      if p<N then p=p+1 j=rnd:randInt(1,p) return j,get_row(j) end
-    end
-  end
   -- resample function executed in parallel using parallel_foreach
   local resample = function(i, id)
     collectgarbage("collect")
     local rnd = random(seed + i - 1)
-    local r,_ = statistic(make_iterator(rnd))
+    local sample = matrixInt32(size):uniform(1,size,rnd)
+    local r,_ = statistic(sample,table.unpack(extra))
     assert(not _, "statistic must return one value (it can be a table")
     assert(type(r) == "number" or type(r) == "table",
            "statistic function must return a number or a table")
@@ -1032,13 +1051,12 @@ stats.boot.percentil =
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local pearson,pearson_methods = class("stats.correlation.pearson")
-get_table_from_dotted_string("stats.correlation", true)
-stats.correlation.pearson = pearson
+local pearson,pearson_methods = class("stats.running.pearson")
+stats.running.pearson = pearson
 
 function pearson:constructor(x,y)
-  self.mean_var_x  = stats.mean_var()
-  self.mean_var_y  = stats.mean_var()
+  self.mean_var_x  = stats.running.mean_var()
+  self.mean_var_y  = stats.running.mean_var()
   self.xy_sum      = 0
   if x then self:add(x,y) end
 end
@@ -1074,7 +1092,7 @@ end
 
 stats.dist.bernoulli = function(p)
   if class.is_a(p, matrix) then
-    return stats.dist.binomial(matrix.col_major(1,{1}),p)
+    return stats.dist.binomial(matrix(1,{1}),p)
   else
     return stats.dist.binomial(1,p)
   end
@@ -1092,3 +1110,12 @@ april_set_doc(stats.comb,{
                 },
                 outputs = { "A number with (n over k)" },
 })
+
+stats.mean_var = make_deprecated_function("stats.mean_var",
+                                          "stats.running.mean_var",
+                                          stats.running.mean_var)
+
+stats.correlation = {} -- deprecated table
+stats.correlation.pearson = make_deprecated_function("stats.correlation.pearson",
+                                                     "stats.running.pearson",
+                                                     stats.running.pearson)

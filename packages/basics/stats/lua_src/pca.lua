@@ -1,4 +1,15 @@
 stats = get_table_from_dotted_string("stats", true)
+stats.pca = stats.pca or {}
+stats.zca = stats.zca or {}
+
+april_set_doc(stats.pca,{
+                class = "namespace",
+                summary = "Table with PCA related stuff",
+})
+april_set_doc(stats.zca,{
+                class = "namespace",
+                summary = "Table with ZCA related stuff",
+})
 
 local function normalize(m,norm)
   local norm = norm or m:norm2()
@@ -13,7 +24,8 @@ end
 -------------------------------------------------------------------------------
 
 -- WARNING IN PLACE OPERATION
-function stats.mean_centered_by_pattern(X)
+function stats.pca.center_by_pattern(X)
+  local X=X:clone()
   local dim = X:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N = table.unpack(dim)
@@ -27,9 +39,9 @@ end
 -------------------------------------------------------------------------------
 
 -- NOT IN-PLACE
-function stats.pca_whitening(X,U,S,epsilon)
+function stats.pca.whitening(X,U,S,epsilon)
   local epsilon = epsilon or 0.0
-  local result = matrix[X:get_major_order()](X:dim(1), S:dim(1))
+  local result = matrix(X:dim(1), S:dim(1))
   result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
   for v,i in S:iterate() do
     result:select(2,i):scal( 1/math.sqrt(v + epsilon) )
@@ -38,14 +50,14 @@ function stats.pca_whitening(X,U,S,epsilon)
 end
 
 -- WARNING IN PLACE OPERATION
-function stats.zca_whitening(X,U,S,epsilon)
-  local aux = stats.pca_whitening(X,U,S,epsilon)
+function stats.zca.whitening(X,U,S,epsilon)
+  local aux = stats.pca.whitening(X,U,S,epsilon)
   X:gemm{ A=aux, B=U, trans_B=true, beta=0, alpha=1 }
   return X
 end
 
 -- compute PCA mass
-stats.pca_mass =
+stats.pca.mass =
   april_doc{
     class = "function",
     summary = "Computes PCA mass probability given S diagonal sparse matrix",
@@ -61,7 +73,7 @@ stats.pca_mass =
   end
 
 -- show PCA threshold
-stats.pca_threshold =
+stats.pca.threshold =
   april_doc{
     class = "function",
     summary = "Computes the PCA threshold for a given mass probability",
@@ -99,34 +111,39 @@ stats.pca =
     summary = "Computes PCA using SVD decomposition of covariance matrix",
     description = { "Data is ordered by rows, features by columns.",
                     "If not centered, the data is centered by columns instead",
-                    "that by rows (using mean_centered_by_pattern function)." },
+                    "that by rows (using stats.pca.center_by_pattern function",
+                    "instead of stats.center function)." },
     params = {
       "A 2D matrix",
-      "An [optional] table with 'centered' boolean",
+      "An [optional] table with 'centered' boolean, by default centered=false",
     },
     outputs = {
       "U matrix with left singular vectors",
       "S diagonal sparse matrix with  singular values",
       "VT transpose of right singular vectors",
+      "In case centered=false, fourth result is the center vector [optional]",
     },
   }..
-  function(Xc, params)
-    local params = get_table_fields(
-      {
-        centered = { type_match = "boolean", default = nil },
-      }, params)
-    assert(#Xc:dim() == 2, "Expected a bi-dimensional matrix")
-    if not params.centered then
-      Xc = stats.mean_centered_by_pattern(Xc)
-    end
-    local sigma = stats.cov(Xc,{ centered=true })
-    local U,S,VT = sigma:svd()
-    return U,S,VT
-end
+  setmetatable(stats.pca, {
+                 __call = function(self, Xc, params)
+                   local params = get_table_fields(
+                     {
+                       centered = { type_match = "boolean", default = nil },
+                     }, params)
+                   assert(#Xc:dim() == 2, "Expected a bi-dimensional matrix")
+                   local center
+                   if not params.centered then
+                     Xc,center = stats.pca.center_by_pattern(Xc)
+                   end
+                   local sigma = stats.cov(Xc,{ centered=true })
+                   local U,S,VT = sigma:svd()
+                   return U,S,VT,center
+                 end
+  })
 
 -------------------------------------------------------------------------------
 
-stats.iterative_pca =
+stats.pca.gs_pca =
   april_doc{
     class = "function",
     summary = "Computes PCA using GS-PCA (iterative PCA algorithm)",
@@ -177,10 +194,9 @@ stats.iterative_pca =
     if M < N then
       print("# Warning, M < N, probably matrix need to be transposed")
     end
-    local major_order = X:get_major_order()
-    local T = matrix[major_order](M,K):zeros() -- left eigenvectors
-    local P = matrix[major_order](N,K):zeros() -- right eigenvectors
-    local L = matrix[major_order](K):zeros()   -- eigenvalues
+    local T = matrix(M,K):zeros() -- left eigenvectors
+    local P = matrix(N,K):zeros() -- right eigenvectors
+    local L = matrix(K):zeros()   -- eigenvalues
     local R = X:clone()
     local U = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
     assert( math.abs(U:sum() / U:size()) < 1e-03,

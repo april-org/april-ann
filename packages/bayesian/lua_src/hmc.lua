@@ -124,7 +124,7 @@ local function hmc(self, eval, theta)
     vel0 = vel:clone() -- for in case of rejection
     vel:scal(-persistence)
     for name,v in pairs(vel) do
-      local aux = matrix.col_major(v:size(),1)
+      local aux = matrix(v:size(),1)
       norm01:sample(rng, aux)
       v:rewrap(v:size(),1):axpy(spersistence, aux)
     end

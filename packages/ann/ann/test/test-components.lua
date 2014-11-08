@@ -7,6 +7,8 @@ local T       = utest.test
 local verbose = false
 local rnd     = random(1234)
 
+utest.select_tests(arg)
+
 function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   if verbose then
     fprintf(io.stderr, "\nGradients %s (%d,%d,%d,%s)\n",
@@ -17,13 +19,13 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
-  input  = matrix.col_major(b, i):uniformf(-1,1,rnd)
+  input  = matrix(b, i):uniformf(-1,1,rnd)
   if loss_name == "mse" then
-    target = matrix.col_major(b, o):uniformf(-1,1,rnd)
+    target = matrix(b, o):uniformf(-1,1,rnd)
   elseif not norm and (loss_name == "batch_fmeasure_micro_avg" or loss_name == "batch_fmeasure_macro_avg") then
-    target = matrix.col_major(b, o):uniform(0,1,rnd)
+    target = matrix(b, o):uniform(0,1,rnd)
   else
-    target = matrix.col_major(b, o):uniformf(0,1,rnd)
+    target = matrix(b, o):uniformf(0,1,rnd)
   end
   if norm then
     apply(function(m) m:exp() m:scal(1/m:sum()) end,
@@ -373,7 +375,7 @@ T("DOTPRODUCT + HARDTANH TEST",
   function()
     check(function()
         for i=1,4 do
-          for o=1,4 do
+          for o=1,3 do
             for b=1,4 do
               check_component(function()
                   return ann.components.stack():

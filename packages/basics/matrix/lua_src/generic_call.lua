@@ -55,7 +55,7 @@ matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
       m:fill(value)
     else
       assert(class.is_a(m, matrix_class), "Needs a number or a matrix as value")
-      m:squeeze():copy(value:squeeze())
+      m:copy(value)
     end
   end
 end

@@ -81,7 +81,7 @@ namespace ANN {
     MatrixFloat *loss_output;
     if ( H>0.0f || H<0.0f ) {
       int dim = 1;
-      loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+      loss_output = new MatrixFloat(1, &dim);
 #ifdef USE_CUDA
       loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif

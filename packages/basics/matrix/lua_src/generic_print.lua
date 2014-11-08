@@ -6,7 +6,6 @@ matrix.__generic__.__make_generic_print__ = function(name,getter)
   return function(self)
     local MAX_ROW_LEN,MAX_ROWS = 60,6
     local dims     = self:dim()
-    local major    = (self.get_major_order and self:get_major_order()) or "row_major"
     local coords   = {}
     local out      = {}
     local row      = {}
@@ -41,9 +40,10 @@ matrix.__generic__.__make_generic_print__ = function(name,getter)
         if #row > 0 then table.insert(out, table.concat(row, " ")) row={} row_len = 0 end
       end
     end
-    table.insert(out, string.format("# %s of size [%s] in %s [%s]\n",
+    table.insert(out, string.format("# %s of size [%s] stride [%s] ref [%s]\n",
 				    name,
-				    table.concat(dims, ","), major,
+				    table.concat(dims, ","),
+                                    table.concat(self:stride(), ","),
 				    self:get_reference_string()))
     return table.concat(out, "\n")
   end

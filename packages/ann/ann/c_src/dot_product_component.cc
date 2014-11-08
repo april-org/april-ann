@@ -70,7 +70,7 @@ namespace ANN {
     MatrixFloat *output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
                     static_cast<int>(getOutputSize()) };
-    output_mat = new MatrixFloat(2, dims, CblasColMajor);
+    output_mat = new MatrixFloat(2, dims);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
 #endif
@@ -104,16 +104,15 @@ namespace ANN {
     MatrixFloat *output_mat;
     int dims[2] = {static_cast<int>(bunch_size),
                    static_cast<int>(getOutputSize())};
-    output_mat = new MatrixFloat(2, dims, CblasColMajor);
+    output_mat = new MatrixFloat(2, dims);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
 #endif
     matSparseMM(output_mat,
-                  CblasNoTrans,
-                  NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-                  CblasNoTrans,
-                  1.0f, input_mat, weights_mat,
-                  0.0f);
+                CblasNoTrans,
+                NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                1.0f, input_mat, weights_mat,
+                0.0f);
     return output_mat;
   }
   
@@ -125,7 +124,7 @@ namespace ANN {
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
 		    static_cast<int>(getInputSize()) };
-    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
+    error_output_mat = new MatrixFloat(2, dims);
 #ifdef USE_CUDA
     error_output_mat->setUseCuda(use_cuda);
 #endif      
@@ -215,10 +214,10 @@ namespace ANN {
     SparseMatrixFloat *input_mat;
     input_mat = getSparseInputMatrix();
     if (transpose_weights == CblasNoTrans) {
-      matSparseMM(grads_mat.get(),
+      AprilUtils::SharedPtr< MatrixFloat > gT(grads_mat->transpose());
+      matSparseMM(gT.get(),
                   CblasTrans,
                   CblasNoTrans,
-                  CblasTrans,
                   1.0f,
                   input_mat,
                   error_input_mat,
@@ -227,7 +226,6 @@ namespace ANN {
     else {
       matSparseMM(grads_mat.get(),
                   CblasTrans,
-                  CblasNoTrans,
                   CblasNoTrans,
                   1.0f,
                   input_mat,

@@ -44,6 +44,26 @@ local unpack = table.unpack
 local wrap = coroutine.wrap
 local yield = coroutine.yield
 
+-- Clones the function and its upvalues
+local function clone_function(func)
+  -- clone by using a string dump
+  local ok,func_dump = pcall(string.dump, func)
+  local func_clone = (ok and loadstring(func_dump)) or func
+  if func_clone ~= func then
+    -- copy upvalues
+    local i = 1
+    while true do
+      local name,value = debug.getupvalue(func,i)
+      if not name then break end
+      -- TODO: implement cone (deep copy) of tables
+      if type(value) == "function" then value = clone_function(value) end
+      debug.setupvalue(func_clone, i, value)
+      i = i + 1
+    end
+  end
+  return func_clone
+end
+
 -- Filters a Lua iterator function output using a given predicate function. The
 -- predicate returns true when a value must be taken, false when it must be
 -- removed. The predicate function is called as f(...) where ... are the values
@@ -121,10 +141,79 @@ end
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 
+-- Function generators
+
+-- Range iterator, receives start,stop,step
+function iterator.range(...)
+  local arg = pack(...)
+  local start,stop,step = arg[1],arg[2],arg[3] or 1
+  if not stop then start,stop=1,start end
+  local i = start - step
+  return iterator(function(step, i)
+      if step and i then
+        i = i + step
+        if i <= stop then return i end
+      end
+                  end, step, i)
+end
+
+-- Duplicates its arguments in an infinite iterator.
+function iterator.duplicate(...)
+  return iterator(function(arg) return unpack(arg) end, pack(...))
+end
+
+-- Returns an inifite iterator which calls the given function with: f(0), f(1),
+-- ..., f(i), ...
+function iterator.tabulate(func)
+  local x=-1
+  return iterator(function() x=x+1 return func(x) end)
+end
+
+-- Returns a zero indefinitely.
+function iterator.zeros()
+  return iterator(function() return 0 end)
+end
+
+-- Returns a one indefinitely.
+function iterator.ones()
+  return iterator(function() return 1 end)
+end
+
+-- Returns an iterator over multiple iterators at the same time. The iteration
+-- ends if any of the given iterators end.
+function iterator.zip(...)
+  local arg = { ... }
+  for i=1,#arg do assert(class.is_a(arg[i], iterator),
+                         "Needs instances of iterator class") end
+  local finished = false
+  return iterator(function()
+      if finished then return nil end
+      local result = {}
+      for i=1,#arg do
+        local partial = table.pack( arg[i]() )
+        if not partial[1] then finished=true return nil end
+        for k,v in ipairs(partial) do table.insert(result,v) end
+      end
+      return table.unpack(result)
+  end)
+end
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
 -- Constructor of class iterator. It is a wrapper around a Lua iterator
 -- function, which allow to keep the iterator state, allowing to write easy
 -- functional operations (map, reduce, filter, ...).
 function iterator:constructor(f, s, v)
+  if class.is_a(f, iterator) then
+    assert(not s and not v, "Given s and v parameters with an iterator object")
+    f,s,v = f:get()
+  elseif type(f) == "table" then
+    if #f == 0 then f,s,v = iterator(pairs(f)):select(2):get()
+    else f,s,v = iterator(ipairs(f)):select(2):get()
+    end    
+  end
   self.f,self.s,self.v = f,s,v
 end
 
@@ -270,12 +359,172 @@ function iterator_methods:table()
   return t
 end
 
+-- Returns the iterator result at nth position.
+function iterator_methods:nth(nth)
+  for i=1,nth-1 do
+    if not self() then break end
+  end
+  return self()
+end
+
+-- Returns the head of the iterator.
+function iterator_methods:head()
+  return self:nth(1)
+end
+
+-- Returns the tail of the iterator.
+function iterator_methods:tail()
+  self() -- skip first value
+  return self
+end
+
+-- Returns the first n elements of the iterator, or the first which satisfy a
+-- given predicate
+function iterator_methods:take(n)
+  if type(n) == "number" then
+    local i=0
+    return iterator(function() if i < n then i=i+1 return self() end end)
+  else
+    local satisfied = true
+    return iterator(function()
+        if satisfied then
+          local result = pack( self() )
+          if not n( unpack(result) ) then
+            satisfied = false
+          else
+            return unpack( result )
+          end
+        end
+    end)
+  end
+end
+
+-- Skips the first n elements of the iterator, or the first which satisfy a
+-- given predicate
+function iterator_methods:drop(n)
+  if type(n) == "number" then
+    for i=1,n do
+      if not self() then break end
+    end
+    return self
+  else
+    local result
+    repeat result = pack(self()) until not n( unpack(result) )
+    return iterator(function()
+        local aux
+        aux,result = result,pack( self() )
+        return unpack(aux)
+    end)
+  end
+end
+
+-- Splits an iterator into two iterators, only works with pure functional
+-- iterators.
+function iterator_methods:split(n)
+  return self:clone():take(n),self:clone():drop(n)
+end
+
+-- Only works properly with pure functional iterators.
+function iterator_methods:clone()
+  local f,s,v = self:get()
+  local f = clone_function(f)
+  return iterator(f,s,v)
+end
+
+-- Returns the position of the first iterator index which is equals to the given
+-- arguments.
+function iterator_methods:index(...)
+  local arg = pack(...)
+  local idx=0
+  while true do
+    idx=idx+1
+    local current = pack(self()) if not current[1] then break end
+    assert(#current == #arg, "Incorrect number of arguments")
+    local eq = true
+    for j=1,#current do
+      if current[j] ~= arg[j] then eq = false break end
+    end
+    if eq then return idx end
+  end
+  return nil
+end
+
+-- Returns an iterator to positions which are equal to the given arguments.
+function iterator_methods:indices(...)
+  local arg = pack(...)
+  return iterator(function(self, idx)
+      while true do
+        idx = idx+1
+        local current = pack(self()) if not current[1] then break end
+        local eq = true
+        for j=1,#current do
+          if current[j] ~= arg[j] then eq = false break end
+        end
+        if eq then return idx end
+      end
+                  end, self, 0)
+end
+
+-- Filters by using a regular expression.
+function iterator_methods:grep(regexp_string)
+  assert(type(regexp_string) == "string", "Only valid with string values")
+  return self:filter(function(str,...)
+      assert(not ..., "Only valid for unary iterators")
+      assert(type(str) == "string", "Only valid with string values")
+      return str:find(regexp_string) ~= nil
+  end)
+end
+
+-- Returns two iterators where elements do and not do satisfy the given
+-- predicate.
+function iterator_methods:partition(pred)
+  return self:clone():filter(pred),
+  self:clone():filter(function(...) return not pred(...) end)
+end
+
+-- Returns two iterators where elements do and not do satisfy the given
+-- predicate.
+function iterator_methods:size()
+  return self:reduce(function(acc,x) return acc + 1 end, 0)
+end
+
+-- Returns true if all return values satisfy the predicate.
+function iterator_methods:all(pred)
+  return self:reduce(function(acc,...) return acc and pred(...) end, true)
+end
+
+-- Returns true if at least one return value satisfies the predicate.
+function iterator_methods:any(pred)
+  return self:reduce(function(acc,...) return acc or pred(...) end, false)
+end
+
+-- Returns the sum.
+function iterator_methods:sum()
+  return self:reduce(function(a,b) return a+b end, 0)
+end
+
+-- Returns the product.
+function iterator_methods:prod()
+  return self:reduce(function(a,b) return a*b end, 1)
+end
+
+-- Returns the max.
+function iterator_methods:max()
+  return self:reduce(math.max, -math.huge)
+end
+
+-- Returns the min.
+function iterator_methods:min()
+  return self:reduce(math.min, math.huge)
+end
+
 -- In APRIL-ANN this module is defined at global environment
 if aprilann_available then
   _G.apply = apply
   _G.iterator = iterator
   _G.iterable_filter = filter
   _G.iterable_map = map
+  _G.range = iterator.range
   _G.reduce = reduce
 end
 

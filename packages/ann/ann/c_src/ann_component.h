@@ -39,14 +39,7 @@ using AprilUtils::hash;    // required for build
 using AprilUtils::string;
 using AprilUtils::vector;
 
-#ifndef NDEBUG
-#define ASSERT_MATRIX(m) do {						\
-    april_assert( (m)->getMajorOrder() == CblasColMajor );		\
-  } while(0)
-// april_assert( (m)->getNumDim() == 2 );
-#else
 #define ASSERT_MATRIX(m)
-#endif
 
 /**
  * @brief Maximum size of automatically generated names.

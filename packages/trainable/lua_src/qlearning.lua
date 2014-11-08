@@ -56,7 +56,7 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
   local prev_state = noise:forward(prev_state, true)
   noise:reset(0)
   local state = noise:forward(state, true)
-  local error_grad = matrix.col_major(1, nactions):zeros()
+  local error_grad = matrix(1, nactions):zeros()
   local needs_gradient = optimizer:needs_property("gradient")
   local loss,Qsp,Qs
   loss,gradients,Qsp,Qs,expected_Qsa =
@@ -209,10 +209,10 @@ function trainable_batch_builder_methods:add(prev_state, output, action, reward)
   assert(type(reward) == "number",  "Needs a matrix as 4th argument")
   table.insert(self.batch,
                {
-                 prev_state:clone("row_major"):rewrap(prev_state:size()),
+                 prev_state:clone():rewrap(prev_state:size()),
                  action,
                  reward,
-                 output:clone("row_major"):rewrap(output:size()),
+                 output:clone():rewrap(output:size()),
                })
   if self.state_size then
     assert(self.state_size == prev_state:size(), "Found different state sizes")

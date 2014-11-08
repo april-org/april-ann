@@ -831,6 +831,20 @@ extern const char *__COMMIT_NUMBER__;
 
 /////////////////////////////////////////////////////////////////////////////
 
+//BIND_FUNCTION util.silent_errors
+{
+  int argn = lua_gettop(L);
+  if (argn > 0) {
+    bool v;
+    LUABIND_GET_PARAMETER(1, bool, v);
+    setSilentErrorsValue(v);
+  }
+  LUABIND_RETURN(bool, getSilentErrorsValue());
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
 //BIND_FUNCTION util.options.test
 {
   AprilUtils::SharedPtr<stopwatch> clock = new stopwatch();

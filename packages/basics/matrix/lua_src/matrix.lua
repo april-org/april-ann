@@ -1,3 +1,5 @@
+class.extend(matrix, "t", matrix.."transpose")
+
 -- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
@@ -15,6 +17,42 @@ class.extend(matrix, "pinv",
                    beta    = 0.0,
                  }
 end)
+
+matrix.ext.iterate =
+  april_doc{
+    class = "method",
+    summary = "Returns an iterator which traverses a dimension",
+    description = {
+      "The iterator uses m:select() method to traverse the given",
+      "dimension number. The iterator returns the pair pos,slice",
+      "where pos is the position inside the dimension and slice",
+      "is a matrix with the result of m:select(dim,pos).",
+      "Note that slice is reused between different iterations.",
+      "Note that slice is a reference to the original matrix, any",
+      "change to slice will be reflected into m."
+    },
+    params = {
+      "A matrix instance (any kind of matrix type)",
+      "A dimension number [optional], by default it is 1 (row traversal)",
+    },
+    outputs = {
+      "An instance of iterator class",
+    },
+  } ..
+  function(self,dim)
+    local dim = dim or 1
+    local d = self:dim()
+    assert(dim > 0 and dim < #d, "Out-of-bounds dimension number")
+    local slice = self:select(dim,1)
+    return iterator(function(state,pos)
+        local self,slice,dim,sz = table.unpack(state)
+        pos = pos + 1
+        if pos <= d[dim] then
+          slice = (pos == 1 and slice) or self:select(dim,pos)
+          return pos,slice
+        end
+                    end, {self,slice,dim,d[dim]}, 0)
+  end
 
 class.extend(matrix, "order",
              april_doc{
@@ -66,6 +104,8 @@ class.extend(matrix, "index",
                },
              } ..
                function(self,dim,idx)
+                 assert(type(dim) == "number",
+                        "Needs a number as second argument")
                  if type(idx) == "table" then idx = matrixInt32(idx)
                  elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                  end
@@ -79,7 +119,7 @@ class.extend(matrix, "index",
                  local dim_bound = d[dim]
                  d[dim] = idx:size()
                  local constructor = class.of(self)
-                 local result = constructor[self:get_major_order()](table.unpack(d))
+                 local result = constructor(table.unpack(d))
                  d[dim] = 1
                  local self_sw = self:sliding_window{ size=d, step=d }
                  local dest_sw   = result:sliding_window{ size=d, step=d }
@@ -188,11 +228,6 @@ class.extend(matrix, "indexed_copy",
                return self
 end)
 
--- the constructor
-matrix.row_major = function(...)
-  return matrix(...)
-end
-
 -- static methods which return a new matrix instead of operate in-place
 matrix.op = {}
 for _,method in ipairs{"adjust_range", "clamp", "cmul",
@@ -215,7 +250,7 @@ function matrix.op.repmat(x, ...)
   assert(#arg >= #dim, "Underflow given number of dimensions")
   for i=1,#arg do dim[i] = dim[i] or 1 result_dim[i] = dim[i] * arg[i] end
   local x = x:rewrap(table.unpack(dim))
-  local result = matrix[x:get_major_order()](table.unpack(result_dim))
+  local result = matrix(table.unpack(result_dim))
   local result_sw = result:sliding_window{ size=dim, step=dim }
   local mat
   while not result_sw:is_end() do
@@ -226,14 +261,99 @@ function matrix.op.repmat(x, ...)
   return result
 end
 
-function matrix.op.diag(m)
-  local dim = m:dim()
-  assert(#dim == 2, "Needs a 2D matrix")
-  local N = dim[1]
-  assert(dim[2] == N, "Needs a square matrix")
-  local get_map = function(i) return m:get(i,i) end
-  return matrix.sparse.diag(iterator(range(1,N)):map(get_map):table())
-end
+matrix.op.diag =
+  april_doc{
+    class = "function",
+    summary = "Returns a matrix with diagonal elements of the given matrix",
+    params = {
+      "A 2D matrix",
+      "The k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    assert(#dim == 2, "Needs a 2D matrix")
+    local N = dim[1]
+    assert(dim[2] == N, "Needs a square matrix")
+    local get_map
+    if k == 0 then
+      get_map = function(i) return m:get(i,i) end
+    elseif k>0 then
+      assert(k < N, "Out-of-bounds k argument")
+      get_map = function(i) return m:get(i,i+k) end
+    else -- k<0
+      assert(k > -N, "Out-of-bounds k argument")
+      get_map = function(i) return m:get(i-k,i) end
+    end
+    local ctor = class.of(m)
+    if rawequal(ctor,matrix.sparse) then ctor = matrix end
+    return ctor(N-math.abs(k)):linspace():map(get_map)
+  end
+
+matrix.op.triu =
+  april_doc{
+    class = "function",
+    summary = "Returns uppper triangular matrix taken from given matrix",
+    params = {
+      "A 2D matrix",
+      "The start k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    local N = dim[1]
+    assert(#dim == 2, "Needs a 2D matrix")
+    assert(dim[2] == N, "Needs a square matrix")
+    assert(k <= 0 or k <  N, "Out-of-bounds k argument")
+    assert(k >= 0 or k > -N, "Out-of-bounds k argument")
+    local ctor = class.of(m)
+    local triu = ctor(table.unpack(dim)):zeros()
+    -- for each row
+    for i=1,math.min(N,N-k) do
+      local cols = { math.max(1,i+k), N }
+      triu[{ i, cols }] = m(i, cols)
+    end
+    return triu
+  end
+
+matrix.op.tril =
+  april_doc{
+    class = "function",
+    summary = "Returns lower triangular matrix taken from given matrix",
+    params = {
+      "A 2D matrix",
+      "The start k-th diagonal number [optional], by default k=0",
+    },
+    outputs = {
+      "A new matrix instance",
+    }
+  } ..
+  function(m,k)
+    local k=k or 0
+    local dim = m:dim()
+    local N = dim[1]
+    assert(#dim == 2, "Needs a 2D matrix")
+    assert(dim[2] == N, "Needs a square matrix")
+    assert(k <= 0 or k <  N, "Out-of-bounds k argument")
+    assert(k >= 0 or k > -N, "Out-of-bounds k argument")
+    local ctor = class.of(m)
+    local triu = ctor(table.unpack(dim)):zeros()
+    local j=math.max(1,k+1) -- col number
+    -- for each row
+    for i=math.max(1,-k+1),N do
+      local cols = { 1, math.min(N,j) } j=j+1
+      triu[{ i, cols }] = m(i, cols)
+    end
+    return triu
+  end
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrix)
@@ -283,12 +403,12 @@ end
 matrix.meta_instance.__mul = function(op1, op2)
   if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
     if class.is_a(op2,matrix.sparse) then
-      local res = matrix[op1:get_major_order()](op1:dim(1),op2:dim(2))
-      res:sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
-		     trans_A=true, trans_B=true, trans_C=true }
+      local res = matrix(op1:dim(1),op2:dim(2))
+      res:transpose():sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+                                 trans_A=true, trans_B=true }
       return res
     else
-      local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
+      local res = matrix(op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
       return res
     end
@@ -473,26 +593,6 @@ april_set_doc(matrix, {
 		  "nth dimension size",
 		  { "A table with values [optional]. The values must be",
 		    "in row major order", },
-		},
-		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.col_major, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Constructor of a multidimensional matrix.",
-		  "The data is stored at col_major order, but from",
-		  "outside is viewed as row_major (for compatibility",
-		  "purposes).",
-		},
-		params = {
-		  "First dimension size",
-		  "Second dimension size",
-		  "...",
-		  "ith dimension size",
-		  "...",
-		  "nth dimension size",
-		  { "A table with values [optional]. The values must be",
-		    "in row major order", }
 		},
 		outputs = { "A matrix instantiated object" }, })
 
@@ -705,13 +805,6 @@ april_set_doc(matrix.."set_use_cuda", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc(matrix.."get_major_order", {
-		class = "method",
-		summary = "Returns the major order of internal data.",
-		outputs = {
-		  "A string with the major order",
-		}, })
-
 april_set_doc(matrix.."dim", {
 		class = "method",
 		summary = "Returns a table with the size of each dimension.",
@@ -821,15 +914,6 @@ april_set_doc(matrix.join, {
 april_set_doc(matrix.."clone", {
 		class = "method",
 		summary = "Returns a deep copy (clone) of the caller matrix.",
-		description = {
-		  "Returns a deep copy (clone) of the caller matrix.",
-		  "It has the possibility of indicate the major order,",
-		  "and the data will be reordered if necessary.",
-		},
-		params = {
-		  { "A string: col_major or row_major [optional]. By",
-		    "default it is the same major order as the caller matrix" },
-		},
 		outputs = {
 		  "A matrix object (cloned)",
 		}, })
@@ -841,6 +925,21 @@ april_set_doc(matrix.."transpose", {
 		  "Returns transposition of the caller matrix.",
 		  "The returned matrix is a reference to the original.",
 		},
+		outputs = {
+		  "A matrix object (transposed)",
+		}, })
+
+april_set_doc(matrix.."transpose", {
+		class = "method",
+		summary = "Transposes two dimensions.",
+		description = {
+		  "Transposes two dimensions of the caller matrix.",
+		  "The returned matrix is a reference to the original.",
+		},
+                params = {
+                  "One dimension number",
+                  "Second dimension number",
+                },
 		outputs = {
 		  "A matrix object (transposed)",
 		}, })
@@ -1322,10 +1421,6 @@ april_set_doc(matrix.."inv",
 		  "This method computes the inverse of matrix.",
 		  "Check that your matrix is not singular, otherwise",
 		  "the returned matrix won't be correct.",
-		  "It is adapted to work with row_major matrices, but",
-		  "internally they are transformed to col_major, so",
-		  "it is more efficient to compute the inverse over",
-		  "col_major matrices.",
 		},
 		outputs = { "The matrix inverse" },
 	      })
@@ -1336,11 +1431,8 @@ april_set_doc(matrix.."svd",
 		summary = "Computes the SVD of a matrix",
 		description = {
 		  "This method computes the SVD of matrix.",
-		  "It is adapted to work with row_major matrices, but",
-		  "internally they are transformed to col_major, so",
-		  "it is more efficient to compute the SVD over",
-		  "col_major matrices. The computation returns three matrices",
-		  "in col_major, so A=U * S * V'.",
+                  "The computation returns three matrices",
+		  ", so A=U * S * V'.",
 		},
 		outputs = {
 		  "The matrix U",
@@ -1467,3 +1559,12 @@ april_set_doc(matrix.__sliding_window__.."iterate",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",
 		outputs     = { "An iterator function" },
 	      })
+
+-----------------------------
+-- DEPRECATED CONSTRUCTORS --
+matrix.row_major = make_deprecated_function("matrix.row_major", "matrix", matrix)
+matrix.col_major = make_deprecated_function("matrix.col_major", "matrix", matrix)
+class.extend(matrix, "get_major_order",
+             make_deprecated_function("matrix.get_major_order", nil,
+                                      function(self) return "row_major" end))
+-----------------------------

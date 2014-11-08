@@ -11,14 +11,8 @@ T("ROCTest", function()
     check.number_eq( metrics.roc( matrix{0.2,0.3,0.4,0.5},
                                   matrix{0,1,0,1} ):compute_area(),
                      0.75 )
-    check.number_eq( metrics.roc( matrix.col_major{0.2,0.3,0.4,0.5},
-                                  matrix.col_major{0,1,0,1} ):compute_area(),
-                     0.75 )
     check.eq( metrics.roc( matrix{0.2,0.3,0.4,0.5},
                            matrix{1,0,0,0} ):compute_area(),
-              0.0 )
-    check.eq( metrics.roc( matrix.col_major{0.2,0.3,0.4,0.5},
-                           matrix.col_major{1,0,0,0} ):compute_area(),
               0.0 )
     check.number_eq( metrics.roc( matrix{0.2,0.3,0.4,0.5},
                                   matrix{0,0,1,0} ):compute_area(),

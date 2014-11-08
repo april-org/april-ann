@@ -26,16 +26,14 @@
 #include "cblas_headers.h"
 int clapack_sgetrf(const int Order, const int M, const int N,
                    float *A, const int lda, int *ipiv) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  UNUSED_VARIABLE(Order);
   int INFO;
   sgetrf_(&M,&N,A,&lda,ipiv,&INFO);
   return INFO;
 }
 int clapack_sgetri(const int Order, const int N,
                    float *A, const int lda, int *ipiv) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  UNUSED_VARIABLE(Order);
   int INFO;
   int LWORK = N*N;
   float *WORK = new float[LWORK];
@@ -45,8 +43,9 @@ int clapack_sgetri(const int Order, const int N,
 }
 int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 		   float *A, float *U, float *S, float *VT) {
-  if (Order != CblasColMajor)
+  if (Order != CblasColMajor) {
     ERROR_EXIT(256, "Only col_major order is allowed\n");
+  }
   const int numSV = (M<N) ? M : N;
   // workspace
   float workSize;
@@ -68,27 +67,29 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 }
 int clapack_spotrf(const int Order, const int Uplo, const int N, float *A,
                    const int LDA) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
   int info = 0;
-  char uplo = (Uplo == CblasLower) ? 'L' : 'U';
-  spotrf_(&uplo, &N, A, &LDA, &info);
+  if (Order == CblasRowMajor) {
+    char uplo = (Uplo == CblasLower) ? 'U' : 'L';
+    spotrf_(&uplo, &N, A, &LDA, &info);
+  }
+  else { // CblasColMajor
+    char uplo = (Uplo == CblasLower) ? 'L' : 'U';
+    spotrf_(&uplo, &N, A, &LDA, &info);
+  }
   return info;
 }
 #elif defined(USE_XCODE)
 #include "cblas_headers.h"
 int clapack_sgetrf(int Order, int M, int N,
                    float *A, int lda, int *ipiv) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  UNUSED_VARIABLE(Order);
   int INFO;
   sgetrf_(&M,&N,A,&lda,ipiv,&INFO);
   return INFO;
 }
 int clapack_sgetri(int Order, int N,
                    float *A, int lda, int *ipiv) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  UNUSED_VARIABLE(Order);
   int INFO;
   int LWORK = N*N;
   float *WORK = new float[LWORK];
@@ -122,11 +123,15 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
 }
 int clapack_spotrf(int Order, int Uplo, int N, float *A,
                    int LDA) {
-  if (Order != CblasColMajor)
-    ERROR_EXIT(256, "Only col_major order is allowed\n");
   int info = 0;
-  char uplo = (Uplo == CblasLower) ? 'L' : 'U';
-  spotrf_(&uplo, &N, A, &LDA, &info);
+  if (Order == CblasRowMajor) {
+    char uplo = (Uplo == CblasLower) ? 'U' : 'L';
+    spotrf_(&uplo, &N, A, &LDA, &info);
+  }
+  else { // CblasColMajor
+    char uplo = (Uplo == CblasLower) ? 'L' : 'U';
+    spotrf_(&uplo, &N, A, &LDA, &info);
+  }
   return info;
 }
 #else

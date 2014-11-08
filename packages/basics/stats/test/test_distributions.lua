@@ -1,6 +1,6 @@
 local check = utest.check
 local T = utest.test
-local M = matrix.col_major
+local M = matrix
 local EPSILON = 0.001
 local N = 1000
 
@@ -39,7 +39,7 @@ T("NormalDistTest", function()
                                  M(3,3):zeros():diag(2):set(1,2,1):set(2,1,1) )
     check.eq(type(d), "stats.dist.normal.general")
     
-    local pdf_result = M(2, { 0.0175621, 0.00572678 })
+    local pdf_result = M(2, { 0.0151933, 0.00832571 })
     
     check.eq( d:logpdf( M(2,3):uniformf(-1,2,random(9427)) ):exp(), pdf_result )
     
@@ -52,7 +52,7 @@ T("NormalDistTest", function()
         -- check(function()
         --     return data:sum(1):scal(1/N):equals( M(1,3):fill(a) )
         -- end, "Multivariate population mean test")
-        local mv = stats.mean_var()
+        local mv = stats.running.mean_var()
         data:map(function(x) mv:add(x) end)
         local mu,sigma = mv:compute()
         check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil,
@@ -77,7 +77,7 @@ T("DiagNormalDistTest", function()
         -- check(function()
         --     return data:sum(1):scal(1/N):equals( M(1,3):fill(a) )
         -- end, "Multivariate population mean test")
-        local mv = stats.mean_var()
+        local mv = stats.running.mean_var()
         data:map(function(x) mv:add(x) end)
         local mu,sigma = mv:compute()
         check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil,
@@ -98,7 +98,7 @@ T("StdNormalDist", function()
     check(function()
         return math.abs(data:sum()/N) < 0.1
     end)
-    local mv = stats.mean_var()
+    local mv = stats.running.mean_var()
     data:map(function(x) mv:add(x) end)
     local mu,sigma = mv:compute()
     check(function() return math.abs(mu) < 0.04 end)
@@ -201,7 +201,7 @@ T("LogNormalDistTest", function()
         check(function()
             return (data:sum(1):scal(1/N):log() - M(1,3):fill(a + b/2)):abs():sum()/3 < 0.1
         end)
-        local mv = stats.mean_var()
+        local mv = stats.running.mean_var()
         data:map(function(x) mv:add(x) end)
         local mu,sigma = mv:compute()
         check.number_eq(math.log(mu), a + b/2, 0.1)
@@ -223,7 +223,7 @@ T("DiagLogNormalDistTest", function()
         check(function()
             return (data:sum(1):scal(1/N):log() - M(1,3):fill(a + b/2)):abs():sum()/3 < 0.1
         end)
-        local mv = stats.mean_var()
+        local mv = stats.running.mean_var()
         data:map(function(x) mv:add(x) end)
         local mu,sigma = mv:compute()
         check.number_eq(mu, math.exp(a + b/2), 0.1)

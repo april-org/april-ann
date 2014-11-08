@@ -46,7 +46,6 @@ namespace ANN {
     void UtilRegularization::L1NormMap(MatrixFloat *w,
 				       float value) {
       april_assert(w->getNumDim() == 2);
-      april_assert(w->getMajorOrder() == CblasColMajor);
       //
       AprilMath::MatrixExt::MatrixScalarMap1(w,Kernels::L1NormKernel(value),w);
     }

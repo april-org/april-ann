@@ -4,14 +4,14 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 
 local check = utest.check
 local T = utest.test
-local w = matrix.col_major(4,3):uniformf(0,1,random(1234))
-local input = matrix.col_major(5,3,{ 0, 1, 0,
-                                     1, 1, 1,
-                                     1, 0, 1,
-                                     1, 0, 0,
-                                     0, 0, 1 })
+local w = matrix(4,3):uniformf(0,1,random(1234))
+local input = matrix(5,3,{ 0, 1, 0,
+                           1, 1, 1,
+                           1, 0, 1,
+                           1, 0, 0,
+                           0, 0, 1 })
 local sparse_input = matrix.sparse.csr(input)
-local e = matrix.col_major(5,4):uniformf(0,1,random(2384))
+local e = matrix(5,4):uniformf(0,1,random(2384))
 --
 T("SparseDotProductTest",
   function()

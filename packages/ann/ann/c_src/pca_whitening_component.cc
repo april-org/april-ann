@@ -49,8 +49,6 @@ namespace ANN {
 			getInputSize(), getOutputSize(),
 			true),
     takeN(takeN) {
-    if (U->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Incorrect U matrix major order, needed col_major\n");
     if (U->getNumDim() != 2)
       ERROR_EXIT(128, "Needs a bi-dimensional matrix as U argument\n");
     if ( !S->isDiagonal() )

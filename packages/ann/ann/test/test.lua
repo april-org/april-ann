@@ -37,7 +37,7 @@ function check_result(trainer, filter, t, testname)
     k=k+1
   end
   for name,cnn in trainer:iterate_weights() do
-    local w = cnn:matrix():toTable()
+    local w = cnn:toTable()
     for _,v in ipairs(w) do
       assert(v-t[k]<epsilon,
 	     string.format("[%s] Incorrect weight, expected %f, found %f",

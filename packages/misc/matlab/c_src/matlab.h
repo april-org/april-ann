@@ -142,10 +142,9 @@ namespace Matlab {
       // SUB-ELEMENTS
       TaggedDataElement *getNextSubElement();
       // FOR NUMERIC TYPES (casting)
-      Basics::MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
+      Basics::MatrixFloat *getMatrix(char *name, size_t maxsize);
       // FOR NUMERIC TYPES (casting)
-      Basics::MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize,
-                                                bool col_major=false);
+      Basics::MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize);
       // FOR NUMERIC TYPES (casting)
       Basics::MatrixDouble *getMatrixDouble(char *name, size_t maxsize);
       virtual uint32_t getClass();

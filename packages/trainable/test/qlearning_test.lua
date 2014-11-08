@@ -27,7 +27,7 @@ local shuffle_random = random(23824)
 
 -- two dimensions: velocity, position
 local function start_state()
-  return matrix.col_major(1,2,{0.0, -0.5})
+  return matrix(1,2,{0.0, -0.5})
 end
 
 local function stop_condition(state)
