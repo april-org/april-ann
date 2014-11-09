@@ -25,7 +25,7 @@ T("SparseDotProductTest",
           output = 4,
           weights = "w",
           transpose = transpose,
-        }:build{ weights=matrix.dict{ w=w } }
+        }:build{ weights={ w=w } }
         --
         local output = c:forward(input):get_matrix()
         c:backprop(e)
@@ -36,7 +36,7 @@ T("SparseDotProductTest",
         local grads2 = c:compute_gradients()
         --
         check.eq(output,sparse_output)
-        check.eq(grads1("w"),grads2("w"))
+        check.eq(grads1.w, grads2.w)
       end
     end
 end)

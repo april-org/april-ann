@@ -69,6 +69,11 @@ namespace AprilUtils {
                                         const AprilMath::ComplexF &value) {
     lua_pushComplexF(L, value);
   }
+
+  template<> bool LuaTable::
+  checkType<AprilMath::ComplexF>(lua_State *L, int idx) {
+    return lua_isComplexF(L, idx);
+  }
 }
 
 //BIND_END

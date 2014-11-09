@@ -77,6 +77,9 @@ namespace AprilUtils {
   
   template<> void LuaTable::
   pushInto<Basics::MatrixFloat *>(lua_State *L, Basics::MatrixFloat *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixFloat *>(lua_State *L, int idx);
 }
 
 #endif // MATRIXFLOAT_H

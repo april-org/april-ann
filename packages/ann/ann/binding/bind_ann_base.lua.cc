@@ -25,6 +25,7 @@
 #include "bind_sparse_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
+#include "bind_util.h"
 #include "table_of_token_codes.h"
 
 using namespace AprilUtils;
@@ -57,17 +58,25 @@ namespace ANN {
     }
   }
 
-  template<typename Value, typename PushFunction>
-  void pushHashTableInLuaStack(lua_State *L,
-                               AprilUtils::hash<AprilUtils::string,Value> &hashobject,
-                               PushFunction push_function) {
-    lua_createtable(L, 0, hashobject.size());
-    for (typename AprilUtils::hash<AprilUtils::string,Value>::iterator it = hashobject.begin();
-         it != hashobject.end(); ++it) {
-      push_function(L, it->second);
-      lua_setfield(L, -2, it->first.c_str());
-    }
+}
+
+namespace AprilUtils {
+
+  template<> ANN::ANNComponent *LuaTable::
+  convertTo<ANN::ANNComponent *>(lua_State *L, int idx) {
+    return lua_toANNComponent(L, idx);
   }
+  
+  template<> void LuaTable::
+  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value) {
+    lua_pushANNComponent(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<ANN::ANNComponent *>(lua_State *L, int idx) {
+    return lua_isANNComponent(L, idx);
+  }
+  
 }
 
 //BIND_END
@@ -463,14 +472,13 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
-  Basics::MatrixFloatSet *weight_grads_dict;
-  if (argn == 1)
-    LUABIND_GET_PARAMETER(1, MatrixFloatSet, weight_grads_dict);
-  else
-    weight_grads_dict = new Basics::MatrixFloatSet();
+  AprilUtils::LuaTable weight_grads_dict;
+  if (argn == 1) {
+    weight_grads_dict = AprilUtils::LuaTable(L,1);
+  }
   //
   obj->computeAllGradients(weight_grads_dict);
-  LUABIND_RETURN(MatrixFloatSet, weight_grads_dict);
+  LUABIND_RETURN(LuaTable, weight_grads_dict);
 }
 //BIND_END
 
@@ -501,41 +509,38 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   unsigned int input_size=0, output_size=0;
-  Basics::MatrixFloatSet *weights_dict = 0;
-  AprilUtils::hash<AprilUtils::string,ANNComponent*> components_dict;
+  AprilUtils::LuaTable weights_dict(L), components_dict(L);
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights,
-					 MatrixFloatSet, weights_dict, 0);
+    lua_getfield(L, 1, "weights");
+    if (!lua_isnil(L, -1)) weights_dict = lua_toLuaTable(L,-1);
+    lua_pop(L, 1);
   }
-  if (weights_dict == 0) weights_dict = new Basics::MatrixFloatSet();
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
   LUABIND_RETURN(ANNComponent, obj);
-  LUABIND_RETURN(MatrixFloatSet, weights_dict);
-  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_INCREASE_NUM_RETURNS(1);
+  LUABIND_RETURN(LuaTable, weights_dict);
+  LUABIND_RETURN(LuaTable, components_dict);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_weights
 {
-  Basics::MatrixFloatSet *weights_dict = new Basics::MatrixFloatSet();
+  AprilUtils::LuaTable weights_dict(L);
   obj->copyWeights(weights_dict);
-  LUABIND_RETURN(MatrixFloatSet, weights_dict);
+  LUABIND_RETURN(LuaTable, weights_dict);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_components
 {
-  AprilUtils::hash<AprilUtils::string,ANNComponent*> components_dict;
+  AprilUtils::LuaTable components_dict(L);
   obj->copyComponents(components_dict);
-  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(LuaTable, components_dict);
 }
 //BIND_END
 

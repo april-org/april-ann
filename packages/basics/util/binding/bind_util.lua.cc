@@ -37,6 +37,11 @@
 using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
+
+int lua_isLuaTable(lua_State *L, int idx);
+AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx);
+void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &tbl);
+
 //BIND_END
 
 //BIND_HEADER_C
@@ -79,6 +84,10 @@ namespace AprilUtils {
 
   template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value) {
     value.pushTable(L);
+  }
+
+  template<> bool LuaTable::checkType<LuaTable>(lua_State *L, int idx) {
+    return lua_isLuaTable(L, idx);
   }
 
   template<> stopwatch *LuaTable::
@@ -613,6 +622,12 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
+//BIND_METHOD stopwatch to_lua_string
+{
+  LUABIND_RETURN(string, "stopwatch()");
+}
+//BIND_END
+
 // FIXME: nanosleep puede volver antes, en tal caso para avisar a lua
 // se podría devolver el booleano que devuelve (y que estamos
 // ignorando) y el tiempo restante :P
@@ -910,6 +925,8 @@ FILE **newfile (lua_State *L) {
   if (opt_clock2 != tbl_clock2) LUABIND_ERROR("TEST 2 FAILED\n");
   //
   opt.put("str", "Hello world!");
-  return 1; // returns the table
+  string str(opt.toLuaString());
+  lua_pushstring(L, str.c_str());
+  return 2; // returns the table
 }
 //BIND_END

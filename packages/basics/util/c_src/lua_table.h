@@ -48,18 +48,72 @@ namespace AprilUtils {
     LuaTable(const LuaTable &other);
     
     ~LuaTable();
-
+    
     LuaTable &operator=(const LuaTable &other);
     
-    template<typename T> LuaTable &put(const char *name, T value) {
+    string toLuaString();
+    
+    template<typename T>
+    LuaTable &put(const string &name, T value) {
+      return put<T>(name.c_str(), value);
+    }
+    
+    bool checkNil(const string &name) const {
+      return checkNil(name.c_str());
+    }
+
+    template<typename T>
+    bool checkNilOrType(const string &name) const {
+      return checkNilOrType<T>(name.c_str());
+    }
+
+    template<typename T>
+    T get(const string &name) const {
+      return get<T>(name.c_str());
+    }
+
+    template<typename T>
+    T opt(const string &name, const T def_value = T()) const {
+      return opt<T>(name.c_str(), def_value);
+    }
+
+    template<typename T>
+    LuaTable &put(const char *name, T value) {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, value);
       lua_setfield(L, -2, name);
       lua_pop(L, 1);
       return *this;
     }
+    
+    bool checkNil(const char *name) const {
+      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_getfield(L, -1, name);
+      if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
+        return true;
+      }
+      else {
+        lua_pop(L, 2);
+        return false;
+      }
+    }
 
-    template<typename T> T get(const char *name) const {
+    template<typename T>
+    bool checkNilOrType(const char *name) const {
+      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_getfield(L, -1, name);
+      if (lua_isnil(L, -1)) {
+        lua_pop(L, 2);
+        return true;
+      }
+      bool is = checkType<T>(L, -1);
+      lua_pop(L,2);
+      return is;
+    }
+
+    template<typename T>
+    T get(const char *name) const {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
       if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
@@ -68,7 +122,8 @@ namespace AprilUtils {
       return v;
     }
     
-    template<typename T> T opt(const char *name, const T def_value = T()) const {
+    template<typename T>
+    T opt(const char *name, const T def_value = T()) const {
       if (!checkAndGetRef()) {
         lua_pop(L, 1);
         return def_value;
@@ -87,7 +142,7 @@ namespace AprilUtils {
       }
       // return T();
     }
-    
+
     void pushTable(lua_State *L);
     
     /// Converts the value at the top of Lua stack, without removing it.
@@ -96,6 +151,7 @@ namespace AprilUtils {
       UNUSED_VARIABLE(L);
       UNUSED_VARIABLE(idx);
       ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(T).name());
+      return T();
     }
     
     /// Pushes a value into the Lua stack.
@@ -106,7 +162,18 @@ namespace AprilUtils {
       ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(value).name());
     }
     
+    /// Checks the expected type.
+    template<typename T>
+    static bool checkType(lua_State *L, int idx) {
+      UNUSED_VARIABLE(L);
+      UNUSED_VARIABLE(idx);
+      ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(T).name());
+      return false;
+    }
+    
   private:
+    /// Number of unpopped results.
+    mutable int pop_at_end;
     /// The lua_State where the table is allocated.
     mutable lua_State *L;
     /// The reference in the registry where the table can be retrieved.
@@ -124,6 +191,7 @@ namespace AprilUtils {
   template<> float LuaTable::convertTo<float>(lua_State *L, int idx);
   template<> double LuaTable::convertTo<double>(lua_State *L, int idx);
   template<> bool LuaTable::convertTo<bool>(lua_State *L, int idx);
+  template<> const char *LuaTable::convertTo<const char *>(lua_State *L, int idx);
   template<> string LuaTable::convertTo<string>(lua_State *L, int idx);
   template<> LuaTable LuaTable::convertTo<LuaTable>(lua_State *L, int idx);
   
@@ -136,6 +204,22 @@ namespace AprilUtils {
   template<> void LuaTable::pushInto<const char *>(lua_State *L,
                                                    const char *value);
   template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value);
+
+  template<> bool LuaTable::checkType<int>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<float>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<double>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<bool>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<const char *>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<string>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<LuaTable>(lua_State *L, int idx);
+
+  // overload of get for const char *
+  template<>
+  const char *LuaTable::get<const char *>(const char *name) const;
+  
+  // overload of opt for const char *
+  template<>
+  const char *LuaTable::opt<const char *>(const char *name, const char *def) const;
   
 } // namespace AprilUtils
 

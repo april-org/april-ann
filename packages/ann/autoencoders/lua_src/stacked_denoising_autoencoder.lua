@@ -2,6 +2,8 @@ get_table_from_dotted_string("ann.autoencoders", true)
 
 ----------------------------------------------------------------------
 
+local md = matrix.dict
+
 -- The auto-encoder class (AE) will be a denoising auto-encoder (DAE) when
 -- trained with corrupted input, and clean output
 
@@ -216,12 +218,12 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
     ann.connections.
-    randomize_weights(weights_table(wname),
-		      {
-			random = weights_random,
-			inf    = -math.sqrt(6 / (input_size + cod_size)),
-			sup    =  math.sqrt(6 / (input_size + cod_size))
-		      })
+      randomize_weights(weights_table[wname],
+                        {
+                          random = weights_random,
+                          inf    = -math.sqrt(6 / (input_size + cod_size)),
+                          sup    =  math.sqrt(6 / (input_size + cod_size))
+      })
   end
   return autoencoder_component
 end
@@ -420,7 +422,7 @@ ann.autoencoders.build_full_autoencoder =
     local bias_mat      = sdae_table.bias
     local sdae          = ann.components.stack{ name=names_prefix.."stack" }
     local prev_size     = layers[1].size
-    local weights_table = matrix.dict()
+    local weights_table = {}
     local k = 1
     for i=2,#layers do
       local size , actf   = layers[i].size,layers[i].actf
@@ -705,7 +707,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
     local weights = {}
     local bias    = {}
     -- incremental mlp
-    local mlp_final_weights = matrix.dict()
+    local mlp_final_weights = {}
     local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
     -- loop for each pair of layers
     for i=2,#params.layers do
@@ -736,7 +738,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                                                                params.bunch_size,
                                                                params.optimizer())
 
-        local aux_weights = mlp_final_weights:clone()
+        local aux_weights = md.clone( mlp_final_weights )
         mlp_final_trainer:build{ weights=aux_weights }
         data = generate_training_table_configuration_on_the_fly(current_dataset_params,
                                                                 params.replacement,
@@ -895,7 +897,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                                                                nil,
                                                                params.bunch_size,
                                                                params.optimizer())
-        local aux_weights = mlp_final_weights:clone()
+        local aux_weights = md.clone( mlp_final_weights )
         mlp_final_trainer:build{ weights = aux_weights }
         data = generate_training_table_configuration_on_the_fly(current_dataset_params,
                                                                 params.replacement,
@@ -987,7 +989,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local codifier_net  = ann.components.stack{ name="stack" }
-  local weights_table = matrix.dict()
+  local weights_table = {}
   for i=2,#layers do
     local bname = "b"..(i-1)
     local wname = "w"..(i-1)

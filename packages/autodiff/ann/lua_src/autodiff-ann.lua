@@ -19,7 +19,7 @@ function AD.ann.model(f, i, symbols, shared, isize, osize)
   local model = ann.components.wrapper{
     input = isize,
     output = osize,
-    weights = matrix.dict(shared),
+    weights = shared,
     state = { f = f, df_dw_tbl = df_dw_tbl, symbols = symbols, cache = {} },
     forward = function(self, input, during_training)
       self.state.cache  = {}

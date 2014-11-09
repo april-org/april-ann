@@ -29,12 +29,11 @@ namespace ANN {
     ANNComponent(name, 0,
 		 component->getInputSize(),
 		 component->getOutputSize()),
-    component(component),
-    component_weights(new Basics::MatrixFloatSet()) {
+    component(component) {
     if (!component->getIsBuilt()) {
       ERROR_EXIT(128, "Needs a built component!\n");
     }
-    component->copyWeights(component_weights.get());
+    component->copyWeights(component_weights);
   }
   
   ConstANNComponent::~ConstANNComponent() { }
@@ -57,8 +56,8 @@ namespace ANN {
   
   void ConstANNComponent::build(unsigned int _input_size,
                                 unsigned int _output_size,
-                                Basics::MatrixFloatSet *weights_dict,
-                                AprilUtils::hash<string,ANNComponent*> &components_dict) {
+                                AprilUtils::LuaTable &weights_dict,
+                                AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
   }
   
@@ -66,11 +65,11 @@ namespace ANN {
     AprilUtils::SharedPtr<AprilIO::CStringStream>
       stream(new AprilIO::CStringStream());
     char *component_str = component->toLuaString();
-    char *component_weights_str = component_weights->toLuaString();
+    AprilUtils::string component_weights_str( component_weights.toLuaString() );
     stream->printf("ann.components.const{ name='%s', component=%s:build{ weights=%s } }",
                    name.c_str(),
 		   component_str,
-                   component_weights_str);
+                   component_weights_str.c_str());
     stream->put("\0",1); // forces a \0 at the end of the buffer
     delete[] component_str;
     delete[] component_weights_str;

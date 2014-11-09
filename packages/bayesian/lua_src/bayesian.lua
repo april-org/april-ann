@@ -1,7 +1,5 @@
 get_table_from_dotted_string("bayesian", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 -- modifies model weights to be the MAP model for a given eval function
 function bayesian.get_MAP_weights(eval, samples)
   assert(samples, "Needs a table with samples as 2nd argument")

@@ -608,6 +608,7 @@ function autodiff.func(s, args, shared_values, optimize)
     outputs       = s,
     shared_values = shared_values,
     funcs         = funcs,
+    get_shared    = function(self) return self.shared_values end,
     set_shared    = function(self,new_shared_values)
       for name,w in pairs(new_shared_values) do
         self.shared_values[name] = w

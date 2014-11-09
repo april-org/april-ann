@@ -78,8 +78,8 @@ namespace ANN {
   
   void RewrapANNComponent::build(unsigned int _input_size,
 				 unsigned int _output_size,
-				 MatrixFloatSet *weights_dict,
-				 hash<string,ANNComponent*> &components_dict) {
+				 AprilUtils::LuaTable &weights_dict,
+				 AprilUtils::LuaTable &components_dict) {
     unsigned int sz = 1;
     for (int i=1; i<this->n; ++i) sz *= rewrap_dims[i];
     //

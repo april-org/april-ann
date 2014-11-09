@@ -497,40 +497,138 @@ end
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-function matrix.dict.wrap_matrices(m)
-  local tt = type(m)
-  local unwrap
-  if tt == "table" then
-    m = matrix.dict(m)
-    unwrap = function(m) return iterator(pairs(m)):table() end
-  elseif tt == "matrix" then
-    m = matrix.dict():insert("1",m)
-    unwrap = function(m) return m("1") end
+matrix.dict = matrix.dict or {}
+setmetatable(matrix.dict, { __call =
+                              function(self,v)
+                                if v then
+                                  return type(v) == "table" and v or {v}
+                                else
+                                  return {}
+                                end
+                              end
+})
+
+local mmap = function(tbl,func,...)
+  if type(tbl) == "table" then
+    for name,w in pairs(tbl) do func(w,...) end
   else
-    unwrap = function(m) return m end
+    func(tbl,...)
   end
-  assert(class.is_a(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
-  return m,unwrap
+  return tbl
 end
 
-function matrix.dict.meta_instance.__index:to_lua_string(format)
-  local str_tbl = { "matrix.dict{\n" }
-  for name,w in pairs(self) do
-    table.insert(str_tbl,
-		 string.format("[%q] = %s,\n", name, w:to_lua_string(format)))
+local mreduce = function(tbl,func,start,...)
+  if type(tbl) == "table" then
+    local acc = start
+    for name,w in pairs(tbl) do acc = func(acc,w,...) end
+    return acc
+  else
+    return func(start,w,...)
   end
-  table.insert(str_tbl, "}")
-  return table.concat(str_tbl, " ")
 end
 
-function matrix.dict.meta_instance:__call(key)
-  return self:find(key)
+matrix.dict.iterator = function(tbl,name_match)
+  if type(tbl) == "table" then
+    local name_match = name_match or ".*"
+    return iterator(pairs(tbl)):
+    filter(function(name,w) return name:find(name_match) end)
+  else
+    assert("Needs a table")
+  end
 end
-function matrix.dict.meta_instance:__newindex(key,value)
-  return self:insert(key, value)
+
+for _,name in ipairs{ "scal", "fill", "scalar_add", "pow", "clamp",
+                      "zeros", "ones", "plogp", "log", "log1p", "exp", "sqrt",
+                      "tan", "tanh", "atan", "atanh",
+                      "cos", "cosh", "acos", "acosh",
+                      "sin", "sinh", "asin", "asinh",
+                      "abs", "complement", "sign", "inv",
+                      "prune_subnormal_and_check_normal", } do
+  matrix.dict[name] = function(tbl,...)
+    return mmap(tbl, function(w, name, ...) w[name](w,...) end, name, ...)
+  end
 end
-function matrix.dict.meta_instance:__pairs()
-  return self:iterate()
+
+matrix.dict.clone = function(tbl)
+  if type(tbl) == "table" then
+    return iterator(pairs(tbl)):
+    map(function(name,w) return name,w:clone() end):table()
+  else
+    return tbl:clone()
+  end
+end
+
+matrix.dict.clone_only_dims = function(tbl)
+  if type(tbl) == "table" then
+    return iterator(pairs(tbl)):
+    map(function(name,w) return name,matrix.as(w) end):
+      table()
+  else
+    return matrix.as(tbl)
+  end
+end
+
+matrix.dict.axpy = function(tbl1,value,tbl2)
+  assert(type(value) == "number", "Needs a number as 2nd argument")
+  if type(tbl1) == "table" and type(tbl2) == "table" then
+    for name,w1 in pairs(tbl1) do
+      local w2 = april_assert(tbl2[name], "Unable to find key %s", name)
+      w1:axpy(value,w2)
+    end
+  else
+    tbl1:axpy(value, tbl2)
+  end
+  return tbl1
+end
+
+matrix.dict.copy = function(tbl1,tbl2)
+  if type(tbl1) == "table" and type(tbl2) == "table" then
+    for name,w1 in pairs(tbl1) do
+      local w2 = april_assert(tbl2[name], "Unable to find key %s", name)
+      w1:copy(w2)
+    end
+  else
+    tbl1:copy(tbl2)
+  end
+  return tbl1
+end
+
+matrix.dict.cmul = function(tbl1,tbl2)
+  if type(tbl1) == "table" and type(tbl2) == "table" then
+    for name,w1 in pairs(tbl1) do
+      local w2 = april_assert(tbl2[name], "Unable to find key %s", name)
+      w1:cmul(w2)
+    end
+  else
+    tbl1:cmul(tbl2)
+  end
+  return tbl1
+end
+
+matrix.dict.norm2 = function(tbl)
+  if type(tbl) == "table" then
+    local n2 = mreduce(tbl, function(acc,w) return acc + w:norm2()^2 end, 0)
+    return math.sqrt(n2)
+  else
+    return tbl:norm2()
+  end
+end
+
+matrix.dict.size = function(tbl)
+  return mreduce(tbl, function(acc,w) return acc + w:size() end, 0)
+end
+
+matrix.dict.dot = function(tbl1,tbl2)
+  if type(tbl1) == "table" and type(tbl2) == "table" then
+    local dot=0
+    for name,w1 in pairs(tbl1) do
+      local w2 = april_assert(tbl2[name], "Unable to find %s key", name)
+      dot = dot + w1:dot(w2)
+    end
+    return dot
+  else
+    return tbl1:dot(tbl2)
+  end
 end
 
 -----------------------------------------------------------------------------

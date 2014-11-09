@@ -32,7 +32,7 @@ namespace ANN {
     
   protected:
     AprilUtils::SharedPtr<ANNComponent> component;
-    AprilUtils::SharedPtr<Basics::MatrixFloatSet> component_weights;
+    AprilUtils::LuaTable component_weights;
     
   public:
     ConstANNComponent(ANNComponent *component, const char *name);
@@ -53,8 +53,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict);
 
     virtual char *toLuaString();
   };

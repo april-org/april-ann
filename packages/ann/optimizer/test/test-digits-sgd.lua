@@ -14,7 +14,7 @@ T("SGDConvexTest", function()
     -- the minimum is in x=0.333
     local x = matrix(1,1,{-100})
     for i=1,200 do
-      opt:execute(function() return f(x),df_dx(x) end, x)
+      opt:execute(function() return f(x),{df_dx(x)} end, {x})
     end
     check.eq(x, matrix(1,1,{0.333}))
 end)
@@ -132,7 +132,7 @@ T("SGDTestDigits", function()
 
     clock = util.stopwatch()
     clock:go()
-
+    local weights = trainer.weights_table
     -- print("Epoch Training  Validation")
     local tmp = os.tmpname()
     for epoch = 1,max_epochs do

@@ -1,7 +1,5 @@
 get_table_from_dotted_string("bayesian.optimizer", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 -- Hamiltonian Monte-Carlo implementation with a basic on-line adaptation of
 -- epsilon, bounded by [epsilon_min,epsilon_max].
 
@@ -19,17 +17,17 @@ local wrap_matrices = matrix.dict.wrap_matrices
 -- implemented to minimize the negative of the log-likelihood (maximize the
 -- log-likelihood).
 --
--- @param theta is a matrix, a table of matrices or a matrix.dict instance.
+-- @param theta is a matrix, a table of matrices.
 local function hmc(self, eval, theta)
   local state       = self.state
   --
   local energies    = state.energies
   local math_log    = math.log
   local math_clamp  = math.clamp
+  local md          = matrix.dict
   local priors      = state.priors
   local samples     = state.samples
   local origw = theta
-  local theta = wrap_matrices(theta)
   --
   local acc_decay   = self:get_option("acc_decay")
   local alpha       = self:get_option("alpha")
@@ -61,7 +59,7 @@ local function hmc(self, eval, theta)
   --
   -- kinetic energy associated with given velocity
   local kinetic_energy = function(vel)
-    return 0.5 * vel:dot(vel)
+    return 0.5 * md.dot(vel,vel)
   end
   --
   -- executes the simulation chain of HMC using leapfrog updates
@@ -72,21 +70,19 @@ local function hmc(self, eval, theta)
     local leapfrog = function(pos, vel, epsilon, i)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
       local _,grads = eval_with_priors(origw, i)
-      grads = wrap_matrices(grads)
-      vel:axpy(-epsilon, grads)
+      md.axpy(vel, -epsilon, grads)
       -- from vel(t + eps/2) compute pos(t + eps)
-      pos:axpy(epsilon*inv_mass, vel)
+      md.axpy(pos, epsilon*inv_mass, vel)
       -- local eval_result,grads = eval_with_priors(origw, i)
-      -- vel:axpy(-epsilon*0.5, grads)
+      -- md.axpy(vel, -epsilon*0.5, grads)
     end
     --
     -- compute velocity at time: t + eps/2
     local initial_energy,grads = eval_with_priors(origw, 0)
     initial_energy = scale*initial_energy + priors:compute_neg_log_prior(pos)
-    grads = wrap_matrices(grads)
-    vel:axpy(-0.5*epsilon, grads)
+    md.axpy(vel, -0.5*epsilon, grads)
     -- compute position at time: t + eps
-    pos:axpy(epsilon*inv_mass, vel)
+    md.axpy(pos, epsilon*inv_mass, vel)
     -- compute from 2 to nsteps leapfrog updates
     for i=2,nsteps do
       leapfrog(pos, vel, epsilon, i-1)
@@ -94,8 +90,7 @@ local function hmc(self, eval, theta)
     -- compute velocity at time: t + nsteps*eps
     local final_energy,grads = eval_with_priors(origw, nsteps)
     final_energy = scale*final_energy + priors:compute_neg_log_prior(pos)
-    grads = wrap_matrices(grads)
-    vel:axpy(-0.5*epsilon, grads)
+    md.axpy(vel, -0.5*epsilon, grads)
     return initial_energy, final_energy
   end
   --
@@ -111,19 +106,19 @@ local function hmc(self, eval, theta)
   --
   -- one HMC sample procedure
   local norm01 = state.norm01 or stats.dist.normal()
-  local theta0 = theta:clone() -- for in case of rejection
+  local theta0 = md.clone(theta) -- for in case of rejection
   local vel    = self.state.vel
   local vel0 -- only if persistent
   -- sample velocity from a standard normal distribution
   if persistence == 0.0 or not vel then
-    vel = vel or theta:clone_only_dims()
-    for name,v in pairs(vel) do
+    vel = vel or md.clone_only_dims(theta)
+    for _,v in pairs(vel) do
       norm01:sample(rng, v:rewrap(v:size(), 1))
     end
   else
-    vel0 = vel:clone() -- for in case of rejection
-    vel:scal(-persistence)
-    for name,v in pairs(vel) do
+    vel0 = md.clone(vel) -- for in case of rejection
+    md.scal(vel, -persistence)
+    for _,v in pairs(vel) do
       local aux = matrix(v:size(),1)
       norm01:sample(rng, aux)
       v:rewrap(v:size(),1):axpy(spersistence, aux)
@@ -134,7 +129,7 @@ local function hmc(self, eval, theta)
   local initial_kinetic = kinetic_energy(vel) * inv_mass
   -- simulate the HMC mechanics
   local initial_energy, final_energy = simulation(theta, vel, p_epsilon, nsteps)
-  vel:scal(-1.0)
+  md.scal(vel, -1.0)
   local final_kinetic = kinetic_energy(vel) * inv_mass
   -- rejection based in metropolis hastings
   local accept = metropolis_hastings(initial_energy + initial_kinetic,
@@ -145,8 +140,8 @@ local function hmc(self, eval, theta)
   -- if not ok then print(ok, "PROBLEM") end
   if not accept or not ok then
     energy = initial_energy
-    theta:copy(theta0)
-    if persistent then vel:copy(vel0) end
+    md.copy(theta, theta0)
+    if persistent then md.copy(vel, vel0) end
   end
   local accepted = (accept and 1) or 0
   -- accept rate update (exponential mean)
@@ -154,7 +149,7 @@ local function hmc(self, eval, theta)
   --
   self:count_one()
   if self:get_count() % thin == 0 then
-    table.insert(samples, theta:clone())
+    table.insert(samples, md.clone(theta))
     table.insert(energies, energy)
   end
   local acceptance_rate

@@ -443,7 +443,7 @@ train_holdout_methods.execute =
       if state.best_val_error == math.huge or rel_error > params.tolerance then
         state.best_epoch     = state.current_epoch
         state.best_val_error = state.validation_error
-        state.best           = state.last:clone()
+        state.best           = state.last.clone and state.last.clone() or matrix.dict.clone( state.last )
       end
     end
     return true

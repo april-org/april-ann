@@ -44,6 +44,7 @@ namespace AprilUtils {
   }
 
   LuaTable::~LuaTable() {
+    if (pop_at_end > 0) lua_pop(L, pop_at_end);
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
   }
 
@@ -56,6 +57,7 @@ namespace AprilUtils {
   }
   
   void LuaTable::init(lua_State *L, int i) {
+    pop_at_end = 0;
     this->L = L;
     if (lua_isnil(L,i) || lua_type(L,i) == LUA_TNONE) ref = LUA_NOREF;
     else {
@@ -65,6 +67,18 @@ namespace AprilUtils {
       }
       this->ref = luaL_ref(L, LUA_REGISTRYINDEX);
     }
+  }
+
+  string LuaTable::toLuaString() {
+    /* the function name */
+    lua_getglobal(L, "util");
+    lua_getfield(L, -1, "to_lua_string");
+    pushTable(L);
+    lua_pushstring(L, "binary");
+    lua_call(L, 2, 1);
+    string str(lua_tostring(L,-1));
+    lua_pop(L,2);
+    return str;
   }
     
   void LuaTable::pushTable(lua_State *L) {
@@ -106,6 +120,14 @@ namespace AprilUtils {
   }
 
   template<>
+  const char *LuaTable::convertTo<const char *>(lua_State *L, int idx) {
+    UNUSED_VARIABLE(L);
+    UNUSED_VARIABLE(idx);
+    ERROR_EXIT(128, "Not implemented for 'const char *', use 'string'\n");
+    return 0;
+  }
+
+  template<>
   string LuaTable::convertTo<string>(lua_State *L, int idx) {
     string aux(lua_tostring(L, idx), luaL_len(L, idx));
     return aux;
@@ -142,4 +164,60 @@ namespace AprilUtils {
                                         const char *value) {
     lua_pushstring(L, value);
   }
+
+  template<>
+  bool LuaTable::checkType<int>(lua_State *L, int idx) {
+    return lua_isnumber(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<float>(lua_State *L, int idx) {
+    return lua_isnumber(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<double>(lua_State *L, int idx) {
+    return lua_isnumber(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<bool>(lua_State *L, int idx) {
+    return lua_isboolean(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<const char *>(lua_State *L, int idx) {
+    return lua_isstring(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<string>(lua_State *L, int idx) {
+    return lua_isstring(L, idx);
+  }
+  
+  // overload of get for const char *
+  template<>
+  const char *LuaTable::get<const char *>(const char *name) const {
+    if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+    lua_getfield(L, -1, name);
+    if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
+    const char *str = lua_tostring(L,-1);
+    ++pop_at_end;
+    return str;
+  }
+
+  // overload of opt for const char *
+  template<>
+  const char *LuaTable::opt<const char *>(const char *name, const char *def) const {
+    if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+    lua_getfield(L, -1, name);
+    if (lua_isnil(L,-1)) {
+      lua_pop(L, 1);
+      return def;
+    }
+    const char *str = lua_tostring(L,-1);
+    ++pop_at_end;
+    return str;
+  }
+  
 }

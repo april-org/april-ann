@@ -300,6 +300,9 @@ namespace AprilUtils {
   template<> void LuaTable::
   pushInto<const AprilMath::ComplexF &>(lua_State *L,
                                         const AprilMath::ComplexF &value);
+
+  template<> bool LuaTable::
+  checkType<AprilMath::ComplexF>(lua_State *L, int idx);
 }
 
 #endif // COMPLEX_NUMBER_H

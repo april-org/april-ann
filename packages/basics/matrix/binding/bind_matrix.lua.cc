@@ -45,6 +45,11 @@ namespace AprilUtils {
   pushInto<Basics::MatrixFloat *>(lua_State *L, Basics::MatrixFloat *value) {
     lua_pushMatrixFloat(L, value);
   }
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixFloat *>(lua_State *L, int idx) {
+    return lua_isMatrixFloat(L, idx);
+  }
 }
 
 #define FUNCTION_NAME "read_vector"

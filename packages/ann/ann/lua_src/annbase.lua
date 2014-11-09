@@ -2,8 +2,6 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
-local wrap_matrices = matrix.dict.wrap_matrices
-----------------------------------------------------------------------
 
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
@@ -88,14 +86,14 @@ function ann_wrapper_methods:reset(n)
 end
 
 function ann_wrapper_methods:compute_gradients(dict)
-  local dict = wrap_matrices(dict or {})
+  local dict = dict or {}
   self:compute_gradients_function(dict)
   return dict
 end
 
 function ann_wrapper_methods:build()
   -- already built
-  return self,self.weights,matrix.dict()
+  return self,self.weights,{}
 end
 
 function ann_wrapper_methods:copy_weights()
@@ -103,7 +101,7 @@ function ann_wrapper_methods:copy_weights()
 end
 
 function ann_wrapper_methods:copy_components()
-  return matrix.dict()
+  return {}
 end
 
 function ann_wrapper_methods:to_lua_string()
@@ -730,7 +728,7 @@ april_set_doc(ann.components.base.."copy_weights",
 		class="method",
 		summary="Returns the dictionary weights_name=>ann.connections",
 		outputs= {
-		  { "A matrix.dict objecti all the weights_name=>matrix found",
+		  { "A matrix table weights_name=>matrix with matrices found",
 		    "at the components hierarchy."},
 		}
 	      })

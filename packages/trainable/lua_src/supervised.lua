@@ -11,14 +11,13 @@ local pairs = pairs
 local assert = assert
 --
 local type = type
+local april_assert = april_assert
 local is_a = class.is_a
 local iterator = iterator
 local get_table_fields = get_table_fields
-local april_assert = april_assert
+local md = matrix.dict
 
 -----------------------------------------
-
-local wrap_matrices = matrix.dict.wrap_matrices
 
 ------------------------------
 -- SUPERVISED_TRAINER CLASS --
@@ -84,17 +83,17 @@ trainable_supervised_trainer.constructor =
       trainable.supervised_trainer.constructor(self,
                                                model, loss, bunch_size,
                                                optimizer, smooth_gradients)
-      local weight = connections
-      if not is_a(connections, matrix.dict) then
-        weights = matrix.dict()
-        for name,wdata in pairs(connections) do
-          local m = wdata
-          if not is_a(m, matrix) then
-            m = wdata.w:rewrap(wdata.output,wdata.input)
-          end
-          weights:insert(name,m:clone())
-        end
-      end
+      local weights = connections
+      -- if not is_a(connections, matrix.dict) then
+      --   weights = matrix.dict()
+      --   for name,wdata in pairs(connections) do
+      --     local m = wdata
+      --     if not is_a(m, matrix) then
+      --       m = wdata.w:rewrap(wdata.output,wdata.input)
+      --     end
+      --     weights:insert(name,m:clone())
+      --   end
+      -- end
       self:build{ weights = weights }
     else
       -- Constructor of a new object
@@ -114,14 +113,14 @@ trainable_supervised_trainer.constructor =
       self.loss_function    = loss_function or false
       self.optimizer        = optimizer
       self.smooth_gradients = smooth_gradients
-      self.weights_table    = matrix.dict()
+      self.weights_table    = {}
       self.components_table = {}
       self.component2weights_dict = {}
       self.weights2component_dict = {}
       self.weights_order    = {}
       self.components_order = {}
       self.bunch_size       = bunch_size or false
-      self.weight_grads     = matrix.dict()
+      self.weight_grads     = {}
     end
   end
 
@@ -317,7 +316,7 @@ trainable_supervised_trainer_methods.size =
     if not self.is_built then
       error("It is not build")
     end
-    return self.weights_table:size()
+    return md.size(self.weights_table)
   end
 
 ------------------------------------------------------------------------
@@ -331,7 +330,7 @@ function trainable_supervised_trainer_methods:to_lua_string(format)
   table.insert(t, ",\n")
   table.insert(t, "connections={")
   for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table(wname)
+    local cobj = self.weights_table[wname]
     local w = cobj
     table.insert(t, string.format("\n[%q] = ", wname))
     table.insert(t, w:to_lua_string(format))
@@ -530,7 +529,7 @@ trainable_supervised_trainer_methods.iterate_weights =
         end
       until self.weights_order[pos]:match(match_string)
       local name = self.weights_order[pos]
-      return name,self.weights_table(name)
+      return name,self.weights_table[name]
     end
   end
 
@@ -577,7 +576,7 @@ trainable_supervised_trainer_methods.weights =
     if not self.is_built then
       error("Needs execution of build method")
     end
-    return self.weights_table(str)
+    return self.weights_table[str]
   end
 
 ------------------------------------------------------------------------
@@ -640,7 +639,7 @@ trainable_supervised_trainer_methods.randomize_weights =
         local current_inf = params.inf
         local current_sup = params.sup
         local constant    = 0
-        local connection  = self.weights_table(wname)
+        local connection  = self.weights_table[wname]
         if params.use_fanin then
           constant = constant + ann.connections.get_input_size(connection)
         end
@@ -675,25 +674,25 @@ trainable_supervised_trainer_methods.build =
         "to provide easy acces to components and connections.",
       }, 
     params = {
-      ["weights"] = "A dictionary weights_name => ann.connections object [optional]",
+      ["weights"] = "A table weights_name=>matrix [optional]",
       ["input"]   = "The input size of the component [optional]",
       ["output"]  = "The output size of the component [optional]",
     },
     outputs = {
       "The caller object",
-      "Weights table, associates weights_name => ann.connections object",
+      "Weights table, associates weights_name=>matrix",
       "Components table, associates component_name => ann.components object",
     },
   } ..
   function(self, t)
     local params = get_table_fields(
       {
-        weights = { mandatory = false, default=nil },
+        weights = { mandatory = false, default=nil, type_match="table" },
         input   = { type_match="number", mandatory = false, default=nil },
         output  = { type_match="number", mandatory = false, default=nil },
       }, t or {})
-    self.weight_grads  = matrix.dict()
-    self.weights_table = wrap_matrices(params.weights or matrix.dict())
+    self.weight_grads  = {}
+    self.weights_table = params.weights or {}
     -- BUILD CALL
     _,
     self.weights_table,
@@ -702,7 +701,7 @@ trainable_supervised_trainer_methods.build =
       output  = params.output,
       weights = self.weights_table, }
     --
-    self.weights_order = self.weights_table:keys()
+    self.weights_order = iterator(table.keys(self.weights_table)):table()
     table.sort(self.weights_order)
     self.components_order = {}
     self.component2weights_dict = {}
@@ -731,7 +730,7 @@ trainable_supervised_trainer_methods.get_weights_of =
     outputs = { "An instance of ann.connections" },
   } ..
   function(self, name)
-    return self.weights_table(self.component2weights_dict[name])
+    return self.weights_table[self.component2weights_dict[name]]
   end
 
 trainable_supervised_trainer_methods.get_components_of =
@@ -818,7 +817,7 @@ trainable_supervised_trainer_methods.train_step =
           if needs_gradient then
             local gradient=model:backprop(loss:gradient(output,target))
             --
-            grads:zeros()
+            md.zeros(grads)
             --
             local grads = model:compute_gradients(grads)
             self.weight_grads = grads
@@ -910,7 +909,7 @@ trainable_supervised_trainer_methods.compute_gradients_step =
     if type(input)  == "table" then input  = matrix(input)  end
     if type(target) == "table" then target = matrix(target) end
     local loss         = loss or self.loss_function
-    local weight_grads = weight_grads or matrix.dict()
+    local weight_grads = weight_grads or {}
     local tr_loss,tr_loss_matrix,gradient
     self.ann_component:reset()
     local output = self.ann_component:forward(input, true)
@@ -920,8 +919,7 @@ trainable_supervised_trainer_methods.compute_gradients_step =
       gradient = loss:gradient(output, target)
       gradient = self.ann_component:backprop(gradient)
       --
-      iterator(pairs(weight_grads)):
-      apply(function(name,mat)mat:zeros()end)
+      md.zeros(weight_grads)
       --
       weight_grads = self.ann_component:compute_gradients(weight_grads)
       return weight_grads,tr_loss,tr_loss_matrix
@@ -967,7 +965,7 @@ trainable_supervised_trainer_methods.grad_check_step =
       local w = cnn
       -- The shared parameter has no effect in gradients check, only bunch_size
       local ratio = 1/bunch_size
-      local ann_grads = self.weight_grads(wname)
+      local ann_grads = self.weight_grads[wname]
       assert(w:is_contiguous(),
              "Unable to check grads of non-contiguous matrices")
       for i=1,w:size() do
@@ -1509,7 +1507,7 @@ trainable_supervised_trainer_methods.show_weights =
   } ..
   function(self)
     for _,wname in pairs(self.weights_order) do
-      local w = self.weights_table(wname):toTable()
+      local w = self.weights_table[wname]:toTable()
       print(wname, table.concat(w, " "))
     end
   end
@@ -1539,7 +1537,7 @@ trainable_supervised_trainer_methods.clone =
       obj:set_optimizer(self.optimizer:clone())
     end
     if #self.weights_order > 0 then
-      obj:build{ weights = self.weights_table:clone() }
+      obj:build{ weights = md.clone(self.weights_table) }
     end
     -- add possible user functions
     for i,v in pairs(self) do

@@ -11,7 +11,6 @@ local mop = matrix.op
 local iterator = iterator
 local get_table_fields = get_table_fields
 local april_assert = april_assert
-local wrap_matrices = matrix.dict.wrap_matrices
 
 local FLT_MIN = mathcore.limits.float.min()
 

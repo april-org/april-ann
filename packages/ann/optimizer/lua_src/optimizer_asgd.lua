@@ -9,8 +9,8 @@ local type = type
 local april_assert = april_assert
 local get_table_fields = get_table_fields
 local iterator = iterator
+local md = matrix.dict
 local mop = matrix.op
-local wrap_matrices = matrix.dict.wrap_matrices
 
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
@@ -35,7 +35,7 @@ function asgd:constructor(g_options, l_options, count, aw)
 			    g_options,
 			    l_options,
 			    count)
-  self.aw = wrap_matrices(aw or matrix.dict())
+  self.aw = aw or {}
   if not g_options then
     -- default values
     self:set_option("learning_rate", 0.01)
@@ -46,21 +46,18 @@ function asgd:constructor(g_options, l_options, count, aw)
 end
 
 function asgd_methods:execute(eval, weights)
-  local wrap_matrices = wrap_matrices
   local table = table
   local assert = assert
   --
-  local weights = wrap_matrices(weights)
   local arg = table.pack( eval(weights) )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
-  gradients = wrap_matrices(gradients)
   local t = self:get_count()
   for wname,w in pairs(weights) do
-    local aw          = self.aw(wname) or w:clone():zeros()
-    local grad        = gradients(wname)
+    local aw          = self.aw[wname] or w:clone():zeros()
+    local grad        = gradients[wname]
     -- learning options
     local lr          = self:get_option_of(wname, "learning_rate")
     local lr_decay    = self:get_option_of(wname, "lr_decay")
@@ -99,7 +96,7 @@ function asgd_methods:clone()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
-  obj.aw                = self.aw:clone()
+  obj.aw                = md.clone( self.aw )
   return obj
 end
 
@@ -112,7 +109,7 @@ function asgd_methods:to_lua_string(format)
 		  ",",
 		  tostring(self.count),
 		  ",",
-		  self.aw:to_lua_string(format),
+		  util.to_lua_string(self.aw, format),
 		  ")" }
   return table.concat(str_t, "")
 end

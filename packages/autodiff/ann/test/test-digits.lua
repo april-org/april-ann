@@ -126,8 +126,6 @@ opt:set_option("momentum", momentum)
 --
 
 -- WEIGHTS DICTIONARY
-local weights_dict = matrix.dict(weights)
-
 local ds_pair_it = trainable.dataset_pair_iterator
 -- traindataset
 local function train_dataset(in_ds,out_ds)
@@ -137,17 +135,16 @@ local function train_dataset(in_ds,out_ds)
 					      bunch_size=bunch_size,
 					      shuffle = rnd, } do
     local loss
-    loss = opt:execute(function(params)
-                         if params ~= weights then
-                           dw_func:set_shared(params)
-                         end
-			 local loss,b1,w1,b2,w2,
-			 b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
-					 output_bunch:get_matrix():transpose())
-                         local grads = matrix.dict{ b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
-			 return loss, grads
-		       end,
-		       weights_dict)
+    loss = opt:execute(function(params,it)
+        if params ~= dw_func:get_shared() then
+          dw_func:set_shared(params)
+        end
+        local loss,b1,w1,b2,w2,
+        b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
+                        output_bunch:get_matrix():transpose())
+        local grads = { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
+        return loss, grads end,
+      dw_func:get_shared())
     mv:add(loss)
   end
   return mv:compute()
@@ -174,7 +171,7 @@ while train_func:execute(function()
 							 train_output)
 			   local va_loss = validate_dataset(val_input,
 							    val_output)
-			   return weights_dict,tr_loss,va_loss
+			   return dw_func:get_shared(),tr_loss,va_loss
 			 end) do
   print(train_func:get_state_string())
 end

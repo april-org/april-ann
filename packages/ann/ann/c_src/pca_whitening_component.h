@@ -28,7 +28,6 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "dot_product_component.h"
-#include "matrixFloatSet.h"
 
 namespace ANN {
 
@@ -41,7 +40,7 @@ namespace ANN {
     Basics::MatrixFloat *U_S_epsilon; //< matrix for dot_product_component
     float epsilon;  //< regularization
     DotProductANNComponent dot_product_encoder; //< Applies the transformation
-    Basics::MatrixFloatSet matrix_set; //< Auxiliary for dot_product_encoder build
+    AprilUtils::LuaTable matrix_set; //< Auxiliary for dot_product_encoder build
     unsigned int takeN;
     
   public:
@@ -67,8 +66,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict);
 
     virtual char *toLuaString();
     unsigned int getTakeN() const { return takeN; }

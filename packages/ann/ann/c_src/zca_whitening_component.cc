@@ -53,9 +53,9 @@ namespace ANN {
       int sizes[2] = { U->getDimSize(0), static_cast<int>(takeN) };
       aux_U = new MatrixFloat(this->U, coords, sizes, true);
     }
-    matrix_set.insert(WEIGHTS_NAME, aux_U);
-    hash<string,ANNComponent*> components_dict;
-    dot_product_decoder.build(0, 0, &matrix_set, components_dict);
+    matrix_set.put(WEIGHTS_NAME, aux_U);
+    AprilUtils::LuaTable components_dict;
+    dot_product_decoder.build(0, 0, matrix_set, components_dict);
   }
   
   ZCAWhiteningANNComponent::~ZCAWhiteningANNComponent() {
@@ -82,13 +82,13 @@ namespace ANN {
   
   char *ZCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", false);
+    AprilUtils::LuaTable options;
+    options.put("ascii", false);
     stream->printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    U->write(stream.get(), &options);
+    U->write(stream.get(), options);
     stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), &options);
+    S->write(stream.get(), options);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, getTakeN());
     stream->put("\0",1); // forces a \0 at the end of the buffer
     return stream->releaseString();
