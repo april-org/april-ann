@@ -56,6 +56,8 @@ namespace ANN {
     matrix_set.put(WEIGHTS_NAME, aux_U);
     AprilUtils::LuaTable components_dict;
     dot_product_decoder.build(0, 0, matrix_set, components_dict);
+    // avoid problems with DecRef in LuaTable
+    IncRef(&dot_product_decoder);
   }
   
   ZCAWhiteningANNComponent::~ZCAWhiteningANNComponent() {

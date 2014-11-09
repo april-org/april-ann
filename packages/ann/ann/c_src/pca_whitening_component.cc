@@ -77,6 +77,8 @@ namespace ANN {
     matrix_set.put(WEIGHTS_NAME, U_S_epsilon);
     AprilUtils::LuaTable components_dict;
     dot_product_encoder.build(0, 0, matrix_set, components_dict);
+    // avoid problems with DecRef in LuaTable
+    IncRef(&dot_product_encoder);
   }
   
   PCAWhiteningANNComponent::~PCAWhiteningANNComponent() {
