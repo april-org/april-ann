@@ -39,8 +39,11 @@ local function clone_function(func,lookup_table)
     while true do
       local name,value = debug.getupvalue(func,i)
       if not name then break end
-      -- TODO: implement cone (deep copy) of tables
-      debug.setupvalue(func_clone, i, util.clone(value, lookup_table))
+      if name == "_ENV" then
+        debug.setupvalue(func_clone, i, value)
+      else
+        debug.setupvalue(func_clone, i, util.clone(value, lookup_table))
+      end
       i = i + 1
     end
   end
@@ -1006,10 +1009,11 @@ function util.function_to_lua_string(func,format)
   return table.concat(t, "")
 end
 
+-- It clones a data object. Doesn't work if exists loops in tables.
 function util.clone(data, lookup_table)
   if data == nil then return nil end
   local lookup_table = lookup_table or {}
-  if lookup_table[data] then 
+  if lookup_table[data] then
     return lookup_table[data]
   else
     local obj
