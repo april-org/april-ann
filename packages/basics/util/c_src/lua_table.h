@@ -172,8 +172,6 @@ namespace AprilUtils {
     }
     
   private:
-    /// Number of unpopped results.
-    mutable int pop_at_end;
     /// The lua_State where the table is allocated.
     mutable lua_State *L;
     /// The reference in the registry where the table can be retrieved.

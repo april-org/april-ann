@@ -44,7 +44,6 @@ namespace AprilUtils {
   }
 
   LuaTable::~LuaTable() {
-    if (pop_at_end > 0) lua_pop(L, pop_at_end);
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
   }
 
@@ -57,7 +56,6 @@ namespace AprilUtils {
   }
   
   void LuaTable::init(lua_State *L, int i) {
-    pop_at_end = 0;
     this->L = L;
     if (lua_isnil(L,i) || lua_type(L,i) == LUA_TNONE) ref = LUA_NOREF;
     else {
@@ -202,7 +200,7 @@ namespace AprilUtils {
     lua_getfield(L, -1, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
     const char *str = lua_tostring(L,-1);
-    ++pop_at_end;
+    // don't pop string and reference to fix const char * pointer
     return str;
   }
 
@@ -216,7 +214,7 @@ namespace AprilUtils {
       return def;
     }
     const char *str = lua_tostring(L,-1);
-    ++pop_at_end;
+    // don't pop string and reference to fix const char * pointer
     return str;
   }
   
