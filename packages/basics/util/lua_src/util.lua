@@ -27,6 +27,28 @@ is_class = make_deprecated_function("is_class",
 
 ------------------------------------------------------------------------------
 
+-- Clones the function and its upvalues
+local function clone_function(func,lookup_table)
+  local lookup_table = lookup_table or {}
+  -- clone by using a string dump
+  local ok,func_dump = pcall(string.dump, func)
+  local func_clone = (ok and loadstring(func_dump)) or func
+  if func_clone ~= func then
+    -- copy upvalues
+    local i = 1
+    while true do
+      local name,value = debug.getupvalue(func,i)
+      if not name then break end
+      -- TODO: implement cone (deep copy) of tables
+      debug.setupvalue(func_clone, i, util.clone(value, lookup_table))
+      i = i + 1
+    end
+  end
+  return func_clone
+end
+
+------------------------------------------------------------------------------
+
 function iscallable(obj)
   local t = luatype(obj)
   return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
@@ -982,6 +1004,32 @@ function util.function_to_lua_string(func,format)
     ")"
   }
   return table.concat(t, "")
+end
+
+function util.clone(data, lookup_table)
+  if data == nil then return nil end
+  local lookup_table = lookup_table or {}
+  if lookup_table[data] then 
+    return lookup_table[data]
+  else
+    local obj
+    local tt = type(data)
+    if tt == "number" or tt == "string" or tt == "thread" or tt == "boolean" then obj = data
+    elseif tt == "function" then obj = clone_function(data, lookup_table)
+    elseif data.clone then obj = data:clone()
+    elseif luatype(data) == "userdata" then obj = data
+    else
+      assert(luatype(data) == "table", "Expected a table")
+      obj = {}
+      for i,v in pairs(data) do
+        local clone_i = util.clone(i, lookup_table)
+        local clone_v = util.clone(v, lookup_table)
+        obj[clone_i] = clone_v
+      end
+    end
+    lookup_table[data] = obj
+    return obj
+  end
 end
 
 function util.to_lua_string(data,format)
