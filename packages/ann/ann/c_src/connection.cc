@@ -169,8 +169,8 @@ namespace ANN {
   char *Connections::toLuaString(MatrixFloat *weights) {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->put("matrix.fromString[[");
-    AprilUtils::HashTableOptions options;
-    weights->write( stream.get(), options.putBoolean("ascii", false) );
+    AprilUtils::LuaTable options;
+    weights->write( stream.get(), options.put("ascii", false) );
     stream->put("]]\0", 3); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }

@@ -137,12 +137,12 @@ namespace Stats {
 
   char *UniformDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.uniform(matrix.fromString[[");
-    low->write(stream.get(), &options);
+    low->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    high->write(stream.get(), &options);
+    high->write(stream.get(), options);
     stream->put("]])\0",4);
     return stream->releaseString();
   }

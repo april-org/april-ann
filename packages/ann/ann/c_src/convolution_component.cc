@@ -294,11 +294,14 @@ namespace ANN {
     return error_output_mat;
   }
   
-  void ConvolutionANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
+  void ConvolutionANNComponent::computeGradients(const char *name,
+                                                 AprilUtils::LuaTable &grads_mat_dict) {
     weights_matrix->addToSharedCount(number_input_windows);
-    if (grads_mat.empty()) {
+    MatrixFloat *grads_mat = grads_mat_dict.opt<MatrixFloat*>(name, 0);
+    if (grads_mat == 0) {
       grads_mat = weights_matrix->cloneOnlyDims();
-      matZeros(grads_mat.get());
+      matZeros(grads_mat);
+      grads_mat_dict.put(name, grads_mat);
     }
 #ifdef USE_CUDA
     grads_mat->setUseCuda(use_cuda);
@@ -331,7 +334,7 @@ namespace ANN {
       IncRef(error_input_flattened);
       
       // WEIGHTS UPDATE
-      matGemm(grads_mat.get(),
+      matGemm(grads_mat,
               CblasTrans, CblasNoTrans,
               1.0f,
               error_input_flattened, // A
@@ -366,19 +369,19 @@ namespace ANN {
 
   void ConvolutionANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     MatrixFloatSet *weights_dict,
-				     hash<string,ANNComponent*> &components_dict) {
+				     AprilUtils::LuaTable &weights_dict,
+				     AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     //
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name.c_str(), 0);
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
-    if (!w.empty()) {
+    if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w.get());
+      AssignRef(weights_matrix, w);
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
@@ -395,22 +398,22 @@ namespace ANN {
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
-      w = weights_matrix;
+      weights_dict.put(weights_name.c_str(), weights_matrix);
     }
   }
 
-  void ConvolutionANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void ConvolutionANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
-    if (!w.empty() && w.get() != weights_matrix)
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name.c_str(), 0);
+    if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w.empty()) {
-      w = weights_matrix;
+    else if (w == 0) {
+      weights_dict.put(weights_name.c_str(), weights_matrix);
     }
   }  
 

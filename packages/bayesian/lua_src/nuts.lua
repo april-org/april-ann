@@ -1,7 +1,5 @@
 get_table_from_dotted_string("bayesian.optimizer", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 -- Radford M. Neal. MCMC using Hamiltonian dynamics. 2010
 -- http://www.cs.toronto.edu/~radford/ham-mcmc.abstract.html
 

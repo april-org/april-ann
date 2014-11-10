@@ -10,7 +10,7 @@ local april_assert = april_assert
 local get_table_fields = get_table_fields
 local iterator = iterator
 local mop = matrix.op
-local wrap_matrices = matrix.dict.wrap_matrices
+local md = matrix.dict
 
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
@@ -38,8 +38,8 @@ function rprop:constructor(g_options, l_options, count, steps, old_signs)
 			    g_options,
 			    l_options,
 			    count)
-  self.steps     = wrap_matrices(steps or matrix.dict())
-  self.old_signs = wrap_matrices(old_signs or matrix.dict())
+  self.steps     = steps or {}
+  self.old_signs = old_signs or {}
   if not g_options then
     -- default values
     self:set_option("initial_step",  0.1)
@@ -55,12 +55,10 @@ function rprop:constructor(g_options, l_options, count, steps, old_signs)
 end
 
 function rprop_methods:execute(eval, weights)
-  local wrap_matrices = wrap_matrices
   local table = table
   local assert = assert
   --
   local origw         = weights
-  local weights       = wrap_matrices(weights)
   local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
   local eta_minus     = self:get_option("eta_minus")
@@ -76,12 +74,11 @@ function rprop_methods:execute(eval, weights)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
-    gradients = wrap_matrices(gradients)
     --
     for wname,w in pairs(weights) do
-      local grad        = gradients(wname)
-      local old_sign    = old_signs(wname)
-      local step        = steps(wname) or w:clone():fill(initial_step)
+      local grad        = gradients[wname]
+      local old_sign    = old_signs[wname]
+      local step        = steps[wname] or w:clone():fill(initial_step)
       -- learning options
       local l1          = self:get_option_of(wname, "L1_norm")
       local l2          = self:get_option_of(wname, "weight_decay")
@@ -127,10 +124,10 @@ function rprop_methods:clone()
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
   if self.steps then
-    obj.steps = self.steps:clone()
+    obj.steps = md.clone( self.steps )
   end
   if self.old_signs then
-    obj.old_signs = self.old_signs:clone()
+    obj.old_signs = md.clone( self.old_signs )
   end
   return obj
 end
@@ -143,9 +140,9 @@ function rprop_methods:to_lua_string(format)
 		  ",",
 		  tostring(self.count),
 		  ",",
-		  self.steps:to_lua_string(format),
+		  util.to_lua_string(self.steps, format),
 		  ",",
-		  self.old_signs:to_lua_string(format),
+		  util.to_lua_string(self.old_signs, format),
 		  ")" }
   return table.concat(str_t, "")
 end

@@ -20,7 +20,7 @@ T("LossTest", function()
       end
       if g then
         local ep = l:gradient(i,t)
-        check.eq(ep:get_matrix(), g(i,t))
+        check.eq(ep, g(i,t))
       end
     end
 

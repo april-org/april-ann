@@ -412,7 +412,7 @@ namespace Basics {
      * Any key/value in @c options dictionary will be ignored.
      */
     static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
-                                 const AprilUtils::GenericOptions *options);
+                                 const AprilUtils::LuaTable &options);
 
     /**
      * @brief Writes the SparseMatrix into a stream.
@@ -424,7 +424,7 @@ namespace Basics {
      *   binarization purposes. By default it is true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const AprilUtils::GenericOptions *options);
+                       const AprilUtils::LuaTable &options);
 
     
   private:

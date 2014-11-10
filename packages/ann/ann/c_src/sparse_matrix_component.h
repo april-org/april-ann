@@ -85,7 +85,7 @@ namespace ANN {
      */
     virtual void privateReset(unsigned int it=0) = 0;
     
-    // virtual void computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) = 0;
+    // virtual void computeGradients(const char *name, AprilUtils::LuaTable &weight_grads_dict) = 0;
     
   public:
     VirtualSparseMatrixANNComponent(const char *name, const char *weights_name,
@@ -106,10 +106,10 @@ namespace ANN {
     /*
       virtual void build(unsigned int input_size,
       unsigned int output_size,
-      MatrixFloatSet *weights_dict,
-      hash<string,ANNComponent*> &components_dict) = 0;
+      AprilUtils::LuaTable &weights_dict,
+      AprilUtils::LuaTable &components_dict) = 0;
     */
-    // virtual void copyWeights(MatrixFloatSet *weights_dict) = 0;
+    // virtual void copyWeights(AprilUtils::LuaTable &weights_dict) = 0;
     // virtual char *toLuaString() = 0;
   };
   

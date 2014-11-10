@@ -52,11 +52,6 @@ namespace Basics {
                                           AprilIO::StreamInterface *stream);
 
   } // namespace MatrixIO
-
-  template<>
-  int32_t Matrix<int32_t>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name, int32_t default_value);
   
   //////////////////////////////////////////////////////////////////////////////
   

@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "lua_table.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
@@ -56,6 +57,25 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number) {
   LuaComplexFNumber *obj = new LuaComplexFNumber(number);
   lua_pushLuaComplexFNumber(L, obj);
 }
+
+namespace AprilUtils {
+  template<> AprilMath::ComplexF LuaTable::
+  convertTo<AprilMath::ComplexF>(lua_State *L, int idx) {
+    return lua_toComplexF(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<const AprilMath::ComplexF &>(lua_State *L,
+                                        const AprilMath::ComplexF &value) {
+    lua_pushComplexF(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<AprilMath::ComplexF>(lua_State *L, int idx) {
+    return lua_isComplexF(L, idx);
+  }
+}
+
 //BIND_END
 
 //BIND_HEADER_H

@@ -75,12 +75,6 @@ namespace Basics {
 
   } // namespace MatrixIO
 
-  template<>
-  bool Matrix<bool>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                       const char *name, bool default_value) {
-    return options->getOptionalBoolean(name, default_value);
-  }
-
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<bool>;
 

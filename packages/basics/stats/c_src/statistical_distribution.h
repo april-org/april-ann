@@ -24,7 +24,6 @@
 #include "error_print.h"
 #include "logbase.h"
 #include "matrixFloat.h"
-#include "matrixFloatSet.h"
 #include "MersenneTwister.h"
 #include "referenced.h"
 

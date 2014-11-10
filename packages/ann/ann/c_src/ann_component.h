@@ -22,22 +22,16 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
-#include "aux_hash_table.h" // required for build
 #include "connection.h"
 #include "disallow_class_methods.h"
 #include "error_print.h"
 #include "function_interface.h"
-#include "hash_table.h"     // required for build
 #include "mystring.h"
+#include "lua_table.h"
 #include "token_base.h"
 #include "matrixFloat.h"
-#include "matrixFloatSet.h"
 #include "unused_variable.h"
 #include "vector.h"
-
-using AprilUtils::hash;    // required for build
-using AprilUtils::string;
-using AprilUtils::vector;
 
 #define ASSERT_MATRIX(m)
 
@@ -49,10 +43,30 @@ using AprilUtils::vector;
  */
 #define MAX_NAME_STR 256
 
+namespace ANN {
+  // forward declaration
+  class ANNComponent;
+}
+
+namespace AprilUtils {
+
+  template<> ANN::ANNComponent *LuaTable::
+  convertTo<ANN::ANNComponent *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value);
+
+  template<> bool LuaTable::
+  checkType<ANN::ANNComponent *>(lua_State *L, int idx);
+}
+
+
 /**
  * @brief All ANN components and other stuff is implemented here.
  */
 namespace ANN {
+
+
   
   unsigned int mult(const int *v, int n);
 
@@ -277,22 +291,20 @@ namespace ANN {
     /**
      * @brief Computation of gradient of all ANNComponent's is done here.
      *
-     * @param[in,out] weight_grads_dict - A Basics::MatrixFloatSet reference where
+     * @param[in,out] weight_grads_dict - A AprilUtils::LuaTable reference where
      * gradient matrices will be stored.
      *
      * This method traverses all the ANNComponent's using the given
-     * Basics::MatrixFloatSet. If hasWeightsName() is true, the method
-     * computeGradients() will be executed with the shared Basics::MatrixFloat
-     * reference (i.e. AprilUtils::SharedPtr) related to the @c weights_name
-     * property.
+     * AprilUtils::LuaTable. If hasWeightsName() is true, the method
+     * computeGradients() will be executed.
      *
      * @note The @c weight_grads_dict[weights_name] can be an empty reference,
      * in this case, the called method has the responsability of its proper
      * initialization.
      */
-    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict){
-      if (!weights_name.empty()) {
-        computeGradients( (*weight_grads_dict)[weights_name].getDense() );
+    virtual void computeAllGradients(AprilUtils::LuaTable &weight_grads_dict){
+      if (hasWeightsName()) {
+        computeGradients( weights_name.c_str(), weight_grads_dict );
       }
     }
     
@@ -347,35 +359,37 @@ namespace ANN {
      * @param _output_size - The output size given to the method. It can be @c
      * _input_size=0 to indicate that it is unknown or don't care.
      *
-     * @param[in,out] weights_dict - A pointer to Basics::MatrixFloatSet where
+     * @param[in,out] weights_dict - A reference to AprilUtils::LuaTable where
      * weight matrices are stored.
      *
-     * @param[out] components_dict - A dictionary of ANNComponent's which are
-     * part of the ANN.
+     * @param[out] components_dict - A AprilUtils::LuaTable of ANNComponent's which
+     * are part of the ANN.
      *
      * @note Derived classes must re-implement this method throwing errors if
      * necessary when input/output sizes have unexpected values, and calling to
      * the parent method before doing anything.
      *
-     * @note The @c weights_dict param contains weight Basics::MatrixFloat
-     * references (i.e. AprilUtils::SharedPtr) indexed by @c weights_name
-     * property. The reference can be empty and the derived class is responsible
-     * to initialize it properly. If it is not empty, the derived class is
-     * responsible to check its size correctness.
+     * @note The @c weights_dict param can contain any Lua or APRIL-ANN type
+     * indexed by @c weights_name property. It can be empty and the derived
+     * class is responsible to initialize it properly. If it is not empty, the
+     * derived class is responsible to check its size and type correctness.
      */
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict) {
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
       is_built = true;
       ////////////////////////////////////////////////////////////////////
-      ANNComponent *&component = components_dict[name];
-      if (component != 0 &&
-          component != this) ERROR_EXIT1(102, "Non unique component name found: %s\n",
-                                         name.c_str());
-      else component = this;
+      ANNComponent *component = components_dict.opt<ANNComponent *>(name.c_str(), 0);
+      if (component != 0 && component != this) {
+        ERROR_EXIT1(102, "Non unique component name found: %s\n", name.c_str());
+      }
+      else {
+        component = this;
+        components_dict.put(name.c_str(), component);
+      }
       ////////////////////////////////////////////////////////////////////
       if (input_size   == 0)  input_size   = _input_size;
       if (output_size  == 0)  output_size  = _output_size;
@@ -392,7 +406,7 @@ namespace ANN {
     }
     
     /// Retrieve matrix weights from ANNComponent's.
-    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict) {
+    virtual void copyWeights(AprilUtils::LuaTable &weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 
@@ -402,8 +416,8 @@ namespace ANN {
      * @note All derived classes which rewrite this method must call parent
      * method before doing anything.
      */
-    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict) {
-      components_dict[name] = this;
+    virtual void copyComponents(AprilUtils::LuaTable &components_dict) {
+      components_dict.put(name.c_str(), this);
     }
     
     /// For debug purposes.
@@ -495,8 +509,9 @@ namespace ANN {
      * This method is rewritten only by ANNComponent's which contain trainable
      * weight matrices, and therefore it is needed to compute its gradients.
      *
-     * @param weight_grads - A shared reference (i.e. AprilUtils::SharedPtr) to
-     * a Basics::MatrixFloat pointer.
+     * @param weights_name - A string with the corresponding weights name.
+     *
+     * @param weight_grads - A dictionary where to store the gradients.
      *
      * @note The default implementation in ANNComponent does nothing.
      *
@@ -504,7 +519,9 @@ namespace ANN {
      * class is responsible to initialize it properly, or to check the
      * correctness of sizes and dimensions.
      */
-    virtual void computeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> &weight_grads) {
+    virtual void computeGradients(const char *weights_name,
+                                  AprilUtils::LuaTable &weight_grads) {
+      UNUSED_VARIABLE(weights_name);
       UNUSED_VARIABLE(weight_grads);
     }
     

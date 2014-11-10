@@ -28,17 +28,18 @@
 
 #include <cmath>
 
+#ifndef NAN
+#define NAN sqrtf(-1.0f)
+#endif
+
 #include "constString.h"
+#include "lua_table.h"
 #include "error_print.h"
 #include "referenced.h"
 
 #ifdef UNDEF_MATH_DEFINES
 #undef _USE_MATH_DEFINES
 #undef UNDEF_MATH_DEFINES
-#endif
-
-#ifndef NAN
-#define NAN sqrtf(-1.0f)
 #endif
 
 #define REAL_IDX 0
@@ -198,7 +199,6 @@ namespace AprilMath {
   typedef Complex<float> ComplexF;
   typedef Complex<double> ComplexD;
 
-
   class LuaComplexFNumber : public Referenced {
   public:
     
@@ -291,6 +291,18 @@ namespace AprilMath {
 namespace AprilUtils {
   void aprilPrint(const AprilMath::ComplexF &v);
   void aprilPrint(const AprilMath::ComplexD &v);
+
+  ////////////////////////////////////////////////////////////////////////////
+  
+  template<> AprilMath::ComplexF LuaTable::
+  convertTo<AprilMath::ComplexF>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<const AprilMath::ComplexF &>(lua_State *L,
+                                        const AprilMath::ComplexF &value);
+
+  template<> bool LuaTable::
+  checkType<AprilMath::ComplexF>(lua_State *L, int idx);
 }
 
 #endif // COMPLEX_NUMBER_H

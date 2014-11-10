@@ -2,6 +2,8 @@ get_table_from_dotted_string("ann.autoencoders", true)
 
 ----------------------------------------------------------------------
 
+local md = matrix.dict
+
 -- The auto-encoder class (AE) will be a denoising auto-encoder (DAE) when
 -- trained with corrupted input, and clean output
 
@@ -216,12 +218,12 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
     ann.connections.
-    randomize_weights(weights_table(wname),
-		      {
-			random = weights_random,
-			inf    = -math.sqrt(6 / (input_size + cod_size)),
-			sup    =  math.sqrt(6 / (input_size + cod_size))
-		      })
+      randomize_weights(weights_table[wname],
+                        {
+                          random = weights_random,
+                          inf    = -math.sqrt(6 / (input_size + cod_size)),
+                          sup    =  math.sqrt(6 / (input_size + cod_size))
+      })
   end
   return autoencoder_component
 end
@@ -260,7 +262,7 @@ function fake_indexed_methods:getPattern(idx)
     for i=1,#self.dict do
       local current_pat_size = self.dict[i]:patternSize()
       local current_token = self.dict[i]:getPattern(index[i])
-      m:slice({1,col_pos},{1,current_pat_size}):copy(current_token:get_matrix())
+      m:slice({1,col_pos},{1,current_pat_size}):copy(current_token)
       col_pos = col_pos + current_pat_size
     end
     return tokens.matrix(m)
@@ -420,7 +422,7 @@ ann.autoencoders.build_full_autoencoder =
     local bias_mat      = sdae_table.bias
     local sdae          = ann.components.stack{ name=names_prefix.."stack" }
     local prev_size     = layers[1].size
-    local weights_table = matrix.dict()
+    local weights_table = {}
     local k = 1
     for i=2,#layers do
       local size , actf   = layers[i].size,layers[i].actf
@@ -705,7 +707,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
     local weights = {}
     local bias    = {}
     -- incremental mlp
-    local mlp_final_weights = matrix.dict()
+    local mlp_final_weights = {}
     local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
     -- loop for each pair of layers
     for i=2,#params.layers do
@@ -736,7 +738,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                                                                params.bunch_size,
                                                                params.optimizer())
 
-        local aux_weights = mlp_final_weights:clone()
+        local aux_weights = md.clone( mlp_final_weights )
         mlp_final_trainer:build{ weights=aux_weights }
         data = generate_training_table_configuration_on_the_fly(current_dataset_params,
                                                                 params.replacement,
@@ -895,7 +897,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                                                                nil,
                                                                params.bunch_size,
                                                                params.optimizer())
-        local aux_weights = mlp_final_weights:clone()
+        local aux_weights = md.clone( mlp_final_weights )
         mlp_final_trainer:build{ weights = aux_weights }
         data = generate_training_table_configuration_on_the_fly(current_dataset_params,
                                                                 params.replacement,
@@ -987,7 +989,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local codifier_net  = ann.components.stack{ name="stack" }
-  local weights_table = matrix.dict()
+  local weights_table = {}
   for i=2,#layers do
     local bname = "b"..(i-1)
     local wname = "w"..(i-1)
@@ -1111,13 +1113,13 @@ ann.autoencoders.iterative_sampling =
       -- compute the loss of current iteration
       params.loss:reset()
       L = params.loss:loss(output, params.model:get_input())
-      if params.log then output:get_matrix():exp() end
+      if params.log then output:exp() end
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
-        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+        output:set(1,pos,input_rewrapped:get(1,pos))
       end
       -- insert current output to the chain
-      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      table.insert(chain, output:rewrap(table.unpack(params.input:dim())))
       -- improvement measure
       local imp = math.abs(math.abs(last_L - L)/last_L)
       if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
@@ -1127,13 +1129,13 @@ ann.autoencoders.iterative_sampling =
       -- sample from noise distribution
       params.noise:reset()
       local input_token = params.noise:forward(output)
-      input = input_token:get_matrix()
+      input = input_token
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
         input:set(1,pos,input_rewrapped:get(1,pos))
       end
     end
-    return output:get_matrix():rewrap(table.unpack(params.input:dim())),L,chain
+    return output:rewrap(table.unpack(params.input:dim())),L,chain
   end
 
 ----------------------------------------------------------------------------
@@ -1203,22 +1205,22 @@ ann.autoencoders.sgd_sampling =
       -- compute the loss of current iteration
       params.loss:reset()
       L = params.loss:loss(output, params.model:get_input())
-      if params.log then output:get_matrix():exp() end
+      if params.log then output:exp() end
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
-        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+        output:set(1,pos,input_rewrapped:get(1,pos))
       end
-      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      table.insert(chain, output:rewrap(table.unpack(params.input:dim())))
       local imp = math.abs(math.abs(last_L - L)/last_L)
       if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
       if i==1 or L <= min then
-        min,result = L,output:get_matrix()
+        min,result = L,output
         if params.verbose then printf(" *") end
       end
       if params.verbose then printf("\n") end
       if last_L == 0 or imp < params.stop then break end
       -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-      --aux = params.noise:forward(input):get_matrix()
+      --aux = params.noise:forward(input)
       ---- restore masked positions
       --for _,pos in ipairs(params.mask) do
       --aux:set(1,pos,input_rewrapped:get(1,pos))
@@ -1226,10 +1228,10 @@ ann.autoencoders.sgd_sampling =
       
       local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
                                                                   params.model:get_input()))
-      -- local g = gradient:get_matrix():clone():rewrap(16,16):pow(2):sqrt():clamp(0,1)
+      -- local g = gradient:clone():rewrap(16,16):pow(2):sqrt():clamp(0,1)
       -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
-      gradient = gradient:get_matrix()
-      output   = output:get_matrix()
+      gradient = gradient
+      output   = output
       -- input = (1 - beta)*input + beta*output - alpha*gradient
       input = ( input:clone():
                   scal(1.0 - params.beta):
@@ -1240,7 +1242,7 @@ ann.autoencoders.sgd_sampling =
       last_L = L
       -- sample from noise distribution
       params.noise:reset()
-      input = params.noise:forward(input):get_matrix()
+      input = params.noise:forward(input)
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
         input:set(1,pos,input_rewrapped:get(1,pos))

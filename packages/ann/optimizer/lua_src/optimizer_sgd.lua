@@ -10,7 +10,7 @@ local april_assert = april_assert
 local get_table_fields = get_table_fields
 local iterator = iterator
 local mop = matrix.op
-local wrap_matrices = matrix.dict.wrap_matrices
+local md = matrix.dict
 
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
@@ -35,7 +35,7 @@ function sgd:constructor(g_options, l_options, count, update)
 			    g_options,
 			    l_options,
 			    count)
-  self.update = wrap_matrices(update or matrix.dict())
+  self.update = update or {}
   if not g_options then
     -- default values
     self:set_option("learning_rate", 0.01)
@@ -48,25 +48,22 @@ function sgd:constructor(g_options, l_options, count, update)
 end
 
 function sgd_methods:execute(eval, weights)
-  local wrap_matrices = wrap_matrices
   local table = table
   local assert = assert
   --
   local origw = weights
-  local weights = wrap_matrices(weights)
   local arg = table.pack( eval(origw) )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
-  gradients = wrap_matrices(gradients)
   --
   local d0 = self:get_option("decay")
   local decay = 1.0 / (1.0 + d0 * self:get_count())
   --
   for wname,w in pairs(weights) do
-    local update      = self.update(wname) or matrix.as(w):zeros()
-    local grad        = gradients(wname)
+    local update      = self.update[wname] or matrix.as(w):zeros()
+    local grad        = gradients[wname]
     -- learning options
     local lr          = self:get_option_of(wname, "learning_rate")
     local lrd         = lr * decay
@@ -107,7 +104,7 @@ function sgd_methods:clone()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
-  obj.update            = self.update:clone()
+  obj.update            = md.clone( self.update )
   return obj
 end
 
@@ -120,7 +117,7 @@ function sgd_methods:to_lua_string(format)
 		  ",",
 		  tostring(self.count),
 		  ",",
-		  self.update:to_lua_string(format),
+		  util.to_lua_string(self.update, format),
 		  ")" }
   return table.concat(str_t, "")
 end

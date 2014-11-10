@@ -130,8 +130,8 @@ namespace Stats {
   char *ExponentialDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->put("stats.dist.exponential(matrix.fromString[[");
-    AprilUtils::HashTableOptions options;
-    lambda->write( stream.get(), options.putBoolean("ascii", is_ascii) );
+    AprilUtils::LuaTable options;
+    lambda->write( stream.get(), options.put("ascii", is_ascii) );
     stream->put("]])\0",4); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }

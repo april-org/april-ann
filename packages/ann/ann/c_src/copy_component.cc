@@ -193,8 +193,8 @@ namespace ANN {
 
   void CopyANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       MatrixFloatSet *weights_dict,
-			       hash<string,ANNComponent*> &components_dict) {
+			       AprilUtils::LuaTable &weights_dict,
+			       AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     if (output_size == 0) output_size = input_size * times;

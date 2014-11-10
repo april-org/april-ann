@@ -40,8 +40,8 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::read(AprilIO::StreamInterface *stream,
-                  const AprilUtils::GenericOptions *options) {
-    if (options->getOptionalBoolean(MatrixIO::TAB_OPTION, false)) {
+                  const AprilUtils::LuaTable &options) {
+    if (options.opt<bool>(MatrixIO::TAB_OPTION, false)) {
       return readTab(stream, options);
     }
     else {
@@ -52,7 +52,7 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readNormal(AprilIO::StreamInterface *stream,
-                        const AprilUtils::GenericOptions *options) {
+                        const AprilUtils::LuaTable &options) {
     UNUSED_VARIABLE(options);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
@@ -180,16 +180,16 @@ namespace Basics {
   
   template <typename T>
   void Matrix<T>::write(AprilIO::StreamInterface *stream,
-                        const AprilUtils::GenericOptions *options) {
-    bool is_tab = options->getOptionalBoolean(MatrixIO::TAB_OPTION, false);
+                        const AprilUtils::LuaTable &options) {
+    bool is_tab = options.opt(MatrixIO::TAB_OPTION, false);
     if (is_tab) writeTab(stream, options);
     else writeNormal(stream, options);
   }
 
   template <typename T>
   void Matrix<T>::writeNormal(AprilIO::StreamInterface *stream,
-                              const AprilUtils::GenericOptions *options) {
-    bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
+                              const AprilUtils::LuaTable &options) {
+    bool is_ascii = options.opt(MatrixIO::ASCII_OPTION, false);
     //
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::BinarySizer<T> bin_sizer;
@@ -265,12 +265,12 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readTab(AprilIO::StreamInterface *stream,
-                     const AprilUtils::GenericOptions *options) {
-    const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
-    bool read_empty         = options->getOptionalBoolean(MatrixIO::EMPTY_OPTION, false);
-    T default_value         = getTemplateOption(options, MatrixIO::DEFAULT_OPTION, T());
-    int ncols               = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
-    int nrows               = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
+                     const AprilUtils::LuaTable &options) {
+    const char *delim       = options.opt(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
+    bool read_empty         = options.opt(MatrixIO::EMPTY_OPTION, false);
+    T default_value         = options.opt(MatrixIO::DEFAULT_OPTION, T());
+    int ncols               = options.opt<int>(MatrixIO::NCOLS_OPTION, 0);
+    int nrows               = options.opt<int>(MatrixIO::NROWS_OPTION, 0);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -372,7 +372,7 @@ namespace Basics {
   
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
-                           const AprilUtils::GenericOptions *options) {
+                           const AprilUtils::LuaTable &options) {
     UNUSED_VARIABLE(options);
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
@@ -397,16 +397,6 @@ namespace Basics {
     if ((i % columns) != 0) {
       stream->printf("\n"); 
     }
-  }
-
-  template <typename T>
-  T Matrix<T>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                 const char *name, T default_value) {
-    UNUSED_VARIABLE(options);
-    UNUSED_VARIABLE(name);
-    UNUSED_VARIABLE(default_value);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return T();
   }
   
 } // namespace Basics

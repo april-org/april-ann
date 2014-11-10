@@ -66,15 +66,15 @@ namespace ANN {
     
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict);
     
-    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
+    virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
 
-    virtual void copyComponents(AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
+    virtual void copyComponents(AprilUtils::LuaTable &components_dict);
     
     virtual ANNComponent *getComponent(AprilUtils::string &name);
-    virtual void computeAllGradients(Basics::MatrixFloatSet *weight_grads_dict);
+    virtual void computeAllGradients(AprilUtils::LuaTable &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       dot_product->debugInfo();

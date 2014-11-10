@@ -168,12 +168,15 @@ namespace ANN {
     weights_matrix->resetSharedCount();
   }
 
-  void DotProductANNComponent::
-  initializeComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
+  MatrixFloat *DotProductANNComponent::
+  initializeComputeGradients(const char *name,
+                             AprilUtils::LuaTable &grads_mat_dict) {
     weights_matrix->addToSharedCount();
-    if (grads_mat.empty()) {
+    MatrixFloat *grads_mat = grads_mat_dict.opt<MatrixFloat*>(name, 0);
+    if (grads_mat == 0) {
       grads_mat = weights_matrix->cloneOnlyDims();
-      matZeros(grads_mat.get());
+      matZeros(grads_mat);
+      grads_mat_dict.put<MatrixFloat*>(name, grads_mat);
     }
     else if (!grads_mat->sameDim(weights_matrix)) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
@@ -181,17 +184,19 @@ namespace ANN {
 #ifdef USE_CUDA
     grads_mat->setUseCuda(use_cuda);
 #endif
+    return grads_mat;
   }
   
   void DotProductANNComponent::
-  privateDenseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
-    initializeComputeGradients(grads_mat);
+  privateDenseComputeGradients(const char *name,
+                               AprilUtils::LuaTable & grads_mat_dict) {
+    MatrixFloat *grads_mat = initializeComputeGradients(name, grads_mat_dict);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     MatrixFloat *input_mat = getInputMatrix();
     if (bunch_size > 1) {
-      matGemm(grads_mat.get(),
+      matGemm(grads_mat,
               CblasTrans, CblasNoTrans,
               1.0f,
               (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
@@ -199,7 +204,7 @@ namespace ANN {
               1.0f);
     } // if bunch_size > 1 ... else
     else {
-      matGer(grads_mat.get(),
+      matGer(grads_mat,
              1.0f,
              (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
              (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
@@ -207,8 +212,9 @@ namespace ANN {
   }
   
   void DotProductANNComponent::
-  privateSparseComputeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
-    initializeComputeGradients(grads_mat);
+  privateSparseComputeGradients(const char *name,
+                                AprilUtils::LuaTable & grads_mat_dict) {
+    MatrixFloat *grads_mat = initializeComputeGradients(name, grads_mat_dict);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
     SparseMatrixFloat *input_mat;
@@ -224,7 +230,7 @@ namespace ANN {
                   1.0f);
     }
     else {
-      matSparseMM(grads_mat.get(),
+      matSparseMM(grads_mat,
                   CblasTrans,
                   CblasNoTrans,
                   1.0f,
@@ -244,8 +250,8 @@ namespace ANN {
   
   void DotProductANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     MatrixFloatSet *weights_dict,
-				     hash<string,ANNComponent*> &components_dict) {
+				     AprilUtils::LuaTable &weights_dict,
+				     AprilUtils::LuaTable &components_dict) {
     MatrixInputSwitchANNComponent::build(_input_size, _output_size,
                                          weights_dict, components_dict);
     //
@@ -256,13 +262,14 @@ namespace ANN {
     unsigned int weights_input_size  = getInputSize();
     unsigned int weights_output_size = getOutputSize();
     ////////////////////////////////////////////////////////////////////
-    if (transpose_weights == CblasTrans)
+    if (transpose_weights == CblasTrans) {
       swap(weights_input_size, weights_output_size);
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
+    }
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
-    if (!w.empty()) {
+    if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w.get());
+      AssignRef(weights_matrix, w);
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
@@ -281,22 +288,23 @@ namespace ANN {
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
-      w = weights_matrix;
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix);
     }
   }
 
-  void DotProductANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
-    if (weights_matrix == 0)
+  void DotProductANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
+    if (weights_matrix == 0) {
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
-    if (!w.empty() && w.get() != weights_matrix)
+    }
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
+    if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  getWeightsName().c_str(),
 		  getName().c_str());
-    else if (w.empty()) {
-      w = weights_matrix;
+    else if (w == 0) {
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix);
     }
   }  
 

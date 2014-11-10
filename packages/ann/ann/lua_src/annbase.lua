@@ -2,8 +2,6 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
-local wrap_matrices = matrix.dict.wrap_matrices
-----------------------------------------------------------------------
 
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
@@ -88,14 +86,14 @@ function ann_wrapper_methods:reset(n)
 end
 
 function ann_wrapper_methods:compute_gradients(dict)
-  local dict = wrap_matrices(dict or {})
+  local dict = dict or {}
   self:compute_gradients_function(dict)
   return dict
 end
 
 function ann_wrapper_methods:build()
   -- already built
-  return self,self.weights,matrix.dict()
+  return self,self.weights,{}
 end
 
 function ann_wrapper_methods:copy_weights()
@@ -103,7 +101,7 @@ function ann_wrapper_methods:copy_weights()
 end
 
 function ann_wrapper_methods:copy_components()
-  return matrix.dict()
+  return {}
 end
 
 function ann_wrapper_methods:to_lua_string()
@@ -457,6 +455,7 @@ april_set_doc(ann.components.base,
 		    "Components has options (as learning_rate, momentum, ...)",
 		    "which modify they behaviour.",
 		    "Tokens are the basic data which components interchange.",
+                    "Matrix types are a kind of Token, so it is transparent.",
 		    "The ANNs are trained following gradient descent algorithm,",
 		    "so each component has four main properties: input, output,",
 		    "error_input and error_output.",
@@ -545,7 +544,7 @@ april_set_doc(ann.components.base.."get_input",
 		class="method",
 		summary="Returns the token at component input",
 		outputs = {
-		  "A token or nil",
+		  "A token or nil (usually a matrix)",
 		}
 	      })
 
@@ -556,7 +555,7 @@ april_set_doc(ann.components.base.."get_output",
 		class="method",
 		summary="Returns the token at component output",
 		outputs = {
-		  "A token or nil",
+		  "A token or nil (usually a matrix)",
 		}
 	      })
 
@@ -572,7 +571,7 @@ april_set_doc(ann.components.base.."get_error_input",
 		  "in reverse order (from the output)."
 		},
 		outputs = {
-		  "A token or nil",
+		  "A token or nil (usually a matrix)",
 		}
 	      })
 
@@ -588,7 +587,7 @@ april_set_doc(ann.components.base.."get_error_output",
 		  "in reverse order (to the input).",
 		},
 		outputs = {
-		  "A token or nil",
+		  "A token or nil (usually a matrix)",
 		}
 	      })
 
@@ -599,7 +598,7 @@ april_set_doc(ann.components.base.."forward",
 		class="method",
 		summary="Computes forward step with the given token",
 		params={
-		  "An input token",
+		  "An input token (usually a matrix)",
 		  { "A boolean indicating if the forward is during_training or not.",
 		    "This information is used by ann.components.actf objects to",
 		    "apply dropout during training, and to halve the activation",
@@ -607,7 +606,7 @@ april_set_doc(ann.components.base.."forward",
 		    "is false.", }
 		},
 		outputs = {
-		  "An output token",
+		  "An output token (usually a matrix)",
 		}
 	      })
 
@@ -622,10 +621,10 @@ april_set_doc(ann.components.base.."backprop",
 		  "This method is only valid after forward."
 		},
 		params={
-		  "An error input token"
+		  "An error input token (usually a matrix)"
 		},
 		outputs = {
-		  "An error output token",
+		  "An error output token (usually a matrix)",
 		}
 	      })
 
@@ -730,7 +729,7 @@ april_set_doc(ann.components.base.."copy_weights",
 		class="method",
 		summary="Returns the dictionary weights_name=>ann.connections",
 		outputs= {
-		  { "A matrix.dict objecti all the weights_name=>matrix found",
+		  { "A matrix table weights_name=>matrix with matrices found",
 		    "at the components hierarchy."},
 		}
 	      })

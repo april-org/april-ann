@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,10 +18,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef BASE_H
+#define BASE_H
 
-#include "matrixSet.h"
-
-namespace Basics {
-  template class MatrixSet<float>;
+extern "C" {
+#include "lua.h"
 }
 
+namespace Base {
+  void registerGlobalLuaState(lua_State *L);
+  lua_State *getGlobalLuaState();
+}
+
+#endif // BASE_H

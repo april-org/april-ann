@@ -168,7 +168,7 @@ for input,idxs in trainable.dataset_multiple_iterator{
   bunch_size = 1, } do
   trainer:calculate(input)
   local c = trainer:component("pool-1")
-  local o = c:get_output():get_matrix()
+  local o = c:get_output()
   local d = o:dim()
   local k = 0
   for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
@@ -193,13 +193,13 @@ if check_tokens then
     for name,c in self:iterate_components() do -- ("w[34]") do
       print("\n================== "..name.." ==================")
       print("\n++++++++++ input ++++++++++")
-      print(c:get_input():get_matrix())
+      print(c:get_input())
       print("\n++++++++++ output ++++++++++")
-      print(c:get_output():get_matrix())
+      print(c:get_output())
       print("\n++++++++++ error input ++++++++++")
-      print(c:get_error_input():get_matrix())
+      print(c:get_error_input())
       print("\n++++++++++ error output ++++++++++")
-      print(c:get_error_output():get_matrix())
+      print(c:get_error_output())
       print("\n======================================")
     end
   end
@@ -216,9 +216,9 @@ for epoch = 1,max_epochs do
   local norm2_b = trainer:norm2(".*b.*")
   --
   if false then
-    local inp  = trainer:component("conv"):get_input():get_matrix()
-    local outp = trainer:component("conv"):get_output():get_matrix()
-    local err = trainer:component("conv"):get_error_input():get_matrix()
+    local inp  = trainer:component("conv"):get_input()
+    local outp = trainer:component("conv"):get_output()
+    local err = trainer:component("conv"):get_error_input()
     print("DIM", table.concat(err:dim(), " "))
     for i=1,err:dim()[2] do
     --   for j=1,err:dim()[1] do
@@ -253,7 +253,7 @@ end
 --   bunch_size    = 1,
 --   func = function(idxs, trainer)
 --     local c = trainer:component("pool-1")
---     local o = c:get_output():get_matrix()
+--     local o = c:get_output()
 --     local d = o:dim()
 --     local k = 0
 --     for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},

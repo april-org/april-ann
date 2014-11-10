@@ -10,7 +10,7 @@ local april_assert = april_assert
 local get_table_fields = get_table_fields
 local iterator = iterator
 local mop = matrix.op
-local wrap_matrices = matrix.dict.wrap_matrices
+local md = matrix.dict
 
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
@@ -65,13 +65,11 @@ function cg:constructor(g_options, l_options, count,
 end
 
 function cg_methods:execute(eval, weights)
-  local wrap_matrices = wrap_matrices
   local table = table
   local assert = assert
   local math = math
   --
   local origw = weights
-  local weights = wrap_matrices(weights)
   -- DO EVAL
   local do_eval = function(x,i)
     local arg = table.pack( eval(x, i) )
@@ -81,15 +79,15 @@ function cg_methods:execute(eval, weights)
       local l1 = self:get_option_of(wname, "L1_norm")
       local l2 = self:get_option_of(wname, "weight_decay")
       if l1 > 0.0 then reg = reg + l1*mop.abs(w):sum() end
-      if l2 > 0.0 then reg = reg + 0.5*l2*w:dot(w) gradients(wname):axpy(l2, w) end
+      if l2 > 0.0 then reg = reg + 0.5*l2*w:dot(w) gradients[wname]:axpy(l2, w) end
     end
     arg[1] = arg[1] + reg
     return arg
   end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
-    x:axpy(dir, s)
-    for wname,w in pairs(x) do
+    md.axpy(x, dir, s)
+    for wname,w in md.iterator(x) do
       local l1 = self:get_option_of(wname, "L1_norm")
       -- L1 regularization, truncated gradient implementation
       if l1 > 0.0 then ann.optimizer.utils.l1_truncate_gradient(w, math.abs(dir)*l1) end
@@ -97,13 +95,13 @@ function cg_methods:execute(eval, weights)
   end
   -- APPLY REGULARIZATION AND PENALTIES
   local apply_penalties = function(x)
-    for wname,w in pairs(x) do
+    for wname,w in md.iterator(x) do
       local mnp = self:get_option_of(wname, "max_norm_penalty")
       -- constraints
       if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     end
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-      x:prune_subnormal_and_check_normal()
+      md.prune_subnormal_and_check_normal( x )
     end
   end
   ----------------------------------------------------------------------------
@@ -130,53 +128,51 @@ function cg_methods:execute(eval, weights)
   local d1,d2,d3 = 0,0,0
   local f1,f2,f3 = 0,0,0
 
-  local df1 = self.state.df1 or x:clone_only_dims()
-  local df2 = self.state.df2 or x:clone_only_dims()
-  local df3 = self.state.df3 or x:clone_only_dims()
+  local df1 = self.state.df1 or md.clone_only_dims( x )
+  local df2 = self.state.df2 or md.clone_only_dims( x )
+  local df3 = self.state.df3 or md.clone_only_dims( x )
   
   -- search direction
-  local s = self.state.s or x:clone_only_dims()
+  local s = self.state.s or md.clone_only_dims( x )
   
   -- we need a temp storage for X
-  local x0  = self.state.x0 or x:clone()
+  local x0  = self.state.x0 or md.clone( x )
   local f0  = 0
-  local df0 = self.state.df0 or x:clone_only_dims()
+  local df0 = self.state.df0 or md.clone_only_dims( x )
   
   -- evaluate at initial point
   local arg = do_eval(origw, i)
   local tr_loss,gradients = table.unpack(arg)
   if not gradients then return nil end
-  gradients = wrap_matrices(gradients)
   f1 = tr_loss
   table.insert(fx, f1)
-  df1:copy(gradients)
+  md.copy(df1, gradients)
   i=i+1
   
   -- initial search direction
-  s:copy(df1):scal(-1)
+  md.scal( md.copy(s, df1), -1 )
   
   -- slope
-  d1 = -s:dot(s)
+  d1 = -md.dot(s, s)
   -- initial step
   z1 = red/(1-d1)
   
   while i < math.abs(max_eval) do
     
-    x0:copy(x)
+    md.copy( x0, x )
     
     f0 = f1
-    df0:copy(df1)
+    md.copy( df0, df1 )
     
     update_weights(x, z1, s)
 
     arg = do_eval(origw, i)
     tr_loss,gradients = table.unpack(arg)
-    gradients = wrap_matrices(gradients)
     f2 = tr_loss
     
-    df2:copy(gradients)
+    md.copy( df2, gradients )
     i=i+1
-    d2 = df2:dot(s)
+    d2 = md.dot( df2, s )
     -- init point 3 equal to point 1
     f3,d3,z3 = f1,d1,-z1
     local m       = math.min(max_iter,max_eval-i)
@@ -202,12 +198,11 @@ function cg_methods:execute(eval, weights)
 	update_weights(x, z2, s)
         arg = do_eval(origw, i)
 	tr_loss,gradients = table.unpack(arg)
-	gradients = wrap_matrices(gradients)
 	f2 = tr_loss
-	df2:copy(gradients)
+	md.copy( df2, gradients )
 	i=i+1
 	m = m - 1
-	d2 = df2:dot(s)
+	d2 = md.dot( df2, s )
 	z3 = z3-z2
       end
       if f2 > f1+z1*rho*d1 or d2 > -sig*d1 then
@@ -245,36 +240,35 @@ function cg_methods:execute(eval, weights)
       
       arg = do_eval(origw, i)
       tr_loss,gradients = table.unpack(arg)
-      gradients = wrap_matrices(gradients)
       f2 = tr_loss
-      df2:copy(gradients)
+      md.copy( df2, gradients )
       i=i+1
       m = m - 1
-      d2 = df2:dot(s)
+      d2 = md.dot( df2, s )
     end
     if success then
       f1 = f2
       table.insert(fx, f1)
-      local ss = (df2:dot(df2) - df2:dot(df1))/df1:dot(df1)
-      s:scal(ss)
-      s:axpy(-1,df2)
+      local ss = ( md.dot( df2, df2 ) - md.dot( df2, df1 ))/md.dot( df1, df1 )
+      md.scal( s, ss )
+      md.axpy( s, -1, df2 )
       df1,df2 = df2,df1
       -- local tmp = clone(df1)
       -- copy(df1,df2)
       -- copy(df2,tmp)
-      d2 = df1:dot(s)
+      d2 = md.dot( df1, s )
       if d2 > 0 then
-	s:copy(df1)
-	s:scal(-1)
-	d2 = -s:dot(s)
+	md.copy( s, df1 )
+	md.scal( s, -1 )
+	d2 = -md.dot( s, s )
       end
       z1 = z1 * math.min(ratio, d1/(d2 - FLT_MIN))
       d1 = d2
       ls_failed = 0
     else
-      x:copy(x0)
+      md.copy( x, x0 )
       f1 = f0
-      df1:copy(df0)
+      md.copy( df1, df0 )
       if ls_failed or i>max_eval then
 	break
       end
@@ -282,9 +276,9 @@ function cg_methods:execute(eval, weights)
       -- local tmp = clone(df1)
       -- copy(df1,df2)
       -- copy(df2,tmp)
-      s:copy(df1)
-      s:scal(-1)
-      d1 = -s:dot(s)
+      md.copy( s, df1 )
+      md.scal( s, -1 )
+      d1 = -md.dot( s, s )
       z1 = 1/(1-d1)
       ls_failed = 1
     end
@@ -313,22 +307,22 @@ function cg_methods:clone()
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
   if self.state.df0 then
-    obj.state.df0 = self.state.df0:clone()
+    obj.state.df0 = md.clone( self.state.df0 )
   end
   if self.state.df1 then
-    obj.state.df1 = self.state.df1:clone()
+    obj.state.df1 = md.clone( self.state.df1 )
   end
   if self.state.df2 then
-    obj.state.df2 = self.state.df2:clone()
+    obj.state.df2 = md.clone( self.state.df2 )
   end
   if self.state.df3 then
-    obj.state.df3 = self.state.df3:clone()
+    obj.state.df3 = md.clone( self.state.df3 )
   end
   if self.state.x0 then
-    obj.state.x0 = self.state.x0:clone()
+    obj.state.x0 = md.clone( self.state.x0 )
   end
   if self.state.s then
-    obj.state.s = self.state.s:clone()
+    obj.state.s = md.clone( self.state.s )
   end
   return obj
 end
