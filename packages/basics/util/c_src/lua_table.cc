@@ -199,23 +199,37 @@ namespace AprilUtils {
     if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
     lua_getfield(L, -1, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
-    const char *str = lua_tostring(L,-1);
-    // don't pop string and reference to fix const char * pointer
+    const char *str = lua_tostring(L, -1);
+    // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
+    // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
+    // string is referenced in a table, so, as far as the table exists, the
+    // string will also exists.
+    lua_pop(L, 2);
     return str;
   }
 
   // overload of opt for const char *
   template<>
   const char *LuaTable::opt<const char *>(const char *name, const char *def) const {
-    if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
-    lua_getfield(L, -1, name);
-    if (lua_isnil(L,-1)) {
+    if (!checkAndGetRef()) {
       lua_pop(L, 1);
       return def;
     }
-    const char *str = lua_tostring(L,-1);
-    // don't pop string and reference to fix const char * pointer
-    return str;
+    else {
+      lua_getfield(L, -1, name);
+      if (lua_isnil(L,-1)) {
+        lua_pop(L, 2);
+        return def;
+      }
+      const char *str = lua_tostring(L,-1);
+      // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
+      // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
+      // string is referenced in a table, so, as far as the table exists, the
+      // string will also exists.
+      lua_pop(L, 2);
+      return str;
+    }
+    // return T();
   }
   
 }

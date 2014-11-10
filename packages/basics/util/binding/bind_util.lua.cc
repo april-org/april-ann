@@ -99,6 +99,11 @@ namespace AprilUtils {
   pushInto<stopwatch *>(lua_State *L, stopwatch *value) {
     lua_pushstopwatch(L, value);
   }
+
+  template<> bool LuaTable::
+  checkType<stopwatch *>(lua_State *L, int idx) {
+    return lua_isstopwatch(L, idx);
+  }
 }
 
 // COPIED FROM liolib.c:168

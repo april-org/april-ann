@@ -32,7 +32,7 @@ if ann.components.zca_whitening then
     epsilon=0.017,
     takeN=193,
   }
-  new = zca_whitening:forward(aux):get_matrix()
+  new = zca_whitening:forward(aux)
 end
 
 local new2 = stats.zca.whitening(aux:clone(), aU(':','1:193'),

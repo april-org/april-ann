@@ -20,6 +20,8 @@
  *
  */
 //BIND_HEADER_C
+#include <typeinfo>
+
 #include "bind_function_interface.h"
 #include "bind_matrix.h"
 #include "bind_sparse_matrix.h"
@@ -32,32 +34,47 @@ using namespace AprilUtils;
 using namespace Basics;
 
 namespace ANN {
-  static bool rewrapToAtLeastDim2(Token *&tk) {
+  static bool rewrapToAtLeastDim2(AprilUtils::SharedPtr<Token> &tk) {
     if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
       Basics::TokenMatrixFloat *tk_mat = tk->convertTo<Basics::TokenMatrixFloat*>();
       Basics::MatrixFloat *m = tk_mat->getMatrix();
       if (m->getNumDim() == 1) {
         int dims[2] = { 1, m->getDimSize(0) };
-        Basics::Token *new_tk = new Basics::TokenMatrixFloat(m->rewrap(dims, 2));
-        IncRef(new_tk);
-        DecRef(tk);
-        tk = new_tk;
+        tk.reset( new Basics::TokenMatrixFloat(m->rewrap(dims, 2)) );
         return true;
       }
     }
     return false;
   }
 
-  static void unwrapToDim1(Token *&tk) {
+  static void unwrapToDim1(AprilUtils::SharedPtr<Token> &tk) {
     if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
       Basics::TokenMatrixFloat *tk_mat = tk->convertTo<Basics::TokenMatrixFloat*>();
       Basics::MatrixFloat *m = tk_mat->getMatrix();
       int dim = m->getDimSize(1);
       Basics::MatrixFloat *new_m = m->rewrap(&dim, 1);
-      Basics::Token *tk = new Basics::TokenMatrixFloat(new_m);
+      tk.reset( new Basics::TokenMatrixFloat(new_m) );
     }
   }
 
+}
+
+void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
+  if (typeid(*value) == typeid(StackANNComponent)) {
+    lua_pushStackANNComponent(L, (StackANNComponent*)value);
+  }
+  else if (typeid(*value) == typeid(JoinANNComponent)) {
+    lua_pushJoinANNComponent(L, (JoinANNComponent*)value);
+  }
+  else if (dynamic_cast<ActivationFunctionANNComponent*>(value)) {
+    lua_pushActivationFunctionANNComponent(L, (ActivationFunctionANNComponent*)value);
+  }
+  else if (dynamic_cast<StochasticANNComponent*>(value)) {
+    lua_pushStochasticANNComponent(L, (StochasticANNComponent*)value);
+  }
+  else {
+    lua_pushANNComponent(L, value);
+  }
 }
 
 namespace AprilUtils {
@@ -69,7 +86,7 @@ namespace AprilUtils {
   
   template<> void LuaTable::
   pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value) {
-    lua_pushANNComponent(L, value);
+    lua_pushAuxANNComponent(L, value);
   }
 
   template<> bool LuaTable::
@@ -121,6 +138,8 @@ namespace AprilUtils {
 
 using namespace Functions;
 using namespace ANN;
+
+void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_END
 
@@ -361,48 +380,48 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_input
 {
-  Basics::Token *aux = obj->getInput();
-  if (aux == 0) {
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getInput() );
+  if (aux.empty()) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
-  Basics::Token *aux = obj->getOutput();
-  if (aux == 0) {
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getOutput() );
+  if (aux.empty()) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
-  Basics::Token *aux = obj->getErrorInput();
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorInput() );
   if (aux == 0) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_output
 {
-  Basics::Token *aux = obj->getErrorOutput();
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorOutput() );
   if (aux == 0) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
@@ -428,35 +447,32 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent forward
 {
-  Basics::Token *input;
+  AprilUtils::SharedPtr<Basics::Token> input;
   bool during_training;
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
-  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Basics::Token *output = obj->doForward(input, during_training);
+  AprilUtils::SharedPtr<Basics::Token> output( obj->doForward(input.get(),
+                                                              during_training) );
   if (rewrapped) unwrapToDim1(output);
-  LUABIND_RETURN(Token, output);
-  DecRef(input);
+  LUABIND_RETURN(AuxToken, output);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent backprop
 {
-  Basics::Token *input;
+  AprilUtils::SharedPtr<Basics::Token> input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, AuxToken, input);
-  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Basics::Token *gradient = obj->doBackprop(input);
-  if (gradient != 0) {
+  AprilUtils::SharedPtr<Basics::Token> gradient( obj->doBackprop(input.get()) );
+  if (!gradient.empty()) {
     if (rewrapped) unwrapToDim1(gradient);
-    LUABIND_RETURN(Token, gradient);
+    LUABIND_RETURN(AuxToken, gradient);
   }
   else LUABIND_RETURN_NIL();
-  DecRef(input);
 }
 //BIND_END
 
@@ -522,7 +538,7 @@ using namespace ANN;
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
-  LUABIND_RETURN(ANNComponent, obj);
+  LUABIND_RETURN(AuxANNComponent, obj);
   LUABIND_RETURN(LuaTable, weights_dict);
   LUABIND_RETURN(LuaTable, components_dict);
 }
@@ -552,7 +568,7 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, string, name);
   string name_string(name);
   ANNComponent *component = obj->getComponent(name_string);
-  LUABIND_RETURN(ANNComponent, component);
+  LUABIND_RETURN(AuxANNComponent, component);
 }
 //BIND_END
 
@@ -723,8 +739,9 @@ using namespace ANN;
 //BIND_METHOD StackANNComponent unroll
 {
   lua_checkstack(L, obj->size());
-  for (unsigned int i=0; i<obj->size(); ++i)
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+  for (unsigned int i=0; i<obj->size(); ++i) {
+    LUABIND_RETURN(AuxANNComponent, obj->getComponentAt(i));
+  }
 }
 //BIND_END
 
@@ -734,20 +751,18 @@ using namespace ANN;
   int argn = lua_gettop(L);
   lua_checkstack(L, argn);
   for (int i=1; i<=argn; ++i) {
-    unsigned int idx;
-    LUABIND_GET_PARAMETER(i, uint, idx);
-    --idx;
-    if (idx >= obj->size())
+    unsigned int idx = lua_tointeger(L, i);
+    if (idx > obj->size())
       LUABIND_FERROR2("Incorrect index, expected <= %d, found %d\n",
-		      obj->size(), idx+1);
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(idx));
+		      obj->size(), idx);
+    LUABIND_RETURN(AuxANNComponent, obj->getComponentAt(idx - 1));
   }
 }
 //BIND_END
 
 //BIND_METHOD StackANNComponent top
 {
-  LUABIND_RETURN(ANNComponent, obj->topComponent());
+  LUABIND_RETURN(AuxANNComponent, obj->topComponent());
 }
 //BIND_END
 

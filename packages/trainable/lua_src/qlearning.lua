@@ -68,8 +68,8 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
                           thenet:build{ weights = weights }
                         end
                         thenet:reset(it)
-                        local Qsp = thenet:forward(state):get_matrix()
-                        local Qs  = thenet:forward(prev_state,true):get_matrix()
+                        local Qsp = thenet:forward(state)
+                        local Qs  = thenet:forward(prev_state,true)
                         local Qsa = Qs:get(1, prev_action)
                         local delta = reward + discount * Qsp:max() - Qsa
                         local diff = delta
@@ -118,7 +118,7 @@ function trainable_qlearning_trainer_methods:one_step(action, state, reward)
   else
     self.noise:reset(0)
     local state = self.noise:forward(state,true)
-    Qsp = self.thenet:forward(state):get_matrix()
+    Qsp = self.thenet:forward(state)
   end
   self.prev_state = state
   return Qsp

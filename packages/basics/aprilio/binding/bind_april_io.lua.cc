@@ -396,25 +396,6 @@ namespace AprilIO {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME OutputLuaStringStream aprilio.stream.output_lua_string
-//BIND_CPP_CLASS OutputLuaStringStream
-//BIND_SUBCLASS_OF OutputLuaStringStream StreamInterface
-
-//BIND_CONSTRUCTOR OutputLuaStringStream
-{
-  obj = new OutputLuaStringStream(L, 1);
-  LUABIND_RETURN(OutputLuaStringStream, obj);
-}
-//BIND_END
-
-//BIND_METHOD OutputLuaStringStream value
-{
-  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
 //BIND_LUACLASSNAME CStringStream aprilio.stream.c_string
 //BIND_CPP_CLASS CStringStream
 //BIND_SUBCLASS_OF CStringStream StreamInterface

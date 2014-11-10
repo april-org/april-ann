@@ -262,7 +262,7 @@ function fake_indexed_methods:getPattern(idx)
     for i=1,#self.dict do
       local current_pat_size = self.dict[i]:patternSize()
       local current_token = self.dict[i]:getPattern(index[i])
-      m:slice({1,col_pos},{1,current_pat_size}):copy(current_token:get_matrix())
+      m:slice({1,col_pos},{1,current_pat_size}):copy(current_token)
       col_pos = col_pos + current_pat_size
     end
     return tokens.matrix(m)
@@ -1113,13 +1113,13 @@ ann.autoencoders.iterative_sampling =
       -- compute the loss of current iteration
       params.loss:reset()
       L = params.loss:loss(output, params.model:get_input())
-      if params.log then output:get_matrix():exp() end
+      if params.log then output:exp() end
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
-        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+        output:set(1,pos,input_rewrapped:get(1,pos))
       end
       -- insert current output to the chain
-      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      table.insert(chain, output:rewrap(table.unpack(params.input:dim())))
       -- improvement measure
       local imp = math.abs(math.abs(last_L - L)/last_L)
       if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
@@ -1129,13 +1129,13 @@ ann.autoencoders.iterative_sampling =
       -- sample from noise distribution
       params.noise:reset()
       local input_token = params.noise:forward(output)
-      input = input_token:get_matrix()
+      input = input_token
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
         input:set(1,pos,input_rewrapped:get(1,pos))
       end
     end
-    return output:get_matrix():rewrap(table.unpack(params.input:dim())),L,chain
+    return output:rewrap(table.unpack(params.input:dim())),L,chain
   end
 
 ----------------------------------------------------------------------------
@@ -1205,22 +1205,22 @@ ann.autoencoders.sgd_sampling =
       -- compute the loss of current iteration
       params.loss:reset()
       L = params.loss:loss(output, params.model:get_input())
-      if params.log then output:get_matrix():exp() end
+      if params.log then output:exp() end
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
-        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+        output:set(1,pos,input_rewrapped:get(1,pos))
       end
-      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      table.insert(chain, output:rewrap(table.unpack(params.input:dim())))
       local imp = math.abs(math.abs(last_L - L)/last_L)
       if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
       if i==1 or L <= min then
-        min,result = L,output:get_matrix()
+        min,result = L,output
         if params.verbose then printf(" *") end
       end
       if params.verbose then printf("\n") end
       if last_L == 0 or imp < params.stop then break end
       -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-      --aux = params.noise:forward(input):get_matrix()
+      --aux = params.noise:forward(input)
       ---- restore masked positions
       --for _,pos in ipairs(params.mask) do
       --aux:set(1,pos,input_rewrapped:get(1,pos))
@@ -1228,10 +1228,10 @@ ann.autoencoders.sgd_sampling =
       
       local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
                                                                   params.model:get_input()))
-      -- local g = gradient:get_matrix():clone():rewrap(16,16):pow(2):sqrt():clamp(0,1)
+      -- local g = gradient:clone():rewrap(16,16):pow(2):sqrt():clamp(0,1)
       -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
-      gradient = gradient:get_matrix()
-      output   = output:get_matrix()
+      gradient = gradient
+      output   = output
       -- input = (1 - beta)*input + beta*output - alpha*gradient
       input = ( input:clone():
                   scal(1.0 - params.beta):
@@ -1242,7 +1242,7 @@ ann.autoencoders.sgd_sampling =
       last_L = L
       -- sample from noise distribution
       params.noise:reset()
-      input = params.noise:forward(input):get_matrix()
+      input = params.noise:forward(input)
       -- restore masked positions
       for _,pos in ipairs(params.mask) do
         input:set(1,pos,input_rewrapped:get(1,pos))

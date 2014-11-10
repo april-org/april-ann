@@ -140,8 +140,8 @@ local function train_dataset(in_ds,out_ds)
           dw_func:set_shared(params)
         end
         local loss,b1,w1,b2,w2,
-        b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
-                        output_bunch:get_matrix():transpose())
+        b3,w3 = dw_func(input_bunch:transpose(),
+                        output_bunch:transpose())
         local grads = { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
         return loss, grads end,
       dw_func:get_shared())
@@ -156,8 +156,8 @@ local function validate_dataset(in_ds,out_ds)
   for input_bunch,output_bunch in ds_pair_it{ input_dataset=in_ds,
 					      output_dataset=out_ds,
 					      bunch_size=bunch_size } do
-    local loss = L_func(input_bunch:get_matrix():transpose(),
-			output_bunch:get_matrix():transpose())
+    local loss = L_func(input_bunch:transpose(),
+			output_bunch:transpose())
     mv:add(loss)
   end
   return mv:compute()

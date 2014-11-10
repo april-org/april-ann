@@ -758,13 +758,13 @@ trainable_supervised_trainer_methods.train_step =
         "the gradient computed at component inputs.",
       }, 
     params = {
-      "A table with one input pattern or a token (with one or more patterns)",
-      "The corresponding target output pattern (table or token)",
+      "A table with one input pattern or a token (with one or more patterns, usually a matrix)",
+      "The corresponding target output pattern (table or token, usually a matrix)",
       "The loss function [optional]",
       "An optimizer [optional]",
       "The bunch size [optional]",
       "A smooth gradients boolean [optional]",
-      "A mask [optional]",
+      "A mask token [optional] (usually a matrix)",
     },
     outputs = {
       "The mean of loss function at current batch",
@@ -781,10 +781,8 @@ trainable_supervised_trainer_methods.train_step =
     local bunch_size = bunch_size or self.bunch_size or 1
     local smooth_gradients = (smooth_gradients==nil or smooth_gradients)
     if mask then
-      if not is_a(mask,matrix) then mask = mask:get_matrix() end
-      if not is_a(target,matrix) then
-        target = target:get_matrix()
-      end
+      assert( is_a(mask, matrix) )
+      assert( is_a(target, matrix) )
       target = target:clone():cmul(mask)
     end
     local has_average = optimizer:has_property("average")
@@ -803,12 +801,8 @@ trainable_supervised_trainer_methods.train_step =
           model:reset(it)
           local output = model:forward(input, true)
           if mask then
-            if not is_a(output,matrix) then
-              output = output:get_matrix()
-            end
-            if not is_a(target,matrix) then
-              target = target:get_matrix()
-            end
+            assert( is_a(output, matrix) )
+            assert( is_a(target, matrix) )
             output = output:clone():cmul(mask)
           end
           local tr_loss,tr_loss_matrix
@@ -852,8 +846,8 @@ trainable_supervised_trainer_methods.validate_step =
         "the loss for the given pair input/target output.",
       }, 
     params = {
-      "A table with one input pattern or a token (with one or more patterns)",
-      "The corresponding target output pattern (table or token)",
+      "A table with one input pattern or a token (with one or more patterns, usually a matrix)",
+      "The corresponding target output pattern (table or token, usually a matrix)",
       "The loss function [optional]",
     },
     outputs = {
@@ -870,13 +864,9 @@ trainable_supervised_trainer_methods.validate_step =
     model:reset()
     local output = model:forward(input)
     if mask then
-      if not is_a(mask,matrix) then mask = mask:get_matrix() end
-      if not is_a(output,matrix) then
-        output = output:get_matrix()
-      end
-      if not is_a(target,matrix) then
-        target = target:get_matrix()
-      end
+      assert( is_a(mask, matrix) )
+      assert( is_a(output, matrix) )
+      assert( is_a(target, matrix) )
       output = output:clone():cmul(mask)
       target = target:clone():cmul(mask)
     end
@@ -894,8 +884,8 @@ trainable_supervised_trainer_methods.compute_gradients_step =
     class = "method",
     summary = "Executes one gradients computation step",
     params = {
-      "A table with one input pattern or a token (with one or more patterns)",
-      "The corresponding target output pattern (table or token)",
+      "A table with one input pattern or a token (with one or more patterns, usually a matrix)",
+      "The corresponding target output pattern (table or token, usually a matrix)",
       "The loss function [optional].",
       "A table with matrices where to store the gradients [optional]",
     },
@@ -933,8 +923,8 @@ trainable_supervised_trainer_methods.grad_check_step =
     class = "method",
     summary = "Executes one gradients check step",
     params = {
-      "A table with one input pattern or a token (with one or more patterns)",
-      "The corresponding target output pattern (table or token)",
+      "A table with one input pattern or a token (with one or more patterns, usually a matrix)",
+      "The corresponding target output pattern (table or token, usually a matrix)",
       "A boolean, true if you want high verbosity level [optional]",
       "The loss function [optional].",
     },
@@ -1027,16 +1017,16 @@ trainable_supervised_trainer_methods.calculate =
         "the computed output for the given input.",
       }, 
     params = {
-      "A table with one input pattern, a matrix or a token (with one or more patterns)",
+      "A table with one input pattern, a matrix or a token (with one or more patterns, usually a matrix)",
     },
     outputs = {
-      "A matrix with the computed output",
+      "A token with the computed output, usually a matrix",
     },
   } ..
   function(self,input)
     if type(input) == "table" then input = matrix(input) end
     self.ann_component:reset()
-    return self.ann_component:forward(input):get_matrix()
+    return self.ann_component:forward(input)
   end
 
 ------------------------------------------------------------------------

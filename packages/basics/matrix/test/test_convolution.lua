@@ -67,7 +67,7 @@ T("MatrixConvolutionMediumTest",
     local c = ann.components.convolution{ kernel = { 3,3,3 }, n=2,
                                           weights = "w1" }
     c:build{ weights = { w1 = k:rewrap(2, k:size()/2) } }
-    local cnn_o = c:forward(m):get_matrix()
+    local cnn_o = c:forward(m)
     --
     check.eq( o, target_o )
     check.eq( cnn_o, target_o )

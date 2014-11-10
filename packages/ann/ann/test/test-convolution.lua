@@ -26,7 +26,7 @@ rnd=random(1234)
 for name,cnn in pairs(w) do ann.connections.randomize_weights(cnn,{inf=-0.1,sup=0.1,random=rnd}) end
 clock = util.stopwatch()
 clock:go()
-output = thenet:forward(input):get_matrix()
+output = thenet:forward(input)
 
 clock:stop()
 print(m:size(), clock:read())

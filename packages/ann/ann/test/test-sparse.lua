@@ -27,11 +27,11 @@ T("SparseDotProductTest",
           transpose = transpose,
         }:build{ weights={ w=w } }
         --
-        local output = c:forward(input):get_matrix()
+        local output = c:forward(input)
         c:backprop(e)
         local grads1 = c:compute_gradients()
         --
-        local sparse_output = c:forward(sparse_input):get_matrix()
+        local sparse_output = c:forward(sparse_input)
         c:backprop(e)
         local grads2 = c:compute_gradients()
         --

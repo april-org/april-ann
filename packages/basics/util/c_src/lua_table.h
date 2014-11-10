@@ -37,46 +37,70 @@ namespace AprilUtils {
 
   /**
    * @brief A class which allow to put and get data into a Lua table.
+   *
+   * This class allow to access from C++ to Lua values stored into a Lua table.
+   * The Lua table is stored at the C registry, and will be remove in the
+   * destructor. Template methods for put(), get(), and opt() operations are
+   * defined. It is possible to specialize this methods in new C++ types by
+   * specializing the static template methods: convertTo(), pushInto() and
+   * checkType().
+   *
+   * @note All keys are forced to be strings, so, it works with dictionary style
+   * Lua tables, not with arrays.
    */
   class LuaTable {
   public:
-        
+    
+    /// Constructor for a new LuaTable in the registry.
     LuaTable(lua_State *L = Base::getGlobalLuaState());
     
+    /// Constructor for a LuaTable in a given Lua stack position.
     LuaTable(lua_State *L, int n);
     
+    /// Copy constructor.
     LuaTable(const LuaTable &other);
     
+    /// Destructor.
     ~LuaTable();
     
+    /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
     
+    /// Returns a C++ string with the Lua representation of the table.
     string toLuaString();
     
+    /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const string &name, T value) {
       return put<T>(name.c_str(), value);
     }
     
+    /// Checks if the field at the given key name is nil.
     bool checkNil(const string &name) const {
       return checkNil(name.c_str());
     }
 
+    /// Checks if the field at the given key name is of the given type (a nil
+    /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(const string &name) const {
       return checkNilOrType<T>(name.c_str());
     }
 
+    /// Returns the value stored at the given key name field.
     template<typename T>
     T get(const string &name) const {
       return get<T>(name.c_str());
     }
 
+    /// Returns the value stored at the given key name field. In case the field
+    /// is empty, it returns the given def_value argument.
     template<typename T>
     T opt(const string &name, const T def_value = T()) const {
       return opt<T>(name.c_str(), def_value);
     }
 
+    /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, T value) {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
@@ -85,43 +109,41 @@ namespace AprilUtils {
       lua_pop(L, 1);
       return *this;
     }
-    
+
+    /// Checks if the field at the given key name is nil.    
     bool checkNil(const char *name) const {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
-      if (lua_isnil(L, -1)) {
-        lua_pop(L, 2);
-        return true;
-      }
-      else {
-        lua_pop(L, 2);
-        return false;
-      }
+      bool ret =  lua_isnil(L, -1);
+      lua_pop(L, 2);
+      return ret;
     }
 
+    /// Checks if the field at the given key name is of the given type (a nil
+    /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(const char *name) const {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
-      if (lua_isnil(L, -1)) {
-        lua_pop(L, 2);
-        return true;
-      }
-      bool is = checkType<T>(L, -1);
-      lua_pop(L,2);
-      return is;
+      bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
+      lua_pop(L, 2);
+      return ret;
     }
 
+    /// Returns the value stored at the given key name field.    
     template<typename T>
     T get(const char *name) const {
       if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
       if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
+      if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
       T v = convertTo<T>(L, -1);
       lua_pop(L,2);
       return v;
     }
-    
+
+    /// Returns the value stored at the given key name field. In case the field
+    /// is empty, it returns the given def_value argument.    
     template<typename T>
     T opt(const char *name, const T def_value = T()) const {
       if (!checkAndGetRef()) {
@@ -130,22 +152,21 @@ namespace AprilUtils {
       }
       else {
         lua_getfield(L, -1, name);
-        if (lua_isnil(L,-1)) {
-          lua_pop(L,2);
-          return def_value;
+        T v(def_value);
+        if (!lua_isnil(L,-1)) {
+          if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+          v = convertTo<T>(L, -1);
         }
-        else {
-          T v = convertTo<T>(L, -1);
-          lua_pop(L,2);
-          return v;
-        }
+        lua_pop(L,2);
+        return v;
       }
       // return T();
     }
-
+    
+    /// Pushes into Lua stack the Lua table associated with the object.
     void pushTable(lua_State *L);
     
-    /// Converts the value at the top of Lua stack, without removing it.
+    /// Converts the value at the given Lua stack index, without removing it.
     template<typename T>
     static T convertTo(lua_State *L, int idx) {
       UNUSED_VARIABLE(L);
@@ -162,7 +183,7 @@ namespace AprilUtils {
       ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(value).name());
     }
     
-    /// Checks the expected type.
+    /// Checks the expected type of the value at the given Lua stack index.
     template<typename T>
     static bool checkType(lua_State *L, int idx) {
       UNUSED_VARIABLE(L);

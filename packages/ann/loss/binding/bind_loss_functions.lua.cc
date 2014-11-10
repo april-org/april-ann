@@ -59,20 +59,17 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_CHECK_PARAMETER(1, AuxToken);
   LUABIND_CHECK_PARAMETER(2, AuxToken);
-  Token *input, *target;
+  AprilUtils::SharedPtr<Token> input, target;
   LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_PARAMETER(2, AuxToken, target);
-  IncRef(input);
-  IncRef(target);
-  MatrixFloat *loss = obj->computeLoss(input, target);
+  MatrixFloat *loss = obj->computeLoss(input.get(), target.get());
   if (loss) {
     LUABIND_RETURN(float, matSum(loss)/loss->getDimSize(0));
     LUABIND_RETURN(MatrixFloat, loss);
   }
-  else
+  else {
     LUABIND_RETURN_NIL();
-  DecRef(input);
-  DecRef(target);
+  }
 }
 //BIND_END
 
@@ -109,15 +106,12 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_CHECK_PARAMETER(1, AuxToken);
   LUABIND_CHECK_PARAMETER(2, AuxToken);
-  Token *input, *target;
+  AprilUtils::SharedPtr<Token> input, target;
   LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_PARAMETER(2, AuxToken, target);
-  IncRef(input);
-  IncRef(target);
-  Token *error = obj->computeGradient(input, target);
-  LUABIND_RETURN(Token, error);
-  DecRef(input);
-  DecRef(target);
+  AprilUtils::SharedPtr<Token> error( obj->computeGradient(input.get(),
+                                                           target.get()) );
+  LUABIND_RETURN(AuxToken, error);
 }
 //BIND_END
 

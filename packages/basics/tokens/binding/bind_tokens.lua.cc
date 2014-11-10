@@ -18,6 +18,22 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_H
+#include "token_base.h"
+#include "token_memory_block.h"
+#include "token_matrix.h"
+#include "token_null.h"
+#include "token_sparse_matrix.h"
+#include "token_vector.h"
+#include "smart_ptr.h"
+
+using namespace Basics;
+
+bool lua_isAuxToken(lua_State *L, int n);
+AprilUtils::SharedPtr<Token> lua_toAuxToken(lua_State *L, int n);
+void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value);
+//BIND_END
+
 //BIND_HEADER_C
 #include "bind_matrix.h"
 #include "bind_sparse_matrix.h"
@@ -46,10 +62,7 @@ bool lua_isAuxToken(lua_State *L, int n) {
   return lua_isSparseMatrixFloat(L,n) || lua_isMatrixFloat(L,n) || lua_isToken(L,n);
 }
 
-// Be careful, this function returns an object which needs to call IncRef and
-// DecRef ALWAYS, even if the receives is not getting the property. Otherwise, a
-// memory leak will exists.
-Token *lua_toAuxToken(lua_State *L, int n) {
+AprilUtils::SharedPtr<Token> lua_toAuxToken(lua_State *L, int n) {
   if (lua_isMatrixFloat(L, n)) {
     MatrixFloat *mat = lua_toMatrixFloat(L,n);
     return new TokenMatrixFloat(mat);
@@ -60,20 +73,20 @@ Token *lua_toAuxToken(lua_State *L, int n) {
   }
   return lua_toToken(L,n);
 }
-//BIND_END
 
-//BIND_HEADER_H
-#include "token_base.h"
-#include "token_memory_block.h"
-#include "token_matrix.h"
-#include "token_null.h"
-#include "token_sparse_matrix.h"
-#include "token_vector.h"
+void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
+  switch(value->getTokenCode()) {
+  case Basics::table_of_token_codes::token_matrix:
+    lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
+    break;
+  case Basics::table_of_token_codes::token_sparse_matrix:
+    lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
+    break;
+  default:
+    lua_pushToken(L, value.get());
+  }
+}
 
-using namespace Basics;
-
-bool lua_isAuxToken(lua_State *L, int n);
-Token *lua_toAuxToken(lua_State *L, int n);
 //BIND_END
 
 //BIND_LUACLASSNAME Token tokens.base

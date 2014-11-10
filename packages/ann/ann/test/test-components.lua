@@ -45,13 +45,13 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     for name,c in trainer:iterate_components() do
       print("---- " .. name .. " ----")
       print("Input matrix")
-      print(c:get_input():get_matrix())
+      print(c:get_input())
       print("Output matrix")
-      print(c:get_output():get_matrix())
+      print(c:get_output())
       print("Error input matrix")
-      print(c:get_error_input():get_matrix())
+      print(c:get_error_input())
       print("Error output matrix")
-      print(c:get_error_output():get_matrix())
+      print(c:get_error_output())
     end
     error(string.format("Error at %s (%d,%d,%d,%s) !!!",desc,i,o,b,loss_name))
   end

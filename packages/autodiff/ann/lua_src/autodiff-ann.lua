@@ -23,12 +23,12 @@ function AD.ann.model(f, i, symbols, shared, isize, osize)
     state = { f = f, df_dw_tbl = df_dw_tbl, symbols = symbols, cache = {} },
     forward = function(self, input, during_training)
       self.state.cache  = {}
-      self.state.input  = input.get_matrix and input:get_matrix() or input
+      self.state.input  = input
       self.state.output = compiled_f(self.state.input, self.state.cache)
       return tokens.matrix(self.state.output)
     end,
     backprop = function(self, seed)
-      self.state.seed = seed.get_matrix and seed:get_matrix() or seed
+      self.state.seed = seed
     end,
     compute_gradients = function(self,dict)
       local dw = table.pack( compiled_df_dw(self.state.input,
