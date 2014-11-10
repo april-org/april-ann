@@ -67,8 +67,8 @@ namespace Basics {
     }
     lua_pushnumber(L,index);
     int ps = obj->patternSize();
-    Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
-    lua_pushToken(L,tk);
+    AprilUtils::SharedPtr<Token> tk( obj->getPattern(index-1) ); // ojito que le RESTAMOS uno
+    lua_pushAuxToken(L,tk);
     return 2;
   }
 
