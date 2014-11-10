@@ -19,6 +19,8 @@ v0.4.0
 
 ### Unstable changes
 
+- Added `matrix.op.repmat` function.
+- Added `matrix.ext.iterate` iterator.
 - Added statistical distributions in `stats.dist`.
 - Added `matrix.ext.convolution` and `matrix.ext.real_fftwh`.
 - Added `Matrix<T>::convolution` method. It is in experimental stage, please,
@@ -28,6 +30,9 @@ v0.4.0
 
 ### API Changes
 
+- Removed major order differentiation in `matrix`.
+- `tokens.matrix` **automatically** wraps `matrix` instances, from Lua to C++.
+- `matrix` **automatically** unwraps `tokens.matrix` instances, from C++ to Lua.
 - Added new methods to `AprilMath::Limits` class.
 - Added `metrics.roc` for ROC computation.
 - Added new `class` behavior taken from
@@ -62,6 +67,7 @@ v0.4.0
 
 ### C/C++
 
+- Added `LuaTable` class to allow access of Lua tables from C++ code.
 - Added TAR support in C/C++, allowing to use streams as the standard I/O
   objects in APRIL-ANN.
 - Added `basics` namespace which stores almost all C/C++ code in `basics`
