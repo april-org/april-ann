@@ -138,7 +138,9 @@ using namespace ANN;
 
 //BIND_METHOD LossFunction to_lua_string
 {
-  LUABIND_RETURN(string, obj->toLuaString());
+  char *str = obj->toLuaString();
+  LUABIND_RETURN(string, str);
+  delete[] str;
 }
 //BIND_END
 

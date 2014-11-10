@@ -1181,8 +1181,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(1,int,index);
   if (index < 1 || index > obj->numPatterns())
     LUABIND_ERROR("index out of range");
-  Token *token = obj->getPattern(index-1); // ojito que le RESTAMOS uno
-  LUABIND_RETURN(Token, token);
+  AprilUtils::SharedPtr<Token> token( obj->getPattern(index-1) ); // ojito que le RESTAMOS uno
+  LUABIND_RETURN(AuxToken, token);
 }
 //BIND_END
 
@@ -1195,24 +1195,24 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
   LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
-  Token *token = obj->getPatternBunch(indexes,bunch_size);
+  AprilUtils::SharedPtr<Token> token( obj->getPatternBunch(indexes,bunch_size) );
   delete[] indexes;
-  LUABIND_RETURN(Token, token);
+  LUABIND_RETURN(AuxToken, token);
 }
 //BIND_END
 
 //BIND_METHOD DataSetToken putPattern
 {
   int index;
-  Token *pattern;
+  AprilUtils::SharedPtr<Token> pattern;
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_CHECK_PARAMETER(2, AuxToken);
   LUABIND_GET_PARAMETER(1,int,index);
-  LUABIND_GET_PARAMETER(2,Token,pattern);
+  LUABIND_GET_PARAMETER(2,AuxToken,pattern);
   if (index < 1 || index > obj->numPatterns())
     LUABIND_ERROR("index out of range");
-  obj->putPattern(index-1, pattern); // ojito que le RESTAMOS uno
+  obj->putPattern(index-1, pattern.get()); // ojito que le RESTAMOS uno
 }
 //BIND_END
 
@@ -1220,15 +1220,15 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 {
   unsigned int bunch_size;
   int *indexes;
-  Token *pattern;
+  AprilUtils::SharedPtr<Token> pattern;
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_CHECK_PARAMETER(1, table);
-  LUABIND_CHECK_PARAMETER(2, Token);
-  LUABIND_GET_PARAMETER(2,Token,pattern);
+  LUABIND_CHECK_PARAMETER(2, AuxToken);
+  LUABIND_GET_PARAMETER(2,AuxToken,pattern);
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
   LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
-  obj->putPatternBunch(indexes,bunch_size,pattern);
+  obj->putPatternBunch(indexes,bunch_size,pattern.get());
   delete[] indexes;
 }
 //BIND_END
@@ -1300,10 +1300,10 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_METHOD DataSetTokenVector push_back
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, Token);
-  Token *token;
-  LUABIND_GET_PARAMETER(1, Token, token);
-  obj->push_back(token);
+  LUABIND_CHECK_PARAMETER(1, AuxToken);
+  AprilUtils::SharedPtr<Token> token;
+  LUABIND_GET_PARAMETER(1, AuxToken, token);
+  obj->push_back(token.get());
 }
 //BIND_END
 
