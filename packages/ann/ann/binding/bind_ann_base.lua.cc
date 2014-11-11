@@ -127,6 +127,7 @@ namespace AprilUtils {
 #include "relu_actf_component.h"
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
+#include "log_actf_component.h"
 #include "linear_actf_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
@@ -1571,6 +1572,29 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   obj = new SinActfANNComponent(name);
   LUABIND_RETURN(SinActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               LogActfANNComponent               //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LogActfANNComponent ann.components.actf.log
+//BIND_CPP_CLASS    LogActfANNComponent
+//BIND_SUBCLASS_OF  LogActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LogActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LogActfANNComponent(name);
+  LUABIND_RETURN(LogActfANNComponent, obj);  
 }
 //BIND_END
 

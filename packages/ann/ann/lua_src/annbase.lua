@@ -66,6 +66,7 @@ function ann_wrapper_methods:get_error_output()
 end
 
 function ann_wrapper_methods:forward(input, during_training)
+  self:reset()
   self.input  = input
   self.output = self:forward_function(input, during_training)
   return self.output
@@ -91,8 +92,10 @@ function ann_wrapper_methods:compute_gradients(dict)
   return dict
 end
 
-function ann_wrapper_methods:build()
-  -- already built
+function ann_wrapper_methods:build(params)
+  local input,output,weights = params.input,params.output,params.weights
+  -- TODO: check input/output sizes
+  if params.weights then matrix.dict.replace( self.weights, params.weights ) end
   return self,self.weights,{}
 end
 

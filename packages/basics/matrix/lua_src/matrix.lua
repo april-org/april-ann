@@ -549,6 +549,16 @@ for _,name in ipairs{ "scal", "fill", "scalar_add", "pow", "clamp",
   end
 end
 
+matrix.dict.replace = function(tbl1, tbl2)
+  assert(type(tbl1) == "table", "Needs a table as 1st argument")
+  assert(type(tbl2) == "table", "Needs a table as 2nd argument")
+  for name,w1 in pairs(tbl1) do
+    local w2 = tbl2[name]
+    if w2 then tbl1[name] = w2 end
+  end
+  return tbl1
+end
+
 matrix.dict.clone = function(tbl)
   if type(tbl) == "table" then
     return iterator(pairs(tbl)):

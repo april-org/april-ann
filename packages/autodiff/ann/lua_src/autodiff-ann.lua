@@ -22,27 +22,19 @@ function AD.ann.model(f, i, symbols, shared, isize, osize)
     weights = shared,
     state = { f = f, df_dw_tbl = df_dw_tbl, symbols = symbols, cache = {} },
     forward = function(self, input, during_training)
-      self.state.cache  = {}
-      self.state.seed   = nil
-      self.state.input  = input
-      self.state.output = compiled_f(self.state.input, self.state.cache)
-      return self.state.output
+      return compiled_f(input, self.state.cache)
     end,
     backprop = function(self, seed)
-      self.state.seed = seed
     end,
     compute_gradients = function(self,dict)
-      local dw = table.pack( compiled_df_dw(self.state.input,
-                                            self.state.output,
-                                            self.state.seed,
+      local dw = table.pack( compiled_df_dw(self:get_input(),
+                                            self:get_output(),
+                                            self:get_error_input(),
                                             self.state.cache) )
       for i,s in ipairs(symbols) do dict[s.name] = dw[i] end
       return dict
     end,
     reset = function(self)
-      self.state.input  = nil
-      self.state.output = nil
-      self.state.seed   = nil
       self.state.cache  = {}
     end,
   }
