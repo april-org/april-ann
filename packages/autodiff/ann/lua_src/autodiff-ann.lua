@@ -23,6 +23,7 @@ function AD.ann.model(f, i, symbols, shared, isize, osize)
     state = { f = f, df_dw_tbl = df_dw_tbl, symbols = symbols, cache = {} },
     forward = function(self, input, during_training)
       self.state.cache  = {}
+      self.state.seed   = nil
       self.state.input  = input
       self.state.output = compiled_f(self.state.input, self.state.cache)
       return self.state.output
