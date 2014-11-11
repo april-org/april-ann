@@ -25,7 +25,7 @@ function AD.ann.model(f, i, symbols, shared, isize, osize)
       self.state.cache  = {}
       self.state.input  = input
       self.state.output = compiled_f(self.state.input, self.state.cache)
-      return tokens.matrix(self.state.output)
+      return self.state.output
     end,
     backprop = function(self, seed)
       self.state.seed = seed
