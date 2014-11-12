@@ -289,101 +289,175 @@ namespace Imaging {
     return result;
   }
 
-
   ImageFloat *binarize_otsus(const ImageFloat *src)
   {
-    april_assert(src->width()  > 0 && "Zero-sized image!");
-    april_assert(src->height() > 0 && "Zero-sized image!");
-    //Image Integral Matrix
-    ImageFloat *result       = new ImageFloat(src->width(), src->height());
+      april_assert(src->width()  > 0 && "Zero-sized image!");
+      april_assert(src->height() > 0 && "Zero-sized image!");
+      //Image Integral Matrix
+      ImageFloat *result       = new ImageFloat(src->width(), src->height());
+      //IncRef(result);
+      int total = src->height()*src->width();
+      long h[256];
+      
+      long double sum = 0.0;
+      long double sumB = 0.0;
+      long double wB = 0.0;
+      long double wF = 0.0;
+      long double mB;
+      long double mF;
+      long mmax = 0.0;
+      long between = 0.0;
+      double threshold1 = 0;
+      double threshold2 = 0;
+      double T = 0;
+      // Prepare the gray histogram
+      for (int i = 0; i< 256; i++) h[i] = 0;
 
-    int ntotal = src->height()*src->width();
-    long double h[255];
-
-    int T             = 0;
-    long double csum  = 0.0;
-    long double sum   = 0.0;
-    long double sbmax = -1.0;
-
-    double p1 = 0.0;
-    double p2 = 0.0;
-
-    // Prepare the gray histogram
-    for (int i = 0; i< 255; i++) h[i] = 0;
-
-    // Calculate the histogram
-    for (int y = 1; y < src->height(); y++){
-      for (int x = 1; x < src->width(); x++){
-        // Samplear to 255 value
-        int v = (int)((*src)(x,y)*255);
-        h[v]++;
+      // Calculate the histogram
+      for (int y = 0; y < src->height(); y++){
+          for (int x = 0; x < src->width(); x++){
+              // Samplear to 255 value
+              int v = (int)round(((*src)(x,y)*255));
+              h[v]++;
+          }
       }
-    }
+      // Normalize data
+      // Calculate sum of g * h[g];
+      for (int i = 0; i< 256; i++){
+          //h[i] = h[i]/total;
+          sum += i*h[i];
+      }
 
-    // Normalize data
-    // Calculate sum of g * h[g];
-    for (int i = 0; i< 255; i++){
-      h[i] = h[i]/ntotal;
-      sum  += h[i]*i;
-    }
+      // For each histogram
+      for(int i = 0; i < 256; i++){
+          wB += h[i];
+          if (wB == 0)
+              continue;
+          wF = total - wB;
 
-    // For each histogram
-    for(int g = 0; g < 255; g++){
+          if(wF == 0)
+              break;
 
-      double m1 = 0.0;
-      double m2 = 0.0;
-      double sb = 0.0;
+          sumB += i*h[i];
+          mB = sumB / wB;
+          mF = (sum - sumB) / wF;
+          between = wB * wF * (mB - mF)*(mB-mF);
+          if ( between >= mmax ) {
+              threshold1 = i;
+              if ( between > mmax ) {
+                  threshold2 = i;
+              }
+              mmax = between;
+          }
+      }
+      T = (threshold1 + threshold2) / 2.0;
+      //printf("Final threshold %f %f, %f\n", threshold1, threshold2, T); 
+      // Apply the new Threshold
+      for(int y = 0; y < src->height(); y++)      
+          for (int x = 0; x < src->width(); x++){
+              float v = (int)((*src)(x,y)*256);
+              //printf("(%d, %d) %f -> %f\n", x, y, v, T);
+              if( v > T) (*result)(x,y) = 1;
+              else (*result)(x,y) = 0;
+          } 
 
-      p1 += h[g];
+      return result;
+  }
 
-      if ( !p1 ) continue;
-      p2 = 1 - p1;
-      if (!p2) break;
+  ImageFloat *binarize_otsus_old(const ImageFloat *src)
+  {
+      april_assert(src->width()  > 0 && "Zero-sized image!");
+      april_assert(src->height() > 0 && "Zero-sized image!");
+      //Image Integral Matrix
+      ImageFloat *result       = new ImageFloat(src->width(), src->height());
+      //IncRef(result);
+      int ntotal = src->height()*src->width();
+      long double h[256];
 
-      csum += g*h[g];
-      m1 = csum/p1;
-      m2 = (sum - csum) / p2;
-      sb = p1*p2*(m1-m2)*(m1-m2);
+      int T             = 0;
+      long double csum  = 0.0;
+      long double sum   = 0.0;
+      long double sbmax = -1.0;
 
-      // Take the best T who maximize inter-class variance
-      if(sb > sbmax){
-        sbmax = sb;
-        T = g;
-      }      
+      double p1 = 0.0;
+      double p2 = 0.0;
 
-    }
-    // Apply the new Threshold
-    for(int y = 1; y < src->height(); y++)      
-      for (int x = 1; x < src->width(); x++){
-        int v = (int)((*src)(x,y)*255);
-        if( v > T) (*result)(x,y) = 1;
-        else (*result)(x,y) = 0;
-      } 
+      // Prepare the gray histogram
+      for (int i = 0; i< 256; i++) h[i] = 0;
 
-    return result;
+      // Calculate the histogram
+      for (int y = 0; y < src->height(); y++){
+          for (int x = 0; x < src->width(); x++){
+              // Samplear to 255 value
+              int v = (int)round(((*src)(x,y)*255));
+              h[v]++;
+          }
+      }
+
+      // Normalize data
+      // Calculate sum of g * h[g];
+      for (int i = 0; i< 256; i++){
+          h[i] = h[i]/ntotal;
+          sum  += h[i]*i;
+      }
+
+      // For each histogram
+      for(int g = 0; g < 256; g++){
+
+          double m1 = 0.0;
+          double m2 = 0.0;
+          double sb = 0.0;
+
+          p1 += h[g];
+
+          if ( !p1 ) continue;
+          p2 = 1 - p1;
+          if (!p2) break;
+
+          csum += g*h[g];
+          m1 = csum/p1;
+          m2 = (sum - csum) / p2;
+          sb = p1*p2*(m1-m2)*(m1-m2);
+
+          // Take the best T who maximize inter-class variance
+          if(sb > sbmax){
+              sbmax = sb;
+              T = g;
+          }      
+
+      }
+      // Apply the new Threshold
+      for(int y = 0; y < src->height(); y++)      
+          for (int x = 0; x < src->width(); x++){
+              int v = (int)((*src)(x,y)*256);
+              if( v > T) (*result)(x,y) = 1;
+              else (*result)(x,y) = 0;
+          } 
+
+      return result;
   }
 
 
   ImageFloat *binarize_threshold(const ImageFloat *src, double threshold) {
 
-    april_assert(src->width()  > 0 && "Zero-sized image!");
-    april_assert(src->height() > 0 && "Zero-sized image!");
-    //Image Integral Matrix
-    ImageFloat *result       = new ImageFloat(src->width(), src->height());
-  
-    // int ntotal = src->height()*src->width();
+      april_assert(src->width()  > 0 && "Zero-sized image!");
+      april_assert(src->height() > 0 && "Zero-sized image!");
+      //Image Integral Matrix
+      ImageFloat *result       = new ImageFloat(src->width(), src->height());
 
-    for (int y = 0; y < src->height(); y++){
-      for (int x = 0; x < src->width(); x++){
-        if ((*src)(x,y) < threshold) {
-          (*result)(x,y) = 0;   
-        }
-        else {
-          (*result)(x,y) = 1;
-        }
+      // int ntotal = src->height()*src->width();
+
+      for (int y = 0; y < src->height(); y++){
+          for (int x = 0; x < src->width(); x++){
+              if ((*src)(x,y) < threshold) {
+                  (*result)(x,y) = 0;   
+              }
+              else {
+                  (*result)(x,y) = 1;
+              }
+          }
       }
-    }
-    return result;
+      return result;
   }
 
 } // namespace Imaging
