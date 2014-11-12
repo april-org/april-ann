@@ -27,6 +27,23 @@
 #include "luabindmacros.h"
 #include "bind_complex.h"
 
+namespace AprilUtils {
+  template<> Basics::MatrixComplexF *LuaTable::
+  convertTo<Basics::MatrixComplexF *>(lua_State *L, int idx) {
+    return lua_toMatrixComplexF(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixComplexF *>(lua_State *L, Basics::MatrixComplexF *value) {
+    lua_pushMatrixComplexF(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixComplexF *>(lua_State *L, int idx) {
+    return lua_isMatrixComplexF(L, idx);
+  }
+}
+
 namespace Basics {
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {

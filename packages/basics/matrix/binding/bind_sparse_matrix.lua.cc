@@ -29,6 +29,24 @@
 #include "luabindmacros.h" // for lua_pushfloat and lua_pushint
 #include "luabindutil.h"   // for lua_pushfloat and lua_pushint
 
+namespace AprilUtils {
+  template<> Basics::SparseMatrixFloat *LuaTable::
+  convertTo<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
+    return lua_toSparseMatrixFloat(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<Basics::SparseMatrixFloat *>(lua_State *L,
+                                        Basics::SparseMatrixFloat *value) {
+    lua_pushSparseMatrixFloat(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
+    return lua_isSparseMatrixFloat(L, idx);
+  }
+}
+
 namespace Basics {
   int sparseMatrixFloatIteratorFunction(lua_State *L) {
     SparseMatrixFloatIterator *obj = lua_toSparseMatrixFloatIterator(L,1);
