@@ -46,4 +46,19 @@ namespace Basics {
 
 }
 
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::SparseMatrixFloat *LuaTable::
+  convertTo<Basics::SparseMatrixFloat *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::SparseMatrixFloat *>(lua_State *L,
+                                        Basics::SparseMatrixFloat *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::SparseMatrixFloat *>(lua_State *L, int idx);
+}
+
 #endif // SPARSEMATRIXFLOAT_H
