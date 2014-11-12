@@ -87,6 +87,7 @@ rlcompleter._set(
 		    add(k)
 		  end
 		end
+                if rawequal(aux,mt.__index) then break end -- avoid infinite loops
 		aux = mt.__index
 	      until not aux or not getmetatable(aux)
 	    end
