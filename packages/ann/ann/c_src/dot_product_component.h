@@ -46,17 +46,20 @@ namespace ANN {
                                                        bool during_training);
     virtual Basics::MatrixFloat *privateDoDenseBackprop(Basics::MatrixFloat *error_input);
     virtual void privateDenseReset(unsigned int it=0);
-    virtual void privateDenseComputeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat);
+    virtual void privateDenseComputeGradients(const char *name,
+                                              AprilUtils::LuaTable &grads_mat_dict);
 
     // from SparseMatrixANNComponentHelper
     virtual Basics::MatrixFloat *privateDoSparseForward(Basics::SparseMatrixFloat *input,
                                                         bool during_training);
     virtual Basics::SparseMatrixFloat *privateDoSparseBackprop(Basics::MatrixFloat *error_input);
     virtual void privateSparseReset(unsigned int it=0);
-    virtual void privateSparseComputeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat);
+    virtual void privateSparseComputeGradients(const char *name,
+                                              AprilUtils::LuaTable &grads_mat_dict);
     
     //
-    void initializeComputeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat);
+    Basics::MatrixFloat *initializeComputeGradients(const char *name,
+                                                    AprilUtils::LuaTable &grads_mat_dict);
         
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,
@@ -67,9 +70,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
-    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict);
+    virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
     virtual char *toLuaString();
     

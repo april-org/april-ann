@@ -29,5 +29,5 @@ output = nnlm:forward{
   }
 }
 
-print(trainer:component("factors_join"):get_output():get_matrix())
-print(output:get_matrix())
+print(trainer:component("factors_join"):get_output())
+print(output)

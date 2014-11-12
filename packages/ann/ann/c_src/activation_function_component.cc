@@ -56,7 +56,6 @@ namespace ANN {
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
-    april_assert(input_mat->getMajorOrder() == CblasColMajor);
     april_assert(input_mat->getNumDim() >= 2);
     if (!input_mat->getIsContiguous()) {
       input_mat = input_mat->clone();
@@ -91,7 +90,6 @@ namespace ANN {
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *error_input_mat = error_input->getMatrix();
-    april_assert(error_input_mat->getMajorOrder() == CblasColMajor);
     april_assert(error_input_mat->getNumDim() >= 2);
     if (!error_input_mat->getIsContiguous()) {
       error_input_mat = error_input_mat->clone();
@@ -139,8 +137,8 @@ namespace ANN {
   
   void ActivationFunctionANNComponent::build(unsigned int _input_size,
 					     unsigned int _output_size,
-					     MatrixFloatSet *weights_dict,
-					     hash<string,ANNComponent*> &components_dict) {
+					     AprilUtils::LuaTable &weights_dict,
+					     AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     if (input_size == 0) input_size = output_size;
     if (output_size == 0) output_size = input_size;

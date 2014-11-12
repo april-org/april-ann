@@ -26,7 +26,7 @@
 #include "dice.h"
 #include "utilLua.h"
 using Basics::MTRand;
-using Basics::dice;
+using Basics::Dice;
 //BIND_END
 
 //BIND_LUACLASSNAME MTRand random
@@ -325,10 +325,10 @@ using Basics::dice;
 }
 //BIND_END
 
-//BIND_LUACLASSNAME dice random.dice
-//BIND_CPP_CLASS dice
+//BIND_LUACLASSNAME Dice random.dice
+//BIND_CPP_CLASS Dice
 
-//BIND_CONSTRUCTOR dice
+//BIND_CONSTRUCTOR Dice
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
@@ -342,28 +342,28 @@ using Basics::dice;
       //LUABIND_ERROR("random.dice at index %d value should be positive",i+1);
     }
   }
-  obj = new dice(length,v);
+  obj = new Dice(length,v);
   delete[] v;
-  LUABIND_RETURN(dice,obj);
+  LUABIND_RETURN(Dice,obj);
 }
 //BIND_END
 
-//BIND_DESTRUCTOR dice
+//BIND_DESTRUCTOR Dice
 {
 }
 //BIND_END
 
-//BIND_METHOD dice outcomes
+//BIND_METHOD Dice outcomes
 //DOC_BEGIN
 // int outcomes()
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(number,obj->get_outcomes());
+  LUABIND_RETURN(number,obj->getOutcomes());
 }
 //BIND_END
 
-//BIND_METHOD dice thrown
+//BIND_METHOD Dice thrown
 //DOC_BEGIN
 // int thrown(random *generator)
 //DOC_END

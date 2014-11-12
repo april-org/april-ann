@@ -79,17 +79,6 @@ namespace Basics {
 
   } // namespace MatrixIO
 
-  template<>
-  ComplexF Matrix<ComplexF>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name,
-                    ComplexF default_value) {
-    AprilMath::LuaComplexFNumber *c =
-      options->getOptionalReferenced<AprilMath::LuaComplexFNumber>(name, 0);
-    if (c == 0) return default_value;
-    else return c->getValue();
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   
   template class Matrix<ComplexF>;

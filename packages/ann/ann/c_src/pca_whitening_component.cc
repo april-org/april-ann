@@ -42,15 +42,13 @@ namespace ANN {
 						     unsigned int takeN,
 						     const char *name) :
     ANNComponent(name, 0,
-		 static_cast<unsigned int>(S->getDimSize(0)),
+		 static_cast<unsigned int>(U->getDimSize(0)),
 		 (takeN==0)?(static_cast<unsigned int>(S->getDimSize(0))):(takeN)),
     U(U), S(S), epsilon(epsilon),
     dot_product_encoder(0, WEIGHTS_NAME,
 			getInputSize(), getOutputSize(),
 			true),
     takeN(takeN) {
-    if (U->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Incorrect U matrix major order, needed col_major\n");
     if (U->getNumDim() != 2)
       ERROR_EXIT(128, "Needs a bi-dimensional matrix as U argument\n");
     if ( !S->isDiagonal() )
@@ -76,9 +74,11 @@ namespace ANN {
     }
     delete aux_mat;
     //
-    matrix_set.insert(WEIGHTS_NAME, U_S_epsilon);
-    hash<string,ANNComponent*> components_dict;
-    dot_product_encoder.build(0, 0, &matrix_set, components_dict);
+    matrix_set.put(WEIGHTS_NAME, U_S_epsilon);
+    AprilUtils::LuaTable components_dict;
+    dot_product_encoder.build(0, 0, matrix_set, components_dict);
+    // avoid problems with DecRef in LuaTable
+    IncRef(&dot_product_encoder);
   }
   
   PCAWhiteningANNComponent::~PCAWhiteningANNComponent() {
@@ -102,15 +102,15 @@ namespace ANN {
   ANNComponent *PCAWhiteningANNComponent::clone() {
     PCAWhiteningANNComponent *component = new PCAWhiteningANNComponent(U, S,
 								       epsilon,
-								       0,
+								       takeN,
 								       name.c_str());
     return component;
   }
   
   void PCAWhiteningANNComponent::build(unsigned int _input_size,
 				       unsigned int _output_size,
-				       MatrixFloatSet *weights_dict,
-				       hash<string,ANNComponent*> &components_dict) {
+				       AprilUtils::LuaTable &weights_dict,
+				       AprilUtils::LuaTable &components_dict) {
     // TODO: CHECK INPUT OUTPUT SIZES
     UNUSED_VARIABLE(_input_size);
     UNUSED_VARIABLE(_output_size);
@@ -120,13 +120,13 @@ namespace ANN {
   
   char *PCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", false);
+    AprilUtils::LuaTable options;
+    options.put("ascii", false);
     stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    U->write(stream.get(), &options);
+    U->write(stream.get(), options);
     stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), &options);
+    S->write(stream.get(), options);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, takeN);
     stream->put("\0",1); // forces a \0 at the end of the buffer
     return stream->releaseString();

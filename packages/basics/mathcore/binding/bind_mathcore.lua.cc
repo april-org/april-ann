@@ -25,6 +25,8 @@ using namespace AprilMath;
 //BIND_END
 
 //BIND_HEADER_C
+#include "bind_complex.h"
+#include "cmath_overloads.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "error_print.h"
@@ -207,5 +209,171 @@ namespace AprilMath {
 //BIND_METHOD Int32GPUMirroredMemoryBlock get
 {
   LUABIND_RETURN(int,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION mathcore.limits.float.max
+{
+  LUABIND_RETURN(float,Limits<float>::max());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.float.min
+{
+  LUABIND_RETURN(float,Limits<float>::min());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.float.lowest
+{
+  LUABIND_RETURN(float,Limits<float>::lowest());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.float.epsilon
+{
+  LUABIND_RETURN(float,Limits<float>::epsilon());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.float.infinity
+{
+  LUABIND_RETURN(float,Limits<float>::infinity());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.float.quiet_NaN
+{
+  LUABIND_RETURN(float,Limits<float>::quiet_NaN());
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION mathcore.limits.double.max
+{
+  LUABIND_RETURN(double,Limits<double>::max());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.min
+{
+  LUABIND_RETURN(double,Limits<double>::min());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.lowest
+{
+  LUABIND_RETURN(double,Limits<double>::lowest());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.epsilon
+{
+  LUABIND_RETURN(double,Limits<double>::epsilon());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.infinity
+{
+  LUABIND_RETURN(double,Limits<double>::infinity());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.double.quiet_NaN
+{
+  LUABIND_RETURN(double,Limits<double>::quiet_NaN());
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION mathcore.limits.int32.max
+{
+  LUABIND_RETURN(int,Limits<int32_t>::max());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.int32.min
+{
+  LUABIND_RETURN(int,Limits<int32_t>::min());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.int32.lowest
+{
+  LUABIND_RETURN(int,Limits<int32_t>::lowest());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.int32.epsilon
+{
+  LUABIND_RETURN(int,Limits<int32_t>::epsilon());
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION mathcore.limits.char.max
+{
+  LUABIND_RETURN(char,Limits<char>::max());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.char.min
+{
+  LUABIND_RETURN(char,Limits<char>::min());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.char.lowest
+{
+  LUABIND_RETURN(char,Limits<char>::lowest());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.char.epsilon
+{
+  LUABIND_RETURN(char,Limits<char>::epsilon());
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION mathcore.limits.complex.max
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::max());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.min
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::min());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.lowest
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::lowest());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.epsilon
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::epsilon());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.infinity
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::infinity());
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.limits.complex.quiet_NaN
+{
+  LUABIND_RETURN(ComplexF,Limits<ComplexF>::quiet_NaN());
 }
 //BIND_END

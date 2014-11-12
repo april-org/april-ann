@@ -53,9 +53,11 @@ namespace ANN {
       int sizes[2] = { U->getDimSize(0), static_cast<int>(takeN) };
       aux_U = new MatrixFloat(this->U, coords, sizes, true);
     }
-    matrix_set.insert(WEIGHTS_NAME, aux_U);
-    hash<string,ANNComponent*> components_dict;
-    dot_product_decoder.build(0, 0, &matrix_set, components_dict);
+    matrix_set.put(WEIGHTS_NAME, aux_U);
+    AprilUtils::LuaTable components_dict;
+    dot_product_decoder.build(0, 0, matrix_set, components_dict);
+    // avoid problems with DecRef in LuaTable
+    IncRef(&dot_product_decoder);
   }
   
   ZCAWhiteningANNComponent::~ZCAWhiteningANNComponent() {
@@ -68,27 +70,27 @@ namespace ANN {
   }
   
   Token *ZCAWhiteningANNComponent::doBackprop(Token *_error_input) {
-    Token *rotated_error = PCAWhiteningANNComponent::doBackprop(_error_input);
-    return dot_product_decoder.doBackprop(rotated_error);
+    Token *rotated_error = dot_product_decoder.doBackprop(_error_input);
+    return PCAWhiteningANNComponent::doBackprop(rotated_error);
   }
   
   ANNComponent *ZCAWhiteningANNComponent::clone() {
     ZCAWhiteningANNComponent *component = new ZCAWhiteningANNComponent(U, S,
 								       epsilon,
-								       0,
+								       takeN,
 								       name.c_str());
     return component;
   }
   
   char *ZCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", false);
+    AprilUtils::LuaTable options;
+    options.put("ascii", false);
     stream->printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    U->write(stream.get(), &options);
+    U->write(stream.get(), options);
     stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), &options);
+    S->write(stream.get(), options);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, getTakeN());
     stream->put("\0",1); // forces a \0 at the end of the buffer
     return stream->releaseString();

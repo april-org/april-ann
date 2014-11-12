@@ -72,16 +72,14 @@ namespace ANN {
       // new  output to fit the bunch
       AssignRef(output,new TokenMatrixFloat(input_mat->clone()));
       MatrixFloat *output_mat = output->getMatrix();
-      april_assert(output_mat->getMajorOrder() == CblasColMajor);
       // apply dropout
       if (during_training) {
 	if (dropout_mask == 0 || dropout_mask->size() != input_mat->size()) {
 	  if (dropout_mask) DecRef(dropout_mask);
-	  int dims = { input_mat->size() };
-	  dropout_mask = new MatrixFloat(1, dims, CblasColMajor);
+	  dropout_mask = new MatrixFloat(1, input_mat->size());
 	  IncRef(dropout_mask);
 	}
-	for (MatrixFloat::col_major_iterator it(dropout_mask->begin());
+	for (MatrixFloat::iterator it(dropout_mask->begin());
 	     it != dropout_mask->end(); ++it) {
 	  if (random->rand() < prob) *it = 0.0f;
 	  else *it = 1.0f;
@@ -108,7 +106,6 @@ namespace ANN {
       AssignRef(error_input,_error_input);
       TokenMatrixFloat *error_input_token_matrix = _error_input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *error_input_mat = error_input_token_matrix->getMatrix();
-      april_assert(error_input_mat->getMajorOrder() == CblasColMajor);
       april_assert(error_input_mat->getNumDim() >= 2);
       if (!error_input_mat->getIsContiguous()) {
 	error_input_mat = error_input_mat->clone();
@@ -155,8 +152,8 @@ namespace ANN {
 
   void DropoutANNComponent::build(unsigned int _input_size,
 				  unsigned int _output_size,
-				  MatrixFloatSet *weights_dict,
-				  hash<string,ANNComponent*> &components_dict) {
+				  AprilUtils::LuaTable &weights_dict,
+				  AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     if (input_size == 0) input_size = output_size;

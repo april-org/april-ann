@@ -132,8 +132,8 @@ namespace Matlab {
   }
 
   template<typename T>
-  void readMatrixData(MatrixFloat::col_major_iterator &m_it,
-                      MatrixFloat::col_major_iterator &end,
+  void readMatrixData(MatrixFloat::iterator &m_it,
+                      MatrixFloat::iterator &end,
                       const T *ptr, const uint32_t nbytes) {
     UNUSED_VARIABLE(end);
     for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
@@ -145,8 +145,8 @@ namespace Matlab {
   }
 
   template<typename T>
-  void readMatrixData(MatrixComplexF::col_major_iterator &m_it,
-                      MatrixComplexF::col_major_iterator &end,
+  void readMatrixData(MatrixComplexF::iterator &m_it,
+                      MatrixComplexF::iterator &end,
                       const T *ptr_real, const T *ptr_img,
                       const uint32_t nbytes) {
     UNUSED_VARIABLE(end);
@@ -173,8 +173,8 @@ namespace Matlab {
   }
 
   template<typename T>
-  void readMatrixData(MatrixDouble::col_major_iterator &m_it,
-                      MatrixDouble::col_major_iterator &end,
+  void readMatrixData(MatrixDouble::iterator &m_it,
+                      MatrixDouble::iterator &end,
                       const T *ptr, const uint32_t nbytes) {
     UNUSED_VARIABLE(end);
     for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
@@ -186,8 +186,8 @@ namespace Matlab {
   }
 
   template<typename T>
-  void readMatrixData(MatrixChar::col_major_iterator &m_it,
-                      MatrixChar::col_major_iterator &end,
+  void readMatrixData(MatrixChar::iterator &m_it,
+                      MatrixChar::iterator &end,
                       const T *ptr, const uint32_t nbytes) {
     UNUSED_VARIABLE(end);
     for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
@@ -198,8 +198,8 @@ namespace Matlab {
   }
 
   template<typename T>
-  void readMatrixData(MatrixInt32::col_major_iterator &m_it,
-                      MatrixInt32::col_major_iterator &end,
+  void readMatrixData(MatrixInt32::iterator &m_it,
+                      MatrixInt32::iterator &end,
                       const T *ptr, const uint32_t nbytes) {
     UNUSED_VARIABLE(end);
     for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
@@ -365,8 +365,9 @@ namespace Matlab {
     // traversing in col_major the real/img part of the matrix will be traversed
     // last, so it is possible add all real components in a first step, and in a
     // second step to add all the imaginary components
-    MatrixChar::col_major_iterator it(m->begin());
-    MatrixChar::col_major_iterator end(m->end());
+    AprilUtils::SharedPtr< MatrixChar > mT(m->transpose());
+    MatrixChar::iterator it(mT->begin());
+    MatrixChar::iterator end(mT->end());
     // this loop traverses all the real components, and later all the imaginary
     // components (if any)
     switch(real_part->getDataType()) {
@@ -397,8 +398,7 @@ namespace Matlab {
   }
 
   MatrixFloat *MatFileReader::TaggedDataElement::getMatrix(char *name,
-                                                           size_t maxsize,
-                                                           bool col_major) {
+                                                           size_t maxsize) {
     if (getDataType() != MATRIX) {
       ERROR_PRINT1("Impossible to get a Matrix from a non "
                    "Matrix element (type %d)\n", getDataType());
@@ -438,11 +438,11 @@ namespace Matlab {
     for (int i=0; i<num_dims; ++i)
       dims[i] = static_cast<int>(const_dims[i]);
     MatrixFloat *m;
-    m = new MatrixFloat(num_dims, dims,
-                        (col_major)?CblasColMajor:CblasRowMajor);
+    m = new MatrixFloat(num_dims, dims);
     // traversing in col_major
-    MatrixFloat::col_major_iterator it(m->begin());
-    MatrixFloat::col_major_iterator end(m->end());
+    AprilUtils::SharedPtr< MatrixFloat > mT(m->transpose());
+    MatrixFloat::iterator it(mT->begin());
+    MatrixFloat::iterator end(mT->end());
     switch(real_part->getDataType()) {
     case SINGLE:
       readMatrixData(it, end, real_part->getData<const float*>(),
@@ -490,7 +490,7 @@ namespace Matlab {
   }
 
   MatrixComplexF *MatFileReader::TaggedDataElement::
-  getMatrixComplexF(char *name, size_t maxsize, bool col_major) {
+  getMatrixComplexF(char *name, size_t maxsize) {
     if (getDataType() != MATRIX) {
       ERROR_PRINT1("Impossible to get a Matrix from a non "
                    "Matrix element (type %d)\n", getDataType());
@@ -521,11 +521,11 @@ namespace Matlab {
     for (int i=0; i<num_dims; ++i)
       dims[i] = static_cast<int>(const_dims[i]);
     MatrixComplexF *m;
-    m = new MatrixComplexF(num_dims, dims,
-                           (col_major)?CblasColMajor:CblasRowMajor);
+    m = new MatrixComplexF(num_dims, dims);
     // traversing in col_major
-    MatrixComplexF::col_major_iterator it(m->begin());
-    MatrixComplexF::col_major_iterator end(m->end());
+    AprilUtils::SharedPtr< MatrixComplexF > mT(m->transpose());
+    MatrixComplexF::iterator it(mT->begin());
+    MatrixComplexF::iterator end(mT->end());
     if (real_part->getDataType() != img_part->getDataType())
       ERROR_EXIT(256, "Found different data-type for real and imaginary part\n");
     switch(real_part->getDataType()) {
@@ -633,8 +633,9 @@ namespace Matlab {
     MatrixDouble *m;
     m = new MatrixDouble(num_dims, dims);
     // traversing in col_major
-    MatrixDouble::col_major_iterator it(m->begin());
-    MatrixDouble::col_major_iterator end(m->end());
+    AprilUtils::SharedPtr< MatrixDouble > mT(m->transpose());
+    MatrixDouble::iterator it(mT->begin());
+    MatrixDouble::iterator end(mT->end());
     switch(real_part->getDataType()) {
     case INT8:
       readMatrixData(it, end, real_part->getData<const int8_t*>(),
@@ -739,8 +740,9 @@ namespace Matlab {
     MatrixInt32 *m;
     m = new MatrixInt32(num_dims, dims);
     // traversing in col_major
-    MatrixInt32::col_major_iterator it(m->begin());
-    MatrixInt32::col_major_iterator end(m->end());
+    AprilUtils::SharedPtr< MatrixInt32 > mT(m->transpose());
+    MatrixInt32::iterator it(mT->begin());
+    MatrixInt32::iterator end(mT->end());
     switch(real_part->getDataType()) {
     case INT8:
       readMatrixData(it, end, real_part->getData<const int8_t*>(),

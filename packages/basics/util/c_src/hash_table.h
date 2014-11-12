@@ -219,7 +219,7 @@ namespace AprilUtils {
       int index;
       const node *ptr;
         
-      const_iterator(hash *h, int index, node *ptr):
+      const_iterator(const hash *h, int index, const node *ptr):
 	h(h), index(index), ptr(ptr) {}
 
     public:
@@ -316,11 +316,24 @@ namespace AprilUtils {
       return iterator(this, i, ptr);
     }
 
+    const_iterator begin() const {
+      int i=0;
+      const node *ptr = buckets[0];
+      while (ptr == 0) {
+	i++;
+	if (i < num_buckets)
+	  ptr = buckets[i];
+	else break;
+      }
+
+      return const_iterator(this, i, ptr);
+    }
+
   private:
     iterator end_iterator;
     
   public:
-    iterator end() { return end_iterator; }
+    iterator end() const { return end_iterator; }
   };
 
   template <typename ky, typename dt, 

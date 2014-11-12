@@ -44,6 +44,7 @@ namespace AprilIO {
     AprilUtils::constString getConstString() const;
     void swapString(AprilUtils::string &other);
     char *releaseString();
+    const char *c_str() const { return data.c_str(); }
 
     virtual bool empty() const;
     virtual size_t size() const;

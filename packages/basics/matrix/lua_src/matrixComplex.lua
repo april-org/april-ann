@@ -1,13 +1,18 @@
+class.extend(matrixComplex, "t", matrixComplex.."transpose")
+
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixComplex)
 
 matrixComplex.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+matrixComplex.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrixComplex)
+
 matrixComplex.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixComplex",
                                             function(value)
-                                              return string.format("%12s",tostring(value))
+                                              return string.format("%26s",tostring(value))
   end)
 
 matrixComplex.join =
@@ -78,28 +83,6 @@ april_set_doc(matrixComplex, {
 		description ={
 		  "Constructor of a multidimensional matrixComplex.",
 		  "The data is stored at row_major order",
-		},
-		params = {
-		  "First dimension size",
-		  "Second dimension size",
-		  "...",
-		  "ith dimension size",
-		  "...",
-		  "nth dimension size",
-		  { "A table with values [optional]. The values must be",
-		    "in row major order. A valid value is a number, which is",
-		    "taken as real part only, a complex object instance, or a",
-		    "string with the complex number.", },
-		},
-		outputs = { "A matrixComplex instantiated object" }, })
-
-april_set_doc(matrixComplex.col_major, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Constructor of a multidimensional matrixComplex.",
-		  "The data is stored at col_major order, but from",
-		  "outside is viewed as row_major (for compatibility",
-		  "purposes).",
 		},
 		params = {
 		  "First dimension size",
@@ -222,13 +205,6 @@ april_set_doc(matrixComplex.."set_use_cuda", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc(matrixComplex.."get_major_order", {
-		class = "method",
-		summary = "Returns the major order of internal data.",
-		outputs = {
-		  "A string with the major order",
-		}, })
-
 april_set_doc(matrixComplex.."dim", {
 		class = "method",
 		summary = "Returns a table with the size of each dimension.",
@@ -319,15 +295,6 @@ april_set_doc(matrixComplex.."select", {
 april_set_doc(matrixComplex.."clone", {
 		class = "method",
 		summary = "Returns a deep copy (clone) of the caller matrixComplex.",
-		description = {
-		  "Returns a deep copy (clone) of the caller matrixComplex.",
-		  "It has the possibility of indicate the major order,",
-		  "and the data will be reordered if necessary.",
-		},
-		params = {
-		  { "A string: col_major or row_major [optional]. By",
-		    "default it is the same major order as the caller matrixComplex" },
-		},
 		outputs = {
 		  "A matrixComplex object (cloned)",
 		}, })
@@ -550,8 +517,7 @@ april_set_doc(matrixComplex.."to_float",
 		  "Converts the given matrixComplex to a matrix (with float)",
 		  "with the one additional dimension of size two, where the",
 		  "real and imaginary part will be stored together.",
-		  "The extra dimension will be the last if the original",
-		  "matrix is in row_major, or the first if its in col_major.",
+		  "The extra dimension will be the last.",
 		},
 		outputs = { "A matrix instance" },
 })

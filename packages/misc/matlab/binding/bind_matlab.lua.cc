@@ -160,10 +160,8 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 
 //BIND_METHOD MatTaggedDataElement get_matrix
 {
-  bool col_major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
-  Basics::MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
+  Basics::MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE);
   if (m != 0) {
     LUABIND_RETURN(MatrixFloat, m);
     LUABIND_RETURN(string, name);
@@ -173,10 +171,8 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 
 //BIND_METHOD MatTaggedDataElement get_matrix_complex
 {
-  bool col_major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
-  Basics::MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE, col_major);
+  Basics::MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE);
   LUABIND_RETURN(MatrixComplexF, m);
   LUABIND_RETURN(string, name);
 }

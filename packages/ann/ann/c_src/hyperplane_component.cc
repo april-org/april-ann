@@ -87,8 +87,7 @@ namespace ANN {
     bias->reset(it);
   }
 
-  void HyperplaneANNComponent::computeAllGradients(MatrixFloatSet
-						   *weight_grads_dict) {
+  void HyperplaneANNComponent::computeAllGradients(AprilUtils::LuaTable &weight_grads_dict) {
     dot_product->computeAllGradients(weight_grads_dict);
     bias->computeAllGradients(weight_grads_dict);
   }
@@ -113,8 +112,8 @@ namespace ANN {
   
   void HyperplaneANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     MatrixFloatSet *weights_dict,
-				     hash<string,ANNComponent*> &components_dict) {
+				     AprilUtils::LuaTable &weights_dict,
+				     AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
     if (input_size == 0 || output_size == 0)
@@ -126,12 +125,12 @@ namespace ANN {
     bias->build(output_size, output_size, weights_dict, components_dict);
   }
   
-  void HyperplaneANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void HyperplaneANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     dot_product->copyWeights(weights_dict);
     bias->copyWeights(weights_dict);
   }
 
-  void HyperplaneANNComponent::copyComponents(hash<string,ANNComponent*> &components_dict) {
+  void HyperplaneANNComponent::copyComponents(AprilUtils::LuaTable &components_dict) {
     ANNComponent::copyComponents(components_dict);
     dot_product->copyComponents(components_dict);
     bias->copyComponents(components_dict);

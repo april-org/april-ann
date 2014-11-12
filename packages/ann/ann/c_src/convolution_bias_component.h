@@ -52,7 +52,7 @@ namespace ANN {
 
   protected:
 
-    virtual void computeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grad_mat);
+    virtual void computeGradients(const char *name, AprilUtils::LuaTable &weight_grads_dict);
     virtual Basics::MatrixFloat *privateDoForward(Basics::MatrixFloat *input,
                                           bool during_training);
     virtual Basics::MatrixFloat *privateDoBackprop(Basics::MatrixFloat *input_error);
@@ -71,9 +71,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       Basics::MatrixFloatSet *weights_dict,
-		       AprilUtils::hash<AprilUtils::string,ANNComponent*> &components_dict);
-    virtual void copyWeights(Basics::MatrixFloatSet *weights_dict);
+		       AprilUtils::LuaTable &weights_dict,
+		       AprilUtils::LuaTable &components_dict);
+    virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     virtual char *toLuaString();
 
   };

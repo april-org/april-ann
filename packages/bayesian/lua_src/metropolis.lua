@@ -1,24 +1,22 @@
 get_table_from_dotted_string("bayesian.optimizer", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 -- Random walk Metropolis update with normal proposals
 
 -- @param eval is a function a function which returns L(Theta). It is
 -- implemented to minimize the negative of the log-likelihood (maximize the
 -- log-likelihood).
 --
--- @param theta is a matrix, a table of matrices or a matrix.dict instance.
+-- @param theta is a matrix, a table of matrices.
 local function metropolis(self, eval, theta)
   local state       = self.state
   --
   local energies    = state.energies
   local math_log    = math.log
   local math_clamp  = math.clamp
+  local md          = matrix.dict
   local priors      = state.priors
   local samples     = state.samples
-  local origw = theta
-  local theta = wrap_matrices(theta)
+  local origw       = theta
   --
   local acc_decay   = self:get_option("acc_decay")
   local epsilon     = state.epsilon or self:get_option("epsilon")
@@ -40,10 +38,10 @@ local function metropolis(self, eval, theta)
   --
   -- one METROPOLIS sample procedure
   local norm01 = state.norm01 or stats.dist.normal()
-  local theta0 = theta:clone() -- for in case of rejection
+  local theta0 = md.clone(theta) -- for in case of rejection
   local eval0_result = table.pack( eval(origw, 0) )
   local initial_energy = scale*eval0_result[1]
-  for name,v in pairs(theta) do
+  for _,v in pairs(theta) do
     local aux = matrix.as(v)
     norm01:sample(rng, aux:rewrap(v:size(),1))
     v:axpy(epsilon, aux)
@@ -55,12 +53,12 @@ local function metropolis(self, eval, theta)
   --
   local result = eval1_result
   local energy = final_energy
-  local ok =  pcall(theta.prune_subnormal_and_check_normal, theta)
+  local ok =  pcall(md.prune_subnormal_and_check_normal, theta)
   -- if not ok then print(ok, "PROBLEM") end
   if not accept or not ok then
     energy = initial_energy
     result = eval0_result
-    theta:copy(theta0)
+    md.copy(theta,theta0)
   end
   local accepted = (accept and 1) or 0
   -- accept rate update (exponential mean)
@@ -68,7 +66,7 @@ local function metropolis(self, eval, theta)
   --
   self:count_one()
   if self:get_count() % thin == 0 then
-    table.insert(samples, theta:clone())
+    table.insert(samples, md.clone(theta))
     table.insert(energies, energy)
   end
   local acceptance_rate

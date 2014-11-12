@@ -22,12 +22,18 @@ function april_set_doc(object, docblock)
       class       = { mandatory=true,  type_match="string", default=nil },
       summary     = { mandatory=true },
       description = { mandatory=false, default=docblock.summary },
-      params      = { mandatory=false, type_match="table", default=nil },
-      outputs     = { mandatory=false, type_match="table", default=nil },
+      params      = { mandatory=false, default=nil },
+      outputs     = { mandatory=false, default=nil },
     }, docblock)
   assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
   docblock.summary     = concat(docblock.summary)
   docblock.description = concat(docblock.description)
+  if type(docblock.params) == "string" then docblock.params = { docblock.params } end
+  if type(docblock.outputs) == "string" then docblock.outputs = { docblock.outputs } end
+  assert(not docblock.params or type(docblock.params) == "table",
+         "Params filed needs to be nil, table or string")
+  assert(not docblock.outputs or type(docblock.outputs) == "table",
+         "Outputs filed needs to be nil, table or string")
   --
   local tt = type(object)
   if not object or tt == "string" or tt == "number" or tt == "boolean" then

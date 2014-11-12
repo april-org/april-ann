@@ -87,8 +87,8 @@ namespace Basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    AprilUtils::LuaTableOptions options(L,2);
-    return SparseMatrix<T>::read(ptr.get(), &options);
+    AprilUtils::LuaTable options(L,2);
+    return SparseMatrix<T>::read(ptr.get(), options);
   }
 
 } // namespace Basics
@@ -353,13 +353,7 @@ using namespace Basics;
 
 //BIND_METHOD SparseMatrixFloat to_dense
 {
-  const char *major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-  CBLAS_ORDER order=CblasRowMajor;
-  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-  else if (strcmp(major, "row_major") != 0)
-    LUABIND_FERROR1("Incorrect major order string %s", major);
-  LUABIND_RETURN(MatrixFloat, obj->toDense(order));
+  LUABIND_RETURN(MatrixFloat, obj->toDense());
 }
 //BIND_END
 

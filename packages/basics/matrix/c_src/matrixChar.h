@@ -53,10 +53,6 @@ namespace Basics {
 
   } // namespace MatrixIO
 
-  template<>
-  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                       const char *name, char default_value);
-  
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<char> MatrixChar;
 

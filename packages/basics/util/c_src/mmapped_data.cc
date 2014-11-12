@@ -32,7 +32,7 @@ extern const char *__COMMIT_NUMBER__;
 
 namespace AprilUtils {
 
-  const int MAGIC_NUMBER = 0x3333;
+  const int MAGIC_NUMBER = 0x4321;
   
   MMappedDataReader::MMappedDataReader(const char *path,
 				       bool write,

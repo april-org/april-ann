@@ -38,7 +38,8 @@ return {
   "bayesian",
 
   -- LANGUAGE MODELS
-  --  "fnnlm",
+  "language_models",
+  "ngram.lira",
   
   -- IMAGE HANDLERS
   "Image",
@@ -58,7 +59,10 @@ return {
   
   -- HMMs
   "hmm_trainer",
-  "rates",
+  
+  -- Metrics
+  "metrics.rates",
+  "metrics.roc",
 
   -- MISC
   "profiler",

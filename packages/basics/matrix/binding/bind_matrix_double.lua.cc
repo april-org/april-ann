@@ -199,6 +199,12 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
+//BIND_METHOD MatrixDouble squeeze
+{
+  LUABIND_RETURN(MatrixDouble,obj->squeeze());
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble get_reference_string
 {
   char buff[128];
@@ -477,28 +483,24 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  MatrixDouble *obj2;
-  if (argn == 0) obj2 = obj->clone();
-  else {
-    const char *major;
-    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order char %s", major);
-    obj2 = obj->clone(order);
-  }
+  MatrixDouble *obj2 = obj->clone();
   LUABIND_RETURN(MatrixDouble,obj2);
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble transpose
 {
-  LUABIND_RETURN(MatrixDouble, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixDouble, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixDouble, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 
@@ -525,6 +527,52 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
     }
     LUABIND_RETURN_FROM_STACK(-1);
   }
+//BIND_END
+
+//BIND_METHOD MatrixDouble map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixDouble **v = 0;
+  MatrixDouble::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixDouble*[N];
+    list_it = new MatrixDouble::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixDouble);
+    LUABIND_GET_PARAMETER(i+1, MatrixDouble, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixDouble::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushdouble(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushdouble(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isdouble(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or DOUBLE\n");
+      *it = lua_todouble(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixDouble, obj);
+}
 //BIND_END
 
 //BIND_METHOD MatrixDouble sliding_window
@@ -573,10 +621,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble to_float
 {
-  bool col_major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
-  LUABIND_RETURN(MatrixFloat,
-		 convertFromMatrixDoubleToMatrixFloat(obj, col_major));
+  LUABIND_RETURN(MatrixFloat, convertFromMatrixDoubleToMatrixFloat(obj));
 }
 //BIND_END
 

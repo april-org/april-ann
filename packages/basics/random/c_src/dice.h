@@ -26,13 +26,13 @@
 
 namespace Basics {
 
-  class dice : public Referenced {
+  class Dice : public Referenced {
     int outcomes;
     double *threshold;
   public:
-    dice(int outcom, double *prob);
-    ~dice();
-    int get_outcomes() const { return outcomes; }
+    Dice(int outcom, double *prob);
+    ~Dice();
+    int getOutcomes() const { return outcomes; }
     int thrown(MTRand *generator);
   };
 

@@ -4,6 +4,11 @@ matrix.__generic__ = matrix.__generic__ or {}
 matrix.__generic__.__make_generic_join__ = function(constructor)
   return function(dim, ...)
     local arg  = table.pack(...)
+    if type(arg[1]) == "table" then
+      assert(#arg == 1, "Use one table argument or multiple matrix arguments")
+      arg = arg[1]
+    end
+    assert(#arg > 0, "At least one matrix is needed")
     local size = arg[1]:dim()
     -- ERROR CHECK
     assert(dim >= 1 and dim <= #size,
@@ -23,12 +28,7 @@ matrix.__generic__.__make_generic_join__ = function(constructor)
       end
     end
     -- JOIN
-    local outm
-    if arg[1].get_major_order and arg[1]:get_major_order() == "col_major" then
-      outm = constructor.col_major(table.unpack(size))
-    else
-      outm = constructor(table.unpack(size))
-    end
+    local outm = constructor(table.unpack(size))
     local first = matrix(#size):ones():toTable()
     for i=1,#arg do
       local m = arg[i]

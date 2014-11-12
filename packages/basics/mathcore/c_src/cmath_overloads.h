@@ -28,6 +28,10 @@
 #include "error_print.h"
 #include "unused_variable.h"
 
+#ifndef NAN
+#define NAN 0.0/0.0
+#endif
+
 /// Constant for values close to zero.
 #define NEAR_ZERO             1e-6f
 /**
@@ -53,34 +57,56 @@ namespace AprilMath {
   template<typename T>
   class Limits {
   public:
-    /// Returns the minimum finite value of a typename T.
-    static T min() { return T(); }
-    /// Returns the maximum finite value of a typename T.
-    static T max() { return T(); }
+    /// Indicates if infinity() method can be used.
+    static bool hasInfinity() { return false; }
+    /// Returns the positive infinity representation, if hasInfinity() == true.
+    static T infinity() { return T(); }
     /**
      * @brief Machine the difference between 1 and the least value greater
      * than 1 that is representable for typename T.
      */
     static T epsilon() { return T(); }
+    /// Returns the lowest finite value of a typename T.
+    static T lowest() { return T(); }
+    /// Returns the minimum finite value of a typename T.
+    static T min() { return T(); }
+    /// Returns the maximum finite value of a typename T.
+    static T max() { return T(); }
+    /// Returns a NaN value.
+    static T quiet_NaN() { return T(); }
   };
   
+  template<> char Limits<char>::lowest();
   template<> char Limits<char>::min();
   template<> char Limits<char>::max();
 
+  template<> int32_t Limits<int32_t>::lowest();
   template<> int32_t Limits<int32_t>::min();
   template<> int32_t Limits<int32_t>::max();
   
+  template<> float Limits<float>::lowest();
   template<> float Limits<float>::min();
   template<> float Limits<float>::max();
   template<> float Limits<float>::epsilon();
+  template<> bool Limits<float>::hasInfinity();
+  template<> float Limits<float>::infinity();
+  template<> float Limits<float>::quiet_NaN();
   
+  template<> double Limits<double>::lowest();
   template<> double Limits<double>::min();
   template<> double Limits<double>::max();
   template<> double Limits<double>::epsilon();
+  template<> bool Limits<double>::hasInfinity();
+  template<> double Limits<double>::infinity();
+  template<> double Limits<double>::quiet_NaN();
   
+  template<> ComplexF Limits<ComplexF>::lowest();
   template<> ComplexF Limits<ComplexF>::min();
   template<> ComplexF Limits<ComplexF>::max();
   template<> ComplexF Limits<ComplexF>::epsilon();
+  template<> bool Limits<ComplexF>::hasInfinity();
+  template<> ComplexF Limits<ComplexF>::infinity();
+  template<> ComplexF Limits<ComplexF>::quiet_NaN();
 
   ///////////////// NAN CHECK /////////////////
 
@@ -550,35 +576,31 @@ namespace AprilMath {
     /// Less than comparison.
     template<typename T>
     struct m_lt {
-      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c a<b
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        if (a < b) return T(1.0f);
-        else return T(0.0f);
+      /// Returns @c true or @c false depending in @c a<b
+      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) const {
+        return a < b;
       }
     };
     
     /// Greater than comparison.
     template<typename T>
     struct m_gt {
-      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c b<a
+      /// Returns @c true or @c false depending in @c b<a
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        if (b < a) return T(1.0f);
-        else return T(0.0f);
+        return b < a;
       }
     };
     
     /// Equals comparison.
     template<typename T>
     struct m_eq {
-      /// Returns @c T(1.0f) or @c T(0.0f) depending in @c b=a
+      /// Returns @c true or @c false depending in @c b==a
       APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
         if (AprilMath::m_isnan(a)) {
-          if (AprilMath::m_isnan(b)) return T(1.0f);
-          else return T(0.0f);
+          return AprilMath::m_isnan(b);
         }
         else {
-          if (a == b) return T(1.0f);
-          else return T(0.0f);
+          return (a == b);
         }
       }
     };
@@ -705,13 +727,13 @@ namespace AprilMath {
   T m_relu(const T &a) { return Functors::m_relu<T>()(a); }
   /// @see Functors::m_lt
   template<typename T> APRIL_CUDA_EXPORT
-  T m_lt(const T &a, const T &b) { return Functors::m_lt<T>()(a,b); }
+  bool m_lt(const T &a, const T &b) { return Functors::m_lt<T>()(a,b); }
   /// @see Functors::m_gt
   template<typename T> APRIL_CUDA_EXPORT
-  T m_gt(const T &a, const T &b) { return Functors::m_gt<T>()(a,b); }
+  bool m_gt(const T &a, const T &b) { return Functors::m_gt<T>()(a,b); }
   /// @see Functors::m_eq
   template<typename T> APRIL_CUDA_EXPORT
-  T m_eq(const T &a, const T &b) { return Functors::m_eq<T>()(a,b); }
+  bool m_eq(const T &a, const T &b) { return Functors::m_eq<T>()(a,b); }
   /// @see Functors::m_relative_equals
   template<typename T> APRIL_CUDA_EXPORT
   bool m_relative_equals(const T &a, const T &b, const float &c) { return Functors::m_relative_equals<T>()(a,b,c); }
@@ -738,9 +760,8 @@ namespace AprilMath {
     template<typename T>
     struct m_neq {
       /// It uses AprilMath::m_eq function.
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) {
-        if (AprilMath::m_eq(a,b) == T(1.0f)) return T(0.0f);
-        else return T(1.0f);
+      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) {
+        return !(AprilMath::m_eq(a,b));
       }
     };
     
@@ -808,7 +829,7 @@ namespace AprilMath {
   
   /// @see Functors::m_neq
   template<typename T> APRIL_CUDA_EXPORT
-  T m_neq(const T &a, const T &b) { return Functors::m_neq<T>()(a,b); }
+  bool m_neq(const T &a, const T &b) { return Functors::m_neq<T>()(a,b); }
   /// @see Functors::m_logistic
   template<typename T> APRIL_CUDA_EXPORT
   T m_logistic(const T &a) { return Functors::m_logistic<T>()(a); }
@@ -1199,7 +1220,7 @@ namespace AprilMath {
   struct m_curried_lt {
     const T value;
     m_curried_lt(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
       return AprilMath::m_lt(a, value);
     }
   };
@@ -1208,7 +1229,7 @@ namespace AprilMath {
   struct m_curried_gt {
     const T value;
     m_curried_gt(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
       return AprilMath::m_gt(a, value);
     }
   };
@@ -1221,17 +1242,15 @@ namespace AprilMath {
         ERROR_EXIT(128, "For NaN comparison use m_curried_eq_nan\n");
       }
     }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
-      if (a == value) return T(1.0f);
-      else return T(0.0f);
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+      return (a == value);
     }
   };
 
   template<typename T>
   struct m_curried_eq_nan {
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
-      if (AprilMath::m_isnan(a)) return T(1.0f);
-      else return T(0.0f);
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+      return AprilMath::m_isnan(a);
     }
   };
 
@@ -1243,17 +1262,15 @@ namespace AprilMath {
         ERROR_EXIT(128, "For NaN comparison use m_curried_eq_nan\n");
       }
     }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
-      if (a == value) return T(0.0f);
-      else return T(1.0f);
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+      return !(a == value);
     }
   };
 
   template<typename T>
   struct m_curried_neq_nan {
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
-      if (AprilMath::m_isnan(a)) return T(0.0f);
-      else return T(1.0f);
+    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+      return !(AprilMath::m_isnan(a));
     }
   };
   

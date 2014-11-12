@@ -19,6 +19,8 @@ v0.4.0
 
 ### Unstable changes
 
+- Added `matrix.op.repmat` function.
+- Added `matrix.ext.iterate` iterator.
 - Added statistical distributions in `stats.dist`.
 - Added `matrix.ext.convolution` and `matrix.ext.real_fftwh`.
 - Added `Matrix<T>::convolution` method. It is in experimental stage, please,
@@ -28,6 +30,11 @@ v0.4.0
 
 ### API Changes
 
+- Removed major order differentiation in `matrix`.
+- `tokens.matrix` **automatically** wraps `matrix` instances, from Lua to C++.
+- `matrix` **automatically** unwraps `tokens.matrix` instances, from C++ to Lua.
+- Added new methods to `AprilMath::Limits` class.
+- Added `metrics.roc` for ROC computation.
 - Added new `class` behavior taken from
   [Lua OOP-iter](https://github.com/pakozm/lua-oop-iter), in order to introduce
   more modularity in APRIL-ANN.
@@ -39,6 +46,20 @@ v0.4.0
 
 ### Bugs removed
 
+- Solved bug at `matrix:max()` and `matrix:min()` methods.
+- Removed memory leak at `SelectANNComponent::doBackprop()` method.
+- Solved bug at `CopyANNComponent::doBackprop()` method, incorrect behavior for
+  multi-dimensional matrices.
+- Solved bug at `ZCAWhiteningANNComponent::doBackprop()` method was wrong.
+- Solved bug in `stats.boot()` function, it wasn't correctly updated to new
+  `class` functions.
+- Solve bug in `trainable.supervised_trainer`, problem with smooth_gradients
+  flag.
+- Solved bug in trainable.lua `train_holdout:execute()` method, the pocket
+  algorithm wasn't work with negative loss functions.
+- Solved bug at class.lua, inifite loop when calling `class.is_a()`.
+- Solved bug at autoencoder training.
+- Solved bug in ROC computation.
 - CUDA is working, time performance of convolutions needs a review.
 - Solved bug in `constString` extract numeric methods which returns `false` when
   the extraction procedure ends up to the character after the last valid number.
@@ -46,6 +67,7 @@ v0.4.0
 
 ### C/C++
 
+- Added `LuaTable` class to allow access of Lua tables from C++ code.
 - Added TAR support in C/C++, allowing to use streams as the standard I/O
   objects in APRIL-ANN.
 - Added `basics` namespace which stores almost all C/C++ code in `basics`

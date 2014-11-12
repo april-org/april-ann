@@ -250,8 +250,9 @@ namespace ANN {
     else privateSparseReset(it);
   }
 
-  void MatrixInputSwitchANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> & grads_mat) {
-    if (!is_sparse_input) privateDenseComputeGradients(grads_mat);
-    else privateSparseComputeGradients(grads_mat);
+  void MatrixInputSwitchANNComponent::computeGradients(const char *name,
+                                                       AprilUtils::LuaTable &weight_grads_dict) {
+    if (!is_sparse_input) privateDenseComputeGradients(name, weight_grads_dict);
+    else privateSparseComputeGradients(name, weight_grads_dict);
   }
 }

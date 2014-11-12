@@ -54,8 +54,7 @@ namespace ANN {
     MatrixFloat *bias_vec = bias_vector->select(1,0);
     IncRef(bias_vec);
     // the output bias as a 2d matrix of BUNCHxN
-    MatrixFloat *bias_matrix_2d = new MatrixFloat(2, window_size,
-						  CblasColMajor);
+    MatrixFloat *bias_matrix_2d = new MatrixFloat(2, window_size);
     IncRef(bias_matrix_2d);
     // first pattern is done out of the loop
     MatrixFloat *dest = bias_matrix_2d->select(0, 0);
@@ -176,12 +175,15 @@ namespace ANN {
     return error_mat;
   }
      
-  void ConvolutionBiasANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
+  void ConvolutionBiasANNComponent::computeGradients(const char *name,
+                                                     AprilUtils::LuaTable &grads_mat_dict) {
     // reset shared counter
     bias_vector->addToSharedCount(number_input_windows);
-    if (grads_mat.empty()) {
+    MatrixFloat *grads_mat = grads_mat_dict.opt<MatrixFloat*>(name, 0);
+    if (grads_mat == 0) {
       grads_mat = bias_vector->cloneOnlyDims();
-      matZeros(grads_mat.get());
+      matZeros(grads_mat);
+      grads_mat_dict.put(name, grads_mat);
     }
 #ifdef USE_CUDA
     grads_mat->setUseCuda(use_cuda);
@@ -234,14 +236,14 @@ namespace ANN {
 
   void ConvolutionBiasANNComponent::build(unsigned int _input_size,
 					  unsigned int _output_size,
-					  MatrixFloatSet *weights_dict,
-					  hash<string,ANNComponent*> &components_dict) {
+					  AprilUtils::LuaTable &weights_dict,
+					  AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     ////////////////////////////////////////////////////////////////////
-    AprilUtils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
-    if (!b.empty()) {
-      AssignRef(bias_vector, b.get());
+    MatrixFloat *b = weights_dict.opt<MatrixFloat*>(weights_name, 0);
+    if (b != 0) {
+      AssignRef(bias_vector, b);
       if (!Connections::checkInputOutputSizes(bias_vector,1,hidden_size))
 	ERROR_EXIT2(256,"The bias vector input/output sizes are not correct, "
 		    "expected 1x%d [%s]\n", hidden_size, name.c_str());
@@ -251,22 +253,22 @@ namespace ANN {
 	bias_vector = Connections::build(1, hidden_size);
 	IncRef(bias_vector);
       }
-      b = bias_vector;
+      weights_dict.put(weights_name, bias_vector);
     }
   }
 
-  void ConvolutionBiasANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void ConvolutionBiasANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    AprilUtils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
-    if (!b.empty() && b.get() != bias_vector)
+    MatrixFloat *b = weights_dict.opt<MatrixFloat*>(weights_name, 0);
+    if (b != 0 && b != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s bias name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (b.empty()) {
-      b = bias_vector;
+    else if (b == 0) {
+      weights_dict.put(weights_name, bias_vector);
     }
   }  
 

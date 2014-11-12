@@ -143,10 +143,10 @@ namespace AprilIO {
       }
     */
     lua_pushvalue(L, pos);
+    // put string into registry to avoid garbage collection
     ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-    data = lua_tostring(L, -1);
-    lua_pop(L, -1);
+    // get the pointer the stack
+    data = lua_tostring(L, pos);
   }
   
   InputLuaStringStream::~InputLuaStringStream() {

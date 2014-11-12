@@ -1,7 +1,5 @@
 get_table_from_dotted_string("bayesian", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 -- modifies model weights to be the MAP model for a given eval function
 function bayesian.get_MAP_weights(eval, samples)
   assert(samples, "Needs a table with samples as 2nd argument")
@@ -43,13 +41,11 @@ function bayesian.build_bayes_comb(t)
       local invN    = 1/N
       local which   = rnd:choose(samples)
       local out     = forward(which, input)
-      if class.is_a(out, tokens.base) then out = out:get_matrix() end
       assert(class.is_a(out, matrix), "The forward function must return a matrix")
       local output  = out:clone():scal(invN)
       for i=2,N do
         local which = rnd:choose(samples)
         local out   = forward(which, input)
-        if class.is_a(out, tokens.base) then out = out:get_matrix() end
         output:axpy(invN, out)
       end
       return output

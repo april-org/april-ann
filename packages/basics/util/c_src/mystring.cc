@@ -163,6 +163,8 @@ namespace AprilUtils {
   
   const char *string::end() const { return vec.end(); }
   
+  string::size_type string::len() const { return size(); }
+
   string::size_type string::size() const { return vec.size(); }
   
   string::size_type string::max_size() const { return vec.max_size(); }

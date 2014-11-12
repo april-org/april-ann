@@ -20,6 +20,7 @@
  */
 #include <cstring>
 #include <cstdlib>
+#include "april_assert.h"
 #include "binarizer.h"
 #include "constString.h"
 #include "mystring.h"

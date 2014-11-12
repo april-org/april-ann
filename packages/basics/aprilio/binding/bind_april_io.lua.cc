@@ -98,6 +98,7 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
 //BIND_END
 
 //BIND_HEADER_C
+#include "april_assert.h"
 namespace AprilIO {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
@@ -395,25 +396,6 @@ namespace AprilIO {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME OutputLuaStringStream aprilio.stream.output_lua_string
-//BIND_CPP_CLASS OutputLuaStringStream
-//BIND_SUBCLASS_OF OutputLuaStringStream StreamInterface
-
-//BIND_CONSTRUCTOR OutputLuaStringStream
-{
-  obj = new OutputLuaStringStream(L, 1);
-  LUABIND_RETURN(OutputLuaStringStream, obj);
-}
-//BIND_END
-
-//BIND_METHOD OutputLuaStringStream value
-{
-  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
 //BIND_LUACLASSNAME CStringStream aprilio.stream.c_string
 //BIND_CPP_CLASS CStringStream
 //BIND_SUBCLASS_OF CStringStream StreamInterface
@@ -542,13 +524,13 @@ namespace AprilIO {
   if (!lua_istable(L,1)) {
     LUABIND_GET_OPTIONAL_PARAMETER(1, AuxStreamInterface<StreamInterface>, ptr, 0);
     options_pos = 2;
-    AprilUtils::LuaTableOptions options(L,2);
+    AprilUtils::LuaTable options(L,2);
   }
   else {
     options_pos = 1;
     ptr = 0;
   }
-  AprilUtils::LuaTableOptions options(L,options_pos);
+  AprilUtils::LuaTable options(L,options_pos);
   if (ptr == 0) {
     aux_lua_string = new OutputLuaStringStream(L);
     dest = aux_lua_string;
@@ -556,7 +538,7 @@ namespace AprilIO {
   else {
     dest.reset(ptr);
   }
-  obj->write(dest.get(), &options);
+  obj->write(dest.get(), options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
 }
 //BIND_END

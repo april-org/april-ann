@@ -14,10 +14,10 @@ end
 
 -- this function receives an element and returns its corresponding APRIL-ANN Lua
 -- object
-function matlab.tolua(element,col_major)
+function matlab.tolua(element)
   if element:get_type() == matlab.types.matrix then
     local func = class_tolua_table[element:get_class()]
-    if func then return func(element,col_major)
+    if func then return func(element)
     else error("Not recognized class: " .. matlab.classes[element:get_class()])
     end
   else
@@ -30,22 +30,22 @@ end
 -----------------------------
 -- CLASS BUILDER FUNCTIONS --
 -----------------------------
-local function tomatrix(e,col_major)
-  local elem,name = e:get_matrix(col_major)
+local function tomatrix(e)
+  local elem,name = e:get_matrix()
   if elem ~= nil then
     print("# Loading matrix float element: ", name)
   else
-    elem,name = e:get_matrix_complex(col_major)
+    elem,name = e:get_matrix_complex()
     print("# Loading matrix complex element: ", name)
   end
   return elem,name
 end
-local function tomatrixdouble(e,col_major)
+local function tomatrixdouble(e)
   local elem,name = e:get_matrix_double()
   if elem ~= nil then
     print("# Loading matrix double element: ", name)
   else
-    elem,name = e:get_matrix_complex(col_major)
+    elem,name = e:get_matrix_complex()
     print("# Loading matrix complex (casted from double) element: ", name)
   end
   return elem,name
@@ -64,24 +64,24 @@ local function tomatrixchar(e)
   print("# Loading matrix char element:  ", name)
   return elem,name
 end
-local function tocellarray(e,col_major)
+local function tocellarray(e)
   local cell_array,name = e:get_cell_array()
   local wrapper = class_wrapper(cell_array)
   wrapper = class_instance(wrapper, class.of(cell_array))
   wrapper.get = function(obj, ...)
-    return matlab.tolua(cell_array:get(...),col_major)
+    return matlab.tolua(cell_array:get(...))
   end
   wrapper.raw_get = function(obj, ...)
-    return matlab.tolua(cell_array:raw_get(...),col_major)
+    return matlab.tolua(cell_array:raw_get(...))
   end
   print("# Loading cell array element:   ", name, cell_array)
   return wrapper,name
 end
-local function tostructure(e,col_major)
+local function tostructure(e)
   local dictionary,name = e:get_structure()
   for ename,elem in pairs(dictionary) do
     print("# Loading structure element:  ", name, ename, elem)
-    dictionary[ename] = matlab.tolua(elem,col_major)
+    dictionary[ename] = matlab.tolua(elem)
   end
   return dictionary,name
 end
@@ -152,13 +152,12 @@ end
 -- reads a MAT file and returns a Lua table with all the elements, indexed by
 -- its names, and recursively containing matrix, cell_array or struct objects
 -- with all the data
-function matlab.read(path,col_major)
+function matlab.read(path)
   assert(path and type(path)=="string", "First argument must be a path string")
-  local col_major = col_major or false
   local reader    = matlab.reader(path)
   local elements  = {}
   for e in reader:elements() do
-    local lua_element,name = matlab.tolua(e,col_major)
+    local lua_element,name = matlab.tolua(e)
     elements[name] = lua_element
   end
   setmetatable(elements,

@@ -28,6 +28,7 @@ extern "C" {
 #include "april_assert.h"
 #include "error_print.h"
 #include "constString.h"
+#include "mystring.h"
 #include "pair.h"
 
 namespace AprilUtils {
@@ -125,6 +126,20 @@ namespace AprilUtils {
     }
   };
 
+  //----------------------------------------------------------------------
+  // Hash function for string (operator == is OK)
+  //
+  // For hash tables
+  template <> struct default_hash_function<string> {
+    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
+    long int operator()(const string &s1) const {
+      unsigned int resul = 1;
+      for (const char *r = s1.begin(); r != s1.end(); r++)
+        resul = (resul+(unsigned int)(*r))*cte_hash;
+      return resul;
+    }
+  };
+  
   //----------------------------------------------------------------------
   // Hash function for generic pointers (operator == is OK)
   //

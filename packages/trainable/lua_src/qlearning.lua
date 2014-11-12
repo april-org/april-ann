@@ -3,6 +3,8 @@ local trainable_qlearning_trainer,trainable_qlearning_trainer_methods =
 trainable = trainable or {} -- global environment
 trainable.qlearning_trainer = trainable_qlearning_trainer -- global environment
 
+local md = matrix.dict
+
 -----------------------------
 -- QLEARNING TRAINER CLASS --
 -----------------------------
@@ -13,8 +15,8 @@ function trainable_qlearning_trainer:constructor(t)
       sup_trainer = { isa_match=trainable.supervised_trainer, mandatory=true },
       discount = { type_match="number", mandatory=true, default=0.6 },
       lambda = { type_match="number", mandatory=true, default=0.6 },
-      gradients = { mandatory=false, default=matrix.dict() },
-      traces = { mandatory=false, default=matrix.dict() },
+      gradients = { mandatory=false, default={} },
+      traces = { mandatory=false, default={} },
       noise = { mandatory=false, default=ann.components.base() },
       clampQ = { mandatory=false },
       nactions = { mandatory=false, type_match="number" },
@@ -56,7 +58,7 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
   local prev_state = noise:forward(prev_state, true)
   noise:reset(0)
   local state = noise:forward(state, true)
-  local error_grad = matrix.col_major(1, nactions):zeros()
+  local error_grad = matrix(1, nactions):zeros()
   local needs_gradient = optimizer:needs_property("gradient")
   local loss,Qsp,Qs
   loss,gradients,Qsp,Qs,expected_Qsa =
@@ -66,8 +68,8 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
                           thenet:build{ weights = weights }
                         end
                         thenet:reset(it)
-                        local Qsp = thenet:forward(state):get_matrix()
-                        local Qs  = thenet:forward(prev_state,true):get_matrix()
+                        local Qsp = thenet:forward(state)
+                        local Qs  = thenet:forward(prev_state,true)
                         local Qsa = Qs:get(1, prev_action)
                         local delta = reward + discount * Qsp:max() - Qsa
                         local diff = delta
@@ -82,8 +84,8 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
                               traces[name] = matrix.as(g):zeros()
                             end
                           end
-                          traces:scal(lambda*discount)
-                          traces:axpy(1.0, gradients)
+                          md.scal( traces, lambda*discount )
+                          md.axpy( traces, 1.0, gradients )
                           return loss,traces,Qsp,Qs,expected_Qsa
                         else
                           return loss,nil,Qsp,Qs,expected_Qsa
@@ -116,7 +118,7 @@ function trainable_qlearning_trainer_methods:one_step(action, state, reward)
   else
     self.noise:reset(0)
     local state = self.noise:forward(state,true)
-    Qsp = self.thenet:forward(state):get_matrix()
+    Qsp = self.thenet:forward(state)
   end
   self.prev_state = state
   return Qsp
@@ -209,10 +211,10 @@ function trainable_batch_builder_methods:add(prev_state, output, action, reward)
   assert(type(reward) == "number",  "Needs a matrix as 4th argument")
   table.insert(self.batch,
                {
-                 prev_state:clone("row_major"):rewrap(prev_state:size()),
+                 prev_state:clone():rewrap(prev_state:size()),
                  action,
                  reward,
-                 output:clone("row_major"):rewrap(output:size()),
+                 output:clone():rewrap(output:size()),
                })
   if self.state_size then
     assert(self.state_size == prev_state:size(), "Found different state sizes")

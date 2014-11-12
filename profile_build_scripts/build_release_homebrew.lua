@@ -41,6 +41,7 @@ luapkg{
     shared_extra_libs={
      "-flat_namespace",
      "-bundle",
+     "-llua"
     },
   },
   

@@ -27,6 +27,31 @@ is_class = make_deprecated_function("is_class",
 
 ------------------------------------------------------------------------------
 
+-- Clones the function and its upvalues
+local function clone_function(func,lookup_table)
+  local lookup_table = lookup_table or {}
+  -- clone by using a string dump
+  local ok,func_dump = pcall(string.dump, func)
+  local func_clone = (ok and loadstring(func_dump)) or func
+  if func_clone ~= func then
+    -- copy upvalues
+    local i = 1
+    while true do
+      local name,value = debug.getupvalue(func,i)
+      if not name then break end
+      if name == "_ENV" then
+        debug.setupvalue(func_clone, i, value)
+      else
+        debug.setupvalue(func_clone, i, util.clone(value, lookup_table))
+      end
+      i = i + 1
+    end
+  end
+  return func_clone
+end
+
+------------------------------------------------------------------------------
+
 function iscallable(obj)
   local t = luatype(obj)
   return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
@@ -181,40 +206,6 @@ function multiple_ipairs(...)
   return mult_ipairs_it, t, 0
 end
 
-function iterable_filter(func, f, s, v)
-  return function(s,v)
-    local tmp = table.pack(f(s,v))
-    while tmp[1] ~= nil and not func(table.unpack(tmp)) do
-      v = tmp[1]
-      tmp = table.pack(f(s,v))
-    end
-    return table.unpack(tmp)
-  end, s, v
-end
-
--- FROM: http://www.corsix.org/content/mapping-and-lua-iterators
-function iterable_map(func, f, s, v)
-  local done
-  local function maybeyield(...)
-    if ... ~= nil then
-      coroutine.yield(...)
-    end
-  end
-  local function domap(...)
-    v = ...
-    if v ~= nil then
-      return maybeyield(func(...))
-    else
-      done = true
-    end
-  end
-  return coroutine.wrap(function()
-			  repeat
-			    domap(f(s,v))
-			  until done
-			end)
-end
-
 function filter(func, ...)
   assert(func, "filter: needs a function as first argument")
   local t,key,value = {}
@@ -256,25 +247,6 @@ function mapn(func, f, s, v)
     tmp = table.pack(f(s,tmp[1]))
   end
   return t
-end
-
-function reduce(func, initial_value, ...)
-  assert(initial_value ~= nil,
-	 "reduce: needs an initial_value as second argument")
-  local accum,key,value = initial_value
-  for key,value in ... do
-    accum = func(accum, value or key)
-  end
-  return accum
-end
-
-function apply(func, f, s, v)
-  if not func then func = function() end end
-  local tmp = table.pack(f(s,v))
-  while tmp[1] ~= nil do
-    func(table.unpack(tmp))
-    tmp = table.pack(f(s,tmp[1]))
-  end
 end
 
 function glob(...)
@@ -362,16 +334,6 @@ end
 
 function fprintf(file,...)
   file:write(string.format(...))
-end
-
-function range(...)
-  local arg = table.pack(...)
-  local inf,sup,step = arg[1],arg[2],arg[3] or 1
-  local i = inf - step
-  return function()
-    i = i + step
-    if i <= sup then return i end
-  end
 end
 
 function check_mandatory_table_fields(fields, t)
@@ -1010,135 +972,6 @@ function io.uncommented_lines(filename)
   end
 end
 
----------------------------------------------------------------
----------------------- ITERATOR CLASS -------------------------
----------------------------------------------------------------
-
--- The iterator class is useful to simplify the syntax of map, filter, reduce,
--- and apply functions, introducing a more natural order of application of the
--- functions.
-
-local iterator, iterator_methods = class("iterator")
-_G.iterator = iterator -- make global
-
-function iterator:constructor(...)
-  self.data = table.pack(...)
-end
-
-function iterator.meta_instance:__call() return table.unpack(self.data) end
-
-function iterator_methods:get() return table.unpack(self.data) end
-
-function iterator_methods:step()
-  return self.data[1](table.unpack(table.slice(self.data,2,#self.data)))
-end
-
-function iterator_methods:map(func)
-  return iterator(iterable_map(func, self:get()))
-end
-
-function iterator_methods:filter(func)
-  return iterator(iterable_filter(func, self:get()))
-end
-
-function iterator_methods:apply(func)
-  apply(func, self:get())
-end
-
-function iterator_methods:reduce(func, initial_value)
-  return reduce(func, initial_value, self:get())
-end
-
-function iterator_methods:enumerate()
-  local id = 0
-  return self:map(function(...)
-		    id = id + 1
-		    return id, ...
-		  end)
-end
-
-function iterator_methods:call(funcname, ...)
-  local func_args = table.pack(...)
-  return self:map(function(...)
-		    local arg    = table.pack(...)
-		    local result = {}
-		    for i=1,#arg do
-		      local t = table.pack(arg[i][funcname](arg[i],table.unpack(func_args)))
-		      for j=1,#t do table.insert(result, t[j]) end
-		    end
-		    return table.unpack(result)
-		  end)
-end
-
-function iterator_methods:iterate(iterator_func)
-  return self:map(function(...)
-		    local f,s,v = iterator_func(...)
-		    local tmp   = table.pack(f(s,v))
-		    while tmp[1] ~= nil do
-		      coroutine.yield(table.unpack(tmp))
-		      tmp = table.pack(f(s,tmp[1]))
-		    end
-		  end)
-end
-
-function iterator_methods:concat(sep1,sep2)
-  local sep1,sep2 = sep1 or "",sep2 or sep1 or ""
-  local t = {}
-  self:apply(function(...)
-	       local arg = table.pack(...)
-	       table.insert(t, string.format("%s", table.concat(arg, sep1)))
-	     end)
-  return table.concat(t, sep2)
-end
-
-function iterator_methods:field(...)
-  local f,s,v = self:get()
-  local arg   = table.pack(...)
-  return iterator(function(s)
-		    local tmp = table.pack(f(s,v))
-		    if tmp[1] == nil then return nil end
-		    v = tmp[1]
-		    local ret = { }
-		    for i=1,#tmp do
-		      for j=1,#arg do
-			table.insert(ret, tmp[i][arg[j]])
-		      end
-		    end
-		    return table.unpack(ret)
-		  end,s)
-end
-
-function iterator_methods:select(...)
-  local f,s,v = self:get()
-  local arg   = table.pack(...)
-  for i=1,#arg do arg[i]=tonumber(arg[i]) assert(arg[i],"select: expected a number") end
-  return iterator(function(s)
-		    local tmp = table.pack(f(s,v))
-		    if tmp[1] == nil then return nil end
-		    v = tmp[1]
-		    local selected = {}
-		    for i=1,#arg do selected[i] = tmp[arg[i]] end
-		    return table.unpack(selected)
-		  end,s)
-end
-
-function iterator_methods:table()
-  local t = {}
-  local idx = 1
-  self:apply(function(...)
-	       local v = table.pack(...)
-	       local k = table.remove(v, 1)
-	       if #v == 0 then
-		 k,v = idx,k
-	       elseif #v == 1 then
-		 v = v[1]
-	       end
-	       t[k] = v
-	       idx = idx + 1
-	     end)
-  return t
-end
-
 ----------------------------------------------------------------------------
 
 function util.function_setupvalues(func, upvalues)
@@ -1174,6 +1007,33 @@ function util.function_to_lua_string(func,format)
     ")"
   }
   return table.concat(t, "")
+end
+
+-- It clones a data object. Doesn't work if exists loops in tables.
+function util.clone(data, lookup_table)
+  if data == nil then return nil end
+  local lookup_table = lookup_table or {}
+  if lookup_table[data] then
+    return lookup_table[data]
+  else
+    local obj
+    local tt = type(data)
+    if tt == "number" or tt == "string" or tt == "thread" or tt == "boolean" then obj = data
+    elseif tt == "function" then obj = clone_function(data, lookup_table)
+    elseif data.clone then obj = data:clone()
+    elseif luatype(data) == "userdata" then obj = data
+    else
+      assert(luatype(data) == "table", "Expected a table")
+      obj = {}
+      for i,v in pairs(data) do
+        local clone_i = util.clone(i, lookup_table)
+        local clone_v = util.clone(v, lookup_table)
+        obj[clone_i] = clone_v
+      end
+    end
+    lookup_table[data] = obj
+    return obj
+  end
 end
 
 function util.to_lua_string(data,format)

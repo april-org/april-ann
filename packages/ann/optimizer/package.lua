@@ -22,6 +22,7 @@
 	 "test/test-digits-rprop.lua",
 	 "test/test-digits-cg.lua",
 	 "test/test-digits-qprop.lua",
+	 "test/test-digits-l1.lua",
        },
      },
    },

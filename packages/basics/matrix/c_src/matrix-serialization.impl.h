@@ -40,8 +40,8 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::read(AprilIO::StreamInterface *stream,
-                  const AprilUtils::GenericOptions *options) {
-    if (options->getOptionalBoolean(MatrixIO::TAB_OPTION, false)) {
+                  const AprilUtils::LuaTable &options) {
+    if (options.opt<bool>(MatrixIO::TAB_OPTION, false)) {
       return readTab(stream, options);
     }
     else {
@@ -52,8 +52,8 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readNormal(AprilIO::StreamInterface *stream,
-                        const AprilUtils::GenericOptions *options) {
-    const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
+                        const AprilUtils::LuaTable &options) {
+    UNUSED_VARIABLE(options);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     MatrixIO::BinaryExtractor<T> bin_extractor;
@@ -64,7 +64,7 @@ namespace Basics {
     AprilUtils::SharedPtr<AprilIO::CStringStream>
       c_str(new AprilIO::CStringStream());;
     april_assert(!c_str.empty());
-    AprilUtils::constString line,format,order,token;
+    AprilUtils::constString line,format,token;
     // First we read the matrix dimensions
     line = readULine(stream, c_str.get());
     if (!line) {
@@ -100,17 +100,11 @@ namespace Basics {
       ERROR_PRINT("impossible to read format token\n");
       return 0;
     }
-    order = line.extract_token();
-    if (given_order != 0) order = given_order;
+    // legacy major order string
+    // order = line.extract_token();
+    // if (given_order != 0) order = given_order;
     if (pos_comodin == -1) { // Normal version
-      if (!order || order=="row_major")
-        mat = new Matrix<T>(n,dims);
-      else if (order == "col_major")
-        mat = new Matrix<T>(n,dims,CblasColMajor);
-      else {
-        ERROR_PRINT("Impossible to determine the order\n");
-        return 0;
-      }
+      mat = new Matrix<T>(n,dims);
       typename Matrix<T>::iterator data_it(mat->begin());
       if (format == "ascii") {
         while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
@@ -173,10 +167,7 @@ namespace Basics {
         delete[] data; return 0;
       }
       dims[pos_comodin] = size / sizesincomodin;
-      if (!order || order == "row_major")
-        mat = new Matrix<T>(n,dims);
-      else if (order == "col_major")
-        mat = new Matrix<T>(n,dims,CblasColMajor);
+      mat = new Matrix<T>(n,dims);
       int i=0;
       for (typename Matrix<T>::iterator it(mat->begin());
            it!=mat->end();
@@ -189,16 +180,16 @@ namespace Basics {
   
   template <typename T>
   void Matrix<T>::write(AprilIO::StreamInterface *stream,
-                        const AprilUtils::GenericOptions *options) {
-    bool is_tab = options->getOptionalBoolean(MatrixIO::TAB_OPTION, false);
+                        const AprilUtils::LuaTable &options) {
+    bool is_tab = options.opt(MatrixIO::TAB_OPTION, false);
     if (is_tab) writeTab(stream, options);
     else writeNormal(stream, options);
   }
 
   template <typename T>
   void Matrix<T>::writeNormal(AprilIO::StreamInterface *stream,
-                              const AprilUtils::GenericOptions *options) {
-    bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
+                              const AprilUtils::LuaTable &options) {
+    bool is_ascii = options.opt(MatrixIO::ASCII_OPTION, false);
     //
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::BinarySizer<T> bin_sizer;
@@ -222,12 +213,14 @@ namespace Basics {
     if (is_ascii) {
       const int columns = 9;
       stream->printf("ascii");
-      if (this->getMajorOrder() == CblasColMajor) {
+      /* legacy major order string
+        if (this->getMajorOrder() == CblasColMajor) {
         stream->printf(" col_major");
-      }
-      else {
+        }
+        else {
         stream->printf(" row_major");
-      }
+        }
+      */
       stream->printf("\n");
       int i=0;
       for(typename Matrix<T>::const_iterator it(this->begin());
@@ -241,12 +234,14 @@ namespace Basics {
     } else { // binary
       const int columns = 16;
       stream->printf("binary");
-      if (this->getMajorOrder() == CblasColMajor) {
+      /* legacy major order string
+        if (this->getMajorOrder() == CblasColMajor) {
         stream->printf(" col_major");
-      }
-      else {
+        }
+        else {
         stream->printf(" row_major");
-      }
+        }
+      */
       stream->printf("\n");
       // We substract 1 so the final '\0' is not considered
       int i=0;
@@ -270,13 +265,12 @@ namespace Basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::readTab(AprilIO::StreamInterface *stream,
-                     const AprilUtils::GenericOptions *options) {
-    const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
-    const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
-    bool read_empty         = options->getOptionalBoolean(MatrixIO::EMPTY_OPTION, false);
-    T default_value         = getTemplateOption(options, MatrixIO::DEFAULT_OPTION, T());
-    int ncols               = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
-    int nrows               = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
+                     const AprilUtils::LuaTable &options) {
+    const char *delim       = options.opt(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
+    bool read_empty         = options.opt(MatrixIO::EMPTY_OPTION, false);
+    T default_value         = options.opt(MatrixIO::DEFAULT_OPTION, T());
+    int ncols               = options.opt<int>(MatrixIO::NCOLS_OPTION, 0);
+    int nrows               = options.opt<int>(MatrixIO::NROWS_OPTION, 0);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -322,19 +316,10 @@ namespace Basics {
         return 0;
       }
     }
-    AprilUtils::constString order( (given_order) ? given_order : "row_major"),token;
+    AprilUtils::constString token;
     int dims[2] = { nrows, ncols };
     Matrix<T> *mat = 0;
-    if (order=="row_major") {
-      mat = new Matrix<T>(2,dims);
-    }
-    else if (order == "col_major") {
-      mat = new Matrix<T>(2,dims,CblasColMajor);
-    }
-    else {
-      ERROR_PRINT("Impossible to determine the order\n");
-      return 0;
-    }
+    mat = new Matrix<T>(2,dims);
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
     if (read_empty) {
@@ -387,7 +372,7 @@ namespace Basics {
   
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
-                           const AprilUtils::GenericOptions *options) {
+                           const AprilUtils::LuaTable &options) {
     UNUSED_VARIABLE(options);
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
@@ -412,16 +397,6 @@ namespace Basics {
     if ((i % columns) != 0) {
       stream->printf("\n"); 
     }
-  }
-
-  template <typename T>
-  T Matrix<T>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                 const char *name, T default_value) {
-    UNUSED_VARIABLE(options);
-    UNUSED_VARIABLE(name);
-    UNUSED_VARIABLE(default_value);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return T();
   }
   
 } // namespace Basics

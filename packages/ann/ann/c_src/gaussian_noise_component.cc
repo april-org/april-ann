@@ -68,8 +68,7 @@ namespace ANN {
     // get memory blocks for tokens
     MatrixFloat *output_mat = output->getMatrix();
     MatrixFloat *noise_mat  = output_mat->cloneOnlyDims();
-    april_assert(output_mat->getMajorOrder() == CblasColMajor);
-    for (MatrixFloat::col_major_iterator it=noise_mat->begin();
+    for (MatrixFloat::iterator it=noise_mat->begin();
 	 it!=noise_mat->end(); ++it) {
       *it = random->randNorm(mean, variance);
     }
@@ -107,8 +106,8 @@ namespace ANN {
 
   void GaussianNoiseANNComponent::build(unsigned int _input_size,
 					unsigned int _output_size,
-					MatrixFloatSet *weights_dict,
-					hash<string,ANNComponent*> &components_dict) {
+					AprilUtils::LuaTable &weights_dict,
+					AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     if (output_size == 0) output_size = input_size;

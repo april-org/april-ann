@@ -1,0 +1,38 @@
+quer'ia un tren con destino a barcelona
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
+	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
+	p( tren | un ...)	= [3gram] 0.11958 [ -0.922342 ]
+	p( con | tren ...)	= [3gram] 0.000764004 [ -3.116904 ]
+	p( destino | con ...)	= [3gram] 0.285036 [ -0.545100 ]
+	p( a | destino ...)	= [3gram] 0.342676 [ -0.465116 ]
+	p( barcelona | a ...)	= [3gram] 0.0691948 [ -1.159927 ]
+	p( </s> | barcelona ...)	= [3gram] 0.222026 [ -0.653596 ]
+1 sentences, 7 words, 0 OOVs
+0 zeroprobs, logprob= -9.8197 ppl= 16.884 ppl1= 25.282
+
+quer'ia un tren con destino a londres
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
+	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
+	p( tren | un ...)	= [3gram] 0.11958 [ -0.922342 ]
+	p( con | tren ...)	= [3gram] 0.000764004 [ -3.116904 ]
+	p( destino | con ...)	= [3gram] 0.285036 [ -0.545100 ]
+	p( a | destino ...)	= [3gram] 0.342676 [ -0.465116 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -inf ]
+	p( </s> | <unk> ...)	= [3gram] 0.0901419 [ -1.045073 ]
+1 sentences, 6 words, 1 OOVs
+0 zeroprobs, logprob= -9.0513 ppl= 19.635 ppl1= 32.251
+
+quer'ia un avi'on con destino a barcelona
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
+	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
+	p( <unk> | un ...)	= [3gram] 0 [ -inf ]
+	p( con | <unk> ...)	= [3gram] 0.00286187 [ -2.543350 ]
+	p( destino | con ...)	= [3gram] 0.285036 [ -0.545100 ]
+	p( a | destino ...)	= [3gram] 0.342676 [ -0.465116 ]
+	p( barcelona | a ...)	= [3gram] 0.0691948 [ -1.159927 ]
+	p( </s> | barcelona ...)	= [3gram] 0.222026 [ -0.653596 ]
+1 sentences, 6 words, 1 OOVs
+0 zeroprobs, logprob= -8.3238 ppl= 15.457 ppl1= 24.395
+
+file frase: 3 sentences, 19 words, 2 OOVs
+0 zeroprobs, logprob= -27.194871 ppl= 17.223861 ppl1= 26.996596

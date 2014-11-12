@@ -199,57 +199,6 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixComplexF col_major
-//DOC_BEGIN
-// col_major_matrix(int dim1, int dim2, ..., table mat=nil)
-/// Constructor con una secuencia de valores que son las dimensiones de
-/// la matriz el ultimo argumento puede ser una tabla, en cuyo caso
-/// contiene los valores adecuadamente serializados, si solamente
-/// aparece la matriz, se trata de un vector cuya longitud viene dada
-/// implicitamente.
-//DOC_END
-{
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-    }
-  }
-  MatrixComplexF* obj;
-  obj = new MatrixComplexF(ndims,dim,CblasColMajor);
-  if (lua_istable(L,argn)) {
-    int len;
-    LUABIND_TABLE_GETN(argn, len);
-    if (len != obj->size())
-      LUABIND_FERROR2("Incorrect number of elements at the given table, "
-		      "found %d, expected %d", len, obj->size());
-    int i=1;
-    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
-      lua_rawgeti(L,argn,i);
-      *it = lua_toComplexF(L, -1);
-    }
-  }
-  delete[] dim;
-  LUABIND_RETURN(MatrixComplexF,obj);
-}
-//BIND_END
-
 //BIND_METHOD MatrixComplexF size
 {
   LUABIND_RETURN(int, obj->size());
@@ -270,6 +219,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   MatrixComplexF *new_obj = obj->rewrap(dims, ndims);
   delete[] dims;
   LUABIND_RETURN(MatrixComplexF,new_obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF squeeze
+{
+  LUABIND_RETURN(MatrixComplexF,obj->squeeze());
 }
 //BIND_END
 
@@ -492,14 +447,6 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF get_major_order
-{
-  if (obj->getMajorOrder() == CblasRowMajor)
-    LUABIND_RETURN(string, "row_major");
-  else LUABIND_RETURN(string, "col_major");
-}
-//BIND_END
-
 //BIND_METHOD MatrixComplexF dim
 {
   LUABIND_CHECK_ARGN(>=, 0);
@@ -582,28 +529,24 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  MatrixComplexF *obj2;
-  if (argn == 0) obj2 = obj->clone();
-  else {
-    const char *major;
-    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order string %s", major);
-    obj2 = obj->clone(order);
-  }
+  MatrixComplexF *obj2 = obj->clone();
   LUABIND_RETURN(MatrixComplexF,obj2);
 }
 //BIND_END
 
 //BIND_METHOD MatrixComplexF transpose
 {
-  LUABIND_RETURN(MatrixComplexF, obj->transpose());
+  int argn;
+  argn = lua_gettop(L);
+  if (argn == 0) {
+    LUABIND_RETURN(MatrixComplexF, obj->transpose());
+  }
+  else {
+    int d1,d2;
+    LUABIND_GET_PARAMETER(1, int, d1);
+    LUABIND_GET_PARAMETER(2, int, d2);
+    LUABIND_RETURN(MatrixComplexF, obj->transpose(d1-1, d2-1));
+  }
 }
 //BIND_END
 
@@ -647,6 +590,52 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     }
     LUABIND_RETURN_FROM_STACK(-1);
   }
+//BIND_END
+
+//BIND_METHOD MatrixComplexF map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixComplexF **v = 0;
+  MatrixComplexF::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixComplexF*[N];
+    list_it = new MatrixComplexF::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixComplexF);
+    LUABIND_GET_PARAMETER(i+1, MatrixComplexF, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixComplexF::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushComplexF(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushComplexF(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isComplexF(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or COMPLEX\n");
+      *it = lua_toComplexF(L, -1);
+    }
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixComplexF, obj);
+}
 //BIND_END
 
 //BIND_METHOD MatrixComplexF equals
@@ -860,16 +849,10 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
     LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
-  if (obj->getMajorOrder() == CblasRowMajor)
-    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
-		     0.0f);
-    }
-  else
-    for (MatrixComplexF::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
-		     0.0f);
-    }
+  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it) {
+    *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
+                   0.0f);
+  }
   DecRef(random);
   LUABIND_RETURN(MatrixComplexF, obj);
 }
