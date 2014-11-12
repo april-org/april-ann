@@ -763,13 +763,13 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD StackANNComponent top
 {
-  LUABIND_RETURN(AuxANNComponent, obj->topComponent());
+  if (obj->size() > 0) LUABIND_RETURN(AuxANNComponent, obj->topComponent());
 }
 //BIND_END
 
 //BIND_METHOD StackANNComponent pop
 {
-  obj->popComponent();
+  if (obj->size() > 0) obj->popComponent();
   LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
