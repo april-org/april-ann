@@ -1,3 +1,14 @@
+2014/11/17: Updated with Lua 5.3.0
+
+- Added lua-5.3.0.patch andd lstrip-5.3.0.patch files.
+
+$ diff -rupN ~/programas/lua-5.3.0-beta/  lua/lua-5.3.0/  > lua/lua-5.3.0.patch
+$ diff -rupN ~/programas/lstrip/  lua/lstrip/  > lua/lstrip-5.3.0.patch
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
 2013/10/13: COPYRIGHT, AUTHORS, and VERSION stuff is out of Lua source tree, it
 is managed by formiga.
 
