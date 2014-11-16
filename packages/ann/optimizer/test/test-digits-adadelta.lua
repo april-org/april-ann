@@ -139,14 +139,14 @@ T("SGDTestDigits", function()
       trainer = trainable.supervised_trainer.load(tmp)
       printf("%4d  %.7f %.7f :: %.7f %.7f\n",
              totalepocas,errortrain,errorval,vartrain,varval)
-      -- check.number_eq(errortrain, errors[epoch][1], epsilon,
-      --                 string.format("Training error %g is not equal enough to "..
-      --                                 "reference error %g",
-      --                               errortrain, errors[epoch][1]))
-      -- check.number_eq(errorval, errors[epoch][2], epsilon,
-      --                 string.format("Validation error %g is not equal enough to "..
-      --                                 "reference error %g",
-      --                              errorval, errors[epoch][2]))
+      check.number_eq(errortrain, errors[epoch][1], epsilon,
+                      string.format("Training error %g is not equal enough to "..
+                                      "reference error %g",
+                                    errortrain, errors[epoch][1]))
+      check.number_eq(errorval, errors[epoch][2], epsilon,
+                      string.format("Validation error %g is not equal enough to "..
+                                      "reference error %g",
+                                    errorval, errors[epoch][2]))
     end
     os.remove(tmp)
     clock:stop()
