@@ -1,6 +1,9 @@
 -- Variable GLOBAL para conrolar que se generen numeros de linea
 -- utiles para GCC
 
+local unpack = table.unpack
+local loadstring = function(str) return load(str) end
+
 -- strip tipico 
 --    simbolos = simbolos que actuan de separadores
 function strip(texto,simbolos)

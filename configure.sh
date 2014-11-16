@@ -4,7 +4,7 @@ if [ -z $APRILANN_CONFIGURED ]; then
     export PATH="`pwd`"/lua/bin:`pwd`/bin:$PATH
 #export LUA_PATH="`pwd`""/binding/?.lua;?"
 fi
-export LUA_DIR="`pwd`"/lua/lua-5.2.2
+export LUA_DIR="`pwd`"/lua/lua-5.3.0
 (make -C $LUA_DIR            &&
  make -C $LUA_DIR install    &&
  make -C "`pwd`"/lua/lstrip) ||
