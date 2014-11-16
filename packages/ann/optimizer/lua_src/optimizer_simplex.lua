@@ -40,6 +40,10 @@ function simplex:constructor(g_options, l_options, count,
                               {"alpha", "Reflexion coef (1)"},
                               {"gamma", "Expansion coef (2)"},
                               {"rho", "Shrink coef (0.5)"},
+                              {"weight_decay", "Weight L2 regularization (0.0)"},
+                              {"L1_norm", "Weight L1 regularization (0.0)"},
+                              {"max_norm_penalty", "Weight max norm upper bound (0)"},
+                              {"verbose", "true or false (false)"},
 			    },
 			    g_options,
 			    l_options,
@@ -60,13 +64,39 @@ function simplex:constructor(g_options, l_options, count,
     self:set_option("alpha", 1)
     self:set_option("gamma", 2)
     self:set_option("rho", 0.5)
+    self:set_option("weight_decay", 0.0)
+    self:set_option("L1_norm", 0.0)
+    self:set_option("max_norm_penalty", 0.0)
+    self:set_option("verbose", false)
   end
 end
 
 function simplex_methods:execute(eval, weights)
   local table = table
   local assert = assert
-  --
+  -- DO EVAL
+  local do_eval = function(x, i)
+    local loss = eval(x, i)
+    local reg = 0
+    for wname,w in pairs(x) do
+      local l1 = self:get_option_of(wname, "L1_norm")
+      local l2 = self:get_option_of(wname, "weight_decay")
+      if l1 > 0.0 then reg = reg + l1*mop.abs(w):sum() end
+      if l2 > 0.0 then reg = reg + 0.5*l2*w:dot(w) end
+    end
+    return loss + reg
+  end
+  -- APPLY PENALTIES
+  local apply_penalties = function(x)
+    for wname,w in pairs(x) do
+      local mnp = self:get_option_of(wname, "max_norm_penalty")
+      -- constraints
+      if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
+    end
+    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+      md.prune_subnormal_and_check_normal( x )
+    end
+  end
   local beta     = self:get_option("beta")
   local rand     = self:get_option("rand")
   local epsilon  = self:get_option("epsilon")
@@ -75,6 +105,7 @@ function simplex_methods:execute(eval, weights)
   local gamma    = self:get_option("gamma")
   local rho      = self:get_option("rho")
   local max_iter = self:get_option("max_iter")
+  local verbose  = self:get_option("verbose")
   --
   local sz = md.size(weights)
   local lambda0 = self.lambda0 or md.clone_only_dims(weights)
@@ -101,7 +132,7 @@ function simplex_methods:execute(eval, weights)
     end
   end
   -- evaluate candidates with new samples
-  for i=1,#candidates do candidates[i][2] = eval(candidates[i][1]) end
+  for i=1,#candidates do candidates[i][2] = do_eval(candidates[i][1], 0) end
   sort_candidates(candidates)
   --
   local function point(i) return candidates[i][1] end
@@ -114,6 +145,7 @@ function simplex_methods:execute(eval, weights)
     return D
   end
   --
+  self:count_one()
   local iter = 0
   repeat
     iter = iter + 1
@@ -129,7 +161,6 @@ function simplex_methods:execute(eval, weights)
     -- tolerance control, difference between best an worst candidate
     local rel_tol = 2.0 * math.abs(loss(#candidates) - loss(1))/math.abs(loss(#candidates) + loss(1))
     if rel_tol < tol then break end
-    self:count_one()
     -- compute centroid of all points ignoring the worst
     md.zeros(lambda0)
     for i=1,#candidates-1 do md.axpy(lambda0, 1.0, point(i)) end
@@ -138,7 +169,7 @@ function simplex_methods:execute(eval, weights)
     compose(lambdaR, lambda0, alpha, lambda0, point(#candidates))
     
     local S1 = loss(1)
-    local SR = eval(lambdaR)
+    local SR = do_eval(lambdaR, iter)
     local SM = loss(#candidates - 1)
     
     if S1 <= SR and SR <= SM then
@@ -147,7 +178,7 @@ function simplex_methods:execute(eval, weights)
     elseif SR < S1 then
       -- if reflected point improves the best, then try expansion
       compose(lambdaE, lambda0, gamma, lambda0, point(#candidates))
-      local SE = eval(lambdaE)
+      local SE = do_eval(lambdaE, iter)
       -- if expansion improves, take it
       if SE < SR then md.copy(lambdaP, lambdaE)
       else -- otherwise, take reflection
@@ -156,7 +187,7 @@ function simplex_methods:execute(eval, weights)
     elseif SR > SM then
       -- the reflected point not improves second worst, then try shrink
       compose(lambdaC, point(#candidates), rho, lambda0, point(#candidates))
-      local SC = eval(lambdaC)
+      local SC = do_eval(lambdaC, iter)
       -- if shrink improves reflected, take it
       if SC < SR then
         md.copy(lambdaP, lambdaC)
@@ -165,7 +196,7 @@ function simplex_methods:execute(eval, weights)
         for i=2,#candidates do
           md.axpy(candidates[i][1], 1.0, candidates[1][1])
           md.scal(candidates[i][1], 0.5)
-          candidates[i][2] = eval(candidates[i][1])
+          candidates[i][2] = do_eval(candidates[i][1], iter)
         end
         shrinked = true
       end
@@ -175,7 +206,7 @@ function simplex_methods:execute(eval, weights)
       local prev_loss = loss(#candidates)
       -- replace worst point
       md.copy(point(#candidates), lambdaP)
-      candidates[#candidates][2] = eval(candidates[#candidates][1])
+      candidates[#candidates][2] = do_eval(candidates[#candidates][1], iter)
       if prev_loss == loss(#candidates) then
         -- warning: alpha=1 causes infinite loops of not improving
         alpha = alpha * 0.9
@@ -184,7 +215,12 @@ function simplex_methods:execute(eval, weights)
 
     sort_candidates(candidates)
     
-    -- print(self:get_count(), loss(1), loss(#candidates), simplex_module)
+    if verbose then
+      printf("# %6d %6d %.6f %.6f %.6f\n",
+             self:get_count(), iter,
+             loss(1), loss(#candidates),
+             simplex_module)
+    end
     
   until iter >= max_iter
   --
@@ -195,7 +231,9 @@ function simplex_methods:execute(eval, weights)
   self.lambdaP = lambdaP
   --
   md.copy(weights, point(1))
-  return eval(weights)
+  apply_penalties(weights)
+  --
+  return eval(weights, iter)
 end
 
 function simplex_methods:clone()

@@ -17,12 +17,12 @@ end)
 
 T("SimplexTestDigits", function()
     -- un generador de valores aleatorios... y otros parametros
-    bunch_size     = 64
+    bunch_size     = 1024
     semilla        = 1234
     weights_random = random(semilla)
-    description    = "256 inputs 10 log_softmax"
-    inf            = -0.1
-    sup            =  0.1
+    description    = "256 inputs 10 softmax"
+    inf            = -0.01
+    sup            =  0.01
     shuffle_random = random(5678)
     
     m1 = ImageIO.read(string.get_path(arg[0]) .. "../../ann/test/digits.png"):to_grayscale():invert_colors():matrix()
@@ -71,17 +71,16 @@ T("SimplexTestDigits", function()
 
     thenet = ann.mlp.all_all.generate(description)
     trainer = trainable.supervised_trainer(thenet,
-                                           ann.loss.multi_class_cross_entropy(10),
+                                           ann.loss.zero_one(), --multi_class_cross_entropy(10),
                                            bunch_size,
                                            ann.optimizer.simplex())
     trainer:build()
 
     trainer:set_option("rand", shuffle_random)
-    trainer:set_option("max_iter", 40)
-    trainer:set_option("alpha", 1)
-    trainer:set_option("beta", 0.1)
-    trainer:set_option("gamma", 2)
-    trainer:set_option("rho", 0.5)
+    trainer:set_option("beta", 0.01)
+    trainer:set_option("max_iter", 100)
+    trainer:set_option("weight_decay", 0.01)
+    trainer:set_option("verbose", true)
     
     trainer:randomize_weights{
       random      = weights_random,
@@ -112,14 +111,14 @@ T("SimplexTestDigits", function()
     clock:go()
     -- print("Epoch Training  Validation")
     local tmp = os.tmpname()
-    for totalepocas=1,10 do
+    for totalepocas=1,20 do
       collectgarbage("collect")
       errortrain,vartrain  = trainer:train_dataset(datosentrenar)
       trainer:save(tmp)
       trainer = trainable.supervised_trainer.load(tmp)
       errorval,varval      = trainer:validate_dataset(datosvalidar)
-      printf("%4d  %.7f %.7f :: %.7f %.7f\n",
-             totalepocas,errortrain,errorval,vartrain,varval)
+      fprintf(io.stderr, "%4d  %.7f %.7f :: %.7f %.7f\n",
+              totalepocas,errortrain,errorval,vartrain,varval)
     end
     os.remove(tmp)
     clock:stop()
