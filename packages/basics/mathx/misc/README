@@ -1,0 +1,33 @@
+This is a complete math library for Lua 5.3 with the functions available in C99.
+
+To try the library, just edit Makefile to reflect your installation of Lua and
+then run make. This will build the library and run a simple test. For detailed
+installation instructions, see
+	http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/install.html
+
+There is no manual: see the summary below and a C99 reference manual, e.g.
+	http://en.wikipedia.org/wiki/C_mathematical_functions       
+
+Read also test.lua, which shows the library in action.
+
+This code is hereby placed in the public domain.
+
+Please send comments, suggestions, and bug reports to lhf@tecgraf.puc-rio.br .
+
+-------------------------------------------------------------------------------
+
+mathx library:
+abs		cosh		fmod		lgamma		round
+acos		deg		frexp		log		scalbn
+acosh		erf		gamma		log10		sin
+asin		erfc		hypot		log1p		sinh
+asinh		exp		isfinite	log2		sqrt
+atan		exp2		isinf		logb		tan
+atan2		expm1		isnan		modf		tanh
+atanh		fdim		isnormal	nearbyint	trunc
+cbrt		floor		j0		nextafter	y0
+ceil		fma		j1		pow		y1
+copysign	fmax		jn		rad		yn
+cos		fmin		ldexp		remainder
+
+-------------------------------------------------------------------------------
