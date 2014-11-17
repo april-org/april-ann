@@ -2,3 +2,7 @@
 *.a
 bin
 include
+lstrip/llex.c
+lstrip/lstrip
+lua-5.3.0/src/lua
+lua-5.3.0/src/luac

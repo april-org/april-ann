@@ -207,7 +207,7 @@ namespace AprilIO {
   else {
     for (int i=1; i<=argn; ++i) {
       if (lua_isnumber(L, i)) {
-        int size = luaL_checkint(L, i);
+        int size = luaL_checkinteger(L, i);
         LUABIND_INCREASE_NUM_RETURNS(readAndPushStringToLua(L, obj, size,
                                                             lua_string));
       }
@@ -258,7 +258,7 @@ namespace AprilIO {
 //BIND_METHOD StreamInterface seek
 {
   const char *whence = luaL_optstring(L, 1, "cur");
-  int offset = luaL_optint(L, 2, 0);
+  int offset = luaL_optinteger(L, 2, 0);
   int int_whence;
   if (strcmp(whence, "cur") == 0) {
     int_whence = SEEK_CUR;

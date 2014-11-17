@@ -23,7 +23,7 @@ LUAEXECDIR = $(LUA_DIR)/../bin
 all:	test
 
 test:	$T
-	$T $(TEST)
+	$T $(TEST) > /dev/null
 
 $T:	$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)

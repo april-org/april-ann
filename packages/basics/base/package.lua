@@ -1,6 +1,6 @@
 package{ name = "base",
    version = "1.0",
-   depends = { },
+   depends = { "mathx" },
    keywords = { },
    description = "",
    -- targets como en ant

@@ -244,7 +244,8 @@ erase the package name from this list to avoid its compilation.
 Includes these sources
 ----------------------
 - Lua virtual machine 5.2.2: http://www.lua.org/
-- Luiz's lstrip for Lua 5.1, adapted to compile with Lua 5.2.2: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
+- Luiz's lstrip for Lua 5.3: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/lstrip.tar.gz
+- Luiz's lmathx for Lua 5.3: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.3/lmathx.tar.gz
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
 - RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html

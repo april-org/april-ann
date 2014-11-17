@@ -192,7 +192,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
     int i=1;
     for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
       lua_rawgeti(L,argn,i);
-      int32_t v = luaL_checkint(L,-1);
+      int32_t v = luaL_checkinteger(L,-1);
       *it = v;
       lua_remove(L,-1);
     }
@@ -258,7 +258,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   int i=1;
   for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
     lua_rawgeti(L,1,i);
-    int32_t v = luaL_checkint(L,-1);
+    int32_t v = luaL_checkinteger(L,-1);
     *it = v;
     lua_remove(L,-1);
   }
