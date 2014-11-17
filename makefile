@@ -111,6 +111,8 @@ debug-pi:
 #############################################################################
 
 clean:
+	cd lua/lstrip && make clean
+	cd lua/lua-5.3.0 && make clean
 	./clean.sh
 
 install:

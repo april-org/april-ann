@@ -32,9 +32,10 @@ static void strip(lua_State *L, const char *file)
 
 int main(int argc, char* argv[])
 {
- int preserve=0;			/* preserve line breaks? */
+  int preserve=0;			/* preserve line breaks? */
  int dump=0;				/* dump instead of stripping? */
  lua_State *L=luaL_newstate();
+ (void)(argc); // remove compiler warning
  if (argv[0]!=NULL && *argv[0]!=0) progname=argv[0];
  if (L==NULL) fatal("not enough memory for state");
  while (*++argv!=NULL && strcmp(*argv,"-p")==0) preserve++;

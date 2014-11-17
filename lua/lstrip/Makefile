@@ -35,6 +35,6 @@ llex.c:
 llex.o:	proxy.c
 
 clean:
-	-rm -f $(OBJS) core core.* a.out $(MYNAME)
+	-rm -f $(OBJS) core core.* a.out llex.c $(MYNAME)
 
 # eof
