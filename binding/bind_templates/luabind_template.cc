@@ -69,6 +69,12 @@ $$HEADER_C$$
 
   ]], subName, subName))
       end
+      table.insert(cpp_str,string.format([[
+    if (!lua_istable(L,-1)) {
+      fprintf(stderr, "Unable to register table %s, it exists and is not a table\n");
+      exit(10);
+    }
+]], dottedname))
       return table.concat(cpp_str);
    end
 */
@@ -462,14 +468,19 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   DEBUG("lua_register_tables_$$FILENAME2$$ (begin)");
   //LUA for table_name in pairs(TABLES) do
   {
+    DEBUG("lua_setdottedname_$$table_name$$ (begin)");
     $$lua_setdottedname(table_name)$$
+    DEBUG("lua_setdottedname_$$table_name$$ (end)");
   }
   lua_pop(L,1);
   //LUA end
   //LUA for func_name in pairs(FUNCTIONS) do
   {
+    DEBUG("lua_setdottedname_$$func_name$$ (begin)");
     $$lua_setdottedname(func_name)$$
+    DEBUG("lua_setdottedname_$$func_name$$ (end)");
   }
+  DEBUG("function_$$func_name$$ (begin)");
   // stack: table
   lua_pushvalue(L,-1);
   // stack: table table
@@ -482,12 +493,16 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   lua_rawset(L, -3);
   // stack: table
   lua_pop(L,1);
+  DEBUG("function_$$func_name$$ (end)");
   //LUA end
   //LUA for varsTblName,vars in pairs(ENUM_CONSTANT) do
   {
+    DEBUG("lua_setdottedname_$$varsTblName$$ (begin)");
     $$lua_setdottedname(varsTblName)$$
+    DEBUG("lua_setdottedname_$$varsTblName$$ (end)");
   }
   //LUA for varName,varValue in pairs(vars) do
+  DEBUG("set var $$varName$$ (begin)");
   // stack: table
   lua_pushstring(L, "$$varName$$");
   // stack: string table
@@ -513,6 +528,7 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
     fprintf(stderr, "ENUM_CONSTANT value is repeated: $$varsTblName$$.$$varName$$\n");
     exit(10);
   }
+  DEBUG("set var $$varName$$ (end)");
   //LUA end
   lua_pop(L,1);
   //LUA end
@@ -520,9 +536,12 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
 
   //LUA for varsTblName,vars in pairs(STRING_CONSTANT) do
   {
+    DEBUG("lua_setdottedname_$$varsTblName$$ (begin)");
     $$lua_setdottedname(varsTblName)$$
+    DEBUG("lua_setdottedname_$$varsTblName$$ (end)");
   }
   //LUA for varName,varValue in pairs(vars) do
+  DEBUG("set var $$varName$$ (begin)");
   // stack: table
   lua_pushstring(L, "$$varName$$");
   // stack: string table
@@ -530,6 +549,7 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   // stack: value string table
   lua_rawset(L, -3);
   // stack: table
+  DEBUG("set var $$varName$$ (end)");
   //LUA end
   lua_pop(L,1);
   //LUA end

@@ -15,7 +15,7 @@
 #include "lauxlib.h"
 
 #define A(i)	luaL_checknumber(L,i)
-#define I(i)	luaL_checkint(L,i)
+#define I(i)	luaL_checkinteger(L,i)
 
 #undef abs
 #define	abs	fabs

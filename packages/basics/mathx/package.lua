@@ -33,7 +33,7 @@ package{ name = "mathx",
      depends = "provide",
      use_timestamp = true,
      object{ 
-       file = "c_src/*.cc",
+       file = "c_src/*.c",
        dest_dir = "build",
        --       flags = "-std=c99",
      },

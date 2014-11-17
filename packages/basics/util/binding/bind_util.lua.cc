@@ -872,16 +872,6 @@ FILE **newfile (lua_State *L) {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_FUNCTION math.log1p
-{
-  double a;
-  LUABIND_GET_PARAMETER(1,double,a);
-  LUABIND_RETURN(double,log1p(a));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
 //BIND_FUNCTION util.silent_errors
 {
   int argn = lua_gettop(L);
