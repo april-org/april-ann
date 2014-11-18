@@ -175,8 +175,6 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
 #include "luabindmacros.h"
 
 int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
-        // stops garbage collector to avoid problems with reference counting
-        lua_gc(L, LUA_GCSTOP, 0);
 	lua_remove(L,1);  // primer parametro es la metatabla __call(table,...)
 	$$ClassName$$ UNUSED *obj = 0;
 	DEBUG("lua_new_$$ClassName$$ (begin)");
@@ -186,8 +184,6 @@ int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
         if (luabind_num_returned_values != 1) {
           LUABIND_ERROR("constructors must return 1 (and only 1) value");
         }
-	// restart the garbage collector
-        lua_gc(L, LUA_GCRESTART, 0);
 	return luabind_num_returned_values;
 }
 
