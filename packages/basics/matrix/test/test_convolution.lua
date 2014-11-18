@@ -7,8 +7,8 @@ local aux = matrix(1,1,3,3):linear()
 local aux = matrix.join(1,aux,aux)
 local k = matrix(2,1,2,2):linear()
 local o = matrix.ext.convolution(aux, { kernel=k, D=2 })
-local o2 = matrix.ext.convolution(aux:clone("col_major"),
-				  { kernel=k:clone("col_major"), D=2 })
+local o2 = matrix.ext.convolution(aux:clone(),
+				  { kernel=k:clone(), D=2 })
 
 --print(o)
 --print(o2)
@@ -28,13 +28,9 @@ T("MatrixConvolutionBasicTest",
     local target_o = matrix.join(1, target_o, target_o, target_o)
     --
     local o  = matrix.ext.convolution(m, { kernel=k, D=2 })
-    local o2 = matrix.ext.convolution(m:clone("col_major"),
-				      { kernel=k:clone("col_major"), D=2 })
     --
     --print(o)
-    check.eq(o,  target_o)
-    --print(o2)
-    check.eq(o2, target_o:clone("col_major"))
+    check.eq(o, target_o)
 end)
 
 T("MatrixConvolutionMediumTest",
@@ -66,20 +62,15 @@ T("MatrixConvolutionMediumTest",
                                 -28,   3, -38, -11,
     })
 
-    local target_o2 = target_o:clone("col_major")
-    local m2 = m:clone("col_major")
-    local k2 = k:clone("col_major")
     -------------------------------------------------------------------------
     local o = matrix.ext.convolution(m, { kernel=k, D=2 })
-    local o2 = matrix.ext.convolution(m2, { kernel=k2, D=2 })
     local c = ann.components.convolution{ kernel = { 3,3,3 }, n=2,
                                           weights = "w1" }
-    c:build{ weights = matrix.dict{ w1 = k2:rewrap(2, k:size()/2) } }
-    local cnn_o = c:forward(m2):get_matrix()
+    c:build{ weights = { w1 = k:rewrap(2, k:size()/2) } }
+    local cnn_o = c:forward(m)
     --
     check.eq( o, target_o )
-    check.eq( o2, target_o2 )
-    check.eq( cnn_o, target_o2 )
+    check.eq( cnn_o, target_o )
 end)
 
 if #arg > 0 then

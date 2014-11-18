@@ -90,10 +90,10 @@ namespace ANN {
       components[c]->reset(it);
   }
   
-  void StackANNComponent::computeAllGradients(MatrixFloatSet
-					      *weight_grads_dict) {
-    for (unsigned int c=0; c<components.size(); ++c)
+  void StackANNComponent::computeAllGradients(AprilUtils::LuaTable &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c) {
       components[c]->computeAllGradients(weight_grads_dict);
+    }
   }
 
   ANNComponent *StackANNComponent::clone() {
@@ -113,8 +113,8 @@ namespace ANN {
   
   void StackANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
-				MatrixFloatSet *weights_dict,
-				hash<string,ANNComponent*> &components_dict) {
+				AprilUtils::LuaTable &weights_dict,
+				AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
     if (components.size() == 0)
@@ -145,12 +145,12 @@ namespace ANN {
     */
   }
   
-  void StackANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void StackANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->copyWeights(weights_dict);
   }
 
-  void StackANNComponent::copyComponents(hash<string,ANNComponent*> &components_dict) {
+  void StackANNComponent::copyComponents(AprilUtils::LuaTable &components_dict) {
     ANNComponent::copyComponents(components_dict);
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->copyComponents(components_dict);

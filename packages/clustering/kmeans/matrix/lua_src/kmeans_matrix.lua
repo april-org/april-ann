@@ -19,8 +19,6 @@ function funcs.find_clusters(X,C,T,verbose)
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")
   assert(#Cdim == 2, "Centroids matrix must be bi-dimensional")
-  assert(X:get_major_order() == C:get_major_order(),
-	 "Given matrices with different major order")
   local N = Xdim[1] -- number of samples
   local D = Xdim[2] -- number of features (dimensions)
   local K = Cdim[1] -- number of clusters
@@ -33,7 +31,7 @@ function funcs.find_clusters(X,C,T,verbose)
 	       N)
   --
   local auxXblock,mins
-  local Mnew       = matrix[X:get_major_order()]
+  local Mnew       = matrix
   local M2Y        = Mnew(BSIZE,K)
   local CScores    = Mnew(K):zeros()
   local CSqScores  = Mnew(K):zeros()
@@ -103,8 +101,6 @@ function funcs.basic(X,C,params)
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")
   assert(#Cdim == 2, "Centroids matrix must be bi-dimensional")
-  assert(X:get_major_order() == C:get_major_order(),
-	 "Given matrices with different major order")
   local N = Xdim[1] -- number of samples
   local D = Xdim[2] -- number of features (dimensions)
   local K = Cdim[1] -- number of clusters
@@ -113,7 +109,7 @@ function funcs.basic(X,C,params)
 	       D, Cdim[2])
   local max_iter    = params.max_iter
   local threshold   = params.threshold
-  local Mnew        = matrix[X:get_major_order()]
+  local Mnew        = matrix
   local M2Y         = Mnew(BSIZE,K)
   local Csum        = Mnew(K,D)
   local Csq         = Mnew(K,D)
@@ -236,8 +232,6 @@ function funcs.refine(X,C,params)
   local Cdim = C:dim()
   assert(#Xdim == 2, "Data matrix must be bi-dimensional")
   assert(#Cdim == 2, "Centroids matrix must be bi-dimensional")
-  assert(X:get_major_order() == C:get_major_order(),
-	 "Given matrices with different major order")
   local N = Xdim[1] -- number of samples
   local D = Xdim[2] -- number of features (dimensions)
   local K = Cdim[1] -- number of clusters
@@ -247,7 +241,7 @@ function funcs.refine(X,C,params)
 	       "Different columns found between data and centroids: %d ~= %d\n",
 	       D, Cdim[2])
   local num_samples = math.max(K, math.round(N * params.percentage))
-  local Mnew = matrix[X:get_major_order()]
+  local Mnew = matrix
   local S = Mnew(num_samples, D)
   local CM = Mnew(J, K, D)
   local FM = matrix.as(CM)
@@ -329,7 +323,7 @@ local function metatable_call(self,params)
   local distortion
   if not centroids then
     assert(random, "Field random is mandatory when not given centroids")
-    centroids = matrix[data:get_major_order()](params.K,data:dim(2))
+    centroids = matrix(params.K,data:dim(2))
     distortion = funcs.refine(data, centroids, {
 				max_iter   = params.max_iter,
 				random     = params.random,

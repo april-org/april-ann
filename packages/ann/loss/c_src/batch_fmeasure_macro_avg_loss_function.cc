@@ -58,7 +58,7 @@ namespace ANN {
     // FMb = ---------------------
     //        sum(o) + b^2 sum(t)
     int num_classes = input_mat->getDimSize(1);
-    Gs = new MatrixFloat(1,&num_classes,CblasColMajor);
+    Gs = new MatrixFloat(1,&num_classes);
     Hs = Gs->clone();
     AprilUtils::SharedPtr<MatrixFloat> class_input_mat;
     AprilUtils::SharedPtr<MatrixFloat> class_target_mat;
@@ -89,7 +89,7 @@ namespace ANN {
     }
     MatrixFloat *loss_output;
     int aux = 1;
-    loss_output = new MatrixFloat(1, &aux, CblasColMajor);
+    loss_output = new MatrixFloat(1, &aux);
 #ifdef USE_CUDA
     loss_output->setUseCuda(input_mat_->getCudaFlag());
 #endif

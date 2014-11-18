@@ -20,54 +20,80 @@
  *
  */
 //BIND_HEADER_C
+#include <typeinfo>
+
 #include "bind_function_interface.h"
 #include "bind_matrix.h"
 #include "bind_sparse_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
+#include "bind_util.h"
 #include "table_of_token_codes.h"
 
 using namespace AprilUtils;
 using namespace Basics;
 
 namespace ANN {
-  static bool rewrapToAtLeastDim2(Token *&tk) {
+  static bool rewrapToAtLeastDim2(AprilUtils::SharedPtr<Token> &tk) {
     if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
       Basics::TokenMatrixFloat *tk_mat = tk->convertTo<Basics::TokenMatrixFloat*>();
       Basics::MatrixFloat *m = tk_mat->getMatrix();
       if (m->getNumDim() == 1) {
         int dims[2] = { 1, m->getDimSize(0) };
-        Basics::Token *new_tk = new Basics::TokenMatrixFloat(m->rewrap(dims, 2));
-        IncRef(new_tk);
-        DecRef(tk);
-        tk = new_tk;
+        tk.reset( new Basics::TokenMatrixFloat(m->rewrap(dims, 2)) );
         return true;
       }
     }
     return false;
   }
 
-  static void unwrapToDim1(Token *&tk) {
+  static void unwrapToDim1(AprilUtils::SharedPtr<Token> &tk) {
     if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
       Basics::TokenMatrixFloat *tk_mat = tk->convertTo<Basics::TokenMatrixFloat*>();
       Basics::MatrixFloat *m = tk_mat->getMatrix();
       int dim = m->getDimSize(1);
       Basics::MatrixFloat *new_m = m->rewrap(&dim, 1);
-      Basics::Token *tk = new Basics::TokenMatrixFloat(new_m);
+      tk.reset( new Basics::TokenMatrixFloat(new_m) );
     }
   }
 
-  template<typename Value, typename PushFunction>
-  void pushHashTableInLuaStack(lua_State *L,
-                               AprilUtils::hash<AprilUtils::string,Value> &hashobject,
-                               PushFunction push_function) {
-    lua_createtable(L, 0, hashobject.size());
-    for (typename AprilUtils::hash<AprilUtils::string,Value>::iterator it = hashobject.begin();
-         it != hashobject.end(); ++it) {
-      push_function(L, it->second);
-      lua_setfield(L, -2, it->first.c_str());
-    }
+}
+
+void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
+  if (typeid(*value) == typeid(StackANNComponent)) {
+    lua_pushStackANNComponent(L, (StackANNComponent*)value);
   }
+  else if (typeid(*value) == typeid(JoinANNComponent)) {
+    lua_pushJoinANNComponent(L, (JoinANNComponent*)value);
+  }
+  else if (dynamic_cast<ActivationFunctionANNComponent*>(value)) {
+    lua_pushActivationFunctionANNComponent(L, (ActivationFunctionANNComponent*)value);
+  }
+  else if (dynamic_cast<StochasticANNComponent*>(value)) {
+    lua_pushStochasticANNComponent(L, (StochasticANNComponent*)value);
+  }
+  else {
+    lua_pushANNComponent(L, value);
+  }
+}
+
+namespace AprilUtils {
+
+  template<> ANN::ANNComponent *LuaTable::
+  convertTo<ANN::ANNComponent *>(lua_State *L, int idx) {
+    return lua_toANNComponent(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value) {
+    lua_pushAuxANNComponent(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<ANN::ANNComponent *>(lua_State *L, int idx) {
+    return lua_isANNComponent(L, idx);
+  }
+  
 }
 
 //BIND_END
@@ -101,6 +127,7 @@ namespace ANN {
 #include "relu_actf_component.h"
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
+#include "log_actf_component.h"
 #include "linear_actf_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
@@ -112,6 +139,8 @@ namespace ANN {
 
 using namespace Functions;
 using namespace ANN;
+
+void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_END
 
@@ -138,10 +167,11 @@ using namespace ANN;
 				       input_size);
   //
   Basics::MatrixFloat *obj;
-  if (w && w->getMajorOrder() == CblasColMajor) obj = w->clone();
+  if (w) {
+    obj = w->clone();
+  }
   else {
     obj = Connections::build(input_size, output_size);
-    if (w) Connections::loadWeights(obj, w, first_pos, column_size);
   }
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -351,48 +381,48 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_input
 {
-  Basics::Token *aux = obj->getInput();
-  if (aux == 0) {
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getInput() );
+  if (aux.empty()) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
-  Basics::Token *aux = obj->getOutput();
-  if (aux == 0) {
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getOutput() );
+  if (aux.empty()) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
-  Basics::Token *aux = obj->getErrorInput();
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorInput() );
   if (aux == 0) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_output
 {
-  Basics::Token *aux = obj->getErrorOutput();
+  AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorOutput() );
   if (aux == 0) {
     LUABIND_RETURN(Token, new TokenNull());
   }
   else {
-    LUABIND_RETURN(Token, aux);
+    LUABIND_RETURN(AuxToken, aux);
   }
 }
 //BIND_END
@@ -418,35 +448,32 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent forward
 {
-  Basics::Token *input;
+  AprilUtils::SharedPtr<Basics::Token> input;
   bool during_training;
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
-  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Basics::Token *output = obj->doForward(input, during_training);
+  AprilUtils::SharedPtr<Basics::Token> output( obj->doForward(input.get(),
+                                                              during_training) );
   if (rewrapped) unwrapToDim1(output);
-  LUABIND_RETURN(Token, output);
-  DecRef(input);
+  LUABIND_RETURN(AuxToken, output);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent backprop
 {
-  Basics::Token *input;
+  AprilUtils::SharedPtr<Basics::Token> input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, AuxToken, input);
-  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Basics::Token *gradient = obj->doBackprop(input);
-  if (gradient != 0) {
+  AprilUtils::SharedPtr<Basics::Token> gradient( obj->doBackprop(input.get()) );
+  if (!gradient.empty()) {
     if (rewrapped) unwrapToDim1(gradient);
-    LUABIND_RETURN(Token, gradient);
+    LUABIND_RETURN(AuxToken, gradient);
   }
   else LUABIND_RETURN_NIL();
-  DecRef(input);
 }
 //BIND_END
 
@@ -462,14 +489,13 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
-  Basics::MatrixFloatSet *weight_grads_dict;
-  if (argn == 1)
-    LUABIND_GET_PARAMETER(1, MatrixFloatSet, weight_grads_dict);
-  else
-    weight_grads_dict = new Basics::MatrixFloatSet();
+  AprilUtils::LuaTable weight_grads_dict;
+  if (argn == 1) {
+    weight_grads_dict = AprilUtils::LuaTable(L,1);
+  }
   //
   obj->computeAllGradients(weight_grads_dict);
-  LUABIND_RETURN(MatrixFloatSet, weight_grads_dict);
+  LUABIND_RETURN(LuaTable, weight_grads_dict);
 }
 //BIND_END
 
@@ -500,41 +526,38 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   unsigned int input_size=0, output_size=0;
-  Basics::MatrixFloatSet *weights_dict = 0;
-  AprilUtils::hash<AprilUtils::string,ANNComponent*> components_dict;
+  AprilUtils::LuaTable weights_dict(L), components_dict(L);
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights,
-					 MatrixFloatSet, weights_dict, 0);
+    lua_getfield(L, 1, "weights");
+    if (!lua_isnil(L, -1)) weights_dict = lua_toLuaTable(L,-1);
+    lua_pop(L, 1);
   }
-  if (weights_dict == 0) weights_dict = new Basics::MatrixFloatSet();
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
-  LUABIND_RETURN(ANNComponent, obj);
-  LUABIND_RETURN(MatrixFloatSet, weights_dict);
-  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_INCREASE_NUM_RETURNS(1);
+  LUABIND_RETURN(AuxANNComponent, obj);
+  LUABIND_RETURN(LuaTable, weights_dict);
+  LUABIND_RETURN(LuaTable, components_dict);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_weights
 {
-  Basics::MatrixFloatSet *weights_dict = new Basics::MatrixFloatSet();
+  AprilUtils::LuaTable weights_dict(L);
   obj->copyWeights(weights_dict);
-  LUABIND_RETURN(MatrixFloatSet, weights_dict);
+  LUABIND_RETURN(LuaTable, weights_dict);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_components
 {
-  AprilUtils::hash<AprilUtils::string,ANNComponent*> components_dict;
+  AprilUtils::LuaTable components_dict(L);
   obj->copyComponents(components_dict);
-  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(LuaTable, components_dict);
 }
 //BIND_END
 
@@ -546,7 +569,7 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, string, name);
   string name_string(name);
   ANNComponent *component = obj->getComponent(name_string);
-  LUABIND_RETURN(ANNComponent, component);
+  LUABIND_RETURN(AuxANNComponent, component);
 }
 //BIND_END
 
@@ -717,8 +740,9 @@ using namespace ANN;
 //BIND_METHOD StackANNComponent unroll
 {
   lua_checkstack(L, obj->size());
-  for (unsigned int i=0; i<obj->size(); ++i)
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+  for (unsigned int i=0; i<obj->size(); ++i) {
+    LUABIND_RETURN(AuxANNComponent, obj->getComponentAt(i));
+  }
 }
 //BIND_END
 
@@ -728,26 +752,24 @@ using namespace ANN;
   int argn = lua_gettop(L);
   lua_checkstack(L, argn);
   for (int i=1; i<=argn; ++i) {
-    unsigned int idx;
-    LUABIND_GET_PARAMETER(i, uint, idx);
-    --idx;
-    if (idx >= obj->size())
+    unsigned int idx = lua_tointeger(L, i);
+    if (idx > obj->size())
       LUABIND_FERROR2("Incorrect index, expected <= %d, found %d\n",
-		      obj->size(), idx+1);
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(idx));
+		      obj->size(), idx);
+    LUABIND_RETURN(AuxANNComponent, obj->getComponentAt(idx - 1));
   }
 }
 //BIND_END
 
 //BIND_METHOD StackANNComponent top
 {
-  LUABIND_RETURN(ANNComponent, obj->topComponent());
+  if (obj->size() > 0) LUABIND_RETURN(AuxANNComponent, obj->topComponent());
 }
 //BIND_END
 
 //BIND_METHOD StackANNComponent pop
 {
-  obj->popComponent();
+  if (obj->size() > 0) obj->popComponent();
   LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
@@ -1011,10 +1033,16 @@ using namespace ANN;
   int *kernel, *step, n, input_planes_dim;
   check_table_fields(L, 1, "name", "weights", "kernel", "input_planes_dim",
 		     "step", "n", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
+				       input_planes_dim, -1);
+  if (input_planes_dim > 1) {
+    LUABIND_ERROR("Deprecated property, new version only allowed for input_planes_dim==1\n");
+  }
+  else if (input_planes_dim == 1) {
+    ERROR_PRINT("Deprecated property, not needed in the new version");
+  }
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
-				       input_planes_dim, 1);
   LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
   //
   lua_getfield(L, 1, "kernel");
@@ -1041,8 +1069,7 @@ using namespace ANN;
     LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
   }
   lua_pop(L, 1);
-  obj = new ConvolutionANNComponent(size, kernel, step,
-				    input_planes_dim, n,
+  obj = new ConvolutionANNComponent(size, kernel, step, n,
 				    name, weights);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;
@@ -1545,6 +1572,29 @@ using namespace ANN;
   }
   obj = new SinActfANNComponent(name);
   LUABIND_RETURN(SinActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               LogActfANNComponent               //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LogActfANNComponent ann.components.actf.log
+//BIND_CPP_CLASS    LogActfANNComponent
+//BIND_SUBCLASS_OF  LogActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LogActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LogActfANNComponent(name);
+  LUABIND_RETURN(LogActfANNComponent, obj);  
 }
 //BIND_END
 

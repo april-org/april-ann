@@ -55,7 +55,6 @@ using namespace Imaging;
   float_rgb_mem = img->getRawDataAccess()->reinterpretAs<FloatRGB>();
   int dims[2] = { img->getDimSize(0), img->getDimSize(1) };
   Basics::Matrix<FloatRGB> *img_rgb = new Basics::Matrix<FloatRGB>(2, dims,
-                                                                   CblasRowMajor,
                                                                    float_rgb_mem);
   //
   obj = new ImageFloatRGB(img_rgb);
@@ -138,7 +137,6 @@ using namespace Imaging;
   mat_mem = img_rgb->getRawDataAccess()->reinterpretAs<float>();
   int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
   Basics::MatrixFloat *output = new Basics::MatrixFloat(3, dims,
-                                                        img_rgb->getMajorOrder(),
                                                         mat_mem);
   LUABIND_RETURN(MatrixFloat, output);
 }

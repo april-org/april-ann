@@ -1,5 +1,7 @@
+class.extend(matrixChar, "t", matrixChar.."transpose")
+
 -- serialization
-matrix.__generic__.__make_all_serialization_methods__(matrixChar)
+matrix.__generic__.__make_all_serialization_methods__(matrixChar, "ascii")
 
 matrixChar.meta_instance.__tostring = function(self)
   local dims   = self:dim()

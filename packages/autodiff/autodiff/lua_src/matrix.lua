@@ -550,7 +550,7 @@ autodiff.op[MATRIX] = {
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
-		       return a:clone():lt(b)
+		       return a:clone():lt(b):to_float()
 		     end,
 		     function(self, seed, result)
 		       return result
@@ -558,7 +558,7 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name,
-					 ':clone():lt(', b.var_name, ')' }
+					 ':clone():lt(', b.var_name, '):to_float()' }
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)
@@ -577,7 +577,7 @@ autodiff.op[MATRIX] = {
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
-		       return a:clone():gt(b)
+		       return a:clone():gt(b):to_float()
 		     end,
 		     function(self, seed, result)
 		       return result
@@ -585,7 +585,7 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name,
-					 ':clone():gt(', b.var_name, ')' }
+					 ':clone():gt(', b.var_name, '):to_float()' }
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)
@@ -965,7 +965,36 @@ end
     if a.dims then s:set_dims(a.dims) end
     return s
   end,
-  
+
+  clamp = function(a,lower,upper)
+    local a,lower,upper = coercion(a),coercion(lower),coercion(upper)
+    local s = gen_op('clamp', MATRIX, {a,lower,upper},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       local lower = self.args[2]:eval(...)
+		       local upper = self.args[3]:eval(...)
+                       -- TODO: check types
+		       return a:clone():clamp(lower, upper)
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       a:diff(seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+                       local lower = self.args[2]
+                       local upper = self.args[3]
+		       local str_tbl = { a.var_name, ':clone()',
+                                         ':clamp(',
+                                         lower.var_name, ',',
+                                         upper.var_name, ')' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,  
 }
 
 ------------------------------------------------------------------------------

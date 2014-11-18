@@ -202,8 +202,9 @@ namespace Basics {
     checkSortedIndices(sort);
   }
 
+  // FIXME: Matrix<T> *other cannot be const because of transpose() method.
   template <typename T>
-  SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
+  SparseMatrix<T>::SparseMatrix(Matrix<T> *other,
                                 const SPARSE_FORMAT sparse_format,
                                 const T zero) :
     AprilIO::Serializable(), shared_count(0), mmapped_data(0),
@@ -231,7 +232,8 @@ namespace Basics {
     switch(sparse_format) {
     case CSC_FORMAT:
       {
-        typename Matrix<T>::const_col_major_iterator it(other->begin());
+        AprilUtils::SharedPtr< Matrix<T> > aux(other->transpose());
+        typename Matrix<T>::const_iterator it(aux->begin());
         for (int c1=0; c1<other->getDimSize(1); ++c1) {
           for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
             if (zero < *it || *it < -zero) {
@@ -462,8 +464,8 @@ namespace Basics {
   }
 
   template <typename T>
-  Matrix<T> *SparseMatrix<T>::toDense(CBLAS_ORDER order) const {
-    Matrix<T> *result = new Matrix<T>(2, matrixSize, order);
+  Matrix<T> *SparseMatrix<T>::toDense() const {
+    Matrix<T> *result = new Matrix<T>(2, matrixSize);
     typename Matrix<T>::random_access_iterator result_it(result);
     AprilMath::MatrixExt::Operations::matZeros(result);
     int x0=0,x1=0;

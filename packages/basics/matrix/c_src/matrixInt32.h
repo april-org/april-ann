@@ -52,16 +52,25 @@ namespace Basics {
                                           AprilIO::StreamInterface *stream);
 
   } // namespace MatrixIO
-
-  template<>
-  int32_t Matrix<int32_t>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name, int32_t default_value);
   
   //////////////////////////////////////////////////////////////////////////////
   
   typedef Matrix<int32_t> MatrixInt32;
 
 } // namespace Basics
+
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::MatrixInt32 *LuaTable::
+  convertTo<Basics::MatrixInt32 *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixInt32 *>(lua_State *L, Basics::MatrixInt32 *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixInt32 *>(lua_State *L, int idx);
+}
 
 #endif // MATRIX_INT_H

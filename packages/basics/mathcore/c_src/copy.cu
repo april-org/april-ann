@@ -181,6 +181,14 @@ namespace AprilMath {
                              unsigned int,
                              bool);
 
+  template void doCopy<bool>(int, const GPUMirroredMemoryBlock<bool>*,
+                             unsigned int,
+                             unsigned int,
+                             GPUMirroredMemoryBlock<bool>*,
+                             unsigned int,
+                             unsigned int,
+                             bool);
+
   template void doCopy<float>(int, const GPUMirroredMemoryBlock<float>*,
                               unsigned int,
                               unsigned int,

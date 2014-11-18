@@ -1,13 +1,13 @@
 local gp = require "april_tools.gnuplot"()
 local rnd = random(1234)
-local x = stats.dist.normal(0,1):sample(rnd, matrix.col_major(2,1)):transpose()
+local x = stats.dist.normal(0,1):sample(rnd, matrix(2,1)):transpose()
 
 -- A = inv([1, 1.98; 1.98, 4]);
-local A = matrix.col_major(2,2,{ 50.251256, -24.874372,
-                                   -24.874372, 12.562814 })
+local A = matrix(2,2,{ 50.251256, -24.874372,
+                         -24.874372, 12.562814 })
 
 function plot_samples(samples)
-  local data = matrix.col_major(#samples,2)
+  local data = matrix(#samples,2)
   for i=1,#samples do
     data(i,':'):copy(samples[i]("x"))
   end

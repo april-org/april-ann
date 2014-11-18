@@ -76,19 +76,21 @@ namespace ANN {
       return sparse_error_output->getMatrix();
     }
     
-    virtual void computeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat);
+    virtual void computeGradients(const char *name, AprilUtils::LuaTable &weight_grads_dict);
 
     // Abstract methods
 
     virtual Basics::MatrixFloat *privateDoDenseForward(Basics::MatrixFloat *input, bool during_training) = 0;
     virtual Basics::MatrixFloat *privateDoDenseBackprop(Basics::MatrixFloat *input_error) = 0;
     virtual void privateDenseReset(unsigned int it=0) = 0;
-    virtual void privateDenseComputeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat) = 0;
+    virtual void privateDenseComputeGradients(const char *name,
+                                              AprilUtils::LuaTable &weight_grads_dict) = 0;
 
     virtual Basics::MatrixFloat *privateDoSparseForward(Basics::SparseMatrixFloat *input, bool during_training) = 0;
     virtual Basics::SparseMatrixFloat *privateDoSparseBackprop(Basics::MatrixFloat *input_error) = 0;
     virtual void privateSparseReset(unsigned int it=0) = 0;
-    virtual void privateSparseComputeGradients(AprilUtils::SharedPtr<Basics::MatrixFloat> & grads_mat) = 0;
+    virtual void privateSparseComputeGradients(const char *name,
+                                               AprilUtils::LuaTable &weight_grads_dict) = 0;
 
   public:
     MatrixInputSwitchANNComponent(const char *name, const char *weights_name,
@@ -121,10 +123,10 @@ namespace ANN {
     /*
       virtual void build(unsigned int input_size,
       unsigned int output_size,
-      MatrixFloatSet *weights_dict,
-      hash<string,ANNComponent*> &components_dict) = 0;
+      AprilUtils::LuaTable &weights_dict,
+      AprilUtils::LuaTable &components_dict) = 0;
     */
-    // virtual void copyWeights(MatrixFloatSet *weights_dict) = 0;
+    // virtual void copyWeights(AprilUtils::LuaTable &weights_dict) = 0;
     // virtual char *toLuaString() = 0;
     
   };

@@ -3,7 +3,23 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 local check = utest.check
 local T = utest.test
 --
-T("SGDTest", function()
+T("SGDConvexTest", function()
+    local opt = ann.optimizer.sgd()
+    opt:set_option("learning_rate", 0.01)
+    opt:set_option("momentum", 0.02)
+    -- optimize quadractic function: f(x) = 3*x^2 - 2*x + 10
+    local function f(x) return (3*x^2 - 2*x + 10):sum() end
+    local function df_dx(x) return 6*x - 2 end
+    -- df(x)/dx = 6*x - 2
+    -- the minimum is in x=0.333
+    local x = matrix(1,1,{-100})
+    for i=1,200 do
+      opt:execute(function() return f(x),{df_dx(x)} end, {x})
+    end
+    check.eq(x, matrix(1,1,{0.333}))
+end)
+
+T("SGDTestDigits", function()
     -- un generador de valores aleatorios... y otros parametros
     bunch_size     = tonumber(arg[1]) or 64
     semilla        = 1234
@@ -30,7 +46,7 @@ T("SGDTest", function()
       {0.1077118, 0.1718368},
       {0.0960633, 0.1591717},
     }
-    epsilon = 0.01
+    epsilon = 0.01 -- 1% relative difference
 
     --------------------------------------------------------------
 
@@ -116,13 +132,16 @@ T("SGDTest", function()
 
     clock = util.stopwatch()
     clock:go()
-
+    local weights = trainer.weights_table
     -- print("Epoch Training  Validation")
+    local tmp = os.tmpname()
     for epoch = 1,max_epochs do
       collectgarbage("collect")
       totalepocas = totalepocas+1
       errortrain,vartrain  = trainer:train_dataset(datosentrenar)
       errorval,varval      = trainer:validate_dataset(datosvalidar)
+      trainer:save(tmp)
+      trainer = trainable.supervised_trainer.load(tmp)
       printf("%4d  %.7f %.7f :: %.7f %.7f\n",
              totalepocas,errortrain,errorval,vartrain,varval)
       check.number_eq(errortrain, errors[epoch][1], epsilon,
@@ -134,7 +153,7 @@ T("SGDTest", function()
                                       "reference error %g",
                                     errorval, errors[epoch][2]))
     end
-
+    os.remove(tmp)
     clock:stop()
     cpu,wall = clock:read()
     --printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)

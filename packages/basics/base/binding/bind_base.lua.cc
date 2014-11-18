@@ -18,15 +18,12 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_H
+#include "base.h"
+//BIND_END
 
-#ifndef MATRIXFLOATSET_H
-#define MATRIXFLOATSET_H
-
-#include "matrixFloat.h"
-#include "matrixSet.h"
-
-namespace Basics {
-  typedef MatrixSet<float> MatrixFloatSet;
+//BIND_STATIC_CONSTRUCTOR base_static_constructor
+{
+  Base::registerGlobalLuaState(L);
 }
-
-#endif // MATRIXFLOATSET_H
+//BIND_END

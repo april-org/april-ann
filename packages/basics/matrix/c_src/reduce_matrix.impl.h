@@ -163,8 +163,7 @@ namespace AprilMath {
       Basics::Matrix<T> *result  = dest;
       Basics::Matrix<int32_t> *result2 = which;
       if (result == 0) {
-        result = new Basics::Matrix<T>(numDim, result_dims.get(),
-                                       input->getMajorOrder());
+        result = new Basics::Matrix<T>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
       if (result2 == 0) {
@@ -256,8 +255,7 @@ namespace AprilMath {
       /******************************/
       Basics::Matrix<O> *result = dest;
       if (result == 0) {
-        result = new Basics::Matrix<O>(numDim, result_dims.get(),
-                                       input->getMajorOrder());
+        result = new Basics::Matrix<O>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
       else if (result->size() != result_size) {
@@ -666,8 +664,7 @@ namespace AprilMath {
       /******************************/
       Basics::Matrix<O> *result = dest;
       if (result == 0) {
-        result = new Basics::Matrix<O>(numDim, result_dims.get(),
-                                       input1->getMajorOrder());
+        result = new Basics::Matrix<O>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
       else if (result->size() != result_size) {

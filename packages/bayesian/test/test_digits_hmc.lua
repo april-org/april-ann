@@ -146,7 +146,7 @@ for j=1,#trainers do
   local bayesian_model = bayesian.build_bayes_comb{
     forward = function(weights, input)
       thenet:build{ weights = weights }
-      return thenet:forward(input):get_matrix()
+      return thenet:forward(input)
     end,
     N=1000,
     shuffle=rnd,

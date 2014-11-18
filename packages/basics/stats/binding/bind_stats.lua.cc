@@ -72,7 +72,7 @@ using namespace Stats;
   if (N > 0) {
     if (dest == 0) {
       int dims[2] = { N, static_cast<int>(obj->getSize()) };
-      dest = new MatrixFloat(2, dims, CblasColMajor);
+      dest = new MatrixFloat(2, dims);
     }
     else {
       if (N != dest->getDimSize(0))
@@ -97,7 +97,7 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, xf);
     dest = 0;
     int dims[2] = {1,1};
-    x = new MatrixFloat(2, dims, CblasColMajor);
+    x = new MatrixFloat(2, dims);
     (*x)(0,0) = xf;
   }
   IncRef(x);
@@ -119,7 +119,7 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, xf);
     dest = 0;
     int dims[2] = {1,1};
-    x = new MatrixFloat(2, dims, CblasColMajor);
+    x = new MatrixFloat(2, dims);
     (*x)(0,0) = xf;
   }
   IncRef(x);
@@ -141,7 +141,7 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, xf);
     grads = 0;
     int dims[2] = {1,1};
-    x = new MatrixFloat(2, dims, CblasColMajor);
+    x = new MatrixFloat(2, dims);
     (*x)(0,0) = xf;
   }
   IncRef(x);
@@ -196,8 +196,8 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, lowf);
     LUABIND_GET_PARAMETER(2, float, highf);
     int dims[1] = { 1 };
-    low  = new MatrixFloat(1, dims, CblasColMajor);
-    high = new MatrixFloat(1, dims, CblasColMajor);
+    low  = new MatrixFloat(1, dims);
+    high = new MatrixFloat(1, dims);
     (*low)(0)  = lowf;
     (*high)(0) = highf;
   }
@@ -277,7 +277,7 @@ using namespace Stats;
       LUABIND_GET_PARAMETER(1, float, mu);
       LUABIND_GET_PARAMETER(2, float, sigma);
       int dims[1] = { 1 };
-      mean = new MatrixFloat(1, dims, CblasColMajor);
+      mean = new MatrixFloat(1, dims);
       (*mean)(0) = mu;
       cov = SparseMatrixFloat::diag(1, sigma);
       DiagonalNormalDistribution *obj = new DiagonalNormalDistribution(mean, cov);
@@ -359,11 +359,11 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(2, float, sigma);
     LUABIND_GET_OPTIONAL_PARAMETER(3, float, loc, 0.0f);
     int dims[1] = { 1 };
-    mean = new MatrixFloat(1, dims, CblasColMajor);
+    mean = new MatrixFloat(1, dims);
     (*mean)(0) = mu;
     cov = SparseMatrixFloat::diag(1, sigma);
     if (loc != 0.0f) {
-      location = new MatrixFloat(1, dims, CblasColMajor);
+      location = new MatrixFloat(1, dims);
       (*location)(0) = loc;
     }
     else location = 0;
@@ -404,7 +404,7 @@ using namespace Stats;
     float lambdaf;
     LUABIND_GET_PARAMETER(1, float, lambdaf);
     int dims[1] = {1};
-    lambda = new MatrixFloat(1, dims, CblasColMajor);
+    lambda = new MatrixFloat(1, dims);
     AprilMath::MatrixExt::Operations::matFill(lambda, lambdaf);
   }
   obj = new ExponentialDistribution(lambda);
@@ -437,9 +437,9 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, float, alphaf);
     LUABIND_GET_PARAMETER(2, float, betaf);
     int dims[1] = {1};
-    alpha = new MatrixFloat(1, dims, CblasColMajor);
+    alpha = new MatrixFloat(1, dims);
     (*alpha)(0) = alphaf;
-    beta = new MatrixFloat(1, dims, CblasColMajor);
+    beta = new MatrixFloat(1, dims);
     (*beta)(0) = betaf;
   }
   obj = new BetaDistribution(alpha, beta);
@@ -474,9 +474,9 @@ using namespace Stats;
     LUABIND_GET_PARAMETER(1, uint, ni);
     LUABIND_GET_PARAMETER(2, float, pf);
     int dims[1] = {1};
-    n = new MatrixFloat(1, dims, CblasColMajor);
+    n = new MatrixFloat(1, dims);
     (*n)(0) = static_cast<float>(ni);
-    p = new MatrixFloat(1, dims, CblasColMajor);
+    p = new MatrixFloat(1, dims);
     (*p)(0) = pf;
   }
   obj = new BinomialDistribution(n, p);

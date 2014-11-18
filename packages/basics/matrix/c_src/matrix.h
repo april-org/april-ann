@@ -49,8 +49,6 @@ namespace Basics {
     const char * const TAB_OPTION   = "tab";
     /// Boolean option key for read/write using ascii format.
     const char * const ASCII_OPTION = "ascii";
-    /// String option key for read/write in 'col_major' or 'row_major'.
-    const char * const ORDER_OPTION = "order";
     /// String option key with a delimitiers list.
     const char * const DELIM_OPTION = "delim";
     /// Boolean option key indicating if empty fields are allowed during read.
@@ -84,8 +82,6 @@ namespace Basics {
     // weight matrices)
     unsigned int shared_count;
   protected:
-    /// Indicator of transposition
-    bool transposed;
     /// Number of dimensions
     int numDim;
     /// Size of each dimension
@@ -100,18 +96,11 @@ namespace Basics {
     /// Pointer to data
     AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > data;
     AprilUtils::SharedPtr< AprilUtils::MMappedDataReader > mmapped_data;
-    /// Major type (only when numDim=2)
-    CBLAS_ORDER major_order;
     /// For CUDA purposes
     bool use_cuda;
     /// To know if it is contiguous
     mutable matrix_contiguous_enum_t is_contiguous;
   
-    /// Constructor... -> Integer array with the size of each dimension
-    /*
-      Matrix(int numDim, const int* dim, T* data_vector,
-      CBLAS_ORDER major_order = CblasRowMajor);
-    */
     /// Returns the data pointer for read and write
     T *getData() { return data->getPPALForReadAndWrite(); }
     /// Returns the data pointer for read
@@ -174,8 +163,8 @@ namespace Basics {
       const Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
-      /// The coords array is only used when the matrix is not congiuous
-      /// or it is in col_major order, otherwise it is NULL
+      /// The coords array is only used when the matrix is not congiuous,
+      /// otherwise it is NULL
       int *coords;
     public:
       pos_iterator(const Matrix<T> *m);
@@ -191,18 +180,14 @@ namespace Basics {
     };
     // forward declaration
     class const_iterator;
-    class col_major_iterator;
-    class const_col_major_iterator;
     class iterator {
       friend class const_iterator;
-      friend class col_major_iterator;
-      friend class const_col_major_iterator;
       friend class Matrix;
       Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
-      /// The coords array is only used when the matrix is not congiuous
-      /// or it is in col_major order, otherwise it is NULL
+      /// The coords array is only used when the matrix is not congiuous,
+      /// otherwise it is NULL
       int *coords;
       T *data;
       iterator(Matrix<T> *m);
@@ -222,44 +207,13 @@ namespace Basics {
       int getIdx() const { return idx; }
     };
     /*******************************************************/
-    class col_major_iterator {
-      friend class Matrix;
-      Matrix<T> *m; ///< A weak reference.
-      int idx;
-      int raw_pos;
-      /// The coords array is only used when the matrix is not congiuous
-      /// or it is in row_major order, otherwise it is NULL
-      int *coords;
-      T *data;
-      col_major_iterator(Matrix<T> *m);
-      col_major_iterator(Matrix<T> *m, int raw_pos);
-      col_major_iterator(Matrix<T> *m, int raw_pos, int *coords);
-    public:
-      col_major_iterator();
-      col_major_iterator(const col_major_iterator &other);
-      col_major_iterator(const iterator &other);
-      ~col_major_iterator();
-      col_major_iterator &operator=(const col_major_iterator &other);
-      col_major_iterator &operator=(const iterator &other);
-      bool      operator==(const col_major_iterator &other) const;
-      bool      operator==(const iterator &other) const;
-      bool      operator!=(const col_major_iterator &other) const;
-      bool      operator!=(const iterator &other) const;
-      col_major_iterator &operator++();
-      T &operator*();
-      T *operator->();
-      int getRawPos() const;
-      int getIdx() const { return idx; }
-    };
-    /*******************************************************/
     class const_iterator {
-      friend class const_col_major_iterator;
       friend class Matrix;
       const Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
-      /// The coords array is only used when the matrix is not congiuous
-      /// or it is in col_major order, otherwise it is NULL
+      /// The coords array is only used when the matrix is not congiuous,
+      /// otherwise it is NULL
       int *coords;
       const T *data;
       const_iterator(const Matrix<T> *m);
@@ -283,43 +237,7 @@ namespace Basics {
       int getRawPos() const;
       int getIdx() const { return idx; }
     };
-    /*******************************************************/
-    class const_col_major_iterator {
-      friend class Matrix;
-      const Matrix<T> *m; ///< A weak reference.
-      int idx;
-      int raw_pos;
-      /// The coords array is only used when the matrix is not congiuous
-      /// or it is in row_major order, otherwise it is NULL
-      int *coords;
-      const T *data;
-      const_col_major_iterator(const Matrix<T> *m);
-      const_col_major_iterator(const Matrix<T> *m, int raw_pos);
-      const_col_major_iterator(const Matrix<T> *m, int raw_pos, int *coords);
-    public:
-      const_col_major_iterator();
-      const_col_major_iterator(const const_col_major_iterator &other);
-      const_col_major_iterator(const iterator &other);
-      const_col_major_iterator(const const_iterator &other);
-      /*const_col_major_iterator(const iterator &other);*/
-      ~const_col_major_iterator();
-      const_col_major_iterator &operator=(const const_col_major_iterator &other);
-      const_col_major_iterator &operator=(const iterator &other);
-      const_col_major_iterator &operator=(const const_iterator &other);
-      bool            operator==(const const_col_major_iterator &other) const;
-      bool            operator==(const iterator &other) const;
-      bool            operator==(const const_iterator &other) const;
-      bool            operator!=(const const_col_major_iterator &other) const;
-      bool            operator!=(const iterator &other) const;
-      bool            operator!=(const const_iterator &other) const;
-      const_col_major_iterator &operator++();
-      const T &operator*() const;
-      const T *operator->() const;
-      int getRawPos() const;
-      int getIdx() const { return idx; }
-    };
     
-
     /********************************************************/
     /**
      * The sliding is a kind of iterator which traverses the matrix producing
@@ -394,15 +312,13 @@ namespace Basics {
           const int a_sz = m->matrixSize[a];
           const int b_sz = m->matrixSize[b];
           if (a_sz == b_sz) {
-            if (m->major_order == CblasRowMajor)
-              return b < a;
-            else
-              return a < b;
+            return b < a;
           }
           // Don't use a trade-off between size and stride, it will be unsafe with
           // transposed matrices
-          else
+          else {
             return a_sz > b_sz;
+          }
         }
       };
       //
@@ -554,8 +470,8 @@ namespace Basics {
     //
     Matrix(int numDim, const int *stride, const int offset,
            const int *matrixSize, const int total_size, const int last_raw_pos,
-           AprilMath::GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
-           const bool use_cuda, const bool transposed,
+           AprilMath::GPUMirroredMemoryBlock<T> *data,
+           const bool use_cuda,
            AprilUtils::MMappedDataReader *mmapped_data = 0);
 
     /// Modifies the offset of the matrix. WARNING, this method doesn't check the
@@ -570,15 +486,13 @@ namespace Basics {
 
   public:
     /********** Constructors ***********/
-    /// Full constructor given numDim, dim, and major_order
+    /// Full constructor given numDim, dim, data, offset
     Matrix(int numDim, const int* dim,
-           CBLAS_ORDER major_order = CblasRowMajor,
            AprilMath::GPUMirroredMemoryBlock<T> *data = 0,
-           int offset = 0,
-           bool transposed = false);
+           int offset = 0);
   
-    /// Constructor for CblasRowMajor order
-    Matrix(int numDim, int d1, ...);
+    /// Constructor with variadic arguments.
+    explicit Matrix(int numDim, int d1, ...);
   
     /// Constructor given other matrix, it does a shallow or deep copy (clone). By
     /// default is a deep copy, some code pieces expect this behavior, don't
@@ -590,9 +504,9 @@ namespace Basics {
            bool clone=true);
     /// Sub-matrix constructor of a const matrix. WARNING, this matrices don't
     /// allow writes if clone=false
-    Matrix(const Matrix<T> *other,
-           const int* coords, const int *sizes,
-           bool clone=true);
+    explicit Matrix(const Matrix<T> *other,
+                    const int* coords, const int *sizes,
+                    bool clone=true);
     /// Destructor
     virtual ~Matrix();
   
@@ -619,12 +533,6 @@ namespace Basics {
     int getDimSize(int i) const { return matrixSize[i]; }
     int getStrideSize(int i) const { return stride[i]; }
     int size() const { return total_size; }
-    CBLAS_ORDER getMajorOrder() const { return major_order; }
-    bool getTransposedFlag() const { return transposed; }
-    bool getIsDataRowOrdered() const {
-      return ( (getMajorOrder()==CblasRowMajor && !getTransposedFlag()) ||
-               (getMajorOrder()==CblasColMajor &&  getTransposedFlag()) );
-    }
     void setUseCuda(bool v) {
       use_cuda = v;
 #ifdef USE_CUDA
@@ -633,7 +541,7 @@ namespace Basics {
     }
     bool getCudaFlag() const { return use_cuda; }
     bool isSimple() const {
-      return (getIsContiguous())&&(getIsDataRowOrdered());
+      return (getIsContiguous());
     }
     /// Indicates if it is a contiguous matrix
     bool getIsContiguous() const;
@@ -688,20 +596,16 @@ namespace Basics {
       return end_const_iterator;
     }
 
-    /// Symbolic transposition, changes the flag and preserves the major order
-    /// flag
+    /// Symbolic transposition, changes strides order
     Matrix<T>* transpose();
-    /// Changing major order is a different way to perform a transposition, but
-    /// taking into account a change in the major_order flag
-    Matrix<T>* inMajorOrder(CBLAS_ORDER new_major_order);
+    /// Symbolic transposition, changes strides order
+    Matrix<T>* transpose(int dim1, int dim2);
     /// Copy only sizes, but not data
     Matrix<T>* cloneOnlyDims() const;
     /// Deep copy
     Matrix<T>* clone() const;
-    /// Deep copy with different major_order
-    Matrix<T> *clone(CBLAS_ORDER major_order) const;
     /// Shallow copy
-    Matrix<T>* shallow_copy();
+    Matrix<T>* shallowCopy();
   
     /// Number values check
     void pruneSubnormalAndCheckNormal();
@@ -728,8 +632,8 @@ namespace Basics {
     const T& operator() (int coord0, int coord1, int coord2, ...) const;
     const T& operator() (int *coords, int sz) const;
   
-    /// Function to obtain RAW access to data pointer. Be careful with it, because
-    /// you are losing sub-matrix abstraction, and the major order.
+    /// Function to obtain RAW access to data pointer. Be careful with it, you
+    /// are losing sub-matrix abstraction.
     AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
     const AprilMath::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
   
@@ -788,7 +692,7 @@ namespace Basics {
      *   true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const AprilUtils::GenericOptions *options);
+                       const AprilUtils::LuaTable &options);
     
     /**
      * @brief Reads the Matrix from a stream.
@@ -801,12 +705,6 @@ namespace Basics {
      * - MatrixIO::TAB_OPTION contains a bool value indicating if read the
      *   Matrix in a tabulated way (true) or in the APRIL-ANN Matrix format
      *   (false). By default it is false.
-     *
-     * - MatrixIO::ORDER_OPTION this key contains a string with "row_major",
-     *   "col_major", or it can be not defined at all. It forces the read()
-     *   method to allocate a Matrix in the indicate major order. By default it
-     *   is not defined and the major order will be taken from the file in case
-     *   @c TAB_OPTION=false or in "row_major" in case @c TAB_OPTION=true.
      *
      * - MatrixIO::DELIM_OPTION if @c TAB_OPTION=true this key contains a string
      *   value with a list of delimitiers. By default it is "\n\r\t,; ".
@@ -836,7 +734,7 @@ namespace Basics {
      * @note This method throws different kind of errors.
      */
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const AprilUtils::GenericOptions *options);
+                           const AprilUtils::LuaTable &options);
     
   private:
     void allocate_memory(int size);
@@ -852,19 +750,16 @@ namespace Basics {
     }
 
     void writeNormal(AprilIO::StreamInterface *stream,
-                     const AprilUtils::GenericOptions *options);
+                     const AprilUtils::LuaTable &options);
     
     void writeTab(AprilIO::StreamInterface *stream,
-                  const AprilUtils::GenericOptions *options);
+                  const AprilUtils::LuaTable &options);
 
     static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
-                                 const AprilUtils::GenericOptions *options);
+                                 const AprilUtils::LuaTable &options);
     
     static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const AprilUtils::GenericOptions *options);
-    
-    static T getTemplateOption(const AprilUtils::GenericOptions *options,
-                               const char *name, T default_value);
+                              const AprilUtils::LuaTable &options);
   };
 
 } // namespace Basics
@@ -877,5 +772,12 @@ namespace Basics {
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
 #include "matrix-serialization.impl.h"
+
+#include "matrixFloat.h"
+#include "matrixDouble.h"
+#include "matrixComplexF.h"
+#include "matrixInt32.h"
+#include "matrixChar.h"
+#include "matrixBool.h"
 
 #endif // MATRIX_H

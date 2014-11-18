@@ -132,15 +132,14 @@ namespace ANN {
           ERROR_EXIT(128, "Different bunch size between forward and backprop\n");
         }
         error_output_mat = new MatrixFloat(input_mat->getNumDim(),
-                                           input_mat->getDimPtr(),
-                                           CblasColMajor);
+                                           input_mat->getDimPtr());
         break;
       }
     case table_of_token_codes::vector_Tokens:
       {
         int dims[2] = { static_cast<int>(bunch_size),
                         static_cast<int>(input_size) };
-        error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
+        error_output_mat = new MatrixFloat(2, dims);
         break;
       }
     default:
@@ -194,8 +193,8 @@ namespace ANN {
 
   void CopyANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       MatrixFloatSet *weights_dict,
-			       hash<string,ANNComponent*> &components_dict) {
+			       AprilUtils::LuaTable &weights_dict,
+			       AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     if (output_size == 0) output_size = input_size * times;

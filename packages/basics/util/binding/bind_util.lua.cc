@@ -18,8 +18,33 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-//BIND_HEADER_C
+//BIND_HEADER_H
+#include <cmath>
+#include <ctime>
+#include <cstdlib>
 
+#include "mfset.h"
+#include "mmapped_data.h"
+#include "linear_least_squares.h"
+#include "lua_table.h"
+#include "popen2.h"
+#include "signal_handler.h"
+#include "trie_vector.h"
+#include "trie_hash_4_lua.h"
+#include "stopwatch.h"
+#include "words_table.h"
+
+using namespace AprilUtils;
+
+extern const char *__COMMIT_NUMBER__;
+
+int lua_isLuaTable(lua_State *L, int idx);
+AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx);
+void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &tbl);
+
+//BIND_END
+
+//BIND_HEADER_C
 #include <cmath>
 #include <cstring>
 #include <csignal>
@@ -36,9 +61,50 @@ extern "C" {
 #endif
 #include "binarizer.h"
 #include "error_print.h"
-#include "generic_options.h"
 #include "omp_utils.h"
 #include "smart_ptr.h"
+
+int lua_isLuaTable(lua_State *L, int idx) {
+  return lua_istable(L, idx);
+}
+
+AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx) {
+  return AprilUtils::LuaTable(L, idx);
+}
+
+void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &tbl) {
+  tbl.pushTable(L);
+}
+
+namespace AprilUtils {
+
+  template<> LuaTable LuaTable::convertTo<LuaTable>(lua_State *L, int idx) {
+    return lua_toLuaTable(L, idx);
+  }
+
+  template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value) {
+    value.pushTable(L);
+  }
+
+  template<> bool LuaTable::checkType<LuaTable>(lua_State *L, int idx) {
+    return lua_isLuaTable(L, idx);
+  }
+
+  template<> stopwatch *LuaTable::
+  convertTo<stopwatch *>(lua_State *L, int idx) {
+    return lua_tostopwatch(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<stopwatch *>(lua_State *L, stopwatch *value) {
+    lua_pushstopwatch(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<stopwatch *>(lua_State *L, int idx) {
+    return lua_isstopwatch(L, idx);
+  }
+}
 
 // COPIED FROM liolib.c:168
 static int io_fclose (lua_State *L) {
@@ -57,31 +123,10 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
-//BIND_HEADER_H
-#include "mfset.h"
-#include "trie_vector.h"
-#include "trie_hash_4_lua.h"
-#include "stopwatch.h"
-#include "linear_least_squares.h"
-#include "words_table.h"
-#include <cmath>
-#include <ctime>
-#include "popen2.h"
-#include "signal_handler.h"
-#include <cstdlib>
-#include "mmapped_data.h"
-
-using namespace AprilUtils;
-
-extern const char *__COMMIT_NUMBER__;
-
-//BIND_END
-
 //BIND_STATIC_CONSTRUCTOR utils_static_constructor
 {
   binarizer::init();
   SignalHandler::initialize(L);
-  errorPrintSetLuaState(L);
 }
 //BIND_END
 
@@ -582,6 +627,12 @@ extern const char *__COMMIT_NUMBER__;
 }
 //BIND_END
 
+//BIND_METHOD stopwatch to_lua_string
+{
+  LUABIND_RETURN(string, "stopwatch()");
+}
+//BIND_END
+
 // FIXME: nanosleep puede volver antes, en tal caso para avisar a lua
 // se podría devolver el booleano que devuelve (y que estamos
 // ignorando) y el tiempo restante :P
@@ -831,6 +882,20 @@ extern const char *__COMMIT_NUMBER__;
 
 /////////////////////////////////////////////////////////////////////////////
 
+//BIND_FUNCTION util.silent_errors
+{
+  int argn = lua_gettop(L);
+  if (argn > 0) {
+    bool v;
+    LUABIND_GET_PARAMETER(1, bool, v);
+    setSilentErrorsValue(v);
+  }
+  LUABIND_RETURN(bool, getSilentErrorsValue());
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
 //BIND_FUNCTION util.options.test
 {
   AprilUtils::SharedPtr<stopwatch> clock = new stopwatch();
@@ -841,12 +906,11 @@ extern const char *__COMMIT_NUMBER__;
   // stack: table stopwatch
   lua_setfield(L,-2,"clock1");
   // stack: table
-  AprilUtils::UniquePtr<AprilUtils::LuaTableOptions>
-    opt(new AprilUtils::LuaTableOptions(L,1));
-  opt->putReferenced("clock2", clock.get());
+  AprilUtils::LuaTable opt(L,1);
+  opt.put("clock2", clock.get());
   //
-  stopwatch *opt_clock1 = opt->getReferenced<stopwatch>("clock1");
-  stopwatch *opt_clock2 = opt->getReferenced<stopwatch>("clock2");
+  stopwatch *opt_clock1 = opt.get<stopwatch *>("clock1");
+  stopwatch *opt_clock2 = opt.get<stopwatch *>("clock2");
   // stack: table
   lua_getfield(L,-1,"clock1");
   // stack: table stopwatch
@@ -855,21 +919,19 @@ extern const char *__COMMIT_NUMBER__;
   lua_pop(L,1);
   // stack: table
   lua_getfield(L,-1,"clock2");
-  if (lua_type(L,-1) != LUA_TUSERDATA) LUABIND_ERROR("TEST 1 FAILED\n");
+  if (!lua_isstopwatch(L,-1)) LUABIND_ERROR("TEST 1 FAILED\n");
   // stack: table stopwatch
-  Referenced **pre_obj = static_cast<Referenced**>(lua_touserdata(L,-1));
-  Referenced *obj = 0;
-  if (pre_obj != 0) obj = (*pre_obj);
-  else LUABIND_ERROR("TEST 2 FAILED\n");
-  stopwatch *tbl_clock2 = dynamic_cast<stopwatch*>(obj);
-  if (tbl_clock2 == 0) LUABIND_ERROR("TEST 3 FAILED\n");
+  stopwatch *tbl_clock2 = lua_tostopwatch(L,-1);
+  if (tbl_clock2 == 0) LUABIND_ERROR("TEST 2 FAILED\n");
   // stack: table stopwatch
   lua_pop(L,1);
   // stack: table
   if (opt_clock1 != tbl_clock1) LUABIND_ERROR("TEST 1 FAILED\n");
   if (opt_clock2 != tbl_clock2) LUABIND_ERROR("TEST 2 FAILED\n");
   //
-  opt->putString("str", "Hello world!");
-  return 1; // returns the table
+  opt.put("str", "Hello world!");
+  string str(opt.toLuaString());
+  lua_pushstring(L, str.c_str());
+  return 2; // returns the table
 }
 //BIND_END

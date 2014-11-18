@@ -53,13 +53,23 @@ namespace Basics {
 
   } // namespace MatrixIO
 
-  template<>
-  char Matrix<char>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                       const char *name, char default_value);
-  
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<char> MatrixChar;
 
 } // namespace Basics
+
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::MatrixChar *LuaTable::
+  convertTo<Basics::MatrixChar *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixChar *>(lua_State *L, Basics::MatrixChar *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixChar *>(lua_State *L, int idx);
+}
 
 #endif // MATRIX_CHAR_H

@@ -65,7 +65,7 @@ function language_models.get_sentence_prob(params)
     sum = sum + p
   end
 
-  for word_id,word in words_it() do
+  for word_id,word in words_it do
     -- the word which will be passed to print_pw function; a showed_word==nil
     -- means to show nothing
     local printed_word
@@ -250,7 +250,7 @@ function language_models.test_set_ppl(params)
   local lines_it = iterator(io.lines(testset)):
   map( function(line) return line,iterator(line:gmatch("[^%s]+")) end )
 
-  for sentence,words_it in lines_it() do
+  for sentence,words_it in lines_it do
     words_it = words_it:map( function(w) return (vocab:getWordId(w) or unk_id),w end )
     local use_sentence = true
     if train_restriction then

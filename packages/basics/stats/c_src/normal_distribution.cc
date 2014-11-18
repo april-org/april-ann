@@ -51,9 +51,6 @@ namespace Stats {
       ERROR_EXIT(128, "Expected squared bi-dimensional cov matrix\n");
     if (mean->getDimSize(0) != cov->getDimSize(0))
       ERROR_EXIT(128, "Expected mean and cov matrix with same size\n");
-    if (mean->getMajorOrder() != CblasColMajor ||
-        cov->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Expected col_major matrices\n");
     IncRef(mean);
     IncRef(cov);
     updateParams();
@@ -104,7 +101,7 @@ namespace Stats {
                                                 MatrixFloat *result) {
     SharedPtr<MatrixFloat> diff( x->clone() );
     int dims[1] = { x->getDimSize(1) };
-    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims, CblasColMajor) );
+    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims) );
     // over all samples (bunch_size)
     MatrixFloat::iterator result_it(result->begin());
     SharedPtr<MatrixFloat> diff_row;
@@ -145,12 +142,12 @@ namespace Stats {
   
   char *GeneralNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.normal(matrix.fromString[[");
-    mean->write(stream.get(), &options);
+    mean->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    cov->write(stream.get(), &options);
+    cov->write(stream.get(), options);
     stream->put("]])\0",4);
     return stream->releaseString();
   }
@@ -167,8 +164,6 @@ namespace Stats {
       ERROR_EXIT(128, "Expected squared bi-dimensional cov matrix\n");
     if (mean->getDimSize(0) != cov->getDimSize(0))
       ERROR_EXIT(128, "Expected mean and cov matrix with same size\n");
-    if (mean->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Expected col_major mean matrix\n");
     IncRef(mean);
     IncRef(cov);
     updateParams();
@@ -220,7 +215,8 @@ namespace Stats {
     for (MatrixFloat::iterator z_it = z->begin(); z_it != z->end(); ++z_it) {
       *z_it = static_cast<float>(rng->randNorm(0.0, 1.0));
     }
-    matSparseMM(result, CblasTrans, CblasTrans, CblasTrans,
+    SharedPtr<MatrixFloat> rT(result->transpose());
+    matSparseMM(rT.get(), CblasTrans, CblasTrans,
                 1.0f, L, z.get(), 0.0f);
     SharedPtr<MatrixFloat> result_row;
     for (int i=0; i<result->getDimSize(0); ++i) {
@@ -233,7 +229,7 @@ namespace Stats {
                                                  MatrixFloat *result) {
     SharedPtr<MatrixFloat> diff( x->clone() );
     int dims[1] = { x->getDimSize(1) };
-    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims, CblasColMajor) );
+    SharedPtr<MatrixFloat> mult( new MatrixFloat(1, dims) );
     // over all samples (bunch_size)
     MatrixFloat::iterator result_it(result->begin());
     SharedPtr<MatrixFloat> diff_row;
@@ -274,12 +270,12 @@ namespace Stats {
   
   char *DiagonalNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.normal(matrix.fromString[[");
-    mean->write(stream.get(), &options);
+    mean->write(stream.get(), options);
     stream->put("]], matrix.sparse.fromString[[");
-    cov->write(stream.get(), &options);
+    cov->write(stream.get(), options);
     stream->put("]])\0",4); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }
@@ -402,14 +398,14 @@ namespace Stats {
   
   char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.lognormal(matrix.fromString[[");
-    mean->write(stream.get(), &options);
+    mean->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    cov->write(stream.get(), &options);
+    cov->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    location->write(stream.get(), &options);
+    location->write(stream.get(), options);
     stream->put("]])\0",4); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }
@@ -482,14 +478,14 @@ namespace Stats {
   
   char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.lognormal(matrix.fromString[[");
-    mean->write(stream.get(), &options);
+    mean->write(stream.get(), options);
     stream->put("]], matrix.sparse.fromString[[");
-    cov->write(stream.get(), &options);
+    cov->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    location->write(stream.get(), &options);
+    location->write(stream.get(), options);
     stream->put("]])\0",4); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }

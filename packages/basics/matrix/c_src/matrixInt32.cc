@@ -69,13 +69,6 @@ namespace Basics {
 
   } // namespace MatrixIO
   
-  template<>
-  int32_t Matrix<int32_t>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name, int32_t default_value) {
-    return options->getOptionalInt32(name, default_value);
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   
   template class Matrix<int32_t>;

@@ -210,6 +210,7 @@ trainer_deep_wo_pretraining:set_layerwise_option("b.*", "weight_decay",0.0)
 trainer_shallow_classifier:set_layerwise_option("b.*", "weight_decay",0.0)
 
 for i=1,2 do
+  fprintf(io.stderr, "# epoch %d\n", i)
   local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = trainer_deep_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = trainer_shallow_classifier:train_dataset(datosentrenar_shallow)

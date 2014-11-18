@@ -1,7 +1,5 @@
 get_table_from_dotted_string("bayesian", true)
 
-local wrap_matrices = matrix.dict.wrap_matrices
-
 ------------------------------------------------------------------------------
 
 local make_value = function(value)
@@ -68,7 +66,7 @@ function priors_class:constructor(tree,order,outcomes)
 end
 
 function priors_methods:compute_neg_log_prior(weights)
-  local weights = wrap_matrices(weights or {})
+  error("NOT IMPLEMENTED")
   local logprob = 0.0
   for name,m in pairs(self.outcomes) do
     local d = self.tree[name].obj
@@ -120,7 +118,6 @@ end
 
 function priors_methods:sample(rng, weights)
   local outcomes = {}
-  local weights  = wrap_matrices(weights or {})
   for _,name in ipairs(self.order) do
     local v = assert( self.tree[name] )
     local s = sampling_funcs[v.t](v, outcomes)
@@ -135,8 +132,6 @@ function priors_methods:sample(rng, weights)
 end
 
 function priors_methods:update_gradients_with_priors(weights, grads)
-  local weights  = wrap_matrices(weights or {})
-  local grads  = wrap_matrices(grads or {})
   for name,w in pairs(weights) do
     local wgrads = assert( grads(name) )
     local v = self.tree[name]

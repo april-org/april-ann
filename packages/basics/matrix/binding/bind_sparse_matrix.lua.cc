@@ -29,6 +29,24 @@
 #include "luabindmacros.h" // for lua_pushfloat and lua_pushint
 #include "luabindutil.h"   // for lua_pushfloat and lua_pushint
 
+namespace AprilUtils {
+  template<> Basics::SparseMatrixFloat *LuaTable::
+  convertTo<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
+    return lua_toSparseMatrixFloat(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<Basics::SparseMatrixFloat *>(lua_State *L,
+                                        Basics::SparseMatrixFloat *value) {
+    lua_pushSparseMatrixFloat(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
+    return lua_isSparseMatrixFloat(L, idx);
+  }
+}
+
 namespace Basics {
   int sparseMatrixFloatIteratorFunction(lua_State *L) {
     SparseMatrixFloatIterator *obj = lua_toSparseMatrixFloatIterator(L,1);
@@ -87,8 +105,8 @@ namespace Basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    AprilUtils::LuaTableOptions options(L,2);
-    return SparseMatrix<T>::read(ptr.get(), &options);
+    AprilUtils::LuaTable options(L,2);
+    return SparseMatrix<T>::read(ptr.get(), options);
   }
 
 } // namespace Basics
@@ -353,13 +371,7 @@ using namespace Basics;
 
 //BIND_METHOD SparseMatrixFloat to_dense
 {
-  const char *major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-  CBLAS_ORDER order=CblasRowMajor;
-  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-  else if (strcmp(major, "row_major") != 0)
-    LUABIND_FERROR1("Incorrect major order string %s", major);
-  LUABIND_RETURN(MatrixFloat, obj->toDense(order));
+  LUABIND_RETURN(MatrixFloat, obj->toDense());
 }
 //BIND_END
 

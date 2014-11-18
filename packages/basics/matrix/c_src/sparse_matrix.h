@@ -176,7 +176,7 @@ namespace Basics {
 
     /// Constructor given a dense matrix, it does constructs a sparse matrix
     /// (cloned).
-    SparseMatrix(const Matrix<T> *other,
+    SparseMatrix(Matrix<T> *other,
                  const SPARSE_FORMAT sparse_format = CSR_FORMAT,
                  const T zero = T());
     /// Constructor given other matrix, it does a deep copy (clone).
@@ -278,7 +278,7 @@ namespace Basics {
     SparseMatrix<T> *clone(SPARSE_FORMAT sparse_format = NONE_FORMAT) const;
   
     /// Returns an equivalent dense matrix
-    Matrix<T> *toDense(CBLAS_ORDER order=CblasRowMajor) const;
+    Matrix<T> *toDense() const;
   
     /// Number values check
     void pruneSubnormalAndCheckNormal();
@@ -300,7 +300,7 @@ namespace Basics {
     const T operator() (int row, int col) const;
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
-    /// you are losing sub-matrix abstraction, and the major order.
+    /// you are losing sub-matrix abstraction.
     AprilMath::GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values.get(); }
     AprilMath::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices.get(); }
     AprilMath::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index.get(); }
@@ -412,7 +412,7 @@ namespace Basics {
      * Any key/value in @c options dictionary will be ignored.
      */
     static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
-                                 const AprilUtils::GenericOptions *options);
+                                 const AprilUtils::LuaTable &options);
 
     /**
      * @brief Writes the SparseMatrix into a stream.
@@ -424,7 +424,7 @@ namespace Basics {
      *   binarization purposes. By default it is true.
      */
     virtual void write(AprilIO::StreamInterface *stream,
-                       const AprilUtils::GenericOptions *options);
+                       const AprilUtils::LuaTable &options);
 
     
   private:
@@ -449,5 +449,7 @@ namespace Basics {
 #include "sparse_matrix.impl.h"
 #include "sparse_matrix-iterators.impl.h"
 #include "sparse_matrix-serialization.impl.h"
+
+#include "sparse_matrixFloat.h"
 
 #endif // SPARSE_MATRIX_H

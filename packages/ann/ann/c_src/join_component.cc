@@ -181,7 +181,7 @@ namespace ANN {
 		      static_cast<int>(output_size) :
 		      static_cast<int>(input_size) };
     int coords[2] = { 0, 0 };
-    full_mat = new MatrixFloat(2, sizes, CblasColMajor);
+    full_mat = new MatrixFloat(2, sizes);
 #ifdef USE_CUDA
     full_mat->setUseCuda(use_cuda);
 #endif
@@ -268,10 +268,10 @@ namespace ANN {
       components[i]->reset(it);
   }
   
-  void JoinANNComponent::computeAllGradients(MatrixFloatSet
-					     *weight_grads_dict) {
-    for (unsigned int c=0; c<components.size(); ++c)
+  void JoinANNComponent::computeAllGradients(AprilUtils::LuaTable &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c) {
       components[c]->computeAllGradients(weight_grads_dict);
+    }
   }
   
   ANNComponent *JoinANNComponent::clone() {
@@ -285,8 +285,8 @@ namespace ANN {
 
   void JoinANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       MatrixFloatSet *weights_dict,
-			       hash<string,ANNComponent*> &components_dict) {
+			       AprilUtils::LuaTable &weights_dict,
+			       AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     //
@@ -325,12 +325,12 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void JoinANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void JoinANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->copyWeights(weights_dict);
   }
 
-  void JoinANNComponent::copyComponents(hash<string,ANNComponent*> &components_dict) {
+  void JoinANNComponent::copyComponents(AprilUtils::LuaTable &components_dict) {
     ANNComponent::copyComponents(components_dict);
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->copyComponents(components_dict);

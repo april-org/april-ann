@@ -77,12 +77,6 @@ namespace Basics {
   
 
   } // namespace MatrixIO
-
-  template<>
-  float Matrix<float>::getTemplateOption(const AprilUtils::GenericOptions *options,
-                                         const char *name, float default_value) {
-    return options->getOptionalFloat(name, default_value);
-  }
   
   template <>
   void Matrix<float>::pruneSubnormalAndCheckNormal() {

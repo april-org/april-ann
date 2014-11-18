@@ -45,10 +45,6 @@ namespace AprilMath {
             aux_step[0] = aux_step[1] = 1;
             for (int i=0; i<D; ++i) aux_step[i+2] = step[i];
           }
-          if (mat->getMajorOrder() == CblasColMajor) {
-            order_step = new int[numDim];
-            for (int i=0; i<numDim; ++i) order_step[i] = i;
-          }
           switch(D+2 - numDim) {
           case 2: // numDim == D
             // Kx1xN1xN2x...xNd kernel :: M1xM2x...xMd matrix
@@ -116,7 +112,7 @@ namespace AprilMath {
                           mat_sw->numWindows()/bunch_size,
                           mat_slice->size() };
           Basics::Matrix<T> *unrolled_mat =
-            new Basics::Matrix<T>(3, dims,mat->getMajorOrder());
+            new Basics::Matrix<T>(3, dims);
           AprilUtils::UniquePtr<int []> aux_dims(new int[mat_slice->getNumDim()+2]);
           aux_dims[0] = dims[0];
           aux_dims[1] = dims[1];
@@ -129,10 +125,6 @@ namespace AprilMath {
           aux_dims[0] = 1;
           aux_dims[1] = 1;
           AprilUtils::UniquePtr<int []> order_step;
-          if (mat->getMajorOrder() == CblasColMajor) {
-            order_step = new int[mat_slice->getNumDim()+2];
-            for (int i=0; i<mat_slice->getNumDim()+2; ++i) order_step[i] = i;
-          }
           AprilUtils::SharedPtr< typename Basics::Matrix<T>::sliding_window >
             unrolled_sw( new typename Basics::Matrix<T>::
                          sliding_window(unrolled_mat_rewrapped.get(),
@@ -215,8 +207,7 @@ namespace AprilMath {
           }
           // allocate new result matrix if not given
           if (result == 0) {
-            result = new Basics::Matrix<T>(D+2, result_sizes.get(),
-                                           mat->getMajorOrder());
+            result = new Basics::Matrix<T>(D+2, result_sizes.get());
           }
           // check result matrix sizes (includes number of planes = number of kernels)
           else {

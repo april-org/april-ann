@@ -30,17 +30,12 @@ using namespace Basics;
 
 namespace ANN {
 
-  ///////////////////////////////////////////
+  ////////////////////////////////////////////
   // ConvolutionANNComponent implementation //
-  ///////////////////////////////////////////
+  ////////////////////////////////////////////
 
   void ConvolutionANNComponent::initializeArrays(const int *input_dims) {
-    for (int i=1; i<input_planes_dim; ++i) {
-      output_dims[i+1] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
-      input_window_num_steps[i]    = output_dims[i+1];
-      output_window_num_steps[i+1] = output_dims[i+1];
-    }
-    for (int i=input_planes_dim+1; i<=input_num_dims; ++i) {
+    for (int i=2; i<=input_num_dims; ++i) {
       output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
       input_window_num_steps[i]  = output_dims[i];
       output_window_num_steps[i] = output_dims[i];
@@ -58,7 +53,7 @@ namespace ANN {
     output_dims[1]	       = hidden_size;
     input_window_size[0]       = input_dims[0];
     input_window_num_steps[0]  = 1;
-    input_window_num_steps[input_planes_dim] = 1;
+    input_window_num_steps[1]  = 1;
     output_window_size[0]      = input_dims[0];
     // AT CONSTRUCTOR: output_window_size[1] = hidden_size;
     output_window_num_steps[0] = 1;
@@ -67,25 +62,20 @@ namespace ANN {
     // AT CONSTRUCTOR: input_window_rewrap[1] = kernel_size;
     output_window_rewrap[0]    = input_dims[0];
     // AT CONSTRUCTOR: output_window_rewrap[1] = hidden_size;
-    if (input_dims[input_planes_dim] != kernel_dims[input_planes_dim])
-      ERROR_EXIT7(128, "Input matrix dim %d must be equals to kernel dim %d, "
-		  "input_dims[%d]=%d, kernel_dims[%d]=%d [%s]\n",
-		  input_planes_dim, input_planes_dim,
-		  input_planes_dim, input_dims[input_planes_dim],
-		  input_planes_dim, kernel_dims[input_planes_dim],
-		  name.c_str());
+    if (input_dims[1] != kernel_dims[1])
+      ERROR_EXIT3(128, "Input matrix dim 1 must be equals to kernel dim 1, "
+		  "input_dims[1]=%d != kernel_dims[1]=%d [%s]\n",
+		  input_dims[1], kernel_dims[1], name.c_str());
   }
   
   ConvolutionANNComponent::ConvolutionANNComponent(int input_num_dims,
 						   const int *_kernel_dims,
 						   const int *_kernel_step,
-						   const int input_planes_dim,
 						   int num_output_planes,
 						   const char *name,
 						   const char *weights_name) :
     VirtualMatrixANNComponent(name, weights_name, 0, 0),
     weights_matrix(0),
-    input_planes_dim(input_planes_dim),
     number_input_windows(0),
     kernel_size(1),
     hidden_size(num_output_planes),
@@ -95,29 +85,23 @@ namespace ANN {
     output_dims(new int[input_num_dims+1]),
     input_window_size(new int[input_num_dims+1]),
     input_window_num_steps(new int[input_num_dims+1]),
-    input_window_order_step(new int[input_num_dims+1]),
     input_window_rewrap(new int[2]),
     output_window_size(new int[input_num_dims+1]),
     output_window_step(new int[input_num_dims+1]),
     output_window_num_steps(new int[input_num_dims+1]),
-    output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
     kernel_dims[0] = static_cast<int>(hidden_size);
     kernel_step[0] = 1;
-    input_window_order_step[0] = 0;
     output_window_size[0] = 0;
     output_window_size[1] = static_cast<int>(hidden_size);
-    output_window_order_step[0] = 0;
     output_window_step[0] = 1;
     output_window_step[1] = 1;
     for(int i=0; i<input_num_dims; ++i) {
       kernel_size *= _kernel_dims[i];
       kernel_dims[i+1] = _kernel_dims[i];
       kernel_step[i+1] = _kernel_step[i];
-      input_window_order_step[i+1] = i+1;
-      output_window_order_step[i+1] = i+1;
       input_window_size[i+1] = kernel_dims[i+1];
     }
     for(int i=2; i<=input_num_dims; ++i) {
@@ -137,11 +121,9 @@ namespace ANN {
     delete[] output_dims;
     delete[] input_window_size;
     delete[] input_window_num_steps;
-    delete[] input_window_order_step;
     delete[] output_window_size;
     delete[] output_window_step;
     delete[] output_window_num_steps;
-    delete[] output_window_order_step;
     delete[] input_window_rewrap;
     delete[] output_window_rewrap;
   }
@@ -160,7 +142,7 @@ namespace ANN {
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
-    output_mat = new MatrixFloat(input_num_dims+1, output_dims, CblasColMajor);
+    output_mat = new MatrixFloat(input_num_dims+1, output_dims);
     IncRef(output_mat);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
@@ -173,14 +155,12 @@ namespace ANN {
       new MatrixFloat::sliding_window(input_mat, input_window_size,
                                       0,  // OFFSET
                                       kernel_step,
-                                      input_window_num_steps,
-                                      input_window_order_step);
+                                      input_window_num_steps);
     MatrixFloat::sliding_window *output_sw =
       new MatrixFloat::sliding_window(output_mat, output_window_size,
                                       0,  // OFFSET
                                       output_window_step,
-                                      output_window_num_steps,
-                                      output_window_order_step);
+                                      output_window_num_steps);
     number_input_windows = input_sw->numWindows();
     // CONVOLUTION OVER number_input_windows
     MatrixFloat *input_w  = input_sw->getMatrix();
@@ -253,14 +233,12 @@ namespace ANN {
       new MatrixFloat::sliding_window(error_output_mat, input_window_size,
                                       0,  // OFFSET
                                       kernel_step,
-                                      input_window_num_steps,
-                                      input_window_order_step);
+                                      input_window_num_steps);
     MatrixFloat::sliding_window *error_input_sw =
       new MatrixFloat::sliding_window(error_input_mat, output_window_size,
                                       0,  // OFFSET
                                       output_window_step,
-                                      output_window_num_steps,
-                                      output_window_order_step);
+                                      output_window_num_steps);
     april_assert(error_input_sw->numWindows() == number_input_windows);
     // CONVOLUTION GRADIENT
     MatrixFloat *error_input_w  = error_input_sw->getMatrix();
@@ -316,11 +294,14 @@ namespace ANN {
     return error_output_mat;
   }
   
-  void ConvolutionANNComponent::computeGradients(AprilUtils::SharedPtr<MatrixFloat> &grads_mat) {
+  void ConvolutionANNComponent::computeGradients(const char *name,
+                                                 AprilUtils::LuaTable &grads_mat_dict) {
     weights_matrix->addToSharedCount(number_input_windows);
-    if (grads_mat.empty()) {
+    MatrixFloat *grads_mat = grads_mat_dict.opt<MatrixFloat*>(name, 0);
+    if (grads_mat == 0) {
       grads_mat = weights_matrix->cloneOnlyDims();
-      matZeros(grads_mat.get());
+      matZeros(grads_mat);
+      grads_mat_dict.put(name, grads_mat);
     }
 #ifdef USE_CUDA
     grads_mat->setUseCuda(use_cuda);
@@ -331,13 +312,11 @@ namespace ANN {
     MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
 					 0,  // OFFSET
 					 kernel_step,
-					 input_window_num_steps,
-					 input_window_order_step);
+					 input_window_num_steps);
     MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
 					       0,  // OFFSET
 					       output_window_step,
-					       output_window_num_steps,
-					       output_window_order_step);
+					       output_window_num_steps);
     MatrixFloat *input_w       = input_sw.getMatrix();
     MatrixFloat *error_input_w = error_input_sw.getMatrix();
     IncRef(input_w);
@@ -355,7 +334,7 @@ namespace ANN {
       IncRef(error_input_flattened);
       
       // WEIGHTS UPDATE
-      matGemm(grads_mat.get(),
+      matGemm(grads_mat,
               CblasTrans, CblasNoTrans,
               1.0f,
               error_input_flattened, // A
@@ -382,8 +361,7 @@ namespace ANN {
   ANNComponent *ConvolutionANNComponent::clone() {
     ConvolutionANNComponent *component = new
       ConvolutionANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
-			      input_planes_dim, hidden_size,
-			      name.c_str(), weights_name.c_str());
+                              hidden_size, name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;
     return component;
@@ -391,19 +369,19 @@ namespace ANN {
 
   void ConvolutionANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     MatrixFloatSet *weights_dict,
-				     hash<string,ANNComponent*> &components_dict) {
+				     AprilUtils::LuaTable &weights_dict,
+				     AprilUtils::LuaTable &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     //
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name.c_str(), 0);
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
-    if (!w.empty()) {
+    if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w.get());
+      AssignRef(weights_matrix, w);
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
@@ -420,30 +398,30 @@ namespace ANN {
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
-      w = weights_matrix;
+      weights_dict.put(weights_name.c_str(), weights_matrix);
     }
   }
 
-  void ConvolutionANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
+  void ConvolutionANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    AprilUtils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name].getDense();
-    if (!w.empty() && w.get() != weights_matrix)
+    MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name.c_str(), 0);
+    if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w.empty()) {
-      w = weights_matrix;
+    else if (w == 0) {
+      weights_dict.put(weights_name.c_str(), weights_matrix);
     }
   }  
 
   char *ConvolutionANNComponent::toLuaString() {
     buffer_list buffer;
     buffer.printf("ann.components.convolution{ name='%s',weights='%s',"
-		  "n=%d, input_planes_dim=%d, kernel={", name.c_str(), weights_name.c_str(),
-		  hidden_size, input_planes_dim);
+		  "n=%d, kernel={", name.c_str(), weights_name.c_str(),
+		  hidden_size);
     for (int i=0; i<input_num_dims; ++i)
       buffer.printf("%d,", kernel_dims[i+1]);
     buffer.printf("}, step={");

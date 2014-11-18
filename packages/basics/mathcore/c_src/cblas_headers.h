@@ -373,9 +373,9 @@ namespace AprilMath {
   /**
    * @brief Template wrapper for sparse MM operation.
    *
-   * SparseMM computes op(C) = alpha * op(A) * op(B) + beta * C where A is a
+   * SparseMM computes C = alpha * op(A) * op(B) + beta * C where A is a
    * sparse matrix given in CSR or CSC formats, B and C are dense matrices, op
-   * is tranposition operator, and alpha and beta are scalars. op(C) is a matrix
+   * is tranposition operator, and alpha and beta are scalars. C is a matrix
    * with MxN size. op(A) will be MxK and op(B) will be KxN.
    *
    * @see Basics::SparseMatrix class documentation.
@@ -387,7 +387,6 @@ namespace AprilMath {
    * @param sparse_format - The format can be CSR_FORMAT or CSC_FORMAT.
    * @param a_transpose - Indicates if A matrix must be transposed.
    * @param b_transpose - Indicates if B matrix must be transposed.
-   * @param c_transpose - Indicates if C matrix must be transposed.
    * @param m - The number of rows in C.
    * @param n - The number of columns in C.
    * @param k - The common dimension for A and B.
@@ -409,7 +408,6 @@ namespace AprilMath {
                   SPARSE_FORMAT sparse_format,
                   CBLAS_TRANSPOSE a_transpose,
                   CBLAS_TRANSPOSE b_transpose,
-                  CBLAS_TRANSPOSE c_transpose,
                   int m,
                   int n,
                   int k,

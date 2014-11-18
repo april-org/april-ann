@@ -26,8 +26,7 @@
 
 namespace Basics {
 
-  MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat,
-                                                    bool col_major);
+  MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat);
   
 
 } // namespace Basics

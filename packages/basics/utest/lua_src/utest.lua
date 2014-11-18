@@ -97,7 +97,6 @@ local check = function (func,error_msg)
               write(1, "%s\n",
                     iterator(ipairs(ret)):select(2):map(tostring):concat(" "))
             end)
-      write(1, "%s\n", debug.traceback())
     end
     write(1, "Test %s %d: %sfail%s", test_name, testn,
           ansi.fg.bright_red, ansi.fg.default)
@@ -109,7 +108,8 @@ local check = function (func,error_msg)
       end
       error_msg = ", msg: %s"%{error_msg}
     end
-    write(1, "%s\n", error_msg or "")
+    write(1, "%s, it follows the traceback\n", error_msg or "")
+    write(1, "%s\n", debug.traceback())
     failed = failed + 1
     if not failed_list[test_name] then
       table.insert(names_order, test_name)
@@ -149,17 +149,25 @@ utest.check.success = check
 utest.check.fail = function(f, ...)
   return check(function() return not f() end, ...)
 end
+utest.check.errored = function(f, ...)
+  util.silent_errors(true)
+  local ok = check(function() local ok=pcall(f) return not ok end, ...)
+  util.silent_errors(false)
+  return ok
+end
 utest.check.TRUE = function(a, ...)
   return check(function() return a end, ...)
 end
 utest.check.FALSE = function(a, ...)
   return check(function() return not a end, ...)
 end
---_
+--
+local selected_tests
 utest.test = function(name, test_func)
   assert( test_name == NONAMED )
   assert( type(name) == "string", "Needs a string as first argument" )
   assert( type(test_func) == "function", "Needs a function as second argument")
+  if selected_tests and not selected_tests[name] then return end
   test_name = name
   local ok,msg = xpcall(test_func,debug.traceback)
   if not ok then 
@@ -174,6 +182,12 @@ utest.test = function(name, test_func)
     table.insert(failed_list[test_name], "executionfailure")
   end
   test_name = NONAMED
+end
+--
+utest.select_tests = function(arg)
+  if #arg > 0 then selected_tests = table.invert(arg)
+  else selected_tests = nil
+  end
 end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })

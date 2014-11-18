@@ -66,8 +66,8 @@ april_set_doc(ann.loss.."compute_loss",
 		  "but it is not accumulated. Call to accum_loss to accumulate it to the internal state.",
 		},
 		params={
-		  "Input token",
-		  "Target token",
+		  "Input token (usually a matrix)",
+		  "Target token (usually a matrix)",
 		},
 		outputs = {
 		  "The loss function mean at the given batch.",
@@ -89,11 +89,11 @@ april_set_doc(ann.loss.."gradient",
 		  "tokens).",
 		},
 		params={
-		  "Input token",
-		  "Target token",
+		  "Input token (usually a matrix)",
+		  "Target token (usually a matrix)",
 		},
 		outputs = {
-		  "The gradient computed for this pair of tokens",
+		  "The gradient computed for this pair of tokens (usually a matrix)",
 		},
 	      })
 

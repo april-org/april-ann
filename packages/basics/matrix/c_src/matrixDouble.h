@@ -55,11 +55,20 @@ namespace Basics {
     
   } // namespace MatrixIO
 
-  template<>
-  double Matrix<double>::
-  getTemplateOption(const AprilUtils::GenericOptions *options,
-                    const char *name, double default_value);
+}
 
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::MatrixDouble *LuaTable::
+  convertTo<Basics::MatrixDouble *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixDouble *>(lua_State *L, Basics::MatrixDouble *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixDouble *>(lua_State *L, int idx);
 }
 
 #endif // MATRIX_DOUBLE_H

@@ -38,9 +38,6 @@ namespace Stats {
     IncRef(high);
     if (!low->sameDim(high))
       ERROR_EXIT(128, "Expected same sizes in low and high matrices\n");
-    if (low->getMajorOrder() != CblasColMajor ||
-        high->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Expected col_major matrices\n");
     MatrixFloat::const_iterator low_it(low->begin());
     MatrixFloat::const_iterator high_it(high->begin());
     while(low_it != low->end()) {
@@ -140,12 +137,12 @@ namespace Stats {
 
   char *UniformDistribution::toLuaString(bool is_ascii) const {
     SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::HashTableOptions options;
-    options.putBoolean("ascii", is_ascii);
+    AprilUtils::LuaTable options;
+    options.put("ascii", is_ascii);
     stream->put("stats.dist.uniform(matrix.fromString[[");
-    low->write(stream.get(), &options);
+    low->write(stream.get(), options);
     stream->put("]], matrix.fromString[[");
-    high->write(stream.get(), &options);
+    high->write(stream.get(), options);
     stream->put("]])\0",4);
     return stream->releaseString();
   }

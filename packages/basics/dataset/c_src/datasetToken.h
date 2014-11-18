@@ -56,7 +56,7 @@ namespace Basics {
         // FIXME: Check this shape to be consistent when getPattern() returns a multi-dimensional matrix.
         int dims[2]   = { static_cast<int>(bunch_size),
                           patternSize() };
-        MatrixFloat *output_mat = new MatrixFloat(2, dims, CblasColMajor);
+        MatrixFloat *output_mat = new MatrixFloat(2, dims);
         IncRef(output_mat);
         TokenMatrixFloat *output_mat_token  = new TokenMatrixFloat(output_mat);
         output           = output_mat_token;
@@ -214,7 +214,7 @@ namespace Basics {
     DataSetFloat2TokenWrapper(DataSetFloat *ds) :
       ds(ds) {
       int dims[2] = { 1, ds->patternSize() };
-      aux_mat = new MatrixFloat(2, dims, CblasColMajor);
+      aux_mat = new MatrixFloat(2, dims);
 #ifdef USE_CUDA
       aux_mat->setUseCuda(false);
 #endif
@@ -224,7 +224,7 @@ namespace Basics {
     int patternSize() { return ds->patternSize(); }
     Token *getPattern(int index) {
       int dims[2] = { 1, patternSize() };
-      MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
+      MatrixFloat *mat = new MatrixFloat(2, dims);
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
       AprilMath::FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
       float *mem_ptr = mem_block->getPPALForWrite();
@@ -234,7 +234,7 @@ namespace Basics {
     Token *getPatternBunch(const int *indexes, unsigned int bunch_size) {
       int dims[2], major_dim=0;
       dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
-      MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
+      MatrixFloat *mat = new MatrixFloat(2, dims);
 #ifdef USE_CUDA
       bool old_use_cuda = mat->getCudaFlag();
       mat->setUseCuda(false);

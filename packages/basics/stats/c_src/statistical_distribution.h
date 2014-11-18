@@ -24,7 +24,6 @@
 #include "error_print.h"
 #include "logbase.h"
 #include "matrixFloat.h"
-#include "matrixFloatSet.h"
 #include "MersenneTwister.h"
 #include "referenced.h"
 
@@ -36,9 +35,8 @@ namespace Stats {
    * statistical distributions and defines a private API for new classes
    * derivation.
    
-   * All the methods work with col_major matrices (like ANN components), and
-   * with two-dimensional matrices where first dimension is the bunch_size (like
-   * ANN components).
+   * All the methods work with two-dimensional matrices where first dimension is
+   * the bunch_size (like ANN components).
    */
   class StatisticalDistributionBase : public Referenced {
     unsigned int size;
@@ -105,13 +103,11 @@ namespace Stats {
                                 Basics::MatrixFloat *result=0) {
       int dims[2] = { 1, static_cast<int>(size) };
       if (result == 0) {
-        result = new Basics::MatrixFloat(2, dims, CblasColMajor);
+        result = new Basics::MatrixFloat(2, dims);
       }
       else if (result->getNumDim() != 2 || result->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
                     "bi-dimensional matrix with Nx%u shape\n", size);
-      else if (result->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
       // virtual call
       privateSample(rng, result);
       return result;
@@ -131,17 +127,13 @@ namespace Stats {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
-      if (x->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major in x matrix\n");
       int dims[1] = { x->getDimSize(0) };
       if (result == 0) {
-        result = new Basics::MatrixFloat(1, dims, CblasColMajor);
+        result = new Basics::MatrixFloat(1, dims);
       }
       else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
                     "one-dimensional matrix with %d size\n", dims[0]);
-      else if (result->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
       // virtual call
       privateLogpdf(x, result);
       return result;
@@ -161,17 +153,13 @@ namespace Stats {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
-      if (x->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major in x matrix\n");
       int dims[1] = { x->getDimSize(0) };
       if (result == 0) {
-        result = new Basics::MatrixFloat(1, dims, CblasColMajor);
+        result = new Basics::MatrixFloat(1, dims);
       }
       else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
                     "one-dimensional matrix with %d size\n", dims[0]);
-      else if (result->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
       // virtual call
       privateLogcdf(x, result);
       return result;
@@ -192,19 +180,15 @@ namespace Stats {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
-      if (x->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major in x matrix\n");
       const int *dims = x->getDimPtr();
       if (grads == 0) {
-        grads = new Basics::MatrixFloat(2, dims, CblasColMajor);
+        grads = new Basics::MatrixFloat(2, dims);
         AprilMath::MatrixExt::Operations::matZeros(grads);
       }
       else if (grads->getNumDim() != 2 || grads->getDimSize(0) != dims[0] ||
                grads->getDimSize(1) != dims[1])
         ERROR_EXIT2(128, "Incorrect grads matrix size, expected "
                     "bidimensional matrix with %dx%d size\n", dims[0], dims[1]);
-      else if (grads->getMajorOrder() != CblasColMajor)
-        ERROR_EXIT(128, "Expected col_major order in grads matrix\n");
       // virtual call
       IncRef(grads);
       privateLogpdfDerivative(x, grads);

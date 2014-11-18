@@ -96,8 +96,8 @@ namespace ANN {
   
   void SliceANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
-				MatrixFloatSet *weights_dict,
-				hash<string,ANNComponent*> &components_dict) {
+				AprilUtils::LuaTable &weights_dict,
+				AprilUtils::LuaTable &components_dict) {
     unsigned int sz = mult(slice_size+1, n-1);
     //
     if (_output_size != 0 && _output_size != sz)

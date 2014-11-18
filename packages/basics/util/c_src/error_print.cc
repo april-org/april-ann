@@ -18,15 +18,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "base.h"
 #include "error_print.h"
-extern "C" {
-#include "lua.h"
+
+bool silent_errors = false;
+
+void setSilentErrorsValue(bool value) {
+  silent_errors = value;
 }
-
-lua_State *error_print_globalL=0;
-
-void errorPrintSetLuaState(lua_State *L) {
-  error_print_globalL = L;
+bool getSilentErrorsValue() {
+  return silent_errors;
 }
 
 #define MAX_FRAMES     256
@@ -43,6 +44,7 @@ void errorPrintSetLuaState(lua_State *L) {
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
 void print_CPP_stacktrace(FILE *out) {
+  if (getSilentErrorsValue()) return;
 #ifdef NDEBUG
   UNUSED_VARIABLE(out);
 #else
@@ -128,9 +130,9 @@ void print_CPP_stacktrace(FILE *out) {
 
 void print_CPP_LUA_stacktrace_and_exit(int errorcode) {
   print_CPP_stacktrace();
-  if (error_print_globalL != 0) {
-    lua_pushstring(error_print_globalL, "");
-    lua_error(error_print_globalL);
+  if (Base::getGlobalLuaState() != 0) {
+    lua_pushstring(Base::getGlobalLuaState(), "");
+    lua_error(Base::getGlobalLuaState());
   }
   else {
     exit(errorcode);

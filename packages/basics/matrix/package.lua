@@ -17,7 +17,10 @@
      name = "test",
      lua_unit_test{
        file={
+         "test/test_gemm.lua",
+         "test/test_gemv.lua",
 	 "test/test_matrix_inv_solve.lua",
+	 "test/test_matrix_fft.lua",
 	 "test/test_matrix_math.lua",
 	 "test/test_sparse_matrix.lua",
 	 "test/test_convolution.lua",
@@ -34,6 +37,7 @@
      provide_bind{ file = "binding/bind_matrix_double.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_int32.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_char.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_bool.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_referenced_vector.lua.cc", dest_dir = "include" }
    },
    target{
@@ -76,6 +80,10 @@
      },
      build_bind{
         file = "binding/bind_matrix_char.lua.cc",
+        dest_dir = "build",
+     },
+     build_bind{
+        file = "binding/bind_matrix_bool.lua.cc",
         dest_dir = "build",
      },
      build_bind{

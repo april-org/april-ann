@@ -106,10 +106,10 @@ namespace ANN {
     /*
       virtual void build(unsigned int input_size,
       unsigned int output_size,
-      MatrixFloatSet *weights_dict,
-      hash<string,ANNComponent*> &components_dict) = 0;
+      AprilUtils::LuaTable &weights_dict,
+      AprilUtils::LuaTable &components_dict) = 0;
     */
-    // virtual void copyWeights(MatrixFloatSet *weights_dict) = 0;
+    // virtual void copyWeights(AprilUtils::LuaTable &weights_dict) = 0;
     // virtual char *toLuaString() = 0;
   };
   
