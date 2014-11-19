@@ -841,6 +841,16 @@ function interest_points.extract_points_NN(img, trainer_uppers, trainer_lowers, 
     print(#uppers, #lowers)
     local uppers_classified = get_points_from_NN(uppers, trainer_uppers)
     local lowers_classified = get_points_from_NN(lowers, trainer_lowers)
+
+    function resize_points(points)
+      for i, v in ipairs(points) do
+        v[1] = v[1]*resize_factor
+        v[2] = v[2]*resize_factor
+      end
+    end
+
+    resize_points(uppers_classified)
+    resize_points(lowers_classified)
     --local uppers_classified = {}
     --local lowers_classified = {}
     print(#uppers_classified,#lowers_classified)
