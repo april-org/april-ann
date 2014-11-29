@@ -42,7 +42,7 @@ matrix.ext.iterate =
   function(self,dim)
     local dim = dim or 1
     local d = self:dim()
-    assert(dim > 0 and dim < #d, "Out-of-bounds dimension number")
+    assert(dim > 0 and dim <= #d, "Out-of-bounds dimension number")
     local slice = self:select(dim,1)
     return iterator(function(state,pos)
         local self,slice,dim,sz = table.unpack(state)
