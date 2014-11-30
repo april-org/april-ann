@@ -843,8 +843,30 @@ end
 function table.tostring(t,format)
   if t.to_lua_string then return t:to_lua_string(format) end
   local out  = {}
-  local keys = iterator(pairs(t)):select(1):table()
+  -- first serialize the array part of the table
+  local j=1
+  while t[j] ~= nil do
+    local v = t[j]
+    local value
+    local tt = luatype(v)
+    if tt == "table" then value = table.tostring(v,format)
+    elseif tt == "string" then value = string.format("%q",v)
+    elseif tt == "userdata" then
+      assert(v.to_lua_string, "Needs to_lua_string method")
+      value = v:to_lua_string(format)
+    elseif tt == "function" then
+      value = util.function_to_lua_string(v,format)
+    else value = tostring(v)
+    end
+    table.insert(out, value)
+    j=j+1
+  end
+  -- extract all keys removing array part
+  local keys = iterator(pairs(t)):select(1):
+  filter(function(key) local k = tonumber(key) return not k or k<=0 or k>=j end):table()
+  -- sort the keys in order to obtain a deterministic result
   table.sort(keys, function(a,b) return tostring(a) < tostring(b) end)
+  -- serialize non array part of the table
   for _,i in ipairs(keys) do
     local v = t[i]
     local key
