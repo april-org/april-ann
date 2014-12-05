@@ -277,7 +277,7 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     while true do
       local arg = table.pack(data_it())
       if arg[1] == nil then break end
-      out[#out + 1] = func(table.unpack(arg))
+      out[#out + 1] = util.pack( func(table.unpack(arg)) )
     end
     return out
   else -- general case for N processes
@@ -294,7 +294,7 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
       index = index + 1
       if (index%num_processes) == id then -- data correspond to current process
         table.insert(arg, id)
-        local ret = func(table.unpack(arg))
+        local ret = util.pack( func(table.unpack(arg)) )
         if ret ~= nil then
           fprintf(f,"[%d] = %s,\n", index, util.to_lua_string(ret, "binary"))
         end
@@ -988,6 +988,22 @@ function io.uncommented_lines(filename)
 end
 
 ----------------------------------------------------------------------------
+
+function util.unpack(t)
+  if type(t) == "table" then
+    return table.unpack(t)
+  else
+    return t
+  end
+end
+
+function util.pack(...)
+  if select('#',...) == 1 then
+    return ...
+  else
+    return table.pack(...)
+  end
+end
 
 function util.function_setupvalues(func, upvalues)
   for i,value in ipairs(upvalues) do
