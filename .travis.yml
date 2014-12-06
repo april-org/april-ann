@@ -8,6 +8,7 @@ matrix:
   exclude:
     - os: osx
       compiler: gcc
+    - os: osx
       env: TEST_OMP=yes
     - os: linux
       compiler: clang
