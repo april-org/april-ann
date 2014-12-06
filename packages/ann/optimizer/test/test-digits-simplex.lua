@@ -111,7 +111,7 @@ T("SimplexTestDigits", function()
     clock:go()
     -- print("Epoch Training  Validation")
     local tmp = os.tmpname()
-    for totalepocas=1,20 do
+    for totalepocas=1,4 do
       collectgarbage("collect")
       errortrain,vartrain  = trainer:train_dataset(datosentrenar)
       trainer:save(tmp)
