@@ -1,4 +1,9 @@
-env: OMP_NUM_THREADS=2 TEST_OMP=no
+env:
+  global:
+    - OMP_NUM_THREADS=2
+  matrix:
+    - TEST_OMP=yes
+    - TEST_OMP=no
 matrix:
   exclude:
     - os: osx
