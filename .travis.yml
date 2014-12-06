@@ -1,8 +1,14 @@
-env: OMP_NUM_THREADS=2
+env:
+  - OMP_NUM_THREADS=2 TEST_OMP=yes
+  - OMP_NUM_THREADS=2 TEST_OMP=no
 matrix:
   exclude:
     - os: osx
       compiler: gcc
+      env: TEST_OMP=yes
+    - os:linux
+      compiler: clang
+      env: TEST_OMP=yes
 branches:
   only:
     - master
