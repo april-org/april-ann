@@ -261,7 +261,7 @@ end
 
 -- executes in parallel a function, and returns the concatenation of all results
 function parallel_foreach(num_processes, list_number_or_iterator, func)
-  local tt = type(list_or_number)
+  local tt = type(list_number_or_iterator)
   assert(tt == "number" or tt == "table" or
            class.is_a(list_number_or_iterator, iterator),
          "Needs an APRIL-ANN iterator,  table or number as 2nd argument")
