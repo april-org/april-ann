@@ -8,8 +8,10 @@ matrix:
   exclude:
     - os: osx
       compiler: gcc
+      env: TEST_OMP=yes
     - os: linux
       compiler: clang
+      env: TEST_OMP=yes
 branches:
   only:
     - master
