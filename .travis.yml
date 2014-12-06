@@ -8,7 +8,7 @@ matrix:
   exclude:
     - os: osx
       compiler: gcc
-    - os:linux
+    - os: linux
       compiler: clang
 branches:
   only:
