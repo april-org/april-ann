@@ -3,7 +3,7 @@
 UNAME=$(uname)
 if [[ $UNAME == "Linux" ]]; then
     if [[ $CC == gcc ]]; then
-	if [[ $OMP == "yes" ]]; then
+	if [[ $TEST_OMP == "yes" ]]; then
             ## echo "**** GCC RELEASE-ATLAS ****"     &&
             ## make release-atlas                     &&
             echo "**** GCC TEST-DEBUG-ATLAS ****"  &&
@@ -15,7 +15,7 @@ if [[ $UNAME == "Linux" ]]; then
             make test-debug-no-omp
 	fi
     elif [[ $CC == clang ]]; then
-	if [[ $OMP == "no" ]]; then
+	if [[ $TEST_OMP == "no" ]]; then
             ## echo "**** CLANG RELEASE-NO-OMP ****"     &&
             ## make release-no-omp                       &&
             echo "**** CLANG TEST-DEBUG-NO-OMP ****"  &&
@@ -30,7 +30,7 @@ if [[ $UNAME == "Linux" ]]; then
     fi
 elif [[ $UNAME == "Darwin" ]]; then
     if [[ $CC == clang ]]; then
-	if [[ $OMP == "no" ]]; then
+	if [[ $TEST_OMP == "no" ]]; then
             ## echo "**** CLANG RELEASE-HOMEBREW ****"     &&
             ## make release-macosx                       &&
             echo "**** CLANG TEST-DEBUG-HOMEBREW ****"  &&
