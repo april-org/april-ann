@@ -961,8 +961,7 @@ local function boot(self,params,...)
     if type(r) ~= "table" then r = {r} end
     return r
   end
-  local result = parallel_foreach(ncores, repetitions,
-                                  resample, util.to_lua_string)
+  local result = parallel_foreach(ncores, repetitions, resample)
   if params.verbose then fprintf(io.stderr, " done\n") end
   return result
 end

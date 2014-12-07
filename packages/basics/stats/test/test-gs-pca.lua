@@ -8,7 +8,7 @@ local base_dir = string.get_path(arg[0])
 local ok,m = pcall(matrix.fromTabFilename, "/tmp/sample.txt.gz")
 
 if not ok then
-  ok=os.execute("curl -0 http://cafre.dsic.upv.es:8080/~pako/STUFF/sample.txt.gz > /tmp/sample.txt.gz")
+  ok=os.execute("curl --connect-timeout 60 -0 http://cafre.dsic.upv.es:8080/~pako/STUFF/sample.txt.gz > /tmp/sample.txt.gz")
   if not ok then
     print("WARNING: impossible to run test\n")
     os.exit(0)
