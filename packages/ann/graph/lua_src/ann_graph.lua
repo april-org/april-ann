@@ -8,8 +8,9 @@ local function topological_sort(nodes, obj)
   local result = { }
   local queue = { obj }
   local in_counts = { }
-  local i = 1
+  local i = 0
   while i < #queue do
+    i = i + 1
     local current = queue[i]
     local node = nodes[current]
     result[#result+1] = current
@@ -19,7 +20,6 @@ local function topological_sort(nodes, obj)
         queue[#queue+1] = dst
       end
     end
-    i = i + 1
   end
   return result
 end
@@ -104,7 +104,9 @@ ann_graph_methods.build =
     params = { "An optional table" },
   } ..
   function(self, tbl)
-    assert(#self.nodes.out_edges > 0, "Connections from 'input' node are needed")
+    local tbl = tbl or {}
+    assert(#self.nodes.input.out_edges > 0,
+           "Connections from 'input' node are needed")
     assert(self.nodes.output, "Connections to 'output' node are needed")
     self.order = topological_sort(self.nodes, "input")
     assert(self.order[1] == "input" and self.order[#self.order] == "output")
@@ -114,15 +116,26 @@ ann_graph_methods.build =
     --
     local nodes = self.nodes
     local input_size = tbl.input or 0
-    local weights = tbl.weights
+    local weights = tbl.weights or {}
+    local components = { [self.name] = self }
+    local function compute_size(isize, tbl)
+      local sz = 0
+      for _,k in ipairs(tbl) do
+        if k == "input" then sz = sz + isize
+        else sz = sz + k:get_output_size() end
+      end
+      return sz
+    end
     for _,obj in ipairs(self.order) do
       local node = nodes[obj]
       obj:build{ input = compute_size(input_size, node.in_edges),
                  weights = weights }
+      obj:copy_components(components)
     end
     self.is_built = true
     self.input_size = compute_size(tbl.input or 0, nodes.input.out_edges)
     self.output_size = compute_size(tbl.output or 0, nodes.output.in_edges)
+    return self,weights,components
   end
 
 -- traverse the graph following the topological order (self.order), composing

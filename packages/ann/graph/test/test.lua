@@ -11,11 +11,11 @@ T("ANNGraphComponentTest",
   function()
     -- nodes
     local c_w1 = ann.components.dot_product{ input=10, output=20, weights="w1" }
-    local c_b1 = ann.components.bias{ weights="b1" }
+    local c_b1 = ann.components.bias{ weights="b1", size=20 }
     local c_a1 = ann.components.actf.logistic()
-    local c_w2 = ann.components.dot_product{ input=20, output=4, weights="w1" }
-    local c_b2 = ann.components.bias{ weights="b2" }
-    local c_a2 = ann.components.actf.softmax()
+    local c_w2 = ann.components.dot_product{ input=20, output=4, weights="w2" }
+    local c_b2 = ann.components.bias{ weights="b2", size=4 }
+    local c_a2 = ann.components.actf.linear()
     -- ANN GRAPH
     local nn = ann.graph('nn')
     -- connections
@@ -27,7 +27,11 @@ T("ANNGraphComponentTest",
     nn:connect(c_b2, c_a2)
     nn:connect(c_a2, "output")
     -- build
-    nn:build()
+    local rnd = random(1234)
+    local _,weights = nn:build()
+    for _,w in pairs(weights) do
+      w:uniformf(-0.01, 0.01, rnd)
+    end
     -- STACK COMPONENT
     local stack = ann.components.stack()
     stack:push(c_w1)
@@ -38,7 +42,7 @@ T("ANNGraphComponentTest",
     stack:push(c_a2)
     stack:build()
     --
-    local input = matrix(10,20):uniformf()
+    local input = matrix(20,10):uniformf(-0.1, 0.1, rnd)
     local nn_output = nn:forward(input)
     local stack_output = stack:forward(input)
     print(nn_output)
