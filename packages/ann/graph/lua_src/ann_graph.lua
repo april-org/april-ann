@@ -158,15 +158,17 @@ end
 -- component error outputs, and storing the error output of every component at
 -- the table error_outputs_table
 ann_graph_methods.backprop = function(self, input)
-  local error_outputs_table = { output=input }
+  local error_inputs_table = { output=input }
   local accumulate = function(dst, e)
-    error_outputs_table[dst] = error_outputs_table[dst] or matrix.as(e)
-    error_outputs_table[dst]:axpy(1.0, e)
+    local err = error_inputs_table[dst]
+    if not err then error_inputs_table[dst] = e:clone()
+    else err = err:axpy(1.0, e) end
   end
+  for _,obj in ipairs(self.nodes.output.in_edges) do accumulate(obj, input) end
   for i=#self.order,1,-1 do
     local obj = self.order[i]
     local node = self.nodes[obj]
-    local error_input = error_outputs_table[obj]
+    local error_input = error_inputs_table[obj]
     local error_output = obj:backprop(error_input)
     if class.is_a(error_output, tokens.vector.bunch) then
       assert(error_output:size() == #node.in_edges)
@@ -178,13 +180,13 @@ ann_graph_methods.backprop = function(self, input)
     end
   end
   self.error_input_token = input
-  self.error_output_token = error_outputs_table.input
+  self.error_output_token = error_inputs_table.input
   return self.error_output_token
 end
 
 ann_graph_methods.compute_gradients = function(self, weight_grads)
   local weight_grads = weight_grads or {}
-  for _,obj in self.order do obj:compute_gradients(weight_grads) end
+  for _,obj in ipairs(self.order) do obj:compute_gradients(weight_grads) end
   return weight_grads
 end
 
