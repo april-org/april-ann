@@ -51,8 +51,8 @@ namespace Basics {
       lua_pushnil(L); return 1;
     }
     lua_pushnumber(L, index);
-    Token *token = (*obj)[index-1];
-    lua_pushToken(L, token);
+    AprilUtils::SharedPtr<Token> token( (*obj)[index-1] );
+    lua_pushAuxToken(L, token);
     return 2;
   }
 
@@ -296,8 +296,8 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
   unsigned int pos;
   LUABIND_CHECK_PARAMETER(1, uint);
   LUABIND_GET_PARAMETER(1, uint, pos);
-  Token *token = (*obj)[pos-1];
-  LUABIND_RETURN(Token, token);
+  AprilUtils::SharedPtr<Token> token( (*obj)[pos-1] );
+  LUABIND_RETURN(AuxToken, token);
 }
 //BIND_END
 
@@ -319,10 +319,10 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
 //BIND_METHOD TokenBunchVector push_back
 {
   LUABIND_CHECK_ARGN(==, 1);
-  Token *token;
-  LUABIND_CHECK_PARAMETER(1, Token);
-  LUABIND_GET_PARAMETER(1, Token, token);
-  obj->TokenBunchVector::push_back(token);
+  AprilUtils::SharedPtr<Token> token;
+  LUABIND_CHECK_PARAMETER(1, AuxToken);
+  LUABIND_GET_PARAMETER(1, AuxToken, token);
+  obj->TokenBunchVector::push_back(token.get());
   LUABIND_RETURN(TokenBunchVector, obj);
 }
 //BIND_END

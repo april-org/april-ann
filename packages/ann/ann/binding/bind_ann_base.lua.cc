@@ -548,6 +548,10 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent copy_weights
 {
   AprilUtils::LuaTable weights_dict(L);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    weights_dict = lua_toLuaTable(L, 1);
+  }
   obj->copyWeights(weights_dict);
   LUABIND_RETURN(LuaTable, weights_dict);
 }
@@ -556,6 +560,10 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent copy_components
 {
   AprilUtils::LuaTable components_dict(L);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    components_dict = lua_toLuaTable(L, 1);
+  }
   obj->copyComponents(components_dict);
   LUABIND_RETURN(LuaTable, components_dict);
 }
