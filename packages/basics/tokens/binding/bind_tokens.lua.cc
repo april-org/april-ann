@@ -82,6 +82,9 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
   case Basics::table_of_token_codes::token_sparse_matrix:
     lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
     break;
+  case Basics::table_of_token_codes::vector_Tokens:
+    lua_pushTokenBunchVector(L, (TokenBunchVector*)value.get());
+    break;
   default:
     lua_pushToken(L, value.get());
   }
@@ -273,16 +276,16 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
     }
     else {
       int sz;
-      Token **v;
       LUABIND_TABLE_GETN(1, sz);
-      v = new Token*[sz];
-      LUABIND_TABLE_TO_VECTOR(1, Token, v, sz);
       obj = new TokenBunchVector(sz);
       for (unsigned int i=0; i<static_cast<unsigned int>(sz); ++i) {
-	(*obj)[i] = v[i];
-	IncRef(v[i]);
+        lua_pushnumber(L, i+1); // OJO: +1
+        lua_gettable(L, 1);
+        AprilUtils::SharedPtr<Token> aux(lua_toAuxToken(L,-1));
+        lua_pop(L,1);
+	(*obj)[i] = aux.get();
+	IncRef(aux.get());
       }
-      delete[] v;
     }
   }
   else obj = new TokenBunchVector();

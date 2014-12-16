@@ -26,6 +26,12 @@ T("ANNGraphComponentTest",
     nn:connect(c_w2, c_b2)
     nn:connect(c_b2, c_a2)
     nn:connect(c_a2, "output")
+    -- serialization test
+    local nn = nn:clone()
+    local tmpname = os.tmpname()
+    util.serialize(nn, tmpname)
+    local nn = util.deserialize(tmpname)
+    os.remove(tmpname)
     -- build
     do
       local rnd = random(1234)
@@ -34,6 +40,9 @@ T("ANNGraphComponentTest",
         weights[name]:uniformf(-0.01, 0.01, rnd)
       end
     end
+    -- input/output sizes
+    check.eq(nn:get_input_size(), 10)
+    check.eq(nn:get_output_size(), 4)
     -- STACK COMPONENT
     local stack = ann.components.stack()
     stack:push(c_w1:clone())
@@ -67,4 +76,39 @@ T("ANNGraphComponentTest",
     for nn_g,stack_g in it_zip(iterator(nn_grads), iterator(stack_grads)) do
       check.eq(nn_g, stack_g)
     end
+end)
+
+T("SumComponentTest",
+  function()
+    local s = ann.graph.sum()
+    s:build{ input=30, output=10 }
+    check.eq(s:get_input_size(), 30)
+    check.eq(s:get_output_size(), 10)
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):linear(),
+                                               matrix(4,10):linear(),
+                                               matrix(4,10):linear(), })
+    check.eq(out, 3 * matrix(4,10):linear())
+    local out = s:backprop(matrix(4,10):linear())
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    for _,m in out:iterate() do check.eq(m, matrix(4,10):linear()) end
+    check.errored(function() s:build{ input=30, output=13 } end)
+end)
+
+T("BindComponentTest",
+  function()
+    local s = ann.graph.bind()
+    s:build{ input=30, output=30 }
+    check.eq(s:get_input_size(), 30)
+    check.eq(s:get_output_size(), 30)
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):linear(),
+                                               matrix(4,10):linear(),
+                                               matrix(4,10):linear(), })
+    local j = matrix.join(2,{ matrix(4,10):linear(),
+                              matrix(4,10):linear(),
+                              matrix(4,10):linear(), })
+    check.eq(out, j)
+    local out = s:backprop(j)
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    for _,m in out:iterate() do check.eq(m, matrix(4,10):linear()) end
+    check.errored(function() s:build{ input=30, output=20 } end)
 end)

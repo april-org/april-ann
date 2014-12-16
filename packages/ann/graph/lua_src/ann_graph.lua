@@ -40,6 +40,14 @@ local function compose(tbl, dict)
   return result
 end
 
+local function ann_graph_topsort(self)
+  self.order = topological_sort(self.nodes, "input")
+  assert(self.order[1] == "input" and self.order[#self.order] == "output")
+  -- remove 'input' and 'output' strings from topological order table
+  table.remove(self.order, 1)
+  table.remove(self.order, #self.order)
+end
+
 ------------------------------------------------------------------------------
 
 ann = ann or {}
@@ -57,9 +65,17 @@ ann.graph.constructor =
     summary = "constructor",
     params = { "A name string" },
   } ..
-  function(self, name)
+  function(self, name, components, connections)
     self.nodes = { input = { in_edges = {}, out_edges = {} } }
-    self.name = name or "ann_graph"
+    self.name = name or ann.generate_name()
+    if components and connections then
+      for src,dst in iterator(connections):map(table.unpack) do
+        if components[dst] ~= "input" then
+          local src = iterator(src):map(function(i) return components[i] end):table()
+          self:connect(src, components[dst])
+        end
+      end
+    end
   end
 
 ann_graph_methods.connect =
@@ -85,13 +101,16 @@ ann_graph_methods.connect =
            "Needs an ann component or 'output' string as destination")
     assert(not self.nodes[dst], "Overwriting a previously defined destination")
     local tt_src = type(src)
+    -- just to ensure src as a table
     if tt_src ~= "table" then src = { src } end
+    -- traverse every input and take note of dst in out_edges of every input
     for i=1,#src do
       local v = src[i]
       assert(class.is_a(v, ann.components.base) or v == "input" ,
              "Needs an ann component or 'input' string as source")
       table.insert(self.nodes[v].out_edges, dst)
     end
+    -- take note of the given input table as input edges of the given dst
     self.nodes[dst] = { in_edges = src, out_edges = {} }
     return self
   end
@@ -101,40 +120,46 @@ ann_graph_methods.build =
     class = "method",
     summary = "Builds the ANN component",
     description = "See april_help(ann.components.base..'build')",
-    params = { "An optional table" },
+    params = { "An optional table with 'input', 'output' and 'weights' fields" },
   } ..
   function(self, tbl)
     local tbl = tbl or {}
     assert(#self.nodes.input.out_edges > 0,
            "Connections from 'input' node are needed")
     assert(self.nodes.output, "Connections to 'output' node are needed")
-    self.order = topological_sort(self.nodes, "input")
-    assert(self.order[1] == "input" and self.order[#self.order] == "output")
-    -- remove 'input' and 'output' strings from topological order table
-    table.remove(self.order, 1)
-    table.remove(self.order, #self.order)
+    -- build the topological sort, which will be stored at self.order
+    ann_graph_topsort(self)
     --
     local nodes = self.nodes
     local input_size = tbl.input or 0
     local weights = tbl.weights or {}
     local components = { [self.name] = self }
-    local function compute_size(isize, tbl)
-      local sz = 0
-      for _,k in ipairs(tbl) do
-        if k == "input" then sz = sz + isize
-        else sz = sz + k:get_output_size() end
-      end
-      return sz
+    -- computes the sum of the elements of sizes which belong to tbl
+    local function sum_sizes(tbl, sizes)
+      return iterator(tbl):map(function(obj) return sizes[obj] end):reduce(math.add(), 0)
     end
+    --
+    local input_sizes = {}
+    local output_sizes = { input = input_size }
+    -- precompute input/output sizes
+    for _,obj in ipairs(self.order) do
+      input_sizes[obj] = obj:get_input_size()
+      output_sizes[obj] = obj:get_output_size()
+    end
+    input_sizes.output = sum_sizes(nodes.output.in_edges, output_sizes)
+    --
     for _,obj in ipairs(self.order) do
       local node = nodes[obj]
-      obj:build{ input = compute_size(input_size, node.in_edges),
-                 weights = weights }
-      obj:copy_components(components)
+      local _,_,aux = obj:build{ input = sum_sizes(node.in_edges, output_sizes),
+                                 output = sum_sizes(node.out_edges, input_sizes),
+                                 weights = weights }
+      for k,v in pairs(aux) do assert(not components[k]) components[k] = v end
+      input_sizes[obj]  = obj:get_input_size()
+      output_sizes[obj] = obj:get_output_size()
     end
-    self.is_built = true
-    self.input_size = compute_size(tbl.input or 0, nodes.input.out_edges)
-    self.output_size = compute_size(tbl.output or 0, nodes.output.in_edges)
+    self.input_size  = sum_sizes(nodes.input.out_edges, input_sizes)
+    self.output_size = sum_sizes(nodes.output.in_edges, output_sizes)
+    self.is_built    = true
     return self,weights,components
   end
 
@@ -211,7 +236,7 @@ ann_graph_methods.has_weights_name = function(self)
 end
 
 ann_graph_methods.get_is_built = function(self)
-  return self.is_built or false
+  return self.order and true or false
 end
 
 ann_graph_methods.debug_info = function(self)
@@ -219,11 +244,11 @@ ann_graph_methods.debug_info = function(self)
 end
 
 ann_graph_methods.get_input_size = function(self)
-  return self.input_size
+  return self.input_size or 0
 end
 
 ann_graph_methods.get_output_size = function(self)
-  return self.output_size
+  return self.output_size or 0
 end
 
 ann_graph_methods.get_input = function(self)
@@ -255,18 +280,37 @@ ann_graph_methods.precompute_output_size = function(self, tbl)
   for _,obj in ipairs(self.order) do
     local node = self.nodes[obj]
     local input = compose(node.in_edges, outputs_table)
-    outputs_table[obj] = obj:precompute_output_size(input)
+    outputs_table[obj] = obj:precompute_output_size(input, #node.in_edges)
   end
   return compose(self.nodes.output.in_edges, outputs_table)
 end
 
 ann_graph_methods.clone = function(self)
   local graph = ann.graph(self.name)
-  for obj,node in pairs(self.edges) do
-    local new_obj = (obj ~= "input" and obj ~= "output" and obj:clone()) or obj
-    for _,dst in ipairs(node.out_edges) do graph:connect(new_obj, dst) end
-  end
+  graph.nodes = util.clone(self.nodes)
   return graph
+end
+
+ann_graph_methods.to_lua_string = function(self, format)
+  local cnns = {}
+  if not rawget(self,order) then ann_graph_topsort(self) end
+  local order = iterator(self.order):table()
+  order[#order+1] = "input"
+  order[#order+1] = "output"
+  local obj2id = table.invert(order)
+  for id,dst in ipairs(order) do
+    cnns[id] = {
+      iterator(ipairs(self.nodes[dst].in_edges)):
+      map(function(j,src) return j,obj2id[src] end):table(),
+      id,
+    }
+  end
+  local str = {
+    "ann.graph(", "%q"%{self.name} , ",",
+    util.to_lua_string(order, format), ",",
+    util.to_lua_string(cnns, format), ")",
+  }
+  return table.concat(str)
 end
 
 ann_graph_methods.set_use_cuda = function(self, v)
@@ -282,14 +326,14 @@ ann_graph_methods.get_use_cuda = function(self)
   return self.use_cuda or false
 end
 
-ann_graph_methods.copy_weights = function(self)
-  local dict = {}
+ann_graph_methods.copy_weights = function(self, dict)
+  local dict = dict or {}
   for _,obj in ipairs(self.order) do obj:copy_weights(dict) end
   return dict
 end
 
-ann_graph_methods.copy_components = function(self)
-  local dict = {}
+ann_graph_methods.copy_components = function(self, dict)
+  local dict = dict or {}
   for _,obj in ipairs(self.order) do obj:copy_components(dict) end
   return dict
 end
@@ -300,6 +344,283 @@ ann_graph_methods.get_component = function(self, name)
     local c = obj:get_component(name)
     if c then return c end
   end
+end
+
+---------------------------------------------------------------------------
+
+local bind_methods
+ann.graph.bind,bind_methods = class("ann.graph.bind", ann.components.base)
+
+ann.graph.bind.constructor = function(self, name)
+  self.name = name or ann.generate_name()
+end
+
+bind_methods.build = function(self, tbl)
+  local tbl = tbl or {}
+  if tbl.input and tbl.input ~= 0 then
+    self.size = tbl.input
+    assert(not tbl.output or tbl.output == 0 or tbl.output == tbl.input)
+  end
+  if tbl.output ~= 0 then
+    self.size = tbl.output
+    assert(not tbl.input or tbl.input == 0 or tbl.input == tbl.output)
+  end
+  if not self.size then self.size = 0 end
+  return self,tbl.weights or {},{ [self.name] = self }
+end
+
+bind_methods.forward = function(self, input, during_training)
+  assert(class.is_a(input, tokens.vector.bunch),
+         "Needs a tokens.vector.bunch as input")
+  local output = matrix.join(2, iterator(input:iterate()):
+                               map(function(i,m)
+                                   assert(#m:dim() == 2,
+                                          "Needs flattened input matrices")
+                                   return i,m
+                               end):table())
+  self.input_token = input
+  self.output_token = output
+  return output
+end
+
+bind_methods.backprop = function(self, input)
+  local output = tokens.vector.bunch()
+  local pos = 1
+  for _,m in self.input_token:iterate() do
+    local dest = pos + m:dim(2) - 1
+    local slice = input(':', {pos, dest})
+    pos = dest + 1
+    output:push_back(slice)
+  end
+  self.error_input_token = input
+  self.error_output_token = output
+  return output
+end
+
+bind_methods.compute_gradients = function(self, weight_grads)
+  return weight_grads or {}
+end
+
+bind_methods.reset = function(self, input)
+  self.input_token = nil
+  self.output_token = nil
+  self.error_input_token = nil
+  self.error_output_token = nil
+end
+
+bind_methods.get_name = function(self)
+  return self.name
+end
+
+bind_methods.get_weights_name = function(self)
+  return nil
+end
+
+bind_methods.has_weights_name = function(self)
+  return false
+end
+
+bind_methods.get_is_built = function(self)
+  return (self.size ~= nil)
+end
+
+bind_methods.debug_info = function(self)
+  error("Not implemented")
+end
+
+bind_methods.get_input_size = function(self)
+  return self.size or 0
+end
+
+bind_methods.get_output_size = function(self)
+  return self.size or 0
+end
+
+bind_methods.get_input = function(self)
+  return self.input_token
+end
+
+bind_methods.get_output = function(self)
+  return self.output_token
+end
+
+bind_methods.get_error_input = function(self)
+  return self.error_input_token
+end
+
+bind_methods.get_error_output = function(self)
+  return self.error_output_token
+end
+
+bind_methods.precompute_output_size = function(self, tbl)
+  assert(#tbl == 1, "Needs a flattened input")
+  return tbl
+end
+
+bind_methods.clone = function(self)
+  return ann.graph.bind(self.name)
+end
+
+bind_methods.to_lua_string = function(self, format)
+  local str = { "ann.graph.bind(", "%q"%{self.name}, ")" }
+  return table.concat(str)
+end
+
+bind_methods.set_use_cuda = function(self, v)
+  self.use_cuda = v
+end
+
+bind_methods.get_use_cuda = function(self)
+  return self.use_cuda or false
+end
+
+bind_methods.copy_weights = function(self, dict)
+  return dict or {}
+end
+
+bind_methods.copy_components = function(self, dict)
+  return dict or {}
+end
+
+bind_methods.get_component = function(self, name)
+  if self.name == name then return self end
+end
+
+---------------------------------------------------------------------------
+
+local sum_methods
+ann.graph.sum,sum_methods = class("ann.graph.sum", ann.components.base)
+
+ann.graph.sum.constructor = function(self, name)
+  self.name = name or ann.generate_name()
+end
+
+sum_methods.build = function(self, tbl)
+  local tbl = tbl or {}
+  if tbl.input and tbl.input ~= 0 then
+    self.input_size = tbl.input
+  else
+    self.input_size = 0
+  end
+  if tbl.output ~= 0 then
+    self.output_size = tbl.output
+  else
+    self.output_size = 0
+  end
+  if self.input_size ~= 0 and self.output_size ~= 0 then
+    assert( (self.input_size % self.output_size) == 0,
+      "Input size mod output size has to be zero")
+  end
+  return self, tbl.weights or {}, { [self.name] = self }
+end
+
+sum_methods.forward = function(self, input, during_training)
+  assert(class.is_a(input, tokens.vector.bunch),
+         "Needs a tokens.vector.bunch as input")
+  local output = input:at(1):clone()
+  for i=2,input:size() do output:axpy(1.0, input:at(i)) end
+  self.input_token = input
+  self.output_token = output
+  return output
+end
+
+sum_methods.backprop = function(self, input)
+  local output = tokens.vector.bunch()
+  for i=1,self.input_token:size() do
+    output:push_back(input)
+  end
+  self.error_input_token = input
+  self.error_output_token = output
+  return output
+end
+
+sum_methods.compute_gradients = function(self, weight_grads)
+  return weight_grads or {}
+end
+
+sum_methods.reset = function(self, input)
+  self.input_token = nil
+  self.output_token = nil
+  self.error_input_token = nil
+  self.error_output_token = nil
+end
+
+sum_methods.get_name = function(self)
+  return self.name
+end
+
+sum_methods.get_weights_name = function(self)
+  return nil
+end
+
+sum_methods.has_weights_name = function(self)
+  return false
+end
+
+sum_methods.get_is_built = function(self)
+  return (self.input_size ~= nil)
+end
+
+sum_methods.debug_info = function(self)
+  error("Not implemented")
+end
+
+sum_methods.get_input_size = function(self)
+  return self.input_size or 0
+end
+
+sum_methods.get_output_size = function(self)
+  return self.output_size or 0
+end
+
+sum_methods.get_input = function(self)
+  return self.input_token
+end
+
+sum_methods.get_output = function(self)
+  return self.output_token
+end
+
+sum_methods.get_error_input = function(self)
+  return self.error_input_token
+end
+
+sum_methods.get_error_output = function(self)
+  return self.error_output_token
+end
+
+sum_methods.precompute_output_size = function(self, tbl, n)
+  assert(#tbl == 1, "Needs a flattened input")
+  return iterator(tbl):map(math.div(nil,n)):table()
+end
+
+sum_methods.clone = function(self)
+  return ann.graph.sum(self.name)
+end
+
+sum_methods.to_lua_string = function(self, format)
+  local str = { "ann.graph.sum(", "%q"%{self.name}, ")" }
+  return table.concat(str)
+end
+
+sum_methods.set_use_cuda = function(self, v)
+  self.use_cuda = v
+end
+
+sum_methods.get_use_cuda = function(self)
+  return self.use_cuda or false
+end
+
+sum_methods.copy_weights = function(self, dict)
+  return dict or {}
+end
+
+sum_methods.copy_components = function(self, dict)
+  return dict or {}
+end
+
+sum_methods.get_component = function(self, name)
+  if self.name == name then return self end
 end
 
 ---------------------------------------------------------------------------
