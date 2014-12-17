@@ -13,7 +13,7 @@ if autodiff then
   
   local AD = autodiff
   
-  T("SaddlePointTest",
+  T("BealesFunctionTest",
     function()
       local rnd  = random(1234)
       local x, y = M(1,1,{1}), M(1,1,{1})
