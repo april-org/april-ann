@@ -198,10 +198,6 @@ Publications
 
 List of research papers which uses this tool:
 
-- Francisco Zamora-Martínez, Pablo Romeu, Paloma Botella-Rocamora, and Juan Pardo.
-  [On-line learning of indoor temperature forecasting models towards energy efficiency](http://dx.doi.org/10.1016/j.enbuild.2014.04.034),
-  *Energy and Buildings*, 83:162-172, 2014.
-
 - Joan Pastor-Pellicer, Salvador España-Boquera, Francisco Zamora-Martínez,
   María José Castro-Bleda.
   [Handwriting Normalization by Zone Estimation using HMM/ANNs](http://people.sabanciuniv.edu/berrin/cs581/Papers/icfhr2014/data/4334a633.pdf),
@@ -224,13 +220,13 @@ List of research papers which uses this tool:
   In *Advances in Computational Intelligence, IWANN, part I*, LNCS, pages 376-384. Springer, 2013.
 
 - F. Zamora-Martínez, Pablo Romeu, Juan Pardo, and Daniel Tormo.
-  Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment.
+  [Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment](http://www.scitepress.org/DigitalLibrary/Link.aspx?doi=10.5220/0004133502060211).
   In *IC3K - KDIR*, pages 206-211, 2012.
 
 Our ancient ANN implementation in the former APRIL tookit was published here:
 
 - S. España-Boquera, F. Zamora-Martinez, M.J. Castro-Bleda, J. Gorbe-Moya.
-  Efficient BP algorithms for general feedforward neural networks.
+  [Efficient BP algorithms for general feedforward neural networks](http://link.springer.com/chapter/10.1007%2F978-3-540-73053-8_33#page-1).
   In *IWINAC*, pages 327-336, 2007.
 
 Other projects using it

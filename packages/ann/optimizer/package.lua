@@ -25,6 +25,7 @@
 	 "test/test-digits-l1.lua",
 	 "test/test-digits-simplex.lua",
 	 "test/test-digits-adadelta.lua",
+	 "test/test-beales-function.lua",
        },
      },
    },
