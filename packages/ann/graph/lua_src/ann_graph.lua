@@ -150,6 +150,9 @@ ann_graph_methods.build =
     --
     for _,obj in ipairs(self.order) do
       local node = nodes[obj]
+      april_assert(#node.out_edges > 0,
+                   "Node %s doesn't have output connections",
+                   obj:get_name())
       local _,_,aux = obj:build{ input = sum_sizes(node.in_edges, output_sizes),
                                  output = sum_sizes(node.out_edges, input_sizes),
                                  weights = weights }
@@ -244,11 +247,11 @@ ann_graph_methods.debug_info = function(self)
 end
 
 ann_graph_methods.get_input_size = function(self)
-  return self.input_size or 0
+  return rawget(self,"input_size") or 0
 end
 
 ann_graph_methods.get_output_size = function(self)
-  return self.output_size or 0
+  return rawget(self,"output_size") or 0
 end
 
 ann_graph_methods.get_input = function(self)
@@ -293,21 +296,21 @@ end
 
 ann_graph_methods.to_lua_string = function(self, format)
   local cnns = {}
-  if not rawget(self,order) then ann_graph_topsort(self) end
-  local order = iterator(self.order):table()
-  order[#order+1] = "input"
-  order[#order+1] = "output"
-  local obj2id = table.invert(order)
-  for id,dst in ipairs(order) do
+  if not rawget(self,"order") then ann_graph_topsort(self) end
+  local ext_order = iterator(self.order):table()
+  ext_order[#ext_order+1] = "input"
+  ext_order[#ext_order+1] = "output"
+  local ext_obj2id = table.invert(ext_order)
+  for id,dst in ipairs(ext_order) do
     cnns[id] = {
       iterator(ipairs(self.nodes[dst].in_edges)):
-      map(function(j,src) return j,obj2id[src] end):table(),
+      map(function(j,src) return j,ext_obj2id[src] end):table(),
       id,
     }
   end
   local str = {
     "ann.graph(", "%q"%{self.name} , ",",
-    util.to_lua_string(order, format), ",",
+    util.to_lua_string(ext_order, format), ",",
     util.to_lua_string(cnns, format), ")",
   }
   return table.concat(str)
@@ -365,7 +368,7 @@ bind_methods.build = function(self, tbl)
     self.size = tbl.output
     assert(not tbl.input or tbl.input == 0 or tbl.input == tbl.output)
   end
-  if not self.size then self.size = 0 end
+  if not rawget(self,"size") then self.size = 0 end
   return self,tbl.weights or {},{ [self.name] = self }
 end
 
@@ -421,7 +424,7 @@ bind_methods.has_weights_name = function(self)
 end
 
 bind_methods.get_is_built = function(self)
-  return (self.size ~= nil)
+  return (rawget(self,"size") ~= nil)
 end
 
 bind_methods.debug_info = function(self)
@@ -429,11 +432,11 @@ bind_methods.debug_info = function(self)
 end
 
 bind_methods.get_input_size = function(self)
-  return self.size or 0
+  return rawget(self,"size") or 0
 end
 
 bind_methods.get_output_size = function(self)
-  return self.size or 0
+  return rawget(self,"size") or 0
 end
 
 bind_methods.get_input = function(self)
@@ -558,7 +561,7 @@ sum_methods.has_weights_name = function(self)
 end
 
 sum_methods.get_is_built = function(self)
-  return (self.input_size ~= nil)
+  return (rawget(self,"input_size") ~= nil)
 end
 
 sum_methods.debug_info = function(self)
@@ -566,11 +569,11 @@ sum_methods.debug_info = function(self)
 end
 
 sum_methods.get_input_size = function(self)
-  return self.input_size or 0
+  return rawget(self,"input_size") or 0
 end
 
 sum_methods.get_output_size = function(self)
-  return self.output_size or 0
+  return rawget(self,"output_size") or 0
 end
 
 sum_methods.get_input = function(self)
@@ -626,13 +629,13 @@ end
 ---------------------------------------------------------------------------
 ann.graph.test = function()
   local nodes = {
-    a = { out_edges = { "b", "c" }, in_edges = { } },
-    b = { out_edges = { "c", "d" }, in_edges = { "a" } },
-    c = { out_edges = { "d" }, in_edges = { "a", "b" } },
-    d = { out_edges = { }, in_edges = { "b", "c" } },
+    a = { out_edges = { 'b', 'c' }, in_edges = { } },
+    b = { out_edges = { 'c', 'd' }, in_edges = { 'a' } },
+    c = { out_edges = { 'd' }, in_edges = { 'a', 'b' } },
+    d = { out_edges = { }, in_edges = { 'b', 'c' } },
   }
-  local result = topological_sort(nodes, "a")
-  utest.check.TRUE( iterator.zip(iterator(result), iterator{ "a", "b", "c", "d" }):
+  local result = topological_sort(nodes, 'a')
+  utest.check.TRUE( iterator.zip(iterator(result), iterator{ 'a', 'b', 'c', 'd' }):
                     reduce(function(acc,a,b) return acc and a==b end, true) )
   --
   local a = matrix(3,4):linear()
