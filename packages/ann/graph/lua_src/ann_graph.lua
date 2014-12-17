@@ -318,9 +318,16 @@ ann.graph.bind.constructor = function(self, name)
 end
 
 bind_methods.build = function(self, tbl)
-  (ann.components.lua.."build")(self, tbl)
+  local _,w,c = (ann.components.lua.."build")(self, tbl)
+  if self:get_input_size() == 0 then
+    self.input_size = self:get_output_size()
+  end
+  if self:get_output_size() == 0 then
+    self.output_size = self:get_input_size()
+  end
   assert(self:get_input_size() == self:get_output_size(),
          "Unable to compute input/output sizes")
+  return self,w,c
 end
 
 bind_methods.forward = function(self, input, during_training)
@@ -375,12 +382,12 @@ ann.graph.sum.constructor = function(self, name)
 end
 
 sum_methods.build = function(self, tbl)
-  (ann.components.lua.."build")(self, tbl)
+  local _,w,c = (ann.components.lua.."build")(self, tbl)
   if rawget(self,"input_size") and rawget(self,"output_size") then
     assert( (self.input_size % self.output_size) == 0,
       "Output size should be a multiple of input size")
   end
-  return self, tbl.weights or {}, { [self.name] = self }
+  return self,w,c
 end
 
 sum_methods.forward = function(self, input, during_training)
