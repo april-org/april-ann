@@ -53,7 +53,7 @@ end
 ann = ann or {}
 
 local ann_graph_methods
-ann.graph,ann_graph_methods = class("ann.graph", ann.components.base)
+ann.graph,ann_graph_methods = class("ann.graph", ann.components.lua)
 
 april_set_doc(ann.graph, {
                 class = "class",
@@ -66,8 +66,8 @@ ann.graph.constructor =
     params = { "A name string" },
   } ..
   function(self, name, components, connections)
+    ann.components.lua.constructor(self, name)
     self.nodes = { input = { in_edges = {}, out_edges = {} } }
-    self.name = name or ann.generate_name()
     if components and connections then
       for src,dst in iterator(connections):map(table.unpack) do
         if components[dst] ~= "input" then
@@ -160,9 +160,10 @@ ann_graph_methods.build =
       input_sizes[obj]  = obj:get_input_size()
       output_sizes[obj] = obj:get_output_size()
     end
-    self.input_size  = sum_sizes(nodes.input.out_edges, input_sizes)
-    self.output_size = sum_sizes(nodes.output.in_edges, output_sizes)
-    self.is_built    = true
+    (ann.components.lua.."build")(self,
+                                  { weights = weights,
+                                    input = sum_sizes(nodes.input.out_edges, input_sizes),
+                                    output = sum_sizes(nodes.output.in_edges, output_sizes) })
     return self,weights,components
   end
 
@@ -170,15 +171,17 @@ ann_graph_methods.build =
 -- the input of every component by using previous component outputs, and storing
 -- the output of every component at the table outputs_table
 ann_graph_methods.forward = function(self, input, during_training)
+  assert(rawget(self,"order"), "It is needed to call build method")
   local outputs_table = { input=input }
   for _,obj in ipairs(self.order) do
     local node = self.nodes[obj]
     local input = compose(node.in_edges, outputs_table)
     outputs_table[obj] = obj:forward(input, during_training)
   end
-  self.input_token = input
-  self.output_token = compose(self.nodes.output.in_edges, outputs_table)
-  return self.output_token
+  local output = compose(self.nodes.output.in_edges, outputs_table)
+  self:set_input(input)
+  self:set_output(output)
+  return output
 end
 
 -- traverse the graph following inverse topological order (self.order),
@@ -186,6 +189,8 @@ end
 -- component error outputs, and storing the error output of every component at
 -- the table error_outputs_table
 ann_graph_methods.backprop = function(self, input)
+  assert(rawget(self,"order"), "It is needed to call build method")
+  assert(rawget(self,"output_token"), "It is needed to call forward method")
   local error_inputs_table = { output=input }
   local accumulate = function(dst, e)
     local err = error_inputs_table[dst]
@@ -207,67 +212,23 @@ ann_graph_methods.backprop = function(self, input)
       accumulate(node.in_edges[1], error_output)
     end
   end
-  self.error_input_token = input
-  self.error_output_token = error_inputs_table.input
-  return self.error_output_token
+  self:set_error_input(input)
+  self:set_error_output(error_inputs_table.input)
+  return error_inputs_table.input
 end
 
 ann_graph_methods.compute_gradients = function(self, weight_grads)
+  assert(rawget(self,"order"), "It is needed to call build method")
+  assert(rawget(self,"output_token"), "It is needed to call forward method")
+  assert(rawget(self,"error_output_token"), "It is needed to call backprop method")
   local weight_grads = weight_grads or {}
   for _,obj in ipairs(self.order) do obj:compute_gradients(weight_grads) end
   return weight_grads
 end
 
-ann_graph_methods.reset = function(self, input)
+ann_graph_methods.reset = function(self, n)
   for _,obj in self.order do obj:reset() end
-  self.input_token = nil
-  self.output_token = nil
-  self.error_input_token = nil
-  self.error_output_token = nil
-end
-
-ann_graph_methods.get_name = function(self)
-  return self.name
-end
-
-ann_graph_methods.get_weights_name = function(self)
-  return nil
-end
-
-ann_graph_methods.has_weights_name = function(self)
-  return false
-end
-
-ann_graph_methods.get_is_built = function(self)
-  return self.order and true or false
-end
-
-ann_graph_methods.debug_info = function(self)
-  error("Not implemented")
-end
-
-ann_graph_methods.get_input_size = function(self)
-  return rawget(self,"input_size") or 0
-end
-
-ann_graph_methods.get_output_size = function(self)
-  return rawget(self,"output_size") or 0
-end
-
-ann_graph_methods.get_input = function(self)
-  return self.input_token
-end
-
-ann_graph_methods.get_output = function(self)
-  return self.output_token
-end
-
-ann_graph_methods.get_error_input = function(self)
-  return self.error_input_token
-end
-
-ann_graph_methods.get_error_output = function(self)
-  return self.error_output_token
+  (ann.components.lua.."reset")(self, n)
 end
 
 ann_graph_methods.precompute_output_size = function(self, tbl)
@@ -322,22 +283,20 @@ ann_graph_methods.set_use_cuda = function(self, v)
       v:set_use_cuda(v)
     end
   end
-  self.use_cuda = v
-end
-
-ann_graph_methods.get_use_cuda = function(self)
-  return self.use_cuda or false
+  (ann.components.lua.."set_use_cuda")(self, v)
 end
 
 ann_graph_methods.copy_weights = function(self, dict)
   local dict = dict or {}
   for _,obj in ipairs(self.order) do obj:copy_weights(dict) end
+  (ann.components.lua.."copy_weights")(self, dict)
   return dict
 end
 
 ann_graph_methods.copy_components = function(self, dict)
   local dict = dict or {}
   for _,obj in ipairs(self.order) do obj:copy_components(dict) end
+  (ann.components.lua.."copy_components")(self, dict)
   return dict
 end
 
@@ -352,24 +311,16 @@ end
 ---------------------------------------------------------------------------
 
 local bind_methods
-ann.graph.bind,bind_methods = class("ann.graph.bind", ann.components.base)
+ann.graph.bind,bind_methods = class("ann.graph.bind", ann.components.lua)
 
 ann.graph.bind.constructor = function(self, name)
-  self.name = name or ann.generate_name()
+  ann.components.lua.constructor(self, name)
 end
 
 bind_methods.build = function(self, tbl)
-  local tbl = tbl or {}
-  if tbl.input and tbl.input ~= 0 then
-    self.size = tbl.input
-    assert(not tbl.output or tbl.output == 0 or tbl.output == tbl.input)
-  end
-  if tbl.output ~= 0 then
-    self.size = tbl.output
-    assert(not tbl.input or tbl.input == 0 or tbl.input == tbl.output)
-  end
-  if not rawget(self,"size") then self.size = 0 end
-  return self,tbl.weights or {},{ [self.name] = self }
+  (ann.components.lua.."build")(self, tbl)
+  assert(self:get_input_size() == self:get_output_size(),
+         "Unable to compute input/output sizes")
 end
 
 bind_methods.forward = function(self, input, during_training)
@@ -381,8 +332,8 @@ bind_methods.forward = function(self, input, during_training)
                                           "Needs flattened input matrices")
                                    return i,m
                                end):table())
-  self.input_token = input
-  self.output_token = output
+  self:set_input(input)
+  self:set_output(output)
   return output
 end
 
@@ -395,64 +346,9 @@ bind_methods.backprop = function(self, input)
     pos = dest + 1
     output:push_back(slice)
   end
-  self.error_input_token = input
-  self.error_output_token = output
+  self:set_error_input(input)
+  self:set_error_output(output)
   return output
-end
-
-bind_methods.compute_gradients = function(self, weight_grads)
-  return weight_grads or {}
-end
-
-bind_methods.reset = function(self, input)
-  self.input_token = nil
-  self.output_token = nil
-  self.error_input_token = nil
-  self.error_output_token = nil
-end
-
-bind_methods.get_name = function(self)
-  return self.name
-end
-
-bind_methods.get_weights_name = function(self)
-  return nil
-end
-
-bind_methods.has_weights_name = function(self)
-  return false
-end
-
-bind_methods.get_is_built = function(self)
-  return (rawget(self,"size") ~= nil)
-end
-
-bind_methods.debug_info = function(self)
-  error("Not implemented")
-end
-
-bind_methods.get_input_size = function(self)
-  return rawget(self,"size") or 0
-end
-
-bind_methods.get_output_size = function(self)
-  return rawget(self,"size") or 0
-end
-
-bind_methods.get_input = function(self)
-  return self.input_token
-end
-
-bind_methods.get_output = function(self)
-  return self.output_token
-end
-
-bind_methods.get_error_input = function(self)
-  return self.error_input_token
-end
-
-bind_methods.get_error_output = function(self)
-  return self.error_output_token
 end
 
 bind_methods.precompute_output_size = function(self, tbl)
@@ -469,50 +365,20 @@ bind_methods.to_lua_string = function(self, format)
   return table.concat(str)
 end
 
-bind_methods.set_use_cuda = function(self, v)
-  self.use_cuda = v
-end
-
-bind_methods.get_use_cuda = function(self)
-  return self.use_cuda or false
-end
-
-bind_methods.copy_weights = function(self, dict)
-  return dict or {}
-end
-
-bind_methods.copy_components = function(self, dict)
-  return dict or {}
-end
-
-bind_methods.get_component = function(self, name)
-  if self.name == name then return self end
-end
-
 ---------------------------------------------------------------------------
 
 local sum_methods
-ann.graph.sum,sum_methods = class("ann.graph.sum", ann.components.base)
+ann.graph.sum,sum_methods = class("ann.graph.sum", ann.components.lua)
 
 ann.graph.sum.constructor = function(self, name)
   self.name = name or ann.generate_name()
 end
 
 sum_methods.build = function(self, tbl)
-  local tbl = tbl or {}
-  if tbl.input and tbl.input ~= 0 then
-    self.input_size = tbl.input
-  else
-    self.input_size = 0
-  end
-  if tbl.output ~= 0 then
-    self.output_size = tbl.output
-  else
-    self.output_size = 0
-  end
-  if self.input_size ~= 0 and self.output_size ~= 0 then
+  (ann.components.lua.."build")(self, tbl)
+  if rawget(self,"input_size") and rawget(self,"output_size") then
     assert( (self.input_size % self.output_size) == 0,
-      "Input size mod output size has to be zero")
+      "Output size should be a multiple of input size")
   end
   return self, tbl.weights or {}, { [self.name] = self }
 end
@@ -522,8 +388,8 @@ sum_methods.forward = function(self, input, during_training)
          "Needs a tokens.vector.bunch as input")
   local output = input:at(1):clone()
   for i=2,input:size() do output:axpy(1.0, input:at(i)) end
-  self.input_token = input
-  self.output_token = output
+  self:set_input(input)
+  self:set_output(output)
   return output
 end
 
@@ -532,64 +398,9 @@ sum_methods.backprop = function(self, input)
   for i=1,self.input_token:size() do
     output:push_back(input)
   end
-  self.error_input_token = input
-  self.error_output_token = output
+  self:set_error_input(input)
+  self:set_error_output(output)
   return output
-end
-
-sum_methods.compute_gradients = function(self, weight_grads)
-  return weight_grads or {}
-end
-
-sum_methods.reset = function(self, input)
-  self.input_token = nil
-  self.output_token = nil
-  self.error_input_token = nil
-  self.error_output_token = nil
-end
-
-sum_methods.get_name = function(self)
-  return self.name
-end
-
-sum_methods.get_weights_name = function(self)
-  return nil
-end
-
-sum_methods.has_weights_name = function(self)
-  return false
-end
-
-sum_methods.get_is_built = function(self)
-  return (rawget(self,"input_size") ~= nil)
-end
-
-sum_methods.debug_info = function(self)
-  error("Not implemented")
-end
-
-sum_methods.get_input_size = function(self)
-  return rawget(self,"input_size") or 0
-end
-
-sum_methods.get_output_size = function(self)
-  return rawget(self,"output_size") or 0
-end
-
-sum_methods.get_input = function(self)
-  return self.input_token
-end
-
-sum_methods.get_output = function(self)
-  return self.output_token
-end
-
-sum_methods.get_error_input = function(self)
-  return self.error_input_token
-end
-
-sum_methods.get_error_output = function(self)
-  return self.error_output_token
 end
 
 sum_methods.precompute_output_size = function(self, tbl, n)
@@ -604,26 +415,6 @@ end
 sum_methods.to_lua_string = function(self, format)
   local str = { "ann.graph.sum(", "%q"%{self.name}, ")" }
   return table.concat(str)
-end
-
-sum_methods.set_use_cuda = function(self, v)
-  self.use_cuda = v
-end
-
-sum_methods.get_use_cuda = function(self)
-  return self.use_cuda or false
-end
-
-sum_methods.copy_weights = function(self, dict)
-  return dict or {}
-end
-
-sum_methods.copy_components = function(self, dict)
-  return dict or {}
-end
-
-sum_methods.get_component = function(self, name)
-  if self.name == name then return self end
 end
 
 ---------------------------------------------------------------------------
