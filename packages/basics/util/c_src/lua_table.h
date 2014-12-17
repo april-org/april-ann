@@ -62,7 +62,7 @@ namespace AprilUtils {
     
     /// Destructor.
     ~LuaTable();
-    
+
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
     
@@ -197,9 +197,10 @@ namespace AprilUtils {
     mutable lua_State *L;
     /// The reference in the registry where the table can be retrieved.
     int ref;
-    
+
     /// Auxiliary method to simplify constructors.
     void init(lua_State *L, int i);
+    
     /// Checks ref != LUA_NOREF and pushes it into the Lua stack.
     bool checkAndGetRef() const;
     

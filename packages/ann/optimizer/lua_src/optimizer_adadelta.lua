@@ -72,13 +72,13 @@ function adadelta_methods:execute(eval, weights)
     -- L2 regularization
     if l2 > 0.0 then grad:axpy(l2, w) end
     -- accumulate gradients
-    Egradient:scal(decay):axpy(1-decay, grad^2)
+    Egradient[{}] = decay*Egradient + (1-decay)*grad^2
     -- compute update on grad matrix
-    grad:cmul( mop.sqrt(Eupdate + eps):cmul( 1.0/mop.sqrt(Egradient + eps) ) )
-    -- apply update matrix to the weights
-    w:axpy(-1.0, grad)
+    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps))
     -- accumulate updates
-    Eupdate:scal(decay):axpy(1-decay, grad:pow(2))
+    Eupdate[{}] = decay*Eupdate + (1-decay)*update^2
+    -- apply update matrix to the weights
+    w:axpy(1.0, update)
     -- constraints
     if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     -- weights normality check

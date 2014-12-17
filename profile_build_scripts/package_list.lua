@@ -35,6 +35,7 @@ return {
   "ann.loss",
   "trainable",
   "ann.autoencoders",
+  "ann.graph",
   "bayesian",
 
   -- LANGUAGE MODELS
