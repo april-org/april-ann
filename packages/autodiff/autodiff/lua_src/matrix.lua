@@ -299,7 +299,7 @@ autodiff.op[MATRIX] = {
     local a,b = coercion(a),coercion(b)
     assert(a.dtype ~= MATRIX or b.dtype ~= MATRIX,
 	   "Incorrect types, div between MATRIX and MATRIX is not implemented")
-    return a * (b^(-1))
+    return autodiff.op.cmul( a, (b^(-1)) )
   end,
 
   -- pow by an scalar
