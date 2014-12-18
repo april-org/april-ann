@@ -80,7 +80,9 @@ end)
 
 T("SumComponentTest",
   function()
-    local s = ann.graph.sum()
+    local s = ann.graph.sum():clone()
+    check.eq(s:to_lua_string(), "ann.graph.sum(%q)"%{s:get_name()})
+    --
     s:build{ input=30, output=10 }
     check.eq(s:get_input_size(), 30)
     check.eq(s:get_output_size(), 10)
@@ -96,7 +98,9 @@ end)
 
 T("BindComponentTest",
   function()
-    local s = ann.graph.bind()
+    local s = ann.graph.bind():clone()
+    check.eq(s:to_lua_string(), "ann.graph.bind(%q)"%{s:get_name()})
+    --
     s:build{ input=30, output=30 }
     check.eq(s:get_input_size(), 30)
     check.eq(s:get_output_size(), 30)

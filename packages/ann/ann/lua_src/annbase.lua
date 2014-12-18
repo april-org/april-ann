@@ -263,11 +263,11 @@ lua_component_methods.precompute_output_size = function(self, tbl)
 end
 
 lua_component_methods.clone = function(self)
-  return ann.components.lua(self.name)
+  return class.of(self)(self.name)
 end
 
 lua_component_methods.to_lua_string = function(self, format)
-  return "ann.components.lua(%q)" % {self.name}
+  return "%s(%q)" % {get_object_id(self), self.name}
 end
 
 lua_component_methods.set_use_cuda = function(self, v)

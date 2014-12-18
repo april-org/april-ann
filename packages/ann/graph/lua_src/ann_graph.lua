@@ -146,61 +146,54 @@ ann_graph_methods.connect =
     return self
   end
 
-ann_graph_methods.build =
-  april_doc{
-    class = "method",
-    summary = "Builds the ANN component",
-    description = "See april_help(ann.components.base..'build')",
-    params = { "An optional table with 'input', 'output' and 'weights' fields" },
-  } ..
-  function(self, tbl)
-    local tbl = tbl or {}
-    assert(#self.nodes.input.out_edges > 0,
-           "Connections from 'input' node are needed")
-    assert(self.nodes.output, "Connections to 'output' node are needed")
-    -- build the topological sort, which will be stored at self.order
-    ann_graph_topsort(self)
-    --
-    local nodes = self.nodes
-    local input_size = tbl.input or 0
-    local weights = tbl.weights or {}
-    local components = { [self.name] = self }
-    -- computes the sum of the elements of sizes which belong to tbl
-    local function sum_sizes(tbl, sizes)
-      return iterator(tbl):map(function(obj) return sizes[obj] end):reduce(math.add(), 0)
-    end
-    --
-    local input_sizes = {}
-    local output_sizes = { input = input_size }
-    -- precompute input/output sizes
-    for _,obj in ipairs(self.order) do
-      input_sizes[obj] = obj:get_input_size()
-      output_sizes[obj] = obj:get_output_size()
-    end
-    input_sizes.output = sum_sizes(nodes.output.in_edges, output_sizes)
-    --
-    for _,obj in ipairs(self.order) do
-      local node = nodes[obj]
-      april_assert(#node.out_edges > 0,
-                   "Node %s doesn't have output connections",
-                   obj:get_name())
-      local _,_,aux = obj:build{ input = sum_sizes(node.in_edges, output_sizes),
-                                 output = sum_sizes(node.out_edges, input_sizes),
-                                 weights = weights }
-      for k,v in pairs(aux) do assert(not components[k]) components[k] = v end
-      input_sizes[obj]  = obj:get_input_size()
-      output_sizes[obj] = obj:get_output_size()
-    end
-    for k=2,#nodes.input.out_edges do
-      assert(input_sizes[nodes.input.out_edges[1]] == input_sizes[nodes.input.out_edges[k]],
-             "All input connection should have the same input size")
-    end
-    (ann.components.lua.."build")(self,
-                                  { weights = weights,
-                                    input = input_sizes[nodes.input.out_edges[1]],
-                                    output = sum_sizes(nodes.output.in_edges, output_sizes) })
-    return self,weights,components
+ann_graph_methods.build = function(self, tbl)
+  local tbl = tbl or {}
+  assert(#self.nodes.input.out_edges > 0,
+         "Connections from 'input' node are needed")
+  assert(self.nodes.output, "Connections to 'output' node are needed")
+  -- build the topological sort, which will be stored at self.order
+  ann_graph_topsort(self)
+  --
+  local nodes = self.nodes
+  local input_size = tbl.input or 0
+  local weights = tbl.weights or {}
+  local components = { [self.name] = self }
+  -- computes the sum of the elements of sizes which belong to tbl
+  local function sum_sizes(tbl, sizes)
+    return iterator(tbl):map(function(obj) return sizes[obj] end):reduce(math.add(), 0)
   end
+  --
+  local input_sizes = {}
+  local output_sizes = { input = input_size }
+  -- precompute input/output sizes
+  for _,obj in ipairs(self.order) do
+    input_sizes[obj] = obj:get_input_size()
+    output_sizes[obj] = obj:get_output_size()
+  end
+  input_sizes.output = sum_sizes(nodes.output.in_edges, output_sizes)
+  --
+  for _,obj in ipairs(self.order) do
+    local node = nodes[obj]
+    april_assert(#node.out_edges > 0,
+                 "Node %s doesn't have output connections",
+                 obj:get_name())
+    local _,_,aux = obj:build{ input = sum_sizes(node.in_edges, output_sizes),
+                               output = sum_sizes(node.out_edges, input_sizes),
+                               weights = weights }
+    for k,v in pairs(aux) do assert(not components[k]) components[k] = v end
+    input_sizes[obj]  = obj:get_input_size()
+    output_sizes[obj] = obj:get_output_size()
+  end
+  for k=2,#nodes.input.out_edges do
+    assert(input_sizes[nodes.input.out_edges[1]] == input_sizes[nodes.input.out_edges[k]],
+           "All input connection should have the same input size")
+  end
+  (ann.components.lua.."build")(self,
+                                { weights = weights,
+                                  input = input_sizes[nodes.input.out_edges[1]],
+                                  output = sum_sizes(nodes.output.in_edges, output_sizes) })
+  return self,weights,components
+end
 
 -- traverse the graph following the topological order (self.order), composing
 -- the input of every component by using previous component outputs, and storing
@@ -395,14 +388,6 @@ bind_methods.precompute_output_size = function(self, tbl)
   return tbl
 end
 
-bind_methods.clone = function(self)
-  return ann.graph.bind(self.name)
-end
-
-bind_methods.to_lua_string = function(self, format)
-  return "ann.graph.bind(%q)" % {self.name}
-end
-
 ---------------------------------------------------------------------------
 
 local sum_methods
@@ -444,14 +429,6 @@ end
 sum_methods.precompute_output_size = function(self, tbl, n)
   assert(#tbl == 1, "Needs a flattened input")
   return iterator(tbl):map(math.div(nil,n)):table()
-end
-
-sum_methods.clone = function(self)
-  return ann.graph.sum(self.name)
-end
-
-sum_methods.to_lua_string = function(self, format)
-  return "ann.graph.sum(%q)" % {self.name}
 end
 
 ---------------------------------------------------------------------------
