@@ -12,15 +12,15 @@ local mop = matrix.op
 local sdiag = matrix.sparse.diag
 
 -- x must be a 2D matrix
-local function center(x)
+local function center(x,mu)
   local x_dim = x:dim()
   local N = x_dim[1]
-  local x_mu,mu
+  local x_mu
   if #x_dim == 1 then
-    mu   = x:sum()/N
+    mu = mu or x:sum()/N
     x_mu = mu
   else
-    mu = x:sum(1):scal(1/N)
+    mu = mu or x:sum(1):scal(1/N)
     x_mu = mop.repmat(mu,N,1)
   end
   return x - x_mu,mu
@@ -31,17 +31,25 @@ stats.standardize =
     class = "function",
     summary = "Standardize data to have zero-mean one-variance",
     description = "Data is ordered by rows, features by columns.",
-    params = { "A 2D matrix" },
-    outputs = { "Another new allocated matrix" },
+    params = { "A 2D matrix", "A table with center and/or scale matrices [optional]"},
+    outputs = { "Another new allocated matrix", "Center matrix", "Scale matrix" },
   } ..
-  function(x)
+  function(x, params)
+    local params = params or {}
     assert(#x:dim() == 2, "Needs a 2D matrix")
     local N = x:dim(1)
-    local sigma2,mu = stats.var(x,1)
+    local mu,sigma = params.center,params.scale
+    if not sigma then
+      local sigma2,mup = stats.var(x,1)
+      mu = mu or mup
+      sigma = sigma2:sqrt()
+    elseif not mu then
+      mu = stats.amean(x,1)
+    end
     local x = x:clone()
     x:axpy(-1.0, mop.repmat(mu,N,1))
-    x:cmul(mop.repmat(1/sigma2:sqrt(),N,1))
-    return x,mu,sigma2
+    x:cmul(mop.repmat(1/sigma,N,1))
+    return x,mu,sigma
   end
 
 stats.center =
@@ -49,12 +57,12 @@ stats.center =
     class = "function",
     summary = "Centers data by rows, computing mean of every column",
     description = "Data is ordered by rows, features by columns.",
-    params = { "A 2D matrix" },
-    outputs = { "Another new allocated matrix" },
+    params = { "A 2D matrix", "Center matrix" },
+    outputs = { "Another new allocated matrix", "The center matrix" },
   } ..
-  function(x)
+  function(x,mu)
     assert(#x:dim() == 2, "Needs a 2D matrix")
-    return center(x)
+    return center(x,mu)
   end
 
 stats.var =
