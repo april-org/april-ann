@@ -259,7 +259,7 @@ lua_component_methods.get_error_output = function(self)
 end
 
 lua_component_methods.precompute_output_size = function(self, tbl)
-  return tbl
+  error("Not implemented")
 end
 
 lua_component_methods.clone = function(self)

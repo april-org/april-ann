@@ -21,6 +21,16 @@ local function compute_gradients_asserts(self)
          "Backprop method should be called before")
 end
 
+local function forward_finish(self, input, output)
+  self:set_input(input)
+  self:set_output(output)
+end
+
+local function backprop_finish(self, input, output)
+  self:set_error_input(input)
+  self:set_error_output(output)
+end
+
 -- Returns a table with a topological sort given a table of nodes and the
 -- start object.
 
@@ -204,8 +214,7 @@ ann_graph_methods.forward = function(self, input, during_training)
     outputs_table[obj] = obj:forward(input, during_training)
   end
   local output = compose(self.nodes.output.in_edges, outputs_table)
-  self:set_input(input)
-  self:set_output(output)
+  forward_finish(self, input, output)
   return output
 end
 
@@ -238,8 +247,7 @@ ann_graph_methods.backprop = function(self, input)
       accumulate(node.in_edges[1], error_output)
     end
   end
-  self:set_error_input(input)
-  self:set_error_output(error_inputs_table.input)
+  backprop_finish(self, input, error_inputs_table.input)
   return error_inputs_table.input
 end
 
@@ -364,8 +372,7 @@ bind_methods.forward = function(self, input, during_training)
                                           "Needs flattened input matrices")
                                    return i,m
                                end):table())
-  self:set_input(input)
-  self:set_output(output)
+  forward_finish(self, input, output)
   return output
 end
 
@@ -379,8 +386,7 @@ bind_methods.backprop = function(self, input)
     pos = dest + 1
     output:push_back(slice)
   end
-  self:set_error_input(input)
-  self:set_error_output(output)
+  backprop_finish(self, input, output)
   return output
 end
 
@@ -421,8 +427,7 @@ sum_methods.forward = function(self, input, during_training)
          "Needs a tokens.vector.bunch as input")
   local output = input:at(1):clone()
   for i=2,input:size() do output:axpy(1.0, input:at(i)) end
-  self:set_input(input)
-  self:set_output(output)
+  forward_finish(self, input, output)
   return output
 end
 
@@ -432,8 +437,7 @@ sum_methods.backprop = function(self, input)
   for i=1,self:get_input():size() do
     output:push_back(input)
   end
-  self:set_error_input(input)
-  self:set_error_output(output)
+  backprop_finish(self, input, output)
   return output
 end
 
@@ -465,25 +469,18 @@ index_methods.forward = function(self, input, during_training)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
   local output = input:at(self.n)
-  self:set_input(input)
-  self:set_output(output)
+  forward_finish(self, input, output)
   return output
 end
 
 index_methods.backprop = function(self, input)
   backprop_asserts(self)
   local output = tokens.vector.bunch()
-  for i=1,self.n-1 do output:push_back(tokens.null()) end
+  for i = 1, self.n-1 do output:push_back(tokens.null()) end
   output:push_back(input)
-  for i=self.n+1,self:get_input():size() do output:push_back(tokens.null()) end
-  self:set_error_input(input)
-  self:set_error_output(output)
+  for i = self.n+1, self:get_input():size() do output:push_back(tokens.null()) end
+  backprop_finish(self, input, output)
   return output
-end
-
-index_methods.precompute_output_size = function(self, tbl, n)
-  assert(#tbl == 1, "Needs a flattened input")
-  return 0
 end
 
 index_methods.clone = function(self)
