@@ -112,3 +112,54 @@ T("BindComponentTest",
     for _,m in out:iterate() do check.eq(m, matrix(4,10):linear()) end
     check.errored(function() s:build{ input=30, output=20 } end)
 end)
+
+T("IndexComponentTest",
+  function()
+    local s = ann.graph.index(2)
+    s:build()
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):fill(1),
+                                               matrix(4,10):linear(),
+                                               matrix(4,10):fill(3), })
+    check.eq(out, matrix(4,10):linear())
+    local out = s:backprop(matrix(4,10):fill(5))
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    check.TRUE(class.is_a(out:at(1), tokens.null))
+    check.eq(out:at(2), matrix(4,10):fill(5))
+    check.TRUE(class.is_a(out:at(3), tokens.null))
+end)
+
+T("Test",
+  function()
+    local net   = ann.graph()
+    local s1    = ann.components.slice{ pos={1}, size={16*16} }
+    local s2    = ann.components.slice{ pos={16*16+1}, size={8*8} }
+    local l1    = ann.components.hyperplane{ input=16*16, output=32 }
+    local l2    = ann.components.hyperplane{ input=8*8, output=32 }
+    local b     = ann.graph.bind()
+    local stack = ann.components.stack():
+      push( ann.components.actf.relu() ):
+      push( ann.components.hyperplane{ input=64, output=10 } ):
+      push( ann.components.actf.log_softmax() )
+    --
+    net:connect('input', s1)
+    net:connect('input', s2)
+    net:connect(s1,      l1)
+    net:connect(s2,      l2)
+    net:connect({l1,l2}, b)
+    net:connect(b,       stack)
+    net:connect(stack,   'output')
+    net:build{ input=16*16 + 8*8 }
+    --
+    check.eq(net:get_input_size(), 16*16 + 8*8)
+    check.eq(net:get_output_size(), 10)
+    --
+    local rnd = random(1234)
+    local weights = net:copy_weights()
+    local order = iterator(table.keys(weights)):table() table.sort(order)
+    iterator(order):apply(function(name) weights[name]:uniformf(-0.01,0.01,rnd) end)
+    --
+    local out = net:forward(matrix(10, net:get_input_size()):uniformf(0,1,rnd))
+    check.eq(#out:dim(), 2)
+    check.eq(out:dim(2), 10)
+    check.eq(out:dim(1), 10)
+end)

@@ -85,6 +85,9 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
   case Basics::table_of_token_codes::vector_Tokens:
     lua_pushTokenBunchVector(L, (TokenBunchVector*)value.get());
     break;
+  case Basics::table_of_token_codes::token_null:
+    lua_pushTokenNull(L, (TokenNull*)value.get());
+    break;
   default:
     lua_pushToken(L, value.get());
   }

@@ -1,5 +1,26 @@
 -- AUXILIARY FUNCTIONS
 
+local function forward_asserts(self)
+  assert(self:get_is_built(),
+         "Build method should be called before")
+end
+
+local function backprop_asserts(self)
+  assert(self:get_is_built(),
+         "Build method should be called before")
+  assert(rawget(self,"output_token"),
+         "Forward method should be called before")
+end
+
+local function compute_gradients_asserts(self)
+  assert(self:get_is_built(),
+         "Build method should be called before")
+  assert(rawget(self,"output_token"),
+         "Forward method should be called before")
+  assert(rawget(self,"error_output_token"),
+         "Backprop method should be called before")
+end
+
 -- Returns a table with a topological sort given a table of nodes and the
 -- start object.
 
@@ -160,9 +181,13 @@ ann_graph_methods.build =
       input_sizes[obj]  = obj:get_input_size()
       output_sizes[obj] = obj:get_output_size()
     end
+    for k=2,#nodes.input.out_edges do
+      assert(input_sizes[nodes.input.out_edges[1]] == input_sizes[nodes.input.out_edges[k]],
+             "All input connection should have the same input size")
+    end
     (ann.components.lua.."build")(self,
                                   { weights = weights,
-                                    input = sum_sizes(nodes.input.out_edges, input_sizes),
+                                    input = input_sizes[nodes.input.out_edges[1]],
                                     output = sum_sizes(nodes.output.in_edges, output_sizes) })
     return self,weights,components
   end
@@ -171,7 +196,7 @@ ann_graph_methods.build =
 -- the input of every component by using previous component outputs, and storing
 -- the output of every component at the table outputs_table
 ann_graph_methods.forward = function(self, input, during_training)
-  assert(rawget(self,"order"), "It is needed to call build method")
+  forward_asserts(self)
   local outputs_table = { input=input }
   for _,obj in ipairs(self.order) do
     local node = self.nodes[obj]
@@ -189,13 +214,14 @@ end
 -- component error outputs, and storing the error output of every component at
 -- the table error_outputs_table
 ann_graph_methods.backprop = function(self, input)
-  assert(rawget(self,"order"), "It is needed to call build method")
-  assert(rawget(self,"output_token"), "It is needed to call forward method")
+  backprop_asserts(self)
   local error_inputs_table = { output=input }
   local accumulate = function(dst, e)
-    local err = error_inputs_table[dst]
-    if not err then error_inputs_table[dst] = e:clone()
-    else err = err:axpy(1.0, e) end
+    if not class.is_a(e, tokens.null) then
+      local err = error_inputs_table[dst]
+      if not err then error_inputs_table[dst] = e:clone()
+      else err = err:axpy(1.0, e) end
+    end
   end
   for _,obj in ipairs(self.nodes.output.in_edges) do accumulate(obj, input) end
   for i=#self.order,1,-1 do
@@ -218,9 +244,7 @@ ann_graph_methods.backprop = function(self, input)
 end
 
 ann_graph_methods.compute_gradients = function(self, weight_grads)
-  assert(rawget(self,"order"), "It is needed to call build method")
-  assert(rawget(self,"output_token"), "It is needed to call forward method")
-  assert(rawget(self,"error_output_token"), "It is needed to call backprop method")
+  compute_gradients_asserts(self)
   local weight_grads = weight_grads or {}
   for _,obj in ipairs(self.order) do obj:compute_gradients(weight_grads) end
   return weight_grads
@@ -331,6 +355,7 @@ bind_methods.build = function(self, tbl)
 end
 
 bind_methods.forward = function(self, input, during_training)
+  forward_asserts(self)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
   local output = matrix.join(2, iterator(input:iterate()):
@@ -345,9 +370,10 @@ bind_methods.forward = function(self, input, during_training)
 end
 
 bind_methods.backprop = function(self, input)
+  backprop_asserts(self)
   local output = tokens.vector.bunch()
   local pos = 1
-  for _,m in self.input_token:iterate() do
+  for _,m in self:get_input():iterate() do
     local dest = pos + m:dim(2) - 1
     local slice = input(':', {pos, dest})
     pos = dest + 1
@@ -368,8 +394,7 @@ bind_methods.clone = function(self)
 end
 
 bind_methods.to_lua_string = function(self, format)
-  local str = { "ann.graph.bind(", "%q"%{self.name}, ")" }
-  return table.concat(str)
+  return "ann.graph.bind(%q)" % {self.name}
 end
 
 ---------------------------------------------------------------------------
@@ -391,6 +416,7 @@ sum_methods.build = function(self, tbl)
 end
 
 sum_methods.forward = function(self, input, during_training)
+  forward_asserts(self)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
   local output = input:at(1):clone()
@@ -401,8 +427,9 @@ sum_methods.forward = function(self, input, during_training)
 end
 
 sum_methods.backprop = function(self, input)
+  backprop_asserts(self)
   local output = tokens.vector.bunch()
-  for i=1,self.input_token:size() do
+  for i=1,self:get_input():size() do
     output:push_back(input)
   end
   self:set_error_input(input)
@@ -420,8 +447,51 @@ sum_methods.clone = function(self)
 end
 
 sum_methods.to_lua_string = function(self, format)
-  local str = { "ann.graph.sum(", "%q"%{self.name}, ")" }
-  return table.concat(str)
+  return "ann.graph.sum(%q)" % {self.name}
+end
+
+---------------------------------------------------------------------------
+
+local index_methods
+ann.graph.index,index_methods = class("ann.graph.index", ann.components.lua)
+
+ann.graph.index.constructor = function(self, n, name)
+  self.n = assert(n, "Needs a number as first argument")
+  self.name = name or ann.generate_name()
+end
+
+index_methods.forward = function(self, input, during_training)
+  forward_asserts(self)
+  assert(class.is_a(input, tokens.vector.bunch),
+         "Needs a tokens.vector.bunch as input")
+  local output = input:at(self.n)
+  self:set_input(input)
+  self:set_output(output)
+  return output
+end
+
+index_methods.backprop = function(self, input)
+  backprop_asserts(self)
+  local output = tokens.vector.bunch()
+  for i=1,self.n-1 do output:push_back(tokens.null()) end
+  output:push_back(input)
+  for i=self.n+1,self:get_input():size() do output:push_back(tokens.null()) end
+  self:set_error_input(input)
+  self:set_error_output(output)
+  return output
+end
+
+index_methods.precompute_output_size = function(self, tbl, n)
+  assert(#tbl == 1, "Needs a flattened input")
+  return 0
+end
+
+index_methods.clone = function(self)
+  return ann.graph.index(self.n, self.name)
+end
+
+index_methods.to_lua_string = function(self, format)
+  return "ann.graph.index(%d,%q)" % {self.n, self.name}
 end
 
 ---------------------------------------------------------------------------

@@ -93,6 +93,7 @@ function ann_wrapper_methods:compute_gradients(dict)
 end
 
 function ann_wrapper_methods:build(params)
+  params = params or {}
   local input,output,weights = params.input,params.output,params.weights
   -- TODO: check input/output sizes
   if params.weights then matrix.dict.replace( self.weights, params.weights ) end
@@ -168,6 +169,7 @@ lua_component_methods.set_error_output = function(self,tk)
 end
 
 lua_component_methods.build = function(self,tbl)
+  tbl = tbl or {}
   self.is_built = true
   local input_size,output_size
   if tbl.input and tbl.input ~= 0 then
