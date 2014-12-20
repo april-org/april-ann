@@ -1,3 +1,5 @@
+local mop = matrix.op
+
 -- AUXILIARY FUNCTIONS
 
 local function forward_asserts(self)
@@ -466,6 +468,49 @@ end
 
 index_methods.to_lua_string = function(self, format)
   return "ann.graph.index(%d,%q)" % {self.n, self.name}
+end
+
+---------------------------------------------------------------------------
+
+local gated_methods
+ann.graph.gated,gated_methods = class("ann.graph.gated", ann.components.lua)
+
+ann.graph.gated.constructor = function(self, name)
+  self.name = name or ann.generate_name()
+end
+
+gated_methods.build = function(self, tbl)
+  local _,w,c = (ann.components.lua.."build")(self, tbl)
+  if rawget(self,"input_size") and rawget(self,"output_size") then
+    assert( self.input_size == 2*self.output_size,
+      "Output size should be a multiple of input size")
+  end
+  return self,w,c
+end
+
+gated_methods.forward = function(self, input, during_training)
+  forward_asserts(self)
+  assert(class.is_a(input, tokens.vector.bunch),
+         "Needs a tokens.vector.bunch as input")
+  assert(input:size() == 2, "Needs a tokens.vector.bunch with two components")
+  local output = mop.cmul(input:at(1), input:at(2))
+  forward_finish(self, input, output)
+  return output
+end
+
+gated_methods.backprop = function(self, input)
+  backprop_asserts(self)
+  local i = self:get_input()
+  local output = tokens.vector.bunch()
+  output:push_back( mop.cmul(i:at(2), input) )
+  output:push_back( mop.cmul(i:at(1), input) )
+  backprop_finish(self, input, output)
+  return output
+end
+
+gated_methods.precompute_output_size = function(self, tbl, n)
+  assert(#tbl == 1, "Needs a flattened input")
+  return iterator(tbl):map(math.div(nil,2)):table()
 end
 
 ---------------------------------------------------------------------------

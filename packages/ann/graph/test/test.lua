@@ -132,6 +132,23 @@ T("IndexComponentTest",
     check.TRUE(class.is_a(out:at(3), tokens.null))
 end)
 
+T("GatedComponentTest",
+  function()
+    local s = ann.graph.gated():clone()
+    check.eq(s:to_lua_string(), "ann.graph.gated(%q)"%{s:get_name()})
+    --
+    s:build{ input=20, output=10 }
+    check.eq(s:get_input_size(), 20)
+    check.eq(s:get_output_size(), 10)
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):linear(),
+                                               matrix(4,10):linear(), })
+    check.eq(out, matrix(4,10):linear():pow(2))
+    local out = s:backprop(matrix(4,10):linear())
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    for _,m in out:iterate() do check.eq(m, matrix(4,10):linear():pow(2)) end
+    check.errored(function() s:build{ input=20, output=20 } end)
+end)
+
 T("Test",
   function()
     local net   = ann.graph()
