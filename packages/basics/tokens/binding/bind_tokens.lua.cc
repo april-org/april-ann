@@ -71,25 +71,33 @@ AprilUtils::SharedPtr<Token> lua_toAuxToken(lua_State *L, int n) {
     SparseMatrixFloat *mat = lua_toSparseMatrixFloat(L,n);
     return new TokenSparseMatrixFloat(mat);
   }
+  else if (lua_isnil(L, n)) {
+    return TokenNull::getInstance();
+  }
   return lua_toToken(L,n);
 }
 
 void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
-  switch(value->getTokenCode()) {
-  case Basics::table_of_token_codes::token_matrix:
-    lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
-    break;
-  case Basics::table_of_token_codes::token_sparse_matrix:
-    lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
-    break;
-  case Basics::table_of_token_codes::vector_Tokens:
-    lua_pushTokenBunchVector(L, (TokenBunchVector*)value.get());
-    break;
-  case Basics::table_of_token_codes::token_null:
-    lua_pushTokenNull(L, (TokenNull*)value.get());
-    break;
-  default:
-    lua_pushToken(L, value.get());
+  if (value.empty()) {
+    lua_pushTokenNull(L, TokenNull::getInstance());
+  }
+  else {
+    switch(value->getTokenCode()) {
+    case Basics::table_of_token_codes::token_matrix:
+      lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
+      break;
+    case Basics::table_of_token_codes::token_sparse_matrix:
+      lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
+      break;
+    case Basics::table_of_token_codes::vector_Tokens:
+      lua_pushTokenBunchVector(L, (TokenBunchVector*)value.get());
+      break;
+    case Basics::table_of_token_codes::token_null:
+      lua_pushTokenNull(L, TokenNull::getInstance());
+      break;
+    default:
+      lua_pushToken(L, value.get());
+    }
   }
 }
 
@@ -156,7 +164,7 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
 
 //BIND_CONSTRUCTOR TokenNull
 {
-  LUABIND_RETURN(TokenNull, new TokenNull());
+  LUABIND_RETURN(TokenNull, TokenNull::getInstance());
 }
 //BIND_END
 

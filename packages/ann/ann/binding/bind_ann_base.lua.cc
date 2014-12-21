@@ -382,48 +382,28 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent get_input
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getInput() );
-  if (aux.empty()) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getOutput() );
-  if (aux.empty()) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorInput() );
-  if (aux == 0) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_output
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorOutput() );
-  if (aux == 0) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 

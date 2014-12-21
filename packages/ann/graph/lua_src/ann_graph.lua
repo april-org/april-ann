@@ -221,7 +221,7 @@ ann_graph_methods.backprop = function(self, input)
   backprop_asserts(self)
   local error_inputs_table = { output=input }
   local accumulate = function(dst, e)
-    if not class.is_a(e, tokens.null) then
+    if e ~= tokens.null() then
       local err = error_inputs_table[dst]
       if not err then error_inputs_table[dst] = e:clone()
       else err = err:axpy(1.0, e) end
