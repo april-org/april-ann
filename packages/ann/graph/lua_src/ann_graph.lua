@@ -392,14 +392,14 @@ end
 
 ---------------------------------------------------------------------------
 
-local sum_methods
-ann.graph.sum,sum_methods = class("ann.graph.sum", ann.components.lua)
+local add_methods
+ann.graph.add,add_methods = class("ann.graph.add", ann.components.lua)
 
-ann.graph.sum.constructor = function(self, name)
-  self.name = name or ann.generate_name()
+ann.graph.add.constructor = function(self, name)
+  ann.components.lua.constructor(self, name)
 end
 
-sum_methods.build = function(self, tbl)
+add_methods.build = function(self, tbl)
   local _,w,c = (ann.components.lua.."build")(self, tbl)
   if rawget(self,"input_size") and rawget(self,"output_size") then
     assert( (self.input_size % self.output_size) == 0,
@@ -408,7 +408,7 @@ sum_methods.build = function(self, tbl)
   return self,w,c
 end
 
-sum_methods.forward = function(self, input, during_training)
+add_methods.forward = function(self, input, during_training)
   forward_asserts(self)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
@@ -418,7 +418,7 @@ sum_methods.forward = function(self, input, during_training)
   return output
 end
 
-sum_methods.backprop = function(self, input)
+add_methods.backprop = function(self, input)
   backprop_asserts(self)
   local output = tokens.vector.bunch()
   for i=1,self:get_input():size() do
@@ -428,7 +428,7 @@ sum_methods.backprop = function(self, input)
   return output
 end
 
-sum_methods.precompute_output_size = function(self, tbl, n)
+add_methods.precompute_output_size = function(self, tbl, n)
   assert(#tbl == 1, "Needs a flattened input")
   return iterator(tbl):map(math.div(nil,n)):table()
 end
@@ -440,7 +440,7 @@ ann.graph.index,index_methods = class("ann.graph.index", ann.components.lua)
 
 ann.graph.index.constructor = function(self, n, name)
   self.n = assert(n, "Needs a number as first argument")
-  self.name = name or ann.generate_name()
+  ann.components.lua.constructor(self, name)
 end
 
 index_methods.forward = function(self, input, during_training)
@@ -472,14 +472,14 @@ end
 
 ---------------------------------------------------------------------------
 
-local gated_methods
-ann.graph.gated,gated_methods = class("ann.graph.gated", ann.components.lua)
+local cmul_methods
+ann.graph.cmul,cmul_methods = class("ann.graph.cmul", ann.components.lua)
 
-ann.graph.gated.constructor = function(self, name)
+ann.graph.cmul.constructor = function(self, name)
   self.name = name or ann.generate_name()
 end
 
-gated_methods.build = function(self, tbl)
+cmul_methods.build = function(self, tbl)
   local _,w,c = (ann.components.lua.."build")(self, tbl)
   if rawget(self,"input_size") and rawget(self,"output_size") then
     assert( self.input_size == 2*self.output_size,
@@ -488,7 +488,7 @@ gated_methods.build = function(self, tbl)
   return self,w,c
 end
 
-gated_methods.forward = function(self, input, during_training)
+cmul_methods.forward = function(self, input, during_training)
   forward_asserts(self)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
@@ -498,7 +498,7 @@ gated_methods.forward = function(self, input, during_training)
   return output
 end
 
-gated_methods.backprop = function(self, input)
+cmul_methods.backprop = function(self, input)
   backprop_asserts(self)
   local i = self:get_input()
   local output = tokens.vector.bunch()
@@ -508,12 +508,13 @@ gated_methods.backprop = function(self, input)
   return output
 end
 
-gated_methods.precompute_output_size = function(self, tbl, n)
+cmul_methods.precompute_output_size = function(self, tbl, n)
   assert(#tbl == 1, "Needs a flattened input")
   return iterator(tbl):map(math.div(nil,2)):table()
 end
 
 ---------------------------------------------------------------------------
+
 ann.graph.test = function()
   local nodes = {
     a = { out_edges = { 'b', 'c' }, in_edges = { } },

@@ -78,10 +78,10 @@ T("ANNGraphComponentTest",
     end
 end)
 
-T("SumComponentTest",
+T("AddComponentTest",
   function()
-    local s = ann.graph.sum():clone()
-    check.eq(s:to_lua_string(), "ann.graph.sum(%q)"%{s:get_name()})
+    local s = ann.graph.add():clone()
+    check.eq(s:to_lua_string(), "ann.graph.add(%q)"%{s:get_name()})
     --
     s:build{ input=30, output=10 }
     check.eq(s:get_input_size(), 30)
@@ -132,10 +132,10 @@ T("IndexComponentTest",
     check.TRUE(class.is_a(out:at(3), tokens.null))
 end)
 
-T("GatedComponentTest",
+T("CmulComponentTest",
   function()
-    local s = ann.graph.gated():clone()
-    check.eq(s:to_lua_string(), "ann.graph.gated(%q)"%{s:get_name()})
+    local s = ann.graph.cmul():clone()
+    check.eq(s:to_lua_string(), "ann.graph.cmul(%q)"%{s:get_name()})
     --
     s:build{ input=20, output=10 }
     check.eq(s:get_input_size(), 20)
