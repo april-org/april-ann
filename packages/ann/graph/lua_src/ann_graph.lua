@@ -33,28 +33,34 @@ local function backprop_finish(self, input, output)
   self:set_error_output(output)
 end
 
--- Returns a table with a topological sort given a table of nodes and the
--- start object.
+--
+
+local function reverse(t,...)
+  return iterator.range(#t,1,-1):map(function(k) return t[k] end):table(), ...
+end
+
+-- Returns a table with the reverse topological sort given a table of nodes and
+-- the start object. Additionally, it is returned a boolean which indicates if
+-- the network is recurrent.
 
 -- TODO: check cicles
-local function topological_sort(nodes, obj)
-  local result = { }
-  local queue = { obj }
-  local in_counts = { }
-  local i = 0
-  while i < #queue do
-    i = i + 1
-    local current = queue[i]
-    local node = nodes[current]
-    result[#result+1] = current
-    for _,dst in ipairs(node.out_edges) do
-      in_counts[dst] = (in_counts[dst] or 0) + 1
-      if in_counts[dst] == #nodes[dst].in_edges then
-        queue[#queue+1] = dst
-      end
+local function topological_sort(nodes, obj, visited, result)
+  local result = result or {}
+  local visited = visited or {}
+  local node = nodes[obj]
+  local recurrent = false
+  visited[obj] = 'r'
+  for _,dst in ipairs(node.out_edges) do
+    if not visited[dst] then
+      local _,r = topological_sort(nodes, dst, visited, result)
+      recurrent = recurrent or r
+    elseif visited[dst] == 'r' then
+      recurrent = true
     end
-  end
-  return result
+  end  
+  result[#result+1] = obj
+  visited[obj] = recurrent and 'R' or 'b'
+  return result,recurrent,visited
 end
 
 -- Composes a tokens.vector.bunch given a table with multiple objects and
@@ -74,7 +80,8 @@ local function compose(tbl, dict)
 end
 
 local function ann_graph_topsort(self)
-  self.order = topological_sort(self.nodes, "input")
+  self.order,self.recurrent,self.colors =
+    reverse( topological_sort(self.nodes, "input") )
   assert(self.order[1] == "input" and self.order[#self.order] == "output")
   -- remove 'input' and 'output' strings from topological order table
   table.remove(self.order, 1)
@@ -522,9 +529,30 @@ ann.graph.test = function()
     c = { out_edges = { 'd' }, in_edges = { 'a', 'b' } },
     d = { out_edges = { }, in_edges = { 'b', 'c' } },
   }
-  local result = topological_sort(nodes, 'a')
-  utest.check.TRUE( iterator.zip(iterator(result), iterator{ 'a', 'b', 'c', 'd' }):
+  local result,recurrent = reverse( topological_sort(nodes, 'a') )
+  utest.check.TRUE( iterator.zip(iterator(result),
+                                 iterator{ 'a', 'b', 'c', 'd' }):
                     reduce(function(acc,a,b) return acc and a==b end, true) )
+  utest.check.FALSE(recurrent)
+  --
+  local nodes = {
+    a = { out_edges = { 'b' } },
+    b = { out_edges = { 'c' } },
+    c = { out_edges = { 'd', 'e' } },
+    d = { out_edges = { 'b', 'f' } },
+    e = { out_edges = { 'f' } },
+    f = { out_edges = { } },
+  }
+  local result,recurrent,colors = reverse( topological_sort(nodes, 'a') )
+  utest.check.TRUE( iterator.zip(iterator(result),
+                                 iterator{ 'a', 'b', 'c', 'e', 'd', 'f' }):
+                    reduce(function(acc,a,b) return acc and a==b end, true) )
+  utest.check.TRUE(recurrent)
+  local ref_colors = { a='R', b='R', c='R', d='R', e='b', f='b' }
+  utest.check.TRUE(
+    iterator(pairs(colors)):
+    reduce(function(acc,k,v) return acc and ref_colors[k]==v end, true)
+  )
   --
   local a = matrix(3,4):linear()
   local b = matrix(3,5):linear()

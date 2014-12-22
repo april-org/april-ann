@@ -149,12 +149,21 @@ function iterator.range(...)
   local start,stop,step = arg[1],arg[2],arg[3] or 1
   if not stop then start,stop=1,start end
   local i = start - step
-  return iterator(function(step, i)
-      if step and i then
-        i = i + step
-        if i <= stop then return i end
-      end
-                  end, step, i)
+  if step > 0 then
+    return iterator(function(step, i)
+        if step and i then
+          i = i + step
+          if i <= stop then return i end
+        end
+                    end, step, i)
+  else
+    return iterator(function(step, i)
+        if step and i then
+          i = i + step
+          if i >= stop then return i end
+        end
+                    end, step, i)
+  end
 end
 
 -- Duplicates its arguments in an infinite iterator.
