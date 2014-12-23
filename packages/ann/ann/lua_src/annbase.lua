@@ -165,6 +165,23 @@ ann.components.lua.constructor = function(self, name, input, output)
   self.output_size = output
 end
 
+lua_component_methods.set_input = function(self,tk)
+  self.input_token = tk
+end
+
+lua_component_methods.set_output = function(self,tk)
+  self.output_token = tk
+end
+
+lua_component_methods.set_error_input = function(self,tk)
+  self.error_input_token = tk
+end
+
+lua_component_methods.set_error_output = function(self,tk)
+  self.error_output_token = tk
+end
+
+
 lua_component_methods.build = function(self,tbl)
   tbl = tbl or {}
   self.is_built = true
