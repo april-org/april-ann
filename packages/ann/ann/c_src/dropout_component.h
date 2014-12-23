@@ -51,6 +51,31 @@ namespace ANN {
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
     
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk);
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk);
+    }
+    
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      StochasticANNComponent::copyState(dict);
+      AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
+      state.put("mask", dropout_mask);
+    }
+
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      StochasticANNComponent::setState(dict);
+      AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
+      AssignRef(dropout_mask, state.get<Basics::MatrixFloat*>("mask"));
+    }
+    
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
     virtual Basics::Token *doBackprop(Basics::Token *input_error);

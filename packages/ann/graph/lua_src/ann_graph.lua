@@ -116,6 +116,9 @@ ann.graph.constructor =
         end
       end
     end
+    -- for truncated BPTT
+    self.bptt_step = 0 -- controls current step number
+    self.backstep  = 1 -- indicates truncation length (it can be math.huge)
   end
 
 ann_graph_methods.connect =
@@ -263,6 +266,7 @@ end
 ann_graph_methods.reset = function(self, n)
   for _,obj in self.order do obj:reset() end
   (ann.components.lua.."reset")(self, n)
+  self.bptt_step = 0
 end
 
 ann_graph_methods.precompute_output_size = function(self, tbl)
@@ -340,6 +344,14 @@ ann_graph_methods.get_component = function(self, name)
     local c = obj:get_component(name)
     if c then return c end
   end
+end
+
+ann_graph_methods.get_is_recurrent = function(self)
+  return rawget(self,recurrent)
+end
+
+ann_graph_methods.set_bptt_truncation = function(self, backstep)
+  self.backstep = (backstep <= 0) and math.huge or backstep
 end
 
 ---------------------------------------------------------------------------

@@ -3,6 +3,11 @@ get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
 
+class.extend(ann.components.base, "get_is_recurrent",
+             function() return false end)
+
+----------------------------------------------------------------------
+
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
 

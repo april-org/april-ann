@@ -107,6 +107,14 @@ namespace ANN {
     
     /// Method to serialize the underlying random object
     virtual const Basics::MTRand *getRandom() const { return random; }
+
+    /*
+      virtual void copyState(AprilUtils::LuaTable &dict) {
+      }
+      virtual void setState(AprilUtils::LuaTable &dict) {
+      }
+    */
+    
   };
 }
 

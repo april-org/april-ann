@@ -27,6 +27,7 @@
 #include "buffer_list.h"
 #include "constString.h"
 #include "disallow_class_methods.h"
+#include "lua_table.h"
 #include "referenced.h"
 #include "table_of_token_codes.h"
 
@@ -77,5 +78,19 @@ namespace Basics {
   };
 
 } // namespace Basics
+
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> Basics::Token *LuaTable::
+  convertTo<Basics::Token *>(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto<Basics::Token *>(lua_State *L, Basics::Token *value);
+
+  template<> bool LuaTable::
+  checkType<Basics::Token *>(lua_State *L, int idx);
+}
 
 #endif // TOKEN_BASE_H

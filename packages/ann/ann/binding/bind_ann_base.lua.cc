@@ -367,6 +367,23 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent copy_state
+{
+  LuaTable state;
+  if (lua_istable(L,1)) state = lua_toLuaTable(L,1);
+  obj->copyState(state);
+  LUABIND_RETURN(LuaTable, state);
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent set_state
+{
+  LuaTable state(L,1);
+  obj->setState(state);
+  LUABIND_RETURN(AuxANNComponent, obj);
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent get_input_size
 {
   LUABIND_RETURN(uint, obj->getInputSize());
@@ -480,7 +497,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ANNComponent clone
 {
-  LUABIND_RETURN(ANNComponent, obj->clone());
+  LUABIND_RETURN(AuxANNComponent, obj->clone());
 }
 //BIND_END
 
@@ -490,7 +507,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, bool, use_cuda);
   obj->setUseCuda(use_cuda);
-  LUABIND_RETURN(ANNComponent, obj);
+  LUABIND_RETURN(AuxANNComponent, obj);
 }
 //BIND_END
 

@@ -40,6 +40,24 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value);
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 
+namespace AprilUtils {
+  template<> Basics::Token *LuaTable::
+  convertTo<Basics::Token *>(lua_State *L, int idx) {
+    return lua_toAuxToken(L, idx).get();
+  }
+  
+  template<> void LuaTable::
+  pushInto<Basics::Token *>(lua_State *L, Basics::Token *value) {
+    AprilUtils::SharedPtr<Token> ptr(value);
+    lua_pushAuxToken(L, ptr);
+  }
+
+  template<> bool LuaTable::
+  checkType<Basics::Token *>(lua_State *L, int idx) {
+    return lua_isAuxToken(L, idx);
+  }
+}
+
 namespace Basics {
   int token_bunch_vector_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es

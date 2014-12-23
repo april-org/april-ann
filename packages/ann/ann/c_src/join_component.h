@@ -70,6 +70,31 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk);
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk);
+    }
+    
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      for (unsigned int i=0; i<components.size(); ++i) {
+        components[i]->copyState(dict);
+      }
+    }
+
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      for (unsigned int i=0; i<components.size(); ++i) {
+        components[i]->setState(dict);
+      }
+    }
 
     virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
 				      AprilUtils::vector<unsigned int> &output_size) {
