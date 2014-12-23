@@ -44,23 +44,25 @@ end
 -- the network is recurrent.
 
 -- TODO: check cicles
-local function topological_sort(nodes, obj, visited, result)
-  local result = result or {}
+local function topological_sort(nodes, obj, visited, result, back_nodes)
   local visited = visited or {}
+  local result = result or {}
+  local back_nodes = back_nodes or {}
   local node = nodes[obj]
   local recurrent = false
   visited[obj] = 'r'
   for _,dst in ipairs(node.out_edges) do
     if not visited[dst] then
-      local _,r = topological_sort(nodes, dst, visited, result)
+      local _,r = topological_sort(nodes, dst, visited, result, back_nodes)
       recurrent = recurrent or r
     elseif visited[dst] == 'r' then
       recurrent = true
+      back_nodes[obj] = true
     end
   end  
   result[#result+1] = obj
   visited[obj] = recurrent and 'R' or 'b'
-  return result,recurrent,visited
+  return result,recurrent,visited,back_nodes
 end
 
 -- Composes a tokens.vector.bunch given a table with multiple objects and
@@ -80,7 +82,7 @@ local function compose(tbl, dict)
 end
 
 local function ann_graph_topsort(self)
-  self.order,self.recurrent,self.colors =
+  self.order,self.recurrent,self.colors,self.back_nodes =
     reverse( topological_sort(self.nodes, "input") )
   assert(self.order[1] == "input" and self.order[#self.order] == "output")
   -- remove 'input' and 'output' strings from topological order table
@@ -117,8 +119,9 @@ ann.graph.constructor =
       end
     end
     -- for truncated BPTT
-    self.bptt_step = 0 -- controls current step number
-    self.backstep  = 1 -- indicates truncation length (it can be math.huge)
+    self.bptt_step = 0  -- controls current BPTT step number
+    self.backstep  = 1  -- indicates truncation length (it can be math.huge)
+    self.bptt_data = {} -- array with ANN state for every BPTT step
   end
 
 ann_graph_methods.connect =
@@ -213,6 +216,15 @@ end
 ann_graph_methods.forward = function(self, input, during_training)
   forward_asserts(self)
   local outputs_table = { input=input }
+  ------------------
+  -- BPTT section --
+  ------------------
+  -- prepares previous step outputs for recurrent connections
+  bptt = self.bptt_data[self.bptt_step]
+  for obj,_ in pairs(self.back_nodes) do
+    outputs_table[obj] = bptt[obj:get_name()].output
+  end
+  ------------------
   for _,obj in ipairs(self.order) do
     local node = self.nodes[obj]
     local input = compose(node.in_edges, outputs_table)
@@ -220,6 +232,17 @@ ann_graph_methods.forward = function(self, input, during_training)
   end
   local output = compose(self.nodes.output.in_edges, outputs_table)
   forward_finish(self, input, output)
+  ------------------
+  -- BPTT section --
+  ------------------
+  -- counts one step and copy the state of the whole network
+  if self.bptt_step > self.backstep then
+    self.bptt_step = 0
+    self.bptt_data = {}
+  end
+  self.bptt_step = self.bptt_step + 1
+  self.bptt_data[self.bptt_step] = self:copy_state()
+  ------------------
   return output
 end
 
@@ -261,6 +284,19 @@ ann_graph_methods.compute_gradients = function(self, weight_grads)
   local weight_grads = weight_grads or {}
   for _,obj in ipairs(self.order) do obj:compute_gradients(weight_grads) end
   return weight_grads
+end
+
+ann_graph_methods.copy_state = function(self, tbl)
+  tbl = tbl or {}
+  (ann.components.lua.."copy_state")(self, tbl)
+  for _,obj in ipairs(self.order) do obj:copy_state(tbl) end
+  return tbl
+end
+
+ann_graph_methods.set_state = function(self, tbl)
+  (ann.components.lua.."set_state")(self, tbl)
+  for _,obj in ipairs(self.order) do obj:set_state(tbl) end
+  return self
 end
 
 ann_graph_methods.reset = function(self, n)
@@ -432,7 +468,10 @@ add_methods.forward = function(self, input, during_training)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
   local output = input:at(1):clone()
-  for i=2,input:size() do output:axpy(1.0, input:at(i)) end
+  for i=2,input:size() do
+    local tk = input:at(i)
+    if tk ~= tokens.null() then output:axpy(1.0, input:at(i)) end
+  end
   forward_finish(self, input, output)
   return output
 end
