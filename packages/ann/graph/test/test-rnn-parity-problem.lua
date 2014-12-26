@@ -31,11 +31,13 @@ local rec_add = ann.graph.add()
 -- feed-forward connections
 g:connect('input', l1)( rec_add )( a1 )( l2 )( a2 )( 'output' )
 -- recurrent connections
-g:connect(a2, ann.components.actf.exp())( r1 )( rec_add )
+g:connect(l2, ann.components.actf.logistic())( r1 )( rec_add )
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
 trainable.supervised_trainer(g):build():
   randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
+
+g:dot_graph("blah.dot")
 
 g:set_bptt_truncation(BACKSTEP)
 

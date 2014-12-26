@@ -1,15 +1,15 @@
-local BACKSTEP     = math.huge
+local BACKSTEP     = 1
 local MAX_ERROR    = 0.04
 local EPSILON      = 0.01
 local MAX_SEQ_SIZE = 10
-local MAX_EPOCHS   = 4000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
+local MAX_EPOCHS   = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
 local WEIGHT_DECAY = 0.0001
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local rnd1   = random(79684)
+local rnd1   = random(547)
 local rnd2   = random(1234)
 local bern05 = stats.dist.bernoulli(0.5)
 local noise  = stats.dist.normal(0, 0.01)
@@ -17,7 +17,7 @@ local noise  = stats.dist.normal(0, 0.01)
 -- RNN COMPONENTS CONSTRUCTION SECTION
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
-local H    = 4 -- number of neurons in hidden layer
+local H    = 2 -- number of neurons in hidden layer
 local l1   = ann.components.hyperplane{ input=1, output=H }
 local a1   = ann.components.actf.logistic()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
@@ -26,7 +26,8 @@ local a2   = ann.components.actf.log_logistic()
 local gates_actf     = "logistic"
 local l1_input_gate  = ann.components.hyperplane{ input=H+1, output=1 }
 local l1_output_gate = ann.components.hyperplane{ input=H+1, output=H }
-local l1_forget_gate = ann.components.hyperplane{ input=H+1, output=H }
+local l1_forget_gate = ann.components.hyperplane{ dot_product_weights="l1_forget_w",
+                                                  input=H+1, output=H }
 -- peephole component
 local peephole = ann.graph.bind()
 -- junction components
@@ -87,6 +88,7 @@ local function forward(g, input, during_training, it)
     input:axpy(1.0, noise:sample(rnd2, input:size()))
   end
   local o_j
+  local c = g:copy_components()
   for j=1,input:dim(1) do
     o_j = g:forward( input(j,':'), during_training )
   end
@@ -113,8 +115,8 @@ local function check_gradients(x, y, weights, bptt_grads, EPSILON, func, ...)
       local g_diff = (l1-l2) / (2*EPSILON)
       if g_bptt ~= 0 or g_diff ~= 0 then
 	local err = math.abs(g_diff - g_bptt) / math.max( math.abs(g_diff) + math.abs(g_bptt) )
-        -- print(g_diff, g_bptt)
-	assert( err < MAX_ERROR or (g_bptt < EPSILON/4 and g_diff < EPSILON/4), err )
+        -- print(name, g_diff, g_bptt)
+	assert( err < MAX_ERROR or g_bptt < EPSILON or g_diff < EPSILON, err )
       end
     end
   end
