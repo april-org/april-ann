@@ -1,9 +1,9 @@
-local BACKSTEP     = 1
+local BACKSTEP     = math.huge
 local MAX_ERROR    = 0.04
 local EPSILON      = 0.01
 local MAX_SEQ_SIZE = 10
-local MAX_EPOCHS   = 10000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
-local WEIGHT_DECAY = 0.0004
+local MAX_EPOCHS   = 4000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
+local WEIGHT_DECAY = 0.0001
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -17,7 +17,7 @@ local noise  = stats.dist.normal(0, 0.01)
 -- RNN COMPONENTS CONSTRUCTION SECTION
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
-local H    = 2 -- number of neurons in hidden layer
+local H    = 4 -- number of neurons in hidden layer
 local l1   = ann.components.hyperplane{ input=1, output=H }
 local a1   = ann.components.actf.logistic()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
@@ -30,9 +30,9 @@ local l1_forget_gate = ann.components.hyperplane{ input=H+1, output=H }
 -- peephole component
 local peephole = ann.graph.bind()
 -- junction components
-local l1_input  = ann.graph.cmul()
-local l1_output = ann.graph.cmul()
-local l1_forget = ann.graph.cmul()
+local l1_input  = ann.graph.cmul('l1_input')
+local l1_output = ann.graph.cmul('l1_output')
+local l1_forget = ann.graph.cmul('l1_forget')
 -- recurrent junction component
 local rec_add   = ann.graph.add()
 
@@ -47,13 +47,15 @@ g:connect(peephole, l1_input_gate)( ann.components.actf[gates_actf]() )( l1_inpu
 g:connect(peephole, l1_output_gate)( ann.components.actf[gates_actf]() )( l1_output )
 g:connect(peephole, l1_forget_gate)( ann.components.actf[gates_actf]() )( l1_forget )
 -- recurrent connection
-g:connect(rec_add, l1_forget)( rec_add )
+g:connect(l1_forget, rec_add)( l1_forget )
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
 trainable.supervised_trainer(g):build():
   randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
 -- iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
+
+g:dot_graph("blah.dot")
 
 g:set_bptt_truncation(BACKSTEP)
 

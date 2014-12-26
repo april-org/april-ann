@@ -225,6 +225,24 @@ ann_graph_methods.replace =
     return self
   end
 
+ann_graph_methods.dot_graph =
+  function(self, filename)
+    local f = io.open(filename, "w")
+    f:write("digraph %s {\nrankdir=BT;\n"%{self:get_name()})
+    for obj,node in pairs(self.nodes) do
+      local src = (obj ~= 'input' and obj ~= 'output' and obj:get_name()) or obj
+      local shape = "ellipse"
+      if self.back_nodes[obj] then shape = "rectangle" end
+      f:write('%s [label="%s (%s)",shape="%s"];\n'%{ src, src, type(obj), shape })
+      for obj2 in iterator(node.out_edges) do
+        local dst = (obj2 ~= 'input' and obj2 ~= 'output' and obj2:get_name()) or obj2
+        f:write('%s -> %s;\n'%{ src, dst })
+      end
+    end
+    f:write("}\n")
+    f:close()
+  end
+
 ann_graph_methods.build = function(self, tbl)
   local tbl = tbl or {}
   assert(#self.nodes.input.out_edges > 0,
