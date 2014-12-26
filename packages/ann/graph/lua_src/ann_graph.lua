@@ -257,7 +257,10 @@ ann_graph_methods.build = function(self, tbl)
   local components = { [self.name] = self }
   -- computes the sum of the elements of sizes which belong to tbl
   local function sum_sizes(tbl, sizes)
-    return iterator(tbl):map(function(obj) return sizes[obj] end):reduce(math.add(), 0)
+    local zero = false
+    local sz = iterator(tbl):map(function(obj) zero=(sizes[obj] == 0) return sizes[obj] end):reduce(math.add(), 0)
+    if zero then sz = 0 end
+    return sz
   end
   local function check_sizes(tbl, sizes)
     local sz
@@ -538,8 +541,8 @@ end
 local bind_methods
 ann.graph.bind,bind_methods = class("ann.graph.bind", ann.components.lua)
 
-ann.graph.bind.constructor = function(self, name)
-  ann.components.lua.constructor(self, name)
+ann.graph.bind.constructor = function(self, name, size)
+  ann.components.lua.constructor(self, name, size, size)
 end
 
 bind_methods.build = function(self, tbl)
@@ -717,12 +720,12 @@ cmul_methods.backprop = function(self, input)
   if b and b ~= null_token then
     output:push_back( mop.cmul(b, input) )
   else
-    output:push_back( null_token )
+    output:push_back( input )
   end
   if a and a ~= null_token then
     output:push_back( mop.cmul(a, input) )
   else
-    output:push_back( null_token )
+    output:push_back( input )
   end
   backprop_finish(self, input, output)
   return output

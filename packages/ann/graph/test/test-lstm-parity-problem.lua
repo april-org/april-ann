@@ -1,39 +1,39 @@
-local BACKSTEP     = 1
-local MAX_ERROR    = 0.04
-local EPSILON      = 0.01
-local MAX_SEQ_SIZE = 10
-local MAX_EPOCHS   = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
-local WEIGHT_DECAY = 0.0001
+local CHECK_GRADIENTS = false
+local BACKSTEP        = math.huge
+local MAX_ERROR       = 0.04
+local EPSILON         = 0.01
+local MAX_SEQ_SIZE    = 10
+local MAX_EPOCHS      = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
+local WEIGHT_DECAY    = 0.000001
+local H               = 2 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local rnd1   = random(547)
+local rnd1   = random(7576)
 local rnd2   = random(1234)
 local bern05 = stats.dist.bernoulli(0.5)
-local noise  = stats.dist.normal(0, 0.01)
+local noise  = stats.dist.normal(0, 0.02)
 
 -- RNN COMPONENTS CONSTRUCTION SECTION
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
-local H    = 2 -- number of neurons in hidden layer
 local l1   = ann.components.hyperplane{ input=1, output=H }
-local a1   = ann.components.actf.logistic()
+local a1   = ann.components.actf.sin()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
 -- gate components
 local gates_actf     = "logistic"
 local l1_input_gate  = ann.components.hyperplane{ input=H+1, output=1 }
 local l1_output_gate = ann.components.hyperplane{ input=H+1, output=H }
-local l1_forget_gate = ann.components.hyperplane{ dot_product_weights="l1_forget_w",
-                                                  input=H+1, output=H }
+local l1_forget_gate = ann.components.hyperplane{ input=H+1, output=H }
 -- peephole component
 local peephole = ann.graph.bind()
 -- junction components
-local l1_input  = ann.graph.cmul('l1_input')
-local l1_output = ann.graph.cmul('l1_output')
-local l1_forget = ann.graph.cmul('l1_forget')
+local l1_input  = ann.graph.cmul()
+local l1_output = ann.graph.cmul()
+local l1_forget = ann.graph.cmul()
 -- recurrent junction component
 local rec_add   = ann.graph.add()
 
@@ -42,7 +42,8 @@ local rec_add   = ann.graph.add()
 -- feed-forward connections
 g:connect('input', l1_input)( l1 )( rec_add )( a1 )( l1_output )( l2 )( a2 )( 'output' )
 -- peephole recurrent connection
-g:connect({ 'input', a1 }, peephole)
+g:connect(a1, peephole )
+g:connect('input', peephole)
 -- gate connections
 g:connect(peephole, l1_input_gate)( ann.components.actf[gates_actf]() )( l1_input )
 g:connect(peephole, l1_output_gate)( ann.components.actf[gates_actf]() )( l1_output )
@@ -54,7 +55,7 @@ g:connect(l1_forget, rec_add)( l1_forget )
 trainable.supervised_trainer(g):build():
   randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
--- iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
+iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
 
 g:dot_graph("blah.dot")
 
@@ -68,6 +69,8 @@ local keys    = iterator(table.keys(weights)):table() table.sort(keys)
 for wname in iterator(table.keys(weights)):filter(function(k) return k:find("w.*") end) do
   opt:set_layerwise_option(wname, "weight_decay", WEIGHT_DECAY)
 end
+
+-- opt:set_option("max_iter", 1)
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -91,6 +94,7 @@ local function forward(g, input, during_training, it)
   local c = g:copy_components()
   for j=1,input:dim(1) do
     o_j = g:forward( input(j,':'), during_training )
+    -- print("+++", table.concat(c.wop:get_output():toTable(), " "))
   end
   return o_j
 end
@@ -163,7 +167,7 @@ end
 -----------------------------------------------------------------------------
 
 -- TRAINING SECTION
-if BACKSTEP == math.huge then gradient_checking_loop() end
+if CHECK_GRADIENTS and BACKSTEP == math.huge then gradient_checking_loop() end
 local last = 0
 for s=2,MAX_SEQ_SIZE do
   last = train(last+1, last+MAX_EPOCHS, s)
