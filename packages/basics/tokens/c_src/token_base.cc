@@ -20,6 +20,7 @@
  */
 #include <typeinfo>
 #include "token_base.h"
+#include "token_null.h"
 
 namespace Basics {
 

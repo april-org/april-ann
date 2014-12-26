@@ -1,4 +1,5 @@
-local mop = matrix.op
+local mop        = matrix.op
+local null_token = tokens.null()
 
 -- AUXILIARY FUNCTIONS
 
@@ -84,10 +85,12 @@ end
 local function ann_graph_topsort(self)
   self.order,self.recurrent,self.colors,self.back_nodes =
     reverse( topological_sort(self.nodes, "input") )
-  assert(self.order[1] == "input" and self.order[#self.order] == "output")
+  assert(self.order[1] == "input")
   -- remove 'input' and 'output' strings from topological order table
   table.remove(self.order, 1)
-  table.remove(self.order, #self.order)
+  for i,v in ipairs(self.order) do
+    if v=='output' then table.remove(self.order, i) break end
+  end
 end
 
 ------------------------------------------------------------------------------
@@ -135,29 +138,90 @@ ann_graph_methods.connect =
       "would be received as input of the destination component.",
       "Additionally, 'input' string can be used as source to indicate the",
       "graph input token. Similarly, 'output' string can be used as destination",
-      "to produce the graph output token.",
+      "to produce the graph output token. Multiple calls will be aggregated.",
     },
     params = {
       "An ANN component, a table of multiple ANN components. 'input' string is fine.",
       "An ANN component or 'output' string.",
     },
+    outputs = {
+      "A function which can be called to concatenate connections in a forward way",
+    },
   } ..
   function(self, src, dst)
     assert(class.is_a(dst, ann.components.base) or dst == "output",
            "Needs an ann component or 'output' string as destination")
-    assert(not self.nodes[dst], "Overwriting a previously defined destination")
     local tt_src = type(src)
     -- just to ensure src as a table
     if tt_src ~= "table" then src = { src } end
+    --
+    local function check(v)
+      self.nodes[v] = self.nodes[v] or { in_edges = {}, out_edges = {} }
+      return self.nodes[v]
+    end
+    check(dst)
+    local node = self.nodes[dst]
     -- traverse every input and take note of dst in out_edges of every input
     for i=1,#src do
       local v = src[i]
       assert(class.is_a(v, ann.components.base) or v == "input" ,
              "Needs an ann component or 'input' string as source")
-      table.insert(self.nodes[v].out_edges, dst)
+      -- take note of the given dst as output edge of the src[i] component
+      table.insert(check(v).out_edges, dst)
+      -- take note of the given inputs as input edges of dst
+      table.insert(node.in_edges, v)
     end
-    -- take note of the given input table as input edges of the given dst
-    self.nodes[dst] = { in_edges = src, out_edges = {} }
+    return function(dst2) return self:connect(dst, dst2) end
+  end
+
+ann_graph_methods.remove =
+  april_doc{
+    class = "method",
+    summary = "Removes one node and all its connections",
+    params = {
+      "An ANN component.",
+    },
+    outputs = {
+      "The caller object.",
+    },
+  } ..
+  function(self, obj)
+    self.is_built = false
+    local node = assert(self.nodes[obj], "Unable to locate the given component")
+    self.nodes[obj] = nil
+    for dst in iterator(node.out_edges) do
+      self.nodes[dst].in_edges = iterator(self.nodes[dst].in_edges):
+      filter(function(v) return v~=obj end):table()
+    end
+    for src in iterator(node.in_edges) do
+      self.nodes[src].out_edges = iterator(self.nodes[src].out_edges):
+      filter(function(v) return v~=obj end):table()
+    end
+    return self
+  end
+
+ann_graph_methods.replace =
+  april_doc{
+    class = "method",
+    summary = "Replaces one node by another",
+    params = {
+      "The ANN component to be replaced.",
+      "The new ANN component.",
+    },
+    outputs = {
+      "The caller object.",
+    },
+  } ..
+  function(self, old, new)
+    self.is_built = false
+    local node = assert(self.nodes[old], "Unable to locate the given component")
+    self:remove(old)
+    for dst in iterator(node.out_edges) do
+      self:connect(new, dst)
+    end
+    for src in iterator(node.in_edges) do
+      self:connect(src, new)
+    end
     return self
   end
 
@@ -177,6 +241,11 @@ ann_graph_methods.build = function(self, tbl)
   local function sum_sizes(tbl, sizes)
     return iterator(tbl):map(function(obj) return sizes[obj] end):reduce(math.add(), 0)
   end
+  local function check_sizes(tbl, sizes)
+    local sz
+    for i=1,#sizes do sz = sz or sizes[i] assert(sz == sizes[i]) end
+    return sz
+  end
   --
   local input_sizes = {}
   local output_sizes = { input = input_size }
@@ -193,16 +262,17 @@ ann_graph_methods.build = function(self, tbl)
                  "Node %s doesn't have output connections",
                  obj:get_name())
     local _,_,aux = obj:build{ input = sum_sizes(node.in_edges, output_sizes),
-                               output = sum_sizes(node.out_edges, input_sizes),
+                               output = check_sizes(node.out_edges, input_sizes),
                                weights = weights }
     for k,v in pairs(aux) do assert(not components[k]) components[k] = v end
     input_sizes[obj]  = obj:get_input_size()
     output_sizes[obj] = obj:get_output_size()
   end
-  for k=2,#nodes.input.out_edges do
-    assert(input_sizes[nodes.input.out_edges[1]] == input_sizes[nodes.input.out_edges[k]],
-           "All input connection should have the same input size")
-  end
+  -- FIXME: problem with components where input size is undefined
+  -- for k=2,#nodes.input.out_edges do
+  --   assert(input_sizes[nodes.input.out_edges[1]] == input_sizes[nodes.input.out_edges[k]],
+  --          "All input connection should have the same input size")
+  -- end
   (ann.components.lua.."build")(self,
                                 { weights = weights,
                                   input = input_sizes[nodes.input.out_edges[1]],
@@ -214,15 +284,16 @@ end
 -- the input of every component by using previous component outputs, and storing
 -- the output of every component at the table outputs_table
 ann_graph_methods.forward = function(self, input, during_training)
+  self.gradients_computed = false
   forward_asserts(self)
   local outputs_table = { input=input }
   ------------------
   -- BPTT section --
   ------------------
   -- prepares previous step outputs for recurrent connections
-  bptt = self.bptt_data[self.bptt_step]
+  bptt = self.bptt_data[self.bptt_step] or {}
   for obj,_ in pairs(self.back_nodes) do
-    outputs_table[obj] = bptt[obj:get_name()].output
+    outputs_table[obj] = ( bptt[obj:get_name()] or {} ).output or null_token
   end
   ------------------
   for _,obj in ipairs(self.order) do
@@ -236,14 +307,73 @@ ann_graph_methods.forward = function(self, input, during_training)
   -- BPTT section --
   ------------------
   -- counts one step and copy the state of the whole network
-  if self.bptt_step > self.backstep then
-    self.bptt_step = 0
-    self.bptt_data = {}
-  end
   self.bptt_step = self.bptt_step + 1
+  if self.bptt_step > self.backstep then
+    self.bptt_step = 1
+  end
   self.bptt_data[self.bptt_step] = self:copy_state()
   ------------------
   return output
+end
+
+local accumulate = function(dst, e, error_inputs_table)
+  if e and e ~= null_token then
+    local err = error_inputs_table[dst]
+    if not err or err == null_token then error_inputs_table[dst] = e:clone()
+    else err = err:axpy(1.0, e) end
+  end
+end
+
+local function ann_graph_compute_gradients(self)
+  compute_gradients_asserts(self)
+  local weight_grads = rawget(self,"grads") or {}
+  for _,obj in ipairs(self.order) do
+    if obj:get_error_input() and obj:get_error_input() ~= null_token then
+      obj:compute_gradients(weight_grads)
+    else
+      for wname,w in pairs(obj:copy_weights()) do
+        weight_grads[wname] = weight_grads[wname] or matrix.as(w):zeros()
+      end
+    end
+  end
+  self.grads = weight_grads
+  self.gradients_computed = true
+end
+
+local function ann_graph_backprop(self)
+  backprop_asserts(self)
+  local error_inputs_table = { }
+  for i=self.bptt_step,1,-1 do
+    local bptt  = self.bptt_data[i]
+    local input = bptt[self:get_name()].backprop
+    error_inputs_table.input  = nil
+    error_inputs_table.output = input
+    for _,obj in ipairs(self.nodes.output.in_edges) do
+      accumulate(obj, input, error_inputs_table)
+    end
+    for j=#self.order,1,-1 do
+      local obj = self.order[j]
+      local node = self.nodes[obj]
+      obj:set_state(bptt)
+      local error_input = error_inputs_table[obj]
+      if error_input then
+        local error_output = obj:backprop(error_input)
+        error_inputs_table[obj] = nil
+        if class.is_a(error_output, tokens.vector.bunch) then
+          assert(error_output:size() == #node.in_edges)
+          for j,e in error_output:iterate() do
+            accumulate(node.in_edges[j], e, error_inputs_table)
+          end
+        else
+          accumulate(node.in_edges[1], error_output, error_inputs_table)
+        end
+      end
+    end
+    backprop_finish(self, input, error_inputs_table.input)
+    -- compute and accumulate gradients of current iteration
+    ann_graph_compute_gradients(self)
+  end
+  return error_inputs_table.input
 end
 
 -- traverse the graph following inverse topological order (self.order),
@@ -251,38 +381,23 @@ end
 -- component error outputs, and storing the error output of every component at
 -- the table error_outputs_table
 ann_graph_methods.backprop = function(self, input)
-  backprop_asserts(self)
-  local error_inputs_table = { output=input }
-  local accumulate = function(dst, e)
-    if e ~= tokens.null() then
-      local err = error_inputs_table[dst]
-      if not err then error_inputs_table[dst] = e:clone()
-      else err = err:axpy(1.0, e) end
-    end
+  -- keep the backprop input for a future use
+  self.bptt_data[self.bptt_step][self:get_name()].backprop = input
+  if self.bptt_step == self.backstep then
+    return ann_graph_backprop(self)
+  else
+    return null_token
   end
-  for _,obj in ipairs(self.nodes.output.in_edges) do accumulate(obj, input) end
-  for i=#self.order,1,-1 do
-    local obj = self.order[i]
-    local node = self.nodes[obj]
-    local error_input = error_inputs_table[obj]
-    local error_output = obj:backprop(error_input)
-    if class.is_a(error_output, tokens.vector.bunch) then
-      assert(error_output:size() == #node.in_edges)
-      for j,e in error_output:iterate() do
-        accumulate(node.in_edges[j], e)
-      end
-    else
-      accumulate(node.in_edges[1], error_output)
-    end
-  end
-  backprop_finish(self, input, error_inputs_table.input)
-  return error_inputs_table.input
 end
 
 ann_graph_methods.compute_gradients = function(self, weight_grads)
-  compute_gradients_asserts(self)
+  if not rawget(self,"gradients_computed") then
+    -- ann_graph_backprop implements gradient computation
+    ann_graph_backprop(self)
+    assert(rawget(self,"gradients_computed"))
+  end
   local weight_grads = weight_grads or {}
-  for _,obj in ipairs(self.order) do obj:compute_gradients(weight_grads) end
+  for k,v in pairs(self.grads) do weight_grads[k] = v end
   return weight_grads
 end
 
@@ -300,9 +415,11 @@ ann_graph_methods.set_state = function(self, tbl)
 end
 
 ann_graph_methods.reset = function(self, n)
-  for _,obj in self.order do obj:reset() end
+  for _,obj in ipairs(self.order) do obj:reset() end
   (ann.components.lua.."reset")(self, n)
   self.bptt_step = 0
+  self.bptt_data = {}
+  self.grads = {}
 end
 
 ann_graph_methods.precompute_output_size = function(self, tbl)
@@ -324,12 +441,18 @@ ann_graph_methods.precompute_output_size = function(self, tbl)
 end
 
 ann_graph_methods.clone = function(self)
+  -- After cloning, the BPTT is truncated, so, it is recommended to avoid
+  -- cloning when learning a sequence, it is better to clone after any
+  -- sequence learning.
   local graph = ann.graph(self.name)
   graph.nodes = util.clone(self.nodes)
   return graph
 end
 
 ann_graph_methods.to_lua_string = function(self, format)
+  -- After saving, the BPTT is truncated, so, it is recommended to avoid
+  -- saving when learning a sequence, it is better to clone after any
+  -- sequence learning.
   local cnns = {}
   if not rawget(self,"order") then ann_graph_topsort(self) end
   local ext_order = iterator(self.order):table()
@@ -383,7 +506,7 @@ ann_graph_methods.get_component = function(self, name)
 end
 
 ann_graph_methods.get_is_recurrent = function(self)
-  return rawget(self,recurrent)
+  return rawget(self,"recurrent")
 end
 
 ann_graph_methods.set_bptt_truncation = function(self, backstep)
@@ -467,10 +590,12 @@ add_methods.forward = function(self, input, during_training)
   forward_asserts(self)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
-  local output = input:at(1):clone()
-  for i=2,input:size() do
+  local i,output = 1
+  while not input:at(1) or input:at(1)== null_token do i=i+1 end
+  output = input:at(i):clone()
+  for i=i+1,input:size() do
     local tk = input:at(i)
-    if tk ~= tokens.null() then output:axpy(1.0, input:at(i)) end
+    if tk and tk ~= null_token then output:axpy(1.0, input:at(i)) end
   end
   forward_finish(self, input, output)
   return output
@@ -513,9 +638,9 @@ end
 index_methods.backprop = function(self, input)
   backprop_asserts(self)
   local output = tokens.vector.bunch()
-  for i = 1, self.n-1 do output:push_back(tokens.null()) end
+  for i = 1, self.n-1 do output:push_back(null_token) end
   output:push_back(input)
-  for i = self.n+1, self:get_input():size() do output:push_back(tokens.null()) end
+  for i = self.n+1, self:get_input():size() do output:push_back(null_token) end
   backprop_finish(self, input, output)
   return output
 end

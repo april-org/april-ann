@@ -41,19 +41,19 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value);
 #include "sparse_matrixFloat.h"
 
 namespace AprilUtils {
-  template<> Basics::Token *LuaTable::
-  convertTo<Basics::Token *>(lua_State *L, int idx) {
-    return lua_toAuxToken(L, idx).get();
+  template<> AprilUtils::SharedPtr<Basics::Token> LuaTable::
+  convertTo< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx) {
+    return lua_toAuxToken(L, idx);
   }
   
   template<> void LuaTable::
-  pushInto<Basics::Token *>(lua_State *L, Basics::Token *value) {
-    AprilUtils::SharedPtr<Token> ptr(value);
+  pushInto< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L,
+                                                   AprilUtils::SharedPtr<Basics::Token> ptr) {
     lua_pushAuxToken(L, ptr);
   }
 
   template<> bool LuaTable::
-  checkType<Basics::Token *>(lua_State *L, int idx) {
+  checkType< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx) {
     return lua_isAuxToken(L, idx);
   }
 }

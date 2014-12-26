@@ -252,7 +252,23 @@ namespace ANN {
       UNUSED_VARIABLE(tk);
     }
 
-
+    /// Sets a Basics::Token as the last given input.
+    virtual void setInput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setInput(tk.get());
+    }
+    /// Sets a Basics::Token as the last produced output.
+    virtual void setOutput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setOutput(tk.get());
+    }
+    /// Sets a Basics::Token as the last given deltas (error input)
+    virtual void setErrorInput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setErrorInput(tk.get());
+    }
+    /// Sets a Basics::Token as the last produced deltas (error output)
+    virtual void setErrorOutput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setErrorOutput(tk.get());
+    }
+    
     /**
      * @brief Computes the forward step of the ANNComponent.
      *
@@ -437,10 +453,10 @@ namespace ANN {
     virtual void copyState(AprilUtils::LuaTable &dict) {
       // A Lua table will contain the state.
       AprilUtils::LuaTable state;
-      state.put(INPUT_STR, getInput());
-      state.put(OUTPUT_STR, getOutput());
-      state.put(ERROR_INPUT_STR, getErrorInput());
-      state.put(ERROR_OUTPUT_STR, getErrorOutput());
+      state.put(INPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getInput()));
+      state.put(OUTPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getOutput()));
+      state.put(ERROR_INPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getErrorInput()));
+      state.put(ERROR_OUTPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getErrorOutput()));
       // The state is stored at dict LuaTable argument indexed by the name.
       dict.put(name, state);
     }
@@ -448,10 +464,10 @@ namespace ANN {
     /// Modifies the state of the component
     virtual void setState(AprilUtils::LuaTable &dict) {
       AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
-      setInput(state.get<Basics::Token*>(INPUT_STR));
-      setOutput(state.get<Basics::Token*>(OUTPUT_STR));
-      setErrorInput(state.get<Basics::Token*>(ERROR_INPUT_STR));
-      setErrorOutput(state.get<Basics::Token*>(ERROR_OUTPUT_STR));
+      setInput(state.get< AprilUtils::SharedPtr<Basics::Token> >(INPUT_STR));
+      setOutput(state.get< AprilUtils::SharedPtr<Basics::Token> >(OUTPUT_STR));
+      setErrorInput(state.get< AprilUtils::SharedPtr<Basics::Token> >(ERROR_INPUT_STR));
+      setErrorOutput(state.get< AprilUtils::SharedPtr<Basics::Token> >(ERROR_OUTPUT_STR));
     }
     
     /// Retrieve matrix weights from ANNComponent's.

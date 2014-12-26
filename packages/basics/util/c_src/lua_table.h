@@ -162,7 +162,7 @@ namespace AprilUtils {
       }
       // return T();
     }
-    
+
     /// Pushes into Lua stack the Lua table associated with the object.
     void pushTable(lua_State *L);
     

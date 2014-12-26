@@ -66,6 +66,18 @@ namespace ANN {
       PCAWhiteningANNComponent::setErrorOutput(tk);
     }
 
+    // FIXME: Is it needd an implementation of copyState and setState?
+    /*
+      virtual void copyState(AprilUtils::LuaTable &dict) {
+      dot_product->copyState(dict);
+      bias->copyState(dict);
+      }
+      virtual void setState(AprilUtils::LuaTable &dict) {
+      dot_product->setState(dict);
+      bias->setState(dict);
+      }
+    */
+    
 
     virtual ANNComponent *clone();
     

@@ -21,54 +21,6 @@
 #ifndef TOKEN_NULL_H
 #define TOKEN_NULL_H
 
-#include "april_assert.h"
-#include "buffer_list.h"
-#include "constString.h"
-#include "disallow_class_methods.h"
-#include "referenced.h"
-#include "smart_ptr.h"
-#include "table_of_token_codes.h"
 #include "token_base.h"
-#include "unused_variable.h"
-
-namespace Basics {
-  
-  /// TokenNull is a singleton class which represents a void Token.
-  class TokenNull : public Token {
-    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenNull);
-    TokenNull() { }
-    
-  public:
-    
-    static TokenNull *getInstance() {
-      static AprilUtils::SharedPtr<TokenNull> singleton( new TokenNull() );
-      return singleton.get();
-    }
-    virtual ~TokenNull() { }
-    
-    virtual Token *clone() const { return getInstance(); }
-    
-    // FOR DEBUG PURPOSES
-    // TODO:
-    virtual AprilUtils::buffer_list* debugString(const char *prefix,
-                                                 int debugLevel) {
-      UNUSED_VARIABLE(prefix);
-      UNUSED_VARIABLE(debugLevel);
-      return 0;
-    }
-    
-    virtual TokenCode getTokenCode() const {
-      return table_of_token_codes::token_null;
-    }
-    
-    // TODO:
-    virtual AprilUtils::buffer_list* toString() { return 0; }
-    
-    // ALL TOKENS MUST IMPLEMENT THIS STATIC METHOD FOR SERIALIZATION PURPOSES
-    // TODO:
-    // Token *fromString(AprilUtils::constString &cs);
-  };
-  
-} // namespace Basics
 
 #endif // TOKEN_NULL_H
