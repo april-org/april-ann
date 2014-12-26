@@ -341,6 +341,8 @@ local function ann_graph_compute_gradients(self)
 end
 
 local function ann_graph_backprop(self)
+  assert(self.bptt_step == 1 or self:get_is_recurrent(),
+         "Unable to use BPTT in non recurrent networks")
   backprop_asserts(self)
   local error_inputs_table = { }
   for i=self.bptt_step,1,-1 do
@@ -676,7 +678,15 @@ cmul_methods.forward = function(self, input, during_training)
   assert(class.is_a(input, tokens.vector.bunch),
          "Needs a tokens.vector.bunch as input")
   assert(input:size() == 2, "Needs a tokens.vector.bunch with two components")
-  local output = mop.cmul(input:at(1), input:at(2))
+  local a, b = input:at(1), input:at(2)
+  local output
+  if not a or a == null_token then
+    output = b
+  elseif not b or b == null_token then
+    output = a
+  else
+    output = mop.cmul(a, b)
+  end
   forward_finish(self, input, output)
   return output
 end
@@ -685,8 +695,17 @@ cmul_methods.backprop = function(self, input)
   backprop_asserts(self)
   local i = self:get_input()
   local output = tokens.vector.bunch()
-  output:push_back( mop.cmul(i:at(2), input) )
-  output:push_back( mop.cmul(i:at(1), input) )
+  local a, b = i:at(1), i:at(2)
+  if b and b ~= null_token then
+    output:push_back( mop.cmul(b, input) )
+  else
+    output:push_back( null_token )
+  end
+  if a and a ~= null_token then
+    output:push_back( mop.cmul(a, input) )
+  else
+    output:push_back( null_token )
+  end
   backprop_finish(self, input, output)
   return output
 end
