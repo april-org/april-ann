@@ -229,16 +229,25 @@ ann_graph_methods.dot_graph =
   function(self, filename)
     local f = io.open(filename, "w")
     f:write("digraph %s {\nrankdir=BT;\n"%{self:get_name()})
-    for obj,node in pairs(self.nodes) do
-      local src = (obj ~= 'input' and obj ~= 'output' and obj:get_name()) or obj
-      local shape = "ellipse"
-      if self.back_nodes[obj] then shape = "rectangle" end
-      f:write('%s [label="%s (%s)",shape="%s"];\n'%{ src, src, type(obj), shape })
-      for obj2 in iterator(node.out_edges) do
-        local dst = (obj2 ~= 'input' and obj2 ~= 'output' and obj2:get_name()) or obj2
-        f:write('%s -> %s;\n'%{ src, dst })
+    for tbl in iterator{self.order,{'input','output'}} do
+      for obj in iterator(tbl) do
+        local node = self.nodes[obj]
+        local src = (obj ~= "input" and obj ~= "output" and obj:get_name()) or obj
+        local shape, edge_style = "ellipse", "solid"
+        if self.back_nodes[obj] then shape = "rectangle" end
+        if obj ~= "input" and obj ~= "output" then
+          f:write('%s [label="%s (%s)",shape="%s"];\n'%{ src, src, type(obj), shape })
+        end
+        for obj2 in iterator(node.out_edges) do
+          local dst = (obj2 ~= "input" and obj2 ~= "output" and obj2:get_name()) or obj2
+          f:write("%s -> %s [style=%s];\n"%{ src, dst, edge_style })
+        end
       end
     end
+    f:write("input [shape=none];\n")
+    f:write("output [shape=none];\n")
+    f:write("{rank=source; input;}\n")
+    f:write("{rank=sink; output;}\n")
     f:write("}\n")
     f:close()
   end
@@ -318,7 +327,7 @@ ann_graph_methods.forward = function(self, input, during_training)
   end
   ------------------
   for _,obj in ipairs(self.order) do
-    local node = self.nodes[obj]
+    local node  = self.nodes[obj]
     local input = compose(node.in_edges, outputs_table)
     outputs_table[obj] = obj:forward(input, during_training)
   end

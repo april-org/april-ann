@@ -3,9 +3,10 @@ local BACKSTEP        = math.huge
 local MAX_ERROR       = 0.04
 local EPSILON         = 0.01
 local MAX_SEQ_SIZE    = 10
+local SEQ_STEP        = 1
 local MAX_EPOCHS      = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
-local WEIGHT_DECAY    = 0.000001
-local H               = 2 -- number of neurons in hidden layer
+local WEIGHT_DECAY    = 0.001
+local H               = 4 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -13,6 +14,9 @@ local H               = 2 -- number of neurons in hidden layer
 
 local rnd1   = random(7576)
 local rnd2   = random(1234)
+local rnd3   = random(5723)
+local rnd4   = random(4825)
+local rnd5   = random(8257)
 local bern05 = stats.dist.bernoulli(0.5)
 local noise  = stats.dist.normal(0, 0.02)
 
@@ -23,37 +27,33 @@ local l1   = ann.components.hyperplane{ input=1, output=H }
 local a1   = ann.components.actf.sin()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
--- gate components
-local gates_actf     = "logistic"
-local l1_input_gate  = ann.components.hyperplane{ input=H+1, output=1 }
-local l1_output_gate = ann.components.hyperplane{ input=H+1, output=H }
-local l1_forget_gate = ann.components.hyperplane{ input=H+1, output=H }
--- peephole component
-local peephole = ann.graph.bind()
+-- gating components
+local gatings_actf     = ann.components.actf.logistic
+local l1_input_gating  = ann.components.hyperplane{ input=H+1, output=H }
+local l1_output_gating = ann.components.hyperplane{ input=H+1, output=H }
+local l1_forget_gating = ann.components.hyperplane{ input=H+1, output=H }
 -- junction components
-local l1_input  = ann.graph.cmul()
-local l1_output = ann.graph.cmul()
-local l1_forget = ann.graph.cmul()
+local l1_input_gate  = ann.graph.cmul()
+local l1_output_gate = ann.graph.cmul()
+local l1_forget_gate = ann.graph.cmul()
 -- recurrent junction component
 local rec_add   = ann.graph.add()
 
 -- RNN CONNECTIONS SECTION
 
 -- feed-forward connections
-g:connect('input', l1_input)( l1 )( rec_add )( a1 )( l1_output )( l2 )( a2 )( 'output' )
--- peephole recurrent connection
-g:connect(a1, peephole )
-g:connect('input', peephole)
+g:connect('input', l1)( l1_input_gate )( rec_add )( a1 )( l1_output_gate )( l2 )( a2 )( 'output' )
 -- gate connections
-g:connect(peephole, l1_input_gate)( ann.components.actf[gates_actf]() )( l1_input )
-g:connect(peephole, l1_output_gate)( ann.components.actf[gates_actf]() )( l1_output )
-g:connect(peephole, l1_forget_gate)( ann.components.actf[gates_actf]() )( l1_forget )
+g:connect({ 'input', rec_add }, ann.graph.bind())( l1_input_gating )( gatings_actf() )( l1_input_gate )
+g:connect({ 'input', rec_add }, ann.graph.bind())( l1_output_gating )( gatings_actf() )( l1_output_gate )
+g:connect({ 'input', rec_add }, ann.graph.bind())( l1_forget_gating )( gatings_actf() )( l1_forget_gate )
 -- recurrent connection
-g:connect(l1_forget, rec_add)( l1_forget )
+g:connect(rec_add, l1_forget_gate)( rec_add )
+-- g:connect(rec_add, rec_add)
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
-trainable.supervised_trainer(g):build():
-  randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
+local trainer = trainable.supervised_trainer(g):build()
+trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
 iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
 
@@ -66,19 +66,17 @@ local loss    = ann.loss.cross_entropy()
 local opt     = ann.optimizer.adadelta()
 local weights = g:copy_weights()
 local keys    = iterator(table.keys(weights)):table() table.sort(keys)
-for wname in iterator(table.keys(weights)):filter(function(k) return k:find("w.*") end) do
+for wname in iterator(table.keys(weights)):filter(function(k) return k:find(".*") end) do
   opt:set_layerwise_option(wname, "weight_decay", WEIGHT_DECAY)
 end
-
--- opt:set_option("max_iter", 1)
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 -- GENERATE INPUT/OUTPUT SAMPLE
-local function build_input_output_sample(n)
-  local input, sum = bern05:sample(rnd2, n), 0
+local function build_input_output_sample(n, rnd)
+  local input, sum = bern05:sample(rnd, n), 0
   local output = matrix(1, 1, { input:sum() % 2 })
   return input, output
 end
@@ -88,13 +86,14 @@ local function forward(g, input, during_training, it)
   g:reset(it)
   local input = input:clone():indexed_fill(1, input:select(2,1):lt(1), -1)
   if during_training then
-    input:axpy(1.0, noise:sample(rnd2, input:size()))
+    input:axpy(1.0, noise:sample(rnd4, input:size()))
   end
   local o_j
   local c = g:copy_components()
   for j=1,input:dim(1) do
     o_j = g:forward( input(j,':'), during_training )
-    -- print("+++", table.concat(c.wop:get_output():toTable(), " "))
+    -- print("---", table.concat(c.c28:get_input():toTable(), " "))
+    -- print("+++", table.concat(c.c28:get_output():toTable(), " "))
   end
   return o_j
 end
@@ -130,7 +129,7 @@ end
 local function gradient_checking_loop()
   for sz=1,3 do
     for k=1,4 do
-      local x,y = build_input_output_sample(sz)
+      local x,y = build_input_output_sample(sz, rnd5)
       local y_hat = forward(g, x)
       g:backprop( loss:gradient(y_hat, y) )
       local bptt_grads = g:compute_gradients()
@@ -144,7 +143,7 @@ end
 local function train(start, stop, max_seq_size)
     for i=start,stop do
       local sz = rnd2:randInt(1, max_seq_size)
-      local input,output = build_input_output_sample(sz)
+      local input,output = build_input_output_sample(sz, rnd2)
       local l,grads,y,o = opt:execute(function(x,it)
 	  if x ~= weights then g:build{ weights=x } weights = x end
 	  loss:reset()
@@ -155,9 +154,10 @@ local function train(start, stop, max_seq_size)
 	  local grads = g:compute_gradients()
 	  return loss:get_accum_loss(),grads,y_j:get(1,1),o_j:get(1,1)
 				      end, weights)
-      printf("%5d  %.6f  ::  %.2f  %.2f  %5d :: %s\n", i, l,
+      printf("%5d  %.6f  ::  %.2f  %.2f  %5d :: %.6f %.6f :: %s\n", i, l,
 	     y, (o<0) and math.exp(o) or o, sz,
-	     table.concat(input:rewrap(input:size()):toTable(), " "))
+             trainer:norm2("w.*"), trainer:norm2("b.*"),
+	     input:size() < 10 and table.concat(input:rewrap(input:size()):toTable(), " ") or " ")
     end
     return stop
 end
@@ -169,16 +169,19 @@ end
 -- TRAINING SECTION
 if CHECK_GRADIENTS and BACKSTEP == math.huge then gradient_checking_loop() end
 local last = 0
-for s=2,MAX_SEQ_SIZE do
+for s=2,MAX_SEQ_SIZE,SEQ_STEP do
   last = train(last+1, last+MAX_EPOCHS, s)
 end
 
 -- EVALUATION SECTION
+local loss = ann.loss.zero_one()
 for i=1,1000 do
-  local sz = rnd2:randInt(1, MAX_SEQ_SIZE*100)
-  local x,y = build_input_output_sample(sz)
-  local y_hat = forward(g, x):get(1,1)
-  y = y:get(1,1)
+  local sz = rnd3:randInt(1, MAX_SEQ_SIZE*100)
+  local x,y = build_input_output_sample(sz, rnd3)
+  local y_hat = forward(g, x)
+  loss:accum_loss( loss:compute_loss(y_hat, y) )
+  y     = y:get(1,1)
+  y_hat = y_hat:get(1,1)
   y_hat = (y_hat<0) and math.exp(y_hat) or y_hat
   printf("%.6f  ::  %.2f  %.2f  %d\n", math.abs(y_hat - y)^2,
 	 y, y_hat, x:size())
@@ -191,3 +194,6 @@ for wname,w in iterator(keys):map(function(k) return k,weights[k] end) do
   print(wname)
   print(w)
 end
+
+print("----------------------------")
+print(loss:get_accum_loss())
