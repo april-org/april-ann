@@ -24,18 +24,21 @@ local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
 -- recurrency components
 local r1      = ann.components.dot_product{ input=1, output=H }
-local rec_add = ann.graph.add()
+local rec_add = ann.graph.add{ output=H }
 
 -- RNN CONNECTIONS SECTION
 
 -- feed-forward connections
 g:connect('input', l1)( rec_add )( a1 )( l2 )( a2 )( 'output' )
+g:connect(l2, ann.components.actf.logistic())( r1 )
 -- recurrent connections
-g:connect(l2, ann.components.actf.logistic())( r1 )( rec_add )
+g:delayed(r1, rec_add)
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
 trainable.supervised_trainer(g):build():
   randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
+
+-- iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
 
 g:dot_graph("blah.dot")
 

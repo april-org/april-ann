@@ -68,10 +68,12 @@ namespace ANN {
     }
 
     virtual void copyState(AprilUtils::LuaTable &dict) {
+      ANNComponent::copyState(dict);
       dot_product->copyState(dict);
       bias->copyState(dict);
     }
     virtual void setState(AprilUtils::LuaTable &dict) {
+      ANNComponent::setState(dict);
       dot_product->setState(dict);
       bias->setState(dict);
     }

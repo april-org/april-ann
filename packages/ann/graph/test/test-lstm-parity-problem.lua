@@ -1,4 +1,4 @@
-local CHECK_GRADIENTS = false
+local CHECK_GRADIENTS = true
 local BACKSTEP        = math.huge
 local MAX_ERROR       = 0.04
 local EPSILON         = 0.01
@@ -6,7 +6,7 @@ local MAX_SEQ_SIZE    = 10
 local SEQ_STEP        = 1
 local MAX_EPOCHS      = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
 local WEIGHT_DECAY    = 0.001
-local H               = 4 -- number of neurons in hidden layer
+local H               = 2 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -18,13 +18,13 @@ local rnd3   = random(5723)
 local rnd4   = random(4825)
 local rnd5   = random(8257)
 local bern05 = stats.dist.bernoulli(0.5)
-local noise  = stats.dist.normal(0, 0.02)
+local noise  = stats.dist.normal(0, 0.01)
 
 -- RNN COMPONENTS CONSTRUCTION SECTION
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
 local l1   = ann.components.hyperplane{ input=1, output=H }
-local a1   = ann.components.actf.sin()
+local a1   = ann.components.actf.logistic()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
 -- gating components
@@ -33,26 +33,33 @@ local l1_input_gating  = ann.components.hyperplane{ input=H+1, output=H }
 local l1_output_gating = ann.components.hyperplane{ input=H+1, output=H }
 local l1_forget_gating = ann.components.hyperplane{ input=H+1, output=H }
 -- junction components
-local l1_input_gate  = ann.graph.cmul()
-local l1_output_gate = ann.graph.cmul()
-local l1_forget_gate = ann.graph.cmul()
+local l1_input_gate  = ann.graph.cmul{ output=H }
+local l1_output_gate = ann.graph.cmul{ output=H }
+local l1_forget_gate = ann.graph.cmul{ output=H }
+-- peephole components
+local input_peephole  = ann.graph.bind{ size=l1_input_gating:get_input_size() }
+local output_peephole = ann.graph.bind{ size=l1_output_gating:get_input_size() }
+local forget_peephole = ann.graph.bind{ size=l1_forget_gating:get_input_size() }
 -- recurrent junction component
-local rec_add   = ann.graph.add()
+local rec_add = ann.graph.add{ output=l1:get_output_size() }
 
 -- RNN CONNECTIONS SECTION
 
 -- feed-forward connections
 g:connect('input', l1)( l1_input_gate )( rec_add )( a1 )( l1_output_gate )( l2 )( a2 )( 'output' )
 -- gate connections
-g:connect({ 'input', rec_add }, ann.graph.bind())( l1_input_gating )( gatings_actf() )( l1_input_gate )
-g:connect({ 'input', rec_add }, ann.graph.bind())( l1_output_gating )( gatings_actf() )( l1_output_gate )
-g:connect({ 'input', rec_add }, ann.graph.bind())( l1_forget_gating )( gatings_actf() )( l1_forget_gate )
--- recurrent connection
-g:connect(rec_add, l1_forget_gate)( rec_add )
--- g:connect(rec_add, rec_add)
+g:connect('input', input_peephole)( l1_input_gating )( gatings_actf() )( l1_input_gate )
+g:connect('input', output_peephole)( l1_output_gating )( gatings_actf() )( l1_output_gate )
+g:connect('input', forget_peephole)( l1_forget_gating )( gatings_actf() )( l1_forget_gate )( rec_add )
+g:connect(rec_add, output_peephole) -- non delayed
+-- recurrent connections
+g:connect(rec_add, input_peephole, 1)
+g:connect(rec_add, forget_peephole, 1)
+g:connect(rec_add, l1_forget_gate, 1)
+-- g:delayed(rec_add, rec_add)
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
-local trainer = trainable.supervised_trainer(g):build()
+local trainer = trainable.supervised_trainer(g):build{ input=1, output=1 }
 trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
 iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
@@ -92,8 +99,10 @@ local function forward(g, input, during_training, it)
   local c = g:copy_components()
   for j=1,input:dim(1) do
     o_j = g:forward( input(j,':'), during_training )
-    -- print("---", table.concat(c.c28:get_input():toTable(), " "))
-    -- print("+++", table.concat(c.c28:get_output():toTable(), " "))
+    -- print("iii", table.concat(c.c19:get_output():toTable(), " "))
+    -- print("@@@", table.concat(c.c21:get_output():toTable(), " "))
+    -- print("---", iterator(c.c25:get_input():iterate()):map(function(k,v) return "|||",table.concat(v:toTable(), " ") end):concat(" "," "))
+    -- print("+++", table.concat(c.c25:get_output():toTable(), " "))
   end
   return o_j
 end
@@ -179,7 +188,7 @@ for i=1,1000 do
   local sz = rnd3:randInt(1, MAX_SEQ_SIZE*100)
   local x,y = build_input_output_sample(sz, rnd3)
   local y_hat = forward(g, x)
-  loss:accum_loss( loss:compute_loss(y_hat, y) )
+  loss:accum_loss( loss:compute_loss(matrix.op.exp(y_hat), y) )
   y     = y:get(1,1)
   y_hat = y_hat:get(1,1)
   y_hat = (y_hat<0) and math.exp(y_hat) or y_hat

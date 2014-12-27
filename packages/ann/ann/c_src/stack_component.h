@@ -84,12 +84,14 @@ namespace ANN {
     }
     
     virtual void copyState(AprilUtils::LuaTable &dict) {
+      ANNComponent::copyState(dict);
       for (unsigned int i=0; i<components.size(); ++i) {
         components[i]->copyState(dict);
       }
     }
 
     virtual void setState(AprilUtils::LuaTable &dict) {
+      ANNComponent::setState(dict);
       for (unsigned int i=0; i<components.size(); ++i) {
         components[i]->setState(dict);
       }
