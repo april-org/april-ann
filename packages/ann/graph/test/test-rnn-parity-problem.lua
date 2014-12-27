@@ -152,11 +152,14 @@ for s=2,MAX_SEQ_SIZE do
 end
 
 -- EVALUATION SECTION
+local loss = ann.loss.zero_one()
 for i=1,1000 do
   local sz = rnd2:randInt(1, MAX_SEQ_SIZE*100)
   local x,y = build_input_output_sample(sz)
-  local y_hat = forward(g, x):get(1,1)
-  y = y:get(1,1)
+  local y_hat = forward(g, x)
+  loss:accum_loss( loss:compute_loss(matrix.op.exp(y_hat), y) )
+  y     = y:get(1,1)
+  y_hat = y_hat:get(1,1)
   y_hat = (y_hat<0) and math.exp(y_hat) or y_hat
   printf("%.6f  ::  %.2f  %.2f  %d\n", math.abs(y_hat - y)^2,
 	 y, y_hat, x:size())
@@ -169,3 +172,6 @@ for wname,w in iterator(keys):map(function(k) return k,weights[k] end) do
   print(wname)
   print(w)
 end
+
+print("----------------------------")
+print(loss:get_accum_loss())
