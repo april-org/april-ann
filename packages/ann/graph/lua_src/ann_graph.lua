@@ -200,12 +200,12 @@ ann.graph.constructor =
     params = { "A name string" },
   } ..
   function(self, name, components, connections, backstep)
-    ann.components.lua.constructor(self, name)
+    ann.components.lua.constructor(self, { name=name })
     -- for truncated BPTT
     self.max_delay = 0  -- maximum delay in the network
     self.bptt_step = 0  -- controls current BPTT step number
     self.bptt_data = {} -- array with ANN state for every BPTT step
-    self:set_bptt_truncation(backstep or 1) -- indicates truncation length
+    self:set_bptt_truncation(backstep or 0) -- indicates truncation length
     --
     self.nodes = { input = node_constructor() }
     if components and connections then
@@ -377,6 +377,9 @@ ann_graph_methods.build = function(self, tbl)
   -- build the topological sort, which will be stored at self.order
   ann_graph_topsort(self)
   self.recurrent = (self.max_delay > 0)
+  if self.recurrent then
+    if self.backstep == 0 then self:set_bptt_truncation(math.huge) end
+  end
   --
   local nodes = self.nodes
   local input_size = tbl.input or 0
@@ -446,8 +449,12 @@ ann_graph_methods.forward = function(self, input, during_training)
   -- BPTT section --
   ------------------
   local bptt = self.bptt_data
-  self.bptt_step = self.bptt_step + 1
-  if self.bptt_step > self.backstep then self.bptt_step = 1 end
+  if self:get_is_recurrent() then
+    self.bptt_step = self.bptt_step + 1
+    if self.bptt_step > self.backstep then self.bptt_step = 1 end
+  else
+    self.bptt_step = 1
+  end
   local backstep  = self.backstep
   local bptt_step = self.bptt_step
   -- current time iteration is initialized with default values for input object
@@ -590,7 +597,7 @@ ann_graph_methods.backprop = function(self, input)
   local bptt = assert(self.bptt_data[self.bptt_step], "Execute forward before")
   bptt.output.error_input  = input
   bptt.output.error_output = input
-  if self.bptt_step == self.backstep then
+  if self.bptt_step == self.backstep or not self:get_is_recurrent() then
     return ann_graph_backprop(self)
   else
     return null_token
@@ -725,7 +732,7 @@ ann_graph_methods.get_is_recurrent = function(self)
 end
 
 ann_graph_methods.set_bptt_truncation = function(self, backstep)
-  self.backstep = ( (backstep <= 0) and math.huge or backstep ) + 1
+  self.backstep = backstep + 1
   assert(self.backstep > self.max_delay,
          "Unable to set the given BPTT truncation")
 end
@@ -736,15 +743,10 @@ local bind_methods
 ann.graph.bind,bind_methods = class("ann.graph.bind", ann.components.lua)
 
 ann.graph.bind.constructor = function(self, tbl)
-  local tbl = get_table_fields({
-      name = { type_match="number" },
-      input = { type_match="number" },
-      output = { type_match="number" },
-      size = { type_match="number" },
-                               }, tbl or {})
-  ann.components.lua.constructor(self, tbl.name,
-                                 tbl.input or tbl.size,
-                                 tbl.output or tbl.size)
+  if tbl and tbl.size then
+    tbl.input, tbl.output, tbl.size = tbl.size, tbl.size, nil
+  end
+  ann.components.lua.constructor(self, tbl)
 end
 
 bind_methods.build = function(self, tbl)
@@ -799,12 +801,7 @@ local add_methods
 ann.graph.add,add_methods = class("ann.graph.add", ann.components.lua)
 
 ann.graph.add.constructor = function(self, tbl)
-  local tbl = get_table_fields({
-      name = { type_match="number" },
-      input = { type_match="number" },
-      output = { type_match="number" },
-                               }, tbl or {})
-  ann.components.lua.constructor(self, tbl.name, tbl.input, tbl.output)
+  ann.components.lua.constructor(self, tbl)
 end
 
 add_methods.build = function(self, tbl)
@@ -851,14 +848,9 @@ end
 local index_methods
 ann.graph.index,index_methods = class("ann.graph.index", ann.components.lua)
 
-ann.graph.index.constructor = function(self, n, tbl)
-  local tbl = get_table_fields({
-      name = { type_match="number" },
-      input = { type_match="number" },
-      output = { type_match="number" },
-                               }, tbl or {})
+ann.graph.index.constructor = function(self, n, name)
   self.n = assert(n, "Needs a number as first argument")
-  ann.components.lua.constructor(self, tbl.name, tbl.input, tbl.output)
+  ann.components.lua.constructor(self, { name=name })
 end
 
 index_methods.forward = function(self, input, during_training)
@@ -894,12 +886,7 @@ local cmul_methods
 ann.graph.cmul,cmul_methods = class("ann.graph.cmul", ann.components.lua)
 
 ann.graph.cmul.constructor = function(self, tbl)
-  local tbl = get_table_fields({
-      name = { type_match="number" },
-      input = { type_match="number" },
-      output = { type_match="number" },
-                               }, tbl or {})
-  ann.components.lua.constructor(self, tbl.name, tbl.input, tbl.output)
+  ann.components.lua.constructor(self, tbl)
 end
 
 cmul_methods.build = function(self, tbl)

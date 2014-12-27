@@ -159,10 +159,16 @@ local lua_component_methods
 ann.components.lua,lua_component_methods = class("ann.components.lua",
                                                  ann.components.base)
 
-ann.components.lua.constructor = function(self, name, input, output)
-  self.name = name or ann.generate_name()
-  self.input_size = input
-  self.output_size = output
+ann.components.lua.constructor = function(self, tbl)
+  tbl = tbl or {}
+  local tbl = get_table_fields({
+      name = { type_match="string" },
+      input = { type_match="number" },
+      output = { type_match="number" },
+                               }, tbl or {})
+  self.name = tbl.name or ann.generate_name()
+  self.input_size = tbl.input
+  self.output_size = tbl.output
 end
 
 lua_component_methods.set_input = function(self,tk)
@@ -297,11 +303,16 @@ lua_component_methods.precompute_output_size = function(self, tbl)
 end
 
 lua_component_methods.clone = function(self)
-  return class.of(self)(self.name)
+  return class.of(self){ name=self.name,
+                         input=self:get_input_size(),
+                         output=self:get_output_size() }
 end
 
 lua_component_methods.to_lua_string = function(self, format)
-  return "%s(%q)" % {get_object_id(self), self.name}
+  return "%s{ name=%q, input=%d output=%d }" % {get_object_id(self),
+                                                self.name,
+                                                self:get_input_size(),
+                                                self:get_output_size()}
 end
 
 lua_component_methods.set_use_cuda = function(self, v)

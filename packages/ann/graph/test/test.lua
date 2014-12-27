@@ -81,7 +81,7 @@ end)
 T("AddComponentTest",
   function()
     local s = ann.graph.add():clone()
-    check.eq(s:to_lua_string(), "ann.graph.add(%q)"%{s:get_name()})
+    s:to_lua_string()
     --
     s:build{ input=30, output=10 }
     check.eq(s:get_input_size(), 30)
@@ -99,7 +99,7 @@ end)
 T("BindComponentTest",
   function()
     local s = ann.graph.bind():clone()
-    check.eq(s:to_lua_string(), "ann.graph.bind(%q)"%{s:get_name()})
+    s:to_lua_string()
     --
     s:build{ input=30, output=30 }
     check.eq(s:get_input_size(), 30)
@@ -135,7 +135,7 @@ end)
 T("CmulComponentTest",
   function()
     local s = ann.graph.cmul():clone()
-    check.eq(s:to_lua_string(), "ann.graph.cmul(%q)"%{s:get_name()})
+    s:to_lua_string()
     --
     s:build{ input=20, output=10 }
     check.eq(s:get_input_size(), 20)
