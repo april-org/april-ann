@@ -5,7 +5,7 @@ local EPSILON         = 0.01
 local MAX_SEQ_SIZE    = 10
 local SEQ_STEP        = 1
 local MAX_EPOCHS      = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
-local WEIGHT_DECAY    = 0.001
+local WEIGHT_DECAY    = 0.00001
 local H               = 2 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
@@ -24,7 +24,7 @@ local noise  = stats.dist.normal(0, 0.01)
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
 local l1   = ann.components.hyperplane{ input=1, output=H }
-local a1   = ann.components.actf.logistic()
+local a1   = ann.components.actf.tanh()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
 -- gating components
@@ -70,12 +70,15 @@ g:set_bptt_truncation(BACKSTEP)
 
 -- LOSS AND OPTIMIZER SECTION
 local loss    = ann.loss.cross_entropy()
-local opt     = ann.optimizer.adadelta()
+local opt     = ann.optimizer.sgd()
 local weights = g:copy_weights()
 local keys    = iterator(table.keys(weights)):table() table.sort(keys)
 for wname in iterator(table.keys(weights)):filter(function(k) return k:find(".*") end) do
   opt:set_layerwise_option(wname, "weight_decay", WEIGHT_DECAY)
 end
+
+opt:set_option("learning_rate", 0.08)
+opt:set_option("momentum", 0.1)
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
