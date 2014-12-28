@@ -575,6 +575,7 @@ local function ann_graph_backprop(self)
       local error_input = bptt[i][name_of(obj)].error_input
       if error_input and error_input ~= null_token then
         local error_output = obj:backprop(error_input)
+        obj:copy_state(bptt[i])
         -- accumulate error output into all input connections
         accumulate_error_output(node, error_output, i, retrieve_state)
       end -- if error_input
@@ -615,6 +616,11 @@ ann_graph_methods.compute_gradients = function(self, weight_grads)
   local weight_grads = weight_grads or {}
   for k,v in pairs(self.grads) do weight_grads[k] = v end
   return weight_grads
+end
+
+ann_graph_methods.get_bptt_state = function(self, t)
+  assert(self.bptt_data[t], "Unable to retrieve the state at the given time")
+  return self.bptt_data[t]
 end
 
 ann_graph_methods.copy_state = function(self, tbl)
