@@ -4,7 +4,7 @@ local EPSILON      = 0.01
 local MAX_SEQ_SIZE = 10
 local MAX_EPOCHS   = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
 local WEIGHT_DECAY = 0.0004
-local H            = 2 -- number of neurons in hidden layer
+local H            = 1 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
