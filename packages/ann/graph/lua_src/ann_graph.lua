@@ -353,9 +353,10 @@ ann_graph_methods.dot_graph =
         end
         for k,obj2,delay in node_all_out_edges_it(node) do
           local edge_style = (delay == 0) and edge_style or "dashed"
+          local constraint = (delay == 0) and "true" or "false"
           local dst = (obj2 ~= "input" and obj2 ~= "output" and obj2:get_name()) or obj2
-          f:write('%s -> %s [label="%s",style=%s];\n'%{ src, dst,
-                                                        delay, edge_style })
+          f:write('%s -> %s [label="%s",style=%s,constraint=%s];\n' %
+                    { src, dst, delay, edge_style, constraint })
         end
       end
     end
