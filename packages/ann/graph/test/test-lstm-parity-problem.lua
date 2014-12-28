@@ -239,7 +239,7 @@ for i=1,1000 do
   local sz = rnd3:randInt(1, MAX_SEQ_SIZE*100)
   local x,y = build_input_output_sample(sz, rnd3)
   local y_hat = forward(g, x)
-  if i==1 then save_activations(g, sz, "activations.png") end
+  if i==1 then save_activations(g, sz, "activations_lstm.png") end
   loss:accum_loss( loss:compute_loss(matrix.op.exp(y_hat), y) )
   y     = y:get(1,1)
   y_hat = y_hat:get(1,1)

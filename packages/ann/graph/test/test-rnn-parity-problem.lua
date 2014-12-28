@@ -4,6 +4,7 @@ local EPSILON      = 0.01
 local MAX_SEQ_SIZE = 10
 local MAX_EPOCHS   = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
 local WEIGHT_DECAY = 0.0004
+local H            = 2 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -17,7 +18,6 @@ local noise  = stats.dist.normal(0, 0.01)
 -- RNN COMPONENTS CONSTRUCTION SECTION
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
-local H    = 2 -- number of neurons in hidden layer
 local l1   = ann.components.hyperplane{ input=1, output=H }
 local a1   = ann.components.actf.sin()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
@@ -38,7 +38,17 @@ g:delayed(r1, rec_add)
 trainable.supervised_trainer(g):build():
   randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
--- iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
+--[[
+1       instance 0x191fae0 of ann.components.hyperplane c2
+2       instance of ann.graph.add       c11
+3       instance 0x191fcd0 of ann.components.actf.sin   c5
+4       instance 0x1920000 of ann.components.hyperplane c6
+5       instance 0x192b4e0 of ann.components.actf.logistic      c12
+6       instance 0x19203a0 of ann.components.dot_product        c10
+7       instance 0x19201f0 of ann.components.actf.log_logistic  c9
+]]
+
+iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
 
 g:dot_graph("blah.dot")
 
@@ -140,6 +150,22 @@ local function train(start, stop, max_seq_size)
     return stop
 end
 
+local function save_activations(g, sz, filename)
+  local input       = matrix(1, sz)
+  local hidden      = matrix(H, sz)
+  local output      = matrix(1, sz)
+  for t=1,sz do
+    local aux = {':',t}
+    local state = g:get_bptt_state(t)
+    input[aux] = state.input.input:t()
+    output[aux] = state.output.output:t()
+    hidden[aux] = state.c5.output:t()
+  end
+  local r = matrix.join(1, input, matrix.op.adjust_range(hidden, 0, 1),
+                        matrix.op.exp(output))
+  ImageIO.write(Image(r), filename)
+end
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -157,6 +183,7 @@ for i=1,1000 do
   local sz = rnd2:randInt(1, MAX_SEQ_SIZE*100)
   local x,y = build_input_output_sample(sz)
   local y_hat = forward(g, x)
+  if i==1 then save_activations(g, sz, "activations_rnn.png") end
   loss:accum_loss( loss:compute_loss(matrix.op.exp(y_hat), y) )
   y     = y:get(1,1)
   y_hat = y_hat:get(1,1)
