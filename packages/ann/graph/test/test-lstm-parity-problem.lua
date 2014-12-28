@@ -24,7 +24,7 @@ local noise  = stats.dist.normal(0, 0.01)
 local g    = ann.graph() -- the RNN is a graph component
 -- feed-forward components
 local l1   = ann.components.hyperplane{ input=1, output=H }
-local a1   = ann.components.actf.tanh()
+local a1   = ann.components.actf.logistic()
 local l2   = ann.components.hyperplane{ input=H, output=1 }
 local a2   = ann.components.actf.log_logistic()
 -- gating components
@@ -62,6 +62,26 @@ g:connect(rec_add, l1_forget_gate, 1)
 local trainer = trainable.supervised_trainer(g):build{ input=1, output=1 }
 trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 
+--[[
+1       instance of ann.graph.bind      c24
+2       instance 0x21d9060 of ann.components.hyperplane c16
+3       instance 0x21dd190 of ann.components.actf.logistic      c28
+4       instance of ann.graph.cmul      c21
+5       instance of ann.graph.bind      c22
+6       instance 0x21cdab0 of ann.components.hyperplane c10
+7       instance 0x21dda70 of ann.components.actf.logistic      c26
+8       instance 0x21cb660 of ann.components.hyperplane c2
+9       instance of ann.graph.cmul      c19
+10      instance of ann.graph.add       c25
+11      instance of ann.graph.bind      c23
+12      instance 0x21d8dc0 of ann.components.hyperplane c13
+13      instance 0x21de790 of ann.components.actf.logistic      c27
+14      instance 0x21cb850 of ann.components.actf.tanh  c5
+15      instance of ann.graph.cmul      c20
+16      instance 0x21cd750 of ann.components.hyperplane c6
+17      instance 0x21cd900 of ann.components.actf.log_logistic  c9
+]]
+
 iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
 
 g:dot_graph("blah.dot")
@@ -73,10 +93,15 @@ local loss    = ann.loss.cross_entropy()
 local opt     = ann.optimizer.sgd()
 local weights = g:copy_weights()
 local keys    = iterator(table.keys(weights)):table() table.sort(keys)
-for wname in iterator(table.keys(weights)):filter(function(k) return k:find(".*") end) do
-  opt:set_layerwise_option(wname, "weight_decay", WEIGHT_DECAY)
+
+local function set_weight_decay(opt)
+  for wname in iterator(table.keys(weights)):filter(function(k) return k:find(".*") end) do
+    opt:set_layerwise_option(wname, "weight_decay", WEIGHT_DECAY)
+  end
+  return opt
 end
 
+set_weight_decay(opt)
 opt:set_option("learning_rate", 0.08)
 opt:set_option("momentum", 0.1)
 
@@ -152,7 +177,7 @@ local function gradient_checking_loop()
 end
 
 -- TRAINING LOOP
-local function train(start, stop, max_seq_size)
+local function train(start, stop, max_seq_size, opt)
     for i=start,stop do
       local sz = rnd2:randInt(1, max_seq_size)
       local input,output = build_input_output_sample(sz, rnd2)
@@ -174,6 +199,28 @@ local function train(start, stop, max_seq_size)
     return stop
 end
 
+local function save_activations(g, sz, filename)
+  local input       = matrix(1, sz)
+  local input_gate  = matrix(H, sz)
+  local output_gate = matrix(H, sz)
+  local forget_gate = matrix(H, sz)
+  local hidden      = matrix(H, sz)
+  local output      = matrix(1, sz)
+  for t=1,sz do
+    local aux = {':',t}
+    local state = g:get_bptt_state(t)
+    input[aux] = state.input.input:t()
+    output[aux] = state.output.output:t()
+    input_gate[aux] = state.c19.output:t()
+    output_gate[aux] = state.c20.output:t()
+    forget_gate[aux] = state.c21.output:t()
+    hidden[aux] = state.c5.output:t()
+  end
+  local r = matrix.join(1, input, input_gate, forget_gate, hidden,
+                        output_gate, matrix.op.exp(output))
+  ImageIO.write(Image(r), filename)
+end
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -182,7 +229,8 @@ end
 if CHECK_GRADIENTS and BACKSTEP == math.huge then gradient_checking_loop() end
 local last = 0
 for s=2,MAX_SEQ_SIZE,SEQ_STEP do
-  last = train(last+1, last+MAX_EPOCHS, s)
+  if s==7 then opt = set_weight_decay(ann.optimizer.adadelta()) end
+  last = train(last+1, last+MAX_EPOCHS, s, opt)
 end
 
 -- EVALUATION SECTION
@@ -191,6 +239,7 @@ for i=1,1000 do
   local sz = rnd3:randInt(1, MAX_SEQ_SIZE*100)
   local x,y = build_input_output_sample(sz, rnd3)
   local y_hat = forward(g, x)
+  if i==1 then save_activations(g, sz, "activations.png") end
   loss:accum_loss( loss:compute_loss(matrix.op.exp(y_hat), y) )
   y     = y:get(1,1)
   y_hat = y_hat:get(1,1)
