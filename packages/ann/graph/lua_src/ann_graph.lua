@@ -14,9 +14,8 @@ local null_token = tokens.null()
 -- token.sparse_matrix. Returns the bunch size (mini-batch size) of the given
 -- token (that is, the size of the first dimension).
 local get_bunch_size = function(tk)
-  if class.is_a(tk, tokens.vector.bunch) then
-    tk = tk:at(1)
-  end
+  -- search the first token which is not a tokens.vector.bunch
+  while class.is_a(tk, tokens.vector.bunch) do tk = tk:at(1) end
   return tk:dim(1)
 end
 
@@ -956,12 +955,50 @@ end
 ---------------------------------------------------------------------------
 
 ann.graph.test = function()
+  local m = matrix(10,20)
+  local function check(m, sz)
+    utest.check.eq( get_bunch_size(m), sz )
+    utest.check.eq( get_bunch_size(tokens.vector.bunch{ m, m }), sz )
+    utest.check.eq( get_bunch_size(tokens.vector.bunch{
+                                     tokens.vector.bunch{ m },
+                                     m }), sz )
+  end
+  check( matrix(10,20), 10 )
+  check( matrix.sparse.diag{1,2,3}, 3)
+  --
+  utest.check.eq( name_of("one"), "one" )
+  utest.check.eq( name_of{ get_name = function() return "one" end }, "one" )
+  utest.check.eq( name_of( ann.graph.bind{ name="one" } ), "one" )
+  --
+  local nodes = { a=node_constructor(), b=node_constructor(),
+                  c=node_constructor(), d=node_constructor() }
+  node_connect(nodes, "a", "b", 0)
+  node_connect(nodes, "a", "c", 0)
+  node_connect(nodes, "b", "c", 0)
+  node_connect(nodes, "b", "d", 0)
+  node_connect(nodes, "c", "d", 0)
+  --
+  utest.check.eq( nodes.a.out_edges[1], "b" )
+  utest.check.eq( nodes.a.out_edges[2], "c" )
+  utest.check.eq( nodes.b.out_edges[1], "c" )
+  utest.check.eq( nodes.b.out_edges[2], "d" )
+  utest.check.eq( nodes.c.out_edges[1], "d" )
+  utest.check.eq( #nodes.d.out_edges, 0 )
+  --
+  utest.check.eq( #nodes.a.in_edges, 0 )
+  utest.check.eq( nodes.b.in_edges[1], "a" )
+  utest.check.eq( nodes.c.in_edges[1], "a" )
+  utest.check.eq( nodes.c.in_edges[2], "b" )
+  utest.check.eq( nodes.d.in_edges[1], "b" )
+  utest.check.eq( nodes.d.in_edges[2], "c" )
+  --
   local nodes = {
     a = { out_edges = { 'b', 'c' }, out_delay_values = { 0, 0 } },
     b = { out_edges = { 'c', 'd' }, out_delay_values = { 0, 0 } },
     c = { out_edges = { 'd' }, out_delay_values = { 0 } },
     d = { out_edges = { } },
   }
+  --
   local result,recurrent = reverse( topological_sort(nodes, 'a') )
   utest.check.TRUE( iterator.zip(iterator(result),
                                  iterator{ 'a', 'b', 'c', 'd' }):
