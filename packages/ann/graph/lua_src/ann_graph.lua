@@ -593,9 +593,13 @@ end
 -- composing the error input of every component by accumulating previous
 -- component error outputs, and storing the error output of every component at
 -- the table error_outputs_table
-ann_graph_methods.backprop = function(self, input)
+ann_graph_methods.backprop = function(self, input, time)
+  time = time or self.bptt_step
+  april_assert(time == self.bptt_step or self.backstep == math.huge, "%s %s",
+               "Backprop for a given time different of last time step only",
+               "valid if BPTT truncation = math.huge")
   -- keep the backprop input for a future use
-  local bptt = assert(self.bptt_data[self.bptt_step], "Execute forward before")
+  local bptt = assert(self.bptt_data[time], "Execute forward before")
   bptt.output.error_input  = input
   bptt.output.error_output = input
   if self.bptt_step == self.backstep or not self:get_is_recurrent() then
@@ -617,23 +621,30 @@ ann_graph_methods.compute_gradients = function(self, weight_grads)
   return weight_grads
 end
 
-ann_graph_methods.get_bptt_state = function(self, t)
-  assert(self.bptt_data[t], "Unable to retrieve the state at the given time")
-  return self.bptt_data[t]
+ann_graph_methods.get_bptt_state = function(self, time)
+  assert(self.bptt_data[time], "Unable to retrieve the state at the given time")
+  return self.bptt_data[time]
 end
 
 ann_graph_methods.copy_state = function(self, tbl)
   tbl = tbl or {}
   (ann.components.lua.."copy_state")(self, tbl)
   for _,obj in ipairs(self.order) do obj:copy_state(tbl) end
-  -- TODO: compute input and output components state
+  tbl[self:get_name()] = { input = self:get_input(),
+                           output = self:get_output(),
+                           error_input = self:get_error_input(),
+                           error_output = self:get_error_output(), }
   return tbl
 end
 
 ann_graph_methods.set_state = function(self, tbl)
   (ann.components.lua.."set_state")(self, tbl)
   for _,obj in ipairs(self.order) do obj:set_state(tbl) end
-  -- TODO: set input and output components state
+  local data = tbl[self:get_name()]
+  if data.input then self:set_input(data.input) end
+  if data.output then self:set_output(data.output) end
+  if data.error_input then self:set_error_output(data.error_input) end
+  if data.error_output then self:set_error_output(data.error_output) end
   return self
 end
 
