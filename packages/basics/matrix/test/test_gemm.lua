@@ -3,7 +3,13 @@ local T=utest.test
 
 function do_test()
   T("GEMMTest1", function()
-
+      local a = matrix(2,1):linspace() -- matrix with strides = {1,1}
+      local b = matrix(2,2):linspace()
+      check.eq(a:t()*b,
+               matrix(1,2,{ 1*1 + 2*3, 1*2 + 2*4 }))
+      check.eq(matrix(2,1):t():gemm{ A=a:t(), B=b, alpha=1, beta=0 },
+               a:t()*b )
+      --
       local t1 = { 1, 2, 3,
                    4, 5, 6 }
       local t2 = { 3, 4,

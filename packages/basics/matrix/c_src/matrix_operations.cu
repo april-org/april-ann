@@ -472,6 +472,11 @@ namespace AprilMath {
           if (A_stride[0] != 1) trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
           if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
         }
+        // when ld?==1 the matrix is a row or col vector, we need avoid CBLAS
+        // error limits
+        if (lda == 1) lda = AprilUtils::max(K,M);
+        if (ldb == 1) ldb = AprilUtils::max(K,N);
+        if (ldc == 1) ldc = AprilUtils::max(N,M);
         doGemm(order, trans_A, trans_B,
                M, N, K,
                alpha, otherA->getRawDataAccess(), lda,
@@ -538,6 +543,10 @@ namespace AprilMath {
         else {
           if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
         }
+        // when ld?==1 the matrix is a row or col vector, we need avoid CBLAS
+        // error limits
+        if (ldb == 1) ldb = AprilUtils::max(K,N);
+        if (ldc == 1) ldc = AprilUtils::max(N,M);
         doSparseMM<T>(order,
                       otherA->getSparseFormat(),
                       trans_A,
