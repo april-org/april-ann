@@ -21,24 +21,27 @@
  */
 #ifndef TRANSPOSE_H
 #define TRANSPOSE_H
+#include "complex_number.h"
 #include "mathcore.h"
 
 #ifdef USE_CUDA
-namespace CUDA {
-  cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
-                                  int m, int n,
-                                  const float *orig, int orig_inc,
-                                  float *dest, int dest_inc);
+namespace AprilMath {
+  namespace CUDA {
+    cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
+                                    int m, int n,
+                                    const float *orig, int orig_inc,
+                                    float *dest, int dest_inc);
 
-  cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
-                                  int m, int n,
-                                  const double *orig, int orig_inc,
-                                  double *dest, int dest_inc);
+    cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
+                                    int m, int n,
+                                    const double *orig, int orig_inc,
+                                    double *dest, int dest_inc);
 
-  cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
-                                  int m, int n,
-                                  const ComplexF *orig, int orig_inc,
-                                  ComplexF *dest, int dest_inc);
+    cublasStatus_t wrapperTranspose(cublasHandle_t &handle,
+                                    int m, int n,
+                                    const AprilMath::ComplexF *orig, int orig_inc,
+                                    AprilMath::ComplexF *dest, int dest_inc);
+  }
 }
 #endif // USE_CUDA
 
