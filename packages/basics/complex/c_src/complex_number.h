@@ -55,27 +55,40 @@
 #endif
 
 namespace AprilMath {
-
+  
+  /**
+   * @brief A class which declares a complex number.
+   *
+   * This class is intended to be used as template parameter of Basics::Matrix
+   * class, allowing to do algebra operations in complex domain.
+   */
   template<typename T>
   struct Complex {
-    T data[2];
+    T data[2]; //< The complex number is an array where [0]=REAL, [1]=IMAGINARY.
+    /// Static function for instantiation of \c 1+1i complex number.
     __host__ __device__ static Complex<T> one_one() {
       return Complex(static_cast<T>(1.0), static_cast<T>(1.0));
     }
+    /// Static function for instantiation of \c 0+0i complex number.
     __host__ __device__ static Complex<T> zero_zero() {
       return Complex(static_cast<T>(0.0), static_cast<T>(0.0));
     }
+    /// Static function for instantiation of \c 1+0i complex number.
     __host__ __device__ static Complex<T> one_zero() {
       return Complex(static_cast<T>(1.0), static_cast<T>(0.0));
     }
+    /// Static function for instantiation of 0+1i complex number.
     __host__ __device__ static Complex<T> zero_one() {
       return Complex(static_cast<T>(0.0), static_cast<T>(1.0));
     }
+    /// Default constructor, declares \c 0+0i complex number.
     __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
+    /// Construction for \c r+0i complex number, being \c r the argument.
     __host__ __device__ Complex(T r) {
       data[REAL_IDX] = r;
       data[IMG_IDX]  = static_cast<T>(0.0);
     }
+    /// Full construction from real (r) and imaginary (i) arguments.
     __host__ __device__ Complex(T r, T i) {
       data[REAL_IDX] = r;
       data[IMG_IDX]  = i;
@@ -90,10 +103,12 @@ namespace AprilMath {
       this->data[IMG_IDX]  = other.data[IMG_IDX];
       return *this;
     }
+    /// Two complex numbers are equal if their difference module is < 0.0001
     __host__ __device__ bool operator==(const Complex<T> &other) const {
       Complex<T> r(other - *this);
       return (r.abs() < static_cast<T>(0.0001));
     }
+    /// Defined using negation of operatior ==
     __host__ __device__ bool operator!=(const Complex<T> &other) const {
       return !(*this == other);
     }
@@ -154,19 +169,23 @@ namespace AprilMath {
       result.data[IMG_IDX]  = -this->data[IMG_IDX];
       return result;
     }
+    /// Complex numbers are sorted by its modulus.
     __host__ __device__ bool operator<(const Complex<T> &other) const {
       // FIXME: are you sure?
       return abs() < other.abs();
     }
+    /// Complex numbers are sorted by its modulus.
     __host__ __device__ bool operator>(const Complex<T> &other) const {
       // FIXME: are you sure?
       return abs() > other.abs();
     }
+    /// Exponential operation.
     __host__ __device__ Complex<T> expc() const {
       T expa = exp(data[REAL_IDX]);
       return Complex<T>(expa*cos(data[REAL_IDX]),
                         expa*sin(data[IMG_IDX]));
     }
+    /// Conjugate operation, it is done \b IN-PLACE
     __host__ __device__ void conj() {
       data[IMG_IDX] = -data[IMG_IDX];
     }
@@ -176,6 +195,7 @@ namespace AprilMath {
     __host__ __device__ T &img() { return data[IMG_IDX]; }
     __host__ __device__ T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
                                                      data[IMG_IDX]*data[IMG_IDX] ); }
+    /// Returns the square root of the complex number.
     __host__ __device__ T sqrtc() const { return sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
     __host__ __device__ T angle() const {
       T phi;
@@ -187,6 +207,7 @@ namespace AprilMath {
       else phi = NAN;
       return phi;
     }
+    /// Retruns by reference the modulus \c r and angle \c phi.
     __host__ __device__ void polar(T &r, T &phi) const {
       r = abs();
       phi = angle();
@@ -198,11 +219,18 @@ namespace AprilMath {
 
   typedef Complex<float> ComplexF;
   typedef Complex<double> ComplexD;
-
+  
+  /**
+   * The class LuaComplexFNumber is intended to parse complex numbers from const
+   * strings comming from Lua. It uses a simple automaton to perform the parsing
+   * of the string following this regexp: [+-]?N?[+-](Ni)?
+   */
   class LuaComplexFNumber : public Referenced {
   public:
     
     LuaComplexFNumber(const ComplexF &number) : Referenced(), number(number) { }
+    
+    /// Constructor from const string, as a finite state machine.
     LuaComplexFNumber(const char *str) : Referenced() {
       float num;
       char  sign='+'; // initialized to avoid compilation warning
@@ -254,16 +282,41 @@ namespace AprilMath {
         ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
     }
     
+    /// Returns the read complex number by reference.
     ComplexF &getValue() { return number; }
+    /// Returns the read complex number by const reference.
     const ComplexF &getValue() const { return number; }
 
   private:
     ComplexF number;
     
-    // Automaton which interprets a string like this regexp: N?[+-]N?i
-    enum STATES { INITIAL, NUMBER, SIGN, NUMBER_SIGN, NUMBER_NUMBER,
-                  FINAL, ERROR };
-    enum TOKENS { TOKEN_FLOAT, TOKEN_SIGN, TOKEN_I, TOKEN_UNKOWN, TOKEN_END };
+    /// Automaton states (syntactic structure).
+    enum STATES { INITIAL, /// Initial state of the automaton.
+                  NUMBER,  /// A number has been read.
+                  SIGN,    /// A sign has been read.
+                  NUMBER_SIGN, /// A number and after a sign has been read.
+                  NUMBER_NUMBER, /// Two numbers have been read.
+                  FINAL,   /// Parsing finished.
+                  ERROR    /// Unexpected symbol or token error.
+    };
+    /// Automaton tokens (lexical symbols).
+    enum TOKENS { TOKEN_FLOAT,  /// A real number in scientific format.
+                  TOKEN_SIGN,   /// A sign symbol.
+                  TOKEN_I,      /// The i symbol.
+                  TOKEN_UNKOWN, /// Unrecognized token.
+                  TOKEN_END     /// End of the string.
+    };
+    
+    /**
+     * This function receives a const string and returns its token identifier.
+     * Additionally, if the token is a TOKEN_FLOAT, the argument \c num will
+     * be filled with the read number; if the token is a TOKEN_SIGN, the argument
+     * \c sign will be filled with a '+' or '-' symbol.
+     *
+     * @note This function uses AprilUtils::constString::extract_float and
+     * AprilUtils::constString::extract_char methods to read the number,
+     * the sign, or the 'i' symbol.
+     */
     TOKENS getToken(AprilUtils::constString &cs, float &num, char &sign) {
       if (cs.empty()) return TOKEN_END;
       char ch;
@@ -293,6 +346,9 @@ namespace AprilUtils {
   void aprilPrint(const AprilMath::ComplexD &v);
 
   ////////////////////////////////////////////////////////////////////////////
+  
+  // This section allows to push complex numbers from C++ into Lua by calling
+  // LuaTable object methods.
   
   template<> AprilMath::ComplexF LuaTable::
   convertTo<AprilMath::ComplexF>(lua_State *L, int idx);
