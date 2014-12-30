@@ -1,5 +1,6 @@
 -- forces the use of CUDA
-mathcore.set_use_cuda_default(util.is_cuda_available())
+local use_cuda = false -- util.is_cuda_available()
+mathcore.set_use_cuda_default(use_cuda)
 --
 
 local check = utest.check
@@ -19,7 +20,7 @@ T("SparseDotProductTest",
         {w:transpose():clone(),true}
     }) do
       local w,transpose = table.unpack(aux)
-      if not util.is_cuda_available() or transpose then
+      if not use_cuda or transpose then
         local c = ann.components.dot_product{
           input = 3,
           output = 4,
