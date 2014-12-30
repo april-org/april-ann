@@ -8,6 +8,15 @@ function do_test()
 
   T("MathOpTest",
     function()
+      local m = matrix(3,4,5):linspace()
+      local m2 = m:t(1,2)
+      local a = m2:select(1,1)
+      local b = matrix(5,2):linspace()
+      local c = a*b
+      check.eq(c, matrix(3,2,{ 95,   110,
+                               595,  710,
+                               1095, 1310, }))
+
       local a = matrix(2,4,3,{
                          0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2,
                          0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4,
