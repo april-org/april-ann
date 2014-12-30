@@ -464,10 +464,30 @@ namespace ANN {
       return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
     }
 
+    /**
+     * @brief Generates a name.
+     *
+     * The name is generated with the given prefix.
+     *
+     * @note If not prefix or @c prefix=0 is given, a @c "c" will be used by
+     * default.
+     *
+     * @see Method resetIdCounters().
+     */
+    static AprilUtils::string generateName(const char *prefix=0) {
+      char default_prefix[2] = "c";
+      char str_id[MAX_NAME_STR+1];
+      if (prefix == 0) prefix = default_prefix;
+      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
+      AprilUtils::string name = AprilUtils::string(str_id);
+      ++next_name_id;
+      return name;
+    }
+
   private:
     /// A flag which indicates if the ANNComponent has been properly built.
     bool is_built;
-
+    
     /**
      * @brief Generates a default name for the ANNComponent.
      *
@@ -479,12 +499,7 @@ namespace ANN {
      * @see Method resetIdCounters().
      */
     void generateDefaultName(const char *prefix=0) {
-      char default_prefix[2] = "c";
-      char str_id[MAX_NAME_STR+1];
-      if (prefix == 0) prefix = default_prefix;
-      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
-      name = AprilUtils::string(str_id);
-      ++next_name_id;
+      name = generateName(prefix);
     }
     
   protected:

@@ -1,5 +1,14 @@
 matlab = matlab or {}
 
+local function generic_tostring(self)
+  local out = {}
+  for name,data in pairs(self) do
+    local str = data.str and data:str() or ""
+    table.insert(out,"%s : %s %s"%{name,type(data),str})
+  end
+  return table.concat(out, "\n")
+end
+
 -- this table keeps a dictionary of functions which receives an element of a
 -- given class and returns an APRIL-ANN Lua object
 local class_tolua_table = {
@@ -32,36 +41,27 @@ end
 -----------------------------
 local function tomatrix(e)
   local elem,name = e:get_matrix()
-  if elem ~= nil then
-    print("# Loading matrix float element: ", name)
-  else
+  if elem == nil then
     elem,name = e:get_matrix_complex()
-    print("# Loading matrix complex element: ", name)
   end
   return elem,name
 end
 local function tomatrixdouble(e)
   local elem,name = e:get_matrix_double()
-  if elem ~= nil then
-    print("# Loading matrix double element: ", name)
-  else
+  if elem == nil then
     elem,name = e:get_matrix_complex()
-    print("# Loading matrix complex (casted from double) element: ", name)
   end
   return elem,name
 end
 local function tomatrixint32(e)
   local elem,name = e:get_matrix_int32()
-  if elem ~= nil then
-    print("# Loading matrix int32 element: ", name)
-  else
+  if elem == nil then
     error("Not supported complex numbers for integer data types")
   end
   return elem,name
 end
 local function tomatrixchar(e)
   local elem,name = e:get_matrix_char()
-  print("# Loading matrix char element:  ", name)
   return elem,name
 end
 local function tocellarray(e)
@@ -74,15 +74,17 @@ local function tocellarray(e)
   wrapper.raw_get = function(obj, ...)
     return matlab.tolua(cell_array:raw_get(...))
   end
-  print("# Loading cell array element:   ", name, cell_array)
+  wrapper.str = function(obj)
+    return "dims [%s]"%{table.concat(obj:dim(),",")}
+  end
   return wrapper,name
 end
 local function tostructure(e)
   local dictionary,name = e:get_structure()
   for ename,elem in pairs(dictionary) do
-    print("# Loading structure element:  ", name, ename, elem)
     dictionary[ename] = matlab.tolua(elem)
   end
+  setmetatable(dictionary, { __tostring = generic_tostring })
   return dictionary,name
 end
 
@@ -108,43 +110,6 @@ add_wrapper(matlab.classes.cell_array, tocellarray)
 add_wrapper(matlab.classes.structure, tostructure)
 -----------------------------------------------------------------------------
 
-local function process_element(data,name)
-  local out = {}
-  local prefix=""
-  if name and #name > 0 then
-    table.insert(out,
-		 string.format("# name= '%s', type= %s\n", name, type(data)))
-    prefix=name.." "
-  else
-    table.insert(out, string.format("# name= nil, type= %s\n", type(data)))
-  end
-  if type(data) == "table" then
-    if data.size then
-      for i=0,data:size()-1 do
-	table.insert(out,
-		     string.format("# %s[%s]={\n",
-				   prefix,
-				   table.concat(data:compute_coords(i), ",")))
-	table.insert(out,process_element(data:raw_get(i)).."\n")
-	table.insert(out, "# }\n")
-      end
-    else
-      for name,elem in pairs(data) do
-	table.insert(out, string.format("# %s.%s=\n", prefix, name))
-	table.insert(out, process_element(elem).."\n")
-      end
-    end
-  else
-    if type(data) == "matrixChar" then
-      local t = data:to_string_table()
-      table.insert(out, table.concat(t, " "))
-    else
-      table.insert(out, tostring(data))
-    end
-  end
-  return table.concat(out, "")
-end
-
 -------------------
 -- MAIN FUNCTION --
 -------------------
@@ -160,15 +125,6 @@ function matlab.read(path)
     local lua_element,name = matlab.tolua(e)
     elements[name] = lua_element
   end
-  setmetatable(elements,
-	       {
-		 __tostring = function(self)
-		   local out = {}
-		   for name,data in pairs(self) do
-		     table.insert(out,process_element(data,name))
-		   end
-		   return table.concat(out, "")
-		 end
-	       })
+  setmetatable(elements, { __tostring = generic_tostring })
   return elements
 end

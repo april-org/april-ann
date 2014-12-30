@@ -24,6 +24,23 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+namespace AprilUtils {
+  template<> Basics::MatrixChar *LuaTable::
+  convertTo<Basics::MatrixChar *>(lua_State *L, int idx) {
+    return lua_toMatrixChar(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto<Basics::MatrixChar *>(lua_State *L, Basics::MatrixChar *value) {
+    lua_pushMatrixChar(L, value);
+  }
+
+  template<> bool LuaTable::
+  checkType<Basics::MatrixChar *>(lua_State *L, int idx) {
+    return lua_isMatrixChar(L, idx);
+  }
+}
+
 namespace Basics {
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {

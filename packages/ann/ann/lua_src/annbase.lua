@@ -93,6 +93,7 @@ function ann_wrapper_methods:compute_gradients(dict)
 end
 
 function ann_wrapper_methods:build(params)
+  params = params or {}
   local input,output,weights = params.input,params.output,params.weights
   -- TODO: check input/output sizes
   if params.weights then matrix.dict.replace( self.weights, params.weights ) end
@@ -137,6 +138,158 @@ end
 
 function ann_wrapper_methods:get_component(name)
   error("Not implemented in wrapper component")
+end
+
+----------------------------------------------------------------------
+
+local lua_component_methods
+ann.components.lua,lua_component_methods = class("ann.components.lua",
+                                                 ann.components.base)
+
+ann.components.lua.constructor = function(self, name, input, output)
+  self.name = name or ann.generate_name()
+  self.input_size = input
+  self.output_size = output
+end
+
+lua_component_methods.set_input = function(self,tk)
+  self.input_token = tk
+end
+
+lua_component_methods.set_output = function(self,tk)
+  self.output_token = tk
+end
+
+lua_component_methods.set_error_input = function(self,tk)
+  self.error_input_token = tk
+end
+
+lua_component_methods.set_error_output = function(self,tk)
+  self.error_output_token = tk
+end
+
+lua_component_methods.build = function(self,tbl)
+  tbl = tbl or {}
+  self.is_built = true
+  local input_size,output_size
+  if tbl.input and tbl.input ~= 0 then
+    input_size = tbl.input
+  end
+  if tbl.output and tbl.output ~= 0 then
+    output_size = tbl.output
+  end
+  local self_input_size = rawget(self,"input_size")
+  local self_output_size = rawget(self,"output_size")
+  self.input_size = input_size or self_input_size
+  self.output_size = output_size or self_output_size
+  return self,tbl.weights or {},{ [self.name] = self }
+end
+
+lua_component_methods.forward = function(self, input, during_training)
+  assert(rawget(self,"is_built"), "It is needed to call build method")
+  self.input_token = input
+  self.output_token = input
+  return input
+end
+
+lua_component_methods.backprop = function(self, input)
+  assert(rawget(self,"is_built"), "It is needed to call build method")
+  assert(rawget(self,"output_token"), "It is needed to call forward method")
+  self.error_input_token = input
+  self.error_output_token = input
+  return input
+end
+
+lua_component_methods.compute_gradients = function(self, weight_grads)
+  assert(rawget(self,"is_built"), "It is needed to call build method")
+  assert(rawget(self,"output_token"), "It is needed to call forward method")
+  assert(rawget(self,"error_output_token"), "It is needed to call backprop method")
+  return weight_grads or {}
+end
+
+lua_component_methods.reset = function(self, n)
+  self.input_token = nil
+  self.output_token = nil
+  self.error_input_token = nil
+  self.error_output_token = nil
+end
+
+lua_component_methods.get_name = function(self)
+  return self.name
+end
+
+lua_component_methods.get_weights_name = function(self)
+  return nil
+end
+
+lua_component_methods.has_weights_name = function(self)
+  return false
+end
+
+lua_component_methods.get_is_built = function(self)
+  return rawget(self,"is_built") or false
+end
+
+lua_component_methods.debug_info = function(self)
+  error("Not implemented")
+end
+
+lua_component_methods.get_input_size = function(self)
+  return rawget(self,"input_size") or 0
+end
+
+lua_component_methods.get_output_size = function(self)
+  return rawget(self,"output_size") or 0
+end
+
+lua_component_methods.get_input = function(self)
+  return rawget(self,"input_token") or tokens.null()
+end
+
+lua_component_methods.get_output = function(self)
+  return rawget(self,"output_token") or tokens.null()
+end
+
+lua_component_methods.get_error_input = function(self)
+  return rawget(self,"error_input_token") or tokens.null()
+end
+
+lua_component_methods.get_error_output = function(self)
+  return rawget(self,"error_output_token") or tokens.null()
+end
+
+lua_component_methods.precompute_output_size = function(self, tbl)
+  error("Not implemented")
+end
+
+lua_component_methods.clone = function(self)
+  return class.of(self)(self.name)
+end
+
+lua_component_methods.to_lua_string = function(self, format)
+  return "%s(%q)" % {get_object_id(self), self.name}
+end
+
+lua_component_methods.set_use_cuda = function(self, v)
+  self.use_cuda = v
+end
+
+lua_component_methods.get_use_cuda = function(self)
+  return rawget(self,"use_cuda") or false
+end
+
+lua_component_methods.copy_weights = function(self, dict)
+  return dict or {}
+end
+
+lua_component_methods.copy_components = function(self, dict)
+  local dict = dict or {}
+  dict[self.name] = self
+  return dict
+end
+
+lua_component_methods.get_component = function(self, name)
+  if self.name == name then return self end
 end
 
 ----------------------------------------------------------------------
