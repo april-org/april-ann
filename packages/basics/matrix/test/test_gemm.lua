@@ -7,7 +7,11 @@ function do_test()
       local b = matrix(2,2):linspace()
       check.eq(a:t()*b,
                matrix(1,2,{ 1*1 + 2*3, 1*2 + 2*4 }))
+      check.eq(matrix(1,2):gemm{ A=a, B=b, trans_A=true, alpha=1, beta=0 },
+               a:t()*b)
       check.eq(matrix(2,1):t():gemm{ A=a:t(), B=b, alpha=1, beta=0 },
+               a:t()*b )
+      check.eq(matrix(2,1):t():gemm{ A=a, B=b, trans_A=true, alpha=1, beta=0 },
                a:t()*b )
       --
       local t1 = { 1, 2, 3,
