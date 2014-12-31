@@ -64,7 +64,8 @@ namespace AprilMath {
    */
   template<typename T>
   struct Complex {
-    T data[2]; //< The complex number is an array where [0]=REAL, [1]=IMAGINARY.
+    /// The complex number is an array where [0]=REAL, [1]=IMAGINARY.
+    T data[2];
     /// Static function for instantiation of \c 1+1i complex number.
     __host__ __device__ static Complex<T> one_one() {
       return Complex(static_cast<T>(1.0), static_cast<T>(1.0));
@@ -221,17 +222,50 @@ namespace AprilMath {
   typedef Complex<double> ComplexD;
   
   /**
-   * The class LuaComplexFNumber is intended to parse complex numbers from const
-   * strings comming from Lua. It uses a simple automaton to perform the parsing
-   * of the string following this regexp: [+-]?N?[+-](Ni)?
+   * @brief The class LuaComplexFNumber is intended to parse float Complex
+   * numbers ( ComplexF ) from a <tt>const char *</tt> coming from Lua.
+   *
+   * It uses a simple automaton to perform the parsing of the string following
+   * this regexp: \c ([+-]N)?([+-]Ni)?
+   *
+   * @note The automaton in dot format, excluding ERROR state (non expected
+   * tokens achieve always ERROR state):
+   * \dot
+   * digraph ComplexAutomaton {
+   * rankdir=LR;
+   * lambda [shape=none, label=""];
+   * FINAL [shape=doublecircle];
+   * lambda -> INITIAL;
+   * INITIAL -> SIGN [label="TOKEN_SIGN"];
+   * INITIAL -> NUMBER [label="TOKEN_FLOAT"];
+   * INITIAL -> FINAL [label="TOKEN_I"];
+   * SIGN -> NUMBER [label="TOKEN_FLOAT"];
+   * SIGN -> FINAL [label="TOKEN_I"];
+   * NUMBER -> R_SIGN [label="TOKEN_SIGN"];
+   * NUMBER -> FINAL [label="TOKEN_I"];
+   * NUMBER -> FINAL [label="TOKEN_END"];
+   * R_SIGN -> R_NUMBER [label="TOKEN_FLOAT"];
+   * R_SIGN -> FINAL [label="TOKEN_I"];
+   * R_NUMBER -> FINAL [label="TOKEN_I"];
+   * }
+   * \enddot
    */
   class LuaComplexFNumber : public Referenced {
   public:
     
     LuaComplexFNumber(const ComplexF &number) : Referenced(), number(number) { }
     
-    /// Constructor from const string, as a finite state machine.
+    /**
+     * @brief Constructor from <tt>const char *</tt>, implements an automaton
+     * (FSM).
+     *
+     * Constructor from <tt>const char *</tt>, implements an automaton
+     * (FSM).
+     *
+     * @see LuaComplexFNumber class for the automaton dot graph.
+     */
     LuaComplexFNumber(const char *str) : Referenced() {
+#define SET_SIGN(s, n) (n) = ( (s) == '+' ) ? 1.0f : -1.0f
       float num;
       char  sign='+'; // initialized to avoid compilation warning
       AprilUtils::constString cs(str);
@@ -242,36 +276,37 @@ namespace AprilMath {
         switch(state) {
         case INITIAL:
           switch(token) {
+          case TOKEN_SIGN: SET_SIGN(sign, number.real()); state=SIGN; break;
           case TOKEN_FLOAT: number.real()=num; state=NUMBER; break;
           case TOKEN_I: number.real()=0.0f; number.img()=1.0f; state=FINAL; break;
-          case TOKEN_SIGN: number.real()=0.0f; state=SIGN; break;
-          default: state=ERROR;
-          }
-          break;
-        case NUMBER:
-          switch(token) {
-          case TOKEN_FLOAT: number.img()=num; state=NUMBER_NUMBER; break;
-          case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
-          case TOKEN_SIGN: state=NUMBER_SIGN; break;
-          case TOKEN_END: number.img()=0.0f; state=FINAL; break;
           default: state=ERROR;
           }
           break;
         case SIGN:
           switch(token) {
-          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+          case TOKEN_FLOAT: number.real()=number.real()*num; state=NUMBER; break;
+          case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
           default: state=ERROR;
           }
           break;
-        case NUMBER_NUMBER:
+        case NUMBER:
           switch(token) {
+          case TOKEN_SIGN: SET_SIGN(sign, number.img()); state=R_SIGN; break;
+          case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
+          case TOKEN_END: number.img()=0.0f; state=FINAL; break;
+          default: state=ERROR;
+          }
+          break;
+        case R_SIGN:
+          switch(token) {
+          case TOKEN_FLOAT: number.img()=number.img()*num; state=R_NUMBER; break;
           case TOKEN_I: state=FINAL; break;
           default: state=ERROR;
           }
           break;
-        case NUMBER_SIGN:
+        case R_NUMBER:
           switch(token) {
-          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+          case TOKEN_I: state=FINAL; break;
           default: state=ERROR;
           }
           break;
@@ -280,6 +315,7 @@ namespace AprilMath {
       }
       if (state == ERROR || !cs.empty())
         ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
+#undef SET_SIGN
     }
     
     /// Returns the read complex number by reference.
@@ -288,43 +324,46 @@ namespace AprilMath {
     const ComplexF &getValue() const { return number; }
 
   private:
+    /// The parsed number result.
     ComplexF number;
     
     /// Automaton states (syntactic structure).
-    enum STATES { INITIAL, /// Initial state of the automaton.
-                  NUMBER,  /// A number has been read.
-                  SIGN,    /// A sign has been read.
-                  NUMBER_SIGN, /// A number and after a sign has been read.
-                  NUMBER_NUMBER, /// Two numbers have been read.
-                  FINAL,   /// Parsing finished.
-                  ERROR    /// Unexpected symbol or token error.
+    enum STATES { INITIAL,  ///< Initial state of the automaton.
+                  SIGN,     ///< A sign has been read.
+                  NUMBER,   ///< A number has been read.
+                  R_SIGN,   ///< A sign after the real part.
+                  R_NUMBER, ///< A number after the real part (with/without sign).
+                  FINAL,    ///< Parsing finished.
+                  ERROR     ///< Unexpected symbol or token error.
     };
     /// Automaton tokens (lexical symbols).
-    enum TOKENS { TOKEN_FLOAT,  /// A real number in scientific format.
-                  TOKEN_SIGN,   /// A sign symbol.
-                  TOKEN_I,      /// The i symbol.
-                  TOKEN_UNKOWN, /// Unrecognized token.
-                  TOKEN_END     /// End of the string.
+    enum TOKENS { TOKEN_FLOAT,  ///< A real number in scientific format.
+                  TOKEN_SIGN,   ///< A sign symbol.
+                  TOKEN_I,      ///< The i symbol.
+                  TOKEN_UNKOWN, ///< Unrecognized token.
+                  TOKEN_END     ///< End of the string.
     };
     
     /**
-     * This function receives a const string and returns its token identifier.
-     * Additionally, if the token is a TOKEN_FLOAT, the argument \c num will
-     * be filled with the read number; if the token is a TOKEN_SIGN, the argument
-     * \c sign will be filled with a '+' or '-' symbol.
+     * @brief Parses a AprilUtils::constString and returns its token type and
+     * value.
      *
-     * @note This function uses AprilUtils::constString::extract_float and
-     * AprilUtils::constString::extract_char methods to read the number,
-     * the sign, or the 'i' symbol.
+     * This function receives a
+     * AprilUtils::constString and returns its token identifier. Additionally,
+     * if the token is a TOKEN_FLOAT, the argument \c num will be filled with
+     * the read number; if the token is a TOKEN_SIGN, the argument \c sign will
+     * be filled with a '+' or '-' symbol.
+     *
+     * @note This function uses AprilUtils::constString::operator[] and
+     * AprilUtils::constString::extract_float methods to read the char (sign \c
+     * '+'/'-'or \c 'i' symbols), or the float number.
      */
     TOKENS getToken(AprilUtils::constString &cs, float &num, char &sign) {
       if (cs.empty()) return TOKEN_END;
-      char ch;
-      if (cs.extract_float(&num)) return TOKEN_FLOAT;
-      if (cs.extract_char(&ch)) {
-        if (ch == '+' || ch == '-') { sign=ch; return TOKEN_SIGN; }
-        else if (ch == 'i') return TOKEN_I;
-      }
+      char ch = cs[0];
+      if (ch == '+' || ch == '-') { cs.skip(1); sign=ch; return TOKEN_SIGN; }
+      else if (ch == 'i') { cs.skip(1); return TOKEN_I; }
+      else if (cs.extract_float(&num)) return TOKEN_FLOAT;
       return TOKEN_UNKOWN;
     }
     

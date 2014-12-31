@@ -58,6 +58,7 @@ static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
 // }
 
 namespace AprilMath {
+  /// Contains CUDA kernels, helper classes and functions.
   namespace CUDA {
 
     //
