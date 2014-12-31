@@ -64,9 +64,11 @@ namespace AprilMath {
 
           streams.push_back(0);
           current_stream = 0;
+#ifndef NDEBUG
           fprintf(stderr,
                   "# Initialized CUDA, CUBLAS and CUSPARSE for GPU capabilitites "
                   "of version %d.%d\n", properties.major, properties.minor);
+#endif
         }
       }
 

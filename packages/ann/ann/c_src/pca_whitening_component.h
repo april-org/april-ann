@@ -55,6 +55,20 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return dot_product_encoder.getOutput(); }
     virtual Basics::Token *getErrorInput() { return dot_product_encoder.getErrorInput(); }
     virtual Basics::Token *getErrorOutput() { return dot_product_encoder.getErrorOutput(); }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      dot_product_encoder.setInput(tk);
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      dot_product_encoder.setOutput(tk);
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      dot_product_encoder.setErrorInput(tk);
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      dot_product_encoder.setErrorOutput(tk);
+    }
+
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     

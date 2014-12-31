@@ -3,6 +3,11 @@ get_table_from_dotted_string("ann.components", true)
 
 ----------------------------------------------------------------------
 
+class.extend(ann.components.base, "get_is_recurrent",
+             function() return false end)
+
+----------------------------------------------------------------------
+
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
 
@@ -39,6 +44,14 @@ function ann_wrapper_methods:get_is_built()
 end
 
 function ann_wrapper_methods:debug_info()
+end
+
+function ann_wrapper_methods:copy_state(tbl)
+  error("Not implemented")
+end
+
+function ann_wrapper_methods:set_state(tbl)
+  error("Not implemented")
 end
 
 function ann_wrapper_methods:get_input_size()
@@ -146,10 +159,16 @@ local lua_component_methods
 ann.components.lua,lua_component_methods = class("ann.components.lua",
                                                  ann.components.base)
 
-ann.components.lua.constructor = function(self, name, input, output)
-  self.name = name or ann.generate_name()
-  self.input_size = input
-  self.output_size = output
+ann.components.lua.constructor = function(self, tbl)
+  tbl = tbl or {}
+  local tbl = get_table_fields({
+      name = { type_match="string" },
+      input = { type_match="number" },
+      output = { type_match="number" },
+                               }, tbl or {})
+  self.name = tbl.name or ann.generate_name()
+  self.input_size = tbl.input
+  self.output_size = tbl.output
 end
 
 lua_component_methods.set_input = function(self,tk)
@@ -167,6 +186,7 @@ end
 lua_component_methods.set_error_output = function(self,tk)
   self.error_output_token = tk
 end
+
 
 lua_component_methods.build = function(self,tbl)
   tbl = tbl or {}
@@ -234,6 +254,26 @@ lua_component_methods.debug_info = function(self)
   error("Not implemented")
 end
 
+lua_component_methods.copy_state = function(self, tbl)
+  tbl = tbl or {}
+  tbl[self.name] = {
+    input = self:get_input(),
+    output = self:get_output(),
+    error_input = self:get_error_input(),
+    error_output = self:get_error_output(),
+  }
+  return tbl
+end
+
+lua_component_methods.set_state = function(self, tbl)
+  local tbl = april_assert(tbl[self.name], "State %s not found", self.name)
+  self.input = tbl.input
+  self.output = tbl.output
+  self.error_input = tbl.input
+  self.error_output = tbl.output
+  return self
+end
+
 lua_component_methods.get_input_size = function(self)
   return rawget(self,"input_size") or 0
 end
@@ -263,11 +303,16 @@ lua_component_methods.precompute_output_size = function(self, tbl)
 end
 
 lua_component_methods.clone = function(self)
-  return class.of(self)(self.name)
+  return class.of(self){ name=self.name,
+                         input=self:get_input_size(),
+                         output=self:get_output_size() }
 end
 
 lua_component_methods.to_lua_string = function(self, format)
-  return "%s(%q)" % {get_object_id(self), self.name}
+  return "%s{ name=%q, input=%d output=%d }" % {get_object_id(self),
+                                                self.name,
+                                                self:get_input_size(),
+                                                self:get_output_size()}
 end
 
 lua_component_methods.set_use_cuda = function(self, v)

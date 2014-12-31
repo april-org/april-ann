@@ -52,7 +52,32 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return dot_product_decoder.getOutput(); }
     virtual Basics::Token *getErrorInput() { return dot_product_decoder.getErrorInput(); }
     virtual Basics::Token *getErrorOutput() { return PCAWhiteningANNComponent::getErrorOutput(); }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      PCAWhiteningANNComponent::setInput(tk);
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      dot_product_decoder.setOutput(tk);
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      dot_product_decoder.setErrorInput(tk);
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      PCAWhiteningANNComponent::setErrorOutput(tk);
+    }
 
+    // FIXME: Is it needd an implementation of copyState and setState?
+    /*
+      virtual void copyState(AprilUtils::LuaTable &dict) {
+      dot_product->copyState(dict);
+      bias->copyState(dict);
+      }
+      virtual void setState(AprilUtils::LuaTable &dict) {
+      dot_product->setState(dict);
+      bias->setState(dict);
+      }
+    */
+    
 
     virtual ANNComponent *clone();
     

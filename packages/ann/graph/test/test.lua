@@ -78,10 +78,10 @@ T("ANNGraphComponentTest",
     end
 end)
 
-T("SumComponentTest",
+T("AddComponentTest",
   function()
-    local s = ann.graph.sum():clone()
-    check.eq(s:to_lua_string(), "ann.graph.sum(%q)"%{s:get_name()})
+    local s = ann.graph.add():clone()
+    s:to_lua_string()
     --
     s:build{ input=30, output=10 }
     check.eq(s:get_input_size(), 30)
@@ -99,7 +99,7 @@ end)
 T("BindComponentTest",
   function()
     local s = ann.graph.bind():clone()
-    check.eq(s:to_lua_string(), "ann.graph.bind(%q)"%{s:get_name()})
+    s:to_lua_string()
     --
     s:build{ input=30, output=30 }
     check.eq(s:get_input_size(), 30)
@@ -130,6 +130,23 @@ T("IndexComponentTest",
     check.TRUE(class.is_a(out:at(1), tokens.null))
     check.eq(out:at(2), matrix(4,10):fill(5))
     check.TRUE(class.is_a(out:at(3), tokens.null))
+end)
+
+T("CmulComponentTest",
+  function()
+    local s = ann.graph.cmul():clone()
+    s:to_lua_string()
+    --
+    s:build{ input=20, output=10 }
+    check.eq(s:get_input_size(), 20)
+    check.eq(s:get_output_size(), 10)
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):linear(),
+                                               matrix(4,10):linear(), })
+    check.eq(out, matrix(4,10):linear():pow(2))
+    local out = s:backprop(matrix(4,10):linear())
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    for _,m in out:iterate() do check.eq(m, matrix(4,10):linear():pow(2)) end
+    check.errored(function() s:build{ input=20, output=20 } end)
 end)
 
 T("Test",
