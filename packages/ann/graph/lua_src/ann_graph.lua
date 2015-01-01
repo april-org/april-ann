@@ -614,6 +614,21 @@ ann_graph_methods.backprop = function(self, input, time)
   end
 end
 
+-- Forces the backpropagation computation, computing the gradients and returning
+-- input derivatives for all available time steps (maximum of self.backstep time
+-- steps). This method is needed to obtain error deltas at inputs of the graph,
+-- and to use this deltas to train other ANNs.
+ann_graph_methods.bptt_backprop = function(self, ...)
+  assert(not ..., "No arguments are expected")
+  if not rawget(self,"gradients_computed") then
+    ann_graph_backprop(self)
+    ann_graph_compute_gradients(self)
+  end
+  -- return all the error_output at the input of the graph
+  return iterator.range(self.bptt_step):
+  map(function(k) return k,self.bptt_data[k].input.error_output end):table()
+end
+
 -- Computes the gradients, forcing to execute backprop in case it is needed.
 ann_graph_methods.compute_gradients = function(self, weight_grads)
   if not rawget(self,"gradients_computed") then
@@ -1040,16 +1055,4 @@ ann.graph.test = function()
     iterator(pairs(colors)):
     reduce(function(acc,k,v) return acc and ref_colors[k]==v end, true)
   )
-  --
-  utest.check.errored(function()
-      local g = ann.graph()
-      g:connect("input", "output")
-      g:set_bptt_truncation(4)
-  end)
-  utest.check.success(function()
-      local g = ann.graph()
-      g:connect("input", "output")
-      g:build() g:set_bptt_truncation(4)
-      return true
-  end)
 end

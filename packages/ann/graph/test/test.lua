@@ -7,6 +7,39 @@ local T       = utest.test
 
 T("ANNGraphSourceTest", ann.graph.test)
 
+T("ANNGraphTest",
+  function()
+  --
+  utest.check.errored(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:set_bptt_truncation(4)
+  end)
+  utest.check.success(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:build() g:set_bptt_truncation(4)
+      return true
+  end)
+  --
+  local g = ann.graph()
+  local b = ann.graph.bind{ input=2, output=4 }
+  g:delayed("input", b)
+  g:connect("input", b)("output")
+  g:build{ input=2, output=4 }
+  local m1 = matrix(2,2):linspace()
+  local m2 = 2*matrix(2,2):linspace()
+  g:forward(m1)
+  local o = g:forward(m2)
+  utest.check.eq(o, matrix(2,4,{1,2, 2,4,
+                                3,4, 6,8}))
+  g:backprop(matrix(2,4):ones())
+  local r = g:bptt_backprop()
+  utest.check.eq(#r, 2)
+  utest.check.eq(r[1], matrix(2,2):ones())
+  utest.check.eq(r[2], matrix(2,2):ones())
+end)
+
 T("ANNGraphComponentTest",
   function()
     -- nodes
