@@ -204,7 +204,7 @@ ann.graph.constructor =
     self.max_delay = 0  -- maximum delay in the network
     self.bptt_step = 0  -- controls current BPTT step number
     self.bptt_data = {} -- array with ANN state for every BPTT step
-    self:set_bptt_truncation(backstep or 0) -- indicates truncation length
+    self.backstep  = backstep or 1 -- indicates truncation length
     --
     self.nodes = { input = node_constructor() }
     if components and connections then
@@ -377,9 +377,6 @@ ann_graph_methods.build = function(self, tbl)
   -- build the topological sort, which will be stored at self.order
   ann_graph_topsort(self)
   self.recurrent = (self.max_delay > 0)
-  if self.recurrent then
-    if self.backstep == 0 then self:set_bptt_truncation(math.huge) end
-  end
   --
   local nodes = self.nodes
   local input_size = tbl.input or 0
@@ -433,6 +430,8 @@ ann_graph_methods.build = function(self, tbl)
                                 { weights = weights,
                                   input = input_sizes[nodes.input.out_edges[1]],
                                   output = sum_sizes(nodes.output.in_edges, output_sizes) })
+  -- by default recurrent networks has an infinite BPTT truncation
+  if self.recurrent then self:set_bptt_truncation(math.huge) end
   return self,weights,components
 end
 
@@ -457,15 +456,20 @@ ann_graph_methods.forward = function(self, input, during_training)
   end
   local backstep  = self.backstep
   local bptt_step = self.bptt_step
-  -- current time iteration is initialized with default values for input object
-  bptt[bptt_step] = { input = { input = input, output = input } }
+  -- current time iteration result is initialized with default values for input
+  -- object
+  local results = { input = { input = input, output = input } }
   -- This function receives an object and the delay, and returns the output
   -- activation of the object at the corresponding time iteration. In case of
   -- nil activation, a default matrix with zeros will be returned.
   local function retrieve_output(obj, delay)
-    local pos = bptt_step - delay
-    if backstep < math.huge then pos = (pos - 1) % backstep + 1 end
-    local value = ( (bptt[pos] or empty_table)[name_of(obj)] or empty_table).output
+    local pos
+    if delay ~= 0 then
+      pos = bptt_step - delay
+      if backstep < math.huge then pos = (pos - 1) % backstep + 1 end
+    end
+    local tbl = (delay == 0 and results) or bptt[pos] or empty_table
+    local value = (tbl[name_of(obj)] or empty_table).output
     assert(delay > 0 or value) -- sanity check for non-delayed connections
     local sz = (obj == "input" and self:get_output_size()) or obj:get_output_size()
     april_assert(sz > 0,
@@ -479,7 +483,7 @@ ann_graph_methods.forward = function(self, input, during_training)
     local input  = compose(node_all_in_edges_it(node), retrieve_output)
     local output = obj:forward(input, during_training)
     -- copy state of ALL compounds of obj, it can be a complex object
-    bptt[bptt_step] = obj:copy_state(bptt[bptt_step])
+    results = obj:copy_state(results)
   end
   local node   = self.nodes.output
   local output = compose(node_all_in_edges_it(node), retrieve_output)
@@ -487,7 +491,8 @@ ann_graph_methods.forward = function(self, input, during_training)
   ------------------
   -- BPTT section --
   ------------------
-  bptt[bptt_step].output = { input=output, output=output }
+  results.output  = { input=output, output=output }
+  bptt[bptt_step] = results
   ------------------
   return output
 end
@@ -708,7 +713,7 @@ ann_graph_methods.to_lua_string = function(self, format)
     "ann.graph(", "%q"%{self.name} , ",",
     util.to_lua_string(ext_order, format), ",",
     util.to_lua_string(cnns, format), ",",
-    tostring(self.backstep - 1), ")",
+    tostring(self.backstep), ")",
   }
   return table.concat(str)
 end
@@ -749,7 +754,8 @@ ann_graph_methods.get_is_recurrent = function(self)
 end
 
 ann_graph_methods.set_bptt_truncation = function(self, backstep)
-  self.backstep = backstep + 1
+  assert(self:get_is_built(), "Execution of build method is needed before")
+  self.backstep = backstep
   assert(self.backstep > self.max_delay,
          "Unable to set the given BPTT truncation")
 end
@@ -1034,4 +1040,16 @@ ann.graph.test = function()
     iterator(pairs(colors)):
     reduce(function(acc,k,v) return acc and ref_colors[k]==v end, true)
   )
+  --
+  utest.check.errored(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:set_bptt_truncation(4)
+  end)
+  utest.check.success(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:build() g:set_bptt_truncation(4)
+      return true
+  end)
 end
