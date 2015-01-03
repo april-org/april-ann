@@ -26,13 +26,17 @@ local a2   = ann.components.actf.log_logistic()
 local r1      = ann.components.dot_product{ input=1, output=H }
 local rec_add = ann.graph.add{ output=H }
 
+-- auxiliary activation for layer 2
+local a2p  = ann.components.actf.logistic()
+
 -- RNN CONNECTIONS SECTION
 
 -- feed-forward connections
 g:connect('input', l1)( rec_add )( a1 )( l2 )( a2 )( 'output' )
-g:connect(l2, ann.components.actf.logistic())( r1 )
+g:connect(l2, a2p)
+g:connect(r1, rec_add)
 -- recurrent connections
-g:delayed(r1, rec_add)
+g:delayed(a2p, r1)
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
 trainable.supervised_trainer(g):build():

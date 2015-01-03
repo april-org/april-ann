@@ -166,18 +166,35 @@ end
 -- connections, because topological sort uses only non-delayed connections.
 local function ann_graph_topsort(self)
   local recurrent,colors,back_nodes
+  -- compute topological order by using only non delayed connections, starting
+  -- at input node
   self.order, recurrent, colors, back_nodes =
     reverse( topological_sort(self.nodes, "input") )
+  for obj,node in pairs(self.nodes) do
+    -- recompute topological order using non delayed connections from other nodes
+    -- which only have delayed input connections
+    if not colors[obj] and node_fwd_in_edges_it(node):size() == 0 then
+      local order = reverse( topological_sort(self.nodes, obj,
+                                              colors, { }, back_nodes) )
+      -- Because this nodes only have delayed input connections, they should be
+      -- first in the topological order, so current self.order table is appended
+      -- into order table...
+      for i=1,#self.order do table.insert(order, self.order[i]) end
+      -- and use the new order table as self.order
+      self.order = order
+    end
+    -- assert( colors[obj], "Unable to compute topological sort. Check your "..
+    --           "delayed connections, they should be backward edges.")
+  end
   for obj,_ in pairs(self.nodes) do
-    assert( colors[obj], "Unable to compute topological sort. Check your "..
-              "delayed connections, they should be backward edges.")
+    april_assert( colors[obj],
+                  "Unable to compute topological sort, there are unreachable nodes: %s (%s)",
+                  tostring(obj), name_of(obj) )
   end
   assert(not recurrent, "Unable to sort ANN with 0-delay recurrent connections")
-  assert(self.order[1] == "input")
   -- remove 'input' and 'output' strings from topological order table
-  table.remove(self.order, 1)
   for i,v in ipairs(self.order) do
-    if v=='output' then table.remove(self.order, i) break end
+    if v=='output' or v=='input' then table.remove(self.order, i) end
   end
 end
 
@@ -243,6 +260,7 @@ ann_graph_methods.connect =
     },
   } ..
   function(self, src, dst, delay)
+    self.is_built = false
     delay = delay or 0
     assert(delay >= 0, "Delay must be a >= 0")
     assert(class.is_a(dst, ann.components.base) or dst == "output",
@@ -375,7 +393,7 @@ ann_graph_methods.build = function(self, tbl)
          "Connections from 'input' node are needed")
   assert(self.nodes.output, "Connections to 'output' node are needed")
   -- build the topological sort, which will be stored at self.order
-  ann_graph_topsort(self)
+  if not self:get_is_built() then ann_graph_topsort(self) end
   self.recurrent = (self.max_delay > 0)
   --
   local nodes = self.nodes
