@@ -221,7 +221,7 @@ ann.graph.constructor =
     self.max_delay = 0  -- maximum delay in the network
     self.bptt_step = 0  -- controls current BPTT step number
     self.bptt_data = {} -- array with ANN state for every BPTT step
-    self.backstep  = backstep or 1 -- indicates truncation length
+    self.backstep  = backstep or math.huge -- indicates truncation length
     --
     self.nodes = { input = node_constructor() }
     if components and connections then
@@ -465,14 +465,15 @@ ann_graph_methods.forward = function(self, input, during_training)
   ------------------
   -- BPTT section --
   ------------------
+  local backstep = self.backstep
   local bptt = self.bptt_data
   if self:get_is_recurrent() then
     self.bptt_step = self.bptt_step + 1
     if self.bptt_step > self.backstep then self.bptt_step = 1 end
   else
     self.bptt_step = 1
+    backstep = 1
   end
-  local backstep  = self.backstep
   local bptt_step = self.bptt_step
   -- current time iteration result is initialized with default values for input
   -- object
@@ -572,6 +573,7 @@ local function ann_graph_backprop(self)
   backprop_asserts(self)
   local bptt     = self.bptt_data
   local backstep = self.backstep
+  if not self:get_is_recurrent() then backstep = 1 end
   -- BPTT SECTION --
   local function retrieve_state(obj, bptt_step, delay)
     -- local pos   = (backstep + bptt_step - delay - 1) % self.backstep + 1
@@ -788,6 +790,7 @@ end
 
 ann_graph_methods.set_bptt_truncation = function(self, backstep)
   assert(self:get_is_built(), "Execution of build method is needed before")
+  assert(self:get_is_recurrent(), "Only allowed for recurrent ANNs")
   self.backstep = backstep
   assert(self.backstep > self.max_delay,
          "Unable to set the given BPTT truncation")

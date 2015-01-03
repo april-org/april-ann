@@ -15,9 +15,16 @@ T("ANNGraphTest",
       g:connect("input", "output")
       g:set_bptt_truncation(4)
   end)
-  utest.check.success(function()
+  utest.check.errored(function()
       local g = ann.graph()
       g:connect("input", "output")
+      g:build() g:set_bptt_truncation(4)
+  end)
+  utest.check.success(function()
+      local g = ann.graph()
+      local s = ann.graph.add{ input=4, output=2 }
+      g:connect("input", s)( "output" )
+      g:delayed(s, s)
       g:build() g:set_bptt_truncation(4)
       return true
   end)
