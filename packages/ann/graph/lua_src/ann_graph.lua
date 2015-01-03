@@ -170,12 +170,14 @@ local function ann_graph_topsort(self)
   -- at input node
   self.order, recurrent, colors, back_nodes =
     reverse( topological_sort(self.nodes, "input") )
+  assert(not recurrent, "Unable to sort ANN with 0-delay recurrent connections")
   for obj,node in pairs(self.nodes) do
     -- recompute topological order using non delayed connections from other nodes
     -- which only have delayed input connections
     if not colors[obj] and node_fwd_in_edges_it(node):size() == 0 then
-      local order = reverse( topological_sort(self.nodes, obj,
-                                              colors, { }, back_nodes) )
+      local order,recurrent = reverse( topological_sort(self.nodes, obj,
+                                                        colors, { }, back_nodes) )
+      assert(not recurrent, "Unable to sort ANN with 0-delay recurrent connections")
       -- Because this nodes only have delayed input connections, they should be
       -- first in the topological order, so current self.order table is appended
       -- into order table...
@@ -191,7 +193,6 @@ local function ann_graph_topsort(self)
                   "Unable to compute topological sort, there are unreachable nodes: %s (%s)",
                   tostring(obj), name_of(obj) )
   end
-  assert(not recurrent, "Unable to sort ANN with 0-delay recurrent connections")
   -- remove 'input' and 'output' strings from topological order table
   for i,v in ipairs(self.order) do
     if v=='output' or v=='input' then table.remove(self.order, i) end
