@@ -259,34 +259,44 @@ function glob(...)
   return r
 end
 
-function parallel_foreach(num_processes, list_or_number, func,
-                          output_serialization_function)
-  assert(type(list_or_number) == "number" or type(list_or_number) == "table",
-         "Needs a table or a number as 2nd argument")
-  local outputs
-  if output_serialization_function then
-    outputs = iterator(range(1,num_processes)):
-    map(function(idx) return os.tmpname() end):
-    table()
+-- executes in parallel a function, and returns the concatenation of all results
+function parallel_foreach(num_processes, list_number_or_iterator, func)
+  local tt = type(list_number_or_iterator)
+  assert(tt == "number" or tt == "table" or
+           class.is_a(list_number_or_iterator, iterator),
+         "Needs an APRIL-ANN iterator,  table or number as 2nd argument")
+  local data_it
+  -- in any case, convert list_number_or_iterator into an iterator
+  if tt == "number" then
+    data_it = iterator.range(list_number_or_iterator)
+  else
+    data_it = iterator(list_number_or_iterator)
   end
-  local id = util.split_process(num_processes)-1
-  if outputs then
+  if num_processes == 1 then -- special case for only 1 process
+    local out = {}
+    while true do
+      local arg = table.pack(data_it())
+      if arg[1] == nil then break end
+      out[#out + 1] = util.pack( func(table.unpack(arg)) )
+    end
+    return out
+  else -- general case for N processes
+    local outputs = iterator(range(1,num_processes)):
+    map(function(idx) return os.tmpname() end):table()
+    local id = util.split_process(num_processes)-1
     local f = io.open(outputs[id+1], "w")
     fprintf(f, "return {\n")
-    if type(list_or_number) == "table" then
-      for index, value in ipairs(list_or_number) do
-        if (index%num_processes) == id then
-          local ret = func(value,id)
-          fprintf(f,"[%d] = %s,\n",index,
-                  output_serialization_function(ret) or "nil")
-        end
-      end
-    else
-      for index in range(1,list_or_number) do
-        if (index%num_processes) == id then
-          local ret = func(index,id)
-          fprintf(f,"[%d] = %s,\n",index,
-                  output_serialization_function(ret) or "nil")
+    -- traverse all iterator values
+    local index = 0
+    while true do
+      local arg = table.pack(data_it())
+      if arg[1] == nil then break end
+      index = index + 1
+      if (index%num_processes) == id then -- data correspond to current process
+        table.insert(arg, id)
+        local ret = util.pack( func(table.unpack(arg)) )
+        if ret ~= nil then
+          fprintf(f,"[%d] = %s,\n", index, util.to_lua_string(ret, "binary"))
         end
       end
     end
@@ -297,29 +307,12 @@ function parallel_foreach(num_processes, list_or_number, func,
     util.wait()
     -- maps all the outputs to a table
     return iterator(ipairs(outputs)):
-    map(function(index,filename)
+      map(function(index,filename)
           local t = util.deserialize(filename)
           os.remove(filename)
           -- multiple outputs from this filename
           for k,v in pairs(t) do coroutine.yield(k,v) end
-        end):
-    table()
-  else
-    if type(list_or_number) == "table" then
-      for index, value in ipairs(list_or_number) do
-        if (index%num_processes) == id then
-          local ret = func(value,id)
-        end
-      end
-    else
-      for index in range(1,list_or_number) do
-        if (index%num_processes) == id then
-          local ret = func(index,id)
-        end
-      end
-    end
-    if id ~= 0 then os.exit(0) end
-    util.wait()
+      end):table()
   end
 end
 
@@ -843,8 +836,30 @@ end
 function table.tostring(t,format)
   if t.to_lua_string then return t:to_lua_string(format) end
   local out  = {}
-  local keys = iterator(pairs(t)):select(1):table()
+  -- first serialize the array part of the table
+  local j=1
+  while t[j] ~= nil do
+    local v = t[j]
+    local value
+    local tt = luatype(v)
+    if tt == "table" then value = table.tostring(v,format)
+    elseif tt == "string" then value = string.format("%q",v)
+    elseif tt == "userdata" then
+      assert(v.to_lua_string, "Needs to_lua_string method")
+      value = v:to_lua_string(format)
+    elseif tt == "function" then
+      value = util.function_to_lua_string(v,format)
+    else value = tostring(v)
+    end
+    table.insert(out, value)
+    j=j+1
+  end
+  -- extract all keys removing array part
+  local keys = iterator(pairs(t)):select(1):
+  filter(function(key) local k = tonumber(key) return not k or k<=0 or k>=j end):table()
+  -- sort the keys in order to obtain a deterministic result
   table.sort(keys, function(a,b) return tostring(a) < tostring(b) end)
+  -- serialize non array part of the table
   for _,i in ipairs(keys) do
     local v = t[i]
     local key
@@ -974,6 +989,22 @@ end
 
 ----------------------------------------------------------------------------
 
+function util.unpack(t)
+  if type(t) == "table" then
+    return table.unpack(t)
+  else
+    return t
+  end
+end
+
+function util.pack(...)
+  if select('#',...) == 1 then
+    return ...
+  else
+    return table.pack(...)
+  end
+end
+
 function util.function_setupvalues(func, upvalues)
   for i,value in ipairs(upvalues) do
     debug.setupvalue(func, i, value)
@@ -1044,6 +1075,8 @@ function util.to_lua_string(data,format)
     else
       return table.tostring(data,format)
     end
+  elseif tt == "string" then
+    return string.format("%q", data)
   elseif tt == "function" then
     return util.function_to_lua_string(data,format)
   elseif tt == "userdata" then
