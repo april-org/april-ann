@@ -1051,6 +1051,8 @@ function util.clone(data, lookup_table)
     local tt = type(data)
     if tt == "number" or tt == "string" or tt == "thread" or tt == "boolean" then obj = data
     elseif tt == "function" then obj = clone_function(data, lookup_table)
+      -- FIXME: the following elseif condition can end into a loop if the table
+      -- has itself as metatable and clone doesn't exists
     elseif data.clone and type(data.clone) == "function" then obj = data:clone()
     elseif luatype(data) == "userdata" then obj = data
     else
