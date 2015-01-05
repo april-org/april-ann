@@ -12,7 +12,7 @@ local H               = 1 -- number of neurons in hidden layer
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local rnd1   = random(6307)
+local rnd1   = random(7576)
 local rnd2   = random(1234)
 local rnd3   = random(5723)
 local rnd4   = random(4825)
@@ -24,7 +24,7 @@ local noise  = stats.dist.normal(0, 0.01)
 local g    = ann.graph('parity') -- the RNN is a graph component
 -- by default all gates and peepholes are true
 local lstm = ann.graph.blocks.lstm({ input=1, output=H,
-                                     actf="logistic", name="LSTM" })
+                                     actf="softsign", name="LSTM" })
 g:connect( 'input', lstm,
            ann.components.hyperplane{ input=H, output=1, name="l2" },
            ann.components.actf.log_logistic{ name="a2" },
