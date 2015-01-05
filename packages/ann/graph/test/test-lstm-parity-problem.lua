@@ -6,13 +6,13 @@ local MAX_SEQ_SIZE    = 10
 local SEQ_STEP        = 1
 local MAX_EPOCHS      = 1000 -- max epochs for sequence size = 2,MAX_SEQ_SIZE
 local WEIGHT_DECAY    = 0.00001
-local H               = 2 -- number of neurons in hidden layer
+local H               = 1 -- number of neurons in hidden layer
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local rnd1   = random(7576)
+local rnd1   = random(6307)
 local rnd2   = random(1234)
 local rnd3   = random(5723)
 local rnd4   = random(4825)
@@ -21,46 +21,20 @@ local bern05 = stats.dist.bernoulli(0.5)
 local noise  = stats.dist.normal(0, 0.01)
 
 -- RNN COMPONENTS CONSTRUCTION SECTION
-local g    = ann.graph() -- the RNN is a graph component
--- feed-forward components
-local l1   = ann.components.hyperplane{ input=1, output=H }
-local a1   = ann.components.actf.logistic()
-local l2   = ann.components.hyperplane{ input=H, output=1 }
-local a2   = ann.components.actf.log_logistic()
--- gating components
-local gatings_actf     = ann.components.actf.logistic
-local l1_input_gating  = ann.components.hyperplane{ input=H+1, output=H }
-local l1_output_gating = ann.components.hyperplane{ input=H+1, output=H }
-local l1_forget_gating = ann.components.hyperplane{ input=H+1, output=H }
--- junction components
-local l1_input_gate  = ann.graph.cmul{ output=H }
-local l1_output_gate = ann.graph.cmul{ output=H }
-local l1_forget_gate = ann.graph.cmul{ output=H }
--- peephole components
-local input_peephole  = ann.graph.bind{ size=l1_input_gating:get_input_size() }
-local output_peephole = ann.graph.bind{ size=l1_output_gating:get_input_size() }
-local forget_peephole = ann.graph.bind{ size=l1_forget_gating:get_input_size() }
--- recurrent junction component
-local rec_add = ann.graph.add{ output=l1:get_output_size() }
-
--- RNN CONNECTIONS SECTION
-
--- feed-forward connections
-g:connect('input', l1)( l1_input_gate )( rec_add )( a1 )( l1_output_gate )( l2 )( a2 )( 'output' )
--- gate connections
-g:connect('input', input_peephole)( l1_input_gating )( gatings_actf() )( l1_input_gate )
-g:connect('input', output_peephole)( l1_output_gating )( gatings_actf() )( l1_output_gate )
-g:connect('input', forget_peephole)( l1_forget_gating )( gatings_actf() )( l1_forget_gate )( rec_add )
-g:connect(rec_add, output_peephole) -- non delayed
--- recurrent connections
-g:connect(rec_add, input_peephole, 1)
-g:connect(rec_add, forget_peephole, 1)
-g:connect(rec_add, l1_forget_gate, 1)
--- g:delayed(rec_add, rec_add)
+local g    = ann.graph('parity') -- the RNN is a graph component
+-- by default all gates and peepholes are true
+local lstm = ann.graph.blocks.lstm({ input=1, output=H,
+                                     actf="logistic", name="LSTM" })
+g:connect( 'input', lstm,
+           ann.components.hyperplane{ input=H, output=1, name="l2" },
+           ann.components.actf.log_logistic{ name="a2" },
+           'output' )
 
 -- WEIGHTS INITIALIZATION SECTION, USING A TRAINER
 local trainer = trainable.supervised_trainer(g):build{ input=1, output=1 }
 trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
+
+if lstm:get_is_built() then lstm:dot_graph("jaja.dot") end
 
 --[[
 1       instance of ann.graph.bind      c24
@@ -82,15 +56,15 @@ trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd1 }
 17      instance 0x21cd900 of ann.components.actf.log_logistic  c9
 ]]
 
-iterator(ipairs(g.order)):map(function(k,v) return k,v,v:get_name() end):apply(print)
+g:show_nodes()
 
 g:dot_graph("blah.dot")
 
-g:set_bptt_truncation(BACKSTEP)
+if g:get_is_recurrent() then g:set_bptt_truncation(BACKSTEP) end
 
 -- LOSS AND OPTIMIZER SECTION
 local loss    = ann.loss.cross_entropy()
-local opt     = ann.optimizer.sgd()
+local opt     = ann.optimizer.adadelta()
 local weights = g:copy_weights()
 local keys    = iterator(table.keys(weights)):table() table.sort(keys)
 
@@ -102,8 +76,6 @@ local function set_weight_decay(opt)
 end
 
 set_weight_decay(opt)
-opt:set_option("learning_rate", 0.08)
-opt:set_option("momentum", 0.1)
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -153,10 +125,10 @@ local function check_gradients(x, y, weights, bptt_grads, EPSILON, func, ...)
       w:set(i, v)
       local g_bptt = bptt_grads:get(i)
       local g_diff = (l1-l2) / (2*EPSILON)
+      -- print(name, g_diff, g_bptt)
       if g_bptt ~= 0 or g_diff ~= 0 then
 	local err = math.abs(g_diff - g_bptt) / math.max( math.abs(g_diff) + math.abs(g_bptt) )
-        -- print(name, g_diff, g_bptt)
-	assert( err < MAX_ERROR or g_bptt < EPSILON or g_diff < EPSILON, err )
+        assert( err < MAX_ERROR or g_bptt < EPSILON or g_diff < EPSILON, err )
       end
     end
   end
@@ -166,10 +138,12 @@ end
 local function gradient_checking_loop()
   for sz=1,3 do
     for k=1,4 do
+      -- print("SIZE ", sz, "K ", k)
       local x,y = build_input_output_sample(sz, rnd5)
       local y_hat = forward(g, x)
       g:backprop( loss:gradient(y_hat, y) )
       local bptt_grads = g:compute_gradients()
+      local bptt_data = g:get_bptt_state()
       check_gradients(x, y, weights, bptt_grads, EPSILON,
 		      forward, g, x)
     end
@@ -189,6 +163,8 @@ local function train(start, stop, max_seq_size, opt)
 	  loss:accum_loss( loss:compute_loss( o_j, y_j  ) )
 	  g:backprop( loss:gradient(o_j, y_j) )
 	  local grads = g:compute_gradients()
+          local m = matrix.dict.iterator(grads):select(2):
+            map(matrix.op.abs):map(matrix.."max"):select(1):reduce(math.max,0)
 	  return loss:get_accum_loss(),grads,y_j:get(1,1),o_j:get(1,1)
 				      end, weights)
       printf("%5d  %.6f  ::  %.2f  %.2f  %5d :: %.6f %.6f :: %s\n", i, l,
@@ -206,15 +182,17 @@ local function save_activations(g, sz, filename)
   local forget_gate = matrix(H, sz)
   local hidden      = matrix(H, sz)
   local output      = matrix(1, sz)
+  local input_name  = g:get_input_name()
+  local output_name = g:get_output_name()
   for t=1,sz do
     local aux = {':',t}
     local state = g:get_bptt_state(t)
-    input[aux] = state.input.input:t()
-    output[aux] = state.output.output:t()
-    input_gate[aux] = state.c19.output:t()
-    output_gate[aux] = state.c20.output:t()
-    forget_gate[aux] = state.c21.output:t()
-    hidden[aux] = state.c5.output:t()
+    input[aux] = state[input_name].input:t()
+    output[aux] = state[output_name].output:t()
+    input_gate[aux] = state["LSTM::i::gate"].output:t()
+    output_gate[aux] = state["LSTM::o::gate"].output:t()
+    forget_gate[aux] = state["LSTM::f::gate"].output:t()
+    hidden[aux] = state["LSTM::memory"].output:t()
   end
   local r = matrix.join(1, input, input_gate, forget_gate, hidden,
                         output_gate, matrix.op.exp(output))
@@ -229,7 +207,6 @@ end
 if CHECK_GRADIENTS and BACKSTEP == math.huge then gradient_checking_loop() end
 local last = 0
 for s=2,MAX_SEQ_SIZE,SEQ_STEP do
-  if s==7 then opt = set_weight_decay(ann.optimizer.adadelta()) end
   last = train(last+1, last+MAX_EPOCHS, s, opt)
 end
 

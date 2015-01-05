@@ -32,7 +32,7 @@ local a2p  = ann.components.actf.logistic()
 -- RNN CONNECTIONS SECTION
 
 -- feed-forward connections
-g:connect('input', l1)( rec_add )( a1 )( l2 )( a2 )( 'output' )
+g:connect('input', l1, rec_add, a1, l2, a2, 'output' )
 g:connect(l2, a2p)
 g:connect(r1, rec_add)
 -- recurrent connections
@@ -158,11 +158,13 @@ local function save_activations(g, sz, filename)
   local input       = matrix(1, sz)
   local hidden      = matrix(H, sz)
   local output      = matrix(1, sz)
+  local input_name  = g:get_input_name()
+  local output_name = g:get_output_name()
   for t=1,sz do
     local aux = {':',t}
     local state = g:get_bptt_state(t)
-    input[aux] = state.input.input:t()
-    output[aux] = state.output.output:t()
+    input[aux] = state[input_name].input:t()
+    output[aux] = state[output_name].output:t()
     hidden[aux] = state.c5.output:t()
   end
   local r = matrix.join(1, input, matrix.op.adjust_range(hidden, 0, 1),

@@ -23,7 +23,7 @@ T("ANNGraphTest",
   utest.check.success(function()
       local g = ann.graph()
       local s = ann.graph.add{ input=4, output=2 }
-      g:connect("input", s)( "output" )
+      g:connect("input", s, "output" )
       g:delayed(s, s)
       g:build() g:set_bptt_truncation(4)
       return true
@@ -32,7 +32,7 @@ T("ANNGraphTest",
   local g = ann.graph()
   local b = ann.graph.bind{ input=2, output=4 }
   g:delayed("input", b)
-  g:connect("input", b)("output")
+  g:connect("input", b, "output")
   g:build{ input=2, output=4 }
   local m1 = matrix(2,2):linspace()
   local m2 = 2*matrix(2,2):linspace()
@@ -59,13 +59,7 @@ T("ANNGraphComponentTest",
     -- ANN GRAPH
     local nn = ann.graph('nn')
     -- connections
-    nn:connect("input", c_w1)
-    nn:connect(c_w1, c_b1)
-    nn:connect(c_b1, c_a1)
-    nn:connect(c_a1, c_w2)
-    nn:connect(c_w2, c_b2)
-    nn:connect(c_b2, c_a2)
-    nn:connect(c_a2, "output")
+    nn:connect("input", c_w1, c_b1, c_a1, c_w2, c_b2, c_a2, "output")
     -- serialization test
     local nn = nn:clone()
     local tmpname = os.tmpname()
@@ -202,13 +196,9 @@ T("Test",
       push( ann.components.hyperplane{ input=64, output=10 } ):
       push( ann.components.actf.log_softmax() )
     --
-    net:connect('input', s1)
-    net:connect('input', s2)
-    net:connect(s1,      l1)
-    net:connect(s2,      l2)
-    net:connect({l1,l2}, b)
-    net:connect(b,       stack)
-    net:connect(stack,   'output')
+    net:connect('input', s1, l1)
+    net:connect('input', s2, l2)
+    net:connect({l1,l2}, b, stack, 'output')
     net:build{ input=16*16 + 8*8 }
     --
     check.eq(net:get_input_size(), 16*16 + 8*8)
