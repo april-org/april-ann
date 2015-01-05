@@ -183,7 +183,41 @@ T("CmulComponentTest",
     check.errored(function() s:build{ input=20, output=20 } end)
 end)
 
-T("Test",
+T("ElmanTest",
+  function()
+    check.errored(function() ann.graph.blocks.elman() end)
+    check.errored(function() ann.graph.blocks.elman{ input=10 } end)
+    check.errored(function() ann.graph.blocks.elman{ output=10 } end)
+    --
+    local elman = ann.graph.blocks.elman{ input=10, output=20, name="a" }
+    local _,weights,components = elman:build()
+    check.eq(elman:get_input_size(), 10)
+    check.eq(elman:get_output_size(), 20)
+    check.TRUE(weights["a::b"])
+    check.TRUE(weights["a::w"])
+    check.TRUE(weights["a::context::b"])
+    check.TRUE(weights["a::context::w"])
+    check.TRUE(components["a::layer"])
+    check.TRUE(components["a::b"])
+    check.TRUE(components["a::w"])
+    check.TRUE(components["a::actf"])
+    check.TRUE(components["a::context::layer"])
+    check.TRUE(components["a::context::b"])
+    check.TRUE(components["a::context::w"])
+    check.TRUE(components["a::memory"])
+end)
+
+T("LSTMTest",
+  function()
+    check.errored(function() ann.graph.blocks.lstm() end)
+    check.errored(function() ann.graph.blocks.lstm{ input=10 } end)
+    check.errored(function() ann.graph.blocks.lstm{ output=10 } end)
+    --
+    local lstm = ann.graph.blocks.lstm{ input=10, output=20, name="a" }
+    local _,weights,components = lstm:build()
+end)
+
+T("StackTest",
   function()
     local net   = ann.graph()
     local s1    = ann.components.slice{ pos={1}, size={16*16} }

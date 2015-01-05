@@ -1146,7 +1146,7 @@ ann.graph.blocks = {}
 
 -----------------------------------------------------------------------------
 
-ann.graph.blocks.elman =  april_doc{
+ann.graph.blocks.elman = april_doc{
   class = "function",
   summary = "Returns an Elman block implemented using an ann.graph instance",
   params = {
@@ -1167,11 +1167,27 @@ ann.graph.blocks.elman =  april_doc{
     local input   = params.input
     local output  = params.output
     local g       = ann.graph(params.name)
-    local layer   = ann.components.hyperplane{ input=input, output=output }
+    local name    = params.name or g:get_name()
+    local layer   = ann.components.hyperplane{
+      input=input, output=output,
+      bias_weights = "%s::b"%{ name },
+      dot_product_weights = "%s::w"%{ name },
+      name = name .. "::layer",
+      bias_name = "%s::b"%{ name },
+      dot_product_name = "%s::w"%{ name },
+    }
     local actf    = assert(ann.components.actf[params.actf],
-                           "Incorrect actf parameter")()
-    local context = ann.components.hyperplane{ input=output, output=output }
-    local rec_add = ann.graph.add{ input=output*2, output=output }
+                           "Incorrect actf parameter"){ name = "%s::actf"%{name} }
+    local context = ann.components.hyperplane{
+      input=output, output=output,
+      bias_weights = "%s::context::b"%{ name },
+      dot_product_weights = "%s::context::w"%{ name },
+      name = name .. "::context::layer",
+      bias_name = "%s::context::b"%{ name },
+      dot_product_name = "%s::context::w"%{ name },
+    }
+    local rec_add = ann.graph.add{ input=output*2, output=output,
+                                   name = name .. "::memory" }
     g:connect( 'input', layer, rec_add, actf, 'output' )
     g:delayed( actf, context )
     g:connect( context, rec_add )
@@ -1221,8 +1237,12 @@ ann.graph.blocks.lstm = april_doc{
     local g     = g or ann.graph(params.name)
     local name  = params.name or g:get_name()
     local layer = ann.components.hyperplane{
+      input=input, output=output,
+      bias_weights = "%s::b"%{ name },
+      dot_product_weights = "%s::w"%{ name },
       name = name .. "::cell_input",
-      input=input, output=output
+      bias_name = "%s::b"%{ name },
+      dot_product_name = "%s::w"%{ name },
     }
     local actf  = assert(ann.components.actf[params.actf],
                          "Incorrect actf parameter"){ name = name .. "::actf" }
