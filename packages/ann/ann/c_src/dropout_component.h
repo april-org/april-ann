@@ -69,13 +69,18 @@ namespace ANN {
     virtual void copyState(AprilUtils::LuaTable &dict) {
       StochasticANNComponent::copyState(dict);
       AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
-      state.put(MASK_STR, dropout_mask);
+      if (dropout_mask != 0) {
+        state.put(MASK_STR, dropout_mask);
+      }
     }
 
     virtual void setState(AprilUtils::LuaTable &dict) {
       StochasticANNComponent::setState(dict);
       AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
-      AssignRef(dropout_mask, state.get<Basics::MatrixFloat*>(MASK_STR));
+      Basics::MatrixFloat *mask = state.opt<Basics::MatrixFloat*>(MASK_STR, 0);
+      if (mask != 0) {
+        AssignRef(dropout_mask, mask);
+      }
     }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
