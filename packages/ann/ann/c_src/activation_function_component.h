@@ -46,7 +46,7 @@ namespace ANN {
     AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_input_mat;
     AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_output_mat;
   protected:
-    /*
+    /**
      * @brief This method receives two matrices, applies the activation over
      * the input and stores the result into the output matrix.
      *
@@ -56,7 +56,7 @@ namespace ANN {
      */
     virtual void applyActivation(Basics::MatrixFloat *input_units,
 				 Basics::MatrixFloat *output_units) = 0;
-    /*
+    /**
      * @brief This method receives four matrices, two input/output with neuron
      * values before/after activation, and two input/output with
      * incoming/outgoing error deltas.
