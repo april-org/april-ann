@@ -264,7 +264,7 @@ ann_graph_methods.connect =
       "The delay value, by default it is 0 [optional]",
     },
     outputs = {
-      "A function which can be called to concatenate connections in a forward way",
+      "The last component in the path",
     },
   } ..
   function(self, src, ...)
