@@ -72,6 +72,11 @@ local function node_constructor()
 end
 
 -- Connects two objects using the given table of nodes to store the data.
+-- A node has three properties:
+--   - out_edges: a Lua table with a list of nodes
+--   - out_delay_values: a Lua table with the delay of nodes in previous list
+--   - in_edges: idem as out_edges
+--   - in_edges_delay_values: idem out_delay_values
 local function node_connect(nodes, src, dst, delay)
   table.insert(nodes[src].out_edges, dst)
   table.insert(nodes[src].out_delay_values, delay)
