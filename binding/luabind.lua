@@ -326,7 +326,7 @@ for i=3,#arg do
 end
 
 FILENAME = arg[1]
-_,_,FILENAME2 = string.find(FILENAME,"[.]*/([%w_]+)%.[^/]*")
+_,_,FILENAME2 = string.find(FILENAME,"[.]*/([%w_]+)%.[^/]*$")
 FILENAME2 = string.gsub(FILENAME2,"%p", "_")
 
 if FILENAME==arg[2] or FILENAME==arg[3] then
