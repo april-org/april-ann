@@ -46,6 +46,11 @@ namespace AprilMath {
      * generic functions defined at AprilMath::MatrixExt for map or reduce
      * operations using Matrix instances.
      *
+     * This operations have been implemented receiving two Basics::Matrix
+     * objects, the source @c obj and the destination @c dest . In case
+     * @c dest=0 , @c obj will be taken as destination, computing the operation
+     * <b>in-place</b>.
+     *
      * @see AprilMath::MatrixExt
      */
     namespace Operations {
