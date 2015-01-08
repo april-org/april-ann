@@ -34,7 +34,7 @@ namespace ANN {
   namespace Kernels {
     
     void applyHardTanhDerivative(Basics::MatrixFloat *output_errors,
-                                 Basics::MatrixFloat *input_units,
+                                 const Basics::MatrixFloat *input_units,
                                  float inf, float sup) {
       MatrixScalarMap1(input_units,
                        AprilMath::m_curried_clamp_der<float>(inf, sup),
@@ -42,14 +42,14 @@ namespace ANN {
     }
 
     void applyTanh(Basics::MatrixFloat *output,
-                   Basics::MatrixFloat *input) {
+                   const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_antisym_logistic<float>(),
                        output);
     }
     
     void applyTanhDerivative(Basics::MatrixFloat *output_errors,
-                             Basics::MatrixFloat *output_units) {
+                             const Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
                        AprilMath::Functors::m_antisym_logistic_der<float>(),
                        output_errors);
@@ -57,70 +57,70 @@ namespace ANN {
 
     
     void applyLogistic(Basics::MatrixFloat *output,
-                       Basics::MatrixFloat *input) {
+                       const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_logistic<float>(),
                        output);
     }
     
     void applyLogisticDerivative(Basics::MatrixFloat *output_errors,
-                                 Basics::MatrixFloat *output_units) {
+                                 const Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
                        AprilMath::Functors::m_logistic_der<float>(),
                        output_errors);
     }
     
     void applySoftsign(Basics::MatrixFloat *output,
-                       Basics::MatrixFloat *input) {
+                       const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_softsign<float>(),
                        output);
     }
     
     void applySoftsignDerivative(Basics::MatrixFloat *output_errors,
-                                 Basics::MatrixFloat *output_units) {
+                                 const Basics::MatrixFloat *output_units) {
       MatrixScalarMap1(output_units,
                        AprilMath::Functors::m_softsign_der<float>(),
                        output_errors);
     }
 
     void applySoftplus(Basics::MatrixFloat *output,
-                       Basics::MatrixFloat *input) {
+                       const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_softplus<float>(),
                        output);
     }
     
     void applySoftplusDerivative(Basics::MatrixFloat *output_errors,
-                                 Basics::MatrixFloat *input_units) {
+                                 const Basics::MatrixFloat *input_units) {
       MatrixScalarMap1(input_units,
                        AprilMath::Functors::m_softplus_der<float>(),
                        output_errors);
     }
 
     void applyReLU(Basics::MatrixFloat *output,
-                   Basics::MatrixFloat *input) {
+                   const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_relu<float>(),
                        output);
     }
     
     void applyReLUDerivative(Basics::MatrixFloat *output_errors,
-                             Basics::MatrixFloat *input_units) {
+                             const Basics::MatrixFloat *input_units) {
       MatrixScalarMap1(input_units,
                        AprilMath::Functors::m_relu_der<float>(),
                        output_errors);
     }
 
     void applyLogLogistic(Basics::MatrixFloat *output,
-                          Basics::MatrixFloat *input) {
+                          const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,
                        AprilMath::Functors::m_log_logistic<float>(),
                        output);
     }
 
     void applySoftmax(Basics::MatrixFloat *output,
-                      Basics::MatrixFloat *input) {
+                      const Basics::MatrixFloat *input) {
       unsigned int bunch_size = input->getDimSize(0);
       unsigned int size = input->getDimSize(1);
 #ifdef USE_CUDA
@@ -190,7 +190,7 @@ namespace ANN {
     }
     
     void applyLogSoftmax(Basics::MatrixFloat *output,
-                         Basics::MatrixFloat *input) {
+                         const Basics::MatrixFloat *input) {
       unsigned int bunch_size = input->getDimSize(0);
       unsigned int size = input->getDimSize(1);
 #ifdef USE_CUDA
@@ -267,8 +267,8 @@ namespace ANN {
     }
     
     void applySoftmaxDerivative(Basics::MatrixFloat *output_errors_mat,
-                                Basics::MatrixFloat *input_errors_mat,
-                                Basics::MatrixFloat *output_units_mat) {
+                                const Basics::MatrixFloat *input_errors_mat,
+                                const Basics::MatrixFloat *output_units_mat) {
       unsigned int size = output_units_mat->getDimSize(1);
       AprilUtils::SharedPtr<Basics::MatrixFloat> column, sums;
       sums = MatrixScalarReduce2OverDimension
