@@ -58,4 +58,49 @@ namespace ANN {
     buffer.printf("ann.components.actf.logistic{ name='%s' }", name.c_str());
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+
+  SparseLogisticActfANNComponent::SparseLogisticActfANNComponent(const char *name,
+        float beta, float avg_act):LogisticActfANNComponent(name) {
+      beta = beta; avg_act = avg_act; } 
+
+  ANNComponent *SparseLogisticActfANNComponent::clone() {
+    SparseLogisticActfANNComponent *obj = new SparseLogisticActfANNComponent(name.c_str(), beta, avg_act);
+    return obj;
+  }
+
+  char *SparseLogisticActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.sparse_logistic{ name='%s', beta=%d, avg_act=%d  }", name.c_str(), beta, avg_act);
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+ 
+  void SparseLogisticActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+						     MatrixFloat *output_units,
+						     MatrixFloat *input_errors,
+						     MatrixFloat *output_errors) {
+    UNUSED_VARIABLE(input_units);
+    Kernels::applyLogisticDerivative(output_errors, output_units);
+
+    
+    // Computing average activations
+    MatrixFloat *current_avg = matSum(input_units, 1);
+    matScal(current_avg, 1.0f/static_cast<float>(current_avg->getDimSize(1)));
+    
+    // -p/\hat{p} + (1-p)/(1-\hat{p}
+    // -p/\hat{p}
+    MatrixFloat *sparse_errors = current_avg->clone();
+    matScal(sparse_errors, -1.0f/avg_act);
+    // (1-p)/(1-\hat{p})
+    MatrixFloat *aux = current_avg->clone();
+    matComplement(aux);
+    matScal(aux, 1.0f/(1.0f-avg_act));
+    // -p/\hat{p} + (1-p)/(1-\hat{p}
+    matAddition(sparse_errors, aux);
+
+    //MatrixFloat * sparse_errors = matAddition(matScal(current_avg, -1.0f/avg_act), matScal(matComplement(current_avg), 1.0f/(1.0f-avg_act) ) ; 
+
+    matAxpy(output_errors, beta, sparse_errors);
+    matCmul(output_errors, input_errors);
+
+  }
 }

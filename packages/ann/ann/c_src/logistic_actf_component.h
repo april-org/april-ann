@@ -46,6 +46,26 @@ namespace ANN {
 
     virtual char *toLuaString();
   };
+
+  class SparseLogisticActfANNComponent:LogisticActfANNComponent {
+
+    private:
+       float beta;
+       float avg_act;
+    
+    protected:
+    virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
+				     Basics::MatrixFloat *output_units,
+				     Basics::MatrixFloat *input_errors,
+				     Basics::MatrixFloat *output_errors);
+
+    public:
+        SparseLogisticActfANNComponent(const char *name, float beta, float avg_act);
+        virtual ANNComponent *clone(); 
+         //virtual ~SparseLogisticActfANNComponent();
+        virtual char *toLuaString();
+        
+  };
 }
 
 #endif // LOGISTICACTFCOMPONENT_H
