@@ -61,7 +61,7 @@ namespace ANN {
 
   SparseLogisticActfANNComponent::SparseLogisticActfANNComponent(const char *name,
         float beta, float avg_act):LogisticActfANNComponent(name) {
-      beta = beta; avg_act = avg_act; } 
+      this->beta = beta; this->avg_act = avg_act; } 
 
   ANNComponent *SparseLogisticActfANNComponent::clone() {
     SparseLogisticActfANNComponent *obj = new SparseLogisticActfANNComponent(name.c_str(), beta, avg_act);
@@ -70,7 +70,7 @@ namespace ANN {
 
   char *SparseLogisticActfANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.actf.sparse_logistic{ name='%s', beta=%d, avg_act=%d  }", name.c_str(), beta, avg_act);
+    buffer.printf("ann.components.actf.sparse_logistic{ name='%s', beta=%f, rho=%f  }", name.c_str(), this->beta, this->avg_act);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
  

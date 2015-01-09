@@ -47,7 +47,7 @@ namespace ANN {
     virtual char *toLuaString();
   };
 
-  class SparseLogisticActfANNComponent:LogisticActfANNComponent {
+  class SparseLogisticActfANNComponent: public LogisticActfANNComponent {
 
     private:
        float beta;

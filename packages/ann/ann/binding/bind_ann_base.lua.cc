@@ -1379,6 +1379,28 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
+//BIND_LUACLASSNAME SparseLogisticActfANNComponent ann.components.actf.sparse_logistic
+//BIND_CPP_CLASS    SparseLogisticActfANNComponent
+//BIND_SUBCLASS_OF  SparseLogisticActfANNComponent LogisticActfANNComponent
+////BIND_CONSTRUCTOR SparseLogisticActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float beta = 1.0f;
+  float rho = 0.05f;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "beta", "rho", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f); 
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, rho, float, rho, 0.05f); 
+  }
+  obj = new SparseLogisticActfANNComponent(name, beta, rho);
+  LUABIND_RETURN(SparseLogisticActfANNComponent, obj);  
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //              TanhActfANNComponent               //
 /////////////////////////////////////////////////////
