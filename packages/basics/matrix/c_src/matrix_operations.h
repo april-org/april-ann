@@ -509,7 +509,7 @@ namespace AprilMath {
       template <typename T>
       T matDot(const Basics::Matrix<T> *X, const Basics::Matrix<T> *Y);
 
-      /// DOT product Sparse BLAS operation \f$ x \circ Y \f$
+      /// DOT product Sparse BLAS operation \f$ X \circ Y \f$
       template <typename T>
       T matDot(const Basics::Matrix<T> *X, const Basics::SparseMatrix<T> *Y);
 
