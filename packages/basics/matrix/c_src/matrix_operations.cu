@@ -760,20 +760,24 @@ namespace AprilMath {
       }
     
       template <typename T>
-      Matrix<T> *matScal(Matrix<T> *obj, const T value) {
+      Matrix<T> *matScal(Matrix<T> *obj, const T value,
+                         Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
 #ifdef USE_MKL
         // Limit<int>::max() avoids OMP parallel for
-        return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), obj,
+        return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), dest,
                                    AprilMath::Limits<int>::max());
 #else
-        return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), obj);
+        return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), dest);
 #endif
       }
 
       template <typename T>
       SparseMatrix<T> *matScal(SparseMatrix<T> *obj,
-                               const T value) {
-        return SparseMatrixScalarMap1<T,T>(obj, m_curried_mul<T>(value), obj);
+                               const T value,
+                               SparseMatrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return SparseMatrixScalarMap1<T,T>(obj, m_curried_mul<T>(value), dest);
       }
 
       template <typename T>
@@ -1818,7 +1822,8 @@ namespace AprilMath {
                                      const Matrix<float> *);
       template float matDot(const Matrix<float> *, const Matrix<float> *);
       template float matDot(const Matrix<float> *, const SparseMatrix<float> *);
-      template Matrix<float> *matScal(Matrix<float> *, const float);
+      template Matrix<float> *matScal(Matrix<float> *, const float,
+                                      Matrix<float> *);
       template float matNorm2(Matrix<float> *);
       template Matrix<float> *matMin(Matrix<float> *,
                                      int,
@@ -1949,7 +1954,8 @@ namespace AprilMath {
                                       const Matrix<double> *);
       template double matDot(const Matrix<double> *, const Matrix<double> *);
       template double matDot(const Matrix<double> *, const SparseMatrix<double> *);
-      template Matrix<double> *matScal(Matrix<double> *, const double);
+      template Matrix<double> *matScal(Matrix<double> *, const double,
+                                       Matrix<double> *);
       template float matNorm2(Matrix<double> *);
       template Matrix<double> *matMin(Matrix<double> *,
                                       int,
@@ -2054,7 +2060,8 @@ namespace AprilMath {
                                      const Matrix<ComplexF> *);
       template ComplexF matDot(const Matrix<ComplexF> *, const Matrix<ComplexF> *);
       template ComplexF matDot(const Matrix<ComplexF> *, const SparseMatrix<ComplexF> *);
-      template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF);
+      template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF,
+                                         Matrix<ComplexF> *);
       template float matNorm2(Matrix<ComplexF> *);
       template Matrix<ComplexF> *matAddition(const Matrix<ComplexF> *,
                                           const Matrix<ComplexF> *,
@@ -2132,8 +2139,8 @@ namespace AprilMath {
       template SparseMatrix<float> *matOnes(SparseMatrix<float> *);
       template SparseMatrix<float> *matCopy(SparseMatrix<float> *,
                                             const SparseMatrix<float> *);
-      template SparseMatrix<float> *matScal(SparseMatrix<float> *,
-                                            const float );
+      template SparseMatrix<float> *matScal(SparseMatrix<float> *, const float,
+                                            SparseMatrix<float> *);
       template float matNorm2(SparseMatrix<float> *);
       template Matrix<float> *matMin(SparseMatrix<float> *, int ,
                                      Matrix<float> *,
