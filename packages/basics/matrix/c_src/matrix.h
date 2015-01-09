@@ -1,4 +1,4 @@
-/*
+r/*
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
@@ -659,14 +659,14 @@ namespace Basics {
      *
      * @code
      * // A tipical use case for a efficient select use with a matAxpy operation
-     * // Let A a matrix of NxM
-     * // Let B a matrix of Nx1
-     * Matrix<T> *col = 0;
+     * // Let A a Basics::Matrix<float> of NxM
+     * // Let B a Basics::Matrix<float> of Nx1
+     * AprilUtils::SharedPtr< Basics::Matrix<float> > col;
      * for (int i=0; i<A->getDimSize(1); ++i) {
      *   // The first iteration, col=0 and select initialize the col matrix,
      *   // the following iterations the same col matrix will be reused.
-     *   col = A->select(1, i, col);
-     *   matAxpy(col, 1.0, B);
+     *   col = A->select(1, i, col.get());
+     *   matAxpy(col.get(), 1.0, B);
      * }
      * @endcode
      */
