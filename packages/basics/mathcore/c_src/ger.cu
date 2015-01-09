@@ -145,7 +145,11 @@ namespace AprilMath {
     if (use_gpu) {
       cublasStatus_t status;
       cublasHandle_t handle = CUDA::GPUHelper::getHandler();
-      assert(major_type == CblasColMajor);
+      if (major_type != CblasColMajor) {
+        AprilUtils::swap(m, n);
+        AprilUtils::swap(x, y);
+        AprilUtils::swap(x_inc, y_inc);
+      }
       x_mem = x->getGPUForRead() + x_shift;
       y_mem = y->getGPUForRead() + y_shift;
       a_mem = a->getGPUForReadAndWrite() + a_shift;

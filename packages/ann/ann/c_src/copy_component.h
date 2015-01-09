@@ -50,6 +50,11 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+
+    virtual void setInput(Basics::Token *tk) { AssignRef(input, tk->convertTo<Basics::Token*>()); }
+    virtual void setOutput(Basics::Token *tk) { AssignRef(output, tk->convertTo<Basics::TokenBunchVector*>()); }
+    virtual void setErrorInput(Basics::Token *tk) { AssignRef(error_input, tk->convertTo<Basics::TokenBunchVector*>()); }
+    virtual void setErrorOutput(Basics::Token *tk) { AssignRef(error_output, tk->convertTo<Basics::Token*>()); }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     

@@ -19,7 +19,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "april_assert.h"
 #include "mathcore.h"
+#include "smart_ptr.h"
 #include "transpose.h"
 #include "unused_variable.h"
 
@@ -172,7 +174,7 @@ namespace AprilMath {
    ************* CBLAS SECTION ***********
    ***************************************/
 
-  void wrapperCblasGemm(CBLAS_ORDER &major_type,
+  void wrapperCblasGemm(CBLAS_ORDER &major_order,
                         CBLAS_TRANSPOSE a_transpose,
                         CBLAS_TRANSPOSE b_transpose,
                         int m, int n, int k,
@@ -180,14 +182,14 @@ namespace AprilMath {
                         const float *a_mem, unsigned int a_inc,
                         const float *b_mem, unsigned int b_inc,
                         float beta, float *c_mem, unsigned int c_inc) {
-    cblas_sgemm(major_type, a_transpose, b_transpose,
+    cblas_sgemm(major_order, a_transpose, b_transpose,
                 m, n, k,
                 alpha, a_mem, a_inc,
                 b_mem, b_inc,
                 beta, c_mem, c_inc);
   }
 
-  void wrapperCblasGemm(CBLAS_ORDER &major_type,
+  void wrapperCblasGemm(CBLAS_ORDER &major_order,
                         CBLAS_TRANSPOSE a_transpose,
                         CBLAS_TRANSPOSE b_transpose,
                         int m, int n, int k,
@@ -195,14 +197,14 @@ namespace AprilMath {
                         const double *a_mem, unsigned int a_inc,
                         const double *b_mem, unsigned int b_inc,
                         double beta, double *c_mem, unsigned int c_inc) {
-    cblas_dgemm(major_type, a_transpose, b_transpose,
+    cblas_dgemm(major_order, a_transpose, b_transpose,
                 m, n, k,
                 alpha, a_mem, a_inc,
                 b_mem, b_inc,
                 beta, c_mem, c_inc);
   }
 
-  void wrapperCblasGemm(CBLAS_ORDER &major_type,
+  void wrapperCblasGemm(CBLAS_ORDER &major_order,
                         CBLAS_TRANSPOSE a_transpose,
                         CBLAS_TRANSPOSE b_transpose,
                         int m, int n, int k,
@@ -210,7 +212,7 @@ namespace AprilMath {
                         const ComplexF *a_mem, unsigned int a_inc,
                         const ComplexF *b_mem, unsigned int b_inc,
                         ComplexF beta, ComplexF *c_mem, unsigned int c_inc) {
-    cblas_cgemm(major_type, a_transpose, b_transpose,
+    cblas_cgemm(major_order, a_transpose, b_transpose,
                 m, n, k,
                 &alpha, a_mem, a_inc,
                 b_mem, b_inc,
@@ -243,7 +245,7 @@ namespace AprilMath {
    ***************************************/
 
   template <typename T>
-  void doGemm(CBLAS_ORDER major_type,
+  void doGemm(CBLAS_ORDER major_order,
               CBLAS_TRANSPOSE a_transpose,
               CBLAS_TRANSPOSE b_transpose,
               int m,
@@ -265,22 +267,15 @@ namespace AprilMath {
     const T *a_mem, *b_mem;
     T *c_mem;
 #ifndef USE_CUDA
-    UNUSED_VARIABLE(use_gpu);
+   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      AprilUtils::SharedPtr< GPUMirroredMemoryBlock<T> > old_c;
-      int old_c_inc;
-      if (major_type != CblasColMajor) {
+      if (major_order != CblasColMajor) {
         AprilUtils::swap(m,n);
         AprilUtils::swap(a,b);
         AprilUtils::swap(a_inc,b_inc);
-        a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
-        b_transpose = NEGATE_CBLAS_TRANSPOSE(b_transpose);
-        old_c.reset(c);
-        c = new GPUMirroredMemoryBlock<T>(m*n);
-        old_c_inc = c_inc;
-        c_inc = m;
+        AprilUtils::swap(a_transpose, b_transpose);
       }
       cublasStatus_t status;
       cublasHandle_t handle = CUDA::GPUHelper::getHandler();
@@ -290,7 +285,7 @@ namespace AprilMath {
       c_mem = c->getGPUForReadAndWrite() + c_shift;
       cublasOperation_t cublas_a_transpose = CUDA::getCublasOperation(a_transpose);
       cublasOperation_t cublas_b_transpose = CUDA::getCublasOperation(b_transpose);
-
+      
       status = cublasSetStream(handle, CUDA::GPUHelper::getCurrentStream());
       checkCublasError(status);
 
@@ -302,14 +297,6 @@ namespace AprilMath {
                                        &beta, c_mem, c_inc);
       
       checkCublasError(status);
-      
-      if (order != CblasColMajor) {
-        // transpose the result
-        CUDA::wrapperTranspose(handle, m, n,
-                               c->getGPUForRead(), c_inc,
-                               old_c->getGPUForWrite(), old_c_inc);
-        delete c;
-      }
     }
     else {
       //printf("Doing a sgemm with comp=1 & cuda=0\n");
@@ -320,7 +307,7 @@ namespace AprilMath {
       c_mem = c->getPPALForReadAndWrite() + c_shift;
 
       // matrix matrix product: C = \alpha op(A) op(B) + \beta C
-      wrapperCblasGemm(major_type,   // Row or Col Major
+      wrapperCblasGemm(major_order,   // Row or Col Major
                        a_transpose,  // Transpose or not A
                        b_transpose,  // Transpose or not B
                        m,            // num rows of A (before transpose)
@@ -444,7 +431,7 @@ namespace AprilMath {
 #endif
   }
 
-  template void doGemm<float>(CBLAS_ORDER major_type,
+  template void doGemm<float>(CBLAS_ORDER major_order,
                               CBLAS_TRANSPOSE a_transpose,
                               CBLAS_TRANSPOSE b_transpose,
                               int m,
@@ -463,7 +450,7 @@ namespace AprilMath {
                               unsigned int c_shift,
                               bool use_gpu);
 
-  template void doGemm<double>(CBLAS_ORDER major_type,
+  template void doGemm<double>(CBLAS_ORDER major_order,
                                CBLAS_TRANSPOSE a_transpose,
                                CBLAS_TRANSPOSE b_transpose,
                                int m,
@@ -482,7 +469,7 @@ namespace AprilMath {
                                unsigned int c_shift,
                                bool use_gpu);
 
-  template void doGemm<ComplexF>(CBLAS_ORDER major_type,
+  template void doGemm<ComplexF>(CBLAS_ORDER major_order,
                                  CBLAS_TRANSPOSE a_transpose,
                                  CBLAS_TRANSPOSE b_transpose,
                                  int m,

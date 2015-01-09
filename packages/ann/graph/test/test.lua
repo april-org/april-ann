@@ -7,6 +7,46 @@ local T       = utest.test
 
 T("ANNGraphSourceTest", ann.graph.test)
 
+T("ANNGraphTest",
+  function()
+  --
+  utest.check.errored(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:set_bptt_truncation(4)
+  end)
+  utest.check.errored(function()
+      local g = ann.graph()
+      g:connect("input", "output")
+      g:build() g:set_bptt_truncation(4)
+  end)
+  utest.check.success(function()
+      local g = ann.graph()
+      local s = ann.graph.add{ input=4, output=2 }
+      g:connect("input", s, "output" )
+      g:delayed(s, s)
+      g:build() g:set_bptt_truncation(4)
+      return true
+  end)
+  --
+  local g = ann.graph()
+  local b = ann.graph.bind{ input=2, output=4 }
+  g:delayed("input", b)
+  g:connect("input", b, "output")
+  g:build{ input=2, output=4 }
+  local m1 = matrix(2,2):linspace()
+  local m2 = 2*matrix(2,2):linspace()
+  g:forward(m1)
+  local o = g:forward(m2)
+  utest.check.eq(o, matrix(2,4,{1,2, 2,4,
+                                3,4, 6,8}))
+  g:backprop(matrix(2,4):ones())
+  local r = g:bptt_backprop()
+  utest.check.eq(#r, 2)
+  utest.check.eq(r[1], matrix(2,2):ones())
+  utest.check.eq(r[2], matrix(2,2):ones())
+end)
+
 T("ANNGraphComponentTest",
   function()
     -- nodes
@@ -19,13 +59,7 @@ T("ANNGraphComponentTest",
     -- ANN GRAPH
     local nn = ann.graph('nn')
     -- connections
-    nn:connect("input", c_w1)
-    nn:connect(c_w1, c_b1)
-    nn:connect(c_b1, c_a1)
-    nn:connect(c_a1, c_w2)
-    nn:connect(c_w2, c_b2)
-    nn:connect(c_b2, c_a2)
-    nn:connect(c_a2, "output")
+    nn:connect("input", c_w1, c_b1, c_a1, c_w2, c_b2, c_a2, "output")
     -- serialization test
     local nn = nn:clone()
     local tmpname = os.tmpname()
@@ -78,10 +112,10 @@ T("ANNGraphComponentTest",
     end
 end)
 
-T("SumComponentTest",
+T("AddComponentTest",
   function()
-    local s = ann.graph.sum():clone()
-    check.eq(s:to_lua_string(), "ann.graph.sum(%q)"%{s:get_name()})
+    local s = ann.graph.add():clone()
+    s:to_lua_string()
     --
     s:build{ input=30, output=10 }
     check.eq(s:get_input_size(), 30)
@@ -99,7 +133,7 @@ end)
 T("BindComponentTest",
   function()
     local s = ann.graph.bind():clone()
-    check.eq(s:to_lua_string(), "ann.graph.bind(%q)"%{s:get_name()})
+    s:to_lua_string()
     --
     s:build{ input=30, output=30 }
     check.eq(s:get_input_size(), 30)
@@ -132,7 +166,58 @@ T("IndexComponentTest",
     check.TRUE(class.is_a(out:at(3), tokens.null))
 end)
 
-T("Test",
+T("CmulComponentTest",
+  function()
+    local s = ann.graph.cmul():clone()
+    s:to_lua_string()
+    --
+    s:build{ input=20, output=10 }
+    check.eq(s:get_input_size(), 20)
+    check.eq(s:get_output_size(), 10)
+    local out = s:forward(tokens.vector.bunch{ matrix(4,10):linear(),
+                                               matrix(4,10):linear(), })
+    check.eq(out, matrix(4,10):linear():pow(2))
+    local out = s:backprop(matrix(4,10):linear())
+    check.TRUE(class.is_a(out, tokens.vector.bunch))
+    for _,m in out:iterate() do check.eq(m, matrix(4,10):linear():pow(2)) end
+    check.errored(function() s:build{ input=20, output=20 } end)
+end)
+
+T("ElmanTest",
+  function()
+    check.errored(function() ann.graph.blocks.elman() end)
+    check.errored(function() ann.graph.blocks.elman{ input=10 } end)
+    check.errored(function() ann.graph.blocks.elman{ output=10 } end)
+    --
+    local elman = ann.graph.blocks.elman{ input=10, output=20, name="a" }
+    local _,weights,components = elman:build()
+    check.eq(elman:get_input_size(), 10)
+    check.eq(elman:get_output_size(), 20)
+    check.TRUE(weights["a::b"])
+    check.TRUE(weights["a::w"])
+    check.TRUE(weights["a::context::b"])
+    check.TRUE(weights["a::context::w"])
+    check.TRUE(components["a::layer"])
+    check.TRUE(components["a::b"])
+    check.TRUE(components["a::w"])
+    check.TRUE(components["a::actf"])
+    check.TRUE(components["a::context::layer"])
+    check.TRUE(components["a::context::b"])
+    check.TRUE(components["a::context::w"])
+    check.TRUE(components["a::memory"])
+end)
+
+T("LSTMTest",
+  function()
+    check.errored(function() ann.graph.blocks.lstm() end)
+    check.errored(function() ann.graph.blocks.lstm{ input=10 } end)
+    check.errored(function() ann.graph.blocks.lstm{ output=10 } end)
+    --
+    local lstm = ann.graph.blocks.lstm{ input=10, output=20, name="a" }
+    local _,weights,components = lstm:build()
+end)
+
+T("StackTest",
   function()
     local net   = ann.graph()
     local s1    = ann.components.slice{ pos={1}, size={16*16} }
@@ -145,13 +230,9 @@ T("Test",
       push( ann.components.hyperplane{ input=64, output=10 } ):
       push( ann.components.actf.log_softmax() )
     --
-    net:connect('input', s1)
-    net:connect('input', s2)
-    net:connect(s1,      l1)
-    net:connect(s2,      l2)
-    net:connect({l1,l2}, b)
-    net:connect(b,       stack)
-    net:connect(stack,   'output')
+    net:connect('input', s1, l1)
+    net:connect('input', s2, l2)
+    net:connect({l1,l2}, b, stack, 'output')
     net:build{ input=16*16 + 8*8 }
     --
     check.eq(net:get_input_size(), 16*16 + 8*8)

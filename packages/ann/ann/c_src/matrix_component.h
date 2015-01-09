@@ -92,6 +92,20 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    
     /**
      * If a TokenSparseMatrixFloat is given as input, it will be converted to
      * TokenMatrixFloat by calling toDense method of SparseMatrixFloat.

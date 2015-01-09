@@ -54,6 +54,30 @@ namespace ANN {
     virtual Basics::Token *getErrorInput();
     virtual Basics::Token *getErrorOutput();
     
+    virtual void setInput(Basics::Token *tk) {
+      dot_product->setInput(tk);
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      bias->setOutput(tk);
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      bias->setErrorInput(tk);
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      dot_product->setErrorOutput(tk);
+    }
+
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      ANNComponent::copyState(dict);
+      dot_product->copyState(dict);
+      bias->copyState(dict);
+    }
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      ANNComponent::setState(dict);
+      dot_product->setState(dict);
+      bias->setState(dict);
+    }
+    
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
 
     virtual Basics::Token *doBackprop(Basics::Token *input_error);

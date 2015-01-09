@@ -106,7 +106,7 @@ namespace AprilMath {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-
+    
     template<typename T>
     __global__ void axpyLoopKernel(unsigned int N,
                                    T alpha,
@@ -124,13 +124,18 @@ namespace AprilMath {
         unsigned int index_x = matrix_x_pos*x_ld + matrix_y_pos*x_inc;
         unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
         T val = alpha * x_mem[index_x];
-        // This loop is used to synchronize the threads for accessing
-        // the global memory where they write the results. The loop
-        // gets all the values from the threads at the index X in 
-        // the current block, synchronizing the access to Y.
-        for (unsigned int i=0; i<blockDim.x; ++i) {
-          if (i==threadIdx.x) y_mem[index_y] += val;
-          __syncthreads();
+        if (y_ld == 0) {
+          // This loop is used to synchronize the threads for accessing
+          // the global memory where they write the results. The loop
+          // gets all the values from the threads at the index X in 
+          // the current block, synchronizing the access to Y.
+          for (unsigned int i=0; i<blockDim.x; ++i) {
+            if (i==threadIdx.x) y_mem[index_y] += val;
+            __syncthreads();
+          }
+        }
+        else {
+          y_mem[index_y] += val;
         }
       }
     }

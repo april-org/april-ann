@@ -162,7 +162,7 @@ namespace AprilUtils {
       }
       // return T();
     }
-    
+
     /// Pushes into Lua stack the Lua table associated with the object.
     void pushTable(lua_State *L);
     
@@ -205,7 +205,7 @@ namespace AprilUtils {
     bool checkAndGetRef() const;
     
   };
-
+  
   // Basic data types specializations.
   template<> int LuaTable::convertTo<int>(lua_State *L, int idx);
   template<> float LuaTable::convertTo<float>(lua_State *L, int idx);

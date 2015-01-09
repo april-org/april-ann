@@ -63,7 +63,7 @@ void AssignRef(T *&dest, T *ref) {
   if (dest != ref) {
     if (dest != 0) DecRef(dest);
     dest = ref;
-    IncRef(dest);
+    if (dest != 0) IncRef(dest);
   }
 }
 

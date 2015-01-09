@@ -92,10 +92,25 @@ namespace ANN {
                                     unsigned int input_size,
                                     unsigned int output_size);
     virtual ~VirtualSparseMatrixANNComponent();
+    
     virtual Basics::Token *getInput() { return input; }
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk->convertTo<Basics::TokenSparseMatrixFloat*>());
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk->convertTo<Basics::TokenSparseMatrixFloat*>());
+    }
+    
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     virtual Basics::Token *doBackprop(Basics::Token *input_error);
     virtual void   reset(unsigned int it=0);

@@ -111,6 +111,44 @@ namespace ANN {
       if (!is_sparse_input) return error_output;
       else return sparse_error_output;
     }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      switch(tk->getTokenCode()) {
+      case Basics::table_of_token_codes::token_matrix:
+        AssignRef(input, tk->convertTo<Basics::TokenMatrixFloat*>());
+        is_sparse_input = false;
+        break;
+      case Basics::table_of_token_codes::token_sparse_matrix:
+        AssignRef(sparse_input, tk->convertTo<Basics::TokenSparseMatrixFloat*>());
+        is_sparse_input = true;
+        break;
+      default:
+        AssignRef(input, (Basics::TokenMatrixFloat*)0);
+        AssignRef(sparse_input, (Basics::TokenSparseMatrixFloat*)0);
+      }
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      switch(tk->getTokenCode()) {
+      case Basics::table_of_token_codes::token_matrix:
+        AssignRef(error_output, tk->convertTo<Basics::TokenMatrixFloat*>());
+        is_sparse_input = false;
+        break;
+      case Basics::table_of_token_codes::token_sparse_matrix:
+        AssignRef(sparse_error_output,
+                  tk->convertTo<Basics::TokenSparseMatrixFloat*>());
+        is_sparse_input = true;
+        break;
+      default:
+        AssignRef(error_output, (Basics::TokenMatrixFloat*)0);
+        AssignRef(sparse_error_output, (Basics::TokenSparseMatrixFloat*)0);
+      }
+    }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     virtual Basics::Token *doBackprop(Basics::Token *input_error);

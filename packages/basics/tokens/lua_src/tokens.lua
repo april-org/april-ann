@@ -20,3 +20,21 @@ function tokens.table.colmajor2row(tbl, bunch_size)
   end
   return out
 end
+
+---------------------------------------------------------------------------
+
+class.extend(tokens.null, "to_lua_string",
+             function(self)
+               return "tokens.null()"
+end)
+
+class.extend(tokens.vector.bunch, "to_lua_string",
+             function(self, format)
+               local str = { "tokens.vector.bunch{" }
+               for i,v in self:iterate() do
+                 str[#str+1] = util.to_lua_string(v, format)
+                 str[#str+1] = ","
+               end
+               str[#str+1] = "}"
+               return table.concat(str)
+end)

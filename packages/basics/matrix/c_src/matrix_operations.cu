@@ -421,9 +421,11 @@ namespace AprilMath {
                          const Matrix<T> *otherA,
                          const Matrix<T> *otherB,
                          T beta) {
+        int aux_A_stride[2], aux_B_stride[2], aux_C_stride[2];
+        //
         CBLAS_ORDER order = CblasRowMajor;
         if (C == otherA || C == otherB) {
-          ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
+          ERROR_EXIT(128, "GEMM method cannot receive as A or B argument "
                      "the C argument\n");
         }
         if (C->getNumDim() != 2 ||
@@ -437,7 +439,31 @@ namespace AprilMath {
         const int *A_stride = otherA->getStridePtr();
         const int *B_stride = otherB->getStridePtr();
         const int *C_stride = C->getStridePtr();
-        if (C_stride[1] != 1) order = CblasColMajor;
+        const int *A_dim = otherA->getDimPtr();
+        const int *B_dim = otherB->getDimPtr();
+        const int *C_dim = C->getDimPtr();
+        // case of transposed matrix
+        if (C_stride[1] != 1) {
+          order = CblasColMajor;
+        }
+        else {
+          // case of transposed col vector
+          if (C_stride[0] == C_stride[1] && C_dim[1] != 1) {
+            C_stride = aux_C_stride;
+            aux_C_stride[0] = C_dim[1];
+            aux_C_stride[1] = 1;
+          }
+        }
+        if (A_stride[0] == A_stride[1] && A_stride[0] == 1 && A_dim[1] != 1) {
+          A_stride = aux_A_stride;
+          aux_A_stride[0] = A_dim[1];
+          aux_A_stride[1] = 1;
+        }
+        if (B_stride[0] == B_stride[1] && B_stride[0] == 1 && B_dim[1] != 1) {
+          B_stride = aux_B_stride;
+          aux_B_stride[0] = B_dim[1];
+          aux_B_stride[1] = 1;
+        }
         //
         int lda = AprilUtils::max(A_stride[0], A_stride[1]);
         int ldb = AprilUtils::max(B_stride[0], B_stride[1]);
@@ -447,10 +473,6 @@ namespace AprilMath {
             C_stride[0] + C_stride[1] != ldc+1) {
           ERROR_EXIT(128, "Only allowed with contiguous matrices in leading dimension\n");
         }
-        //
-        const int *A_dim = otherA->getDimPtr();
-        const int *B_dim = otherB->getDimPtr();
-        const int *C_dim = C->getDimPtr();
         //
         if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
         if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
@@ -465,13 +487,22 @@ namespace AprilMath {
         int M = C_dim[0], N=C_dim[1];
         int K = A_dim[col_idx_A];
         if (order == CblasRowMajor) {
-          if (A_stride[1] != 1) trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
-          if (B_stride[1] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+          if (A_stride[1] != 1) {
+            trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
+          }
+          if (B_stride[1] != 1) {
+            trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+          }
         }
         else {
-          if (A_stride[0] != 1) trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
-          if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+          if (A_stride[0] != 1) {
+            trans_A = NEGATE_CBLAS_TRANSPOSE(trans_A);
+          }
+          if (B_stride[0] != 1) {
+            trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
+          }
         }
+        //
         doGemm(order, trans_A, trans_B,
                M, N, K,
                alpha, otherA->getRawDataAccess(), lda,
@@ -491,6 +522,8 @@ namespace AprilMath {
                              const SparseMatrix<T> *otherA,
                              const Matrix<T> *otherB,
                              T beta) {
+        int aux_B_stride[2], aux_C_stride[2];
+        //
         CBLAS_ORDER order = CblasRowMajor;
         if (C == otherB) {
           ERROR_EXIT(128, "Sparse GEMM method couldn't receive as A or B argument "
@@ -506,7 +539,26 @@ namespace AprilMath {
         //
         const int *B_stride = otherB->getStridePtr();
         const int *C_stride = C->getStridePtr();
-        if (C_stride[1] != 1) order = CblasColMajor;
+        const int *A_dim = otherA->getDimPtr();
+        const int *B_dim = otherB->getDimPtr();
+        const int *C_dim = C->getDimPtr();
+        // case of transposed matrix
+        if (C_stride[1] != 1) {
+          order = CblasColMajor;
+        }
+        else {
+          // case of transposed col vector
+          if (C_stride[0] == C_stride[1] && C_dim[1] != 1) {
+            C_stride = aux_C_stride;
+            aux_C_stride[0] = C_dim[1];
+            aux_C_stride[1] = 1;
+          }
+        }
+        if (B_stride[0] == B_stride[1] && B_stride[0] == 1 && B_dim[1] != 1) {
+          B_stride = aux_B_stride;
+          aux_B_stride[0] = B_dim[1];
+          aux_B_stride[1] = 1;
+        }
         //
         int ldb = AprilUtils::max(B_stride[0], B_stride[1]);
         int ldc = AprilUtils::max(C_stride[0], C_stride[1]);
@@ -514,10 +566,6 @@ namespace AprilMath {
             C_stride[0] + C_stride[1] != ldc+1) {
           ERROR_EXIT(128, "Only allowed with contiguous matrices in leading dimension\n");
         }
-        //
-        const int *A_dim = otherA->getDimPtr();
-        const int *B_dim = otherB->getDimPtr();
-        const int *C_dim = C->getDimPtr();
         //
         if (trans_A == CblasTrans) AprilUtils::swap(row_idx_A, col_idx_A);
         if (trans_B == CblasTrans) AprilUtils::swap(row_idx_B, col_idx_B);
@@ -538,6 +586,7 @@ namespace AprilMath {
         else {
           if (B_stride[0] != 1) trans_B = NEGATE_CBLAS_TRANSPOSE(trans_B);
         }
+        //
         doSparseMM<T>(order,
                       otherA->getSparseFormat(),
                       trans_A,

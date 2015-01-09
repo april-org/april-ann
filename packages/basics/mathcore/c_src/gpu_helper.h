@@ -35,7 +35,10 @@
 
 namespace AprilMath {
   namespace CUDA {
-
+    
+    /**
+     * @brief A class to deal with CUDA initialization, streams and handlers.
+     */
     class GPUHelper {
       static cublasHandle_t handler;
       static cusparseHandle_t sparse_handler;
@@ -46,6 +49,8 @@ namespace AprilMath {
       static AprilUtils::vector<CUstream> streams;
       static unsigned int current_stream;
     public:
+      
+      /// If not initialized before, this method initializes CUDA.
       static void initHelper() {
         if (!initialized) {
           cublasStatus_t state;	
@@ -64,12 +69,15 @@ namespace AprilMath {
 
           streams.push_back(0);
           current_stream = 0;
+#ifndef NDEBUG
           fprintf(stderr,
                   "# Initialized CUDA, CUBLAS and CUSPARSE for GPU capabilitites "
                   "of version %d.%d\n", properties.major, properties.minor);
+#endif
         }
       }
-
+      
+      /// Destroy a previously initialized CUDA environment.
       static void destroyHandler() {
         destroyStreams();
         if (initialized != true)
@@ -80,26 +88,31 @@ namespace AprilMath {
         initialized = false;
       } 
 
+      /// Returns the cublas handler.
       static cublasHandle_t &getHandler() {
         initHelper();
         return handler;
       }
 
+      /// Returns the cusparse handler.
       static cusparseHandle_t &getSparseHandler() {
         initHelper();
         return sparse_handler;
       }
   
+      /// Returns the CUDA device handler.
       static CUdevice &getCUdevice() {
         initHelper();
         return device;
       }
   
+      /// Returns the maximum number of threads per block in the active device.
       static unsigned int getMaxThreadsPerBlock() {
         initHelper();
         return properties.maxThreadsPerBlock;
       }
   
+      /// Push @c n streams into the collection GPUHelper::streams .
       static void createNStreams(unsigned int n) {
         initHelper();
         cuStreamSynchronize(0);
@@ -110,6 +123,7 @@ namespace AprilMath {
         }
       }
   
+      /// Destroy all the streams in the collection GPUHelper::streams .
       static void destroyStreams() {
         initHelper();
         for (unsigned int i=streams.size(); i>1; --i) {
@@ -120,12 +134,14 @@ namespace AprilMath {
         current_stream = 0;
         april_assert(streams.size() == 1);
       }
-  
+      
+      /// Changes current stream number.
       static void setCurrentStream(unsigned int i) {
         april_assert(i < streams.size());
         current_stream = i;
       }
   
+      /// Returns current stream handler.
       static CUstream getCurrentStream() {
         initHelper();
         return streams[current_stream];

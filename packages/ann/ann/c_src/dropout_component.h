@@ -25,6 +25,8 @@
 #include "token_matrix.h"
 #include "stochastic_component.h"
 
+#define MASK_STR "mask"
+
 namespace ANN {
   
   /// This component adds to the input matrix mask noise, using a given random
@@ -50,6 +52,36 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+    
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk);
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk);
+    }
+    
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      StochasticANNComponent::copyState(dict);
+      AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
+      if (dropout_mask != 0) {
+        state.put(MASK_STR, dropout_mask);
+      }
+    }
+
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      StochasticANNComponent::setState(dict);
+      AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
+      Basics::MatrixFloat *mask = state.opt<Basics::MatrixFloat*>(MASK_STR, 0);
+      if (mask != 0) {
+        AssignRef(dropout_mask, mask);
+      }
+    }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     
