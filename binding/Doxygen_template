@@ -151,7 +151,7 @@ EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
 IMAGE_PATH             = 
-INPUT_FILTER           = "sed -e 's/\/\/.*SUPERFIXME:\?/\/\/\/ \\todo/'" "sed -e 's/\/\/.*FIXME:\?/\/\/\/ \\todo/'" "sed -e 's/\/\/.*TODO:\?/\/\/\/ \\todo/'"
+INPUT_FILTER           = "sed -e 's/\/\/.*SUPERFIXME:\?/\/\/\/ \\todo/;s/\/\/.*FIXME:\?/\/\/\/ \\todo/;s/\/\/.*TODO:\?/\/\/\/ \\todo/'"
 FILTER_PATTERNS        = 
 FILTER_SOURCE_FILES    = NO
 
@@ -218,7 +218,7 @@ LATEX_CMD_NAME         = latex
 MAKEINDEX_CMD_NAME     = makeindex
 COMPACT_LATEX          = NO
 PAPER_TYPE             = a4wide
-EXTRA_PACKAGES         = 
+EXTRA_PACKAGES         = amsmath amsfonts
 LATEX_HEADER           = 
 PDF_HYPERLINKS         = NO
 USE_PDFLATEX           = NO
