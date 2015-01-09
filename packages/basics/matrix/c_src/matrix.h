@@ -650,11 +650,11 @@ namespace Basics {
      * @brief Returns a matrix of one less dimension, with the elements selected
      * for the given dimension at the given index.
      *
-     * If a matrix is given, it must be created before using previous execution
-     * of select method over the same dimension. If a matrix not allocated by
-     * select is given, the behavior is undefined.
+     * If @c dest matrix is given, it should be created using a previous
+     * execution of select method over the same dimension, otherwise, the
+     * behavior of select is undefined.
      *
-     * @note <b>WARNING</b>, the matrix is not check to be correct, so be
+     * @note <b>WARNING</b>, @c dest matrix correctness is not checked, so, be
      * careful.
      *
      * @code
