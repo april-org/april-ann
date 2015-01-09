@@ -245,7 +245,10 @@ namespace AprilMath {
     if (use_gpu) {
       cublasStatus_t status;
       cublasHandle_t handle = CUDA::GPUHelper::getHandler();
-      assert(major_order == CblasColMajor);
+      if (major_order != CblasColMajor) {
+        a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
+        AprilUtils::swap(m, n);
+      }
       cublasOperation_t cublas_a_transpose = CUDA::getCublasOperation(a_transpose);
       a_mem = a->getGPUForRead() + a_shift;
       x_mem = x->getGPUForRead() + x_shift;

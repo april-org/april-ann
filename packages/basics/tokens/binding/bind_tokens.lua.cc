@@ -40,6 +40,24 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value);
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 
+namespace AprilUtils {
+  template<> AprilUtils::SharedPtr<Basics::Token> LuaTable::
+  convertTo< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx) {
+    return lua_toAuxToken(L, idx);
+  }
+  
+  template<> void LuaTable::
+  pushInto< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L,
+                                                   AprilUtils::SharedPtr<Basics::Token> ptr) {
+    lua_pushAuxToken(L, ptr);
+  }
+
+  template<> bool LuaTable::
+  checkType< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx) {
+    return lua_isAuxToken(L, idx);
+  }
+}
+
 namespace Basics {
   int token_bunch_vector_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -51,8 +69,8 @@ namespace Basics {
       lua_pushnil(L); return 1;
     }
     lua_pushnumber(L, index);
-    Token *token = (*obj)[index-1];
-    lua_pushToken(L, token);
+    AprilUtils::SharedPtr<Token> token( (*obj)[index-1] );
+    lua_pushAuxToken(L, token);
     return 2;
   }
 
@@ -71,19 +89,33 @@ AprilUtils::SharedPtr<Token> lua_toAuxToken(lua_State *L, int n) {
     SparseMatrixFloat *mat = lua_toSparseMatrixFloat(L,n);
     return new TokenSparseMatrixFloat(mat);
   }
+  else if (lua_isnil(L, n)) {
+    return TokenNull::getInstance();
+  }
   return lua_toToken(L,n);
 }
 
 void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
-  switch(value->getTokenCode()) {
-  case Basics::table_of_token_codes::token_matrix:
-    lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
-    break;
-  case Basics::table_of_token_codes::token_sparse_matrix:
-    lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
-    break;
-  default:
-    lua_pushToken(L, value.get());
+  if (value.empty()) {
+    lua_pushTokenNull(L, TokenNull::getInstance());
+  }
+  else {
+    switch(value->getTokenCode()) {
+    case Basics::table_of_token_codes::token_matrix:
+      lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
+      break;
+    case Basics::table_of_token_codes::token_sparse_matrix:
+      lua_pushSparseMatrixFloat(L, ((TokenSparseMatrixFloat*)value.get())->getMatrix());
+      break;
+    case Basics::table_of_token_codes::vector_Tokens:
+      lua_pushTokenBunchVector(L, (TokenBunchVector*)value.get());
+      break;
+    case Basics::table_of_token_codes::token_null:
+      lua_pushTokenNull(L, TokenNull::getInstance());
+      break;
+    default:
+      lua_pushToken(L, value.get());
+    }
   }
 }
 
@@ -150,7 +182,7 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
 
 //BIND_CONSTRUCTOR TokenNull
 {
-  LUABIND_RETURN(TokenNull, new TokenNull());
+  LUABIND_RETURN(TokenNull, TokenNull::getInstance());
 }
 //BIND_END
 
@@ -273,16 +305,16 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
     }
     else {
       int sz;
-      Token **v;
       LUABIND_TABLE_GETN(1, sz);
-      v = new Token*[sz];
-      LUABIND_TABLE_TO_VECTOR(1, Token, v, sz);
       obj = new TokenBunchVector(sz);
       for (unsigned int i=0; i<static_cast<unsigned int>(sz); ++i) {
-	(*obj)[i] = v[i];
-	IncRef(v[i]);
+        lua_pushnumber(L, i+1); // OJO: +1
+        lua_gettable(L, 1);
+        AprilUtils::SharedPtr<Token> aux(lua_toAuxToken(L,-1));
+        lua_pop(L,1);
+	(*obj)[i] = aux.get();
+	IncRef(aux.get());
       }
-      delete[] v;
     }
   }
   else obj = new TokenBunchVector();
@@ -296,8 +328,8 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
   unsigned int pos;
   LUABIND_CHECK_PARAMETER(1, uint);
   LUABIND_GET_PARAMETER(1, uint, pos);
-  Token *token = (*obj)[pos-1];
-  LUABIND_RETURN(Token, token);
+  AprilUtils::SharedPtr<Token> token( (*obj)[pos-1] );
+  LUABIND_RETURN(AuxToken, token);
 }
 //BIND_END
 
@@ -319,10 +351,10 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
 //BIND_METHOD TokenBunchVector push_back
 {
   LUABIND_CHECK_ARGN(==, 1);
-  Token *token;
-  LUABIND_CHECK_PARAMETER(1, Token);
-  LUABIND_GET_PARAMETER(1, Token, token);
-  obj->TokenBunchVector::push_back(token);
+  AprilUtils::SharedPtr<Token> token;
+  LUABIND_CHECK_PARAMETER(1, AuxToken);
+  LUABIND_GET_PARAMETER(1, AuxToken, token);
+  obj->TokenBunchVector::push_back(token.get());
   LUABIND_RETURN(TokenBunchVector, obj);
 }
 //BIND_END

@@ -1,4 +1,4 @@
-mathcore.set_use_cuda_default(util.is_cuda_available())
+-- mathcore.set_use_cuda_default(util.is_cuda_available())
 --
 local check = utest.check
 local T = utest.test

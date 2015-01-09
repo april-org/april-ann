@@ -77,20 +77,20 @@ namespace ANN {
     if (bunch_size == 1) {
       // vector x matrix product
       matGemv(output_mat,
-                transpose_weights,
-                1.0f, weights_mat,
-                input_mat,
-                0.0f);
+              transpose_weights,
+              1.0f, weights_mat,
+              input_mat,
+              0.0f);
     } // if bunch_size==1
     else {
       // matrix x matrix product
       // C = \alpha op(A) op(B) + \beta C
       // input * weights = output
       matGemm(output_mat,
-                CblasNoTrans,
-                NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-                1.0f, input_mat, weights_mat,
-                0.0f);
+              CblasNoTrans,
+              NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+              1.0f, input_mat, weights_mat,
+              0.0f);
     } // if bunch_size==1 ... else
     return output_mat;
   }

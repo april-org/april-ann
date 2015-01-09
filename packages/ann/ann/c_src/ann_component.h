@@ -29,6 +29,7 @@
 #include "mystring.h"
 #include "lua_table.h"
 #include "token_base.h"
+#include "token_null.h"
 #include "matrixFloat.h"
 #include "unused_variable.h"
 #include "vector.h"
@@ -42,6 +43,11 @@
  * ANN::ANNComponent::generateDefaultWeightsName().
  */
 #define MAX_NAME_STR 256
+
+#define INPUT_STR "input"
+#define OUTPUT_STR "output"
+#define ERROR_INPUT_STR "error_input"
+#define ERROR_OUTPUT_STR "error_output"
 
 namespace ANN {
   // forward declaration
@@ -224,7 +230,45 @@ namespace ANN {
     virtual Basics::Token *getErrorInput() { return 0; }
     /// Returns a Basics::Token with the last produced deltas (error output)
     virtual Basics::Token *getErrorOutput() { return 0; }
+    
+    /// Sets a Basics::Token as the last given input.
+    virtual void setInput(Basics::Token *tk) {
+      ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+      UNUSED_VARIABLE(tk);
+    }
+    /// Sets a Basics::Token as the last produced output.
+    virtual void setOutput(Basics::Token *tk) {
+      ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+      UNUSED_VARIABLE(tk);
+    }
+    /// Sets a Basics::Token as the last given deltas (error input)
+    virtual void setErrorInput(Basics::Token *tk) {
+      ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+      UNUSED_VARIABLE(tk);
+    }
+    /// Sets a Basics::Token as the last produced deltas (error output)
+    virtual void setErrorOutput(Basics::Token *tk) {
+      ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+      UNUSED_VARIABLE(tk);
+    }
 
+    /// Sets a Basics::Token as the last given input.
+    virtual void setInput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setInput(tk.get());
+    }
+    /// Sets a Basics::Token as the last produced output.
+    virtual void setOutput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setOutput(tk.get());
+    }
+    /// Sets a Basics::Token as the last given deltas (error input)
+    virtual void setErrorInput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setErrorInput(tk.get());
+    }
+    /// Sets a Basics::Token as the last produced deltas (error output)
+    virtual void setErrorOutput(AprilUtils::SharedPtr<Basics::Token> tk) {
+      setErrorOutput(tk.get());
+    }
+    
     /**
      * @brief Computes the forward step of the ANNComponent.
      *
@@ -405,6 +449,27 @@ namespace ANN {
 		    output_size, _output_size);
     }
     
+    /// Retrieve state of the component (inputs, outputs, deltas, masks, ...)
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      // A Lua table will contain the state.
+      AprilUtils::LuaTable state;
+      state.put(INPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getInput()));
+      state.put(OUTPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getOutput()));
+      state.put(ERROR_INPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getErrorInput()));
+      state.put(ERROR_OUTPUT_STR, AprilUtils::SharedPtr<Basics::Token>(getErrorOutput()));
+      // The state is stored at dict LuaTable argument indexed by the name.
+      dict.put(name, state);
+    }
+
+    /// Modifies the state of the component
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      AprilUtils::LuaTable state(dict.get<AprilUtils::LuaTable>(name));
+      setInput(state.get< AprilUtils::SharedPtr<Basics::Token> >(INPUT_STR));
+      setOutput(state.get< AprilUtils::SharedPtr<Basics::Token> >(OUTPUT_STR));
+      setErrorInput(state.get< AprilUtils::SharedPtr<Basics::Token> >(ERROR_INPUT_STR));
+      setErrorOutput(state.get< AprilUtils::SharedPtr<Basics::Token> >(ERROR_OUTPUT_STR));
+    }
+    
     /// Retrieve matrix weights from ANNComponent's.
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict) {
       UNUSED_VARIABLE(weights_dict);
@@ -464,10 +529,30 @@ namespace ANN {
       return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
     }
 
+    /**
+     * @brief Generates a name.
+     *
+     * The name is generated with the given prefix.
+     *
+     * @note If not prefix or @c prefix=0 is given, a @c "c" will be used by
+     * default.
+     *
+     * @see Method resetIdCounters().
+     */
+    static AprilUtils::string generateName(const char *prefix=0) {
+      char default_prefix[2] = "c";
+      char str_id[MAX_NAME_STR+1];
+      if (prefix == 0) prefix = default_prefix;
+      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
+      AprilUtils::string name = AprilUtils::string(str_id);
+      ++next_name_id;
+      return name;
+    }
+
   private:
     /// A flag which indicates if the ANNComponent has been properly built.
     bool is_built;
-
+    
     /**
      * @brief Generates a default name for the ANNComponent.
      *
@@ -479,12 +564,7 @@ namespace ANN {
      * @see Method resetIdCounters().
      */
     void generateDefaultName(const char *prefix=0) {
-      char default_prefix[2] = "c";
-      char str_id[MAX_NAME_STR+1];
-      if (prefix == 0) prefix = default_prefix;
-      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
-      name = AprilUtils::string(str_id);
-      ++next_name_id;
+      name = generateName(prefix);
     }
     
   protected:

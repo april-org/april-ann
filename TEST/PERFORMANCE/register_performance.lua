@@ -1,4 +1,5 @@
 local script = table.remove(arg,1)
+assert(script, "Needs a performance script as argument")
 local outfilename = string.format("%sresults_%s_v%d.%d_%d.log",
 				  string.get_path(script),
 				  (io.popen("hostname", "r"):read("*l")),

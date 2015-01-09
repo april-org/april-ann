@@ -31,7 +31,7 @@ namespace AprilMath {
     /***************************************
      ************** CUDA SECTION ***********
      ***************************************/
-
+    
     template<typename T>
     cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
                                      unsigned int size,

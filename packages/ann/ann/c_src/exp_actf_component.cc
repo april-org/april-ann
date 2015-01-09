@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,10 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "activation_function_kernels.h"
-#include "cblas_headers.h"
-#include "softsign_actf_component.h"
 #include "unused_variable.h"
+#include "cblas_headers.h"
+#include "exp_actf_component.h"
 
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt::Operations;
@@ -30,32 +29,32 @@ using namespace Basics;
 
 namespace ANN {
 
-  SoftsignActfANNComponent::SoftsignActfANNComponent(const char *name) :
+  ExpActfANNComponent::ExpActfANNComponent(const char *name) :
     ActivationFunctionANNComponent(name) { }
-  SoftsignActfANNComponent::~SoftsignActfANNComponent() { }
+  ExpActfANNComponent::~ExpActfANNComponent() { }
 
-  void SoftsignActfANNComponent::applyActivation(MatrixFloat *input_units,
-						 MatrixFloat *output_units) {
-    Kernels::applySoftsign(output_units, input_units);
+  void ExpActfANNComponent::applyActivation(MatrixFloat *input_units,
+					    MatrixFloat *output_units) {
+    matExp(input_units, output_units);
   }
 
-  void SoftsignActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
-						     MatrixFloat *output_units,
-						     MatrixFloat *input_errors,
-						     MatrixFloat *output_errors) {
+  void ExpActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
+                                                MatrixFloat *output_units,
+                                                MatrixFloat *input_errors,
+                                                MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-    Kernels::applySoftsignDerivative(output_errors, output_units);
+    matCopy(output_errors, output_units);
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *SoftsignActfANNComponent::clone() {
-    SoftsignActfANNComponent *obj = new SoftsignActfANNComponent(name.c_str());
+  ANNComponent *ExpActfANNComponent::clone() {
+    ExpActfANNComponent *obj = new ExpActfANNComponent(name.c_str());
     return obj;
   }
 
-  char *SoftsignActfANNComponent::toLuaString() {
+  char *ExpActfANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.actf.softsign{ name='%s' }", name.c_str());
+    buffer.printf("ann.components.actf.exp{ name='%s' }", name.c_str());
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 

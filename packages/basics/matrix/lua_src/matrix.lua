@@ -437,7 +437,7 @@ matrix.meta_instance.__div = function(op1, op2)
 	   "Expected a matrix and a number or two matrices")
     local new_mat1 = op1:clone()
     local new_mat2 = op2:clone():div(1)
-    return new_mat1:axpy(1.0, new_mat2)
+    return new_mat1:cmul(new_mat2)
   end
 end
 

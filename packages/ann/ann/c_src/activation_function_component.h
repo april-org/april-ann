@@ -29,8 +29,14 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /**
+   * @brief An abstract class that defines the basic interface that
+   * the activation functions should fulfill.
+   *
+   * This class implements all methods of ANNComponent but toLuaString(), and
+   * declare two protected abstract methods: applyActivation() and
+   * multiplyDerivatives().
+   */
   class ActivationFunctionANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
     Basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
@@ -40,8 +46,27 @@ namespace ANN {
     AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_input_mat;
     AprilUtils::SharedPtr<Basics::MatrixFloat> flat_error_output_mat;
   protected:
+    /**
+     * @brief This method receives two matrices, applies the activation over
+     * the input and stores the result into the output matrix.
+     *
+     * @param[in] input_units - It is a matrix with the input.
+     * @param[out] output_units - It is a matrix where the result must be
+     *     stored. Its content should be overwritten.
+     */
     virtual void applyActivation(Basics::MatrixFloat *input_units,
 				 Basics::MatrixFloat *output_units) = 0;
+    /**
+     * @brief This method receives four matrices, two input/output with neuron
+     * values before/after activation, and two input/output with
+     * incoming/outgoing error deltas.
+     *
+     * @param[in] input_units - It is the matrix given as input in applyActivation.
+     * @param[in] output_units - It is the matrix given as output at applyActivation.
+     * @param[in] input_errors - It is another matrix with the incoming error deltas.
+     * @param[out] output_errors -  It is a matrix where the outgoing error deltas
+     * would be stored. Its content should be overwritten.
+     */
     virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
 				     Basics::MatrixFloat *output_units,
 				     Basics::MatrixFloat *input_errors,
@@ -54,6 +79,19 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return output; }
     virtual Basics::Token *getErrorInput() { return error_input; }
     virtual Basics::Token *getErrorOutput() { return error_output; }
+    //
+    virtual void setInput(Basics::Token *tk) {
+      AssignRef(input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setOutput(Basics::Token *tk) {
+      AssignRef(output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorInput(Basics::Token *tk) {
+      AssignRef(error_input, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
+    virtual void setErrorOutput(Basics::Token *tk) {
+      AssignRef(error_output, tk->convertTo<Basics::TokenMatrixFloat*>());
+    }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     

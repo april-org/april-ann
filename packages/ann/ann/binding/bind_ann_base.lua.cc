@@ -128,6 +128,7 @@ namespace AprilUtils {
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "log_actf_component.h"
+#include "exp_actf_component.h"
 #include "linear_actf_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
@@ -367,6 +368,23 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent copy_state
+{
+  LuaTable state;
+  if (lua_istable(L,1)) state = lua_toLuaTable(L,1);
+  obj->copyState(state);
+  LUABIND_RETURN(LuaTable, state);
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent set_state
+{
+  LuaTable state(L,1);
+  obj->setState(state);
+  LUABIND_RETURN(AuxANNComponent, obj);
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent get_input_size
 {
   LUABIND_RETURN(uint, obj->getInputSize());
@@ -382,55 +400,34 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent get_input
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getInput() );
-  if (aux.empty()) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getOutput() );
-  if (aux.empty()) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorInput() );
-  if (aux == 0) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_output
 {
   AprilUtils::SharedPtr<Basics::Token> aux( obj->getErrorOutput() );
-  if (aux == 0) {
-    LUABIND_RETURN(Token, new TokenNull());
-  }
-  else {
-    LUABIND_RETURN(AuxToken, aux);
-  }
+  LUABIND_RETURN(AuxToken, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent precompute_output_size
 {
   vector<unsigned int> input_size, output_size;
-  LUABIND_CHECK_ARGN(<=,1);
   int argn = lua_gettop(L);
   if (argn == 0) input_size.push_back(0);
   else {  
@@ -501,7 +498,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ANNComponent clone
 {
-  LUABIND_RETURN(ANNComponent, obj->clone());
+  LUABIND_RETURN(AuxANNComponent, obj->clone());
 }
 //BIND_END
 
@@ -511,7 +508,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, bool, use_cuda);
   obj->setUseCuda(use_cuda);
-  LUABIND_RETURN(ANNComponent, obj);
+  LUABIND_RETURN(AuxANNComponent, obj);
 }
 //BIND_END
 
@@ -548,6 +545,10 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent copy_weights
 {
   AprilUtils::LuaTable weights_dict(L);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    weights_dict = lua_toLuaTable(L, 1);
+  }
   obj->copyWeights(weights_dict);
   LUABIND_RETURN(LuaTable, weights_dict);
 }
@@ -556,6 +557,10 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_METHOD ANNComponent copy_components
 {
   AprilUtils::LuaTable components_dict(L);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    components_dict = lua_toLuaTable(L, 1);
+  }
   obj->copyComponents(components_dict);
   LUABIND_RETURN(LuaTable, components_dict);
 }
@@ -570,6 +575,15 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   string name_string(name);
   ANNComponent *component = obj->getComponent(name_string);
   LUABIND_RETURN(AuxANNComponent, component);
+}
+//BIND_END
+
+//BIND_FUNCTION ann.generate_name
+{
+  const char *prefix;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, string, prefix, 0);
+  AprilUtils::string name = ANNComponent::generateName(prefix);
+  LUABIND_RETURN(string, name.c_str());
 }
 //BIND_END
 
@@ -1595,6 +1609,29 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   obj = new LogActfANNComponent(name);
   LUABIND_RETURN(LogActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               ExpActfANNComponent               //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ExpActfANNComponent ann.components.actf.exp
+//BIND_CPP_CLASS    ExpActfANNComponent
+//BIND_SUBCLASS_OF  ExpActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR ExpActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new ExpActfANNComponent(name);
+  LUABIND_RETURN(ExpActfANNComponent, obj);  
 }
 //BIND_END
 

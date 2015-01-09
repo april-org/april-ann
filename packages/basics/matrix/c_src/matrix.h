@@ -170,10 +170,10 @@ namespace Basics {
       pos_iterator(const Matrix<T> *m);
       pos_iterator();
       ~pos_iterator();
-      pos_iterator &operator=(const pos_iterator &other);
-      bool      operator==(const pos_iterator &other) const;
-      bool      operator!=(const pos_iterator &other) const;
-      pos_iterator &operator++();
+      inline pos_iterator &operator=(const pos_iterator &other);
+      inline bool          operator==(const pos_iterator &other) const;
+      inline bool          operator!=(const pos_iterator &other) const;
+      inline pos_iterator &operator++();
       int getRawPos() const { return raw_pos; }
       int getIdx() const { return idx; }
       bool isEnd() const { return raw_pos == m->last_raw_pos+1; }
@@ -197,12 +197,12 @@ namespace Basics {
       iterator();
       iterator(const iterator &other);
       ~iterator();
-      iterator &operator=(const iterator &other);
-      bool      operator==(const iterator &other) const;
-      bool      operator!=(const iterator &other) const;
-      iterator &operator++();
-      T &operator*();
-      T *operator->();
+      inline iterator &operator=(const iterator &other);
+      inline bool      operator==(const iterator &other) const;
+      inline bool      operator!=(const iterator &other) const;
+      inline iterator &operator++();
+      inline T &operator*();
+      inline T *operator->();
       int getRawPos() const;
       int getIdx() const { return idx; }
     };
@@ -225,15 +225,15 @@ namespace Basics {
       const_iterator(const iterator &other);
       /*const_iterator(const iterator &other);*/
       ~const_iterator();
-      const_iterator &operator=(const const_iterator &other);
-      const_iterator &operator=(const iterator &other);
-      bool            operator==(const const_iterator &other) const;
-      bool            operator==(const iterator &other) const;
-      bool            operator!=(const const_iterator &other) const;
-      bool            operator!=(const iterator &other) const;
-      const_iterator &operator++();
-      const T &operator*() const;
-      const T *operator->() const;
+      inline const_iterator &operator=(const const_iterator &other);
+      inline const_iterator &operator=(const iterator &other);
+      inline bool            operator==(const const_iterator &other) const;
+      inline bool            operator==(const iterator &other) const;
+      inline bool            operator!=(const const_iterator &other) const;
+      inline bool            operator!=(const iterator &other) const;
+      inline const_iterator &operator++();
+      inline const T &operator*() const;
+      inline const T *operator->() const;
       int getRawPos() const;
       int getIdx() const { return idx; }
     };
@@ -278,18 +278,18 @@ namespace Basics {
                      const int *order_step=0);
       sliding_window(const sliding_window &other);
       ~sliding_window();
-      sliding_window &operator=(const sliding_window &other);
-      sliding_window *next();
+      inline sliding_window &operator=(const sliding_window &other);
+      inline sliding_window *next();
       /// This method returns the matrix at the current window position. If a
       /// matrix is given, it must be created before using previous execution of
       /// getMatrix method. WARNING, the matrix is not check to be correct, so be
       /// careful.
-      Matrix<T> *getMatrix(Matrix<T> *dest=0);
-      bool isEnd() const { return finished; }
-      int numWindows() const;
-      void setAtWindow(int windex);
-      const int *getCoords() const;
-      int getNumDim() const;
+      inline Matrix<T> *getMatrix(Matrix<T> *dest=0);
+      inline bool isEnd() const { return finished; }
+      inline int numWindows() const;
+      inline void setAtWindow(int windex);
+      inline const int *getCoords() const;
+      inline int getNumDim() const;
     };
   
     /********************************************************/
@@ -331,15 +331,15 @@ namespace Basics {
       span_iterator();
       span_iterator(const span_iterator &other);
       ~span_iterator();
-      int getOffset() const;
-      int getStride() const;
-      int getSize() const;
-      span_iterator &operator=(const span_iterator &other);
-      bool operator==(const span_iterator &other) const;
-      bool operator!=(const span_iterator &other) const;
-      span_iterator &operator++();
-      int numberOfIterations() const;
-      void setAtIteration(int idx);
+      inline int getOffset() const;
+      inline int getStride() const;
+      inline int getSize() const;
+      inline span_iterator &operator=(const span_iterator &other);
+      inline bool operator==(const span_iterator &other) const;
+      inline bool operator!=(const span_iterator &other) const;
+      inline span_iterator &operator++();
+      inline int numberOfIterations() const;
+      inline void setAtIteration(int idx);
       const int *getDimOrder() const { return order; }
       const int *getCoordinates() const { return coords; }
     };

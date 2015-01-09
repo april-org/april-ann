@@ -42,6 +42,19 @@ namespace ANN {
     virtual Basics::Token *getOutput() { return component->getOutput(); }
     virtual Basics::Token *getErrorInput() { return component->getErrorInput(); }
     virtual Basics::Token *getErrorOutput() { return component->getErrorOutput(); }
+
+    virtual void setInput(Basics::Token *tk) { component->setInput(tk); }
+    virtual void setOutput(Basics::Token *tk) { component->setOutput(tk); }
+    virtual void setErrorInput(Basics::Token *tk) { component->setErrorInput(tk); }
+    virtual void setErrorOutput(Basics::Token *tk) { component->setErrorOutput(tk); }
+
+    virtual void copyState(AprilUtils::LuaTable &dict) {
+      component->copyState(dict);
+    }
+
+    virtual void setState(AprilUtils::LuaTable &dict) {
+      component->setState(dict);
+    }
     
     virtual Basics::Token *doForward(Basics::Token* input, bool during_training);
     

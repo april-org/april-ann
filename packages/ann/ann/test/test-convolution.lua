@@ -10,7 +10,7 @@ input:select(1,1):copy(m2)
 input:select(1,2):copy(m2)
 thenet,w,_ = ann.components.stack():
 -- converts a flatten image to a matrix of only 3 planes (RGB)
-push(ann.components.rewrap{ size={ 3, m:dim()[2], m:dim()[1] } }):
+push(ann.components.rewrap{ size={ 3, m:dim()[2], m:dim()[3] } }):
 -- a kernel over 3 planes and kx,ky sizes, h output neurons
 push(ann.components.convolution{ kernel={3, kx, ky}, n=h }):
 -- max pooling over every hidden neuron (planes) with 7x7 kernel
@@ -40,4 +40,4 @@ for b=1,output:dim()[1] do
   end
 end
 
-ann.save(thenet, "ww.net")
+-- ann.save(thenet, "ww.net")

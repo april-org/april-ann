@@ -27,11 +27,13 @@
 #include "buffer_list.h"
 #include "constString.h"
 #include "disallow_class_methods.h"
+#include "lua_table.h"
 #include "referenced.h"
+#include "smart_ptr.h"
 #include "table_of_token_codes.h"
 
 namespace Basics {
-
+  
   /// A pure abstract class with interface of Token. A Token represents the
   /// concept of a datatype throught Dataflow architectures (even Artificial
   /// Neural Network components).
@@ -61,21 +63,84 @@ namespace Basics {
 
     /// Templatized method which converts the given Token pointer to a Token child
     /// class
-    template <typename T> T convertTo() {
-      T result = dynamic_cast<T>(this);
-      april_assert(result != 0);
-      return result;
-    }
+    template <typename T> T convertTo();
   
     /// Templatized method which converts the given const Token pointer to a const
     /// Token child class
-    template <typename T> const T convertTo() const {
-      T result = dynamic_cast<const T>(this);
-      april_assert(result != 0);
-      return result;
-    }
+    template <typename T> const T convertTo() const;
   };
 
+  /// TokenNull is a singleton class which represents a void Token.
+  class TokenNull : public Token {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenNull);
+    TokenNull() { }
+    
+  public:
+    
+    static TokenNull *getInstance() {
+      static AprilUtils::SharedPtr<TokenNull> singleton( new TokenNull() );
+      return singleton.get();
+    }
+    virtual ~TokenNull() { }
+    
+    virtual Token *clone() const { return getInstance(); }
+    
+    // FOR DEBUG PURPOSES
+    // TODO:
+    virtual AprilUtils::buffer_list* debugString(const char *prefix,
+                                                 int debugLevel) {
+      UNUSED_VARIABLE(prefix);
+      UNUSED_VARIABLE(debugLevel);
+      return 0;
+    }
+    
+    virtual TokenCode getTokenCode() const {
+      return table_of_token_codes::token_null;
+    }
+    
+    // TODO:
+    virtual AprilUtils::buffer_list* toString() { return 0; }
+    
+    // ALL TOKENS MUST IMPLEMENT THIS STATIC METHOD FOR SERIALIZATION PURPOSES
+    // TODO:
+    // Token *fromString(AprilUtils::constString &cs);
+  };
+  
+  template <typename T>
+  T Token::convertTo() {
+    if (static_cast<Token*>(this) == static_cast<Token*>(TokenNull::getInstance())) {
+      return static_cast<T>(0);
+    }
+    T result = dynamic_cast<T>(this);
+    april_assert(result != 0);
+    return result;
+  }
+  
+  template <typename T>
+  const T Token::convertTo() const {
+    if (static_cast<const Token*>(this) == static_cast<const Token*>(TokenNull::getInstance())) {
+      return static_cast<const T>(0);
+    }
+    const T result = dynamic_cast<const T>(this);
+    april_assert(result != 0);
+    return result;
+  }
+
 } // namespace Basics
+
+////////////////////////////////////////////////////////////////////////////
+
+namespace AprilUtils {
+
+  template<> AprilUtils::SharedPtr<Basics::Token> LuaTable::
+  convertTo< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx);
+  
+  template<> void LuaTable::
+  pushInto< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L,
+                                                   AprilUtils::SharedPtr<Basics::Token> value);
+
+  template<> bool LuaTable::
+  checkType< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx);
+}
 
 #endif // TOKEN_BASE_H

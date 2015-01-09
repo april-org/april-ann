@@ -96,7 +96,7 @@ namespace AprilUtils {
   }
 
   ///////////////////////////////////////////////////////////////////////////
-  
+
   template<>
   int LuaTable::convertTo<int>(lua_State *L, int idx) {
     return lua_tointeger(L, idx);
