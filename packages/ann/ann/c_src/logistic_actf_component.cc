@@ -101,6 +101,8 @@ namespace ANN {
 
     matAxpy(output_errors, beta, sparse_errors);
     matCmul(output_errors, input_errors);
-
+   
+    delete aux;
+    delete sparse_errors;
   }
 }
