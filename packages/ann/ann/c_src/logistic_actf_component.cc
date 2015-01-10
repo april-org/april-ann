@@ -87,15 +87,18 @@ namespace ANN {
      
     // -p/\hat{p} + (1-p)/(1-\hat{p}
     // -p/\hat{p}
-    
+    MatrixFloat *sparse_gradient = input_errors->clone();
+
     MatrixFloat *sparse_errors = current_avg->clone();
-    matScalarAdd(sparse_errors, eps);
+    //matScalarAdd(sparse_errors, eps);
+    matClamp(sparse_errors, eps, 1.0f);
     matDiv(sparse_errors, -avg_act);
     
     // (1-p)/(1-\hat{p})
     MatrixFloat *aux = current_avg->clone();
     matComplement(aux);
-    matScalarAdd(aux, eps);
+    //matScalarAdd(aux, eps);
+    matClamp(sparse_errors, eps, 1.0f);
     matDiv(aux, (1.0f-avg_act));
     matAddition(sparse_errors, aux, sparse_errors);
 
@@ -106,15 +109,16 @@ namespace ANN {
     //Unfold
     MatrixFloat *row = 0; 
     for (int i = 0; i < output_units->getDimSize(0); ++i) {
-      row = output_errors->select(0,i, row);
+      row = sparse_gradient->select(0,i, row);
       matAxpy(row , beta, sparse_errors);
     }
-  
     delete row;
+
     Kernels::applyLogisticDerivative(output_errors, output_units);
-    matCmul(output_errors, input_errors);
+    matCmul(output_errors, sparse_gradient);
    
     delete aux;
     delete sparse_errors;
+    delete sparse_gradient;
   }
 }
