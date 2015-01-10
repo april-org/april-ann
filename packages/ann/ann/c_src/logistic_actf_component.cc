@@ -22,7 +22,7 @@
 #include "cblas_headers.h"
 #include "logistic_actf_component.h"
 #include "unused_variable.h"
-
+#include "cmath_overloads.h"
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
@@ -79,9 +79,8 @@ namespace ANN {
 						     MatrixFloat *input_errors,
 						     MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-    Kernels::applyLogisticDerivative(output_errors, output_units);
 
-    float eps = 1e-6;
+    float eps = AprilMath::Limits<float>::epsilon();
     // Computing average activations
     MatrixFloat *current_avg = matSum(output_units, 0);
     matScal(current_avg, 1.0f/static_cast<float>(output_units->getDimSize(0)));
@@ -100,7 +99,7 @@ namespace ANN {
     matDiv(aux, (1.0f-avg_act));
     matAddition(sparse_errors, aux, sparse_errors);
 
-    matAbs(sparse_errors, sparse_errors);
+    matAbs(sparse_errors);
     // Normalize the error
     matScal(sparse_errors, 1.0f/output_units->getDimSize(0));
 
@@ -112,6 +111,7 @@ namespace ANN {
     }
   
     delete row;
+    Kernels::applyLogisticDerivative(output_errors, output_units);
     matCmul(output_errors, input_errors);
    
     delete aux;
