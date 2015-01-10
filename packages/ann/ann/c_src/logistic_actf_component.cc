@@ -81,25 +81,37 @@ namespace ANN {
     UNUSED_VARIABLE(input_units);
     Kernels::applyLogisticDerivative(output_errors, output_units);
 
-    
+    float eps = 1e-6;
     // Computing average activations
-    MatrixFloat *current_avg = matSum(input_units, 1);
-    matScal(current_avg, 1.0f/static_cast<float>(current_avg->getDimSize(1)));
-    
+    MatrixFloat *current_avg = matSum(output_units, 0);
+    matScal(current_avg, 1.0f/static_cast<float>(output_units->getDimSize(0)));
+     
     // -p/\hat{p} + (1-p)/(1-\hat{p}
     // -p/\hat{p}
+    
     MatrixFloat *sparse_errors = current_avg->clone();
-    matScal(sparse_errors, -1.0f/avg_act);
+    matScalarAdd(sparse_errors, eps);
+    matDiv(sparse_errors, -avg_act);
+    
     // (1-p)/(1-\hat{p})
     MatrixFloat *aux = current_avg->clone();
     matComplement(aux);
-    matScal(aux, 1.0f/(1.0f-avg_act));
-    // -p/\hat{p} + (1-p)/(1-\hat{p}
-    matAddition(sparse_errors, aux);
+    matScalarAdd(aux, eps);
+    matDiv(aux, (1.0f-avg_act));
+    matAddition(sparse_errors, aux, sparse_errors);
 
-    //MatrixFloat * sparse_errors = matAddition(matScal(current_avg, -1.0f/avg_act), matScal(matComplement(current_avg), 1.0f/(1.0f-avg_act) ) ; 
+    matAbs(sparse_errors, sparse_errors);
+    // Normalize the error
+    matScal(sparse_errors, 1.0f/output_units->getDimSize(0));
 
-    matAxpy(output_errors, beta, sparse_errors);
+    //Unfold
+    MatrixFloat *row = 0; 
+    for (int i = 0; i < output_units->getDimSize(0); ++i) {
+      row = output_errors->select(0,i, row);
+      matAxpy(row , beta, sparse_errors);
+    }
+  
+    delete row;
     matCmul(output_errors, input_errors);
    
     delete aux;
