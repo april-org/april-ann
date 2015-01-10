@@ -20,9 +20,10 @@
  */
 #include "activation_function_kernels.h"
 #include "cblas_headers.h"
+#include "cmath_overloads.h"
 #include "logistic_actf_component.h"
 #include "unused_variable.h"
-#include "cmath_overloads.h"
+
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilUtils;
@@ -59,66 +60,75 @@ namespace ANN {
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
-  SparseLogisticActfANNComponent::SparseLogisticActfANNComponent(const char *name,
-        float beta, float avg_act):LogisticActfANNComponent(name) {
-      this->beta = beta; this->avg_act = avg_act; } 
+  ///////////////////////////////////////////////////////////////////////
+
+  SparseLogisticActfANNComponent::
+  SparseLogisticActfANNComponent(const char *name,
+                                 float beta, float target_avg_act) :
+    LogisticActfANNComponent(name) {
+    this->beta = beta; this->target_avg_act = target_avg_act;
+  } 
+  
+  SparseLogisticActfANNComponent::~SparseLogisticActfANNComponent() {
+  }
 
   ANNComponent *SparseLogisticActfANNComponent::clone() {
-    SparseLogisticActfANNComponent *obj = new SparseLogisticActfANNComponent(name.c_str(), beta, avg_act);
+    SparseLogisticActfANNComponent *obj = new
+      SparseLogisticActfANNComponent(name.c_str(), beta, target_avg_act);
     return obj;
   }
 
   char *SparseLogisticActfANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.actf.sparse_logistic{ name='%s', beta=%f, rho=%f  }", name.c_str(), this->beta, this->avg_act);
+    buffer.printf("ann.components.actf.sparse_logistic{ "
+                  "name='%s', beta=%f, rho=%f  }",
+                  name.c_str(), this->beta, this->target_avg_act);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
  
   void SparseLogisticActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
-						     MatrixFloat *output_units,
-						     MatrixFloat *input_errors,
-						     MatrixFloat *output_errors) {
+                                                           MatrixFloat *output_units,
+                                                           MatrixFloat *input_errors,
+                                                           MatrixFloat *output_errors) {
     UNUSED_VARIABLE(input_units);
-
-    float eps = AprilMath::Limits<float>::epsilon();
+    
+    const float INV_DIM0 = 1.0f/static_cast<float>(output_units->getDimSize(0));
+    const float EPS = AprilMath::Limits<float>::epsilon();
     // Computing average activations
     MatrixFloat *current_avg = matSum(output_units, 0);
-    matScal(current_avg, 1.0f/static_cast<float>(output_units->getDimSize(0)));
+    matScal(current_avg, INV_DIM0);
      
-    // -p/\hat{p} + (1-p)/(1-\hat{p}
     // -p/\hat{p}
-    MatrixFloat *sparse_gradient = input_errors->clone();
-
-    MatrixFloat *sparse_errors = current_avg->clone();
-    //matScalarAdd(sparse_errors, eps);
-    matClamp(sparse_errors, eps, 1.0f);
-    matDiv(sparse_errors, -avg_act);
+    MatrixFloat *sparse_gradients = current_avg->clone();
+    matClamp(sparse_gradients, EPS, 1.0f);
+    matDiv(sparse_gradients, -target_avg_act);
     
     // (1-p)/(1-\hat{p})
-    MatrixFloat *aux = current_avg->clone();
+    MatrixFloat *aux = current_avg; // reusing current_avg
     matComplement(aux);
-    //matScalarAdd(aux, eps);
-    matClamp(sparse_errors, eps, 1.0f);
-    matDiv(aux, (1.0f-avg_act));
-    matAddition(sparse_errors, aux, sparse_errors);
-
-    matAbs(sparse_errors);
+    matClamp(aux, EPS, 1.0f);
+    matDiv(aux, (1.0f-target_avg_act));
+    
+    // -p/\hat{p} + (1-p)/(1-\hat{p} = sparse_gradients + aux
+    matAxpy(sparse_gradients, 1.0f, aux);
+    
     // Normalize the error
-    matScal(sparse_errors, 1.0f/output_units->getDimSize(0));
+    // matScal(sparse_gradients, INV_DIM0);
 
-    //Unfold
+    // Unfold
+    MatrixFloat *sparse_errors = input_errors->clone();
     MatrixFloat *row = 0; 
     for (int i = 0; i < output_units->getDimSize(0); ++i) {
-      row = sparse_gradient->select(0,i, row);
-      matAxpy(row , beta, sparse_errors);
+      row = sparse_errors->select(0, i, row);
+      matAxpy(row , beta, sparse_gradients);
     }
     delete row;
 
     Kernels::applyLogisticDerivative(output_errors, output_units);
-    matCmul(output_errors, sparse_gradient);
+    matCmul(output_errors, sparse_errors);
    
     delete aux;
+    delete sparse_gradients;
     delete sparse_errors;
-    delete sparse_gradient;
   }
 }

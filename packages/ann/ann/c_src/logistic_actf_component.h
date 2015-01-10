@@ -47,23 +47,32 @@ namespace ANN {
     virtual char *toLuaString();
   };
 
+  /**
+   * @brief Implementation of logistic activation function with sparsity
+   * penalty.
+   *
+   * @note The computation is based on Andrew Ng Stanford lecture:
+   * https://web.stanford.edu/class/cs294a/sparseAutoencoder_2011new.pdf
+   */
   class SparseLogisticActfANNComponent: public LogisticActfANNComponent {
 
-    private:
-       float beta;
-       float avg_act;
-    
-    protected:
+  private:
+    float beta;           ///< Weight of sparsity penalty term.
+    float target_avg_act; ///< Desired level of sparsity.
+   
+  protected:
     virtual void multiplyDerivatives(Basics::MatrixFloat *input_units,
 				     Basics::MatrixFloat *output_units,
 				     Basics::MatrixFloat *input_errors,
 				     Basics::MatrixFloat *output_errors);
 
-    public:
-        SparseLogisticActfANNComponent(const char *name, float beta, float avg_act);
-        virtual ANNComponent *clone(); 
-         //virtual ~SparseLogisticActfANNComponent();
-        virtual char *toLuaString();
+  public:
+    SparseLogisticActfANNComponent(const char *name,
+                                   float beta, float target_avg_act);
+    virtual ~SparseLogisticActfANNComponent();
+    
+    virtual ANNComponent *clone();
+    virtual char *toLuaString();
         
   };
 }
