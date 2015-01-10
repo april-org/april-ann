@@ -894,6 +894,28 @@ end
     return s
   end,
 
+  dim = function(a, b)
+    local a,b = coercion(a),coercion(b)
+    local s = gen_op('dim', SCALAR, {a,b},
+		     function(self, ...)
+		       local a,b = self.args[1]:eval(...),self.args[2]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:dim(b)
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local b = self.args[2]
+		       local str_tbl = { a.var_name, ':dim(', b.var_name, ')' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+    end)
+    -- TODO: if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+
   size = function(a)
     local a = coercion(a)
     local s = gen_op('size', SCALAR, {a},
