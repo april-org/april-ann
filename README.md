@@ -1,7 +1,8 @@
 APRIL-ANN
 =========
 
-Travis CI: [![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=master)](https://travis-ci.org/pakozm/april-ann)
+Travis CI (master): [![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=master)](https://travis-ci.org/pakozm/april-ann)
+Travis CI (devel): [![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=devel)](https://travis-ci.org/pakozm/april-ann)
 
 Contributions
 -------------
