@@ -200,13 +200,9 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
                  cod_params,
 								 weights_random)
 
-  print ("Cod")
-  print (cod_actf)
   for i, v in pairs(cod_params) do
       print(i,v)
   end
-  print ("Input")
-  print (input_actf)
   for i, v in pairs(input_params) do
       print(i,v)
   end
