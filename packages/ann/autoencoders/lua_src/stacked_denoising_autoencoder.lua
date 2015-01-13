@@ -452,9 +452,8 @@ ann.autoencoders.build_full_autoencoder =
                    dot_product_weights = wname,
                    bias_name           = bname,
                    bias_weights        = bname })
-
-      actf_params["name"] = actf_name
-      sdae:push( ann.components.actf[actf](table.merge({name="actf_name"}, actf_params)))
+      
+      sdae:push( ann.components.actf[actf](table.merge({name=actfname}, actf_params)))
       --
       weights_table[wname] = ann.connections{ input=prev_size,
                                               output=size,
@@ -481,8 +480,7 @@ ann.autoencoders.build_full_autoencoder =
                    bias_name           = bname,
                    bias_weights        = bname })
 
-      actf_params.name = actfname
-      sdae:push( ann.components.actf[actf](actf_params))
+      sdae:push( ann.components.actf[actf](table.merge( {name=actfname}, actf_params)))
       --
       weights_table[bname] = ann.connections{ input=1,
                                               output=size,
