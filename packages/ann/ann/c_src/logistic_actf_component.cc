@@ -81,7 +81,7 @@ namespace ANN {
   char *SparseLogisticActfANNComponent::toLuaString() {
     buffer_list buffer;
     buffer.printf("ann.components.actf.sparse_logistic{ "
-                  "name='%s', beta=%f, rho=%f  }",
+                  "name='%s', penalty=%f, sparsity=%f  }",
                   name.c_str(), this->beta, this->target_avg_act);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }

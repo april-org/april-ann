@@ -102,7 +102,7 @@ function ann_autoencoders_ae:constructor(t)
 				     bias_weights="b-dec" .. params.index,
 				     transpose=true
 				   } ):
-    push( ann.components.actf[params.visible.actf](table.insert({ name="v-enc-" .. params.index}, params.hidden.params)))
+    push( ann.components.actf[params.visible.actf](table.merge({ name="v-enc-" .. params.index}, params.hidden.params)))
   end
   if class.is_a(encoder, ann.components.stack) then
     ae:push(encoder:unroll())
@@ -648,6 +648,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                              getter=get_table_fields_ipairs{
                                actf = { mandatory=true, type_match="string" },
                                size = { mandatory=true, type_match="number" },
+                               params = { mandatory=false, type_match="table", default = {} },
                              }, },
         bunch_size       = { mandatory=true, type_match="number", },
         training_options = { mandatory=true },

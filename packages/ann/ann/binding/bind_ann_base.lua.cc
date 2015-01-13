@@ -1387,16 +1387,16 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   const char *name=0;
-  float beta = 1.0f;
-  float rho = 0.05f;
+  float sparsity = 1.0f;
+  float penalty = 0.05f;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "sparsity", "penalty", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f); 
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, rho, float, rho, 0.05f); 
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, penalty, float, penalty, 1.0f); 
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sparsity, float, sparsity, 0.05f); 
   }
-  obj = new SparseLogisticActfANNComponent(name, beta, rho);
+  obj = new SparseLogisticActfANNComponent(name, penalty, sparsity);
   LUABIND_RETURN(SparseLogisticActfANNComponent, obj);  
 }
 //BIND_END
