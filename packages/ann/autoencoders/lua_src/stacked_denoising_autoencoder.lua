@@ -171,8 +171,10 @@ april_set_doc(ann.autoencoders,
 local function build_two_layered_codifier(names_prefix,
 					  input_size,
 					  input_actf,
+            input_params,
 					  cod_size,
-					  cod_actf)
+					  cod_actf,
+            cod_params)
   local codifier_component = ann.components.stack{ name=names_prefix.."stack" }
   codifier_component:push( ann.components.hyperplane{
 			     name                = names_prefix.."c",
@@ -182,7 +184,7 @@ local function build_two_layered_codifier(names_prefix,
 			     bias_weights        = names_prefix.."b",
 			     input  = input_size,
 			     output = cod_size, } )
-  codifier_component:push(ann.components.actf[cod_actf]{ name=names_prefix.."actf" })
+  codifier_component:push(ann.components.actf[cod_actf](table.merge({ name=names_prefix.."actf" }, cod_params)))
   return codifier_component
 end
 
@@ -192,9 +194,24 @@ end
 local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 								 input_size,
 								 input_actf,
+                 input_params,
 								 cod_size,
 								 cod_actf,
+                 cod_params,
 								 weights_random)
+
+  print ("Cod")
+  print (cod_actf)
+  for i, v in pairs(cod_params) do
+      print(i,v)
+  end
+  print ("Input")
+  print (input_actf)
+  for i, v in pairs(input_params) do
+      print(i,v)
+  end
+  
+
   local autoencoder_component = ann.components.stack{ name=names_prefix.."stack" }
   autoencoder_component:push( ann.components.hyperplane{
 				name                = names_prefix.."layer1",
@@ -204,7 +221,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 				bias_weights        = names_prefix.."b1",
 				input  = input_size,
 				output = cod_size, } )
-  autoencoder_component:push(ann.components.actf[cod_actf]{ name=names_prefix.."actf1" })
+  autoencoder_component:push(ann.components.actf[cod_actf](table.merge({ name=names_prefix.."actf1" }, cod_params)))
   autoencoder_component:push( ann.components.hyperplane{
 				name                = names_prefix.."layer2",
 				dot_product_name    = names_prefix.."w2",
@@ -214,7 +231,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 				input  = cod_size,
 				output = input_size,
 				transpose = true} )
-  autoencoder_component:push(ann.components.actf[input_actf]{ name=names_prefix.."actf2" })
+  autoencoder_component:push(ann.components.actf[input_actf](table.merge({ name=names_prefix.."actf2" }, input_params)))
   local _,weights_table = autoencoder_component:build()
   for _,wname in ipairs({ names_prefix.."w",
 			  names_prefix.."b1",
@@ -428,6 +445,7 @@ ann.autoencoders.build_full_autoencoder =
     local k = 1
     for i=2,#layers do
       local size , actf   = layers[i].size,layers[i].actf
+      local actf_params = layers[i].params or {}
       local wname , bname = names_prefix.."w" .. (i-1) , names_prefix.."b" .. k
       local actfname = names_prefix.."actf" .. k
       sdae:push( ann.components.hyperplane{
@@ -438,7 +456,9 @@ ann.autoencoders.build_full_autoencoder =
                    dot_product_weights = wname,
                    bias_name           = bname,
                    bias_weights        = bname })
-      sdae:push( ann.components.actf[actf]{ name=actfname })
+
+      actf_params["name"] = actf_name
+      sdae:push( ann.components.actf[actf](table.merge({name="actf_name"}, actf_params)))
       --
       weights_table[wname] = ann.connections{ input=prev_size,
                                               output=size,
@@ -450,7 +470,8 @@ ann.autoencoders.build_full_autoencoder =
       k = k+1
     end
     for i=#layers-1,1,-1 do
-      local size , actf   = layers[i].size,layers[i].actf
+      local size , actf   = layers[i].size, layers[i].actf
+      local actf_params = layers[i].params or {}
       local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. k
       local dname = names_prefix.."w" .. k
       local actfname = names_prefix.."actf" .. k
@@ -463,7 +484,9 @@ ann.autoencoders.build_full_autoencoder =
                    dot_product_name    = dname,
                    bias_name           = bname,
                    bias_weights        = bname })
-      sdae:push( ann.components.actf[actf]{ name=actfname })
+
+      actf_params.name = actfname
+      sdae:push( ann.components.actf[actf](actf_params))
       --
       weights_table[bname] = ann.connections{ input=1,
                                               output=size,
@@ -723,7 +746,10 @@ ann.autoencoders.greedy_layerwise_pretraining =
       if input_actf == "logistic" then input_actf = "log_logistic"
       elseif input_actf == "softmax" then input_actf = "log_softmax"
       end
+      local input_params = params.layers[i-1].params
       local cod_actf   = params.layers[i].actf
+      local cod_params = params.layers[i].params
+
       local global_options    = table.deep_copy(params.training_options.global)
       local layerwise_options = params.training_options.layerwise[i-1] or {}
       layerwise_options.ann_options = layerwise_options.ann_options or {}
@@ -754,8 +780,10 @@ ann.autoencoders.greedy_layerwise_pretraining =
       dae = build_two_layered_autoencoder_from_sizes_and_actf(params.names_prefix,
                                                               input_size,
                                                               input_actf,
+                                                              input_params,
                                                               cod_size,
                                                               cod_actf,
+                                                              cod_params,
                                                               params.weights_random)
       collectgarbage("collect")
       local loss_function
@@ -825,7 +853,7 @@ ann.autoencoders.greedy_layerwise_pretraining =
                         bias_name           = params.names_prefix.."b" .. (i-1),
                         dot_product_weights = params.names_prefix.."w" .. (i-1),
                         bias_weights        = params.names_prefix.."b" .. (i-1), })
-      mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
+      mlp_final:push( ann.components.actf[cod_actf](table.merge({ name=params.names_prefix.."actf" .. (i-1)}, cod_params)))
       mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wmat
       mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1mat
       --
@@ -840,8 +868,10 @@ ann.autoencoders.greedy_layerwise_pretraining =
           codifier = build_two_layered_codifier(params.names_prefix,
                                                 input_size,
                                                 input_actf,
+                                                input_params,
                                                 cod_size,
-                                                cod_actf)
+                                                cod_actf,
+                                                cod_params)
           local cod_trainer = trainable.supervised_trainer(codifier,
                                                            nil,
                                                            params.bunch_size,

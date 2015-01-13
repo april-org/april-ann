@@ -49,7 +49,7 @@ T("SparseLogistic",
     local beta = 1.0
     local rho  = 0.3
     local dist = stats.dist.binomial(1, 0.6)
-    local net  = ann.components.actf.sparse_logistic{ beta=beta, rho=rho }
+    local net  = ann.components.actf.sparse_logistic{ penalty=beta, sparsity=rho }
     local loss = ann.loss.mse()
     for N = 1,4 do -- mini-batch size (bunch size)
       for M = 1,16 do -- number of neurons
