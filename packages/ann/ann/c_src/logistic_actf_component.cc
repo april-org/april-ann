@@ -112,7 +112,7 @@ namespace ANN {
     // -p/\hat{p} + (1-p)/(1-\hat{p} = sparse_gradients + aux
     matAxpy(sparse_gradients, 1.0f, aux);
     
-    // Normalize the error
+    // FIXME: Do we need to normalize by the bunch size?
     // matScal(sparse_gradients, INV_DIM0);
 
     // Unfold
