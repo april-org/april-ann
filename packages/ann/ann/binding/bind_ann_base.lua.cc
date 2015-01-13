@@ -1391,7 +1391,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   float rho = 0.05f;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "beta", "rho", (const char *)0);
+    check_table_fields(L, 1, "name", "sparsity", "penalty", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f); 
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, rho, float, rho, 0.05f); 

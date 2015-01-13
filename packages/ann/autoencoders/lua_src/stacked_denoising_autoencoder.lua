@@ -20,11 +20,13 @@ function ann_autoencoders_ae:constructor(t)
 		 getter=get_table_fields_recursive{
 		   actf = { mandatory=true, type_match="string" },
 		   size = { mandatory=true, type_match="number" },
+       params = {mandatory=false, type_match="table", default = {}}
 		 }, },
       visible = { mandatory=true,  type_match="table",
 		  getter=get_table_fields_recursive{
 		    actf = { mandatory=true, type_match="string" },
 		    size = { mandatory=true, type_match="number" },
+        params = {mandatory=false, type_match="table", default = {}}
 		  }, },
       encoder = { mandatory=false, isa_match=ann.components.base },
       decoder = { mandatory=false, isa_match=ann.components.base },
@@ -85,7 +87,7 @@ function ann_autoencoders_ae:constructor(t)
 				     dot_product_weights="w" .. params.index,
 				     bias_weights="b-enc" .. params.index,
 				   } ):
-    push( ann.components.actf[params.hidden.actf]{ name="h-enc-" .. params.index} )
+    push( ann.components.actf[params.hidden.actf](table.merge({ name="h-enc-" .. params.index}, params.hidden.params)))
   end
   
   local decoder = params.decoder
@@ -100,7 +102,7 @@ function ann_autoencoders_ae:constructor(t)
 				     bias_weights="b-dec" .. params.index,
 				     transpose=true
 				   } ):
-    push( ann.components.actf[params.visible.actf]{ name="v-enc-" .. params.index} )
+    push( ann.components.actf[params.visible.actf](table.insert({ name="v-enc-" .. params.index}, params.hidden.params)))
   end
   if class.is_a(encoder, ann.components.stack) then
     ae:push(encoder:unroll())

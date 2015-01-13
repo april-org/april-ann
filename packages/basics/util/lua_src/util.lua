@@ -809,6 +809,13 @@ function table.join(t1,t2)
   return result
 end
 
+
+function table.merge(t1,t2)
+  local result = util.clone(t1)
+  for k,v in pairs(t2) do result[k] = util.clone(v) end
+  return result
+end
+
 -- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
 -- are copied as references
 function table.deep_copy(t, lookup_table)

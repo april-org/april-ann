@@ -9,8 +9,8 @@ local shuffle_random   = random(5678)
 local weight_decay     = 0.0001
 local max_epochs       = 400
 local hidden_size      = 1024
-local rho              = 0.01
-local beta             = 3
+local sparsity         = 0.01
+local penalty          = 3
 
 --------------------------------------------------------------
 
@@ -63,7 +63,7 @@ local thenet = ann.components.stack():
                                    bias_weights="b1",
                                    -- shared weights
                                    dot_product_weights="w" } ):
-  push( ann.components.actf.sparse_logistic{ rho=rho, beta=beta } ):
+  push( ann.components.actf.sparse_logistic{ sparsity=sparsity, penalty=penalty } ):
   push( ann.components.hyperplane{ input=hidden_size,
                                    output=train_input:patternSize(),
                                    bias_weights="b2",
