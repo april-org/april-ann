@@ -9,7 +9,7 @@ local function make_block_tostring(name, str)
     end
     if b:size() > MAX then
       data[#data+1] = "..."
-      data[#data+1] = b:get(b:size())
+      data[#data+1] = str(b:get(b:size()))
     end
     result[1] = table.concat(data, " ")
     result[2] = "# %s size %d [%s]"%{name, b:size(), b:get_reference_string()}
