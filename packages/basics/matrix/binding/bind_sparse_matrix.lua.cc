@@ -822,6 +822,26 @@ using namespace Basics;
 }
 //BIND_END
 
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_METHOD SparseMatrixFloat values
+{
+  LUABIND_RETURN(FloatGPUMirroredMemoryBlock, obj->getRawValuesAccess());
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat indices
+{
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawIndicesAccess());
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat first_index
+{
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawFirstIndexAccess());
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME DOKBuilderSparseMatrixFloat matrix.sparse.builders.dok
@@ -865,3 +885,5 @@ using namespace Basics;
   LUABIND_RETURN(SparseMatrixFloat, obj->build(d0, d1, format));
 }
 //BIND_END
+
+//////////////////////////////////////////////////////////////////////////////

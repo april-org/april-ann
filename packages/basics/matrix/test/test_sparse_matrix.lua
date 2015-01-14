@@ -304,4 +304,10 @@ T("SparseDOKBuilder",
                                     0, 0, 0, 0, 0,
                                     4, 0, 0, 0, 0,
                                     0, 0, 0, 0, 0, })))
+    
+    local d = matrix.sparse.builders.dok()
+    d:set(2,2,-1)
+    check.eq(d:build(),
+             matrix.sparse(matrix(2,2,{0,0,
+                                       0,-1})))
 end)
