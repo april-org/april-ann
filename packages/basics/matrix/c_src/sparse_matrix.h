@@ -103,11 +103,9 @@ namespace Basics {
       ~DOKBuilder() { }
       
       void insert(const Key &coords, const T &value) {
-        if (value != 0.0f && value != -0.0f) {
-          if (coords.first > max_row_index) max_row_index = coords.first;
-          if (coords.second > max_col_index) max_col_index = coords.second;
-          data.insert(coords, value);
-        }
+        if (coords.first > max_row_index) max_row_index = coords.first;
+        if (coords.second > max_col_index) max_col_index = coords.second;
+        data.insert(coords, value);
       }
       
       void insert(unsigned int row, unsigned int col, const T &value) {
@@ -132,15 +130,18 @@ namespace Basics {
         }
         //
         const Key sizes(d0, d1);
-        const unsigned int NNZ = data.size();
         // put all coordinates of the dictionary into a vector, it will be
         // sorted after to build the result sparse matrix
-        AprilUtils::vector<Key> coordinates(NNZ);
+        AprilUtils::vector<Key> coordinates(data.size());
         unsigned int i=0;
         for (typename DictType::const_iterator it = data.begin();
              it != data.end(); ++it) {
-          coordinates[i++] = it->first;
+          if (it->second != T(0.0f) && it->second != T(-0.0f)) {
+            coordinates[i++] = it->first;
+          }
         }
+        coordinates.resize(i);
+        const unsigned int NNZ = coordinates.size();
         // depending in the format, the privateBuild template receives
         // CSRCompare() or CSCCompare()
         if (format == CSR_FORMAT) {

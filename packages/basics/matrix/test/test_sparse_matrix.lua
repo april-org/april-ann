@@ -292,5 +292,16 @@ T("SparseDOKBuilder",
     
     check.errored(function() d:set(0, 2, 1.0) end)
     check.errored(function() d:set(2, 0, 1.0) end)
-
+    
+    local d = matrix.sparse.builders.dok()
+    
+    d:set(2, 1,  4)
+    d:set(2, 2,  0)
+    d:set(3, 5, -1)
+    d:set(3, 5,  0) -- remove previous value
+    check.eq(d:build(),
+             matrix.sparse(matrix(3,5,{
+                                    0, 0, 0, 0, 0,
+                                    4, 0, 0, 0, 0,
+                                    0, 0, 0, 0, 0, })))
 end)
