@@ -7,7 +7,7 @@ local errors = matrix(iterator(range(1,1000)):map(function()return rnd:randNorm(
 T("BootstrapTest",
   function()
     local boot_result = stats.boot{
-      size=errors:size(), R=1000, seed=1234,
+      size=errors:size(), R=1000, seed=1234, verbose=true,
       statistic = function(sample)
         local s = errors:index(1, sample)
         local var,mean = stats.var(s)
@@ -24,7 +24,7 @@ T("BootstrapTest",
       end)
     --
     local boot_result = stats.boot{
-      size=errors:size(), R=1000, random=random(1234), ncores=2,
+      size=errors:size(), R=1000, random=random(1234), ncores=2, verbose=true,
       statistic = function(sample)
         local s = errors:index(1, sample)
         local var,mean = stats.var(s)

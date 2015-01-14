@@ -126,7 +126,7 @@ class.extend(matrix, "index",
                  local result_submat,self_submat
                  idx:map(function(p)
                      april_assert(p >= 1 and p <= dim_bound,
-                                  "Index number %d out-of-bounds", i)
+                                  "Index number %d out-of-bounds", p)
                      assert(not dest_sw:is_end())
                      self_sw:set_at_window(p)
                      result_submat = dest_sw:get_matrix(result_submat)      

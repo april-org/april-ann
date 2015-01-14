@@ -184,6 +184,27 @@ function april_print_script_header(arg,file)
   end
 end
 
+-- unpacks together several tables, by recursion (it is limited to short tables)
+local function private_munpack(i,j,...)
+  local n = select('#', ...)
+  i,j = i or 1, j or 1
+  if i <= n then
+    local t = select(i, ...)
+    if t[j] ~= nil then
+      return t[j],private_munpack(i,j+1,...)
+    else
+      return private_munpack(i+1,1,...)
+    end
+  end
+end
+function multiple_unpack(...)
+  if select('#', ...) == 1 then
+    return table.unpack(...)
+  else
+    return private_munpack(1, 1, ...)
+  end
+end
+
 -- http://lua-users.org/wiki/IteratorsTutorial
 function multiple_ipairs(...)
   local t = {...}

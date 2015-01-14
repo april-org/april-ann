@@ -8,6 +8,9 @@ Master branch release
 
 ### API Changes
 
+- Function `stats.boot` uses `multiple_unpack` to allow a table of sizes and the
+  generation of multiple index matrices.
+- Added `multiple_unpack` Lua function.
 - Added `__tostring` metamethod to numeric memory blocks in Lua.
 - Added `dataset.token.sparse_matrix`, a dataset which allow to traverse by rows
   a sparse matrix instance.

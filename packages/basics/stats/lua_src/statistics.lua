@@ -937,7 +937,7 @@ april_set_doc(stats.boot,
 local function boot(self,params,...)
   local params = get_table_fields(
     {
-      size        = { type_match = "number",   mandatory = true, },
+      size        = { mandatory = true, },
       R           = { type_match = "number",   mandatory = true },
       statistic   = { type_match = "function", mandatory = true },
       verbose     = { mandatory = false },
@@ -947,7 +947,7 @@ local function boot(self,params,...)
     },
     params)
   assert(not params.seed or not params.random,
-         "Fields seed and random are forbidden together")
+         "Fields 'seed' and 'random' are forbidden together")
   local extra       = table.pack(...)
   local size        = params.size
   local repetitions = params.R
@@ -955,20 +955,27 @@ local function boot(self,params,...)
   local ncores      = params.ncores
   local seed        = params.seed
   local rnd         = params.random or random(seed)
+  local tsize       = type(size)
+  assert(tsize == "number" or tsize == "table",
+         "Needs a 'size' field with a number or a table of numbers")
+  if tsize == "number" then size = { size } end
   local get_row,N
   -- resample function executed in parallel using parallel_foreach
   local last_i = 0
+  local rnd_matrix = function(sz) return matrixInt32(sz):uniform(1,sz,rnd) end
   local resample = function(i, id)
     collectgarbage("collect")
     -- this loop allows to synchronize the random number generator, allowing to
     -- produce the same exact result independently of ncores value
     for j=last_i+1,i-1 do
-      for k=1,size do rnd:randInt(size-1) end
+      for r=1,#size do
+        for k=1,size[r] do rnd:randInt(size[r]-1) end
+      end
     end
     last_i = i
     --
-    local sample = matrixInt32(size):uniform(1,size,rnd)
-    local r = table.pack( statistic(sample,table.unpack(extra)) )
+    local sample = iterator(size):map(rnd_matrix):table()
+    local r = table.pack( statistic(multiple_unpack(sample, extra)) )
     if (not id or id == 0) and params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
       io.stderr:flush()

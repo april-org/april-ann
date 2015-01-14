@@ -11,3 +11,10 @@ T("GenericOptionsTest", function()
     check.eq(tbl.str, "Hello world!")
     check.eq(str2, util.to_lua_string(tbl))
 end)
+
+T("MultipleUnpackTest", function()
+    local t = table.pack( multiple_unpack({1,2,3},{4,5},{6,7,8}) )
+    for i=1,#t do check.eq(t[i], i) end
+    local t = table.pack( multiple_unpack{1,2,3,4,5,6,7,8,9} )
+    for i=1,#t do check.eq(t[i], i) end
+end)
