@@ -44,6 +44,8 @@ namespace Basics {
   
   typedef SparseMatrix<float> SparseMatrixFloat;
 
+  typedef SparseMatrix<float>::DOKBuilder DOKBuilderSparseMatrixFloat;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////

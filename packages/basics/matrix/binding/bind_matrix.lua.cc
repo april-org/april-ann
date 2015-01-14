@@ -24,6 +24,7 @@ extern "C" {
 #include <ctype.h>
 }
 #include "bind_april_io.h"
+#include "bind_mathcore.h"
 #include "bind_mtrand.h"
 #include "bind_matrix_int32.h"
 #include "bind_matrix_bool.h"
@@ -1849,3 +1850,9 @@ namespace Basics {
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
+
+//BIND_METHOD MatrixFloat data
+{
+  LUABIND_RETURN(FloatGPUMirroredMemoryBlock, obj->getRawDataAccess());
+}
+//BIND_END

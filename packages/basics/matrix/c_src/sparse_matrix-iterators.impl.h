@@ -50,6 +50,10 @@ namespace Basics {
     values      = m->values->getPPALForReadAndWrite();
     indices     = m->indices->getPPALForReadAndWrite();
     first_index = other.first_index;
+    while(first_index[first_index_pos] == first_index[first_index_pos+1] &&
+          first_index_pos < m->getDenseCoordinateSize()) {
+      ++first_index_pos;
+    }
   }
 
   template <typename T>
@@ -81,8 +85,9 @@ namespace Basics {
   template <typename T>
   typename SparseMatrix<T>::iterator &SparseMatrix<T>::iterator::operator++() {
     ++idx;
-    if (idx < m->nonZeroSize())
+    if (idx < m->nonZeroSize()) {
       while(first_index[first_index_pos+1] <= idx) ++first_index_pos;
+    }
     return *this;
   }
 
@@ -122,6 +127,10 @@ namespace Basics {
     values      = m->values->getPPALForRead();
     indices     = m->indices->getPPALForRead();
     first_index = m->first_index->getPPALForRead();
+    while(first_index[first_index_pos] == first_index[first_index_pos+1] &&
+          first_index_pos < m->getDenseCoordinateSize()) {
+      ++first_index_pos;
+    }
   }
 
   template <typename T>
@@ -201,8 +210,9 @@ namespace Basics {
   template <typename T>
   typename SparseMatrix<T>::const_iterator &SparseMatrix<T>::const_iterator::operator++() {
     ++idx;
-    if (idx < m->nonZeroSize())
+    if (idx < m->nonZeroSize()) {
       while(first_index[first_index_pos+1] <= idx) ++first_index_pos;
+    }
     return *this;
   }
 
