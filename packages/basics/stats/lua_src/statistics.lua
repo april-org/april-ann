@@ -921,13 +921,12 @@ april_set_doc(stats.boot,
 		  statistic = {
 		    "A function witch receives a matrixInt32 with sample indices and computes",
                     "statistics (k>=1 statistics) over the sample.",
-                    "If k>1, statistic must return a table with the desired",
-                    "k statistics."
 		  },
 		  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
-                  seed = "A random seed [optional], by default it is os.time()",
-                  [2] = "As second parameter it accepts extra arguments for statistic function.",
+                  seed = "A random seed [optional]",
+                  random = "A random numbers generator [optional]",
+                  ["..."] = "Second and beyond parameters are extra arguments for statistic function.",
 		},
 		outputs = {
 		  "A table with the k statistics for every repetition."
@@ -943,30 +942,37 @@ local function boot(self,params,...)
       statistic   = { type_match = "function", mandatory = true },
       verbose     = { mandatory = false },
       ncores      = { mandatory = false, type_match = "number", default = 1 },
-      seed        = { mandatory = false, type_match = "number", default = os.time() },
+      seed        = { mandatory = false, type_match = "number" },
+      random      = { mandatory = false, isa_match  = random },
     },
     params)
+  assert(not params.seed or not params.random,
+         "Fields seed and random are forbidden together")
   local extra       = table.pack(...)
   local size        = params.size
   local repetitions = params.R
   local statistic   = params.statistic
   local ncores      = params.ncores
   local seed        = params.seed
+  local rnd         = params.random or random(seed)
   local get_row,N
   -- resample function executed in parallel using parallel_foreach
+  local last_i = 0
   local resample = function(i, id)
     collectgarbage("collect")
-    local rnd = random(seed + i - 1)
+    -- this loop allows to synchronize the random number generator, allowing to
+    -- produce the same exact result independently of ncores value
+    for j=last_i+1,i-1 do
+      for k=1,size do rnd:randInt(size-1) end
+    end
+    last_i = i
+    --
     local sample = matrixInt32(size):uniform(1,size,rnd)
-    local r,_ = statistic(sample,table.unpack(extra))
-    assert(not _, "statistic must return one value (it can be a table")
-    assert(type(r) == "number" or type(r) == "table",
-           "statistic function must return a number or a table")
-    if id == 0 and params.verbose and i % 20 == 0 then
+    local r = table.pack( statistic(sample,table.unpack(extra)) )
+    if (not id or id == 0) and params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
       io.stderr:flush()
     end
-    if type(r) ~= "table" then r = {r} end
     return r
   end
   local result = parallel_foreach(ncores, repetitions, resample)
