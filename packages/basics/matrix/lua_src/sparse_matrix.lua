@@ -1,3 +1,5 @@
+class.extend(sparse_matrix, "t", sparse_matrix.."transpose")
+
 -- the constructor
 matrix.sparse.csr = function(...)
   return matrix.sparse(...)
