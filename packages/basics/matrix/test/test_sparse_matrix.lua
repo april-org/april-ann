@@ -251,3 +251,46 @@ T("SparseDotTest",
     -- check.eq(x:dot(y_csr),z)
     check.eq(x:dot(y_csc),z, "csc dot")
 end)
+
+T("SparseDOKBuilder",
+  function()
+    local d = matrix.sparse.builders.dok()
+    
+    d:set(1, 1,  1.0)
+    d:set(2, 1,  1.0)
+    d:set(1, 3, -1.0)
+    d:set(3, 2, -1.0)
+    
+    check.eq(d:build(), matrix.sparse(matrix(3,3,{
+                                               1.0, 0.0, -1.0,
+                                               1.0, 0.0, 0.0,
+                                               0.0, -1.0, 0.0,
+    })))
+    
+    check.eq(d:build(4,4), matrix.sparse(matrix(4,4,{
+                                                  1.0, 0.0, -1.0, 0.0,
+                                                  1.0, 0.0, 0.0, 0.0,
+                                                  0.0, -1.0, 0.0, 0.0,
+                                                  0.0, 0.0, 0.0, 0.0,
+    })))
+    
+    check.eq(d:build(3,4), matrix.sparse(matrix(3,4,{
+                                                  1.0, 0.0, -1.0, 0.0,
+                                                  1.0, 0.0, 0.0, 0.0,
+                                                  0.0, -1.0, 0.0, 0.0,
+    })))
+    
+    check.eq(d:build(4,3), matrix.sparse(matrix(4,3,{
+                                                  1.0, 0.0, -1.0,
+                                                  1.0, 0.0, 0.0,
+                                                  0.0, -1.0, 0.0,
+                                                  0.0, 0.0, 0.0,
+    })))
+
+    check.errored(function() d:build(2,3) end)
+    check.errored(function() d:build(3,2) end)
+    
+    check.errored(function() d:set(0, 2, 1.0) end)
+    check.errored(function() d:set(2, 0, 1.0) end)
+
+end)

@@ -821,3 +821,47 @@ using namespace Basics;
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME DOKBuilderSparseMatrixFloat matrix.sparse.builders.dok
+//BIND_CPP_CLASS DOKBuilderSparseMatrixFloat
+
+//BIND_CONSTRUCTOR DOKBuilderSparseMatrixFloat
+{
+  LUABIND_RETURN(DOKBuilderSparseMatrixFloat, new DOKBuilderSparseMatrixFloat());
+}
+//BIND_END
+
+//BIND_METHOD DOKBuilderSparseMatrixFloat set
+{
+  unsigned int row, col;
+  float value;
+  LUABIND_GET_PARAMETER(1, uint, row);
+  LUABIND_GET_PARAMETER(2, uint, col);
+  LUABIND_GET_PARAMETER(3, float, value);
+  if (row == 0 || col == 0) LUABIND_ERROR("Indices should be > 0");
+  obj->insert(row-1, col-1, value);
+  LUABIND_RETURN(DOKBuilderSparseMatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD DOKBuilderSparseMatrixFloat build
+{
+  unsigned int d0, d1;
+  SPARSE_FORMAT format = CSR_FORMAT;
+  const char *sparse;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, d0, 0);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, uint, d1, 0);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, string, sparse, 0);
+  if (sparse != 0) {
+    if (strcmp(sparse, "csc") == 0) {
+      format = CSC_FORMAT;
+    }
+    else if (strcmp(sparse, "csr") != 0) {
+      LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
+    }
+  }
+  LUABIND_RETURN(SparseMatrixFloat, obj->build(d0, d1, format));
+}
+//BIND_END

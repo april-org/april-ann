@@ -8,6 +8,11 @@ Master branch release
 
 ### API Changes
 
+- Added `dataset.token.sparse_matrix`, a dataset which allow to traverse by rows
+  a sparse matrix instance.
+- Added `matrix.sparse.builders.dok`, a builder which uses the
+  Dictionary-of-Keys format to construct a sparse matrix from *scratch*.
+
 ### Bugs removed
 
 ### C/C++
