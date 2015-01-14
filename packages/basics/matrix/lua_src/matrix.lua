@@ -105,7 +105,7 @@ class.extend(matrix, "index",
              } ..
                function(self,dim,idx)
                  assert(type(dim) == "number",
-                        "Needs a number as second argument")
+                        "Needs a number as first argument")
                  if type(idx) == "table" then idx = matrixInt32(idx)
                  elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                  end
@@ -155,6 +155,8 @@ class.extend(matrix, "indexed_fill",
                },
              } ..
              function(self,dim,idx,val)
+               assert(type(dim) == "number",
+                      "Needs a number as first argument")
                if type(idx) == "table" then idx = matrixInt32(idx)
                elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                end
@@ -197,6 +199,8 @@ class.extend(matrix, "indexed_copy",
                },
              } ..
              function(self,dim,idx,other)
+               assert(type(dim) == "number",
+                      "Needs a number as first argument")
                if type(idx) == "table" then idx = matrixInt32(idx)
                elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                end
