@@ -146,6 +146,14 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_METHOD FloatGPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME DoubleGPUMirroredMemoryBlock mathcore.block.double
@@ -179,6 +187,14 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_METHOD DoubleGPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME Int32GPUMirroredMemoryBlock mathcore.block.int32
@@ -209,6 +225,14 @@ namespace AprilMath {
 //BIND_METHOD Int32GPUMirroredMemoryBlock get
 {
   LUABIND_RETURN(int,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD Int32GPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
 }
 //BIND_END
 

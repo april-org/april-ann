@@ -1,7 +1,7 @@
 local T = utest.test
 local check = utest.check
 
-function fact(n) return iterator(range(1,n)):reduce(math.mul(),1) end
+function fact(n) return iterator(range(1,n)):reduce(math.mul,1) end
 
 T("CombinatorialsTest", function()
     for i=0,10 do

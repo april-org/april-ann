@@ -75,8 +75,10 @@ function simplex_methods:execute(eval, weights)
   local table = table
   local assert = assert
   -- DO EVAL
-  local do_eval = function(x, i)
-    local loss = eval(x, i)
+  local counter = 0
+  local do_eval = function(x)
+    local loss = eval(x, counter)
+    counter = counter + 1
     local reg = 0
     for wname,w in pairs(x) do
       local l1 = self:get_option_of(wname, "L1_norm")
@@ -132,7 +134,7 @@ function simplex_methods:execute(eval, weights)
     end
   end
   -- evaluate candidates with new samples
-  for i=1,#candidates do candidates[i][2] = do_eval(candidates[i][1], 0) end
+  for i=1,#candidates do candidates[i][2] = do_eval(candidates[i][1]) end
   sort_candidates(candidates)
   --
   local function point(i) return candidates[i][1] end
@@ -169,7 +171,7 @@ function simplex_methods:execute(eval, weights)
     compose(lambdaR, lambda0, alpha, lambda0, point(#candidates))
     
     local S1 = loss(1)
-    local SR = do_eval(lambdaR, iter)
+    local SR = do_eval(lambdaR)
     local SM = loss(#candidates - 1)
     
     if S1 <= SR and SR <= SM then
@@ -178,7 +180,7 @@ function simplex_methods:execute(eval, weights)
     elseif SR < S1 then
       -- if reflected point improves the best, then try expansion
       compose(lambdaE, lambda0, gamma, lambda0, point(#candidates))
-      local SE = do_eval(lambdaE, iter)
+      local SE = do_eval(lambdaE)
       -- if expansion improves, take it
       if SE < SR then md.copy(lambdaP, lambdaE)
       else -- otherwise, take reflection
@@ -187,7 +189,7 @@ function simplex_methods:execute(eval, weights)
     elseif SR > SM then
       -- the reflected point not improves second worst, then try shrink
       compose(lambdaC, point(#candidates), rho, lambda0, point(#candidates))
-      local SC = do_eval(lambdaC, iter)
+      local SC = do_eval(lambdaC)
       -- if shrink improves reflected, take it
       if SC < SR then
         md.copy(lambdaP, lambdaC)
@@ -196,7 +198,7 @@ function simplex_methods:execute(eval, weights)
         for i=2,#candidates do
           md.axpy(candidates[i][1], 1.0, candidates[1][1])
           md.scal(candidates[i][1], 0.5)
-          candidates[i][2] = do_eval(candidates[i][1], iter)
+          candidates[i][2] = do_eval(candidates[i][1])
         end
         shrinked = true
       end
@@ -206,7 +208,7 @@ function simplex_methods:execute(eval, weights)
       local prev_loss = loss(#candidates)
       -- replace worst point
       md.copy(point(#candidates), lambdaP)
-      candidates[#candidates][2] = do_eval(candidates[#candidates][1], iter)
+      candidates[#candidates][2] = do_eval(candidates[#candidates][1])
       if prev_loss == loss(#candidates) then
         -- warning: alpha=1 causes infinite loops of not improving
         alpha = alpha * 0.9

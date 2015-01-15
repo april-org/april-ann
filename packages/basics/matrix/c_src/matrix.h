@@ -646,10 +646,30 @@ namespace Basics {
     bool sameDim(const Matrix<O> *other) const;
     bool sameDim(const int *dims, const int len) const;
 
-    /// Returns a matrix of one less dimension, with the elements selected for the
-    /// given dimension at the given index.  If a matrix is given, it must be
-    /// created before using previous execution of select method over the same
-    /// dimension. WARNING, the matrix is not check to be correct, so be careful.
+    /**
+     * @brief Returns a matrix of one less dimension, with the elements selected
+     * for the given dimension at the given index.
+     *
+     * If @c dest matrix is given, it should be created using a previous
+     * execution of select method over the same dimension, otherwise, the
+     * behavior of select is undefined.
+     *
+     * @note <b>WARNING</b>, @c dest matrix correctness is not checked, so, be
+     * careful.
+     *
+     * @code
+     * // A tipical use case for a efficient select use with a matAxpy operation
+     * // Let A a Basics::Matrix<float> of NxM
+     * // Let B a Basics::Matrix<float> of Nx1
+     * AprilUtils::SharedPtr< Basics::Matrix<float> > col;
+     * for (int i=0; i<A->getDimSize(1); ++i) {
+     *   // The first iteration, col=0 and select initialize the col matrix,
+     *   // the following iterations the same col matrix will be reused.
+     *   col = A->select(1, i, col.get());
+     *   matAxpy(col.get(), 1.0, B);
+     * }
+     * @endcode
+     */
     Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
     // Expands current matrix to a diagonal matrix

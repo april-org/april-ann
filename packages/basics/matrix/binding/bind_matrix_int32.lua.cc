@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_mathcore.h"
 #include "bind_matrix.h"
 #include "bind_mtrand.h"
 #include "utilMatrixInt32.h"
@@ -694,3 +695,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //////////////////////////////////////////////////////////////////////
 
+//BIND_METHOD MatrixInt32 data
+{
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawDataAccess());
+}
+//BIND_END

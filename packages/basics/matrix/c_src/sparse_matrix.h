@@ -26,9 +26,12 @@
 #include <new> // surprisingly, placement new doesn't work without this
 #include "aligned_memory.h"
 #include "april_assert.h"
+#include "aux_hash_table.h"
 #include "cblas_headers.h"
 #include "disallow_class_methods.h"
+#include "error_print.h"
 #include "gpu_mirrored_memory_block.h"
+#include "hash_table.h"
 #include "mathcore.h"
 #include "matrix.h"
 #include "maxmin.h"
@@ -79,17 +82,156 @@ namespace Basics {
     /// For CUDA purposes
     bool use_cuda;
     
-    /// Constructor... -> Integer array with the size of each dimension
-    /*
-      Matrix(int numDim, const int* dim, T* data_vector,
-      CBLAS_ORDER major_order = CblasRowMajor);
-    */
-  
     int searchIndexOf(const int c0, const int c1) const;
     int searchIndexOfFirst(const int c0, const int c1) const;
   
   public:
 
+    //////////////////////////////////////////////////////////////////////////
+    
+    /**
+     * @brief Builds a sparse matrix from a Dictionary Of Keys (DOK) format
+     * https://en.wikipedia.org/wiki/Sparse_matrix#Dictionary_of_keys_.28DOK.29
+     */
+    class DOKBuilder : public Referenced {
+      typedef AprilUtils::uint_pair Key;
+      typedef AprilUtils::hash<Key, T> DictType;
+      
+    public:
+      DOKBuilder() : Referenced(), max_row_index(0), max_col_index(0) { }
+      
+      ~DOKBuilder() { }
+      
+      void insert(const Key &coords, const T &value) {
+        if (coords.first > max_row_index) max_row_index = coords.first;
+        if (coords.second > max_col_index) max_col_index = coords.second;
+        data.insert(coords, value);
+      }
+      
+      void insert(unsigned int row, unsigned int col, const T &value) {
+        insert(Key(row,col), value);
+      }
+
+      /**
+       * @brief Builds a sparse matrix by sorting all the coordinates and
+       * declaring the CSR/CSC vectors: values, indices and first_index.
+       */
+      SparseMatrix<T> *build(unsigned int d0=0, unsigned int d1=0,
+                             SPARSE_FORMAT format = CSR_FORMAT) const {
+        if (d0 == 0) d0 = max_row_index+1;
+        if (d1 == 0) d1 = max_col_index+1;
+        if (d0 <= max_row_index) {
+          ERROR_EXIT2(128, "Improper number of rows expected > %u, given %u\n",
+                      max_row_index, d0);
+        }
+        if (d1 <= max_col_index) {
+          ERROR_EXIT2(128, "Improper number of columns expected > %d, given %u\n",
+                      max_col_index, d1);
+        }
+        //
+        const Key sizes(d0, d1);
+        // put all coordinates of the dictionary into a vector, it will be
+        // sorted after to build the result sparse matrix
+        AprilUtils::vector<Key> coordinates(data.size());
+        unsigned int i=0;
+        for (typename DictType::const_iterator it = data.begin();
+             it != data.end(); ++it) {
+          if (it->second != T(0.0f) && it->second != T(-0.0f)) {
+            coordinates[i++] = it->first;
+          }
+        }
+        coordinates.resize(i);
+        const unsigned int NNZ = coordinates.size();
+        // depending in the format, the privateBuild template receives
+        // CSRCompare() or CSCCompare()
+        if (format == CSR_FORMAT) {
+          return privateBuild(sizes, NNZ, coordinates, CSRCompare());
+        }
+        else if (format == CSC_FORMAT) {
+          return privateBuild(sizes, NNZ, coordinates, CSCCompare());
+        }
+        else {
+          ERROR_EXIT1(128, "Not recognized sparse format: %d\n", format);
+        }
+        return 0;
+      }
+      
+    private:
+      DictType data;
+      unsigned int max_row_index, max_col_index;
+      
+      struct CSRCompare {
+        unsigned int getDense(const Key &k) const { return k.first; }
+        unsigned int getSparse(const Key &k) const { return k.second; }
+        SPARSE_FORMAT getFormat() const { return CSR_FORMAT; }
+        bool operator()(const Key &a, const Key &b) const {
+          if (a.first < b.first) return true;
+          else if (a.first > b.first) return false;
+          else return a.second < b.second;
+        }
+      };
+      
+      struct CSCCompare {
+        unsigned int getDense(const Key &k) const { return k.second; }
+        unsigned int getSparse(const Key &k) const { return k.first; }
+        SPARSE_FORMAT getFormat() const { return CSC_FORMAT; }
+        bool operator()(const Key &a, const Key &b) const {
+          if (a.second < b.second) return true;
+          else if (a.second > b.second) return false;
+          else return a.first < b.first;
+        }
+      };
+
+      /**
+       * @brief This private build template allows to factorize code between
+       * both CSR and CSC formats.
+       *
+       * It receives a CMP type which is an instance of CSRCompare or CSCCompare
+       * classes.
+       */
+      template<typename CMP>
+      SparseMatrix *privateBuild(const Key &sizes,
+                                 const unsigned int NNZ,
+                                 AprilUtils::vector<Key> &coordinates,
+                                 CMP compare) const {
+        AprilMath::FloatGPUMirroredMemoryBlock *values =
+          new AprilMath::FloatGPUMirroredMemoryBlock(NNZ);
+        AprilMath::Int32GPUMirroredMemoryBlock *indices =
+          new AprilMath::Int32GPUMirroredMemoryBlock(NNZ);
+        AprilMath::Int32GPUMirroredMemoryBlock *first_index =
+          new AprilMath::Int32GPUMirroredMemoryBlock(compare.getDense(sizes)+1);
+        // build the matrix by sorting the coordinates (CSR or CSC order) and
+        // filling values, indices and first_index memory blocks
+        (*first_index)[0] = 0;
+        AprilUtils::Sort(coordinates.begin(), coordinates.size(), compare);
+        unsigned int j=0;
+        for (unsigned int i=0; i<NNZ; ++i) {
+          const Key &k = coordinates[i];
+          // this loop is for the case of several empty runs
+          while(j < compare.getDense(k)) {
+            ++j;
+            (*first_index)[j] = i;
+          }
+          (*values)[i] = *data.find(k);
+          (*indices)[i] = static_cast<int32_t>(compare.getSparse(k));
+        }
+        // process all remaining empty runs
+        while(j < compare.getDense(sizes)) {
+          ++j;
+          (*first_index)[j] = NNZ;
+        }
+        return new SparseMatrix<T>(static_cast<int>(sizes.first),
+                                   static_cast<int>(sizes.second),
+                                   values,
+                                   indices,
+                                   first_index,
+                                   compare.getFormat());
+      }
+      
+    }; // class DOKBuilder
+    
+    //////////////////////////////////////////////////////////////////////////
+    
     /// Returns if the matrix is a vector
     bool isVector() const { return ( (matrixSize[0]==1) ||
                                      (matrixSize[1]==1) ); }
@@ -200,6 +342,7 @@ namespace Basics {
     int getDimSize(int i) const { return matrixSize[i]; }
     int size() const { return total_size; }
     // FIXME: use an attribute to improve the efficiency of this call
+    /// Returns the Number of Non-Zero elements.
     int nonZeroSize() const { return static_cast<int>(values->getSize()); }
     int getDenseCoordinateSize() const {
       if (sparse_format == CSR_FORMAT) return matrixSize[0];

@@ -75,6 +75,7 @@ using namespace Imaging;
   LUABIND_RETURN(ImageFloat, binarize_sauvola(obj,radius, k, r));
 }
 //BIND_END
+
 //BIND_METHOD ImageFloat binarize_otsus
 {
   LUABIND_CHECK_ARGN(==, 0);

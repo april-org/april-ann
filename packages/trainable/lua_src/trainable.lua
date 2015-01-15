@@ -251,7 +251,7 @@ trainable.dataset_multiple_iterator =
     local bunch_indexes = {}
     if #params.datasets > 2 then
       local pattern_size = iterator(ipairs(params.datasets)):select(2):
-        call('patternSize'):reduce(math.add(), 0)
+        call('patternSize'):reduce(math.add, 0)
       local bunch_mb_size = bunch_size * pattern_size * 4
       return function()
         local ds_idx_func = ds_idx_func

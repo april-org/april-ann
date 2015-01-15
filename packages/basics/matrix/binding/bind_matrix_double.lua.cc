@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_mathcore.h"
 #include "bind_matrix.h"
 #include "utilMatrixDouble.h"
 #include "luabindutil.h"
@@ -664,3 +665,8 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //////////////////////////////////////////////////////////////////////
 
+//BIND_METHOD MatrixDouble data
+{
+  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock, obj->getRawDataAccess());
+}
+//BIND_END

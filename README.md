@@ -1,7 +1,9 @@
 APRIL-ANN
 =========
 
-Travis CI: [![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=master)](https://travis-ci.org/pakozm/april-ann)
+[![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=master)](https://travis-ci.org/pakozm/april-ann) Travis CI (master branch)
+
+[![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=devel)](https://travis-ci.org/pakozm/april-ann) Travis CI (devel branch)
 
 Contributions
 -------------
@@ -285,8 +287,8 @@ Doxygen documentation
 The documentation of the devel branch will be mantained as updated as possible
 in the following links:
 
-- [C/C++ developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
-- [C/C++ binding manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
+- [C/C++ developer manual](http://pakozm.hol.es/STUFF/doxygen_doc/developer/html/index.html)
+- [C/C++ binding manual](http://pakozm.hol.es/STUFF/doxygen_doc/user_refman/html/index.html)
 
 However, you can produce the Doxygen documentation of the branch where
 you are working by using the makefile's `document` target. Please, note that

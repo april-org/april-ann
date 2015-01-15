@@ -8,7 +8,23 @@ Master branch release
 
 ### API Changes
 
+- Simplified `math.add`, `math.sub`, ... and other math extensions for
+  reductions, their original behavior can be emulated by using `bind` function.
+- Added `bind` function to freeze any positional argument of any Lua function.
+- Function `stats.boot` uses `multiple_unpack` to allow a table of sizes and the
+  generation of multiple index matrices.
+- Added `multiple_unpack` Lua function.
+- Added `__tostring` metamethod to numeric memory blocks in Lua.
+- Added `dataset.token.sparse_matrix`, a dataset which allow to traverse by rows
+  a sparse matrix instance.
+- Added `matrix.sparse.builders.dok`, a builder which uses the
+  Dictionary-of-Keys format to construct a sparse matrix from *scratch*.
+- Added method `data` to numeric matrix classes.
+- Added methods `values`, `indices`, `first_index` to sparse matrix class.
+
 ### Bugs removed
+
+- Solved bug in `SparseMatrix::toDense()` method.
 
 ### C/C++
 

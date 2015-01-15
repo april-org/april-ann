@@ -1347,3 +1347,20 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 }
 //BIND_END
 
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME SparseMatrixDataSetToken dataset.token.sparse_matrix
+//BIND_CPP_CLASS    SparseMatrixDataSetToken
+//BIND_SUBCLASS_OF  SparseMatrixDataSetToken DataSetToken
+
+//BIND_CONSTRUCTOR SparseMatrixDataSetToken
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
+  SparseMatrixFloat *sparse_matrix;
+  LUABIND_GET_PARAMETER(1, SparseMatrixFloat, sparse_matrix);
+  obj = new SparseMatrixDataSetToken(sparse_matrix);
+  LUABIND_RETURN(SparseMatrixDataSetToken, obj);
+}
+//BIND_END
+

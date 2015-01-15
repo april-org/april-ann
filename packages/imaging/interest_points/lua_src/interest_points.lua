@@ -288,7 +288,10 @@ function methods:classify_points(img, points, mlp)
     for i, c in ipairs(classes) do
         
         x, y = unpack(points[i])
-        table.insert(res,  {x,y,c, dsOut:getPattern(i)[c]})
+        
+        table.insert(res,  {x,y,c, dsOut:getPattern(i)})
+        
+--        table.insert(res,  {x,y,c, dsOut:getPattern(i)[c]})
         -- Get the confidence
     end
     
@@ -777,6 +780,7 @@ function dataset.interest_point(img, table_points, x_window, y_window, num_class
     -- Create the indexed point
     -- the table is composed by elems (x, y, c)
     -- En la imagen es x, y i en la matriz y x
+    
     local tIndexes = table.imap(table_points, function (elem)
         local index = elem[2]*img_matrix:dim(2)+elem[1] 
         assert(index <= img_matrix:size())
@@ -794,4 +798,63 @@ function dataset.interest_point(img, table_points, x_window, y_window, num_class
 
 
     return dsPoints, points and interest_points.loadTagDataset(points, num_classes)
+end
+
+
+
+
+---------------------------------------
+-- Convolutional and Square point extractor
+-----------------------------------------
+function interest_points.extract_points_NN(img, trainer_uppers, trainer_lowers, x_window, y_window, resize_factor, num_classes)
+
+    local uppers, lowers
+
+    local width, height = img:geometry()
+    local new_width = math.floor(width/resize_factor)
+    local new_height = math.floor(height/resize_factor)
+    if resize_factor > 1 then
+        img = img:resize(new_width,new_height)
+    end
+
+    
+    function get_points_from_NN(points, trainer) 
+        local dsIn = dataset.interest_point(img, points, x_window, y_window, num_classes, true)
+        -- Classify the points
+        local dsPred = trainer:use_dataset({input_dataset=dsIn})
+        local classes = interest_points.getIndexSoftmax(dsPred)
+        local res = {}
+        for i, c in ipairs(classes) do
+
+            x, y = unpack(points[i])
+
+            table.insert(res,  {x,y,c, dsPred:getPattern(i)})
+            --        table.insert(res,  {x,y,c, dsOut:getPattern(i)[c]})
+            -- Get the confidence
+        end
+      return res
+    end
+
+
+    uppers, lowers = interest_points.extract_points_from_image(img)
+    --print(line, img, table_points, x_window, y_window,num_classes, true)
+    print(#uppers, #lowers)
+    local uppers_classified = get_points_from_NN(uppers, trainer_uppers)
+    local lowers_classified = get_points_from_NN(lowers, trainer_lowers)
+
+    function resize_points(points)
+      for i, v in ipairs(points) do
+        v[1] = v[1]*resize_factor
+        v[2] = v[2]*resize_factor
+      end
+    end
+
+    resize_points(uppers_classified)
+    resize_points(lowers_classified)
+    --local uppers_classified = {}
+    --local lowers_classified = {}
+    print(#uppers_classified,#lowers_classified)
+    return uppers_classified, lowers_classified
+
+
 end

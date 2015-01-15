@@ -193,6 +193,16 @@ namespace AprilUtils {
       ptr = 0;
       return tmp;
     }
+
+    /**
+     * @brief Releases the pointer, decreases its reference counter, but NOT
+     * deletes the content.
+     */
+    T *weakRelease() {
+      T *tmp = release();
+      if (tmp != 0) ReleaseRef(tmp);
+      return tmp;
+    }
     
     /**
      * @brief Takes the ownership without IncRef the pointer.

@@ -3,6 +3,15 @@ _G.imageSVG = imageSVG -- global environment
 
 local colors = { "red", "blue", "green", "orange", "purple","yellow"}
 
+function toImage64(filename)
+
+ local f = io.open(filename)
+ base64 = require("ee5_base64") 
+ local s64 = base64.encode(f:read("*all"))
+ f:close()
+ return s64
+end
+
 function imageSVG:constructor(params)
   
     self.width = params.width or -1
@@ -124,10 +133,11 @@ function imageSVG_methods:addCircle(point, params)
 
     local radius = params.radius or 1
     local color = params.color or "green"
-
+    local opacity = params.opacity or 1
     local cx = point[1]
     local cy = point[2]
-    table.insert(self.body,string.format("<circle cx=\"%d\" cy=\"%d\" r=\"%f\" fill=\"%s\"/>", cx, cy, radius, color))
+    table.insert(self.body,string.format("<circle cx=\"%d\" cy=\"%d\" r=\"%f\" fill=\"%s\" fill-opacity=\"%f\" />",
+    cx, cy, radius, color, opacity))
 end
 
 -- Point is a table with two coordinates
@@ -161,21 +171,43 @@ function imageSVG_methods:addRect(rect, params)
 end
 
 function imageSVG_methods:addPoint(point, params)
+    -- TODO: add confidence
+    
+    if params.conf then 
+      self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = (params.conf*2)^2, opacity = 0.5})
+    end
     self:addSquare(point, params)
 end
 
 -- Extra image function
-function imageSVG_methods:addImage(filename, width, height, offsetX, offsetY)
+function imageSVG_methods:addImage(filename, width, height, offsetX, offsetY, absolute)
 
+
+    absolute  = absolute or false
+
+    if absolute then
+        filename = os.getenv("PWD").."/"..filename
+    end
     table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" xlink:href=\"%s\">\n</image>", offsetX, offsetY, width, height, filename))
 
 end
 
-function imageSVG.fromImageFile(filename, width, height)
+function imageSVG_methods:addEmbedImage(filename, width, height, offsetX, offsetY)
+    
+    local image64 = toImage64(filename)
+
+    table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"\
+    xlink:href=\"data:image/png;base64,%s \"/>", offsetX, offsetY, width, height, image64))
+
+end
+function imageSVG.fromImageFile(filename, width, height, absolute)
 
     mySVG = imageSVG({width = width, height = height})
     mySVG:setHeader()
     mySVG:setFooter()
-    mySVG:addImage(filename, width, height, 0, 0)
+
+    absolute = absolute or false
+    
+    mySVG:addImage(filename, width, height, 0, 0, absolute)
     return mySVG  
 end

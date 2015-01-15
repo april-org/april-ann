@@ -32,10 +32,10 @@ package{ name = "mathcore",
        file = "c_src/*.cu",
        dest_dir = "build",
      },
-     -- luac{
-     --   orig_dir = "lua_src",
-     --   dest_dir = "build",
-     -- },
+     luac{
+       orig_dir = "lua_src",
+       dest_dir = "build",
+     },
      build_bind{ file = "binding/bind_mathcore.lua.cc", dest_dir = "build" },
    },
    target{

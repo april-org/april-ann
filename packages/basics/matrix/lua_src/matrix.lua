@@ -105,7 +105,7 @@ class.extend(matrix, "index",
              } ..
                function(self,dim,idx)
                  assert(type(dim) == "number",
-                        "Needs a number as second argument")
+                        "Needs a number as first argument")
                  if type(idx) == "table" then idx = matrixInt32(idx)
                  elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                  end
@@ -126,7 +126,7 @@ class.extend(matrix, "index",
                  local result_submat,self_submat
                  idx:map(function(p)
                      april_assert(p >= 1 and p <= dim_bound,
-                                  "Index number %d out-of-bounds", i)
+                                  "Index number %d out-of-bounds", p)
                      assert(not dest_sw:is_end())
                      self_sw:set_at_window(p)
                      result_submat = dest_sw:get_matrix(result_submat)      
@@ -155,6 +155,8 @@ class.extend(matrix, "indexed_fill",
                },
              } ..
              function(self,dim,idx,val)
+               assert(type(dim) == "number",
+                      "Needs a number as first argument")
                if type(idx) == "table" then idx = matrixInt32(idx)
                elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                end
@@ -197,6 +199,8 @@ class.extend(matrix, "indexed_copy",
                },
              } ..
              function(self,dim,idx,other)
+               assert(type(dim) == "number",
+                      "Needs a number as first argument")
                if type(idx) == "table" then idx = matrixInt32(idx)
                elseif class.is_a(idx, matrixBool) then idx = idx:to_index()
                end
