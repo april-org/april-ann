@@ -8,6 +8,9 @@ Master branch release
 
 ### API Changes
 
+- Simplified `math.add`, `math.sub`, ... and other math extensions for
+  reductions, their original behavior can be emulated by using `bind` function.
+- Added `bind` function to freeze any positional argument of any Lua function.
 - Function `stats.boot` uses `multiple_unpack` to allow a table of sizes and the
   generation of multiple index matrices.
 - Added `multiple_unpack` Lua function.

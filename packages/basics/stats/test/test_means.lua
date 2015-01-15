@@ -17,7 +17,7 @@ T("MeansTest", function()
     local m = matrix(3,4):linear(1)
     check.number_eq(stats.amean(m), m:sum()/m:size())
     check.number_eq(stats.gmean(m),
-                    iterator(range(1,12)):reduce(math.mul(),1)^(1/m:size()))
+                    iterator(range(1,12)):reduce(math.mul,1)^(1/m:size()))
     check.number_eq(stats.hmean(m),
-                    m:size() / iterator(range(1,12)):map(function(x) return 1/x end):reduce(math.add(),0))             
+                    m:size() / iterator(range(1,12)):map(function(x) return 1/x end):reduce(math.add,0))
 end)

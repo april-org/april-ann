@@ -184,16 +184,40 @@ function april_print_script_header(arg,file)
   end
 end
 
+-- auxiliary function for bind
+local function merge_unpack(t1, t2, i, j, n, m)
+  i,j = i or 1, j or 1
+  n,m = n or t1.n, m or t2.n
+  if i <= n then
+    if t1[i] ~= nil then
+      return t1[i],merge_unpack(t1, t2, i+1, j, n, m)
+    else
+      return t2[j],merge_unpack(t1, t2, i+1, j+1, n, m)
+    end
+  elseif j <= m then
+    return t2[j],merge_unpack(t1, t2, i, j+1, n, m)
+  end
+end
+
+-- allow to bind arguments to any Lua function (only variadic arguments)
+function bind(func, ...)
+  local args = table.pack(...)
+  return function(...)
+    return func(merge_unpack(args, table.pack(...)))
+  end
+end
+
 -- unpacks together several tables, by recursion (it is limited to short tables)
-local function private_munpack(i,j,...)
+local function private_munpack(i, j, m, ...)
   local n = select('#', ...)
   i,j = i or 1, j or 1
   if i <= n then
     local t = select(i, ...)
-    if t[j] ~= nil then
-      return t[j],private_munpack(i,j+1,...)
+    local m = m or t.n or #t
+    if j <= m then
+      return t[j],private_munpack(i, j+1, m, ...)
     else
-      return private_munpack(i+1,1,...)
+      return private_munpack(i+1, 1, nil, ...)
     end
   end
 end
@@ -201,7 +225,7 @@ function multiple_unpack(...)
   if select('#', ...) == 1 then
     return table.unpack(...)
   else
-    return private_munpack(1, 1, ...)
+    return private_munpack(1, 1, nil, ...)
   end
 end
 
@@ -462,114 +486,84 @@ end
 
 -- auxiliary function for fast development of reductions
 function math.lnot(a)
-  if a then return not a
-  else return function(a) return not a end
-  end
+  assert(a, "Needs one argument, you can use bind function to freeze any arg")
+  return not a
 end
 -- auxiliary function for fast development of reductions
 function math.lor(a,b)
-  if a and b then return a or b end
-  if not a and not b then return function(a,b) return a or b end end
-  if b == nil then
-    return function(b) return a or b end
-  end
-  error("Incorrect arguments")
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a or b
 end
+
 -- auxiliary function for fast development of reductions
 function math.land(a,b)
-  if a and b then return a and b end
-  if not a and not b then return function(a,b) return a and b end end
-  if b == nil then
-    return function(b) return a and b end
-  end
-  error("Incorrect arguments")
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a and b
 end
+
 -- auxiliary function for fast development of reductions
 function math.ge(a,b)
-  if a and b then return a>=b end
-  if not a and not b then return function(a,b) return a>=b end end
-  if b == nil then
-    return function(b) return a>=b end
-  elseif a == nil then
-    return function(a) return a>=b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a>=b
 end
+
 -- auxiliary function for fast development of reductions
 function math.gt(a,b)
-  if a and b then return a>b end
-  if not a and not b then return function(a,b) return a>b end end
-  if b == nil then
-    return function(b) return a>b end
-  elseif a == nil then
-    return function(a) return a>b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a>b
 end
+
 -- auxiliary function for fast development of reductions
 function math.le(a,b)
-  if a and b then return a<=b end
-  if not a and not b then return function(a,b) return a<=b end end
-  if b == nil then
-    return function(b) return a<=b end
-  elseif a == nil then
-    return function(a) return a<=b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a<=b
 end
+
 -- auxiliary function for fast development of reductions
 function math.lt(a,b)
-  if a and b then return a<b end
-  if not a and not b then return function(a,b) return a<b end end
-  if b == nil then
-    return function(b) return a<b end
-  elseif a == nil then
-    return function(a) return a<b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a<b
 end
+
 -- auxiliary function for fast development of reductions
 function math.eq(a,b)
-  if a and b then return a==b end
-  if not a and not b then return function(a,b) return a==b end end
-  if b == nil then
-    return function(b) return a==b end
-  end
-  error("Incorrect arguments")
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a==b
 end
+
 -- auxiliary function for fast development of reductions
 function math.add(a,b)
-  if a and b then return a+b end
-  if not a and not b then return function(a,b) return a+b end end
-  if b == nil then
-    return function(b) return a+b end
-  end
-  error("Incorrect arguments")
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a+b
 end
+
 -- auxiliary function for fast development of reductions
 function math.sub(a,b)
-  if a and b then return a-b end
-  if not a and not b then return function(a,b) return a-b end end
-  if b == nil then
-    return function(b) return a-b end
-  elseif a == nil then
-    return function(a) return a-b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a-b
 end
+
 -- auxiliary function for fast development of reductions
 function math.mul(a,b)
-  if a and b then return a*b end
-  if not a and not b then return function(a,b) return a*b end end
-  if b == nil then
-    return function(b) return a*b end
-  end
-  error("Incorrect arguments")
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a*b
 end
+
 -- auxiliary function for fast development of reductions
 function math.div(a,b)
-  if a and b then return a/b end
-  if not a and not b then return function(a,b) return a/b end end
-  if b == nil then
-    return function(b) return a/b end
-  elseif a == nil then
-    return function(a) return a/b end
-  end
+  assert(a and b,
+         "Needs one argument, you can use bind function to freeze any arg")
+  return a/b
 end
 
 -- Redondea un valor real
@@ -674,6 +668,8 @@ function string.get_path(path_with_filename, sep)
   local sep=sep or'/'
   return path_with_filename:match("(.*"..sep..")") or "./"
 end
+
+string.dirname = string.get_path -- synonim
 
 function string.lines_of(t)
   return string.gmatch(t,"[^\n]+")

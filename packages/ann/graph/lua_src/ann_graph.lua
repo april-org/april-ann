@@ -1035,7 +1035,7 @@ end
 
 add_methods.precompute_output_size = function(self, tbl, n)
   assert(#tbl == 1, "Needs a flattened input")
-  return iterator(tbl):map(math.div(nil,n)):table()
+  return iterator(tbl):map(bind(math.div, nil, n)):table()
 end
 
 ---------------------------------------------------------------------------
@@ -1138,7 +1138,7 @@ end
 
 cmul_methods.precompute_output_size = function(self, tbl, n)
   assert(#tbl == 1, "Needs a flattened input")
-  return iterator(tbl):map(math.div(nil,2)):table()
+  return iterator(tbl):map(bind(math.div, nil, 2)):table()
 end
 
 ---------------------------------------------------------------------------
