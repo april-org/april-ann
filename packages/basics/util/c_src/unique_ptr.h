@@ -37,6 +37,16 @@ namespace AprilUtils {
    * delete the owned resource. In other words, by default it does nothing when
    * referneces a pointer, but executes delete or delete[] when its time
    * expires.
+   *
+   * @note Avoid using this class as return value in functions, it is
+   * safer to return a plain pointer which can be captured in tha assignment,
+   * as the following example does:
+   * @code
+   * float *foo(int sz) { return new float[sz]; }
+   * int main() {
+   *   AprilUtils::UniquePtr<float []> ptr = foo(10);
+   * }
+   * @endcode
    */
   template< typename T,
             typename Referencer=StandardReferencer<T>,

@@ -57,11 +57,6 @@ namespace Basics {
   template <typename T>
   void Matrix<T>::allocate_memory(int size) {
     data.reset( new AprilMath::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
-#ifndef NDEBUG
-    // Initialization to NaN allows to find not initialized memory blocks.
-    AprilMath::MatrixExt::Operations::
-      matFill(this, AprilMath::Limits<T>::quiet_NaN());
-#endif
   }
 
   /// Release of the memory allocated for data pointer.

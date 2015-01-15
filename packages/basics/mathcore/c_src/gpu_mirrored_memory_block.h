@@ -36,6 +36,7 @@ extern "C" {
 }
 
 #include "april_assert.h"
+#include "cmath_overloads.h"
 #include "referenced.h"
 #include "complex_number.h"
 #include "unused_variable.h"
@@ -620,7 +621,15 @@ namespace AprilMath {
     /// Constructor with allocation of memory, the memory pointer will be properly
     /// allocated and freed at destruction.
     GPUMirroredMemoryBlock(unsigned int sz) :
-      GPUMirroredMemoryBlockBase(sz*sizeof(T)) { }
+      GPUMirroredMemoryBlockBase(sz*sizeof(T)) {
+#ifndef NDEBUG
+      // Initialization to NaN allows to find not initialized memory blocks.
+      T *mem = getPPALForWrite();
+      for (unsigned int i=0; i<getSize(); ++i) {
+        mem[i] = AprilMath::Limits<T>::quiet_NaN();
+      }
+#endif
+    }
   
     virtual ~GPUMirroredMemoryBlock() { }
   
