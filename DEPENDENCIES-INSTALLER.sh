@@ -13,7 +13,7 @@ if [ $UNAME = "Linux" ]; then
 	    if ! dpkg -l $packages > /dev/null; then
 		sudo apt-get -qq update
 		sudo apt-get install -qq $packages
-		if ! locate liblapacke.so; then
+		if ! ldconfig -p | grep liblapacke > /dev/null; then
                     cwd=$(pwd)
                     cd /tmp/ &&
                     wget http://www.netlib.org/lapack/lapack-3.5.0.tgz &&
