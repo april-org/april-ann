@@ -9,30 +9,36 @@ if [ $UNAME = "Linux" ]; then
             exit 10
         fi
         if [[ $ubuntu_release == "12.04" ]]; then
-	    sudo apt-get -qq update
-	    sudo apt-get install -qq gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev libzip-dev
-            if ! locate liblapacke.so; then
-                cwd=$(pwd)
-                cd /tmp/ &&
-                wget http://www.netlib.org/lapack/lapack-3.5.0.tgz &&
-                tar zxvf lapack-3.5.0.tgz &&
-                cd lapack-3.5.0 &&
-                cmake -DBUILD_SHARED_LIBS=1 -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . &&
-                make &&
-                sudo make install
-                if [[ $? -ne 0 ]]; then
-                    echo "Error installing dependencies"
-                    exit 10
-                fi
-                cd $cwd
-            fi
+	    packages="gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev libzip-dev"
+	    if ! dpkg -l $packages > /dev/null; then
+		sudo apt-get -qq update
+		sudo apt-get install -qq $packages
+		if ! locate liblapacke.so; then
+                    cwd=$(pwd)
+                    cd /tmp/ &&
+                    wget http://www.netlib.org/lapack/lapack-3.5.0.tgz &&
+                    tar zxvf lapack-3.5.0.tgz &&
+                    cd lapack-3.5.0 &&
+                    cmake -DBUILD_SHARED_LIBS=1 -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . &&
+                    make &&
+                    sudo make install
+                    if [[ $? -ne 0 ]]; then
+			echo "Error installing dependencies"
+			exit 10
+                    fi
+                    cd $cwd
+		fi
+	    fi
         else
-	    sudo apt-get -qq update
-            sudo apt-get install -qq gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev libzip-dev
-            if [[ $? -ne 0 ]]; then
-                echo "Error installing dependencies, only works with ubuntu >= 12.04"
-                exit 10
-            fi
+	    packages="gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev libzip-dev"
+	    if ! dpkg -l $packages > /dev/null; then
+		sudo apt-get -qq update
+		sudo apt-get install -qq gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev libzip-dev
+		if [[ $? -ne 0 ]]; then
+                    echo "Error installing dependencies, only works with ubuntu >= 12.04"
+                    exit 10
+		fi
+	    fi
         fi
         dest=$(tempfile)
         echo -e '#include "lua5.2-deb-multiarch.h"\nint main() { return 0; }\n' > $dest.c
