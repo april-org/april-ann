@@ -41,3 +41,58 @@ T("SparseDotProductTest",
       end
     end
 end)
+--
+T("SparseLogistic",
+  function()
+    local mop  = matrix.op
+    local rnd  = random(1234)
+    local beta = 1.0
+    local rho  = 0.3
+    local dist = stats.dist.binomial(1, 0.6)
+    local net  = ann.components.actf.sparse_logistic{ penalty=beta, sparsity=rho }
+    local loss = ann.loss.mse()
+    for N = 1,4 do -- mini-batch size (bunch size)
+      for M = 1,16 do -- number of neurons
+        local input  = matrix(N, M):uniformf(-3, 3, rnd)
+        local output = net:forward(input)
+        local target = matrix(N, M)
+        dist:sample( rnd, target:rewrap( target:size(), 1 ) )
+        local gradients = net:backprop( loss:gradient(output, target) )
+        --
+        local EPS = mathcore.limits.float.epsilon()*2
+        function sparsity_penalty(output, rho)
+          local hat_rho = output:sum(1):scal( 1/output:dim(1) )
+          hat_rho:clamp(EPS, 1.0 - EPS)
+          local l = rho*mop.log(rho/hat_rho) + (1-rho)*mop.log((1 - rho)/(1-hat_rho))
+          return l:sum()
+        end
+        --
+        function compute_loss(output, target)
+          local l = loss:compute_loss(output, target)
+          return l + beta*sparsity_penalty(output, rho)
+        end
+        --
+        local REL = 0.05 -- relative error
+        local E = 0.001  -- difference value
+        for i=1,N do
+          for j=1,M do
+            local aux = input:get(i, j)
+            input:set(i, j, aux + E)
+            local lp = compute_loss( net:forward(input), target )
+            input:set(i, j, aux - E)
+            local ln = compute_loss( net:forward(input), target )
+            input:set(i, j, aux)
+            local hat_g = (lp - ln)/(2*E)
+            local g = gradients:get(i, j) / N
+            -- printf("%3d  %3d  %.4f  %.4f  %.4f  %.4f\n",
+            --        i, j, hat_g, g,
+            --        math.abs(hat_g - g)/(math.abs(g) + math.abs(hat_g)),
+            --        output:get(i,j), target:get(i,j))
+            if hat_g>2*E and g>2*E then
+              check.number_eq(hat_g, g, REL, "%.4f  %.4f"%{ hat_g, g})
+            end
+          end
+        end
+      end
+    end
+end)

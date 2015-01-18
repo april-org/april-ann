@@ -297,9 +297,19 @@ autodiff.op[MATRIX] = {
   
   div = function(a,b)
     local a,b = coercion(a),coercion(b)
-    assert(a.dtype ~= MATRIX or b.dtype ~= MATRIX,
-	   "Incorrect types, div between MATRIX and MATRIX is not implemented")
-    return autodiff.op.cmul( a, (b^(-1)) )
+    if a.dtype == CONSTANT or a.dtype == SCALAR then
+      assert(b.dtype == MATRIX,
+	   "Incorrect types, expected MATRIX as second argument")
+      return a * (b^(-1))
+    elseif b.dtype == CONSTANT or b.dtype == SCALAR then
+      assert(a.dtype == MATRIX,
+	   "Incorrect types, expected MATRIX as first argument")
+      return a * (1/b)
+    else
+      assert(a.dtype == MATRIX and b.dtype == MATRIX,
+             "Incorrect types, expected MATRIX for both arguments")
+      return autodiff.op.cmul(a, (b^(-1)))
+    end
   end,
 
   -- pow by an scalar
@@ -891,6 +901,28 @@ end
 					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+
+  dim = function(a, b)
+    local a,b = coercion(a),coercion(b)
+    local s = gen_op('dim', SCALAR, {a,b},
+		     function(self, ...)
+		       local a,b = self.args[1]:eval(...),self.args[2]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:dim(b)
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local b = self.args[2]
+		       local str_tbl = { a.var_name, ':dim(', b.var_name, ')' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+    end)
+    -- TODO: if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
