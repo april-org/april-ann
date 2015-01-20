@@ -1,21 +1,21 @@
-LUALIB = /usr/lib/lua/5.2
-BIN = /usr/bin
+PREFIX = /usr
 UNAME = `uname`
 LINUX_SUFIX = `( ldconfig -p | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so > /dev/null && echo "mkl" ) || ( ldconfig -p | grep libatlas > /dev/null && echo "atlas" ) || echo ""`
 
 # homebrew
 ifneq ("$(wildcard /usr/local/include/lua.h)","")
 DARWIN_SUFIX = homebrew
-LUALIB = /usr/local/lib/lua/5.2
-BIN = /usr/local/bin
+PREFIX = /usr/local
 endif
 
 # macports
 ifneq ("$(wildcard /opt/local/include/lua.h)","")
 DARWIN_SUFIX = macports
-LUALIB = /opt/local/lib/lua/5.2
-BIN = /opt/local/bin
+PREFIX = /opt/local
 endif
+
+LUALIB = $(PREFIX)/lib/lua/5.2
+BIN = $(PREFIX)/bin
 
 ALL: auto-release
 

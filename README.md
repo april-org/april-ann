@@ -65,9 +65,18 @@ First, it is mandatory to configure (only the first time) the repo PATH and othe
 Second, you could compile the APRIL version which you need. We have developed compiling files for using
 different libraries. It is simple, you do
 
-```$ make TARGET```
+```$ make```
 
-where TARGET is one of the following, depending on which version you want:
+and it would detect automatically your platform (Darwin or Linux) and your
+target SUFIX (mkl, atlas, macports or homebrew). The automatic targets are:
+
+- **release** automatic platform and sufix detection target (the same as `make`
+  without any argument).
+- **debug** automatic platform and sufix detection target for debug version.
+- **test** automatic platform and sufix detection target for test-debug version.
+
+There are more available targets, just depending in your particular system
+installation you can execute them by using `$ make TARGET`:
 
 - **release-mkl** needs of MKL library installed at `/opt/MKL` as prefix.
 - **release-atlas** needs of OMP and ATLAS library.
@@ -75,12 +84,20 @@ where TARGET is one of the following, depending on which version you want:
 - **release-cuda-mkl** needs CUDA and MKL installed at `/opt/MKL` as prefix.
 - **release-macports** needs Mac OS X with MacPorts and Accelerate Framework.
 - **release-homebrew** needs Mac OS X with Homebrew and Accelerate Framework.
-- **release** it is the default target if nothing indicated when `make`
-  invocation and is equivalent to **release-mkl**.
 
 Besides this targets, it is possible to compile for debug replacing release
 string with **debug** string, and for testing replacing release by
 **test-debug**.
+
+The makefile has the following variables which can be forced by the user:
+
+- **PREFIX** indicates the prefix for libraries and binaries. In Linux it is
+  `/usr`, in Darwin it depends on MacPorts (`/opt/local`) or Homebrew
+  (`/usr/local`).
+- **LUALIB** indicates where Lua modules are installed, by default it is
+  `$(PREFIX)/lib/lua/5.2`
+- **BIN** indicates where you want to install binary files, by default it is
+  `$(PREFIX)/bin`
 
 Each of this targets will need a little configuration depending on your library
 installation. For example, in order to compile with MKL, the file
@@ -117,9 +134,10 @@ installation. For example, in order to compile with MKL, the file
   },
 ```
 
-You need to especify the `-I` option to the compiler, and all the extra_libs stuff related with MKL.
-Exists one build file for each possible target: build_release.lua, build_debug.lua, build_mkl_release.lua,
-build_mkl_debug.lua, ... and so on.
+You need to especify the `-I` option to the compiler, and all the extra_libs
+stuff related with MKL.  Exists one build file for each possible target:
+`build_release.lua`, `build_debug.lua`, `build_mkl_release.lua`,
+`build_mkl_debug.lua`, ... and so on.
 
 The binary will be generated at `bin/april-ann`, which incorporates the Lua 5.2
 interpreter and works without any dependency in Lua.  Besides, a shared library
