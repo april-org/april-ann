@@ -3,18 +3,18 @@ BIN = /usr/bin
 UNAME = `uname`
 LINUX_SUFIX = `( ldconfig -p | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so > /dev/null && echo "mkl" ) || ( ldconfig -p | grep libatlas > /dev/null && echo "atlas" ) || echo ""`
 
-# macports
-ifneq ("`which port`","")
-DARWIN_SUFIX = macports
-LUALIB = /opt/local/lib/lua/5.2
-BIN = /opt/local/bin
-endif
-
 # homebrew
-ifneq ("`which brew`","")
+ifneq ("$(wildcard /usr/local/include/lua.h)","")
 DARWIN_SUFIX = homebrew
 LUALIB = /usr/local/lib/lua/5.2
 BIN = /usr/local/bin
+endif
+
+# macports
+ifneq ("$(wildcard /opt/local/include/lua.h)","")
+DARWIN_SUFIX = macports
+LUALIB = /opt/local/lib/lua/5.2
+BIN = /opt/local/bin
 endif
 
 ALL: auto-release
@@ -36,39 +36,45 @@ auto-test-debug:
 # RELEASE
 
 system-release-Linux: check_linux_release
+	@echo "Sufix $(LINUX_SUFIX)"
 	@make release-$(LINUX_SUFIX)
 
 system-release-Darwin: check_darwin_release
+	@echo "Sufix $(DARWIN_SUFIX)"
 	@make release-$(DARWIN_SUFIX)
 
 # DEBUG
 
 system-debug-Linux: check_linux_release
+	@echo "Sufix $(LINUX_SUFIX)"
 	@make debug-$(LINUX_SUFIX)
 
 system-debug-Darwin: check_darwin_release
+	@echo "Sufix $(DARWIN_SUFIX)"
 	@make debug-$(DARWIN_SUFIX)
 
 # TEST-DEBUG
 
 system-test-debug-Linux: check_linux_release
+	@echo "Sufix $(LINUX_SUFIX)"
 	@make test-debug-$(LINUX_SUFIX)
 
 system-test-debug-Darwin: check_darwin_release
+	@echo "Sufix $(DARWIN_SUFIX)"
 	@make test-debug-$(DARWIN_SUFIX)
 
 # CHECK
 
 check_linux_release:
 ifeq ("$(LINUX_SUFIX)", "")
-        @echo "Impossible to detect the proper release!"
-        exit 1
+	@echo "Impossible to detect the proper release!"
+	@exit 1
 endif
 
 check_darwin_release:
 ifeq ("$(DARWIN_SUFIX)", "")
-        @echo "Impossible to detect macports or homebrew!"
-        exit 1
+	@echo "Impossible to detect macports or homebrew!"
+	@exit 1
 endif
 
 #############################################################################
