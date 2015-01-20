@@ -87,5 +87,6 @@ autodiff.op[CONSTANT] = {
   atan = function(a) local a=coercion(a) return autodiff[CONSTANT]( math.atan( a:eval() ) ) end,
   -- matrix expressions
   transpose = function(a) local a=coercion(a) return autodiff[CONSTANT]( a:eval() ) end,
-  fill = function(a,b) local a,b=coercion(a),coercion(b) return autodiff[CONSTANT](b) end,
+  fill = function(a,b) local a,b=coercion(a),coercion(b) return autodiff[CONSTANT](b:eval()) end,
+  cmul = function(a,b) local a,b=coercion(a),coercion(b) return autodiff[CONSTANT](a:eval()*b:eval()) end,
 }

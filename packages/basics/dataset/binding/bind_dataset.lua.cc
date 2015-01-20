@@ -980,17 +980,19 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "dataset", "vd", "zero", "one", "random", 0);
+  check_table_fields(L, 1, "dataset", "zero", "one", "random", "prob",
+                     (const char *)0);
   DataSetFloat *ds;
   MTRand *random;
-  double vd;
+  double prob;
   float zero, one;
   LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
   LUABIND_GET_TABLE_PARAMETER(1, random,  MTRand,       random);
-  LUABIND_GET_TABLE_PARAMETER(1, vd,      double,       vd);
+  LUABIND_GET_TABLE_PARAMETER(1, prob,    double,       prob);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float, zero, 0.0f);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float, one,  1.0f);
-  DataSetFloat *obj = new SaltPepperNoiseDataSetFloat(ds, random, vd, zero, one);
+  DataSetFloat *obj = new SaltPepperNoiseDataSetFloat(ds, random,
+                                                      prob, zero, one);
   LUABIND_RETURN(DataSetFloat,obj);
 }
 //BIND_END

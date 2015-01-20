@@ -51,7 +51,7 @@ params_pretrain = {
 			     random   = perturbation_prob } end,
 			 function(ds) return dataset.salt_pepper_noise{
 			     dataset  = ds, -- WARNING: the function argument
-			     vd       = 0.30,
+			     prob     = 0.30,
 			     zero     = 0.0,
 			     one      = 1.0,
 			     random   = perturbation_prob } end },

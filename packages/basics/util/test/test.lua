@@ -25,4 +25,10 @@ T("MultipleUnpackTest", function()
     for i=1,#t do check.eq(t[i], i) end
     local t = table.pack( multiple_unpack{1,2,3,4,5,6,7,8,9} )
     for i=1,#t do check.eq(t[i], i) end
+    local t = table.pack( multiple_unpack(table.pack(1, nil, 3, nil),
+                                          table.pack(5, nil, nil, 8)) )
+    check.eq(t.n, 8)
+    for i=1,t.n do
+      check.TRUE(t[i] == i or t[i] == nil)
+    end
 end)
