@@ -1,15 +1,83 @@
-LINUX_LUALIB = /usr/lib/lua/5.2
-DARWIN_LUALIB = /opt/local/lib/lua/5.2
+LUALIB = /usr/lib/lua/5.2
 BIN = /usr/bin
 UNAME = `uname`
+LINUX_SUFIX = `( ldconfig -p | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so > /dev/null && echo "mkl" ) || ( ldconfig -p | grep libatlas > /dev/null && echo "atlas" ) || echo ""`
 
-ALL: release
+# macports
+ifneq ("`which port`","")
+DARWIN_SUFIX = macports
+LUALIB = /opt/local/lib/lua/5.2
+BIN = /opt/local/bin
+endif
 
-release: release-mkl
+# homebrew
+ifneq ("`which brew`","")
+DARWIN_SUFIX = homebrew
+LUALIB = /usr/local/lib/lua/5.2
+BIN = /usr/local/bin
+endif
 
-debug: debug-no-omp
+ALL: auto-release
 
-test: test-debug-no-omp
+########################## AUTOMACTIC SECTION ############################
+
+auto-release:
+	@echo "System $(UNAME)"
+	@make system-release-$(UNAME)
+
+auto-debug:
+	@echo "System $(UNAME)"
+	@make system-debug-$(UNAME)
+
+auto-test-debug:
+	@echo "System $(UNAME)"
+	@make system-test-debug-$(UNAME)
+
+# RELEASE
+
+system-release-Linux: check_linux_release
+	@make release-$(LINUX_SUFIX)
+
+system-release-Darwin: check_darwin_release
+	@make release-$(DARWIN_SUFIX)
+
+# DEBUG
+
+system-debug-Linux: check_linux_release
+	@make debug-$(LINUX_SUFIX)
+
+system-debug-Darwin: check_darwin_release
+	@make debug-$(DARWIN_SUFIX)
+
+# TEST-DEBUG
+
+system-test-debug-Linux: check_linux_release
+	@make test-debug-$(LINUX_SUFIX)
+
+system-test-debug-Darwin: check_darwin_release
+	@make test-debug-$(DARWIN_SUFIX)
+
+# CHECK
+
+check_linux_release:
+ifeq ("$(LINUX_SUFIX)", "")
+        @echo "Impossible to detect the proper release!"
+        exit 1
+endif
+
+check_darwin_release:
+ifeq ("$(DARWIN_SUFIX)", "")
+        @echo "Impossible to detect macports or homebrew!"
+        exit 1
+endif
+
+#############################################################################
+
+release: auto-release
+
+debug: auto-debug
+
+test: auto-test-debug
 
 document:
 	rm -Rf doxygen_doc build_doc
@@ -28,11 +96,11 @@ test-debug-atlas: debug-atlas
 test-debug-no-omp: debug-no-omp
 	lua profile_build_scripts/build_debug_no_omp.lua test
 
-# TEST for MACOSX MACPORTS
+# TEST for DARWIN MACPORTS
 test-debug-macports: debug-macports
 	lua profile_build_scripts/build_debug_macports.lua test
 
-# TEST for MACOSX HOMEBREW
+# TEST for DARWIN HOMEBREW
 test-debug-homebrew: debug-homebrew
 	lua profile_build_scripts/build_debug_homebrew.lua test
 
@@ -50,11 +118,11 @@ test-debug-pi: debug-pi
 
 #############################################################################
 
-# RELEASE for MACOSX MACPORTS
+# RELEASE for DARWIN MACPORTS
 release-macports:
 	lua profile_build_scripts/build_release_macports.lua
 
-# RELEASE for MACOSX HOMEBREW
+# RELEASE for DARWIN HOMEBREW
 release-homebrew:
 	lua profile_build_scripts/build_release_homebrew.lua
 
@@ -80,11 +148,11 @@ release-no-omp:
 
 #############################################################################
 
-# DEBUG for MACOSX MACPORTS
+# DEBUG for DARWIN MACPORTS
 debug-macports:
 	lua profile_build_scripts/build_debug_macports.lua
 
-# DEBUG for MACOSX HOMEBREW
+# DEBUG for DARWIN HOMEBREW
 debug-homebrew:
 	lua profile_build_scripts/build_debug_homebrew.lua
 
@@ -120,19 +188,23 @@ uninstall:
 	make uninstall-$(UNAME)
 
 install-Darwin:
-	mkdir -p $(DARWIN_LUALIB)
-	install lib/aprilann.so $(DARWIN_LUALIB)
+	mkdir -p $(LUALIB)
+	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
 install-Linux:
-	mkdir -p $(LINUX_LUALIB)
-	install lib/aprilann.so $(LINUX_LUALIB)
+	mkdir -p $(LUALIB)
+	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
 uninstall-Darwin:
-	rm -f $(DARWIN_LUALIB)/aprilann.so
+	rm -f $(LUALIB)/aprilann.so
 	rm -f $(BIN)/april-ann
 
 uninstall-Linux:
-	rm -f $(LINUX_LUALIB)/aprilann.so
+	rm -f $(LUALIB)/aprilann.so
 	rm -f $(BIN)/april-ann
+
+##############################################################################
+
+.PHONY: all 
