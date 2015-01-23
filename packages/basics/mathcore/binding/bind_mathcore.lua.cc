@@ -53,7 +53,7 @@ namespace AprilMath {
   }
 #undef FUNCTION_NAME
 
-#define FUNCTION_NAME "set"
+#define FUNCTION_NAME "raw_set"
   template<typename T>
   void GPUMirroredMemoryBlockSet(lua_State *L,
                                  GPUMirroredMemoryBlock<T> *obj) {
@@ -61,21 +61,21 @@ namespace AprilMath {
     unsigned int i;
     LUABIND_GET_PARAMETER(1,uint,i);
     LUABIND_GET_PARAMETER(2,number,value);
-    if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+    if (i >= obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
     T *ptr = obj->getPPALForWrite();
-    ptr[i-1] = value;
+    ptr[i] = value;
   }
 #undef FUNCTION_NAME
 
-#define FUNCTION_NAME "get"
+#define FUNCTION_NAME "raw_get"
   template<typename T>
   T GPUMirroredMemoryBlockGet(lua_State *L,
                               GPUMirroredMemoryBlock<T> *obj) {
     unsigned int i;
     LUABIND_GET_PARAMETER(1,uint,i);
-    if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+    if (i >= obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
     const T *ptr = obj->getPPALForRead();
-    return ptr[i-1];
+    return ptr[i];
   }
 #undef FUNCTION_NAME
 
@@ -132,7 +132,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD FloatGPUMirroredMemoryBlock set
+//BIND_METHOD FloatGPUMirroredMemoryBlock raw_set
 {
   LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
@@ -140,7 +140,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD FloatGPUMirroredMemoryBlock get
+//BIND_METHOD FloatGPUMirroredMemoryBlock raw_get
 {
   LUABIND_RETURN(float,GPUMirroredMemoryBlockGet(L,obj));
 }
@@ -173,7 +173,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD DoubleGPUMirroredMemoryBlock set
+//BIND_METHOD DoubleGPUMirroredMemoryBlock raw_set
 {
   LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
@@ -181,7 +181,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD DoubleGPUMirroredMemoryBlock get
+//BIND_METHOD DoubleGPUMirroredMemoryBlock raw_get
 {
   LUABIND_RETURN(double,GPUMirroredMemoryBlockGet(L,obj));
 }
@@ -214,7 +214,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD Int32GPUMirroredMemoryBlock set
+//BIND_METHOD Int32GPUMirroredMemoryBlock raw_set
 {
   LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
@@ -222,7 +222,7 @@ namespace AprilMath {
 }
 //BIND_END
 
-//BIND_METHOD Int32GPUMirroredMemoryBlock get
+//BIND_METHOD Int32GPUMirroredMemoryBlock raw_get
 {
   LUABIND_RETURN(int,GPUMirroredMemoryBlockGet(L,obj));
 }

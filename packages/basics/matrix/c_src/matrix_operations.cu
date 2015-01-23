@@ -377,13 +377,7 @@ namespace AprilMath {
           ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
                       obj->size(), other->size());
         }
-#ifdef USE_MKL
-        // Limit<int>::max() avoids OMP parallel for
-        return MatrixSpanMap1<T,T>(other, CurriedAxpy<T>(alpha), obj,
-                                   AprilMath::Limits<int>::max());
-#else
         return MatrixSpanMap1<T,T>(other, CurriedAxpy<T>(alpha), obj);
-#endif
       }
 
       template <typename T>
@@ -763,13 +757,7 @@ namespace AprilMath {
       Matrix<T> *matScal(Matrix<T> *obj, const T value,
                          Matrix<T> *dest) {
         if (dest == 0) dest = obj;
-#ifdef USE_MKL
-        // Limit<int>::max() avoids OMP parallel for
-        return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), dest,
-                                   AprilMath::Limits<int>::max());
-#else
         return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), dest);
-#endif
       }
 
       template <typename T>
