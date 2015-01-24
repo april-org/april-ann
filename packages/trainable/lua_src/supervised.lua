@@ -67,6 +67,12 @@ trainable_supervised_trainer.constructor =
         "This parameter scales the gradients depending in the",
         "bunch_size and in the number of times the weight was used",
       },
+      {
+        "A gradient exploding limit [optional], by default",
+        "it is false. This parameter can be false/nil or a number indicating",
+        "the 2-norm limit of gradients, it can be useful to avoid gradient",
+        "exploding in optimizers like adadelta.",
+      },
     },
     outputs = { "Instantiated object" },
   } ..
@@ -80,9 +86,11 @@ trainable_supervised_trainer.constructor =
       local bunch_size  = t.bunch_size
       local optimizer   = t.optimizer
       local smooth_gradients = (t.smooth_gradients==nil or t.smooth_gradients)
+      local max_gradients_norm = t.max_gradients_norm
       trainable.supervised_trainer.constructor(self,
                                                model, loss, bunch_size,
-                                               optimizer, smooth_gradients)
+                                               optimizer, smooth_gradients,
+                                               max_gradients_norm)
       local weights = connections
       -- if not is_a(connections, matrix.dict) then
       --   weights = matrix.dict()
@@ -97,9 +105,10 @@ trainable_supervised_trainer.constructor =
       self:build{ weights = weights }
     else
       -- Constructor of a new object
-      local ann_component,loss_function,bunch_size,optimizer,smooth_gradients = ...
+      local ann_component,loss_function,bunch_size,optimizer,smooth_gradients,max_gradients_norm = ...
       local optimizer = optimizer or ann.optimizer.sgd()
       local smooth_gradients = (smooth_gradients==nil or smooth_gradients)
+      local max_gradients_norm = max_gradients_norm
       if loss_function and not is_a(loss_function, ann.loss) then
         error("The second parameter must be an instance of ann.loss")
       end
@@ -113,6 +122,7 @@ trainable_supervised_trainer.constructor =
       self.loss_function    = loss_function or false
       self.optimizer        = optimizer
       self.smooth_gradients = smooth_gradients
+      self.max_gradients_norm = max_gradients_norm
       self.weights_table    = {}
       self.components_table = {}
       self.component2weights_dict = {}
@@ -321,6 +331,19 @@ trainable_supervised_trainer_methods.size =
 
 ------------------------------------------------------------------------
 
+trainable_supervised_trainer_methods.set_max_gradients_norm =
+  april_doc{
+    class = "method",
+    summary = "Changes the max gradients norm parameter",
+    outputs = { "The caller object" },
+  } ..
+  function(self, max_gradients_norm)
+    self.max_gradients_norm = max_gradients_norm
+    return self
+  end
+
+------------------------------------------------------------------------
+
 function trainable_supervised_trainer_methods:to_lua_string(format)
   assert(self.is_built, "The component is not built")
   local t = { }
@@ -355,6 +378,11 @@ function trainable_supervised_trainer_methods:to_lua_string(format)
   if self.smooth_gradients ~= nil then
     table.insert(t, "smooth_gradients=")
     table.insert(t, tostring(self.smooth_gradients))
+    table.insert(t, ",\n")
+  end
+  if self.max_gradients_norm ~= nil then
+    table.insert(t, "max_gradients_norm=")
+    table.insert(t, tostring(self.max_gradients_norm))
     table.insert(t, ",\n")
   end
   table.insert(t, "}")
@@ -765,6 +793,7 @@ trainable_supervised_trainer_methods.train_step =
       "The bunch size [optional]",
       "A smooth gradients boolean [optional]",
       "A mask token [optional] (usually a matrix)",
+      "A max gradients norm [optional]",
     },
     outputs = {
       "The mean of loss function at current batch",
@@ -772,7 +801,7 @@ trainable_supervised_trainer_methods.train_step =
     },
   } ..
   function(self, input, target, loss, optimizer,
-           bunch_size, smooth_gradients, mask)
+           bunch_size, smooth_gradients, mask, max_gradients_norm)
     if type(input)  == "table" then input  = matrix(input)  end
     if type(target) == "table" then target = matrix(target) end
     if type(mask)   == "table" then mask   = matrix(mask) end
@@ -780,6 +809,7 @@ trainable_supervised_trainer_methods.train_step =
     local optimizer  = optimizer or self.optimizer or error("Needs an optimizer object")
     local bunch_size = bunch_size or self.bunch_size or 1
     local smooth_gradients = (smooth_gradients==nil or smooth_gradients)
+    local max_gradients_norm = max_gradients_norm
     if mask then
       assert( is_a(mask, matrix) )
       assert( is_a(target, matrix) )
@@ -821,6 +851,14 @@ trainable_supervised_trainer_methods.train_step =
                 local N = mat:get_shared_count()
                 N       = ( N>0 and N) or 1
                 mat:scal( 1.0/math.sqrt(N * bunch_size) )
+              end
+            end
+            -- gradient explode control
+            if max_gradients_norm then
+              local gradients_norm = matrix.dict.norm2(grads)
+              if gradients_norm > max_gradients_norm then
+                local ratio = max_gradients_norm / gradients_norm
+                matrix.dict.scal(grads, ratio)
               end
             end
             -- the loss, the gradients, and the loss matrix
@@ -1142,6 +1180,7 @@ trainable_supervised_trainer_methods.train_dataset =
           "was set at constructor, otherwise it is mandatory.",
         }, 
       ["smooth_gradients"] = "A smooth gradients boolean [optional]",
+      ["max_gradients_norm"] = "A maximum gradients norm [optional]",
     },
     outputs = {
       "A number with the mean loss of each training step",
@@ -1177,16 +1216,21 @@ trainable_supervised_trainer_methods.train_dataset =
         smooth_gradients = { type_match = "boolean",
                              mandatory  = false,
                              default=self.smooth_gradients },
+        max_gradients_norm = { type_match = "number",
+                               mandatory  = false,
+                               default=self.max_gradients_norm },
       }, t, true)
     assert(self.is_built,
            "Execute build method before call this method")
     local loss       = params.loss
     local optimizer  = params.optimizer
     local smooth_gradients = params.smooth_gradients
+    local max_gradients_norm = params.max_gradients_norm
     local mask_dataset = params.mask_dataset
     params.loss      = nil
     params.optimizer = nil
     params.smooth_gradients   = nil
+    params.max_gradients_norm = nil
     params.mask_dataset       = nil
     params.bunch_size         = params.bunch_size or self.bunch_size
     -- set to ZERO the accumulated of loss
@@ -1196,7 +1240,7 @@ trainable_supervised_trainer_methods.train_dataset =
       params.assert_output_size = self:get_output_size()
       for input_bunch,output_bunch,bunch_indexes in trainable.dataset_pair_iterator(params) do
         self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
-                        smooth_gradients)
+                        smooth_gradients, nil, max_gradients_norm)
       end
     else
       params.datasets = { params.input_dataset,
@@ -1209,7 +1253,7 @@ trainable_supervised_trainer_methods.train_dataset =
                                       self:get_output_size() }
       for input_bunch,output_bunch,mask_bunch,bunch_indexes in trainable.dataset_multiple_iterator(params) do
         self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
-                        smooth_gradients, mask_bunch)
+                        smooth_gradients, mask_bunch, max_gradients_norm)
       end
     end
     return loss:get_accum_loss()
@@ -1519,7 +1563,8 @@ trainable_supervised_trainer_methods.clone =
                                              nil,
                                              self.bunch_size,
                                              nil,
-                                             self.smooth_gradients)
+                                             self.smooth_gradients,
+                                             self.max_gradients_norm)
     if self.loss_function then
       obj:set_loss_function(self.loss_function:clone())
     end
