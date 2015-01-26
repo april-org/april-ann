@@ -167,23 +167,23 @@ namespace AprilMath {
   }
 
   // sparse CBLAS wrappers
-
-  void wrapperCblasAxpyi(int NNZ, float alpha,
-                         const float *x_mem, const int *x_ind,
-                         float *y_mem) {
-    cblas_saxpyi(NNZ, alpha, x_mem, x_ind, y_mem);
-  }
-
-  void wrapperCblasAxpyi(int NNZ, double alpha,
-                         const double *x_mem, const int *x_ind,
-                         double *y_mem) {
-    cblas_daxpyi(NNZ, alpha, x_mem, x_ind, y_mem);
-  }
-
-  void wrapperCblasAxpyi(int NNZ, ComplexF alpha,
-                         const ComplexF *x_mem, const int *x_ind,
-                         ComplexF *y_mem) {
-    cblas_caxpyi(NNZ, &alpha, x_mem, x_ind, y_mem);
+  
+  template<typename T>
+  void wrapperCblasAxpyi(int NNZ, T alpha,
+                         const T *x_mem, const int *x_ind,
+                         T *y_mem, unsigned int y_inc) {
+    if (alpha != 1.0f) {
+      for (int i=0; i<NNZ; ++i) {
+        int y_pos = x_ind[i] * y_inc;
+        y_mem[y_pos] += alpha * x_mem[i];
+      }
+    }
+    else {
+      for (int i=0; i<NNZ; ++i) {
+        int y_pos = x_ind[i] * y_inc;
+        y_mem[y_pos] += x_mem[i];
+      }
+    }
   }
 
   /***************************************
@@ -299,12 +299,11 @@ namespace AprilMath {
                     const GPUMirroredMemoryBlock<T> *x_values,
                     const Int32GPUMirroredMemoryBlock *x_indices,
                     GPUMirroredMemoryBlock<T>* y,
+                    unsigned int x_shift,
                     unsigned int y_shift,
                     unsigned int y_inc,
                     bool use_gpu)
   {
-    if (y_inc != 1)
-      ERROR_EXIT(128, "sparse AXPY not implemented for stride != 1\n");
     const T *x_values_mem;
     const int *x_indices_mem;
     T *y_mem;
@@ -313,13 +312,14 @@ namespace AprilMath {
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      if (y_inc != 1)
-        ERROR_EXIT(128, "Error, executing sparse AXPY in CUDA with inc != 1\n");
+      if (y_inc != 1) {
+        ERROR_EXIT(128, "sparse AXPY not implemented for stride != 1\n");
+      }
       cusparseStatus_t status;
       cusparseHandle_t handle = CUDA::GPUHelper::getSparseHandler();
       //printf("Doing a saxpy with comp=1 & cuda=1\n");
-      x_values_mem  = x_values->getGPUForRead();
-      x_indices_mem = x_indices->getGPUForRead();
+      x_values_mem  = x_values->getGPUForRead() + x_shift;
+      x_indices_mem = x_indices->getGPUForRead() + x_shift;
       y_mem = y->getGPUForReadAndWrite() + y_shift;
     
       status = cusparseSetStream(handle, CUDA::GPUHelper::getCurrentStream());
@@ -333,10 +333,10 @@ namespace AprilMath {
     }
     else {
 #endif
-      x_values_mem  = x_values->getPPALForRead();
-      x_indices_mem = x_indices->getPPALForRead();
+      x_values_mem  = x_values->getPPALForRead() + x_shift;
+      x_indices_mem = x_indices->getPPALForRead() + x_shift;
       y_mem = y->getPPALForReadAndWrite() + y_shift;
-      wrapperCblasAxpyi(NNZ, alpha, x_values_mem, x_indices_mem, y_mem);
+      wrapperCblasAxpyi(NNZ, alpha, x_values_mem, x_indices_mem, y_mem, y_inc);
 #ifdef USE_CUDA
     }
 #endif
@@ -377,6 +377,7 @@ namespace AprilMath {
                                     const GPUMirroredMemoryBlock<float> *x_values,
                                     const Int32GPUMirroredMemoryBlock *x_indices,
                                     GPUMirroredMemoryBlock<float>* y,
+                                    unsigned int x_shift,
                                     unsigned int y_shift,
                                     unsigned int y_inc,
                                     bool use_gpu);
@@ -386,6 +387,7 @@ namespace AprilMath {
                                      const GPUMirroredMemoryBlock<double> *x_values,
                                      const Int32GPUMirroredMemoryBlock *x_indices,
                                      GPUMirroredMemoryBlock<double>* y,
+                                     unsigned int x_shift,
                                      unsigned int y_shift,
                                      unsigned int y_inc,
                                      bool use_gpu);
@@ -395,6 +397,7 @@ namespace AprilMath {
                                        const GPUMirroredMemoryBlock<ComplexF> *x_values,
                                        const Int32GPUMirroredMemoryBlock *x_indices,
                                        GPUMirroredMemoryBlock<ComplexF>* y,
+                                       unsigned int x_shift,
                                        unsigned int y_shift,
                                        unsigned int y_inc,
                                        bool use_gpu);

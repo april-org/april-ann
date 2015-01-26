@@ -70,6 +70,12 @@ T("SparseAXPYTest",
         return make_eq(m:clone():axpy(1.0,aux:to_dense()),
                        m:clone():axpy(1.0,aux))()
     end)
+    check(function()
+        return make_eq(m:rewrap(3,3):clone():axpy(1.0,m2:to_dense()),
+                       m:rewrap(3,3):clone():axpy(1.0,m2))()
+    end)
+    check.errored(function() m:rewrap(3,3):clone():axpy(1.0,aux) end)
+    check.errored(function() m:clone():axpy(1.0,m2) end)
 end)
 
 T("SparseSerializationTest",

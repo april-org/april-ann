@@ -387,22 +387,49 @@ namespace AprilMath {
           ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
                       obj->size(), other->size());
         }
-        if (!obj->isVector()) {
-          ERROR_EXIT(128, "sparse AXPY only works with vectors\n");
-        }
         if ( (other->getSparseFormat() == CSR_FORMAT &&
               other->getDimSize(0) != 1) ||
              (other->getSparseFormat() == CSC_FORMAT &&
               other->getDimSize(1) != 1) ) {
-          ERROR_EXIT(128, "sparse AXPY needs a CSR row-vector or a CSC col-vector\n");
+          // bi-dimensional case
+          if (other->getDimSize(0) != obj->getDimSize(0) ||
+              other->getDimSize(1) != obj->getDimSize(1)) {
+            ERROR_EXIT4(128, "Incompatible matrix sizes, sparse is %dx%d, "
+                        "dense is %dx%d\n",
+                        other->getDimSize(0), other->getDimSize(1),
+                        obj->getDimSize(0), obj->getDimSize(1));
+          }
+          bool cuda_flag = obj->getCudaFlag() || other->getCudaFlag();
+          const GPUMirroredMemoryBlock<T> *values = other->getRawValuesAccess();
+          const Int32GPUMirroredMemoryBlock *indices = other->getRawIndicesAccess();
+          const int32_t *first_index = other->getRawFirstIndexAccess()->getPPALForRead();;
+          AprilUtils::SharedPtr< Matrix<T> > slice;
+          unsigned int dim = (other->getSparseFormat() == CSR_FORMAT) ? 0 : 1;
+          for (int i=0; i<other->getDimSize(dim); ++i) {
+            slice = obj->select(dim, i, slice.get());
+            doSparseAxpy(first_index[i+1] - first_index[i], alpha,
+                         values,
+                         indices,
+                         slice->getRawDataAccess(),
+                         first_index[i],
+                         static_cast<unsigned int>(slice->getOffset()),
+                         static_cast<unsigned int>(slice->getStrideSize(1-dim)),
+                         cuda_flag);
+          }
         }
-        doSparseAxpy(other->nonZeroSize(), alpha,
-                     other->getRawValuesAccess(),
-                     other->getRawIndicesAccess(),
-                     obj->getRawDataAccess(),
-                     static_cast<unsigned int>(obj->getOffset()),
-                     static_cast<unsigned int>(obj->getVectorStride()),
-                     obj->getCudaFlag() || other->getCudaFlag());
+        else {
+          // vector case
+          if (!obj->isVector()) {
+            ERROR_EXIT(128, "sparse AXPY only works with vectors\n");
+          }
+          doSparseAxpy(other->nonZeroSize(), alpha,
+                       other->getRawValuesAccess(),
+                       other->getRawIndicesAccess(),
+                       obj->getRawDataAccess(), 0,
+                       static_cast<unsigned int>(obj->getOffset()),
+                       static_cast<unsigned int>(obj->getVectorStride()),
+                       obj->getCudaFlag() || other->getCudaFlag());
+        }
         return obj;
       }
 
