@@ -1,6 +1,6 @@
 PREFIX = /usr
 UNAME := `uname`
-LINUX_SUFIX := $(shell ( ldconfig -p | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so > /dev/null && echo "mkl" ) || ( ldconfig -p | grep libatlas > /dev/null && echo "atlas" ) || echo "")
+LINUX_SUFIX := $(shell ( ldconfig -p 2>/dev/null | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so 2>&1 > /dev/null && echo "mkl" ) || ( ldconfig -p 2>/dev/null | grep libatlas > /dev/null && echo "atlas" ) || echo "")
 
 # homebrew
 ifneq ("$(wildcard /usr/local/include/lua.h)","")
