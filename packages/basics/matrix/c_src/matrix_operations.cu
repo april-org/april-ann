@@ -413,7 +413,7 @@ namespace AprilMath {
                          slice->getRawDataAccess(),
                          first_index[i],
                          static_cast<unsigned int>(slice->getOffset()),
-                         static_cast<unsigned int>(slice->getStrideSize(1-dim)),
+                         static_cast<unsigned int>(slice->getStrideSize(0)),
                          cuda_flag);
           }
         }
