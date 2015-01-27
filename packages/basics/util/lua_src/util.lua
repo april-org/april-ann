@@ -1138,10 +1138,12 @@ end
 
 function util.deserialize(from)
   assert(from, "A string or function is needed as 1st argument")
-  if from:find("^[%s]*return[%s{}()]") then
-    util.deserialize(function() return from end)
-  elseif type(from) == "string" then
-    return dofile(from)
+  if type(from) == "string" then
+    if from:find("^[%s]*return[%s{}()]") then
+      return util.deserialize(function() return from end)
+    else
+      return dofile(from)
+    end
   elseif iscallable(from) then
     local f = load(from())
     return f()

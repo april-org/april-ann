@@ -32,3 +32,14 @@ T("MultipleUnpackTest", function()
       check.TRUE(t[i] == i or t[i] == nil)
     end
 end)
+
+T("SerializationTest", function()
+    local t = {1,2,3,a={2,3},c=util.stopwatch()}
+    local t2 = util.deserialize(util.serialize(t))
+    check.eq(t2[1],1)
+    check.eq(t2[2],2)
+    check.eq(t2[3],3)
+    check.eq(t2.a[1],2)
+    check.eq(t2.a[2],3)
+    check.eq(type(t2.c), "util.stopwatch")
+end)
