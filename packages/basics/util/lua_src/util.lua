@@ -1119,7 +1119,6 @@ end
 ------------------------------------------------------------------------------
 
 function util.serialize(data, where, format)
-  assert(where, "A string or function is needed as 2nd argument")
   local tw = type(where)
   if tw == "string" then
     local f = io.open(where, "w")
