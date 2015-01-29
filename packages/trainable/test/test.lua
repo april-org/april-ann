@@ -44,16 +44,15 @@ thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(),
-				       bunch_size)
+				       bunch_size,
+                                       ann.optimizer.adadelta(),
+                                       true, -- smooth parameter
+                                       15)    -- max gradients norm parameter
 trainer:build()
 --
-trainer:set_option("learning_rate", 0.01)
-trainer:set_option("momentum", 0.01)
 trainer:set_option("weight_decay", 1e-04)
-trainer:set_option("L1_norm", 1e-05)
 -- we avoid weight_decay in bias
 trainer:set_layerwise_option("b.", "weight_decay", 0)
-trainer:set_layerwise_option("b.", "L1_norm", 0)
 
 trainer:randomize_weights{
   random      = random(52324),
@@ -124,5 +123,8 @@ end
 --printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
 --printf("# Validation error: %f  +-  %f\n", val_error, val_variance)
 
+
+
 local img = ann.connections.input_filters_image(best:weights("w1"), {16,16})
 ImageIO.write(img, "/tmp/filters.png")
+trainer:save("wop.lua")

@@ -8,6 +8,10 @@ Master branch release
 
 ### API Changes
 
+- Added `max_gradients_norm` in `traianble.supervised_trainer`, to avoid
+  gradients exploding.
+- Added `ann.components.actf.sparse_logistic` a logistic activation function
+  with sparsity penalty.
 - Simplified `math.add`, `math.sub`, ... and other math extensions for
   reductions, their original behavior can be emulated by using `bind` function.
 - Added `bind` function to freeze any positional argument of any Lua function.

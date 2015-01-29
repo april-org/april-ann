@@ -1119,16 +1119,18 @@ end
 ------------------------------------------------------------------------------
 
 function util.serialize(data, where, format)
-  assert(where, "A string or function is needed as 2nd argument")
-  if type(where) == "string" then
+  local tw = type(where)
+  if tw == "string" then
     local f = io.open(where, "w")
     f:write("return ")
     f:write(util.to_lua_string(data, format))
     f:close()
+  elseif tw == "nil" then
+    return string.format("return %s", util.to_lua_string(data, format))
   elseif iscallable(where) then
     where(string.format("return %s", util.to_lua_string(data, format)))
   else
-    error("Needs a string or a function as 2nd argument")
+    error("Needs a string, a function, or nil as 2nd argument")
   end
 end
 
@@ -1137,7 +1139,11 @@ end
 function util.deserialize(from)
   assert(from, "A string or function is needed as 1st argument")
   if type(from) == "string" then
-    return dofile(from)
+    if from:find("^[%s]*return[%s{}()]") then
+      return util.deserialize(function() return from end)
+    else
+      return dofile(from)
+    end
   elseif iscallable(from) then
     local f = load(from())
     return f()

@@ -277,6 +277,7 @@ namespace AprilMath {
    * of the values in x_value parameter.
    * @param[in,out] y - The vector y in AXPY operation. It is given as a
    * GPUMirroredMemoryBlock pointer.
+   * @param x_shift - The first valid position at x pointers (both of them).
    * @param y_shift - The first valid position at y pointer.
    * @param y_inc - The stride between two consecutive elements in y vector.
    * @param use_gpu - Indicates if to use GPU computation or not.
@@ -290,6 +291,7 @@ namespace AprilMath {
                     const GPUMirroredMemoryBlock<T> *x_values,
                     const Int32GPUMirroredMemoryBlock *x_indices,
                     GPUMirroredMemoryBlock<T>* y,
+                    unsigned int x_shift,
                     unsigned int y_shift,
                     unsigned int y_inc,
                     bool use_gpu);

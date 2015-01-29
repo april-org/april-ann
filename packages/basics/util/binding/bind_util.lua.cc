@@ -629,7 +629,7 @@ FILE **newfile (lua_State *L) {
 
 //BIND_METHOD stopwatch to_lua_string
 {
-  LUABIND_RETURN(string, "stopwatch()");
+  LUABIND_RETURN(string, "util.stopwatch()");
 }
 //BIND_END
 
