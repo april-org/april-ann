@@ -5,6 +5,11 @@ APRIL-ANN
 
 [![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=devel)](https://travis-ci.org/pakozm/april-ann) Travis CI (devel branch)
 
+User documentation
+------------------
+
+Follow [wiki](https://github.com/pakozm/april-ann/wiki) for user documentation.
+
 Tutorials
 ---------
 
