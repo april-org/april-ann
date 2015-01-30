@@ -88,7 +88,11 @@ autodiff.op[SCALAR] = {
     local a,b = coercion(a),coercion(b)
     return a * (b^(-1))
   end,
-
+  
+  sqrt = function(a)
+    return a^(0.5)
+  end,
+  
   pow = function(a,b)
     local a,b = coercion(a),coercion(b)
     -- simplifactions

@@ -52,6 +52,7 @@ function AD.ann.logistic(a)
   local s = AD.gen_op('logistic', AD.dtypes.MATRIX, {a},
 		      function(self, ...)
 			local a = self.args[1]:eval(...)
+                        -- 1 / ( 1.0 + exp(-x) )
 			return a:clone():scal(-1):exp():scalar_add(1.0):div(1.0)
 		      end,
 		      function(self, seed, result)
@@ -98,8 +99,36 @@ function AD.ann.tanh(a)
   return s  
 end
 
+-- LOG LOGISTIC ACTIVATION FUNCTION
+function AD.ann.log_logistic(a)
+  local a = AD.coercion(a)
+  local s = AD.gen_op('log_logistic', AD.dtypes.MATRIX, {a},
+		      function(self, ...)
+			local a = self.args[1]:eval(...)
+                        -- -log( 1.0 + exp(-x) )
+                        return a:clone():scal(-1):exp():scalar_add(1.0):log():scal(-1)
+		      end,
+		      function(self, seed, result)
+			local a     = self.args[1]
+                        local e     = AD.op.cmul(self)
+			local dself = AD.op.cmul(e, (1 - e))
+			a:diff(AD.op.cmul(seed, dself), result)
+			return result
+		      end,
+		      function(self, dest)
+			local a = self.args[1]
+			local tbl = { a.var_name, ":clone()", ":scal(-1)",
+				      ":exp()", ":scalar_add(1.0)",
+				      ":log():scal(-1)" }
+			dest:write_expr_assign(self.var_name,
+					       table.concat(tbl, ""))
+		      end)
+  return s
+end
+
 -- LOG SOFTMAX ACTIVATION FUNCTION WITH CROSS-ENTROPY LOSS
 function AD.ann.cross_entropy_log_softmax(input, target, dim)
+  dim = dim or 1
   assert(type(dim)=="number", "The 3rd argument (dim) must be a number")
   local other_dim = 3 - dim
   local i   = AD.coercion(input)
@@ -136,8 +165,54 @@ function AD.ann.cross_entropy_log_softmax(input, target, dim)
   return s
 end
 
+-- LOG LOGISTIC ACTIVATION FUNCTION WITH CROSS-ENTROPY LOSS
+local ZERO = mathcore.limits.float.epsilon()
+local ONE  = 1.0
+function AD.ann.cross_entropy_log_logistic(input, target, dim)
+  dim = dim or 1
+  assert(type(dim)=="number", "The 3rd argument (dim) must be a number")
+  local other_dim = 3 - dim
+  local i   = AD.coercion(input)
+  local t   = AD.coercion(target)
+  local output = AD.ann.log_logistic(i,dim)
+  -- ignore the gradient of logistic, it is computed at the loss function
+  output:ignore_gradient()
+  -- cross_entropy
+  s = AD.gen_op('CE_logistic', AD.dtypes.MATRIX, {output,t},
+		function(self, ...)
+		  local log_i = self.args[1]:eval(...)
+		  local t     = self.args[2]:eval(...)
+                  local log_1_i = log_i:clone():exp():complement():clamp( ZERO, ONE ):log()
+                  local pos     = log_i:cmul( t )
+                  local neg     = log_1_i:cmul( 1 - t )
+		  return pos:axpy( 1.0, neg ):sum( other_dim ):scal(-1)
+		end,
+		function(self, seed, result)
+		  local log_i = self.args[1]
+		  local t     = self.args[2]
+		  local dself = AD.op.exp(log_i) - t
+		  if dim == 1 then seed:set_broadcast(true, false)
+		  else             seed:set_broadcast(false, true) end
+		  local seed  = AD.op.fill(log_i, seed)
+		  log_i:diff(AD.op.cmul(seed, dself), result)
+		  return result
+		end,
+		function(self, dest)
+		  local log_i = self.args[1]
+		  local t     = self.args[2]
+                  local tbl   = {
+                    log_i.var_name, ":clone():cmul(", t.var_name, "):axpy(1.0, ",
+                    log_i.var_name, ":clone():exp():complement():clamp(", ZERO, ",", ONE, "):log():cmul(1 - ", t.var_name, "))",
+                    ":sum(", other_dim, "):scal(-1)",
+                  }
+		  dest:write_expr_assign(self.var_name, table.concat(tbl))
+		end)
+  return s
+end
+
 -- LOG-SOFTMAX
 function AD.ann.log_softmax(a,dim)
+  dim = dim or 1
   assert(type(dim)=="number", "The 2nd argument (dim) must be a number")
   local other_dim = 3 - dim
   local a = AD.coercion(a)
