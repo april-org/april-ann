@@ -522,7 +522,7 @@ namespace OCR {
             )
     {
         // Precondition mat size must be columns
-        assert(line_mat->getDimSize(0) == img->width() && "Matrix points does not fit with the image");
+        //assert(line_mat->getDimSize(0) == img->width() && "Matrix points does not fit with the image");
         int width = img->width();
         int height = img->height();
 
@@ -562,6 +562,11 @@ namespace OCR {
 
             float cur_upper = line_it(column,0);
             float cur_lower = line_it(column,1);
+            if (column >= line_mat->getDimSize(0)){
+              cur_upper = line_it(line_mat->getDimSize(0)-1, 0);
+              cur_lower = line_it(line_mat->getDimSize(0)-1, 1);
+            }
+                
             if (cur_upper > cur_lower) 
                 cur_upper = cur_lower; 
             if (column > next_asc.x) {
@@ -592,6 +597,8 @@ namespace OCR {
             if (cur_upper >= cur_lower) {
                 cur_upper = max(cur_lower-1.f, 0.0f);
             }
+
+            
             //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
             //printf("Liada2 %d %f %f,(%f,%f) (%f,%f)\n", column, cur_desc, cur_lower, prev_desc.x, prev_desc.y, next_desc.x, next_desc.y);
             result_it(column, 0) = cur_asc;
