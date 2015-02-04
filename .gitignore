@@ -1,5 +1,9 @@
 gmon.out
 
+# ignores any shell script
+##########################
+*.sh
+
 # Auxiliary include file #
 ##########################
 lua5.2-deb-multiarch.h
