@@ -109,6 +109,7 @@ namespace Imaging {
     Image<T> *rotate90_cw() const; // Rotate 90 degrees clockwise, creates a new image
     Image<T> *rotate90_ccw() const; // Rotate 90 degrees counter-clockwise, new image
     Image<T> *resize(int dst_width, int dst_height) const; // Resize an image
+    Image<T> *upsample(int width_factor, int height_factor) const; // upsample
     Image<T> *invert_colors() const; // Invert the color of every pixel, new image
 
     Image<T> *convolution5x5(float *k, T default_color=T()) const;

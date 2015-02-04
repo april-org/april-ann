@@ -405,6 +405,17 @@ using namespace Imaging;
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat upsample
+{
+  LUABIND_CHECK_ARGN(==, 2);
+  int x, y;
+  LUABIND_GET_PARAMETER(1, int, x);
+  LUABIND_GET_PARAMETER(2, int, y);
+  ImageFloat *res = obj->upsample(x,y);
+  LUABIND_RETURN(ImageFloat, res);
+}
+//BIND_END
+
 //BIND_METHOD ImageFloat affine_transform
 {
   Basics::AffineTransform2D *trans;
