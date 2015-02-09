@@ -809,6 +809,32 @@ namespace Imaging {
     return result;
   }
 
+  template<typename T>
+  Image<T> *Image<T>::upsample(int width_factor, int height_factor) const
+  {
+    T default_value=T();
+    int dimensions[2];
+    int dst_height = height()*height_factor;
+    int dst_width  = width()*width_factor;
+    dimensions[0]  = dst_height;
+    dimensions[1]  = dst_width;
+
+    Basics::Matrix<T> *new_mat = new Basics::Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
+    typename Basics::Matrix<T>::const_random_access_iterator
+      src_it(this->getMatrix());
+    typename Basics::Matrix<T>::random_access_iterator result_it(new_mat);
+
+    // we go through the destination image, this algorithm is NOT the
+    // best one
+    for (int y=0; y<dst_height; y++) {
+      for (int x=0; x<dst_width; x++) {
+        result_it(y,x) = src_it(y/width_factor,x/height_factor);
+      }
+    }
+    return result;
+  }
+
   /** 
    *  Applies an affine transform given by the matrix
    *

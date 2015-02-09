@@ -496,6 +496,11 @@ autodiff.op[MATRIX] = {
       s:set_dims(iterator(ipairs(a.dims)):select(2):
 		 reduce(function(acc,v) return table.insert(acc,1,v) end, {}))
     end
+    if a.broadcast then
+      local b = a.broadcast
+      local t = iterator.range(#b,1,-1):map(function(i) return b[i] end):table()
+      s:set_broadcast(table.unpack(t))
+    end
     return s
   end,
 

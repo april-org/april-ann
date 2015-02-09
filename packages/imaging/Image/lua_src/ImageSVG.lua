@@ -179,6 +179,13 @@ function imageSVG_methods:addPoint(point, params)
     self:addSquare(point, params)
 end
 
+function imageSVG_methods:addLine(ini_point, end_point, params)
+
+    --local color = params.color or "black"
+    table.insert(self.body, string.format('<line x1="%d" y1="%d" x2="%d" y2="%d"/>', 
+    ini_point[1], ini_point[2], end_point[1], end_point[2]))
+
+end
 -- Extra image function
 function imageSVG_methods:addImage(filename, width, height, offsetX, offsetY, absolute)
 

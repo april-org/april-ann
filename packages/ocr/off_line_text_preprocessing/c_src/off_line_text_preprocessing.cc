@@ -246,363 +246,370 @@ namespace OCR {
 
 
     ImageFloat *normalize_size (ImageFloat     *source,
-                                float           ascender_ratio,
-                                float           descender_ratio,
-                                vector<Point2D> ascenders,
-                                vector<Point2D> upper_baseline, 
-                                vector<Point2D> lower_baseline,
-                                vector<Point2D> descenders,
-                                int dst_height,
-                                bool keep_aspect
-                                )
+            float           ascender_ratio,
+            float           descender_ratio,
+            vector<Point2D> ascenders,
+            vector<Point2D> upper_baseline, 
+            vector<Point2D> lower_baseline,
+            vector<Point2D> descenders,
+            int dst_height,
+            bool keep_aspect
+            )
     {
-      // Precondition: upper_baseline and lower_baseline must contain, at least, one point each
-      assert(!upper_baseline.empty() && "Upper baseline must not be empty");
-      assert(!lower_baseline.empty() && "Lower baseline must not be empty");
+        // Precondition: upper_baseline and lower_baseline must contain, at least, one point each
+        assert(!upper_baseline.empty() && "Upper baseline must not be empty");
+        assert(!lower_baseline.empty() && "Lower baseline must not be empty");
 
-      int width = source->width();
-      int height = source->height();
-      int BASELINE_SLACK=int(0.02f*height);
+        int width = source->width();
+        int height = source->height();
+        int BASELINE_SLACK=int(0.02f*height);
 
-      //printf("BASELINE_SLACK = %d\n", BASELINE_SLACK);
+        //printf("BASELINE_SLACK = %d\n", BASELINE_SLACK);
 
-      if (dst_height < 0)
-        dst_height = source->height();
+        if (dst_height < 0)
+            dst_height = source->height();
 
-      int ascender_size  = int(roundf(ascender_ratio*dst_height));
-      int descender_size = int(roundf(descender_ratio*dst_height));
-      int body_size      = dst_height - ascender_size - descender_size;
+        int ascender_size  = int(roundf(ascender_ratio*dst_height));
+        int descender_size = int(roundf(descender_ratio*dst_height));
+        int body_size      = dst_height - ascender_size - descender_size;
 
-      /* Definimos 4 alturas relevantes en las imagenes
-       *  
-       *   IMAGEN DESTINO              IMAGEN ORIGEN
-       *
-       *   - 0 --------------------------- cur_asc -
-       *   |               ascenders               |
-       *   - dst_upper ----------------- cur_upper -
-       *   |                  body                 |
-       *   - dst_lower ----------------- cur_lower -
-       *   |               descenders              |
-       *   - dst_height-1 --------------- cur_desc -
-       */
+        /* Definimos 4 alturas relevantes en las imagenes
+         *  
+         *   IMAGEN DESTINO              IMAGEN ORIGEN
+         *
+         *   - 0 --------------------------- cur_asc -
+         *   |               ascenders               |
+         *   - dst_upper ----------------- cur_upper -
+         *   |                  body                 |
+         *   - dst_lower ----------------- cur_lower -
+         *   |               descenders              |
+         *   - dst_height-1 --------------- cur_desc -
+         */
 
-      int dst_upper = ascender_size;
-      int dst_lower = ascender_size + body_size;
+        int dst_upper = ascender_size;
+        int dst_lower = ascender_size + body_size;
 
-      int dims[2] = {dst_height, width};
-      MatrixFloat *result_mat = new MatrixFloat(2, dims);
-            
-      // FIXME: For non inverted matrix
-      AprilMath::MatrixExt::Operations::matFill(result_mat, 0.0f);
-            
-      ImageFloat  *result = new ImageFloat(result_mat);
-            
-      int asc_idx = 0;
-      int upper_idx = 0;
-      int lower_idx = 0;
-      int desc_idx = 0;
+        int dims[2] = {dst_height, width};
+        MatrixFloat *result_mat = new MatrixFloat(2, dims);
 
-      Point2D next_asc, next_upper, next_lower, next_desc;
-      Point2D prev_asc, prev_upper, prev_lower, prev_desc;
+        // FIXME: For non inverted matrix
+        AprilMath::MatrixExt::Operations::matFill(result_mat, 0.0f);
 
-      prev_asc = get_first_point(ascenders, width, 0.0f, &asc_idx);
-      next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
-      asc_idx++;
+        ImageFloat  *result = new ImageFloat(result_mat);
 
-      prev_desc = get_first_point(descenders, width, height-1.0f, &desc_idx);
-      next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
-      desc_idx++;
+        int asc_idx = 0;
+        int upper_idx = 0;
+        int lower_idx = 0;
+        int desc_idx = 0;
 
-      // Default value won't be used due to precondition
-      prev_upper = get_first_point(upper_baseline, width, -9999.9f, &upper_idx);
-      next_upper = get_next_point(upper_baseline, upper_idx, width, -9999.9f);
-      upper_idx++;
+        Point2D next_asc, next_upper, next_lower, next_desc;
+        Point2D prev_asc, prev_upper, prev_lower, prev_desc;
 
-      // Default value won't be used due to precondition
-      prev_lower = get_first_point(lower_baseline, width, -9999.9f, &lower_idx);
-      next_lower = get_next_point(lower_baseline, lower_idx, width, -9999.9f);
-      lower_idx++;
+        prev_asc = get_first_point(ascenders, width, 0.0f, &asc_idx);
+        next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+        asc_idx++;
 
-      int body_columns=0;
-      float body_size_sum=0.0f;
+        prev_desc = get_first_point(descenders, width, height-1.0f, &desc_idx);
+        next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+        desc_idx++;
 
-      for (int column = 0; column < width; column++) {
-        if (column > next_asc.x) {
-          prev_asc = next_asc;
-          next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
-          asc_idx++;
+        // Default value won't be used due to precondition
+        prev_upper = get_first_point(upper_baseline, width, -9999.9f, &upper_idx);
+        next_upper = get_next_point(upper_baseline, upper_idx, width, -9999.9f);
+        upper_idx++;
+
+        // Default value won't be used due to precondition
+        prev_lower = get_first_point(lower_baseline, width, -9999.9f, &lower_idx);
+        next_lower = get_next_point(lower_baseline, lower_idx, width, -9999.9f);
+        lower_idx++;
+
+        int body_columns=0;
+        float body_size_sum=0.0f;
+
+        for (int column = 0; column < width; column++) {
+            if (column > next_asc.x) {
+                prev_asc = next_asc;
+                next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+                asc_idx++;
+            }
+            if (column > next_desc.x) {
+                prev_desc = next_desc;
+                next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+                desc_idx++;
+            }
+            if (column > next_upper.x) {
+                prev_upper = next_upper;
+                next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
+                upper_idx++;
+            }
+            if (column > next_lower.x) {
+                prev_lower = next_lower;
+                next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
+                lower_idx++;
+            }
+
+            float cur_upper = max(0.0f, prev_upper.y + 
+                    ((column - prev_upper.x) / (next_upper.x-prev_upper.x)) * 
+                    (next_upper.y - prev_upper.y) - BASELINE_SLACK);
+            float cur_lower = min(height - 1.0f, prev_lower.y + 
+                    ((column - prev_lower.x) / (next_lower.x - prev_lower.x)) *
+                    (next_lower.y - prev_lower.y) + BASELINE_SLACK);
+
+            if (cur_upper > cur_lower) {
+                swap(cur_upper, cur_lower);
+            }
+
+
+            float cur_asc   = min(cur_upper, prev_asc.y + 
+                    ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
+                    (next_asc.y   - prev_asc.y));
+            float cur_desc  = max(cur_lower, prev_desc.y +
+                    ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
+                    (next_desc.y  - prev_desc.y));
+
+            // Center
+            //
+            // First normalize the body and calculate the normalization rasize
+            float body_ratio = (cur_lower - cur_upper)/body_size;
+            if (cur_lower-cur_upper >= 1.0f) {
+                body_columns++;
+                body_size_sum += cur_lower-cur_upper;
+                resize_index(source, result, column, cur_upper, cur_lower, dst_upper, dst_lower);
+            }
+
+
+            // Ascender
+            float expected_top = dst_upper*body_ratio;
+            float top_cut      = cur_asc;
+
+            if (keep_aspect) {
+                top_cut = cur_upper - expected_top;
+            }
+            //Fill the blanks
+
+            float dst_asc = 0;
+
+            if (top_cut < 0) {
+                dst_asc = -top_cut/body_ratio;
+                top_cut = 0;
+            }
+            if(cur_upper - top_cut >= 1.0f)
+                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+            //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
+            // Descenders
+            float expected_bottom =  (dst_height - dst_lower)*body_ratio;
+            float dst_desc        =  dst_height;
+            float bottom_cut      =  cur_desc;
+
+            if (keep_aspect) {
+                bottom_cut = cur_lower + expected_bottom;
+            }
+            if (bottom_cut > height) {
+                dst_desc   = dst_lower + (height-cur_lower)/body_ratio; 
+                bottom_cut = height;
+            }
+            //printf("dst_dsc :%d, dst_height: %d, bottom_cut:%d, height: %d, ratio: %f\n", dst_desc, dst_height, bottom_cut, height, body_ratio); 
+            assert(dst_desc <= dst_height && "Something went wrong");
+            if( bottom_cut - cur_lower >= 1.0f)
+                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
         }
-        if (column > next_desc.x) {
-          prev_desc = next_desc;
-          next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
-          desc_idx++;
-        }
-        if (column > next_upper.x) {
-          prev_upper = next_upper;
-          next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
-          upper_idx++;
-        }
-        if (column > next_lower.x) {
-          prev_lower = next_lower;
-          next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
-          lower_idx++;
-        }
 
-        float cur_upper = max(0.0f, prev_upper.y + 
-                              ((column - prev_upper.x) / (next_upper.x-prev_upper.x)) * 
-                              (next_upper.y - prev_upper.y) - BASELINE_SLACK);
-        float cur_lower = min(height - 1.0f, prev_lower.y + 
-                              ((column - prev_lower.x) / (next_lower.x - prev_lower.x)) *
-                              (next_lower.y - prev_lower.y) + BASELINE_SLACK);
-
-        if (cur_upper > cur_lower) {
-          swap(cur_upper, cur_lower);
-        }
-
-
-        float cur_asc   = min(cur_upper, prev_asc.y + 
-                              ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
-                              (next_asc.y   - prev_asc.y));
-        float cur_desc  = max(cur_lower, prev_desc.y +
-                              ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
-                              (next_desc.y  - prev_desc.y));
-
-        // Center
-        //
-        // First normalize the body and calculate the normalization rasize
-        float body_ratio = (cur_lower - cur_upper)/body_size;
-        if (cur_lower-cur_upper >= 1.0f) {
-          body_columns++;
-          body_size_sum += cur_lower-cur_upper;
-          resize_index(source, result, column, cur_upper, cur_lower, dst_upper, dst_lower);
-        }
-
-
-        // Ascender
-        float expected_top = dst_upper*body_ratio;
-        float top_cut      = cur_asc;
-
-        if (keep_aspect) {
-          top_cut = cur_upper - expected_top;
-        }
-        //Fill the blanks
-
-        float dst_asc = 0;
-
-        if (top_cut < 0) {
-          dst_asc = -top_cut/body_ratio;
-          top_cut = 0;
-        }
-        if(cur_upper - top_cut >= 1.0f)
-          resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
-        //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
-        // Descenders
-        float expected_bottom =  (dst_height - dst_lower)*body_ratio;
-        float dst_desc        =  dst_height;
-        float bottom_cut      =  cur_desc;
-
-        if (keep_aspect) {
-          bottom_cut = cur_lower + expected_bottom;
-        }
-        if (bottom_cut > height) {
-          dst_desc   = dst_lower + (height-cur_lower)/body_ratio; 
-          bottom_cut = height;
-        }
-        //printf("dst_dsc :%d, dst_height: %d, bottom_cut:%d, height: %d, ratio: %f\n", dst_desc, dst_height, bottom_cut, height, body_ratio); 
-        assert(dst_desc <= dst_height && "Something went wrong");
-        if( bottom_cut - cur_lower >= 1.0f)
-          resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
-      }
-
-      return result;
+        return result;
     }
 
 
     ImageFloat *normalize_size (ImageFloat     *source,
-                                MatrixFloat *line_mat,
-                                float           ascender_ratio,
-                                float           descender_ratio,
-                                int dst_height,
-                                bool keep_aspect
-                                )
+            MatrixFloat *line_mat,
+            float           ascender_ratio,
+            float           descender_ratio,
+            int dst_height,
+            bool keep_aspect
+            )
     {
-      // Precondition: upper_baseline and lower_baseline must contain, at least, one point each
-      int width = source->width();
-      int height = source->height();
+        // Precondition: upper_baseline and lower_baseline must contain, at least, one point each
+        int width = source->width();
+        int height = source->height();
 
-      MatrixFloat::random_access_iterator line_it(line_mat);
+        MatrixFloat::random_access_iterator line_it(line_mat);
 
-      assert(line_mat->getDimSize(0) == width && "The number of columns does not fit");
-      assert(line_mat->getDimSize(1) == 4 && "There are no 3 areas on the image");
-      if (dst_height < 0)
-        dst_height = source->height();
+        assert(line_mat->getDimSize(0) == width && "The number of columns does not fit");
+        assert(line_mat->getDimSize(1) == 4 && "There are no 3 areas on the image");
+        if (dst_height < 0)
+            dst_height = source->height();
 
-      int ascender_size  = int(roundf(ascender_ratio*dst_height));
-      int descender_size = int(roundf(descender_ratio*dst_height));
-      int body_size      = dst_height - ascender_size - descender_size;
+        int ascender_size  = int(roundf(ascender_ratio*dst_height));
+        int descender_size = int(roundf(descender_ratio*dst_height));
+        int body_size      = dst_height - ascender_size - descender_size;
 
-      /* Definimos 4 alturas relevantes en las imagenes
-       *  
-       *   IMAGEN DESTINO              IMAGEN ORIGEN
-       *
-       *   - 0 --------------------------- cur_asc -
-       *   |               ascenders               |
-       *   - dst_upper ----------------- cur_upper -
-       *   |                  body                 |
-       *   - dst_lower ----------------- cur_lower -
-       *   |               descenders              |
-       *   - dst_height-1 --------------- cur_desc -
-       */
+        /* Definimos 4 alturas relevantes en las imagenes
+         *  
+         *   IMAGEN DESTINO              IMAGEN ORIGEN
+         *
+         *   - 0 --------------------------- cur_asc -
+         *   |               ascenders               |
+         *   - dst_upper ----------------- cur_upper -
+         *   |                  body                 |
+         *   - dst_lower ----------------- cur_lower -
+         *   |               descenders              |
+         *   - dst_height-1 --------------- cur_desc -
+         */
 
-      int dst_upper = ascender_size;
-      int dst_lower = ascender_size + body_size;
+        int dst_upper = ascender_size;
+        int dst_lower = ascender_size + body_size;
 
-      int dims[2] = {dst_height, width};
-      MatrixFloat *result_mat = new MatrixFloat(2, dims);
-      ImageFloat  *result = new ImageFloat(result_mat);
-      for (int column = 0; column < width; column++) {
+        int dims[2] = {dst_height, width};
+        MatrixFloat *result_mat = new MatrixFloat(2, dims);
+        ImageFloat  *result = new ImageFloat(result_mat);
+        for (int column = 0; column < width; column++) {
 
-        float cur_upper = line_it(column, 1);
-        float cur_lower = line_it(column, 2);
+            float cur_upper = line_it(column, 1);
+            float cur_lower = line_it(column, 2);
 
-        float cur_asc   = line_it(column, 0);
-        float cur_desc  = line_it(column, 3);
-        // First normalize the body and calculate the normalization rasize
-        float body_ratio = (cur_lower - cur_upper)/body_size;
-        if (cur_lower-cur_upper >= 1.0f) {
-          resize_index(source, result, column, cur_upper, cur_lower, dst_upper, dst_lower);
+            float cur_asc   = line_it(column, 0);
+            float cur_desc  = line_it(column, 3);
+            // First normalize the body and calculate the normalization rasize
+            float body_ratio = (cur_lower - cur_upper)/body_size;
+            if (cur_lower-cur_upper >= 1.0f) {
+                resize_index(source, result, column, cur_upper, cur_lower, dst_upper, dst_lower);
+            }
+
+
+            // Ascender
+            float expected_top = dst_upper*body_ratio;
+            float top_cut      = cur_asc;
+
+            if (keep_aspect) {
+                top_cut = cur_upper - expected_top;
+            }
+            //Fill the blanks
+
+            float dst_asc = 0;
+
+            if (top_cut < 0) {
+                dst_asc = -top_cut/body_ratio;
+                top_cut = 0;
+            }
+            if (cur_upper - top_cut >= 1)
+                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+            //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
+            // Descenders
+            float expected_bottom =  (dst_height - dst_lower)*body_ratio;
+            float dst_desc        =  dst_height;
+            float bottom_cut      =  cur_desc;
+
+            if (keep_aspect) {
+                bottom_cut = cur_lower + expected_bottom;
+            }
+            if (bottom_cut > height) {
+                dst_desc   = dst_lower + (height-cur_lower)/body_ratio; 
+                bottom_cut = height;
+            }
+            assert(dst_desc <= dst_height && "Something went wrong");
+            if(bottom_cut - cur_lower >= 1.0f)
+                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
+
         }
 
 
-        // Ascender
-        float expected_top = dst_upper*body_ratio;
-        float top_cut      = cur_asc;
-
-        if (keep_aspect) {
-          top_cut = cur_upper - expected_top;
-        }
-        //Fill the blanks
-
-        float dst_asc = 0;
-
-        if (top_cut < 0) {
-          dst_asc = -top_cut/body_ratio;
-          top_cut = 0;
-        }
-        if (cur_upper - top_cut >= 1)
-          resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
-        //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
-        // Descenders
-        float expected_bottom =  (dst_height - dst_lower)*body_ratio;
-        float dst_desc        =  dst_height;
-        float bottom_cut      =  cur_desc;
-
-        if (keep_aspect) {
-          bottom_cut = cur_lower + expected_bottom;
-        }
-        if (bottom_cut > height) {
-          dst_desc   = dst_lower + (height-cur_lower)/body_ratio; 
-          bottom_cut = height;
-        }
-        assert(dst_desc <= dst_height && "Something went wrong");
-        if(bottom_cut - cur_lower >= 1.0f)
-          resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
-
-      }
-
-
-      return result;
+        return result;
     }
 
     // From the points of the topline and baseline, adds the ascenderes and descenders
     MatrixFloat *add_asc_desc (ImageFloat     *img,
-                               MatrixFloat *line_mat,
-                               float v_threshold,
-                               int h_threshold
-                               )
+            MatrixFloat *line_mat,
+            float v_threshold,
+            int h_threshold
+            )
     {
-      // Precondition mat size must be columns
-      assert(line_mat->getDimSize(0) == img->width() && "Matrix points does not fit with the image");
-      int width = img->width();
-      int height = img->height();
+        // Precondition mat size must be columns
+        //assert(line_mat->getDimSize(0) == img->width() && "Matrix points does not fit with the image");
+        int width = img->width();
+        int height = img->height();
 
 
-      // Generate the 4 matrix dim
-      int dims[2] = {width, 4};
-      MatrixFloat *result = new MatrixFloat(2, dims);
-      MatrixFloat::random_access_iterator line_it(line_mat);  
-      MatrixFloat::random_access_iterator result_it(result);  
-      // Compute local maxima and local minima
-      vector<Point2D> *ascenders = new vector<Point2D>();
-      vector<Point2D> *descenders = new vector<Point2D>();
+        // Generate the 4 matrix dim
+        int dims[2] = {width, 4};
+        MatrixFloat *result = new MatrixFloat(2, dims);
+        MatrixFloat::random_access_iterator line_it(line_mat);  
+        MatrixFloat::random_access_iterator result_it(result);  
+        // Compute local maxima and local minima
+        vector<Point2D> *ascenders = new vector<Point2D>();
+        vector<Point2D> *descenders = new vector<Point2D>();
 
-      // The true is because the image is inverted
-      InterestPoints::extract_points_from_image(img, descenders, ascenders, 0.6, 0.4, 6, 15, true );
-
-
-      // Filter the points that are over the size
-      filter_asc(ascenders, line_it, width, v_threshold, h_threshold);
-      filter_desc(descenders, line_it, width,v_threshold, h_threshold);
-      // Compute the interpolated lines
-      Point2D next_asc, next_desc;
-      Point2D prev_asc, prev_desc;
-      int asc_idx = 0;
-      int desc_idx = 0;
+        // The true is because the image is inverted
+        InterestPoints::extract_points_from_image(img, descenders, ascenders, 0.6, 0.4, 6, 15, true );
 
 
-      prev_asc = get_first_point(*ascenders, width, 0.0f, &asc_idx);
-      next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
-      asc_idx++;
+        // Filter the points that are over the size
+        filter_asc(ascenders, line_it, width, v_threshold, h_threshold);
+        filter_desc(descenders, line_it, width,v_threshold, h_threshold);
+        // Compute the interpolated lines
+        Point2D next_asc, next_desc;
+        Point2D prev_asc, prev_desc;
+        int asc_idx = 0;
+        int desc_idx = 0;
 
-      prev_desc = get_first_point(*descenders, width, height-1.0f, &desc_idx);
-      next_desc = get_next_point(*descenders, desc_idx, width, height-1.0f);
-      desc_idx++;
 
-      for (int column = 0; column < width; column++) {
+        prev_asc = get_first_point(*ascenders, width, 0.0f, &asc_idx);
+        next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
+        asc_idx++;
 
-        float cur_upper = line_it(column,0);
-        float cur_lower = line_it(column,1);
-        if (cur_upper > cur_lower) 
-          cur_upper = cur_lower; 
-        if (column > next_asc.x) {
-          prev_asc = next_asc;
-          next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
-          asc_idx++;
+        prev_desc = get_first_point(*descenders, width, height-1.0f, &desc_idx);
+        next_desc = get_next_point(*descenders, desc_idx, width, height-1.0f);
+        desc_idx++;
+
+        for (int column = 0; column < width; column++) {
+
+            float cur_upper = line_it(column,0);
+            float cur_lower = line_it(column,1);
+            if (column >= line_mat->getDimSize(0)){
+              cur_upper = line_it(line_mat->getDimSize(0)-1, 0);
+              cur_lower = line_it(line_mat->getDimSize(0)-1, 1);
+            }
+                
+            if (cur_upper > cur_lower) 
+                cur_upper = cur_lower; 
+            if (column > next_asc.x) {
+                prev_asc = next_asc;
+                next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
+                asc_idx++;
+            }
+            if (column > next_desc.x) {
+                prev_desc = next_desc;
+                next_desc = get_next_point(*descenders, desc_idx, width, height-1.0f);
+                desc_idx++;
+            }
+
+            float cur_asc   = min(cur_upper-1.0f, prev_asc.y + 
+                    ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
+                    (next_asc.y   - prev_asc.y));
+            cur_asc = max(0.0f,cur_asc);
+            float cur_desc  = max(cur_lower+1.0f, prev_desc.y +
+                    ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
+                    (next_desc.y  - prev_desc.y));
+            cur_desc = min(height-1.0f, cur_desc);
+            // Add the new lines and copy the old ones
+
+            if (descenders->size() == 0)
+                cur_desc = height;
+            if (ascenders->size() == 0)
+                cur_asc = 0;
+            if (cur_upper >= cur_lower) {
+                cur_upper = max(cur_lower-1.f, 0.0f);
+            }
+
+            
+            //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
+            //printf("Liada2 %d %f %f,(%f,%f) (%f,%f)\n", column, cur_desc, cur_lower, prev_desc.x, prev_desc.y, next_desc.x, next_desc.y);
+            result_it(column, 0) = cur_asc;
+            result_it(column, 3) = cur_desc;
+            result_it(column, 1) = cur_upper;
+            result_it(column, 2) = cur_lower; 
         }
-        if (column > next_desc.x) {
-          prev_desc = next_desc;
-          next_desc = get_next_point(*descenders, desc_idx, width, height-1.0f);
-          desc_idx++;
-        }
 
-        float cur_asc   = min(cur_upper-1.0f, prev_asc.y + 
-                              ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
-                              (next_asc.y   - prev_asc.y));
-        cur_asc = max(0.0f,cur_asc);
-        float cur_desc  = max(cur_lower+1.0f, prev_desc.y +
-                              ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
-                              (next_desc.y  - prev_desc.y));
-        cur_desc = min(height-1.0f, cur_desc);
-        // Add the new lines and copy the old ones
-
-        if (descenders->size() == 0)
-          cur_desc = height;
-        if (ascenders->size() == 0)
-          cur_asc = 0;
-        if (cur_upper >= cur_lower) {
-          cur_upper = max(cur_lower-1.f, 0.0f);
-        }
-        //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
-        //printf("Liada2 %d %f %f,(%f,%f) (%f,%f)\n", column, cur_desc, cur_lower, prev_desc.x, prev_desc.y, next_desc.x, next_desc.y);
-        result_it(column, 0) = cur_asc;
-        result_it(column, 3) = cur_desc;
-        result_it(column, 1) = cur_upper;
-        result_it(column, 2) = cur_lower; 
-      }
-
-      delete ascenders;
-      delete descenders;
-      return result;
+        delete ascenders;
+        delete descenders;
+        return result;
     }
 
   } //namespace OffLineTextPreprocessing

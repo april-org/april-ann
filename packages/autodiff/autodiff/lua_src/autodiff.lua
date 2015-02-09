@@ -43,6 +43,7 @@ setmetatable(compiler_out,
 			       declared_expressions = {} }
 		 setmetatable(obj,compiler_out_mt)
 		 obj.f:write("return function(arg,cache)\n")
+                 obj.f:write("  _ENV=setmetatable(cache,{__index=_G})\n")
 		 return obj
 	       end,
 	     })
@@ -69,6 +70,7 @@ compiler_out_mt.__index = {
   new_function = function(self)
     self.f:write("end,\n")
     self.f:write("function(arg,cache)\n")
+    self.f:write("  _ENV=setmetatable(cache,{__index=_G})\n")
     self.active_vars = {}
     self.declared_expressions = {}
   end,
@@ -81,23 +83,26 @@ compiler_out_mt.__index = {
   -- variable declaration methods
   write_var = function(self,var_name)
     if not self.active_vars[var_name] then
-      self:write_indent()
-      self.f:write(string.format("local %s\n", var_name))
+      -- self:write_indent()
+      -- self.f:write(string.format("local %s\n", var_name))
     end
     self.active_vars[var_name] = true
   end,
   write_initial_var = function(self,var_name,name)
     if not self.active_vars[var_name] then
       self:write_indent()
-      self.f:write(string.format("local %s = arg[%q]\n", var_name, name))
+      -- self.f:write(string.format("local %s = arg[%q]\n", var_name, name))
+      self.f:write(string.format("%s = arg[%q]\n", var_name, name))
     end
     self.active_vars[var_name] = true
   end,
   write_initial_constant = function(self,var_name,value)
     if not self.active_vars[var_name] then
       self:write_indent()
-      self.f:write(string.format("local %s = %s\n",
-				 var_name, tostring(value)))
+      -- self.f:write(string.format("local %s = %s\n",
+      --                            var_name, tostring(value)))
+      self.f:write(string.format("%s = %s\n",
+                                 var_name, tostring(value)))
     end
     self.active_vars[var_name] = true
   end,
@@ -111,7 +116,8 @@ compiler_out_mt.__index = {
     -- case, a block with a cache check is needed.
     if self.cache_counts[var_name] > (parent_count or 1) then
       self:write_indent()
-      self.f:write(string.format("if not cache[%q] then\n", var_name))
+      -- self.f:write(string.format("if not cache[%q] then\n", var_name))
+      self.f:write(string.format("if not %s then\n", var_name))
       self.indent = self.indent + 1
     end
   end,
@@ -128,7 +134,7 @@ compiler_out_mt.__index = {
   write_expr_assign = function(self, var_name, expression)
     self:write_indent()
     if not self.active_vars[var_name] then
-      self.f:write("local ")
+      -- self.f:write("local ")
     end
     self.f:write(string.format("%s = (%s)\n", var_name, expression))
     self.active_vars[var_name] = true
@@ -143,30 +149,31 @@ compiler_out_mt.__index = {
     -- block, because children and parent always come together. In the second
     -- case, a block with a cache check is needed.
     if self.cache_counts[var_name] > (parent_count or 1) then
-      self:write_indent()
-      self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
+      -- self:write_indent()
+      -- self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
+      -- self.f:write(string.format("%s = %s\n", var_name, var_name))
+      -- self.indent = self.indent - 1
+      -- self:write_indent()
+      -- -- self.f:write(string.format("else -- if not cache[%q]\n", var_name))
+      -- self.f:write(string.format("else -- if not %s\n", var_name))
+      -- self.indent = self.indent + 1
+      -- if childs then
+      --   local function get_child_from_cache(v)
+      --     if v.isop then
+      --       self:write_indent()
+      --       -- self.f:write(string.format("%s = cache[%q]\n",
+      --       --                            v.var_name, v.var_name))
+      --       self.declared_expressions[v.var_name] = true
+      --       for i=1,#v.args do get_child_from_cache(v.args[i]) end
+      --     end
+      --   end
+      --   for i=1,#childs do get_child_from_cache(childs[i]) end
+      -- end
+      -- self:write_indent()
+      -- self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
       self.indent = self.indent - 1
       self:write_indent()
-      self.f:write(string.format("else -- if not cache[%q]\n", var_name))
-      self.indent = self.indent + 1
-      if childs then
-	local function get_child_from_cache(v)
-	  if v.isop then
-	    self:write_indent()
-	    self.f:write(string.format("%s = cache[%q]\n",
-				       v.var_name, v.var_name))
-	    self.declared_expressions[v.var_name] = true
-	    for i=1,#v.args do get_child_from_cache(v.args[i]) end
-	  end
-	end
-	for i=1,#childs do get_child_from_cache(childs[i]) end
-      end
-      self:write_indent()
-      self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
-      self.indent = self.indent - 1
-      self:write_indent()
-      self.f:write(string.format("end -- if not cache[%q] else ... end\n",
-	  var_name))
+      self.f:write(string.format("end -- if not %s end\n", var_name))
     end
     self.declared_expressions[var_name] = true
   end,
