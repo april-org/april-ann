@@ -1,46 +1,5 @@
 #include "utilLua.h"
 
-//devuelve true si consigue leer "name" en la tabla que esté en el top
-// y en v[] deja los n primeros valores 
-bool leer_int_params(lua_State *L, const char *name, int *v, int n) {
-  // table
-  lua_pushstring(L, name);  // name (atributo)
-  lua_gettable(L,-2);
-  if (!lua_istable(L,-1)) {
-    lua_pop(L,1);	//remove string
-    return false;
-  }
-  // tabla del atributo
-  for (int i = 1; i <= n; i++) {
-    lua_rawgeti(L, -1, i);
-    v[i-1] = (int)luaL_checknumber(L, -1);
-    lua_pop(L,1);
-  }
-  lua_pop(L,1); //tabla del atributo
-  
-  return true;
-}
-
-//idem pero leyendo bool's
-bool leer_bool_params(lua_State *L, const char *name, bool *v, int n) {
-  // table
-  lua_pushstring(L, name);  // name (atributo)
-  lua_gettable(L,-2);
-  if (!lua_istable(L,-1)) {
-    lua_pop(L,1);	//remove string
-    return false;
-  }
-  // tabla del atributo
-  for (int i = 1; i <= n; i++) {
-    lua_rawgeti(L, -1, i);
-    v[i-1] = (lua_toboolean(L, -1) != 0);
-    lua_pop(L,1);
-  }
-  lua_pop(L,1); //tabla del atributo
-  
-  return true;                 
-}
-
 int table_to_char_vector(lua_State *L, char ***vec) {
   int length = table_getn(L);
   char **v = new char*[length];
