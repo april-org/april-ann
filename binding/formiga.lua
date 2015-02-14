@@ -307,14 +307,19 @@ end
 function formiga.os.get_directory_timestamp(path)
   local f=io.popen("find " .. path .. " -type f -printf '%h/%f %T@\n' 2>/dev/null | " ..
 		     "grep  -v '.*/\\..*' | grep -v 'gmon.out' | " ..
-                     "grep -Ev '[^ ]*/tests?/[^/]+' | " ..
+                     "grep -Ev '[^ ]*/tests?/[^/]+' | grep -Ev '[^ ]*/lua_src' | " ..
                      "cut -d' ' -f2 | sort -n | tail -n 1")
   local timestamp=tonumber(f:read("*l"))
   f:close()
-  if timestamp == nil then
-    timestamp = 0 
-  end
-  return timestamp
+  local f=io.popen("find " .. path .. " -type f -printf '%h/%f %T@\n' 2>/dev/null | " ..
+		     "grep  -v '.*/\\..*' | grep -v 'gmon.out' | " ..
+                     "grep -Ev '[^ ]*/tests?/[^/]+' | grep -E '[^ ]*/lua_src' | " ..
+                     "cut -d' ' -f2 | sort -n | tail -n 1")
+  local timestamp_lua=tonumber(f:read("*l"))
+  f:close()
+  if timestamp == nil then timestamp = 0 end
+  if timestamp_lua == nil then timestamp_lua = 0 end
+  return timestamp,timestamp_lua
 end
 
 -- obtains the timestamp of a given file
@@ -505,7 +510,7 @@ function formiga.exec_package(package_name,target,global_timestamp)
     formiga.pkgconfig_libs[the_package.name]       = aux_pkgconfig_libs
     --
     --
-    if the_package.compile_mark then
+    if the_package.compile_mark or the_package.compile_mark_lua then
       printverbosecolor(1,"yellow", nil, "[package] "..the_package.name,
 			"\tCompile: " .. tostring(the_package.compile_mark))
     else
@@ -517,7 +522,7 @@ function formiga.exec_package(package_name,target,global_timestamp)
     if thetarget == nil then
       print("WARNING: target "..target.." not found")
     else
-      if the_package.compile_mark or not thetarget.use_timestamp then
+      if the_package.compile_mark or the_package.compile_mark_lua or not thetarget.use_timestamp then
 	thetarget.__target__(thetarget)
       end
       table.insert(formiga.lua_dot_c_register_functions,
@@ -542,12 +547,17 @@ function package (t)
   formiga.package_table[t.name].module_name  = formiga.module_name .. "." .. t.name
   -- set up the timestamp
   t.timestamp = formiga.os.get_directory_timestamp(build_dir)
-  t.src_timestamp = formiga.os.get_directory_timestamp(formiga.os.basedir)
+  t.src_timestamp,t.src_timestamp_lua = formiga.os.get_directory_timestamp(formiga.os.basedir)
   -- and the compile_mark
   if t.src_timestamp > t.timestamp then
     t.compile_mark = true
   else
     t.compile_mark = false
+  end
+  if t.src_timestamp_lua > t.timestamp then
+    t.compile_mark_lua = true
+  else
+    t.compile_mark_lua = false
   end
 
   -- relate the package with the directory

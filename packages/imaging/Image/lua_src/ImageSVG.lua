@@ -176,9 +176,32 @@ function imageSVG_methods:addPoint(point, params)
     if params.conf then 
       self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = (params.conf*2)^2, opacity = 0.5})
     end
-    self:addSquare(point, params)
+
+    if params.circle then
+      self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = params.side})
+    else
+      self:addSquare(point, params)
+    end
 end
 
+function imageSVG_methods:addTriangle(point, params)
+
+     
+   local side = params.side or 1
+
+   if params.reverse then
+       side = -side
+   end
+   local mid = point[2] - side
+   local color = params.color or "black"
+   local leftx, lefty = point[1]-side, point[2]+side
+   local rightx, righty = point[1]+side, point[2]+side
+  
+
+   local spoints = string.format("%f,%f %f,%f %f,%f", point[1], mid, leftx, lefty, rightx, righty)
+
+   table.insert(self.body, string.format('<polygon points="%s" style="fill:%s"/>', spoints, color)) 
+end
 function imageSVG_methods:addLine(ini_point, end_point, params)
 
     --local color = params.color or "black"
