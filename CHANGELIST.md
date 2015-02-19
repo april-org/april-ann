@@ -28,6 +28,7 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug in `Image<T>::rotate90_cw` methods.
 - Solved bug in `SparseMatrix::toDense()` method.
 
 ### C/C++

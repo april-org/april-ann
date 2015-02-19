@@ -574,7 +574,7 @@ namespace Imaging {
     for (int y=0; y < height(); ++y) {
       for (int x=0; x < width(); ++x) {
         //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
-        dst_it(height() - 1 - y, x) = src_it(y, x);
+        dst_it(x, height() - 1 - y) = src_it(y, x);
       }
     }
 	
