@@ -339,16 +339,37 @@ end
 
 ----------------------------------------------------------------------
 
-function ann.connections.input_filters_image(w, shape, margin, notranspose)
+function ann.connections.input_filters_image(w, shape, options)
+  local params = get_table_fields({
+      margin = { type_match="number", mandatory=false, default=1 },
+      bgcolor = { type_match="number", mandatory=false, default=0 },
+      rows = { type_match="number", mandatory=false },
+      cols = { type_match="number", mandatory=false },
+                                  }, options)
+  local notranspose = false
   assert(type(shape) == "table", "Needs a shape table as 2nd argument")
   assert(#shape == 2 or #shape == 3,
 	 "Expected shape with 2 or 3 dimensions")
   assert(#shape == 2 or shape[3] == 3,
 	 "Expected 3 components at the 3rd dimension (color RGB)")
-  local margin = margin or 1
+  local margin  = params.margin
+  local bgcolor = params.bgcolor
   local R = math.ceil(math.sqrt(w:dim(1)))
-  local C = math.ceil(math.sqrt(w:dim(1)))
-  local result = matrix(R*(shape[1]+1)-1,C*(shape[2]+1)-1,shape[3]):zeros()
+  local C = math.floor(math.sqrt(w:dim(1)))
+  if params.rows then
+    R = params.rows
+    if params.cols then
+      C = params.cols
+      assert(R*C == w:dim(1), "Incorrect number of rows and cols")
+    else
+      C = math.ceil(w:dim(1)/R)
+    end
+  elseif params.cols then
+    C = params.cols
+    R = math.ceil(w:dim(1)/C)
+  end
+  local result = matrix(R*(shape[1]+margin)-margin,C*(shape[2]+margin)-margin,shape[3])
+  result:fill(bgcolor)
   local neuron_weights
   local step = { shape[1]+margin, shape[2]+margin }
   if #shape == 3 then step[3] = 1 end
@@ -357,10 +378,10 @@ function ann.connections.input_filters_image(w, shape, margin, notranspose)
   for i=1,w:dim(1) do
     result_m = result_sw:get_matrix(result_m)
     neuron_weights = w:select(1,i,neuron_weights)
-    local normalized = neuron_weights:clone(notranspose and "row_major"):
-    rewrap(table.unpack(shape)):clone(notranspose or "row_major"):
-    scal(1/neuron_weights:norm2()):
-    adjust_range(0,1)
+    local normalized = neuron_weights:clone():
+      rewrap(table.unpack(shape)):clone():
+      scal(1/neuron_weights:norm2()):
+      adjust_range(0,1)
     result_m:copy(normalized)
     --
     result_sw:next()    
