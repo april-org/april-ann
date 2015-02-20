@@ -352,6 +352,7 @@ function ann.connections.input_filters_image(w, shape, options)
 	 "Expected shape with 2 or 3 dimensions")
   assert(#shape == 2 or shape[3] == 3,
 	 "Expected 3 components at the 3rd dimension (color RGB)")
+  assert(shape[1] and shape[2], "Found nil values in shape (2nd argument)")
   local margin  = params.margin
   local bgcolor = params.bgcolor
   local R = math.ceil(math.sqrt(w:dim(1)))

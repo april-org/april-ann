@@ -1053,7 +1053,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
     LUABIND_ERROR("Deprecated property, new version only allowed for input_planes_dim==1\n");
   }
   else if (input_planes_dim == 1) {
-    ERROR_PRINT("Deprecated property, not needed in the new version");
+    ERROR_PRINT("Deprecated property, not needed in the new version\n");
   }
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
