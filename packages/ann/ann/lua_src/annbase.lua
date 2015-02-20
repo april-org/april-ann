@@ -376,6 +376,8 @@ function ann.connections.input_filters_image(w, shape, options)
   if #shape == 3 then step[3] = 1 end
   local result_sw = result:sliding_window{ size=shape, step=step }
   local result_m
+  assert(shape[1]*shape[2]*(shape[3] or 1) == w:dim(2),
+         "Incorrect shape dimensions")
   for i=1,w:dim(1) do
     result_m = result_sw:get_matrix(result_m)
     neuron_weights = w:select(1,i,neuron_weights)
