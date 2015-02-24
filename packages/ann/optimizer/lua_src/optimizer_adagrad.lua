@@ -14,23 +14,20 @@ local md = matrix.dict
 
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
-------------------------------------
---------- ADADELTA METHOD ----------
-------------------------------------
+-----------------------------------
+--------- ADAGRAD METHOD ----------
+-----------------------------------
 
--- ADADELTA: An Adaptive Learning Rate Method
--- Matthew D. Zeiler
--- ArXiV.org 2012
--- http://arxiv.org/abs/1212.5701
+-- http://xcorr.net/2014/01/23/adagrad-eliminating-learning-rates-in-stochastic-gradient-descent/
 
-local adadelta, adadelta_methods = class("ann.optimizer.adadelta", ann.optimizer)
-ann.optimizer.adadelta = adadelta -- global environment
+local adagrad, adagrad_methods = class("ann.optimizer.adagrad", ann.optimizer)
+ann.optimizer.adagrad = adagrad -- global environment
 
-function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
+function adagrad:constructor(g_options, l_options, count, Egradients)
   -- the base optimizer, with the supported learning parameters
   ann.optimizer.constructor(self,
                             {
-                              {"learning_rate", "Global learning rate (1.0"},
+                              {"learning_rate", "Global learning rate (1.0)"},
 			      {"decay", "Decay rate (0.95)"},
 			      {"epsilon", "Epsilon constant (1e-06)"},
                               {"weight_decay", "Weight L2 regularization (0.0)"},
@@ -39,7 +36,6 @@ function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
 			    g_options,
 			    l_options,
 			    count)
-  self.Eupdates = Eupdates or {}
   self.Egradients = Egradients or {}
   if not g_options then
     -- default values
@@ -51,7 +47,7 @@ function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
   end
 end
 
-function adadelta_methods:execute(eval, weights)
+function adagrad_methods:execute(eval, weights)
   local table = table
   local assert = assert
   --
@@ -64,7 +60,6 @@ function adadelta_methods:execute(eval, weights)
   --
   local count = self:get_count()
   for wname,w in pairs(weights) do
-    local Eupdate     = self.Eupdates[wname] or matrix.as(w):zeros()
     local Egradient   = self.Egradients[wname] or matrix.as(w):zeros()
     local grad        = gradients[wname]
     -- learning options
@@ -76,13 +71,15 @@ function adadelta_methods:execute(eval, weights)
     -- L2 regularization
     if l2 > 0.0 then grad:axpy(l2, w) end
     -- accumulate gradients
-    Egradient[{}] = decay*Egradient + (1-decay)*grad^2
+    if count == 0 then
+      Egradient[{}] = grad^2
+    else
+      Egradient[{}] = decay*Egradient + (1-decay)*grad^2
+    end
     -- compute update on grad matrix
-    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps))
-    -- accumulate updates
-    Eupdate[{}] = decay*Eupdate + (1-decay)*update^2
+    local update = mop.cmul(grad, 1 / (eps + mop.sqrt(Egradient)))
     -- apply update matrix to the weights
-    w:axpy(lr, update)
+    w:axpy(-lr, update)
     -- constraints
     if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     -- weights normality check
@@ -90,7 +87,6 @@ function adadelta_methods:execute(eval, weights)
       w:prune_subnormal_and_check_normal()
     end
     --
-    self.Eupdates[wname] = Eupdate
     self.Egradients[wname] = Egradient
   end
   -- count one more update iteration
@@ -99,35 +95,32 @@ function adadelta_methods:execute(eval, weights)
   return table.unpack(arg)
 end
 
-function adadelta_methods:clone()
-  local obj = ann.optimizer.adadelta()
+function adagrad_methods:clone()
+  local obj = ann.optimizer.adagrad()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
-  obj.Eupdates          = md.clone( self.Eupdates )
   obj.Egradients        = md.clone( self.Egradients )
   return obj
 end
 
-function adadelta_methods:to_lua_string(format)
+function adagrad_methods:to_lua_string(format)
   local format = format or "binary"
-  local str_t = { "ann.optimizer.adadelta(",
+  local str_t = { "ann.optimizer.adagrad(",
 		  table.tostring(self.global_options),
 		  ",",
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
 		  ",",
-		  util.to_lua_string(self.Eupdates, format),
-		  ",",
 		  util.to_lua_string(self.Egradients, format),
 		  ")" }
   return table.concat(str_t, "")
 end
 
-local adadelta_properties = {
+local adagrad_properties = {
   gradient = true
 }
-function adadelta_methods:needs_property(property)
-  return adadelta_properties[property]
+function adagrad_methods:needs_property(property)
+  return adagrad_properties[property]
 end

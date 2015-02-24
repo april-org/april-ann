@@ -24,6 +24,7 @@ if autodiff then
         ann.optimizer.asgd():
           set_option("learning_rate", 0.04),
         ann.optimizer.adadelta(),
+        ann.optimizer.adagrad():set_option("learning_rate", 0.1),
         ann.optimizer.cg(),
         ann.optimizer.rprop(),
         ann.optimizer.quickprop():

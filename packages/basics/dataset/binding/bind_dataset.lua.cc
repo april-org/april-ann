@@ -25,12 +25,60 @@
 #include "bind_mtrand.h"
 #include "bind_referenced_vector.h"
 #include "bind_tokens.h"
+#include "error_print.h"
 #include "fmeasure.h"
 #include "matrix_operations.h"
 #include "MersenneTwister.h"
 
 using AprilUtils::constString;
 using namespace AprilMath::MatrixExt::Operations;
+
+//devuelve true si consigue leer "name" en la tabla que esté en el top
+// y en v[] deja los n primeros valores 
+bool leer_int_params(lua_State *L, const char *name, int *v, int n) {
+  // table
+  lua_pushstring(L, name);  // name (atributo)
+  lua_gettable(L,-2);
+  if (lua_isnil(L,-1)) {
+    lua_pop(L,1);	//remove string
+    return false;
+  }
+  else if (!lua_istable(L,-1)) {
+    ERROR_EXIT1(128, "Expected a table in field %s\n", name);
+  }
+  // tabla del atributo
+  for (int i = 1; i <= n; i++) {
+    lua_rawgeti(L, -1, i);
+    v[i-1] = (int)luaL_checknumber(L, -1);
+    lua_pop(L,1);
+  }
+  lua_pop(L,1); //tabla del atributo
+  
+  return true;
+}
+
+//idem pero leyendo bool's
+bool leer_bool_params(lua_State *L, const char *name, bool *v, int n) {
+  // table
+  lua_pushstring(L, name);  // name (atributo)
+  lua_gettable(L,-2);
+  if (lua_isnil(L,-1)) {
+    lua_pop(L,1);	//remove string
+    return false;
+  }
+  else if (!lua_istable(L,-1)) {
+    ERROR_EXIT1(128, "Expected a table in field %s\n", name);
+  }
+  // tabla del atributo
+  for (int i = 1; i <= n; i++) {
+    lua_rawgeti(L, -1, i);
+    v[i-1] = (lua_toboolean(L, -1) != 0);
+    lua_pop(L,1);
+  }
+  lua_pop(L,1); //tabla del atributo
+  
+  return true;                 
+}
 
 namespace Basics {
 
