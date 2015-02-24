@@ -226,9 +226,7 @@ function recog.load_frames(args)
 	collectgarbage("collect")
 	local m,size
 	if format == "png" then
-	  local img_gray = ImageIO.read(filename):to_grayscale():invert_colors()
-	  m              = img_gray:rotate90cw(1):info()
-	  size = m:dim()[1]
+          m,size = load_png(filename)
 	elseif format == "mat" then
 	  m,size = load_matrix(filename)
 	else
@@ -616,7 +614,7 @@ function load_matrix(MFCCfilename)
   --if MFCCfilename == 'corpus/n02-082a-s05.fea' then os.exit() end
   local ad = MFCC_cache[MFCCfilename] or matrix.fromFilename(MFCCfilename)
   MFCC_cache[MFCCfilename] = ad
-  return ad,ad:dim()[1]
+  return ad,ad:dim(1)
 end
 
 -- carga la matriz de CCs a partir de un nombre de fichero
@@ -634,7 +632,18 @@ function load_mfcc(MFCCfilename)
     ad = htk_interface.read_matrix_from_mfc_file(MFCCfilename)
   end
   
-  return ad,ad:dim()[1]
+  return ad,ad:dim(1)
+end
+
+-- carga desde un PNG
+function load_png(filename)
+  local m = ImageIO.read(filename):
+    to_grayscale():
+    invert_colors():
+    matrix():
+    transpose():
+    clone()
+  return m,m:dim(1)
 end
 
 -- genera la segmentacion a partes iguales
