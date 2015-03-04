@@ -311,7 +311,7 @@ namespace Basics {
       return data->getDimSize(0);
     }
     virtual int patternSize() {
-      return data->getDimSize(0);
+      return data->getDimSize(1);
     }
     virtual Token *getPattern(int index) {
       int coords[2] = { index, 0 };
