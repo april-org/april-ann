@@ -202,69 +202,28 @@ namespace Basics {
     checkSortedIndices(sort);
   }
 
-  // FIXME: Matrix<T> *other cannot be const because of transpose() method.
+#define NOT_IS_ZERO(it,zero) (zero) < (*it) || (*it) < -(zero)
   template <typename T>
-  SparseMatrix<T>::SparseMatrix(Matrix<T> *other,
-                                const SPARSE_FORMAT sparse_format,
-                                const T zero) :
-    AprilIO::Serializable(), shared_count(0), mmapped_data(0),
-    sparse_format(sparse_format), use_cuda(other->getCudaFlag()),
-    end_iterator(), end_const_iterator() {
-    if (other->getNumDim() != 2)
+  SparseMatrix<T> *SparseMatrix<T>::fromDenseMatrix(const Matrix<T> *dense,
+                                                    const SPARSE_FORMAT sparse_format,
+                                                    const T zero) {
+    if (dense->getNumDim() != 2) {
       ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
-    initialize(other->getDimSize(0), other->getDimSize(1));
-    //
-    int non_zero_size = 0;
-    typename Matrix<T>::const_iterator it(other->begin());
-    for (int c1=0; c1<other->getDimSize(1); ++c1) {
-      for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
-        if (it == other->end())
-          ERROR_EXIT(128, "Unexpected matrix iterator end\n");
-        if (zero < *it || *it < -zero) non_zero_size++;
-      }
     }
-    allocate_memory(non_zero_size);
-    int current = 0;
-    float *values_ptr    = values->getPPALForWrite();
-    int *indices_ptr     = indices->getPPALForWrite();
-    int *first_index_ptr = first_index->getPPALForWrite();
-    first_index_ptr[0] = 0;
-    switch(sparse_format) {
-    case CSC_FORMAT:
-      {
-        AprilUtils::SharedPtr< Matrix<T> > aux(other->transpose());
-        typename Matrix<T>::const_iterator it(aux->begin());
-        for (int c1=0; c1<other->getDimSize(1); ++c1) {
-          for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
-            if (zero < *it || *it < -zero) {
-              values_ptr[current]  = *it;
-              indices_ptr[current] = c0;
-              ++current;
-            }
-          }
-          first_index_ptr[c1+1] = current;
+    AprilUtils::UniquePtr< DOKBuilder > builder( new DOKBuilder() );
+    typename Matrix<T>::const_iterator it(dense->begin());
+    for (int d0=0; d0<dense->getDimSize(0); ++d0) {
+      for (int d1=0; d1<dense->getDimSize(1); ++d1, ++it) {
+        assert(it != dense->end());
+        if (NOT_IS_ZERO(it, zero)) {
+          builder->insert(d0, d1, *it);
         }
       }
-      break; // case CSC_FORMAT
-    case CSR_FORMAT:
-      {
-        typename Matrix<T>::const_iterator it(other->begin());
-        for (int c0=0; c0<other->getDimSize(0); ++c0) {
-          for (int c1=0; c1<other->getDimSize(1); ++c1, ++it) {
-            if (zero < *it || *it < -zero) {
-              values_ptr[current]  = *it;
-              indices_ptr[current] = c1;
-              ++current;
-            }
-          }
-          first_index_ptr[c0+1] = current;
-        }
-      }
-      break; // case CSR_FORMAT
-    default:
-      ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
     }
+    return builder->build(dense->getDimSize(0), dense->getDimSize(1),
+                          sparse_format);
   }
+#undef NOT_IS_ZERO
 
   /// Constructor given other matrix, it does a deep copy (clone).
   template <typename T>

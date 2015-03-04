@@ -28,10 +28,17 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug at `SparseMatrix<T>` when reading it from a file.
 - Solved bug in `Image<T>::rotate90_cw` methods.
 - Solved bug in `SparseMatrix::toDense()` method.
 
 ### C/C++
+
+- The method `SparseMatrix<T>::fromDenseMatrix()` uses a `DOKBuilder` object
+  to build the sparse matrix.
+- The conversion of a `Matrix<T>` into a `SparseMatrix<T>` has been changed from
+  a constructor overload to the static method
+  `SparseMatrix<T>::fromDenseMatrix()`.
 
 ### Other
 

@@ -315,12 +315,7 @@ namespace Basics {
                  AprilMath::Int32GPUMirroredMemoryBlock *first_index,
                  const SPARSE_FORMAT sparse_format = CSR_FORMAT,
                  bool sort=false);
-
-    /// Constructor given a dense matrix, it does constructs a sparse matrix
-    /// (cloned).
-    SparseMatrix(Matrix<T> *other,
-                 const SPARSE_FORMAT sparse_format = CSR_FORMAT,
-                 const T zero = T());
+    
     /// Constructor given other matrix, it does a deep copy (clone).
     SparseMatrix(const SparseMatrix<T> *other,
                  SPARSE_FORMAT sparse_format = NONE_FORMAT);
@@ -329,7 +324,13 @@ namespace Basics {
                  const int *coords, const int *sizes, bool clone=true);
     /// Destructor
     virtual ~SparseMatrix();
-  
+    
+    /// Constructor given a dense Matrix, it returns a SparseMatrix
+    static SparseMatrix<T> *fromDenseMatrix(const Matrix<T> *other,
+                                            const SPARSE_FORMAT
+                                            sparse_format = CSR_FORMAT,
+                                            const T zero = T());
+    
     /// Constructor from a MMAP file
     static SparseMatrix<T> *fromMMappedDataReader(AprilUtils::MMappedDataReader
                                                   *mmapped_data);
