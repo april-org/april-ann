@@ -138,7 +138,7 @@ using namespace Basics;
     MatrixFloat *m;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
     LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
-    obj = new SparseMatrixFloat(m, CSR_FORMAT, near_zero);
+    obj = SparseMatrixFloat::fromDenseMatrix(m, CSR_FORMAT, near_zero);
   }
   else {
     int rows,cols;
@@ -181,7 +181,7 @@ using namespace Basics;
     float near_zero;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
     LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
-    obj = new SparseMatrixFloat(m, CSC_FORMAT, near_zero);
+    obj = SparseMatrixFloat::fromDenseMatrix(m, CSC_FORMAT, near_zero);
   }
   else {
     int rows,cols;

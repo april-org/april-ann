@@ -85,11 +85,14 @@ namespace Basics {
     AprilMath::GPUMirroredMemoryBlock<T> *values = new AprilMath::GPUMirroredMemoryBlock<T>(NZ);
     AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(NZ);
     AprilMath::Int32GPUMirroredMemoryBlock *first_index = 0;
+    SPARSE_FORMAT sparse_format;
     if (!sparse || sparse=="csr") {
       first_index = new AprilMath::Int32GPUMirroredMemoryBlock(dims[0]+1);
+      sparse_format = CSR_FORMAT;
     }
     else if (sparse=="csc") {
       first_index = new AprilMath::Int32GPUMirroredMemoryBlock(dims[1]+1);
+      sparse_format = CSC_FORMAT;
     }
     else {
       ERROR_PRINT("Impossible to determine the sparse format\n");
@@ -161,17 +164,9 @@ namespace Basics {
         }
       }
     }
-    if (sparse=="csr") {
-      mat = new SparseMatrix<T>(dims[0],dims[1],
-                                values,indices,first_index,
-                                CSR_FORMAT);
-    }
-    else {
-      // This was checked before: else if (sparse=="csc") {
-      mat = new SparseMatrix<T>(dims[0],dims[1],
-                                values,indices,first_index,
-                                CSC_FORMAT);
-    }
+    mat = new SparseMatrix<T>(dims[0],dims[1],
+                              values,indices,first_index,
+                              sparse_format);
     return mat;
   }
   
