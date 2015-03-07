@@ -42,7 +42,27 @@ using namespace Stats;
   unsigned int n, k;
   LUABIND_GET_PARAMETER(1, uint, n);
   LUABIND_GET_PARAMETER(2, uint, k);
-  LUABIND_RETURN(uint, Combinations::get(n, k));
+  LUABIND_RETURN(uint, Combinations::get(static_cast<unsigned int>(n),
+                                         static_cast<unsigned int>(k)));
+}
+//BIND_END
+
+//BIND_FUNCTION stats.log_comb
+{
+  unsigned int n, k;
+  LUABIND_GET_PARAMETER(1, uint, n);
+  LUABIND_GET_PARAMETER(2, uint, k);
+  LUABIND_RETURN(double, static_cast<double>
+                 (Combinations::lget(static_cast<unsigned int>(n),
+                                     static_cast<unsigned int>(k))));
+}
+//BIND_END
+
+//BIND_FUNCTION stats.lgamma
+{
+  double x;
+  LUABIND_GET_PARAMETER(1, double, x);
+  LUABIND_RETURN(double, lgamma(x));
 }
 //BIND_END
 

@@ -124,7 +124,8 @@ utest.check = { }
 utest.check.number_eq = function(a, b, epsilon, ...)
   local epsilon = epsilon or 0.02
   return check(function()
-                 return math.abs(a-b)/math.abs(a+b) < epsilon
+      if a == 0 and b == 0 then return true end
+      return math.abs(a-b)/math.abs(a+b) < epsilon
                end, ...)
 end
 utest.check.eq = function(a, b, ...)

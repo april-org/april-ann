@@ -80,9 +80,37 @@ namespace AprilMath {
   template<> char Limits<char>::min();
   template<> char Limits<char>::max();
 
+  template<> int8_t Limits<int8_t>::lowest();
+  template<> int8_t Limits<int8_t>::min();
+  template<> int8_t Limits<int8_t>::max();
+
+  template<> uint8_t Limits<uint8_t>::lowest();
+  template<> uint8_t Limits<uint8_t>::min();
+  template<> uint8_t Limits<uint8_t>::max();
+
+  template<> int16_t Limits<int16_t>::lowest();
+  template<> int16_t Limits<int16_t>::min();
+  template<> int16_t Limits<int16_t>::max();
+
+  template<> uint16_t Limits<uint16_t>::lowest();
+  template<> uint16_t Limits<uint16_t>::min();
+  template<> uint16_t Limits<uint16_t>::max();
+
   template<> int32_t Limits<int32_t>::lowest();
   template<> int32_t Limits<int32_t>::min();
   template<> int32_t Limits<int32_t>::max();
+
+  template<> uint32_t Limits<uint32_t>::lowest();
+  template<> uint32_t Limits<uint32_t>::min();
+  template<> uint32_t Limits<uint32_t>::max();
+
+  template<> int64_t Limits<int64_t>::lowest();
+  template<> int64_t Limits<int64_t>::min();
+  template<> int64_t Limits<int64_t>::max();
+
+  template<> uint64_t Limits<uint64_t>::lowest();
+  template<> uint64_t Limits<uint64_t>::min();
+  template<> uint64_t Limits<uint64_t>::max();
   
   template<> float Limits<float>::lowest();
   template<> float Limits<float>::min();

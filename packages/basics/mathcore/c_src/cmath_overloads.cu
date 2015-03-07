@@ -29,9 +29,37 @@ namespace AprilMath {
   template<> char Limits<char>::min() { return CHAR_MIN; }
   template<> char Limits<char>::max() { return CHAR_MAX; }
 
-  template<> int32_t Limits<int32_t>::lowest() { return INT_MIN; }
-  template<> int32_t Limits<int32_t>::min() { return INT_MIN; }
-  template<> int32_t Limits<int32_t>::max() { return INT_MAX; }
+  template<> int8_t Limits<int8_t>::lowest() { return INT8_MIN; }
+  template<> int8_t Limits<int8_t>::min() { return INT8_MIN; }
+  template<> int8_t Limits<int8_t>::max() { return INT8_MAX; }
+
+  template<> uint8_t Limits<uint8_t>::lowest() { return 0u; }
+  template<> uint8_t Limits<uint8_t>::min() { return 0u; }
+  template<> uint8_t Limits<uint8_t>::max() { return UINT8_MAX; }
+
+  template<> int16_t Limits<int16_t>::lowest() { return INT16_MIN; }
+  template<> int16_t Limits<int16_t>::min() { return INT16_MIN; }
+  template<> int16_t Limits<int16_t>::max() { return INT16_MAX; }
+
+  template<> uint16_t Limits<uint16_t>::lowest() { return 0u; }
+  template<> uint16_t Limits<uint16_t>::min() { return 0u; }
+  template<> uint16_t Limits<uint16_t>::max() { return UINT16_MAX; }
+
+  template<> int32_t Limits<int32_t>::lowest() { return INT32_MIN; }
+  template<> int32_t Limits<int32_t>::min() { return INT32_MIN; }
+  template<> int32_t Limits<int32_t>::max() { return INT32_MAX; }
+
+  template<> uint32_t Limits<uint32_t>::lowest() { return 0u; }
+  template<> uint32_t Limits<uint32_t>::min() { return 0u; }
+  template<> uint32_t Limits<uint32_t>::max() { return UINT32_MAX; }
+  
+  template<> int64_t Limits<int64_t>::lowest() { return INT64_MIN; }
+  template<> int64_t Limits<int64_t>::min() { return INT64_MIN; }
+  template<> int64_t Limits<int64_t>::max() { return INT64_MAX; }
+
+  template<> uint64_t Limits<uint64_t>::lowest() { return 0u; }
+  template<> uint64_t Limits<uint64_t>::min() { return 0u; }
+  template<> uint64_t Limits<uint64_t>::max() { return UINT64_MAX; }
   
   template<> float Limits<float>::lowest() { return -FLT_MAX; }
   template<> float Limits<float>::min() { return FLT_MIN; }
