@@ -23,9 +23,6 @@
 
 #include "cmath_overloads.h"
 
-#ifndef __CONCAT
-#define __CONCAT(x,y) x ## y
-#endif
 #ifndef INT8_MAX
 #define INT8_MAX 0x7f
 #endif
@@ -33,7 +30,7 @@
 #define INT8_MIN (-INT8_MAX - 1)
 #endif
 #ifndef UINT8_MAX
-#define UINT8_MAX ((INT8_MAX<<1) + 1)
+#define UINT8_MAX 0xffU
 #endif  
 #ifndef INT16_MAX
 #define INT16_MAX 0x7fff
@@ -42,7 +39,7 @@
 #define INT16_MIN (-INT16_MAX - 1)
 #endif
 #ifndef UINT16_MAX
-#define UINT16_MAX ((__CONCAT(INT16_MAX,U)<<1U) + 1U)
+#define UINT16_MAX 0xffffU
 #endif
 #ifndef INT32_MAX
 #define INT32_MAX 0x7fffffffL
@@ -51,16 +48,16 @@
 #define INT32_MIN (-INT32_MAX - 1L)
 #endif
 #ifndef UINT32_MAX
-#define UINT32_MAX ((__CONCAT(INT32_MAX,U)<<1UL) + 1UL)
+#define UINT32_MAX 0xffffffffffffUL
 #endif
 #ifndef INT64_MAX
-#define INT64_MAX 0x7fffffffffffffffffffLL
+#define INT64_MAX 0x7fffffffffffffffffffffffffLL
 #endif
 #ifndef INT64_MIN
-#define INT64_MIN (-INT64_MAX - 1ULL)
+#define INT64_MIN (-INT64_MAX - 1LL)
 #endif
 #ifndef UINT64_MAX
-#define UINT64_MAX ((__CONCAT(INT64_MAX,U)<<1ULL) + 1ULL)
+#define UINT64_MAX 0xffffffffffffffffffffffffULL
 #endif
 
 namespace AprilMath {
