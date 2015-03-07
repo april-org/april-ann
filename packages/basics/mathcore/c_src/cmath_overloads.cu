@@ -48,16 +48,16 @@
 #define INT32_MIN (-INT32_MAX - 1L)
 #endif
 #ifndef UINT32_MAX
-#define UINT32_MAX 0xffffffffffffUL
+#define UINT32_MAX 0xffffffffUL
 #endif
 #ifndef INT64_MAX
-#define INT64_MAX 0x7fffffffffffffffffffffffffLL
+#define INT64_MAX 0x7fffffffffffffffLL
 #endif
 #ifndef INT64_MIN
 #define INT64_MIN (-INT64_MAX - 1LL)
 #endif
 #ifndef UINT64_MAX
-#define UINT64_MAX 0xffffffffffffffffffffffffULL
+#define UINT64_MAX 0xffffffffffffffffULL
 #endif
 
 namespace AprilMath {
