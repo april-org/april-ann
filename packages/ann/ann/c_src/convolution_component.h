@@ -119,7 +119,12 @@ namespace ANN {
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
 
     virtual char *toLuaString();
-
+    
+    const int *getKernelShape(int &n) const {
+      n = input_num_dims;
+      return kernel_dims + 1;
+    }
+    
   };
 }
 

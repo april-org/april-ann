@@ -72,6 +72,9 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   else if (dynamic_cast<StochasticANNComponent*>(value)) {
     lua_pushStochasticANNComponent(L, (StochasticANNComponent*)value);
   }
+  else if (dynamic_cast<ConvolutionANNComponent*>(value)) {
+    lua_pushConvolutionANNComponent(L, (ConvolutionANNComponent*)value);
+  }
   else {
     lua_pushANNComponent(L, value);
   }
@@ -1088,6 +1091,16 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;
   delete[] step;
+}
+//BIND_END
+
+//BIND_METHOD ConvolutionANNComponent get_kernel_shape
+{
+  const int *kernel;
+  int n;
+  kernel = obj->getKernelShape(n);
+  LUABIND_VECTOR_TO_NEW_TABLE(int, kernel, n);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
