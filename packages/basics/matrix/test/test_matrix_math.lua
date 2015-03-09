@@ -386,6 +386,37 @@ ascii
                                                2, 3, 1, 3 }), "min(3) b")
   end)
 
+  T("BrodacastTest", function()
+      local a = matrix(4,1,{0,10,20,30})
+      local b = matrix(3,{0,1,2})
+      local c = matrix.ext.broadcast(a,b,function(a,b) return a+b end)
+      local d = matrix.ext.broadcast(a,b,bind(a.axpy, nil, 1))
+      local e = matrix(4,3,{0,1,2,
+                            10,11,12,
+                            20,21,22,
+                            30,31,32})
+      check.eq(c,e)
+      check.eq(d,e)
+      --
+      local x   = matrix(4):linear()
+      local xx  = x:rewrap(4,1)
+      local y   = matrix(5):ones()
+      local z   = matrix(3,4):ones()
+      local add = bind(a.axpy, nil, 1.0)
+      check.errored(function()
+          matrix.ext.broadcast(x, y, add)
+      end)
+      check.eq(matrix.ext.broadcast(xx, y, add),
+               matrix(4,5,{1,1,1,1,1,
+                           2,2,2,2,2,
+                           3,3,3,3,3,
+                           4,4,4,4,4,}))
+      check.eq(matrix.ext.broadcast(x, z, add),
+               matrix(3,4,{1,2,3,4,
+                           1,2,3,4,
+                           1,2,3,4}))
+  end)
+
   T("LargeMatrices", function()
       local m1 = matrix(300,200,100)
       local m2 = matrix(300,200,100)

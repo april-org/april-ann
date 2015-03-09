@@ -74,11 +74,13 @@ matrix.ext.broadcast =
   } ..
   function(a, b, func, ...)
     local function private_broadcast(result, b, b_dim, func, ...)
+      local b  = b:squeeze()
       local sw = result:sliding_window{ size=b_dim, step=b_dim }
       local slice
       while not sw:is_end() do
         slice = sw:get_matrix(slice)
-        local out = func(slice, b, ...)
+        local slice = slice:squeeze()
+        local out   = func(slice, b, ...)
         if out ~= slice then slice:copy(out) end
         sw:next()
       end
@@ -93,8 +95,14 @@ matrix.ext.broadcast =
       end
       return shape
     end
+    local function fill(dim, N)
+      for i=#dim+1,N do table.insert(dim, 1, 1) end
+    end
     local a_dim  = a:dim()
     local b_dim  = b:dim()
+    local N = math.max(#a_dim, #b_dim)
+    fill(a_dim, N)
+    fill(b_dim, N)
     local shape  = result_shape(a_dim, b_dim)
     local result = matrix(table.unpack(shape))
     private_broadcast(result, a, a_dim, result.copy)
