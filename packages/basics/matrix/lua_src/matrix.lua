@@ -20,7 +20,7 @@ end)
 
 matrix.ext.iterate =
   april_doc{
-    class = "method",
+    class = "function",
     summary = "Returns an iterator which traverses a dimension",
     description = {
       "The iterator uses m:select() method to traverse the given",
@@ -52,6 +52,54 @@ matrix.ext.iterate =
           return pos,slice
         end
                     end, {self,slice,dim,d[dim]}, 0)
+  end
+
+matrix.ext.broadcast =
+  april_doc{
+    class = "function",
+    summary = "Broadcasts an operation over two matrices",
+    description = {
+      "Similar to scipy broadcasting: http://wiki.scipy.org/EricsBroadcastingDoc ",
+      "The operator is called as: func(a,b,...) where 'a' and 'b' are slices",
+      "of the given input matrices, and '...' is the given optional variadic",
+      "list of arguments.",
+    },
+    params = {
+      "A matrix",
+      "Another matrix",
+      "A binary operator which receives two matrices",
+      "Extra arguments to the binary operator [optional]",
+    },
+    outputs = { "A new allocated matrix with the result of the broadcast" },
+  } ..
+  function(a, b, func, ...)
+    local function private_broadcast(result, b, b_dim, func, ...)
+      local sw = result:sliding_window{ size=b_dim, step=b_dim }
+      local slice
+      while not sw:is_end() do
+        slice = sw:get_matrix(slice)
+        local out = func(slice, b, ...)
+        if out ~= slice then slice:copy(out) end
+        sw:next()
+      end
+    end
+    local function result_shape(a_dim, b_dim)
+      assert(#a_dim == #b_dim, "Incompatible number of dimensions")
+      local shape = {}
+      for i=1,#a_dim do
+        local n,m = a_dim[i],b_dim[i]
+        assert(n == m or n == 1 or m == 1, "Not aligned matrix shapes")
+        shape[i] = math.max(n, m)
+      end
+      return shape
+    end
+    local a_dim  = a:dim()
+    local b_dim  = b:dim()
+    local shape  = result_shape(a_dim, b_dim)
+    local result = matrix(table.unpack(shape))
+    private_broadcast(result, a, a_dim, result.copy)
+    private_broadcast(result, b, b_dim, func, ...)
+    return result
   end
 
 class.extend(matrix, "order",
