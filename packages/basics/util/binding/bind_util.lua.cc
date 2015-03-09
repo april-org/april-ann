@@ -37,6 +37,8 @@
 using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
+extern const char *__APRILANN_VERSION_MAJOR__;
+extern const char *__APRILANN_VERSION_MINOR__;
 
 int lua_isLuaTable(lua_State *L, int idx);
 AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx);
@@ -132,8 +134,8 @@ FILE **newfile (lua_State *L) {
 
 //BIND_FUNCTION util.version
 {
-  LUABIND_RETURN(int, atoi(APRILANN_VERSION_MAJOR));
-  LUABIND_RETURN(int, atoi(APRILANN_VERSION_MINOR));
+  LUABIND_RETURN(int, atoi(__APRILANN_VERSION_MAJOR__));
+  LUABIND_RETURN(int, atoi(__APRILANN_VERSION_MINOR__));
   LUABIND_RETURN(string, __COMMIT_NUMBER__);
 }
 //BIND_END
