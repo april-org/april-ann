@@ -1119,16 +1119,23 @@ end
 ------------------------------------------------------------------------------
 
 function util.serialize(data, where, format)
+  local version = { util.version() } table.insert(version, os.date())
+  local comment = "-- version info { major, minor, commit number, commit hash, date }"
+  local version_info = ",\n%s\n%s\n"%{ comment,
+                                       util.to_lua_string(version, format) }
   local tw = type(where)
   if tw == "string" then
     local f = io.open(where, "w")
     f:write("return ")
     f:write(util.to_lua_string(data, format))
+    f:write(version_info)
     f:close()
   elseif tw == "nil" then
-    return string.format("return %s", util.to_lua_string(data, format))
+    return string.format("return %s%s", util.to_lua_string(data, format),
+                         version_info)
   elseif iscallable(where) then
-    where(string.format("return %s", util.to_lua_string(data, format)))
+    where(string.format("return %s%s", util.to_lua_string(data, format),
+                        version_info))
   else
     error("Needs a string, a function, or nil as 2nd argument")
   end
