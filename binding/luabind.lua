@@ -89,6 +89,7 @@ end
 --   HEADER_H        : Cabecera del posible .h
 --   HEADER_C        : Cabecera del posible .cc
 --   FOOTER_H        : Pie del posible .h
+--   FOOTER_C        : Pie del posible .cc
 
 FUNCTIONS = {}
 TABLES = {}
@@ -97,6 +98,7 @@ CLASSES = {}
 HEADER_H = ""
 FOOTER_H = ""
 HEADER_C = ""
+FOOTER_C = ""
 LUANAME = {}
 PARENT_CLASS = {}
 STATIC_CONSTRUCTOR = {}
@@ -145,6 +147,7 @@ function load_data(filename)
 	if not LUANAME[ClassName] then LUANAME[ClassName] = ClassName end
 	 CLASSES[ClassName] = {
 	    methods={},
+            lua_to_hook = "",
 	    constructor = "",
 	    destructor  = "",
 	    class_open = "",
@@ -238,6 +241,20 @@ function load_data(filename)
 		    store_header()
 		    print("...Footer h")
 		 end,
+      FOOTER_C = function() 
+		    last_className ="Pie"
+		    last_table, last_key = _G, "FOOTER_C"
+		    store_header()
+		    print("...Footer c")
+		 end,
+      CLASS_LUA_TO_HOOK = function(ClassName)
+                  assert(ClassName, "CLASS_LUA_TO_HOOK needs a ClassName")
+                  check_class(ClassName)
+		  last_className = ClassName
+		  last_table, last_key = CLASSES[ClassName], "lua_to_hook"
+		  store_header()
+		  print("...lua_to_hook "..ClassName)
+	       end,
       LUACLASSNAME = function (cName, luaName)
 	assert(cName and luaName, "LUACLASSNAME needs a cName and luaName")
 			LUANAME[cName] = luaName
