@@ -37,6 +37,7 @@
 using namespace AprilUtils;
 
 extern const char *__COMMIT_NUMBER__;
+extern const char *__COMMIT_HASH__;
 extern const char *__APRILANN_VERSION_MAJOR__;
 extern const char *__APRILANN_VERSION_MINOR__;
 
@@ -137,6 +138,7 @@ FILE **newfile (lua_State *L) {
   LUABIND_RETURN(int, atoi(__APRILANN_VERSION_MAJOR__));
   LUABIND_RETURN(int, atoi(__APRILANN_VERSION_MINOR__));
   LUABIND_RETURN(string, __COMMIT_NUMBER__);
+  LUABIND_RETURN(string, __COMMIT_HASH__);
 }
 //BIND_END
 

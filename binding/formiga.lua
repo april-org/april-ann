@@ -76,7 +76,9 @@
 dofile("binding/utilformiga.lua")
 
 local commit_count = io.popen("git rev-list HEAD --count"):read("*l")
+local commit_hash = io.popen("git log -n 1 --pretty=format:\"%H\""):read("*l")
 if not tonumber(commit_count) then commit_count="UNKNOWN" end
+if #commit_hash == 0 then commit_hash="UNKNOWN" end
 
 -----------------------------------------------------------------
 -- table used to avoid using "other" global variables
@@ -107,7 +109,10 @@ formiga = {
     Ccompiler = os.getenv("CC") or "gcc",
     extra_libs = {"-ldl"},
     shared_extra_libs = { },
-    extra_flags = { string.format("-DGIT_COMMIT=%s", commit_count), },
+    extra_flags = {
+      string.format("-DGIT_COMMIT=%s", commit_count),
+      string.format("-DGIT_HASH=%s", commit_hash),
+    },
     language_by_extension = {
       c = "c", cc = "c++", cxx = "c++", CC = "c++", cpp = "c++",
       cu = "nvcc",

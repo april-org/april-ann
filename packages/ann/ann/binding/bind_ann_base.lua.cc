@@ -75,6 +75,12 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   else if (dynamic_cast<ConvolutionANNComponent*>(value)) {
     lua_pushConvolutionANNComponent(L, (ConvolutionANNComponent*)value);
   }
+  else if (dynamic_cast<RewrapANNComponent*>(value)) {
+    lua_pushRewrapANNComponent(L, (RewrapANNComponent*)value);
+  }
+  else if (dynamic_cast<FlattenANNComponent*>(value)) {
+    lua_pushFlattenANNComponent(L, (FlattenANNComponent*)value);
+  }
   else {
     lua_pushANNComponent(L, value);
   }
@@ -112,6 +118,7 @@ namespace AprilUtils {
 #include "copy_component.h"
 #include "select_component.h"
 #include "rewrap_component.h"
+#include "transpose_component.h"
 #include "slice_component.h"
 #include "flatten_component.h"
 #include "convolution_component.h"
@@ -954,6 +961,48 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_RETURN(RewrapANNComponent,
 		 dynamic_cast<RewrapANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              TransposeANNComponent              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TransposeANNComponent ann.components.transpose
+//BIND_CPP_CLASS    TransposeANNComponent
+//BIND_SUBCLASS_OF  TransposeANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR TransposeANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  check_table_fields(L, 1, "name", "dims", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  lua_getfield(L, 1, "dims");
+  AprilUtils::UniquePtr<int[]> which;
+  if (!lua_isnil(L, -1)) {
+    if (!lua_istable(L, -1)) {
+      LUABIND_ERROR("Expected a table at field dims");
+    }
+    int n;
+    LUABIND_TABLE_GETN(-1, n);
+    if (n != 2) {
+      LUABIND_ERROR("Needs a dims table field with two elements");
+    }
+    which = new int[2];
+    LUABIND_TABLE_TO_VECTOR_SUB1(-1, int, which, n);
+  }
+  lua_pop(L, 1);
+  obj = new TransposeANNComponent(which.get(), name);
+  LUABIND_RETURN(TransposeANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD TransposeANNComponent clone
+{
+  LUABIND_RETURN(TransposeANNComponent,
+		 dynamic_cast<TransposeANNComponent*>(obj->clone()));
 }
 //BIND_END
 
