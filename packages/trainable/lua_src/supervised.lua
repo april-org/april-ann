@@ -391,29 +391,7 @@ end
 
 ------------------------------------------------------------------------
 
-trainable_supervised_trainer_methods.save =
-  april_doc{
-    class = "method",
-    summary = "Save the model at a disk file",
-    description = {
-      "Save the model and connection weights at",
-      "a disk file.",
-      "Only works after build method is called.",
-    },
-    params = {
-      "A filename string",
-      { "A string indicating the matrix format: ascii or binary",
-        "[optional]. By default is binary." },
-    },
-  } ..
-  function(self, filename, format)
-    assert(self.is_built, "The component is not built")
-    local f = io.open(filename,"w") or error("Unable to open " .. filename)
-    f:write("return ")
-    f:write(self:to_lua_string(format))
-    f:write("\n")
-    f:close()
-  end
+trainable_supervised_trainer_methods.save = util.serialize
 
 ------------------------------------------------------------------------
 
@@ -433,9 +411,10 @@ trainable.supervised_trainer.load =
     },
   } ..
   function(filename, loss, bunch_size, optimizer)
-    local f   = loadfile(filename) or error("Unable to open " .. filename)
-    local obj = f() or error("Impossible to load chunk from file " .. filename)
+    local obj = util.deserialize(filename)
     if type(obj) == "table" then
+      fprintf(stderr,
+              "LOADING A DEPRECATED OBJECT!!! Save it in the new format\n")
       -- OLD FORMAT LOADER
       obj = trainable.supervised_trainer(obj)
     end

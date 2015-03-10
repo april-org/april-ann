@@ -1118,46 +1118,73 @@ end
 
 ------------------------------------------------------------------------------
 
-function util.serialize(data, where, format)
-  local version = { util.version() } table.insert(version, os.date())
-  local comment = "-- version info { major, minor, commit number, commit hash, date }"
-  local version_info = ",\n%s\n%s\n"%{ comment,
-                                       util.to_lua_string(version, format) }
-  local tw = type(where)
-  if tw == "string" then
-    local f = io.open(where, "w")
-    f:write("return ")
-    f:write(util.to_lua_string(data, format))
-    f:write(version_info)
-    f:close()
-  elseif tw == "nil" then
-    return string.format("return %s%s", util.to_lua_string(data, format),
-                         version_info)
-  elseif iscallable(where) then
-    where(string.format("return %s%s", util.to_lua_string(data, format),
-                        version_info))
-  else
-    error("Needs a string, a function, or nil as 2nd argument")
+util.serialize =
+  april_doc{
+    class = "function",
+    summary = "Serializes an object to a filename or a string",
+    params = {
+      "Any object, table, string, number, ...",
+      "A filename [optional], if not given an string would be returned",
+      "Format string: 'ascii' or 'binary' [optional]",
+    },
+    outputs = {
+      "In case of nil second argument, this function",
+      "returns a string with the serialized object.",
+    },
+  } ..
+  function (data, where, format)
+    local version = { util.version() } table.insert(version, os.date())
+    local comment = "-- version info { major, minor, commit number, commit hash, date }"
+    local version_info = ",\n%s\n%s\n"%{ comment,
+                                         util.to_lua_string(version, format) }
+    local tw = type(where)
+    if tw == "string" then
+      local f = io.open(where, "w")
+      f:write("return ")
+      f:write(util.to_lua_string(data, format))
+      f:write(version_info)
+      f:close()
+    elseif tw == "nil" then
+      return string.format("return %s%s", util.to_lua_string(data, format),
+                           version_info)
+    elseif iscallable(where) then
+      where(string.format("return %s%s", util.to_lua_string(data, format),
+                          version_info))
+    else
+      error("Needs a string, a function, or nil as 2nd argument")
+    end
   end
-end
 
 ------------------------------------------------------------------------------
 
-function util.deserialize(from)
-  assert(from, "A string or function is needed as 1st argument")
-  if type(from) == "string" then
-    if from:find("^[%s]*return[%s{}()]") then
-      return util.deserialize(function() return from end)
+util.deserialize = 
+  april_doc{
+    class = "function",
+    summary = "Deserializes an object from a filename or a string",
+    params = {
+      "A string with a filename or a serialized object",
+      { "... a variadic list of arguments to be passed to",
+        "the object during deserialization", },
+    },
+    outputs = {
+      "A deserialized object",
+    },
+  } ..
+  function (from, ...)
+    assert(from, "A string or function is needed as 1st argument")
+    if type(from) == "string" then
+      if from:find("^[%s]*return[%s{}()]") then
+        return util.deserialize(function() return from end)
+      else
+        return assert(loadfile(from))(...)
+      end
+    elseif iscallable(from) then
+      local f = load(from())
+      return f(...)
     else
-      return dofile(from)
+      error("Needs a string or a function as 1st argument")
     end
-  elseif iscallable(from) then
-    local f = load(from())
-    return f()
-  else
-    error("Needs a string or a function as 1st argument")
   end
-end
 
 ------------------------------------------------------------------------------
 
