@@ -65,14 +65,14 @@ matrix.ext.broadcast =
       "list of arguments.",
     },
     params = {
+      "A binary operator which receives two matrices, called as func(a,b,...)",
       "A matrix",
       "Another matrix",
-      "A binary operator which receives two matrices",
       "Extra arguments to the binary operator [optional]",
     },
     outputs = { "A new allocated matrix with the result of the broadcast" },
   } ..
-  function(a, b, func, ...)
+  function(func, a, b, ...)
     local function private_broadcast(result, b, b_dim, func, ...)
       local b  = b:squeeze()
       local sw = result:sliding_window{ size=b_dim, step=b_dim }

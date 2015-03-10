@@ -21,7 +21,7 @@ local function center(x,mu)
   else
     mu = mu or x:sum(1):scal(1/N)
     -- x_mu = mop.repmat(mu,N,1)
-    return matrix.ext.broadcast(x, mu, bind(x.axpy, nil, -1.0)), mu
+    return matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu), mu
   end
 end
 
@@ -45,8 +45,8 @@ stats.standardize =
     elseif not mu then
       mu = stats.amean(x,1)
     end
-    local x = matrix.ext.broadcast(x, mu, bind(x.axpy, nil, -1.0))
-    x = matrix.ext.broadcast(x, 1/sigma, x.cmul)
+    local x = matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu)
+    x = matrix.ext.broadcast(x.cmul, x, 1/sigma)
     -- x:axpy(-1.0, mop.repmat(mu,N,1))
     -- x:cmul(mop.repmat(1/sigma,N,1))
     return x,mu,sigma
