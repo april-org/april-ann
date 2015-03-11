@@ -178,7 +178,7 @@ function april_print_script_header(arg,file)
   local file = file or io.stdout
   fprintf(file,"# HOST:     %s\n", (io.popen("hostname", "r"):read("*l")))
   fprintf(file,"# DATE:     %s\n", os.date())
-  fprintf(file,"# VERSION:  %d.%d COMMIT %s\n", util.version())
+  fprintf(file,"# VERSION:  %d.%d COMMIT %s %s\n", util.version())
   if arg and arg[0] then
     fprintf(file,"# CMD:      %s %s\n", arg[0], table.concat(arg, " "))
   end
