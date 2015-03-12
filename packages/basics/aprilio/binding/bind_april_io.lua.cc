@@ -394,6 +394,12 @@ namespace AprilIO {
 }
 //BIND_END
 
+//BIND_CLASS_LUA_TO_HOOK InputLuaStringStream
+{
+  obj->retrieveStringFromRegistry(L);
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME CStringStream aprilio.stream.c_string
