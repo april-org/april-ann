@@ -29,8 +29,25 @@ which can be useful for C/C++ developing. For Lua developing use the wiki.
 It is possible to make a pull request directly to `master` branch for bug or
 memory leak solving.
 
-Requirements
-------------
+Dependencies and basic setup
+----------------------------
+
+Clone the repository and enter to it:
+
+```
+$ git clone https://github.com/pakozm/april-ann.git
+$ cd april-ann
+```
+
+The first time you want to run APRIL-ANN, you need to install
+dependencies in Linux (via apt-get) and in MacOS X (via MacPorts/Homebrew).
+There is an automatic shellscript which covers majorly Ubuntu (other Debian
+based distributions can be supported) and MacOS X systems. You just need
+to run:
+
+```$ ./DEPENDENCIES-INSTALLER.sh```
+
+### Requirements, installed by previous script
 
 Requires the following libraries. Versions are only orientative, it could work
 with older and newer versions whenver the API was compatible.
@@ -58,23 +75,17 @@ make target:
 
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6.
 
-Dependencies setup
-------------------
-
-The first time, you need to install dependencies in Linux (via apt-get) and in
-MacOS X (via MacPorts) running:
-
-```$ ./DEPENDENCIES-INSTALLER.sh```
-
 Compilation
 -----------
 
-First, it is mandatory to configure (only the first time) the repo PATH and other stuff:
+First, it is mandatory to configure the repo PATH and other stuff.
+This step is needed every time you start a session, and before compilation:
 
 ```$ . configure.sh```
 
-Second, you could compile the APRIL version which you need. We have developed compiling files for using
-different libraries. It is simple, you do
+Second, you can compile the APRIL-ANN version which you need.
+We have developed compiling files for using different libraries.
+The most simple compilation way is
 
 ```$ make```
 
@@ -86,7 +97,7 @@ target SUFIX (mkl, atlas, macports or homebrew). The automatic targets are:
 - **debug** automatic platform and sufix detection target for debug version.
 - **test** automatic platform and sufix detection target for test-debug version.
 
-There are more available targets, just depending in your particular system
+There are available more targets, just depending in your particular system
 installation you can execute them by using `$ make TARGET`:
 
 - **release-mkl** needs of MKL library installed at `/opt/MKL` as prefix.
