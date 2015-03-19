@@ -103,8 +103,8 @@ local function compute_gradients_asserts(self)
          "Build method should be called before")
   assert(rawget(self,"output_token"),
          "Forward method should be called before")
-  assert(rawget(self,"error_output_token"),
-         "Backprop method should be called before")
+  -- assert(rawget(self,"error_output_token"),
+  -- "Backprop method should be called before")
 end
 
 local function forward_finish(self, input, output)

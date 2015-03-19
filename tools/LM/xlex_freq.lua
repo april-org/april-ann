@@ -116,7 +116,7 @@ if text then
     if prob < min then min = prob end
     for line in io.lines(patfile) do
       jaja = jaja + 1
-      if math.mod(jaja, 100000) == 0 then printf(".") io.stdout:flush() end
+      if jaja % 100000 == 0 then printf(".") io.stdout:flush() end
       local words = string.tokenize(line)
       for i,w in ipairs(words) do
         if vocfile then
