@@ -233,10 +233,10 @@ namespace Basics {
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
   AprilUtils::UniquePtr<int []> dim;
-  if (ndims == 0) { // caso matrix{valores}
+  if (ndims == 0) { // caso matrix{valores} o matrix(block)
     ndims = 1;
     dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
+    dim[0] = -1;
   } else {
     dim = new int[ndims];
     for (i=1; i <= ndims; i++) {
@@ -254,11 +254,13 @@ namespace Basics {
   if (lua_isFloatGPUMirroredMemoryBlock(L, argn)) {
     FloatGPUMirroredMemoryBlock *block;
     block = lua_toFloatGPUMirroredMemoryBlock(L, argn);
+    if (dim[0] == -1) dim[0] = block->getSize();
     obj = new MatrixFloat(ndims, dim.get(), block);
   }
   else {
     obj = new MatrixFloat(ndims, dim.get());
     if (lua_istable(L,argn)) {
+      if (dim[0] == -1) LUABIND_TABLE_GETN(1, dim[0]);
       int i=1;
       int len;
       LUABIND_TABLE_GETN(argn, len);
