@@ -36,6 +36,7 @@ luapkg{
       "-lmkl_intel_lp64",
       "-Wl,--start-group",
       "-lmkl_intel_thread",
+      "-lmkl_def",
       "-lmkl_core",
       "-Wl,--end-group",
       "-liomp5",

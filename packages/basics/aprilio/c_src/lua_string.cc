@@ -64,7 +64,7 @@ namespace AprilIO {
   }
   
   void OutputLuaStringStream::close() {
-    if (out_buffer != 0) {
+    if (!closed && out_buffer != 0) {
       flush();
       closed = true;
     }
@@ -170,7 +170,7 @@ namespace AprilIO {
     if (L != this->L) {
       ERROR_EXIT(128, "Incorrect lua_State reference\n");
     }
-    lua_pushlstring(L, data, total_size);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
     return 1;
   }
   
@@ -238,4 +238,11 @@ namespace AprilIO {
   bool InputLuaStringStream::eofStream() const {
     return data_pos >= total_size;
   }
+
+  void InputLuaStringStream::retrieveStringFromRegistry(lua_State *L) {
+    if (L != this->L) ERROR_EXIT(256, "Incorrect Lua state given\n");
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+    data = lua_tostring(L, -1);
+  }
+
 } // namespace AprilIO

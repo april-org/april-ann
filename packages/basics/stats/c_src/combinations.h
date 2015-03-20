@@ -21,49 +21,63 @@
 #ifndef COMBINATIONS_H
 #define COMBINATIONS_H
 
+#include <cmath>
+
+extern "C" {
+#include <stdint.h>
+}
+
+#include "cmath_overloads.h"
 #include "error_print.h"
-#include "vector.h"
+#include "maxmin.h"
 
 namespace Stats {
-
+  
   class Combinations {
     // it is forbidden to instantiate this class, it is a static class
     Combinations() {}
-  
-    static AprilUtils::vector<unsigned int> pascal_triangle;
+  public:
     
-    static void reserve(unsigned int n) {
-      if (pascal_triangle.size() <= n) {
-        unsigned int oldn = pascal_triangle.size();
-        pascal_triangle.resize( (n+1)<<1 );
-        for (unsigned int i=oldn; i<pascal_triangle.size(); ++i)
-          pascal_triangle[i] = 0;
-      }
-    }
-    
-    static unsigned int privateGet(unsigned int n, unsigned int k) {
-      // frontier problems
-      if (n <= 1 || k == 0) return 1;
-      unsigned int pos = ( ( (n)*(n-1) ) >> 1 ) + (k-1) - 1;
-      reserve(pos);
-      unsigned int &v = pascal_triangle[pos];
-      if (v == 0) {
-        // general problem
-        if (k<n) v = privateGet(n-1, k-1) + privateGet(n-1, k);
-        else     v = privateGet(n-1, k-1);
-      }
-      return v;
-    }
-    
-    public:
-  
-    static unsigned int get(unsigned int n, unsigned int k) {
+    /// Returns the logarithm of binomial coefficient of n items in groups of k
+    static long double lget(uint32_t n, uint32_t k) {
       if (k>n) ERROR_EXIT(256, "k must be less or equal than n\n");
-      return privateGet(n, k);
+      // base case
+      if (k == 0 || k == n) return 0.0;
+      // general case for large numbers, use lgammal function
+      long double a = lgammal(n + 1u);
+      long double b = lgammal(k + 1u);
+      long double c = lgammal(n - k + 1u);
+      long double result = a - b - c;
+      return result;
     }
 
+    /// Returns the binomial coefficient of n items in groups of k
+    static uint32_t get(uint32_t n, uint32_t k) {
+      // general case for large numbers, use lgammal function
+      if (n > 20u) {
+        long double result = roundl(expl(lget(n, k)));
+        if (result > static_cast<long double>(AprilMath::Limits<uint32_t>::max())) {
+          ERROR_EXIT(256, "Overflow in 32 bits unsigned integer\n");
+        }
+        return static_cast<uint32_t>(result);
+      }
+      else {
+        if (k>n) ERROR_EXIT(256, "k must be less or equal than n\n");
+        // base case
+        if (k == 0 || k == n) return 1u;
+        // general case for short numbers, use iteration
+        else {
+          // take into account triangle symmetry
+          k = AprilUtils::min(k, n - k);
+          uint32_t result = 1u;
+          for (uint32_t i=0u; i<k; ++i) {
+            result = result * (n - i) / (i + 1);
+          }
+          return result;
+        }
+      }
+    }
   };
-  
 }
 
 #endif // COMBINATIONS_H

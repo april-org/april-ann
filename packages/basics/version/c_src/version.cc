@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2014, Francisco Zamora-Martinez
+ * Copyright 2015, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,10 @@
 #endif
 #define STRINGFY(X) #X
 #define TOSTRING(X) STRINGFY(X)
-const char *__COMMIT_NUMBER__ = TOSTRING(GIT_COMMIT);
+const char *__COMMIT_NUMBER__            = TOSTRING(GIT_COMMIT);
+const char *__COMMIT_HASH__              = TOSTRING(GIT_HASH);
+const char *__APRILANN_VERSION_MAJOR__   = TOSTRING(APRILANN_VERSION_MAJOR);
+const char *__APRILANN_VERSION_MINOR__   = TOSTRING(APRILANN_VERSION_MINOR);
+const char *__APRILANN_VERSION_RELEASE__ = TOSTRING(APRILANN_VERSION_RELEASE);
 #undef STRINGFY
 #undef TOSTRING

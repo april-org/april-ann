@@ -720,7 +720,7 @@ using namespace Basics;
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 2);
   int argn = lua_gettop(L); // number of arguments
-  if (argn >= 1) {
+  if (argn >= 1 && !lua_isnil(L,1)) {
     int dim;
     MatrixFloat *dest;
     LUABIND_GET_PARAMETER(1, int, dim);

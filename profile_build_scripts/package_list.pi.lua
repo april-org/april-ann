@@ -22,6 +22,7 @@ local packages_list = {
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+  "version",
  }
 
 return packages_list

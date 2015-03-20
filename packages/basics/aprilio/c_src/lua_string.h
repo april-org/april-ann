@@ -84,6 +84,13 @@ namespace AprilIO {
    *
    * @note A reference to the string is allocated at the registry in order to
    * avoid garbage collection.
+   *
+   * @note This class uses a hook in the binding to retrieve the Lua string
+   * from the registry every time a C call is produced. This behavior is
+   * implemented by the lua_toInputLuaStringStream() function.
+   *
+   * @note This class can modify the stack by adding a reference to the string
+   * allocated at the registry.
    */
   class InputLuaStringStream : public StreamMemory {
     lua_State *L;       ///< The @c lua_State where the string is allocated.
@@ -111,6 +118,8 @@ namespace AprilIO {
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;
     virtual const char *getErrorMsg() const;
+    
+    void retrieveStringFromRegistry(lua_State *L);
     
   protected:
     virtual const char *nextInBuffer(size_t &buf_len);

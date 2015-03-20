@@ -15,15 +15,14 @@ local sdiag = matrix.sparse.diag
 local function center(x,mu)
   local x_dim = x:dim()
   local N = x_dim[1]
-  local x_mu
   if #x_dim == 1 then
     mu = mu or x:sum()/N
-    x_mu = mu
+    return x - mu, mu
   else
     mu = mu or x:sum(1):scal(1/N)
-    x_mu = mop.repmat(mu,N,1)
+    -- x_mu = mop.repmat(mu,N,1)
+    return matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu), mu
   end
-  return x - x_mu,mu
 end
 
 stats.standardize =
@@ -46,9 +45,10 @@ stats.standardize =
     elseif not mu then
       mu = stats.amean(x,1)
     end
-    local x = x:clone()
-    x:axpy(-1.0, mop.repmat(mu,N,1))
-    x:cmul(mop.repmat(1/sigma,N,1))
+    local x = matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu)
+    x = matrix.ext.broadcast(x.cmul, x, 1/sigma)
+    -- x:axpy(-1.0, mop.repmat(mu,N,1))
+    -- x:cmul(mop.repmat(1/sigma,N,1))
     return x,mu,sigma
   end
 

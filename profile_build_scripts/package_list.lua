@@ -67,4 +67,7 @@ return {
 
   -- MISC
   "profiler",
+
+  -- VERSION AND COMMIT NUMBERS
+  "version",
 }

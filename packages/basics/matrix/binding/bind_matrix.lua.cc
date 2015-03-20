@@ -233,10 +233,10 @@ namespace Basics {
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
   AprilUtils::UniquePtr<int []> dim;
-  if (ndims == 0) { // caso matrix{valores}
+  if (ndims == 0) { // caso matrix{valores} o matrix(block)
     ndims = 1;
     dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
+    dim[0] = -1;
   } else {
     dim = new int[ndims];
     for (i=1; i <= ndims; i++) {
@@ -254,26 +254,32 @@ namespace Basics {
   if (lua_isFloatGPUMirroredMemoryBlock(L, argn)) {
     FloatGPUMirroredMemoryBlock *block;
     block = lua_toFloatGPUMirroredMemoryBlock(L, argn);
+    if (dim[0] == -1) dim[0] = block->getSize();
     obj = new MatrixFloat(ndims, dim.get(), block);
   }
   else {
-    obj = new MatrixFloat(ndims, dim.get());
     if (lua_istable(L,argn)) {
+      if (dim[0] == -1) LUABIND_TABLE_GETN(1, dim[0]);
+      obj = new MatrixFloat(ndims, dim.get());
       int i=1;
       int len;
       LUABIND_TABLE_GETN(argn, len);
-      if (len != obj->size())
+      if (len != obj->size()) {
         LUABIND_FERROR2("Incorrect number of elements at the given table, "
                         "found %d, expected %d", len, obj->size());
+      }
       for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
         lua_rawgeti(L,argn,i);
         if (!check_number(L,-1,*it))
           LUABIND_FERROR1("The given table has a no number value at position %d, "
                           "the table could be smaller than matrix size", i);
         lua_remove(L,-1);
-      }
+      } // for each matrix position
+    } // if lua_istable(L,argn)
+    else {
+      obj = new MatrixFloat(ndims, dim.get());
     }
-  }
+  } // else { !lua_isFloatGPUMirroredMemoryBlock(L,argn) }
   LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END

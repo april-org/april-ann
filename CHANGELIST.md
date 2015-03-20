@@ -8,6 +8,7 @@ Master branch release
 
 ### API Changes
 
+- Added `ann.components.transpose`.
 - Added `max_gradients_norm` in `traianble.supervised_trainer`, to avoid
   gradients exploding.
 - Added `ann.components.actf.sparse_logistic` a logistic activation function
@@ -41,6 +42,8 @@ Master branch release
   `SparseMatrix<T>::fromDenseMatrix()`.
 
 ### Other
+
+- Added Git commit hash and compilation time.
 
 v0.4.0
 ------
