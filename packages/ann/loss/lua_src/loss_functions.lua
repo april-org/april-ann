@@ -1,4 +1,78 @@
- ---------------------------
+local ann_loss_lincomb_class,
+ann_loss_lincomb_methods    = class("ann.loss.linear_combination", ann.loss)
+ann.loss.linear_combination = ann_loss_lincomb_class
+
+function ann_loss_lincomb_class:constructor(params)
+  t = {}
+  for i,v in ipairs(params) do
+    t[i] = {
+      loss  = assert(v.loss, "Needs a loss field"),
+      alpha = v.alpha or 1.0,
+      start = v.start or 1.0,
+      size  = v.size,
+    }
+  end
+  self.params = t
+  self.mv = stats.running.mean_var()
+end
+
+function ann_loss_lincomb_methods:accum_loss(loss_val, loss_mat)
+  if not loss_mat then loss_mat,loss_val = loss_val,nil end
+  for _,v in matrix.ext.iterate(loss_mat) do self.mv:add(v:sum()) end
+  return loss_val or loss_mat, loss_val and loss_mat
+end
+
+function ann_loss_lincomb_methods:compute_loss(input, target)
+  assert(class.is_a(input, matrix), "Needs a matrix as input 1st param")
+  assert(class.is_a(target, matrix), "Needs a matrix as target 2nd param")
+  local loss_mat = matrix(input:dim(1),1):zeros()
+  for _,v in ipairs(self.params) do
+    local start,size = v.start, v.size or input:dim(2)
+    local stop = start + size - 1
+    local i = input(':', { start, stop })
+    local t = target(':', { start, stop })
+    local mean,mat = v.loss:compute_loss(i, t)
+    if not mean or not mat then return nil,nil end
+    loss_mat:axpy(v.alpha, mat)
+  end
+  return loss_mat:sum()/loss_mat:dim(1), loss_mat
+end
+
+function ann_loss_lincomb_methods:gradient(input, target)
+  assert(class.is_a(input, matrix), "Needs a matrix as input 1st param")
+  assert(class.is_a(target, matrix), "Needs a matrix as target 2nd param")
+  local grad = matrix.as(input):zeros()
+  for _,v in ipairs(self.params) do
+    local start,size = v.start, v.size or input:dim(2)
+    local stop = start + size - 1
+    local i = input(':', { start, stop })
+    local t = target(':', { start, stop })
+    local g = grad(':', { start, stop })
+    g:axpy(v.alpha, v.loss:gradient(i, t))
+  end
+  return grad
+end
+
+function ann_loss_lincomb_methods:get_accum_loss()
+  return self.mv:compute()
+end
+
+function ann_loss_lincomb_methods:reset()
+  for _,v in ipairs(self.params) do v.loss:reset() end
+  self.mv:clear()
+end
+
+function ann_loss_lincomb_methods:clone()
+  return ann.loss.linear_combination(util.clone(self.params))
+end
+
+function ann_loss_lincomb_methods:to_lua_string()
+  return table.concat{"ann.loss.linear_combination(",
+                      util.to_lua_string(self.params),
+                      ")"}
+end
+
+---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
 
