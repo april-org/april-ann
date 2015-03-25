@@ -58,11 +58,11 @@ namespace ANN {
     if (input_mat->getNumDim() < 2)
       ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input_mat->getNumDim(), name.c_str());
-    if (weights_matrix.empty()) ERROR_EXIT1(129, "Not built component %s\n",
-                                            getName().c_str());
+    if (T_weights_matrix.empty()) ERROR_EXIT1(129, "Not built component %s\n",
+                                              getName().c_str());
     // compute softmax over weights matrix in order to convert raw weights into
     // linear combination coefficients (sum 1, values in range [0,1])
-    Kernels::applySoftmax(normalized_weights_mat.get(), weights_matrix.get());
+    Kernels::applySoftmax(T_normalized_weights_mat.get(), T_weights_matrix.get());
     //
     unsigned int bunch_size  = input_mat->getDimSize(0);
     // new output to fit the bunch
@@ -76,8 +76,8 @@ namespace ANN {
     if (bunch_size == 1) {
       // vector x matrix product
       matGemv(output_mat,
-              CblasNoTrans,
-              1.0f, normalized_weights_mat.get(),
+              CblasTrans,
+              1.0f, T_normalized_weights_mat.get(),
               input_mat,
               0.0f);
     } // if bunch_size==1
@@ -87,8 +87,8 @@ namespace ANN {
       // input * weights = output
       matGemm(output_mat,
               CblasNoTrans,
-              CblasTrans,
-              1.0f, input_mat, normalized_weights_mat.get(),
+              CblasNoTrans,
+              1.0f, input_mat, T_normalized_weights_mat.get(),
               0.0f);
     } // if bunch_size==1 ... else
     return output_mat;
@@ -110,15 +110,15 @@ namespace ANN {
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       matGemm(error_output_mat,
-              CblasNoTrans, CblasNoTrans,
+              CblasNoTrans, CblasTrans,
               1.0f, error_input_mat,
-              normalized_weights_mat.get(),
+              T_normalized_weights_mat.get(),
               0.0f);
     }
     else {
       matGemv(error_output_mat,
-              CblasTrans,
-              1.0f, normalized_weights_mat.get(),
+              CblasNoTrans,
+              1.0f, T_normalized_weights_mat.get(),
               error_input_mat,
               0.0f);
     }
@@ -165,8 +165,10 @@ namespace ANN {
             input_mat,        // B
             0.0f);
     // multiply by softmax derivative to obtain non-normalized weight gradients
-    Kernels::applySoftmaxDerivative(grads_mat, norm_grads_mat.get(),
-                                    normalized_weights_mat.get());
+    AprilUtils::SharedPtr<MatrixFloat> T_grads_mat(grads_mat->transpose());
+    AprilUtils::SharedPtr<MatrixFloat> T_norm_grads_mat(norm_grads_mat->transpose());
+    Kernels::applySoftmaxDerivative(T_grads_mat.get(), T_norm_grads_mat.get(),
+                                    T_normalized_weights_mat.get());
   }
   
   ANNComponent *LinearCombANNComponent::clone() {
@@ -215,7 +217,8 @@ namespace ANN {
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix.get());
     }
-    normalized_weights_mat = weights_matrix->cloneOnlyDims();
+    T_weights_matrix         = weights_matrix->transpose();
+    T_normalized_weights_mat = T_weights_matrix->cloneOnlyDims();
   }
 
   void LinearCombANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {

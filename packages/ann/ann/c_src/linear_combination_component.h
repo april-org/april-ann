@@ -34,8 +34,8 @@ namespace ANN {
   class LinearCombANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(LinearCombANNComponent);
     
-    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_matrix,
-      normalized_weights_mat;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_matrix, T_weights_matrix,
+      T_normalized_weights_mat;
     
   protected:
     
