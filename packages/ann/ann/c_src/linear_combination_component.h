@@ -29,14 +29,29 @@
 
 namespace ANN {
   
-  /// This components computes, for every I output neuron, the dot product
-  /// between input neurons and the weights of the neuron I.
+  /**
+   * @brief This component computes a linear combination of its inputs.
+   *
+   * Outgoing weights are forced to sum 1 and to be in range [0,1].  To achieve
+   * this goal, the component has a set of raw weights which are transformed by
+   * means of softmax function (applied by columns). The transformed weights are
+   * multiplied by the given input.
+   *
+   * @note This component uses @c during_training flag at @c forward() method
+   * to force weights normalization via softmax transformation.
+   */
   class LinearCombANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(LinearCombANNComponent);
     
-    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_matrix, T_weights_matrix,
+    /// The raw weights of this component.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_matrix,
+    /// Transposed version of raw weights, required for softmax by columns
+      T_weights_matrix,
+    /// Transposed version of normalized weights, after softmax transformation
       T_normalized_weights_mat;
     
+    bool needs_weights_normalization;
+
   protected:
     
     // from MatrixANNComponentHelper
@@ -62,6 +77,9 @@ namespace ANN {
     
     virtual char *toLuaString();
     
+    Basics::MatrixFloat *getNormalizedWeights() {
+      return T_normalized_weights_mat->transpose();
+    }
   };
 }
 

@@ -669,6 +669,12 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
+//BIND_METHOD LinearCombANNComponent get_normalized_weights
+{
+  LUABIND_RETURN(MatrixFloat, obj->getNormalizedWeights());
+}
+//BIND_END
+
 //BIND_METHOD LinearCombANNComponent clone
 {
   LUABIND_RETURN(LinearCombANNComponent,

@@ -44,7 +44,8 @@ namespace ANN {
 						 const char *weights_name,
 						 unsigned int input_size,
 						 unsigned int output_size) :
-    VirtualMatrixANNComponent(name, weights_name, input_size, output_size) {
+    VirtualMatrixANNComponent(name, weights_name, input_size, output_size),
+    needs_weights_normalization(true) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
   }
@@ -60,9 +61,15 @@ namespace ANN {
 		  "[%s]", input_mat->getNumDim(), name.c_str());
     if (T_weights_matrix.empty()) ERROR_EXIT1(129, "Not built component %s\n",
                                               getName().c_str());
-    // compute softmax over weights matrix in order to convert raw weights into
-    // linear combination coefficients (sum 1, values in range [0,1])
-    Kernels::applySoftmax(T_normalized_weights_mat.get(), T_weights_matrix.get());
+    if (needs_weights_normalization) {
+      // compute softmax over weights matrix in order to convert raw weights into
+      // linear combination coefficients (sum 1, values in range [0,1])
+      Kernels::applySoftmax(T_normalized_weights_mat.get(),
+                            T_weights_matrix.get());
+      // when not training, this flag would be true the first iteration and
+      // false in the following
+      needs_weights_normalization = during_training;
+    }
     //
     unsigned int bunch_size  = input_mat->getDimSize(0);
     // new output to fit the bunch
@@ -177,6 +184,9 @@ namespace ANN {
       matAxpy(row.get(), -1.0f, max.get());
     }
     matClamp(weights_matrix.get(), -30.0f, 1.0f);
+    // just in case, if gradients have been computed, weights may be changed
+    // after, so update the flag
+    needs_weights_normalization = true;
   }
   
   ANNComponent *LinearCombANNComponent::clone() {
