@@ -81,6 +81,9 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   else if (dynamic_cast<FlattenANNComponent*>(value)) {
     lua_pushFlattenANNComponent(L, (FlattenANNComponent*)value);
   }
+  else if (dynamic_cast<LinearCombANNComponent*>(value)) {
+    lua_pushLinearCombANNComponent(L, (LinearCombANNComponent*)value);
+  }
   else {
     lua_pushANNComponent(L, value);
   }
@@ -108,45 +111,45 @@ namespace AprilUtils {
 //BIND_END
 
 //BIND_HEADER_H
+#include "activation_function_component.h"
 #include "ann_component.h"
-#include "const_component.h"
-#include "dot_product_component.h"
 #include "bias_component.h"
-#include "hyperplane_component.h"
-#include "stack_component.h"
-#include "join_component.h"
-#include "copy_component.h"
-#include "select_component.h"
-#include "rewrap_component.h"
-#include "transpose_component.h"
-#include "slice_component.h"
-#include "flatten_component.h"
-#include "convolution_component.h"
-#include "convolution_bias_component.h"
-#include "maxpooling_component.h"
-#include "activation_function_component.h"
-#include "connection.h"
-#include "activation_function_component.h"
-#include "logistic_actf_component.h"
-#include "tanh_actf_component.h"
-#include "softsign_actf_component.h"
-#include "log_logistic_actf_component.h"
-#include "softmax_actf_component.h"
-#include "log_softmax_actf_component.h"
-#include "softplus_actf_component.h"
-#include "relu_actf_component.h"
-#include "hardtanh_actf_component.h"
-#include "sin_actf_component.h"
-#include "log_actf_component.h"
-#include "exp_actf_component.h"
-#include "linear_actf_component.h"
-#include "gaussian_noise_component.h"
-#include "salt_and_pepper_component.h"
-#include "dropout_component.h"
-#include "pca_whitening_component.h"
-#include "zca_whitening_component.h"
 #include "bind_function_interface.h"
+#include "connection.h"
+#include "const_component.h"
+#include "convolution_bias_component.h"
+#include "convolution_component.h"
+#include "copy_component.h"
+#include "dot_product_component.h"
+#include "dropout_component.h"
 #include "error_print.h"
+#include "exp_actf_component.h"
+#include "flatten_component.h"
+#include "gaussian_noise_component.h"
+#include "hardtanh_actf_component.h"
+#include "hyperplane_component.h"
+#include "join_component.h"
+#include "linear_actf_component.h"
+#include "linear_combination_component.h"
+#include "log_actf_component.h"
+#include "log_logistic_actf_component.h"
+#include "log_softmax_actf_component.h"
+#include "logistic_actf_component.h"
+#include "maxpooling_component.h"
+#include "pca_whitening_component.h"
+#include "relu_actf_component.h"
+#include "rewrap_component.h"
+#include "salt_and_pepper_component.h"
+#include "select_component.h"
+#include "sin_actf_component.h"
+#include "slice_component.h"
+#include "softmax_actf_component.h"
+#include "softplus_actf_component.h"
+#include "softsign_actf_component.h"
+#include "stack_component.h"
+#include "tanh_actf_component.h"
+#include "transpose_component.h"
+#include "zca_whitening_component.h"
 
 using namespace Functions;
 using namespace ANN;
@@ -634,6 +637,42 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_RETURN(DotProductANNComponent,
 		 dynamic_cast<DotProductANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//             LinearCombANNComponent              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LinearCombANNComponent ann.components.linear_comb
+//BIND_CPP_CLASS    LinearCombANNComponent
+//BIND_SUBCLASS_OF  LinearCombANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR LinearCombANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0, *weights_name=0;
+  unsigned int input_size=0, output_size=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "weights", 
+		       "input", "output", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
+  }
+  obj = new LinearCombANNComponent(name, weights_name,
+				   input_size, output_size);
+  LUABIND_RETURN(LinearCombANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD LinearCombANNComponent clone
+{
+  LUABIND_RETURN(LinearCombANNComponent,
+		 dynamic_cast<LinearCombANNComponent*>(obj->clone()));
 }
 //BIND_END
 

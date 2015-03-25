@@ -507,3 +507,34 @@ T("DOTPRODUCT TEST",
     )
 end
 )
+
+----------------------------------
+-- LINEAR COMBINATION COMPONENT --
+----------------------------------
+T("LINCOMB TEST",
+  function()
+    check(
+      function()
+        for i=2,4 do
+          for o=2,4 do
+            for h=1,4 do
+              for b=1,4 do
+                check_component(
+                  function()
+                    return ann.components.stack():
+                      push( ann.components.dot_product{ input=i, output=h },
+                            ann.components.actf.softmax(),
+                            ann.components.linear_comb{ input=h, output=o } )
+                  end,
+                  "mse", i, o, b, "LINCOMB"
+                )
+              end
+            end
+          end
+        end
+        return true
+    end
+    )
+end
+)
+

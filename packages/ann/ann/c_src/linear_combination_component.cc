@@ -44,7 +44,7 @@ namespace ANN {
 						 const char *weights_name,
 						 unsigned int input_size,
 						 unsigned int output_size) :
-    MatrixInputSwitchANNComponent(name, weights_name, input_size, output_size) {
+    VirtualMatrixANNComponent(name, weights_name, input_size, output_size) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
   }
@@ -60,10 +60,9 @@ namespace ANN {
 		  "[%s]", input_mat->getNumDim(), name.c_str());
     if (weights_matrix.empty()) ERROR_EXIT1(129, "Not built component %s\n",
                                             getName().c_str());
-    MatrixFloat *weights_mat = weights_matrix;
     // compute softmax over weights matrix in order to convert raw weights into
     // linear combination coefficients (sum 1, values in range [0,1])
-    Kernels::applySoftmax(normalized_weights_mat.get(), weights_mat.get());
+    Kernels::applySoftmax(normalized_weights_mat.get(), weights_matrix.get());
     //
     unsigned int bunch_size  = input_mat->getDimSize(0);
     // new output to fit the bunch
@@ -78,7 +77,7 @@ namespace ANN {
       // vector x matrix product
       matGemv(output_mat,
               CblasNoTrans,
-              1.0f, normalized_weights_mat,
+              1.0f, normalized_weights_mat.get(),
               input_mat,
               0.0f);
     } // if bunch_size==1
@@ -89,7 +88,7 @@ namespace ANN {
       matGemm(output_mat,
               CblasNoTrans,
               CblasTrans,
-              1.0f, input_mat, normalized_weights_mat,
+              1.0f, input_mat, normalized_weights_mat.get(),
               0.0f);
     } // if bunch_size==1 ... else
     return output_mat;
@@ -108,19 +107,18 @@ namespace ANN {
     error_output_mat->setUseCuda(use_cuda);
 #endif      
     //
-    MatrixFloat *weights_mat = normalized_weights_mat;
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       matGemm(error_output_mat,
               CblasNoTrans, CblasNoTrans,
               1.0f, error_input_mat,
-              weights_mat,
+              normalized_weights_mat.get(),
               0.0f);
     }
     else {
       matGemv(error_output_mat,
               CblasTrans,
-              1.0f, weights_mat,
+              1.0f, normalized_weights_mat.get(),
               error_input_mat,
               0.0f);
     }
@@ -142,7 +140,7 @@ namespace ANN {
       matZeros(grads_mat);
       grads_mat_dict.put<MatrixFloat*>(name, grads_mat);
     }
-    else if (!grads_mat->sameDim(weights_matrix)) {
+    else if (!grads_mat->sameDim(weights_matrix.get())) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     }
 #ifdef USE_CUDA
@@ -157,34 +155,24 @@ namespace ANN {
     MatrixFloat *grads_mat = initializeComputeGradients(name, grads_mat_dict);
     MatrixFloat *error_input_mat;
     error_input_mat = getErrorInputMatrix();
-    // apply softmax derivative to error input matrix
-    AprilUtils::SharedPtr<MatrixFloat> norm_error_input_mat(error_input_mat->clone());
-    Kernels::applySoftmaxDerivative(norm_error_input_mat.get(), error_input_mat,
-                                    normalized_weights_mat.get());
-    //
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
     MatrixFloat *input_mat = getInputMatrix();
-    if (bunch_size > 1) {
-      matGemm(grads_mat,
-              CblasTrans, CblasNoTrans,
-              1.0f,
-              norm_error_input_mat.get(), // A
-              input_mat,                  // B
-              1.0f);
-    } // if bunch_size > 1 ... else
-    else {
-      matGer(grads_mat,
-             1.0f,
-             norm_error_input_mat.get(),
-             input_mat);
-    } // if bunch_size > 1 ... else
+    // compute gradients respect to normalized weights
+    AprilUtils::SharedPtr<MatrixFloat> norm_grads_mat(grads_mat->cloneOnlyDims());
+    matGemm(norm_grads_mat.get(),
+            CblasTrans, CblasNoTrans,
+            1.0f,
+            error_input_mat,  // A
+            input_mat,        // B
+            0.0f);
+    // multiply by softmax derivative to obtain non-normalized weight gradients
+    Kernels::applySoftmaxDerivative(grads_mat, norm_grads_mat.get(),
+                                    normalized_weights_mat.get());
   }
   
   ANNComponent *LinearCombANNComponent::clone() {
     LinearCombANNComponent *component = new
       LinearCombANNComponent(getName().c_str(), getWeightsName().c_str(),
-			     getInputSize(), getOutputSize(),
-			     (transpose_weights == CblasTrans));
+			     getInputSize(), getOutputSize());
     return component;
   }
   
@@ -192,8 +180,8 @@ namespace ANN {
 				     unsigned int _output_size,
 				     AprilUtils::LuaTable &weights_dict,
 				     AprilUtils::LuaTable &components_dict) {
-    MatrixInputSwitchANNComponent::build(_input_size, _output_size,
-                                         weights_dict, components_dict);
+    VirtualMatrixANNComponent::build(_input_size, _output_size,
+                                     weights_dict, components_dict);
     //
     if (getInputSize() == 0 || getOutputSize() == 0)
       ERROR_EXIT1(141, "Impossible to compute input/output "
@@ -202,22 +190,19 @@ namespace ANN {
     unsigned int weights_input_size  = getInputSize();
     unsigned int weights_output_size = getOutputSize();
     ////////////////////////////////////////////////////////////////////
-    if (transpose_weights == CblasTrans) {
-      swap(weights_input_size, weights_output_size);
-    }
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w);
-      if (!Connections::checkInputOutputSizes(weights_matrix,
+      weights_matrix = w;
+      if (!Connections::checkInputOutputSizes(weights_matrix.get(),
 					      weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT5(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %d and %d, found %d and %d [%s]\n",
 		    weights_input_size, weights_output_size,
-		    Connections::getInputSize(weights_matrix),
-		    Connections::getOutputSize(weights_matrix),
+		    Connections::getInputSize(weights_matrix.get()),
+		    Connections::getOutputSize(weights_matrix.get()),
                     getName().c_str());
     }
     else {
@@ -228,9 +213,9 @@ namespace ANN {
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
-      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix);
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix.get());
     }
-    normalized_weights_mat = weights_mat->clone();
+    normalized_weights_mat = weights_matrix->cloneOnlyDims();
   }
 
   void LinearCombANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
@@ -239,23 +224,22 @@ namespace ANN {
 		  getName().c_str());
     }
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
-    if (w != 0 && w != weights_matrix)
+    if (w != 0 && w != weights_matrix.get())
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  getWeightsName().c_str(),
 		  getName().c_str());
     else if (w == 0) {
-      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix);
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix.get());
     }
   }  
 
   char *LinearCombANNComponent::toLuaString() {
     buffer_list buffer;
     buffer.printf("ann.components.dot_product{ name='%s',weights='%s',"
-		  "input=%d,output=%d,transpose=%s }",
+		  "input=%d,output=%d }",
 		  getName().c_str(), getWeightsName().c_str(),
-		  getInputSize(), getOutputSize(),
-		  (transpose_weights==CblasTrans)?"true":"false");
+		  getInputSize(), getOutputSize());
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
   //////////////////////////////////////////////////////////////////////////
