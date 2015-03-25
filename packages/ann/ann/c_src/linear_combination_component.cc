@@ -169,6 +169,14 @@ namespace ANN {
     AprilUtils::SharedPtr<MatrixFloat> T_norm_grads_mat(norm_grads_mat->transpose());
     Kernels::applySoftmaxDerivative(T_grads_mat.get(), T_norm_grads_mat.get(),
                                     T_normalized_weights_mat.get());
+    // normalize the weights, to avoid weights exploding
+    AprilUtils::SharedPtr<MatrixFloat> max( matMax(weights_matrix.get(), 0) );
+    AprilUtils::SharedPtr<MatrixFloat> row;
+    for (int i=0; i<weights_matrix->getDimSize(0); ++i) {
+      row = weights_matrix->select(0, i);
+      matAxpy(row.get(), -1.0f, max.get());
+    }
+    matClamp(weights_matrix.get(), -30.0f, 1.0f);
   }
   
   ANNComponent *LinearCombANNComponent::clone() {
