@@ -298,6 +298,52 @@ T("COPY + JOIN + DOTPRODUCT TEST",
     end)
 end)
 
+---------
+-- LOG --
+---------
+
+T("DOTPRODUCT + LOG TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.log() )
+                              end,
+                "mse", i, o, b, "LOG")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+---------
+-- EXP --
+---------
+
+T("DOTPRODUCT + EXP TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.exp() )
+                              end,
+                "mse", i, o, b, "EXP")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 --------------
 -- LOGISTIC --
 --------------
@@ -541,4 +587,3 @@ T("PROBMAT TEST",
     )
 end
 )
-
