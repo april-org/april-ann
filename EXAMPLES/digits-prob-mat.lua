@@ -44,7 +44,8 @@ val_output   = dataset.matrix(m2,
 
 bunch_size = 256
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 128 tanh 10 softmax")
-thenet:push( ann.components.linear_comb{ input=10, output=10, weights="wN", name="wN" },
+thenet:push( ann.components.left_probabilistic_matrix{ input=10, output=10,
+                                                       weights="wN", name="wN" },
              ann.components.actf.log() )
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(),
@@ -54,8 +55,9 @@ trainer:build()
 --
 trainer:set_option("weight_decay", 0.0001)
 trainer:set_layerwise_option("wN", "learning_rate", 200.0)
+trainer:set_layerwise_option("wN", "weight_decay", 0.0)
 -- we avoid weight_decay in bias
-trainer:set_layerwise_option("b.", "weight_decay", 0)
+trainer:set_layerwise_option("b.", "weight_decay", 0.0)
 
 trainer:randomize_weights{
   random      = random(52324),
@@ -92,8 +94,13 @@ while train_func:execute(function()
 			 end) do
   print(train_func:get_state_string(), trainer:norm2("wN"))
 end
-trainer:weights("wN"):toTabFilename("wN")
-print(trainer:weights("wN"))
+local wN = trainer:weights("wN")
+wN:toTabFilename("wN")
+print(wN)
+local wN = thenet:get(thenet:size()-1):get_normalized_weights()
+iterator(matrix.ext.iterate(wN, 2)):select(2):
+  apply(bind(wN.adjust_range, nil, 0, 1))
+ImageIO.write(Image(wN), "jaja.png")
 best = train_func:get_state_table().best
 clock:stop()
 cpu,wall   = clock:read()

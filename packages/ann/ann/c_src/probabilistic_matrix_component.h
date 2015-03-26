@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef LINCOMBANNCOMPONENT_H
-#define LINCOMBANNCOMPONENT_H  
+#ifndef PROBABILISTICMATRIXANNCOMPONENT_H
+#define PROBABILISTICMATRIXANNCOMPONENT_H  
 
 #include "cblas_headers.h"
 #include "connection.h"
@@ -30,27 +30,35 @@
 namespace ANN {
   
   /**
-   * @brief This component computes a linear combination of its inputs.
+   * @brief This component computes multiplication by a probabilistic matrix.
    *
-   * Outgoing weights are forced to sum 1 and to be in range [0,1].  To achieve
-   * this goal, the component has a set of raw weights which are transformed by
-   * means of softmax function (applied by columns). The transformed weights are
-   * multiplied by the given input.
+   * Weights are forced to sum 1 and to be in range [0,1]. To achieve this goal,
+   * the component has a set of raw weights which are transformed by means of
+   * softmax function. The transformed weights are multiplied by the given
+   * input. The transformation can be LEFT (by columns) or RIGHT (by rows),
+   * normalizing outgoing or incoming weights respectively.
    *
    * @note This component uses @c during_training flag at @c forward() method
    * to force weights normalization via softmax transformation.
    */
-  class LinearCombANNComponent : public VirtualMatrixANNComponent {
-    APRIL_DISALLOW_COPY_AND_ASSIGN(LinearCombANNComponent);
+  class ProbabilisticMatrixANNComponent : public VirtualMatrixANNComponent {
+  public:
+    enum NormalizationSide { LEFT, RIGHT };
+    
+  private:
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ProbabilisticMatrixANNComponent);
     
     /// The raw weights of this component.
-    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_matrix,
-    /// Transposed version of raw weights, required for softmax by columns
-      T_weights_matrix,
-    /// Transposed version of normalized weights, after softmax transformation
+    AprilUtils::SharedPtr<Basics::MatrixFloat> weights_mat,
+    /// Weights after softmax normalization
+      normalized_weights_mat,
+    /// Transposed version of raw weights, required for 'left' transformation
+      T_weights_mat,
+    /// Transposed version of normalized weights, for 'left' transformation
       T_normalized_weights_mat;
     
     bool needs_weights_normalization;
+    NormalizationSide side;
 
   protected:
     
@@ -64,10 +72,11 @@ namespace ANN {
                                                     AprilUtils::LuaTable &grads_mat_dict);
   
   public:
-    LinearCombANNComponent(const char *name=0, const char *weights_name=0,
-			   unsigned int input_size  = 0,
-			   unsigned int output_size = 0);
-    virtual ~LinearCombANNComponent();
+    ProbabilisticMatrixANNComponent(NormalizationSide side,
+                                    const char *name=0, const char *weights_name=0,
+                                    unsigned int input_size  = 0,
+                                    unsigned int output_size = 0);
+    virtual ~ProbabilisticMatrixANNComponent();
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
@@ -78,9 +87,9 @@ namespace ANN {
     virtual char *toLuaString();
     
     Basics::MatrixFloat *getNormalizedWeights() {
-      return T_normalized_weights_mat->transpose();
+      return normalized_weights_mat.get();
     }
   };
 }
 
-#endif // LINCOMBANNCOMPONENT_H
+#endif // PROBABILISTICMATRIXANNCOMPONENT_H

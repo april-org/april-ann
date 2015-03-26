@@ -19,7 +19,7 @@
  *
  */
 #include "activation_function_kernels.h"
-#include "linear_combination_component.h"
+#include "probabilistic_matrix_component.h"
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 #include "swap.h"
@@ -37,35 +37,46 @@ using namespace Basics;
 namespace ANN {
 
   ///////////////////////////////////////////
-  // LinearCombANNComponent implementation //
+  // ProbabilisticMatrixANNComponent implementation //
   ///////////////////////////////////////////
   
-  LinearCombANNComponent::LinearCombANNComponent(const char *name,
-						 const char *weights_name,
-						 unsigned int input_size,
-						 unsigned int output_size) :
+  ProbabilisticMatrixANNComponent::
+  ProbabilisticMatrixANNComponent(NormalizationSide side,
+                                  const char *name,
+                                  const char *weights_name,
+                                  unsigned int input_size,
+                                  unsigned int output_size) :
     VirtualMatrixANNComponent(name, weights_name, input_size, output_size),
-    needs_weights_normalization(true) {
+    needs_weights_normalization(true),
+    side(side) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
   }
   
-  LinearCombANNComponent::~LinearCombANNComponent() {
+  ProbabilisticMatrixANNComponent::~ProbabilisticMatrixANNComponent() {
   }
   
-  MatrixFloat *LinearCombANNComponent::
+  MatrixFloat *ProbabilisticMatrixANNComponent::
   privateDoForward(MatrixFloat *input_mat, bool during_training) {
     UNUSED_VARIABLE(during_training);
     if (input_mat->getNumDim() < 2)
       ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input_mat->getNumDim(), name.c_str());
-    if (T_weights_matrix.empty()) ERROR_EXIT1(129, "Not built component %s\n",
-                                              getName().c_str());
+    if (weights_mat.empty()) ERROR_EXIT1(129, "Not built component %s\n",
+                                         getName().c_str());
     if (needs_weights_normalization) {
       // compute softmax over weights matrix in order to convert raw weights into
       // linear combination coefficients (sum 1, values in range [0,1])
-      Kernels::applySoftmax(T_normalized_weights_mat.get(),
-                            T_weights_matrix.get());
+      if (side == LEFT) {
+        april_assert(!T_weights_mat.empty());
+        april_assert(!T_normalized_weights_mat.empty());
+        Kernels::applySoftmax(T_normalized_weights_mat.get(),
+                              T_weights_mat.get());
+      }
+      else {
+        Kernels::applySoftmax(normalized_weights_mat.get(),
+                              weights_mat.get());
+      }
       // when not training, this flag would be true the first iteration and
       // false in the following
       needs_weights_normalization = during_training;
@@ -83,8 +94,8 @@ namespace ANN {
     if (bunch_size == 1) {
       // vector x matrix product
       matGemv(output_mat,
-              CblasTrans,
-              1.0f, T_normalized_weights_mat.get(),
+              CblasNoTrans,
+              1.0f, normalized_weights_mat.get(),
               input_mat,
               0.0f);
     } // if bunch_size==1
@@ -94,14 +105,14 @@ namespace ANN {
       // input * weights = output
       matGemm(output_mat,
               CblasNoTrans,
-              CblasNoTrans,
-              1.0f, input_mat, T_normalized_weights_mat.get(),
+              CblasTrans,
+              1.0f, input_mat, normalized_weights_mat.get(),
               0.0f);
     } // if bunch_size==1 ... else
     return output_mat;
   }
   
-  MatrixFloat *LinearCombANNComponent::
+  MatrixFloat *ProbabilisticMatrixANNComponent::
   privateDoBackprop(MatrixFloat *error_input_mat) {
     // new error output to fit the bunch
     unsigned int bunch_size = error_input_mat->getDimSize(0);
@@ -117,37 +128,37 @@ namespace ANN {
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       matGemm(error_output_mat,
-              CblasNoTrans, CblasTrans,
+              CblasNoTrans, CblasNoTrans,
               1.0f, error_input_mat,
-              T_normalized_weights_mat.get(),
+              normalized_weights_mat.get(),
               0.0f);
     }
     else {
       matGemv(error_output_mat,
-              CblasNoTrans,
-              1.0f, T_normalized_weights_mat.get(),
+              CblasTrans,
+              1.0f, normalized_weights_mat.get(),
               error_input_mat,
               0.0f);
     }
     return error_output_mat;
   }
 
-  void LinearCombANNComponent::privateReset(unsigned int it) {
+  void ProbabilisticMatrixANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    weights_matrix->resetSharedCount();
+    weights_mat->resetSharedCount();
   }
 
-  MatrixFloat *LinearCombANNComponent::
+  MatrixFloat *ProbabilisticMatrixANNComponent::
   initializeComputeGradients(const char *name,
                              AprilUtils::LuaTable &grads_mat_dict) {
-    weights_matrix->addToSharedCount();
+    weights_mat->addToSharedCount();
     MatrixFloat *grads_mat = grads_mat_dict.opt<MatrixFloat*>(name, 0);
     if (grads_mat == 0) {
-      grads_mat = weights_matrix->cloneOnlyDims();
+      grads_mat = weights_mat->cloneOnlyDims();
       matZeros(grads_mat);
       grads_mat_dict.put<MatrixFloat*>(name, grads_mat);
     }
-    else if (!grads_mat->sameDim(weights_matrix.get())) {
+    else if (!grads_mat->sameDim(weights_mat.get())) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     }
 #ifdef USE_CUDA
@@ -156,7 +167,7 @@ namespace ANN {
     return grads_mat;
   }
   
-  void LinearCombANNComponent::
+  void ProbabilisticMatrixANNComponent::
   computeGradients(const char *name,
                    AprilUtils::LuaTable & grads_mat_dict) {
     MatrixFloat *grads_mat = initializeComputeGradients(name, grads_mat_dict);
@@ -171,35 +182,46 @@ namespace ANN {
             error_input_mat,  // A
             input_mat,        // B
             0.0f);
+    int norm_dim;
     // multiply by softmax derivative to obtain non-normalized weight gradients
-    AprilUtils::SharedPtr<MatrixFloat> T_grads_mat(grads_mat->transpose());
-    AprilUtils::SharedPtr<MatrixFloat> T_norm_grads_mat(norm_grads_mat->transpose());
-    Kernels::applySoftmaxDerivative(T_grads_mat.get(), T_norm_grads_mat.get(),
-                                    T_normalized_weights_mat.get());
+    if (side == LEFT) {
+      april_assert(!T_normalized_weights_mat.empty());
+      norm_dim = 0;
+      AprilUtils::SharedPtr<MatrixFloat> T_grads_mat(grads_mat->transpose());
+      AprilUtils::SharedPtr<MatrixFloat> T_norm_grads_mat(norm_grads_mat->transpose());
+      Kernels::applySoftmaxDerivative(T_grads_mat.get(), T_norm_grads_mat.get(),
+                                      T_normalized_weights_mat.get());
+    }
+    else {
+      norm_dim = 1;
+      Kernels::applySoftmaxDerivative(grads_mat, norm_grads_mat.get(),
+                                      normalized_weights_mat.get());
+    }
     // normalize the weights, to avoid weights exploding
-    AprilUtils::SharedPtr<MatrixFloat> max( matMax(weights_matrix.get(), 0) );
+    AprilUtils::SharedPtr<MatrixFloat> max( matMax(weights_mat.get(), norm_dim) );
     AprilUtils::SharedPtr<MatrixFloat> row;
-    for (int i=0; i<weights_matrix->getDimSize(0); ++i) {
-      row = weights_matrix->select(0, i);
+    for (int i=0; i<weights_mat->getDimSize(norm_dim); ++i) {
+      row = weights_mat->select(norm_dim, i);
       matAxpy(row.get(), -1.0f, max.get());
     }
-    matClamp(weights_matrix.get(), -30.0f, 1.0f);
+    matClamp(weights_mat.get(), -30.0f, 1.0f);
     // just in case, if gradients have been computed, weights may be changed
     // after, so update the flag
     needs_weights_normalization = true;
   }
   
-  ANNComponent *LinearCombANNComponent::clone() {
-    LinearCombANNComponent *component = new
-      LinearCombANNComponent(getName().c_str(), getWeightsName().c_str(),
-			     getInputSize(), getOutputSize());
+  ANNComponent *ProbabilisticMatrixANNComponent::clone() {
+    ProbabilisticMatrixANNComponent *component = new
+      ProbabilisticMatrixANNComponent(side, getName().c_str(),
+                                      getWeightsName().c_str(),
+                                      getInputSize(), getOutputSize());
     return component;
   }
   
-  void LinearCombANNComponent::build(unsigned int _input_size,
-				     unsigned int _output_size,
-				     AprilUtils::LuaTable &weights_dict,
-				     AprilUtils::LuaTable &components_dict) {
+  void ProbabilisticMatrixANNComponent::build(unsigned int _input_size,
+                                              unsigned int _output_size,
+                                              AprilUtils::LuaTable &weights_dict,
+                                              AprilUtils::LuaTable &components_dict) {
     VirtualMatrixANNComponent::build(_input_size, _output_size,
                                      weights_dict, components_dict);
     //
@@ -211,54 +233,58 @@ namespace ANN {
     unsigned int weights_output_size = getOutputSize();
     ////////////////////////////////////////////////////////////////////
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
-    // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
+    // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_mat);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      weights_matrix = w;
-      if (!Connections::checkInputOutputSizes(weights_matrix.get(),
+      weights_mat = w;
+      if (!Connections::checkInputOutputSizes(weights_mat.get(),
 					      weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT5(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %d and %d, found %d and %d [%s]\n",
 		    weights_input_size, weights_output_size,
-		    Connections::getInputSize(weights_matrix.get()),
-		    Connections::getOutputSize(weights_matrix.get()),
+		    Connections::getInputSize(weights_mat.get()),
+		    Connections::getOutputSize(weights_mat.get()),
                     getName().c_str());
     }
     else {
-      if (weights_matrix == 0) {
+      if (weights_mat == 0) {
 	// printf("NEW OF WEIGHTS %s\n", weights_name.c_str());
-	weights_matrix = Connections::build(weights_input_size,
-					    weights_output_size);
-	IncRef(weights_matrix);
+	weights_mat = Connections::build(weights_input_size,
+                                         weights_output_size);
+	IncRef(weights_mat);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
-      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix.get());
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_mat.get());
     }
-    T_weights_matrix         = weights_matrix->transpose();
-    T_normalized_weights_mat = T_weights_matrix->cloneOnlyDims();
+    normalized_weights_mat = weights_mat->cloneOnlyDims();
+    if (side == LEFT) {
+      T_weights_mat         = weights_mat->transpose();
+      T_normalized_weights_mat = normalized_weights_mat->transpose();
+    }
   }
 
-  void LinearCombANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
-    if (weights_matrix == 0) {
+  void ProbabilisticMatrixANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
+    if (weights_mat == 0) {
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
     }
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
-    if (w != 0 && w != weights_matrix.get())
+    if (w != 0 && w != weights_mat.get())
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
-		  "not shared with weights_matrix attribute [%s]\n",
+		  "not shared with weights_mat attribute [%s]\n",
 		  getWeightsName().c_str(),
 		  getName().c_str());
     else if (w == 0) {
-      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_matrix.get());
+      weights_dict.put<MatrixFloat*>(getWeightsName(), weights_mat.get());
     }
   }  
 
-  char *LinearCombANNComponent::toLuaString() {
+  char *ProbabilisticMatrixANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.dot_product{ name='%s',weights='%s',"
-		  "input=%d,output=%d }",
+    buffer.printf("ann.components.probabilistic_matrix{ side='%s',"
+                  "name='%s',weights='%s',input=%d,output=%d }",
+                  (side == LEFT) ? "left" : "right",
 		  getName().c_str(), getWeightsName().c_str(),
 		  getInputSize(), getOutputSize());
     return buffer.to_string(buffer_list::NULL_TERMINATED);
