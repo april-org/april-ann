@@ -45,10 +45,9 @@ val_output   = dataset.matrix(m2,
 bunch_size = 256
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 128 tanh 10 softmax")
 thenet:push( ann.components.left_probabilistic_matrix{ input=10, output=10,
-                                                       weights="wN", name="wN" },
-             ann.components.actf.log() )
+                                                       weights="wN", name="wN" } )
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(),
+				       ann.loss.mse(),
 				       bunch_size,
                                        ann.optimizer.adadelta())
 trainer:build()
@@ -97,7 +96,7 @@ end
 local wN = trainer:weights("wN")
 wN:toTabFilename("wN")
 print(wN)
-local wN = thenet:get(thenet:size()-1):get_normalized_weights()
+local wN = thenet:get(thenet:size()):get_normalized_weights()
 iterator(matrix.ext.iterate(wN, 2)):select(2):
   apply(bind(wN.adjust_range, nil, 0, 1))
 ImageIO.write(Image(wN), "jaja.png")
