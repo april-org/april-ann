@@ -214,6 +214,26 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_LUACLASSNAME NonPairedCrossEntropyLossFunction ann.loss.non_paired_cross_entropy
+//BIND_CPP_CLASS    NonPairedCrossEntropyLossFunction
+//BIND_SUBCLASS_OF  NonPairedCrossEntropyLossFunction LossFunction
+
+//BIND_CONSTRUCTOR NonPairedCrossEntropyLossFunction
+{
+  unsigned int size;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
+  obj=new NonPairedCrossEntropyLossFunction(size);
+  LUABIND_RETURN(NonPairedCrossEntropyLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD NonPairedCrossEntropyLossFunction clone
+{
+  LUABIND_RETURN(NonPairedCrossEntropyLossFunction,
+		 dynamic_cast<NonPairedCrossEntropyLossFunction*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //          MULTI-CLASS CROSS ENTROPY              //
 /////////////////////////////////////////////////////
@@ -235,6 +255,26 @@ using namespace ANN;
 {
   LUABIND_RETURN(MultiClassCrossEntropyLossFunction,
 		 dynamic_cast<MultiClassCrossEntropyLossFunction*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_LUACLASSNAME NonPairedMultiClassCrossEntropyLossFunction ann.loss.non_paired_multi_class_cross_entropy
+//BIND_CPP_CLASS    NonPairedMultiClassCrossEntropyLossFunction
+//BIND_SUBCLASS_OF  NonPairedMultiClassCrossEntropyLossFunction LossFunction
+
+//BIND_CONSTRUCTOR NonPairedMultiClassCrossEntropyLossFunction
+{
+  unsigned int size;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
+  obj=new NonPairedMultiClassCrossEntropyLossFunction(size);
+  LUABIND_RETURN(NonPairedMultiClassCrossEntropyLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD NonPairedMultiClassCrossEntropyLossFunction clone
+{
+  LUABIND_RETURN(NonPairedMultiClassCrossEntropyLossFunction,
+		 dynamic_cast<NonPairedMultiClassCrossEntropyLossFunction*>(obj->clone()));
 }
 //BIND_END
 

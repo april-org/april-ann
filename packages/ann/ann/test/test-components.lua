@@ -390,6 +390,25 @@ T("DOTPRODUCT + LOG_LOGISTIC TEST",
     end)
 end)
 
+T("DOTPRODUCT + LOGISTIC + CE TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.logistic() )
+                              end,
+                "non_paired_cross_entropy", i, o, b, "LOGISTIC_CE")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 ----------
 -- TANH --
 ----------
@@ -529,6 +548,26 @@ T("DOTPRODUCT + LOG_SOFTMAX TEST",
     end)
 end)
 
+T("DOTPRODUCT + SOFTMAX + CE TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=3,6 do
+            for b=1,4 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.softmax() )
+                              end,
+                "non_paired_multi_class_cross_entropy", i, o, b, "SOFTMAX_CE",
+                true)
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 -----------------
 -- DOT PRODUCT --
 -----------------
@@ -575,9 +614,67 @@ T("PROBMAT TEST",
                                                                    input=h,
                                                                    output=o } )
                     end,
-                    "mse", i, o, b, "PROBMAT"
-                  )
+                    "mse", i, o, b, "PROBMAT",
+                    true)
                 end
+              end
+            end
+          end
+        end
+        return true
+    end
+    )
+end
+)
+
+T("PROBMAT TEST 2",
+  function()
+    check(
+      function()
+        for i=2,3 do
+          for o=2,3 do
+            for h=2,4 do
+              for b=1,4 do
+                check_component(
+                  function()
+                    return ann.components.stack():
+                      push( ann.components.dot_product{ input=i, output=h },
+                            ann.components.actf.softmax(),
+                            ann.components.probabilistic_matrix{ side="left",
+                                                                 input=h,
+                                                                 output=o } )
+                  end,
+                  "non_paired_multi_class_cross_entropy", i, o, b, "PROBMAT2",
+                  true)
+              end
+            end
+          end
+        end
+        return true
+    end
+    )
+end
+)
+
+T("PROBMAT TEST 3",
+  function()
+    check(
+      function()
+        for i=2,3 do
+          for o=2,3 do
+            for h=2,4 do
+              for b=1,4 do
+                check_component(
+                  function()
+                    return ann.components.stack():
+                      push( ann.components.dot_product{ input=i, output=h },
+                            ann.components.actf.softmax(),
+                            ann.components.probabilistic_matrix{ side="right",
+                                                                 input=h,
+                                                                 output=o } )
+                  end,
+                  "non_paired_cross_entropy", i, o, b, "PROBMAT3",
+                  true)
               end
             end
           end

@@ -47,7 +47,7 @@ thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 128 tanh 10 softmax")
 thenet:push( ann.components.left_probabilistic_matrix{ input=10, output=10,
                                                        weights="wN", name="wN" } )
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.mse(),
+				       ann.loss.non_paired_multi_class_cross_entropy(),
 				       bunch_size,
                                        ann.optimizer.adadelta())
 trainer:build()

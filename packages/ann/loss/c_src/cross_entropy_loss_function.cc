@@ -72,5 +72,52 @@ namespace ANN {
     buffer.printf("ann.loss.cross_entropy(%d)", size);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+  
+  //////////////////////////////////////////////////////////////////////////
 
+  NonPairedCrossEntropyLossFunction::
+  NonPairedCrossEntropyLossFunction(unsigned int size) :
+    LossFunction(size) {
+  }
+  
+  NonPairedCrossEntropyLossFunction::~NonPairedCrossEntropyLossFunction() {
+  }
+  
+  MatrixFloat *NonPairedCrossEntropyLossFunction::
+  computeLossBunch(Token *input, Token *target) {
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    int dim = input_mat->getDimSize(0);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
+    
+    matNonPairedCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
+    return loss_output;
+  }
+
+  Token *NonPairedCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+    TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
+    AssignRef<Token>(error_output, error_mat_token);
+    matNonPairedCrossEntropyGradient(error_mat, input_mat, target_mat, NEAR_ZERO);
+    return error_output;
+  }
+  
+  float NonPairedCrossEntropyLossFunction::getAccumLoss() {
+    float ret = LossFunction::getAccumLoss();
+    if (ret < 0)
+      ERROR_EXIT(128, "Found negative loss, check if output is log_logistic\n");
+    return ret;
+  }
+
+  char *NonPairedCrossEntropyLossFunction::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.loss.cross_entropy(%d)", size);
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+  
 }

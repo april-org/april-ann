@@ -81,7 +81,9 @@ matrix.ext.broadcast =
         slice = sw:get_matrix(slice)
         local slice = slice:squeeze()
         local out   = func(slice, b, ...)
-        if out ~= slice then slice:copy(out) end
+        if out:get_reference_string() ~= slice:get_reference_string() then
+          slice:copy(out)
+        end
         sw:next()
       end
     end

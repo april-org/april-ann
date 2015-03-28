@@ -26,6 +26,8 @@
 #include "loss_function.h"
 
 namespace ANN {
+
+  /// Multi-class cross-entropy paired with log_softmax outputs
   class MultiClassCrossEntropyLossFunction : public LossFunction {
     MultiClassCrossEntropyLossFunction(MultiClassCrossEntropyLossFunction *other) :
     LossFunction(other) { }
@@ -39,6 +41,26 @@ namespace ANN {
                                    Basics::Token *target);
     virtual LossFunction *clone() {
       return new MultiClassCrossEntropyLossFunction(this);
+    }
+    virtual char *toLuaString();
+  };
+  
+  ///////////////////////////////////
+  
+  /// Multi-class cross-entropy non paired with log_softmax outputs
+  class NonPairedMultiClassCrossEntropyLossFunction : public LossFunction {
+    NonPairedMultiClassCrossEntropyLossFunction(NonPairedMultiClassCrossEntropyLossFunction *other) :
+    LossFunction(other) { }
+  protected:
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
+  public:
+    NonPairedMultiClassCrossEntropyLossFunction(unsigned int size);
+    virtual ~NonPairedMultiClassCrossEntropyLossFunction();
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
+    virtual LossFunction *clone() {
+      return new NonPairedMultiClassCrossEntropyLossFunction(this);
     }
     virtual char *toLuaString();
   };

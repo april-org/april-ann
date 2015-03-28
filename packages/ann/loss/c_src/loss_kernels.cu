@@ -80,6 +80,42 @@ namespace AprilMath {
         };
 
         /////////////////////////////////////////////////////////////////////////
+
+        struct NonPairedCrossEntropy {
+          const float EPSILON;
+          
+          NonPairedCrossEntropy(float EPSILON) : EPSILON(EPSILON) {
+          }
+          
+          APRIL_CUDA_EXPORT float operator()(const float &input,
+                                             const float &target) const {
+            // TODO: check errors using GPU/CPU error capture facility
+            /*
+              april_assert(!(input > 0.0f) &&
+              "Only log-based activation functions are allowed");
+              april_assert(!(target < 0.0f) && !(target > 1.0f) &&
+              "Only [0,1] target patterns are allowed");
+            */
+            // compute derivative
+            float o     = m_clamp(input, EPSILON, 1.0f - EPSILON);
+            float log_o = m_log(o);
+            float log_inv_o = m_log(1.0f - o);
+            // CLAMP of reference (target)
+            float  t = m_clamp(target, EPSILON, 1.0f - EPSILON);
+            // CLAMP of 1.0 - reference (target). We do clamp again to avoid
+            // numerical approximation problems, and to ensure correct working of
+            // inv_t > EPSILON comparison
+            float  inv_t = m_clamp(1.0f - target, EPSILON, 1.0f - EPSILON);
+            // printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
+            float sum;
+            if (t > EPSILON) sum = -t * log_o;
+            else sum = 0.0f;
+            if (inv_t > EPSILON) sum -= inv_t * log_inv_o;
+            return sum;
+          }
+        };
+
+        /////////////////////////////////////////////////////////////////////////
         
         struct CrossEntropyGradient {
           const float log_epsilon, log_1_epsilon, EPSILON;
@@ -92,6 +128,20 @@ namespace AprilMath {
           APRIL_CUDA_EXPORT float operator()(const float &input,
                                              const float &target) const {
             return m_exp(m_clamp(input, log_epsilon, log_1_epsilon)) - target;
+          }
+        };
+
+        struct NonPairedCrossEntropyGradient {
+          const float EPSILON;
+          
+          NonPairedCrossEntropyGradient(float EPSILON) : EPSILON(EPSILON) {
+          }
+          
+          APRIL_CUDA_EXPORT float operator()(const float &input,
+                                             const float &target) const {
+            float o = m_clamp(input,  EPSILON, 1.0f - EPSILON);
+            float t = m_clamp(target, EPSILON, 1.0f - EPSILON);
+            return -(t/o - (1.0f - t)/(1.0f - o));
           }
         };
         
@@ -155,7 +205,17 @@ namespace AprilMath {
                                       input->cloneOnlyDims()));
         matSum(map_output.get(), 1, output);
       }
-      
+
+      void matNonPairedCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::MatrixFloat *target,
+                                    float near_zero) {
+        Kernels::NonPairedCrossEntropy cross_entropy(near_zero);
+        AprilUtils::SharedPtr<Basics::MatrixFloat>
+          map_output(MatrixScalarMap2(input, target, cross_entropy,
+                                      input->cloneOnlyDims()));
+        matSum(map_output.get(), 1, output);
+      }      
       /////////////////////////////////////////////////////////////////////////
 
       void matCrossEntropyGradient(Basics::MatrixFloat *output,
@@ -163,6 +223,14 @@ namespace AprilMath {
                                    const Basics::MatrixFloat *target,
                                    float near_zero) {
         Kernels::CrossEntropyGradient cross_entropy_gradient(near_zero);
+        MatrixScalarMap2(input, target, cross_entropy_gradient, output);
+      }
+
+      void matNonPairedCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::MatrixFloat *target,
+                                            float near_zero) {
+        Kernels::NonPairedCrossEntropyGradient cross_entropy_gradient(near_zero);
         MatrixScalarMap2(input, target, cross_entropy_gradient, output);
       }
 
