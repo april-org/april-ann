@@ -1,3 +1,6 @@
+-- capture comparisong of cpp reference
+local same_cpp_ref = matrix.meta_instance.__eq
+--
 class.extend(matrix, "t", matrix.."transpose")
 
 -- ADDING PSEUDO-INVERSE METHODcond
@@ -81,7 +84,9 @@ matrix.ext.broadcast =
         slice = sw:get_matrix(slice)
         local slice = slice:squeeze()
         local out   = func(slice, b, ...)
-        if out ~= slice then slice:copy(out) end
+        if not same_cpp_ref(out, slice) then
+          slice:copy(out)
+        end
         sw:next()
       end
     end

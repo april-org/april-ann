@@ -72,6 +72,58 @@ namespace ANN {
     buffer_list buffer;
     buffer.printf("ann.loss.multi_class_cross_entropy(%d)", size);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }  
+  }
+  
+  /////////////////////////////////////////////////
 
+  NonPairedMultiClassCrossEntropyLossFunction::
+  NonPairedMultiClassCrossEntropyLossFunction(unsigned int size) :
+    LossFunction(size) {
+    if (size > 0 && size < 3) {
+      ERROR_EXIT(128,
+		 "Multi class cross entropy is only allowed for multi-class "
+		 "problems (three or more output probability neurons). "
+		 "Use cross entropy instead.\n");
+    }
+  }
+  
+  NonPairedMultiClassCrossEntropyLossFunction::
+  ~NonPairedMultiClassCrossEntropyLossFunction() {
+  }
+
+  MatrixFloat *NonPairedMultiClassCrossEntropyLossFunction::
+  computeLossBunch(Token *input, Token *target) {
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    int dim = input_mat->getDimSize(0);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
+    AprilUtils::SharedPtr<MatrixFloat> aux(input_mat->clone());
+    matClamp(aux.get(), NEAR_ZERO, 1.0f);
+    matLog(aux.get());
+    matCmul(aux.get(), target_mat);
+    matSum(aux.get(), 1, loss_output);
+    return matScal(loss_output, -1.0f);
+  }
+
+  Token *NonPairedMultiClassCrossEntropyLossFunction::
+  computeGradient(Token *input, Token *target) {
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    MatrixFloat *error_mat = input_mat->clone();
+    TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
+    AssignRef<Token>(error_output, error_mat_token);
+    matClamp(error_mat, NEAR_ZERO, 1.0f);
+    matDiv(error_mat, -1.0f);
+    matCmul(error_mat, target_mat);
+    return error_output;
+  }
+
+  char *NonPairedMultiClassCrossEntropyLossFunction::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.loss.non_paired_multi_class_cross_entropy(%d)", size);
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }
