@@ -48,6 +48,7 @@ matrix.__generic__.__make_generic_index__ = function(matrix_class)
   assert(matrix_class and class.is_class(matrix_class),
          "Needs a class table as argument")
   local old_index = matrix_class.meta_instance.__index
+  matrix_class.meta_instance.index_table = old_index
   assert(luatype(old_index) == "table",
          "The __index field should be a table")
   return function(self,key)

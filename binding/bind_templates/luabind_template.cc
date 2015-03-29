@@ -22,9 +22,9 @@ extern "C" {
 #endif
 
 #ifdef __DEBUG__
-	#define DEBUG(a) printf("DEBUG %s\n",a);fflush(stdout)
-	#define DEBUG_OBJ(a,o) printf("DEBUG(%p) %s\n",o,a);fflush(stdout) 
 	#include <cstdio>
+	#define DEBUG(a) printf("DEBUG %s\n",a);fflush(stdout)
+	#define DEBUG_OBJ(a,o) printf("DEBUG(%p) %s\n",o,a);fflush(stdout)
 #else
 	#define DEBUG(a)
 	#define DEBUG_OBJ(a,o)
@@ -104,19 +104,10 @@ $$ClassName$$ *lua_to$$ClassName$$(lua_State *L, int index){
 	if (!lua_getmetatable(L,index)) return 0;
 	// metatabla
         lua_pop(L,1);
-	lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-        lua_gettable(L,index);
-        /*
-          lua_pushstring(L,"__index");
-          lua_rawget(L,-2);
-          // metatabla metainstance
-          lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-          lua_gettable(L,-2);
-        */
-	if ( !lua_isboolean(L,-1)) {
+        lua_getfield(L,index,"is_$$(LUANAME[ClassName] or ClassName)$$");
+	if ( !lua_toboolean(L,-1)) {
 		obj = NULL;
 	}
-	//lua_pop(L,3);
         lua_pop(L,1);
         if (obj != NULL) {
 
@@ -128,23 +119,18 @@ $$ClassName$$ *lua_to$$ClassName$$(lua_State *L, int index){
 
 int lua_is$$ClassName$$(lua_State *L, int index){
   int result;
-  $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,index);	
+#ifdef __DEBUG__
+  $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,index);
   DEBUG_OBJ("lua_is$$ClassName$$", obj);
   if (obj == NULL) return 0;
+#else
+  if (!lua_isuserdata(L,index)) return 0;
+#endif
   if (!lua_getmetatable(L,index)) return 0;
   // metatabla
   lua_pop(L,1);
-  lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-  lua_gettable(L,index);
-  /*
-    lua_pushstring(L,"__index");
-    lua_rawget(L,-2);
-    // metatabla metainstance
-    lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-    lua_gettable(L,-2);
-  */
-  result = lua_isboolean(L,-1);
-  //lua_pop(L,3);
+  lua_getfield(L, index, "is_$$(LUANAME[ClassName] or ClassName)$$");
+  result = lua_toboolean(L,-1);
   lua_pop(L,1);
   return ( result != 0 );
 }
@@ -179,7 +165,7 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
 	// pila =  ptr, table:luabind_clases luabind_clases[ClassName]
 	lua_pop(L,2);
 	// pila = ptr
-	
+
 	DEBUG("lua_push$$ClassName$$ (end)");
 }
 

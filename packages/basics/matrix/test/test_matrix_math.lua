@@ -160,7 +160,7 @@ ascii
                         44, 56,
                      }),
             "transpose mul *")
-
+      
       local j = matrix(2,2):gemm{
         trans_A=true, trans_B=false,
         alpha=1.0, A=g, B=g,
