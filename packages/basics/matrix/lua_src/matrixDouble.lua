@@ -9,6 +9,9 @@ matrixDouble.meta_instance.__call =
 matrixDouble.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixDouble)
 
+matrixDouble.meta_instance.__index =
+  matrix.__generic__.__make_generic_index__(matrixDouble)
+
 matrixDouble.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixDouble",
                                             function(value)

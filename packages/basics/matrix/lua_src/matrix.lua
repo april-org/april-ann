@@ -3,6 +3,12 @@ local same_cpp_ref = matrix.meta_instance.__eq
 --
 class.extend(matrix, "t", matrix.."transpose")
 
+-- serialization
+matrix.__generic__.__make_all_serialization_methods__(matrix)
+
+matrix.join =
+  matrix.__generic__.__make_generic_join__(matrix)
+
 -- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
@@ -420,97 +426,6 @@ matrix.op.tril =
     return triu
   end
 
--- serialization
-matrix.__generic__.__make_all_serialization_methods__(matrix)
-
--- other stuff
-
-matrix.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
-
--- define left side operator [{}]
-matrix.meta_instance.__newindex =
-  matrix.__generic__.__make_generic_newindex__(matrix)
-
-matrix.meta_instance.__tostring =
-  matrix.__generic__.__make_generic_print__("Matrix",
-                                            function(value)
-                                              return string.format("% -13.6g", value)
-  end)
-
-matrix.join =
-  matrix.__generic__.__make_generic_join__(matrix)
-
-matrix.meta_instance.__eq = function(op1, op2)
-  if type(op1) == "number" or type(op2) == "number" then return false end
-  return op1:equals(op2)
-end
-
-matrix.meta_instance.__add = function(op1, op2)
-  if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
-  if type(op2) == "number" then
-    return op1:clone():scalar_add(op2)
-  else
-    return op1:add(op2)
-  end
-end
-
-matrix.meta_instance.__sub = function(op1, op2)
-  if class.is_a(op1,matrix) and class.is_a(op2,matrix) then
-    return op1:sub(op2)
-  elseif class.is_a(op1,matrix) then
-    return op1:clone():scalar_add(-op2)
-  elseif class.is_a(op2,matrix) then
-    return op2:clone():scal(-1):scalar_add(op1)
-  end
-end
-
-matrix.meta_instance.__mul = function(op1, op2)
-  if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
-    if class.is_a(op2,matrix.sparse) then
-      local res = matrix(op1:dim(1),op2:dim(2))
-      res:transpose():sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
-                                 trans_A=true, trans_B=true }
-      return res
-    else
-      local res = matrix(op1:dim(1),op2:dim(2))
-      res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
-      return res
-    end
-  else
-    if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
-    if type(op2) == "number" then return op1:clone():scal(op2)
-    else return op1:mul(op2)
-    end
-  end
-end
-
-matrix.meta_instance.__pow = function(op1, op2)
-  local new_mat = op1:clone()
-  return new_mat:pow(op2)
-end
-
-matrix.meta_instance.__div = function(op1, op2)
-  if type(op2) == "number" then
-    local new_mat = op1:clone()
-    return new_mat:scal(1/op2)
-  elseif type(op1) == "number" then
-    local new_mat = op2:clone()
-    return new_mat:div(op1)
-  else
-    assert(class.is_a(op1,matrix) and class.is_a(op2,matrix),
-	   "Expected a matrix and a number or two matrices")
-    local new_mat1 = op1:clone()
-    local new_mat2 = op2:clone():div(1)
-    return new_mat1:cmul(new_mat2)
-  end
-end
-
-matrix.meta_instance.__unm = function(op)
-  local new_mat = op:clone()
-  return new_mat:scal(-1)
-end
-
 -- IMAGE
 
 function matrix.loadImage(filename,format)
@@ -752,7 +667,7 @@ april_set_doc(matrix, {
 		}, })
 
 april_set_doc(matrix, {
-		class = "method", summary = "Constructor",
+		class = "method", summary = "Matrix constructor",
 		description ={
 		  "Constructor of a multidimensional matrix.",
 		  "The data is stored at row_major order",
@@ -782,7 +697,7 @@ april_set_doc(matrix.read, {
 		}, })
 
 april_set_doc(matrix.fromMMap, {
-		class = "function", summary = "constructor",
+		class = "function", summary = "Matrix fromMMap constructor",
 		description ={
 		  "Loads a matrix from a mmaped filename.",
 		},
@@ -812,7 +727,7 @@ april_set_doc(matrix.."toMMap", {
 		}, })
 
 april_set_doc(matrix.loadImage, {
-		class = "function", summary = "constructor",
+		class = "function", summary = "Matrix loadImage constructor",
 		description ={
 		  "Loads a matrix from a image filename.",
 		},
@@ -833,7 +748,7 @@ april_set_doc(matrix.saveImage, {
 		}, })
 
 april_set_doc(matrix.fromString, {
-		class = "function", summary = "constructor",
+		class = "function", summary = "Matrix fromString constructor",
 		description ={
 		  "Loads a matrix from a Lua string.",
 		},
@@ -858,7 +773,7 @@ april_set_doc(matrix.."to_lua_string", {
 		outputs = { "A Lua string" }, })
 
 april_set_doc(matrix.fromPNM, {
-		class = "function", summary = "constructor",
+		class = "function", summary = "Matrix fromPNM constructor",
 		description ={
 		  "Loads a matrix from a PNM image stored at a Lua string.",
 		},
@@ -1741,3 +1656,92 @@ class.extend(matrix, "get_major_order",
              make_deprecated_function("matrix.get_major_order", nil,
                                       function(self) return "row_major" end))
 -----------------------------
+
+-- other stuff
+
+matrix.meta_instance.__call =
+  matrix.__generic__.__make_generic_call__()
+
+-- define left side operator []
+matrix.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrix)
+
+-- define right side operator []
+matrix.meta_instance.__index =
+  matrix.__generic__.__make_generic_index__(matrix)
+
+matrix.meta_instance.__tostring =
+  matrix.__generic__.__make_generic_print__("Matrix",
+                                            function(value)
+                                              return string.format("% -13.6g", value)
+  end)
+
+matrix.meta_instance.__eq = function(op1, op2)
+  if type(op1) == "number" or type(op2) == "number" then return false end
+  return op1:equals(op2)
+end
+
+matrix.meta_instance.__add = function(op1, op2)
+  if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
+  if type(op2) == "number" then
+    return op1:clone():scalar_add(op2)
+  else
+    return op1:add(op2)
+  end
+end
+
+matrix.meta_instance.__sub = function(op1, op2)
+  if class.is_a(op1,matrix) and class.is_a(op2,matrix) then
+    return op1:sub(op2)
+  elseif class.is_a(op1,matrix) then
+    return op1:clone():scalar_add(-op2)
+  elseif class.is_a(op2,matrix) then
+    return op2:clone():scal(-1):scalar_add(op1)
+  end
+end
+
+matrix.meta_instance.__mul = function(op1, op2)
+  if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
+    if class.is_a(op2,matrix.sparse) then
+      local res = matrix(op1:dim(1),op2:dim(2))
+      res:transpose():sparse_mm{ alpha=1.0, beta=0.0, A=op2, B=op1,
+                                 trans_A=true, trans_B=true }
+      return res
+    else
+      local res = matrix(op1:dim(1),op2:dim(2))
+      res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
+      return res
+    end
+  else
+    if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
+    if type(op2) == "number" then return op1:clone():scal(op2)
+    else return op1:mul(op2)
+    end
+  end
+end
+
+matrix.meta_instance.__pow = function(op1, op2)
+  local new_mat = op1:clone()
+  return new_mat:pow(op2)
+end
+
+matrix.meta_instance.__div = function(op1, op2)
+  if type(op2) == "number" then
+    local new_mat = op1:clone()
+    return new_mat:scal(1/op2)
+  elseif type(op1) == "number" then
+    local new_mat = op2:clone()
+    return new_mat:div(op1)
+  else
+    assert(class.is_a(op1,matrix) and class.is_a(op2,matrix),
+	   "Expected a matrix and a number or two matrices")
+    local new_mat1 = op1:clone()
+    local new_mat2 = op2:clone():div(1)
+    return new_mat1:cmul(new_mat2)
+  end
+end
+
+matrix.meta_instance.__unm = function(op)
+  local new_mat = op:clone()
+  return new_mat:scal(-1)
+end

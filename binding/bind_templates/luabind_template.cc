@@ -103,15 +103,21 @@ $$ClassName$$ *lua_to$$ClassName$$(lua_State *L, int index){
 	if (obj == NULL) return 0;
 	if (!lua_getmetatable(L,index)) return 0;
 	// metatabla
-	lua_pushstring(L,"__index");
-	lua_rawget(L,-2);
-	// metatabla metainstance
+        lua_pop(L,1);
 	lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-	lua_gettable(L,-2);
+        lua_gettable(L,index);
+        /*
+          lua_pushstring(L,"__index");
+          lua_rawget(L,-2);
+          // metatabla metainstance
+          lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
+          lua_gettable(L,-2);
+        */
 	if ( !lua_isboolean(L,-1)) {
 		obj = NULL;
 	}
-	lua_pop(L,3);
+	//lua_pop(L,3);
+        lua_pop(L,1);
         if (obj != NULL) {
 
           $$class.lua_to_hook$$
@@ -127,13 +133,19 @@ int lua_is$$ClassName$$(lua_State *L, int index){
   if (obj == NULL) return 0;
   if (!lua_getmetatable(L,index)) return 0;
   // metatabla
-  lua_pushstring(L,"__index");
-  lua_rawget(L,-2);
-  // metatabla metainstance
+  lua_pop(L,1);
   lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
-  lua_gettable(L,-2);
+  lua_gettable(L,index);
+  /*
+    lua_pushstring(L,"__index");
+    lua_rawget(L,-2);
+    // metatabla metainstance
+    lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");
+    lua_gettable(L,-2);
+  */
   result = lua_isboolean(L,-1);
-  lua_pop(L,3);
+  //lua_pop(L,3);
+  lua_pop(L,1);
   return ( result != 0 );
 }
 
