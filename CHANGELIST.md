@@ -6,8 +6,15 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ProbablisitcMatrixANNComponent`, which allow to implement probabilistic
+  mixtures of posteriors and/or likelihoods.
+
 ### API Changes
 
+- Added `ann.components.probabilistic_matrix`, and its corresponding
+  specializations `ann.components.left_probabilistic_matrix` and
+  `ann.components.right_probabilistic_matrix`.
+- Added operator[] in the right side of matrix operations.
 - Added `ann.components.transpose`.
 - Added `max_gradients_norm` in `traianble.supervised_trainer`, to avoid
   gradients exploding.
