@@ -421,6 +421,12 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 }
 //BIND_END
 
+//BIND_METHOD MatrixChar num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
+}
+//BIND_END
+
 //BIND_METHOD MatrixChar stride
 {
   LUABIND_CHECK_ARGN(>=, 0);

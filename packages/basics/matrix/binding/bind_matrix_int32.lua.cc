@@ -443,6 +443,12 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
+//BIND_METHOD MatrixInt32 num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
+}
+//BIND_END
+
 //BIND_METHOD MatrixInt32 stride
 {
   LUABIND_CHECK_ARGN(>=, 0);

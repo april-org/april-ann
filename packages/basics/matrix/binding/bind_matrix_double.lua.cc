@@ -434,6 +434,12 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
+//BIND_METHOD MatrixDouble num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble stride
 {
   LUABIND_CHECK_ARGN(>=, 0);

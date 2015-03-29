@@ -433,6 +433,12 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 }
 //BIND_END
 
+//BIND_METHOD MatrixBool num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
+}
+//BIND_END
+
 //BIND_METHOD MatrixBool stride
 {
   LUABIND_CHECK_ARGN(>=, 0);
