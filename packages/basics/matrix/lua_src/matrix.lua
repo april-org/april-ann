@@ -1667,8 +1667,7 @@ matrix.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrix)
 
 -- define right side operator []
-matrix.meta_instance.__index =
-  matrix.__generic__.__make_generic_index__(matrix)
+matrix.__generic__.__make_generic_index__(matrix)
 
 matrix.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("Matrix",

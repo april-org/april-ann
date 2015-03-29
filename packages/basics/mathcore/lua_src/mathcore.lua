@@ -17,15 +17,12 @@ local function make_block_tostring(name, str)
 end
 
 local function make_index_function(cls)
-  local old_index = cls.meta_instance.__index
-  cls.meta_instance.index_table = old_index
-  cls.meta_instance.__index = function(obj, key)
-    if type(key) == "number" then
-      return obj(key)
-    else
-      return old_index[key]
-    end
-  end
+  class.declare_functional_index(cls,
+                                 function(obj,key)
+                                   if type(key) == "number" then
+                                     return obj(key)
+                                   end
+  end)
 end
 
 local function new_index_function(obj, key, value)

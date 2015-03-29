@@ -600,8 +600,7 @@ matrixComplex.meta_instance.__call =
 matrixComplex.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixComplex)
 
-matrixComplex.meta_instance.__index =
-  matrix.__generic__.__make_generic_index__(matrixComplex)
+matrix.__generic__.__make_generic_index__(matrixComplex)
 
 matrixComplex.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixComplex",

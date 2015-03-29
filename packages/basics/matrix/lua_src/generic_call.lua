@@ -45,26 +45,19 @@ matrix.__generic__.__make_generic_call__ = function()
 end
 
 matrix.__generic__.__make_generic_index__ = function(matrix_class)
-  assert(matrix_class and class.is_class(matrix_class),
-         "Needs a class table as argument")
-  local old_index = matrix_class.meta_instance.__index
-  matrix_class.meta_instance.index_table = old_index
-  assert(luatype(old_index) == "table",
-         "The __index field should be a table")
-  return function(self,key)
-    local tt = type(key)
-    if tt == "number" then
-      if self:num_dim() > 1 then
-        return self:select(1, key)
-      else
-        return self:get(key)
-      end
-    elseif tt == "table" then
-      return self(table.unpack(key))
-    else
-      return old_index[key]
-    end
-  end
+  class.declare_functional_index(matrix_class,
+                                 function(self,key)
+                                   local tt = type(key)
+                                   if tt == "number" then
+                                     if self:num_dim() > 1 then
+                                       return self:select(1, key)
+                                     else
+                                       return self:get(key)
+                                     end
+                                   elseif tt == "table" then
+                                     return self(table.unpack(key))
+                                   end
+  end)
 end
 
 matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
