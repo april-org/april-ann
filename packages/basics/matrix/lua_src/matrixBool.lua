@@ -95,8 +95,7 @@ matrixBool.meta_instance.__call =
 matrixBool.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixBool)
 
-matrixBool.meta_instance.__index =
-  matrix.__generic__.__make_generic_index__(matrixBool)
+matrix.__generic__.__make_generic_index__(matrixBool)
 
 matrixBool.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixBool",
