@@ -74,8 +74,9 @@ matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
     if tt == "number" then
       self = (self:num_dim() > 1) and self:select(1, key) or self(key)
       key = {}
+    else
+      assert(tt == "table", "Needs a table as key")
     end
-    assert(tt == "table", "Needs a table as key")
     local m  = self(table.unpack(key))
     local tv = type(value)
     if tv == "number" or tv == "complex" then
