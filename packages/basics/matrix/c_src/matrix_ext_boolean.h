@@ -27,6 +27,17 @@ namespace AprilMath {
   
   namespace MatrixExt {
 
+    /**
+     * @brief Boolean operations over Matrix instances.
+     *
+     * This operations transform the given matrix in a Basics::MatrixBool
+     * instance with True/False depending in the given condition. All the
+     * functions receive as first argument the target Basics::Matrix and as last
+     * argument an optional destination Basics::MatrixBool. In case of not given
+     * last argument, a new Basics::MatrixBool will be allocated.
+     *
+     * @see AprilMath::MatrixExt
+     */
     namespace Boolean {
       
       //////////////////// BOOLEAN CONDITIONS ////////////////////
@@ -43,7 +54,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matLT(Basics::Matrix<T> *obj, const T &value,
+      Basics::Matrix<bool> *matLT(const Basics::Matrix<T> *obj, const T &value,
                                   Basics::Matrix<bool> *dest=0);
 
       /**
@@ -55,7 +66,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matLT(Basics::Matrix<T> *obj,
+      Basics::Matrix<bool> *matLT(const Basics::Matrix<T> *obj,
                                   const Basics::Matrix<T> *other,
                                   Basics::Matrix<bool> *dest=0);
 
@@ -68,7 +79,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matGT(Basics::Matrix<T> *obj, const T &value,
+      Basics::Matrix<bool> *matGT(const Basics::Matrix<T> *obj, const T &value,
                                   Basics::Matrix<bool> *dest=0);
 
       /**
@@ -80,7 +91,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matGT(Basics::Matrix<T> *obj,
+      Basics::Matrix<bool> *matGT(const Basics::Matrix<T> *obj,
                                   const Basics::Matrix<T> *other,
                                   Basics::Matrix<bool> *dest=0);
 
@@ -93,7 +104,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matEQ(Basics::Matrix<T> *obj, const T &value,
+      Basics::Matrix<bool> *matEQ(const Basics::Matrix<T> *obj, const T &value,
                                   Basics::Matrix<bool> *dest=0);
 
       /**
@@ -105,7 +116,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matEQ(Basics::Matrix<T> *obj,
+      Basics::Matrix<bool> *matEQ(const Basics::Matrix<T> *obj,
                                   const Basics::Matrix<T> *other,
                                   Basics::Matrix<bool> *dest=0);
 
@@ -118,7 +129,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matNEQ(Basics::Matrix<T> *obj, const T &value,
+      Basics::Matrix<bool> *matNEQ(const Basics::Matrix<T> *obj, const T &value,
                                    Basics::Matrix<bool> *dest=0);
 
       /**
@@ -130,7 +141,7 @@ namespace AprilMath {
        * new destination matrix.
        */
       template <typename T>
-      Basics::Matrix<bool> *matNEQ(Basics::Matrix<T> *obj,
+      Basics::Matrix<bool> *matNEQ(const Basics::Matrix<T> *obj,
                                    const Basics::Matrix<T> *other,
                                    Basics::Matrix<bool> *dest=0);
     } // namespace Boolean

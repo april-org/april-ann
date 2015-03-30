@@ -52,7 +52,7 @@ namespace AprilMath {
          ZERO/ONE matrix, depending in the truth of the given condition */
     
       template <typename T>
-      Matrix<bool> *matLT(Matrix<T> *obj, const T &value,
+      Matrix<bool> *matLT(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
         if (dest == 0) {
           dest = new Matrix<bool>(obj->getNumDim(),
@@ -62,7 +62,7 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Matrix<bool> *matLT(Matrix<T> *obj,
+      Matrix<bool> *matLT(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
         if (dest == 0) {
@@ -74,7 +74,7 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Matrix<bool> *matGT(Matrix<T> *obj, const T &value,
+      Matrix<bool> *matGT(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
         if (dest == 0) {
           dest = new Matrix<bool>(obj->getNumDim(),
@@ -84,7 +84,7 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Matrix<bool> *matGT(Matrix<T> *obj,
+      Matrix<bool> *matGT(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
         if (dest == 0) {
@@ -96,7 +96,7 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Matrix<bool> *matEQ(Matrix<T> *obj, const T &value,
+      Matrix<bool> *matEQ(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
         if (dest == 0) {
           dest = new Matrix<bool>(obj->getNumDim(),
@@ -111,7 +111,7 @@ namespace AprilMath {
       }
     
       template <typename T>
-      Matrix<bool> *matEQ(Matrix<T> *obj,
+      Matrix<bool> *matEQ(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
         if (dest == 0) {
@@ -123,7 +123,7 @@ namespace AprilMath {
       }
     
       template <typename T>
-      Matrix<bool> *matNEQ(Matrix<T> *obj, const T &value,
+      Matrix<bool> *matNEQ(const Matrix<T> *obj, const T &value,
                            Matrix<bool> *dest) {
         if (dest == 0) {
           dest = new Matrix<bool>(obj->getNumDim(),
@@ -138,7 +138,7 @@ namespace AprilMath {
       }
     
       template <typename T>
-      Matrix<bool> *matNEQ(Matrix<T> *obj,
+      Matrix<bool> *matNEQ(const Matrix<T> *obj,
                            const Matrix<T> *other,
                            Matrix<bool> *dest) {
         if (dest == 0) {
@@ -149,41 +149,41 @@ namespace AprilMath {
                                           AprilMath::Functors::m_neq<T>(), dest);
       }
 
-      template Matrix<bool> *matLT(Matrix<float> *, const float &,
+      template Matrix<bool> *matLT(const Matrix<float> *, const float &,
                                    Matrix<bool> *);
 
-      template Matrix<bool> *matLT(Matrix<float> *,
+      template Matrix<bool> *matLT(const Matrix<float> *,
                                    const Matrix<float> *,
                                    Matrix<bool> *);
-      template Matrix<bool> *matGT(Matrix<float> *, const float &, Matrix<bool> *);
-      template Matrix<bool> *matGT(Matrix<float> *,
+      template Matrix<bool> *matGT(const Matrix<float> *, const float &, Matrix<bool> *);
+      template Matrix<bool> *matGT(const Matrix<float> *,
                                    const Matrix<float> *, Matrix<bool> *);
-      template Matrix<bool> *matEQ(Matrix<float> *, const float &, Matrix<bool> *);
-      template Matrix<bool> *matEQ(Matrix<float> *,
+      template Matrix<bool> *matEQ(const Matrix<float> *, const float &, Matrix<bool> *);
+      template Matrix<bool> *matEQ(const Matrix<float> *,
                                    const Matrix<float> *,
                                    Matrix<bool> *);
-      template Matrix<bool> *matNEQ(Matrix<float> *, const float &,
+      template Matrix<bool> *matNEQ(const Matrix<float> *, const float &,
                                     Matrix<bool> *);
-      template Matrix<bool> *matNEQ(Matrix<float> *,
+      template Matrix<bool> *matNEQ(const Matrix<float> *,
                                     const Matrix<float> *,
                                     Matrix<bool> *);
       
-      template Matrix<bool> *matLT(Matrix<double> *, const double &,
+      template Matrix<bool> *matLT(const Matrix<double> *, const double &,
                                    Matrix<bool> *);
 
-      template Matrix<bool> *matLT(Matrix<double> *,
+      template Matrix<bool> *matLT(const Matrix<double> *,
                                    const Matrix<double> *,
                                    Matrix<bool> *);
-      template Matrix<bool> *matGT(Matrix<double> *, const double &, Matrix<bool> *);
-      template Matrix<bool> *matGT(Matrix<double> *,
+      template Matrix<bool> *matGT(const Matrix<double> *, const double &, Matrix<bool> *);
+      template Matrix<bool> *matGT(const Matrix<double> *,
                                    const Matrix<double> *, Matrix<bool> *);
-      template Matrix<bool> *matEQ(Matrix<double> *, const double &, Matrix<bool> *);
-      template Matrix<bool> *matEQ(Matrix<double> *,
+      template Matrix<bool> *matEQ(const Matrix<double> *, const double &, Matrix<bool> *);
+      template Matrix<bool> *matEQ(const Matrix<double> *,
                                    const Matrix<double> *,
                                    Matrix<bool> *);
-      template Matrix<bool> *matNEQ(Matrix<double> *, const double &,
+      template Matrix<bool> *matNEQ(const Matrix<double> *, const double &,
                                     Matrix<bool> *);
-      template Matrix<bool> *matNEQ(Matrix<double> *,
+      template Matrix<bool> *matNEQ(const Matrix<double> *,
                                     const Matrix<double> *,
                                     Matrix<bool> *);
       

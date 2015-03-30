@@ -27,6 +27,15 @@ namespace AprilMath {
   
   namespace MatrixExt {
 
+    /**
+     * @brief BLAS operations over Matrix instances.
+     *
+     * This operations have been implemented following CBLAS interface, they are
+     * computed <b>in-place</b> receiving as first argument the destination
+     * Basics::Matrix object.
+     *
+     * @see AprilMath::MatrixExt
+     */
     namespace BLAS {
       //////////////////// CBLAS MATH OPERATIONS ////////////////////
 

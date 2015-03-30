@@ -29,7 +29,15 @@
 namespace AprilMath {
 
   namespace MatrixExt {
-    
+
+    /**
+     * @brief Initializers for Matrix instances.
+     *
+     * This operations initialize the given Basics::Matrix changing it
+     * <b>in-place</b>.
+     *
+     * @see AprilMath::MatrixExt
+     */    
     namespace Initializers {
       
       /// Initialize all the matrix elements to the given value.

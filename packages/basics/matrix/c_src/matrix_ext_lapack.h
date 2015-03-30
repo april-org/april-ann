@@ -27,6 +27,14 @@ namespace AprilMath {
   
   namespace MatrixExt {
 
+    /**
+     * @brief LAPACK operations over Matrix instances.
+     *
+     * This operations have been implemented using LAPACK functions. All of
+     * these functions return its result or a new allocated matrix.
+     *
+     * @see AprilMath::MatrixExt
+     */
     namespace LAPACK {
       
       //////////////////// LAPACK MATH OPERATIONS ////////////////////

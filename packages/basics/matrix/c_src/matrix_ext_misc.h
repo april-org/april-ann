@@ -26,7 +26,15 @@
 namespace AprilMath {
 
   namespace MatrixExt {
-    
+
+    /**
+     * @brief Miscellaneous operations for Matrix instances.
+     *
+     * This operations have been implemented using other matrix operations,
+     * they are wrappers to perform usual computations.
+     *
+     * @see AprilMath::MatrixExt
+     */    
     namespace Misc {
       
 

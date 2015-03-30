@@ -26,7 +26,12 @@
 namespace AprilMath {
 
   namespace MatrixExt {
-    
+
+    /**
+     * @brief Reduction operations for Matrix instances.
+     *
+     * @see AprilMath::MatrixExt
+     */    
     namespace Reductions {
       
       /////////////////// MAX MIN REDUCTIONS ///////////////////
