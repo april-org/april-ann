@@ -22,7 +22,7 @@
 #define FLOATRGB_H
 
 #include "clamp.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 
 namespace Imaging {
 
@@ -72,20 +72,25 @@ namespace AprilUtils{
 
 namespace AprilMath {
   namespace MatrixExt {
-    namespace Operations {
-  
+    namespace BLAS {
+      
       template<>
       Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *dst,
                                                  const Basics::Matrix<Imaging::FloatRGB> *src);
       
-      template <>
-      Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,
-                                                       Basics::Matrix<Imaging::FloatRGB> *dst);
-      
+    }
+    namespace Initializers {
+
       template<>
       Basics::Matrix<Imaging::FloatRGB> *matFill(Basics::Matrix<Imaging::FloatRGB> *obj,
                                                  const Imaging::FloatRGB value);
+    }
+
+    namespace Operations {
       
+      template <>
+      Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,
+                                                       Basics::Matrix<Imaging::FloatRGB> *dst);
     }
   }
 }

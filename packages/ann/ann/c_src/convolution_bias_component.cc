@@ -24,7 +24,8 @@
 #include "table_of_token_codes.h"
 
 using namespace AprilMath;
-using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Initializers;
 using namespace AprilUtils;
 using namespace Basics;
 

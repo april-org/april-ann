@@ -787,7 +787,7 @@ namespace Basics {
 #include "sparse_matrix.h"
 
 // must be defined here
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"

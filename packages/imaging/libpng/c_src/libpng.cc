@@ -130,7 +130,7 @@ namespace Imaging {
       int dims[2]={static_cast<int>(height),
                    static_cast<int>(width)};
       Basics::Matrix<FloatRGB> *m = new Basics::Matrix<FloatRGB>(2, dims);
-      AprilMath::MatrixExt::Operations::matFill(m, FloatRGB(0.0f,0.0f,0.0f));
+      AprilMath::MatrixExt::Initializers::matFill(m, FloatRGB(0.0f,0.0f,0.0f));
       ImageFloatRGB *res = new ImageFloatRGB(m);
 
       unsigned char *p = image_data;

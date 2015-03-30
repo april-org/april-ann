@@ -19,11 +19,14 @@
  *
  */
 #include "batch_fmeasure_micro_avg_loss_function.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "smart_ptr.h"
 #include "token_matrix.h"
 
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Initializers;
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 

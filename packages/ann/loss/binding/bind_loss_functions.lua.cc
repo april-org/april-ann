@@ -24,7 +24,7 @@
 #include "bind_matrix.h"
 #include "token_matrix.h"
 
-using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using namespace Basics;
 //BIND_END
 

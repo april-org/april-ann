@@ -29,6 +29,15 @@
 #include "luabindmacros.h" // for lua_pushfloat and lua_pushint
 #include "luabindutil.h"   // for lua_pushfloat and lua_pushint
 
+#include "matrix_ext.h"
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Boolean;
+using namespace AprilMath::MatrixExt::Initializers;
+using namespace AprilMath::MatrixExt::Misc;
+using namespace AprilMath::MatrixExt::LAPACK;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
+
 namespace AprilUtils {
   template<> Basics::SparseMatrixFloat *LuaTable::
   convertTo<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
@@ -335,7 +344,7 @@ using namespace Basics;
     LUABIND_GET_PARAMETER(1,float,value);
   }
   LUABIND_RETURN(SparseMatrixFloat,
-                 AprilMath::MatrixExt::Operations::
+                 
                  matFill(obj,value));
 }
 //BIND_END
@@ -347,7 +356,7 @@ using namespace Basics;
 //DOC_END
 {
   
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matZeros(obj));
 }
 //BIND_END
@@ -358,7 +367,7 @@ using namespace Basics;
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matOnes(obj));
 }
 //BIND_END
@@ -562,7 +571,7 @@ using namespace Basics;
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+      LUABIND_RETURN(MatrixFloat, 
                      matMin(obj, dim-1, dest, argmin));
       LUABIND_RETURN(MatrixInt32, argmin);
       DecRef(argmin);
@@ -570,7 +579,7 @@ using namespace Basics;
     }
     else {
       int c0, c1;
-      LUABIND_RETURN(float, AprilMath::MatrixExt::Operations::
+      LUABIND_RETURN(float, 
                      matMin(obj, c0, c1));
       LUABIND_RETURN(int, c0+1);
       LUABIND_RETURN(int, c1+1);
@@ -601,7 +610,7 @@ using namespace Basics;
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, AprilMath::MatrixExt::Operations::
+      LUABIND_RETURN(MatrixFloat, 
                      matMax(obj, dim-1, dest, argmax));
       LUABIND_RETURN(MatrixInt32, argmax);
       DecRef(argmax);
@@ -609,7 +618,7 @@ using namespace Basics;
     }
     else {
       int c0, c1;
-      LUABIND_RETURN(float, AprilMath::MatrixExt::Operations::
+      LUABIND_RETURN(float, 
                      matMax(obj, c0, c1));
       LUABIND_RETURN(int, c0+1);
       LUABIND_RETURN(int, c1+1);
@@ -623,14 +632,14 @@ using namespace Basics;
   float epsilon;
   LUABIND_GET_PARAMETER(1, SparseMatrixFloat, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
-  LUABIND_RETURN(boolean, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(boolean, 
                  matEquals(obj, other, epsilon));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat sqrt
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matSqrt(obj));
 }
 //BIND_END
@@ -640,77 +649,77 @@ using namespace Basics;
   float value;
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, float, value);
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matPow(obj,value));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat tan
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matTan(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat tanh
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matTanh(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat atan
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matAtan(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat atanh
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matAtanh(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat sin
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matSin(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat sinh
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matSinh(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat asin
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matAsin(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat asinh
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matAsinh(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat abs
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matAbs(obj));
 }
 //BIND_END
 
 //BIND_METHOD SparseMatrixFloat sign
 {
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matSign(obj));
 }
 //BIND_END
@@ -729,10 +738,10 @@ using namespace Basics;
       LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 		      dim, obj->getNumDim());
     LUABIND_RETURN(MatrixFloat,
-                   AprilMath::MatrixExt::Operations::
+                   
                    matSum(obj, dim-1, dest));
   }
-  else LUABIND_RETURN(float, AprilMath::MatrixExt::Operations::matSum(obj));
+  else LUABIND_RETURN(float, matSum(obj));
 }
 //BIND_END
 
@@ -742,7 +751,7 @@ using namespace Basics;
   LUABIND_CHECK_ARGN(==, 1);
   SparseMatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-  LUABIND_RETURN(SparseMatrixFloat, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(SparseMatrixFloat, 
                  matCopy(obj, mat));
 }
 //BIND_END
@@ -753,7 +762,7 @@ using namespace Basics;
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
     LUABIND_RETURN(SparseMatrixFloat,
-                   AprilMath::MatrixExt::Operations::matScal(obj, value));
+                   matScal(obj, value));
   }
 //BIND_END
 
@@ -763,13 +772,13 @@ using namespace Basics;
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
     LUABIND_RETURN(SparseMatrixFloat,
-                   AprilMath::MatrixExt::Operations::matDiv(obj, value));
+                   matDiv(obj, value));
   }
 //BIND_END
  
 //BIND_METHOD SparseMatrixFloat norm2
   {
-    LUABIND_RETURN(float, AprilMath::MatrixExt::Operations::matNorm2(obj));
+    LUABIND_RETURN(float, matNorm2(obj));
   }
 //BIND_END
 

@@ -20,12 +20,14 @@
  */
 #include "cmath_overloads.h"
 #include "mae_loss_function.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "loss_kernels.h"
 #include "token_matrix.h"
 
 using namespace AprilMath::MatrixExt::LossOperations;
+using namespace AprilMath::MatrixExt::Misc;
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 
