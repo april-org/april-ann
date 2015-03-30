@@ -831,6 +831,18 @@ using namespace Basics;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD SparseMatrixFloat num_dim
+{
+  LAUBIND_RETURN(int, 2);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD SparseMatrixFloat select
+{
+  LAUBIND_ERROR("Not implemented method in sparse matrix instances");
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_METHOD SparseMatrixFloat values
