@@ -23,6 +23,7 @@
 #include "zero_one_loss_function.h"
 
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 

@@ -24,6 +24,15 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+#include "matrix_ext.h"
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Boolean;
+using namespace AprilMath::MatrixExt::Initializers;
+using namespace AprilMath::MatrixExt::Misc;
+using namespace AprilMath::MatrixExt::LAPACK;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
+
 namespace AprilUtils {
   template<> Basics::MatrixChar *LuaTable::
   convertTo<Basics::MatrixChar *>(lua_State *L, int idx) {
@@ -401,7 +410,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_PARAMETER(1, string);
   const char *value;
   LUABIND_GET_PARAMETER(1,string,value);
-  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixChar, 
                  matFill(obj, *value));
 }
 //BIND_END
@@ -418,6 +427,12 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
     LUABIND_RETURN_FROM_STACK(-1);
   }
   else LUABIND_RETURN(int, d[pos-1]);
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
 }
 //BIND_END
 
@@ -514,7 +529,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_ARGN(==,1);
   const char *v;
   LUABIND_GET_PARAMETER(1, string, v);
-  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixChar, 
                  matDiag(obj, *v));
 }
 //BIND_END
@@ -611,7 +626,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixChar *mat;
   LUABIND_GET_PARAMETER(1, MatrixChar, mat);
-  LUABIND_RETURN(MatrixChar, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixChar, 
                  matCopy(obj, mat));
 }
 //BIND_END

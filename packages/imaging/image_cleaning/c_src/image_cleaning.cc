@@ -24,7 +24,7 @@
 #include "maxmin.h"
 #include "image_cleaning.h"
 
-using AprilMath::MatrixExt::Operations::matZeros;
+using AprilMath::MatrixExt::Initializers::matZeros;
 using namespace Basics;
 
 namespace Imaging {

@@ -15,6 +15,9 @@ matrix.__generic__.__make_generic_toString__(matrix.sparse)
 matrix.sparse.meta_instance.__call =
   matrix.__generic__.__make_generic_call__()
 
+-- define right side operator []
+matrix.__generic__.__make_generic_index__(matrix.sparse)
+
 matrix.sparse.meta_instance.__tostring = function(self)
   local out      = {}
   local sparse   = (self.get_sparse_format and self:get_sparse_format()) or "csr"

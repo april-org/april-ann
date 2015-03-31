@@ -9,6 +9,8 @@ matrixInt32.meta_instance.__call =
 matrixInt32.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixInt32)
 
+matrix.__generic__.__make_generic_index__(matrixInt32)
+
 matrixInt32.meta_instance.__tostring =
   matrix.__generic__.__make_generic_print__("MatrixInt32",
                                             function(value)

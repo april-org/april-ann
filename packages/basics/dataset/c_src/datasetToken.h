@@ -26,7 +26,7 @@
 #include "datasetFloat.h"
 #include "function_interface.h"
 #include "matrixFloat.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "smart_ptr.h"
 #include "token_base.h"
 #include "token_matrix.h"
@@ -200,7 +200,7 @@ namespace Basics {
         april_assert(0 <= indexes[i] && indexes[i] < num_patterns);
         ds->getPattern(indexes[i], aux_mem);
         submat = mat->select(0, i, submat.get());
-        AprilMath::MatrixExt::Operations::matCopy(submat.get(),aux_mat.get());
+        AprilMath::MatrixExt::BLAS::matCopy(submat.get(),aux_mat.get());
       }
 #ifdef USE_CUDA
       mat->setUseCuda(old_use_cuda);
@@ -242,7 +242,7 @@ namespace Basics {
       for (unsigned int i=0; i<bunch_size; ++i) {
         coords[major_dim] = static_cast<int>(i);
         submat = mat->select(0, i, submat.get());
-        AprilMath::MatrixExt::Operations::matCopy(aux_mat.get(),submat.get());
+        AprilMath::MatrixExt::BLAS::matCopy(aux_mat.get(),submat.get());
         ds->putPattern(indexes[i], aux_mem);
       }
 #ifdef USE_CUDA

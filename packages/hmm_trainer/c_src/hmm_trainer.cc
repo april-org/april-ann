@@ -595,7 +595,7 @@ namespace HMMs {
     }
 
     if (reest_emission) {
-      AprilMath::MatrixExt::Operations::matZeros(reest_emission);
+      AprilMath::MatrixExt::Initializers::matZeros(reest_emission);
     }
   
     // recuperar prob final:

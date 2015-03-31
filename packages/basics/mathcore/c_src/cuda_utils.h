@@ -35,27 +35,9 @@
 #include "cblas_headers.h"
 #include "ceiling_power_of_two.h"
 #include "complex_number.h"
+#include "cuda_headers.h"
 #include "maxmin.h"
 #include "gpu_helper.h"
-
-#define MAX_CUDA_REDUCE_THREAD_SIZE 1024
-#define MIN_CUDA_REDUCE_THREAD_SIZE    8
-#define MAX_CUDA_REDUCE_NUM_THREADS 1024 // must be multiple of 2 (wrap size=32)
-
-#define APRIL_CUDA_EXPORT __host__ __device__
-#define APRIL_CUDA_ERROR_EXIT(code,msg) aprilCudaErrorExit((code),(msg))
-
-// FIXME: implement properly this feature to control errors in CUDA kernels and
-// CPU equivalent code.
-static __host__ __device__ void aprilCudaErrorExit(int code, const char *msg) {
-  UNUSED_VARIABLE(code);
-  UNUSED_VARIABLE(msg);
-  // do nothing
-}
-
-// static void aprilCudaErrorExit(int code, const char *msg) {
-//   ERROR_EXIT(code,msg);
-// }
 
 namespace AprilMath {
   /// Contains CUDA kernels, helper classes and functions.
@@ -197,8 +179,6 @@ namespace AprilMath {
 
 #else
 
-#define APRIL_CUDA_EXPORT
-#define APRIL_CUDA_ERROR_EXIT(code,msg) ERROR_EXIT(code,msg)
 #define SPECIALIZE_CUDA_SHARED_MEMORY(FULLTYPE,TYPE)
 
 #endif

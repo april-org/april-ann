@@ -293,7 +293,7 @@ namespace OCR {
         MatrixFloat *result_mat = new MatrixFloat(2, dims);
 
         // FIXME: For non inverted matrix
-        AprilMath::MatrixExt::Operations::matFill(result_mat, 0.0f);
+        AprilMath::MatrixExt::Initializers::matFill(result_mat, 0.0f);
 
         ImageFloat  *result = new ImageFloat(result_mat);
 

@@ -26,6 +26,7 @@
 #include "loss_function.h"
 
 namespace ANN {
+  /// Cross-entropy paired with log_logistic outputs
   class CrossEntropyLossFunction : public LossFunction {
     CrossEntropyLossFunction(CrossEntropyLossFunction *other) :
     LossFunction(other) { }
@@ -43,6 +44,28 @@ namespace ANN {
     }
     virtual char *toLuaString();
   };
+
+  //////////////////////////////////////////////////////////
+
+  /// Cross-entropy non paired with log_logistic outputs
+  class NonPairedCrossEntropyLossFunction : public LossFunction {
+    NonPairedCrossEntropyLossFunction(NonPairedCrossEntropyLossFunction *other) :
+    LossFunction(other) { }
+  protected:
+    virtual Basics::MatrixFloat *computeLossBunch(Basics::Token *input,
+                                                  Basics::Token *target);
+  public:
+    NonPairedCrossEntropyLossFunction(unsigned int size);
+    virtual ~NonPairedCrossEntropyLossFunction();
+    virtual Basics::Token *computeGradient(Basics::Token *input,
+                                           Basics::Token *target);
+    virtual float getAccumLoss();
+    virtual LossFunction *clone() {
+      return new NonPairedCrossEntropyLossFunction(this);
+    }
+    virtual char *toLuaString();
+  };
+
 }
 
 #endif // CROSSENTROPYLOSSFUNCTION_H

@@ -19,7 +19,7 @@
  *
  */
 #include "floatrgb.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 
 namespace Imaging {
 
@@ -151,7 +151,7 @@ namespace AprilMath {
                                           bool);
   
   namespace MatrixExt {
-    namespace Operations {
+    namespace BLAS {
       
       template<>
       Basics::Matrix<Imaging::FloatRGB> *matCopy(Basics::Matrix<Imaging::FloatRGB> *dst,
@@ -166,6 +166,19 @@ namespace AprilMath {
         }
         return dst;
       }
+    }
+    namespace Initializers {
+      template<>
+      Basics::Matrix<Imaging::FloatRGB> *matFill(Basics::Matrix<Imaging::FloatRGB> *obj,
+                                                 const Imaging::FloatRGB value) {
+        for (Basics::Matrix<Imaging::FloatRGB>::iterator it(obj->begin());
+             it != obj->end(); ++it) {
+          *it = value;
+        }
+        return obj;
+      }
+    }
+    namespace Operations {
       
       template <>
       Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,
@@ -180,15 +193,7 @@ namespace AprilMath {
         return dst;
       }
 
-      template<>
-      Basics::Matrix<Imaging::FloatRGB> *matFill(Basics::Matrix<Imaging::FloatRGB> *obj,
-                                                 const Imaging::FloatRGB value) {
-        for (Basics::Matrix<Imaging::FloatRGB>::iterator it(obj->begin());
-             it != obj->end(); ++it) {
-          *it = value;
-        }
-        return obj;
-      }
+
     }
   }
 }

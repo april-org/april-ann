@@ -41,7 +41,7 @@ namespace Stats {
     virtual void privateLogpdfDerivative(const Basics::MatrixFloat *x,
                                          Basics::MatrixFloat *result) {
       UNUSED_VARIABLE(x);
-      AprilMath::MatrixExt::Operations::matZeros(result);
+      AprilMath::MatrixExt::Initializers::matZeros(result);
     }
 
   public:

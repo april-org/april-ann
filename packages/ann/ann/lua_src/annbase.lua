@@ -8,6 +8,18 @@ class.extend(ann.components.base, "get_is_recurrent",
 
 ----------------------------------------------------------------------
 
+ann.components.left_probabilistic_matrix = function(t)
+  t.side = "left"
+  return ann.components.probabilistic_matrix(t)
+end
+
+ann.components.right_probabilistic_matrix = function(t)
+  t.side = "right"
+  return ann.components.probabilistic_matrix(t)
+end
+
+----------------------------------------------------------------------
+
 local ann_wrapper, ann_wrapper_methods = class("ann.components.wrapper")
 ann.components.wrapper = ann_wrapper -- global environment
 

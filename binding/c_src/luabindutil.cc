@@ -231,9 +231,20 @@ int lua_concat_class_method(lua_State *L) {
     return 0;
   }
   // stack: class_table name meta_instance __index
-  lua_pushstring(L,method_name);
-  // stack: class_table name meta_instance __index "name"
-  lua_rawget(L,-2);
+  if (lua_istable(L,-1)) {
+    // stack: class_table name meta_instance __index
+    lua_pushstring(L,method_name);
+    // stack: class_table name meta_instance __index "name"
+    lua_rawget(L,-2);
+  }
+  else {
+    // stack: class_table name meta_instance __index
+    lua_pushnil(L);
+    // stack: class_table name meta_instance __index nil
+    lua_pushstring(L,method_name);
+    // stack: class_table name meta_instance __index nil "name"
+    lua_call(L,2,1);
+  }
   // stack: class_table name meta_instance __index method
   if (lua_isnil(L,-1)) {
     return 0;

@@ -160,7 +160,7 @@ ascii
                         44, 56,
                      }),
             "transpose mul *")
-
+      
       local j = matrix(2,2):gemm{
         trans_A=true, trans_B=false,
         alpha=1.0, A=g, B=g,
@@ -415,7 +415,17 @@ ascii
                            1,2,3,4,
                            1,2,3,4}))
   end)
-
+  
+  T("IndexMethods", function()
+      local m1 = matrix(30,20,10):linspace()
+      check.eq(m1:select(1,20), m1[20])
+      m1[10] = m1[25]
+      check.eq(m1:select(1,10), m1:select(1,25))
+      m1[{10,20,10}] = 10
+      check.eq(m1[{10,20,10}], matrix(1,1,1,{10}))
+      check.eq(m1(10,20,10), matrix(1,1,1,{10}))
+  end)
+  
   T("LargeMatrices", function()
       local m1 = matrix(300,200,100)
       local m2 = matrix(300,200,100)
