@@ -28,7 +28,9 @@
 
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt;
+using namespace AprilMath::MatrixExt::BLAS;
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 
 namespace ANN {
   namespace Kernels {

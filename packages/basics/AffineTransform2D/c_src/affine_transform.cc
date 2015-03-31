@@ -32,7 +32,7 @@ namespace Basics {
   AffineTransform2D::AffineTransform2D():
     MatrixFloat(2, dimensions)
   {
-    AprilMath::MatrixExt::Operations::matZeros(this);
+    AprilMath::MatrixExt::Initializers::matZeros(this);
     MatrixFloat::random_access_iterator data(this);
     data(0,0) = 1.0f;
     data(1,1) = 1.0f;
@@ -54,10 +54,10 @@ namespace Basics {
   AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
   {
     SharedPtr<MatrixFloat> this_clone( this->clone() );
-    AprilMath::MatrixExt::Operations::matGemm(this,
-                                              CblasNoTrans, CblasNoTrans,
-                                              1.0f, other, this_clone.get(),
-                                              0.0f);
+    AprilMath::MatrixExt::BLAS::matGemm(this,
+                                        CblasNoTrans, CblasNoTrans,
+                                        1.0f, other, this_clone.get(),
+                                        0.0f);
     return this;
   }
 

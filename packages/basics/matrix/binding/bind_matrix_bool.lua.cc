@@ -23,6 +23,15 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+#include "matrix_ext.h"
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Boolean;
+using namespace AprilMath::MatrixExt::Initializers;
+using namespace AprilMath::MatrixExt::Misc;
+using namespace AprilMath::MatrixExt::LAPACK;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
+
 namespace Basics {
 #define FUNCTION_NAME "read_vector"
   static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -399,21 +408,21 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
   LUABIND_CHECK_PARAMETER(1, boolean);
   bool value;
   LUABIND_GET_PARAMETER(1,boolean,value);
-  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixBool, 
                  matFill(obj, value));
 }
 //BIND_END
 
 //BIND_METHOD MatrixBool zeros
 {
-  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixBool, 
                  matFill(obj, false));
 }
 //BIND_END
 
 //BIND_METHOD MatrixBool ones
 {
-  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixBool, 
                  matFill(obj, true));
 }
 //BIND_END
@@ -532,7 +541,7 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
   LUABIND_CHECK_ARGN(==,1);
   bool v;
   LUABIND_GET_PARAMETER(1, boolean, v);
-  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixBool, 
                  matDiag(obj, v));
 }
 //BIND_END
@@ -628,7 +637,7 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixBool *mat;
   LUABIND_GET_PARAMETER(1, MatrixBool, mat);
-  LUABIND_RETURN(MatrixBool, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixBool, 
                  matCopy(obj, mat));
 }
 //BIND_END

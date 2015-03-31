@@ -24,8 +24,10 @@
 #include "token_matrix.h"
 
 using namespace AprilMath;
+using namespace AprilMath::MatrixExt::BLAS;
 using namespace AprilMath::MatrixExt::LossOperations;
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 

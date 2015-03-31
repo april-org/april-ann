@@ -26,7 +26,7 @@
 #include "copy_component.h"
 
 using namespace AprilMath;
-using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::BLAS;
 using namespace AprilUtils;
 using namespace Basics;
 

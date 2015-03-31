@@ -27,7 +27,7 @@
 
 namespace AprilMath {
   namespace MatrixExt {
-    namespace Operations {
+    namespace Misc {
       namespace ConvolutionUtils {
       
         template <typename T>
@@ -144,7 +144,8 @@ namespace AprilMath {
                                                      unrolled_slice->getNumDim(),
                                                      // clone in case it is not contiguous
                                                      true) );
-            matCopy(unrolled_slice.get(), rewrapped_mat_slice.get());
+            AprilMath::MatrixExt::BLAS::matCopy(unrolled_slice.get(),
+                                                rewrapped_mat_slice.get());
             //
             mat_sw->next();
             unrolled_sw->next();
@@ -282,25 +283,28 @@ namespace AprilMath {
                                       result_pattern :
                                       result_pattern->clone() );
         // compute convolution by using CBLAS GEMM
-        matGemm(contiguous_result_pattern.get(),
-                CblasNoTrans, CblasTrans,
-                T(1.0f),
-                unrolled_kernel.get(),
-                contiguous_source_pattern.get(),
-                T(0.0f));
-        matCopy(result_pattern.get(), contiguous_result_pattern.get());
+        AprilMath::MatrixExt::BLAS::matGemm(contiguous_result_pattern.get(),
+                                            CblasNoTrans, CblasTrans,
+                                            T(1.0f),
+                                            unrolled_kernel.get(),
+                                            contiguous_source_pattern.get(),
+                                            T(0.0f));
+        AprilMath::MatrixExt::BLAS::matCopy(result_pattern.get(),
+                                            contiguous_result_pattern.get());
         for (int j=1; j<bunch_size; ++j) {
           source_pattern = unrolled_this->select(0, j, source_pattern.get());
           result_pattern = unrolled_result->select(0, j, result_pattern.get());
-          matCopy(contiguous_source_pattern.get(), source_pattern.get());
+          AprilMath::MatrixExt::BLAS::matCopy(contiguous_source_pattern.get(),
+                                              source_pattern.get());
           // compute convolution by using CBLAS GEMM
-          matGemm(contiguous_result_pattern.get(),
-                  CblasNoTrans, CblasTrans,
-                  T(1.0f),
-                  unrolled_kernel.get(),
-                  contiguous_source_pattern.get(),
-                  T(0.0f));
-          matCopy(result_pattern.get(), contiguous_result_pattern.get());
+          AprilMath::MatrixExt::BLAS::matGemm(contiguous_result_pattern.get(),
+                                              CblasNoTrans, CblasTrans,
+                                              T(1.0f),
+                                              unrolled_kernel.get(),
+                                              contiguous_source_pattern.get(),
+                                              T(0.0f));
+          AprilMath::MatrixExt::BLAS::matCopy(result_pattern.get(),
+                                              contiguous_result_pattern.get());
         }
         delete[] kernel_sizes;
         return result;
@@ -609,7 +613,7 @@ namespace AprilMath {
         }
       */
       
-    } // namespace Operations
+    } // namespace Misc
   } // namespace MatrixExt
 } // namespace Basics
 

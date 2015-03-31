@@ -26,6 +26,7 @@
 #include "smart_ptr.h"
 
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 
 namespace AprilMath {
   namespace MatrixExt {

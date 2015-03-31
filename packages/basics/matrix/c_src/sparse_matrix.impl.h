@@ -35,7 +35,7 @@
 #include "vector.h"
 
 // Must be defined in this order.
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 
 namespace Basics {
 
@@ -426,7 +426,7 @@ namespace Basics {
   Matrix<T> *SparseMatrix<T>::toDense() const {
     Matrix<T> *result = new Matrix<T>(2, matrixSize);
     typename Matrix<T>::random_access_iterator result_it(result);
-    AprilMath::MatrixExt::Operations::matZeros(result);
+    AprilMath::MatrixExt::Initializers::matZeros(result);
     int x0=0,x1=0;
     for (const_iterator it(begin()); it != end(); ++it) {
       it.getCoords(x0,x1);

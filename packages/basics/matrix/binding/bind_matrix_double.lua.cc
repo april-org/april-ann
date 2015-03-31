@@ -25,6 +25,15 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+#include "matrix_ext.h"
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Boolean;
+using namespace AprilMath::MatrixExt::Initializers;
+using namespace AprilMath::MatrixExt::Misc;
+using namespace AprilMath::MatrixExt::LAPACK;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
+
 namespace AprilUtils {
   template<> Basics::MatrixDouble *LuaTable::
   convertTo<Basics::MatrixDouble *>(lua_State *L, int idx) {
@@ -400,21 +409,21 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
   LUABIND_CHECK_PARAMETER(1, string);
   double value;
   LUABIND_GET_PARAMETER(1,double,value);
-  LUABIND_RETURN(MatrixDouble, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixDouble, 
                  matFill(obj, value));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble zeros
 {
-  LUABIND_RETURN(MatrixDouble, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixDouble, 
                  matZeros(obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble ones
 {
-  LUABIND_RETURN(MatrixDouble, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixDouble, 
                  matOnes(obj));
 }
 //BIND_END
@@ -533,7 +542,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
   LUABIND_CHECK_ARGN(==,1);
   double v;
   LUABIND_GET_PARAMETER(1, double, v);
-  LUABIND_RETURN(MatrixDouble, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixDouble, 
                  matDiag(obj,v));
 }
 //BIND_END
@@ -655,7 +664,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixDouble *mat;
   LUABIND_GET_PARAMETER(1, MatrixDouble, mat);
-  LUABIND_RETURN(MatrixDouble, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixDouble, 
                  matCopy(obj,mat));
 }
 //BIND_END

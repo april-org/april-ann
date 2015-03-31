@@ -34,7 +34,7 @@
 #include "omp_utils.h"
 
 // Must be defined in this order.
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 
 namespace Basics {
 
@@ -310,7 +310,7 @@ namespace Basics {
     if (clone) {
       initialize(other->matrixSize);
       allocate_memory(total_size);
-      AprilMath::MatrixExt::Operations::matCopy(this, other);
+      AprilMath::MatrixExt::BLAS::matCopy(this, other);
     }
     else {
       offset       = other->offset;
@@ -424,7 +424,7 @@ namespace Basics {
       obj = new Matrix<T>(len, new_dims, new_data);
       AprilUtils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
-      AprilMath::MatrixExt::Operations::matCopy(aux.get(),this);
+      AprilMath::MatrixExt::BLAS::matCopy(aux.get(),this);
     }
     else {
       obj = new Matrix<T>(len, new_dims, data.get(), offset);
@@ -507,7 +507,7 @@ namespace Basics {
   template <typename T>
   Matrix<T>* Matrix<T>::clone() const {
     Matrix<T> *result = this->cloneOnlyDims();
-    AprilMath::MatrixExt::Operations::matCopy(result,this);
+    AprilMath::MatrixExt::BLAS::matCopy(result,this);
     return result;
   }
 
@@ -968,8 +968,8 @@ namespace Basics {
     Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
                                           resul->last_raw_pos, resul->data.get(),
                                           resul->use_cuda);
-    AprilMath::MatrixExt::Operations::matZeros(resul);
-    AprilMath::MatrixExt::Operations::matCopy(resul_diag, this);
+    AprilMath::MatrixExt::Initializers::matZeros(resul);
+    AprilMath::MatrixExt::BLAS::matCopy(resul_diag, this);
     delete resul_diag;
     return resul;
   }
@@ -991,12 +991,12 @@ namespace Basics {
     Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    AprilMath::MatrixExt::Operations::matFill(result, default_value);
+    AprilMath::MatrixExt::Initializers::matFill(result, default_value);
     // take submatrix where data will be located
     Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
                                            false);
     // copy data to the submatrix
-    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
+    AprilMath::MatrixExt::BLAS::matCopy(result_data, this);
     //
     delete result_data;
     delete[] result_sizes;
@@ -1015,12 +1015,12 @@ namespace Basics {
     Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    AprilMath::MatrixExt::Operations::matFill(result, default_value);
+    AprilMath::MatrixExt::Initializers::matFill(result, default_value);
     // take submatrix where data will be located
     Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
                                            false);
     // copy data to the submatrix
-    AprilMath::MatrixExt::Operations::matCopy(result_data, this);
+    AprilMath::MatrixExt::BLAS::matCopy(result_data, this);
     //
     delete result_data;
     delete[] result_sizes;
