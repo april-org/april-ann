@@ -73,7 +73,7 @@ matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
     end
     local m  = self(table.unpack(key))
     local tv = type(value)
-    if tv == "number" or tv == "complex" then
+    if tv == "number" or tv == "complex" or tb == "boolean" then
       m:fill(value)
     else
       assert(class.is_a(m, matrix_class), "Needs a number or a matrix as value")
