@@ -481,6 +481,24 @@ namespace AprilMath {
       Basics::SparseMatrix<T> *matDiv(Basics::SparseMatrix<T> *obj, const T &value,
                                       Basics::SparseMatrix<T> *dest=0);
       
+      /**
+       * @brief Computes matrix fill using a given mask matrix.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matMaskedFill(Basics::Matrix<T> *obj,
+                                       const Basics::Matrix<bool> *mask,
+                                       const T &value,
+                                       Basics::Matrix<T> *dest=0);
+      
+      /**
+       * @brief Computes matrix copy using a given mask matrix.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matMaskedCopy(Basics::Matrix<T> *obj1,
+                                       const Basics::Matrix<bool> *mask,
+                                       const Basics::Matrix<T> *obj2,
+                                       Basics::Matrix<T> *dest=0);
+
     } // namespace Operations
     
   } // namespace MatrixExt

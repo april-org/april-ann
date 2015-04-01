@@ -363,6 +363,48 @@ namespace AprilMath {
         if (dest == 0) dest = obj;
         return SparseMatrixScalarMap1<T,T>(obj, m_curried_div<T>(value), dest);
       }
+
+      /// Curried masked fill operator.
+      template<typename T> struct maskedFillOp {
+        const T value; ///< fill value.
+        /// The constructor stores inf and sup values.
+        maskedFillOp(const T &value) : value(value) { }
+        /**
+         * @brief Returns <tt> b ? value : a </tt>
+         */
+        APRIL_CUDA_EXPORT T operator()(const T &a, const bool &b) const {
+          return (b) ? (value) : (a);
+        }
+      };
+      
+      template <typename T>
+      Matrix<T> *matMaskedFill(Matrix<T> *obj, const Matrix<bool> *mask,
+                               const T &value, Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap2<T,bool,T>(obj, mask,
+                                          maskedFillOp<T>(value),
+                                          dest);
+      }
+
+      /// Curried masked copy operator.
+      template<typename T> struct maskedCopyOp {
+        maskedCopyOp() { }
+        /**
+         * @brief Returns <tt> b ? c : a </tt>
+         */
+        APRIL_CUDA_EXPORT T operator()(const T &a, const bool &b,
+                                       const T &c) const {
+          return (b) ? (c) : (a);
+        }
+      };
+      
+      template <typename T>
+      Matrix<T> *matMaskedCopy(Matrix<T> *obj1, const Matrix<bool> *mask,
+                               const Matrix<T> *obj2, Matrix<T> *dest) {
+        if (dest == 0) dest = obj1;
+        return MatrixScalarMap3<T,bool,T,T>(obj1, mask, obj2,
+                                            maskedCopyOp<T>(), dest);
+      }
       
       template Matrix<float> *matPlogp(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matLog(Matrix<float> *, Matrix<float> *);
@@ -397,11 +439,20 @@ namespace AprilMath {
       template Matrix<float> *matAdjustRange(Matrix<float> *,
                                              const float &, const float &,
                                              Matrix<float> *);        
-      template Matrix<float> *matDiv(Matrix<float> *, const float &,
+      template Matrix<float> *matDiv(Matrix<float> *,
+                                     const float &,
                                      Matrix<float> *);
       template Matrix<float> *matDiv(Matrix<float> *,
                                      const Matrix<float> *,
                                      Matrix<float> *);
+      template Matrix<float> *matMaskedFill(Matrix<float> *,
+                                            const Matrix<bool> *,
+                                            const float &,
+                                            Matrix<float> *);
+      template Matrix<float> *matMaskedCopy(Matrix<float> *,
+                                            const Matrix<bool> *,
+                                            const Matrix<float> *,
+                                            Matrix<float> *);
 
       template Matrix<double> *matPlogp(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matLog(Matrix<double> *, Matrix<double> *);
@@ -429,15 +480,24 @@ namespace AprilMath {
       template Matrix<double> *matScal(Matrix<double> *, const double,
                                        Matrix<double> *);
       template Matrix<double> *matCmul(Matrix<double> *,
-                                      const Matrix<double> *,
-                                      Matrix<double> *);
+                                       const Matrix<double> *,
+                                       Matrix<double> *);
       template Matrix<double> *matScalarAdd(Matrix<double> *, const double &,
-                                           Matrix<double> *);
+                                            Matrix<double> *);
       template Matrix<double> *matAdjustRange(Matrix<double> *,
-                                             const double &, const double &,
-                                             Matrix<double> *);        
+                                              const double &, const double &,
+                                              Matrix<double> *);        
       template Matrix<double> *matDiv(Matrix<double> *, const double &,
-                                     Matrix<double> *);
+                                      Matrix<double> *);
+      template Matrix<double> *matMaskedFill(Matrix<double> *,
+                                             const Matrix<bool> *,
+                                             const double &,
+                                             Matrix<double> *);
+      template Matrix<double> *matMaskedCopy(Matrix<double> *,
+                                             const Matrix<bool> *,
+                                             const Matrix<double> *,
+                                             Matrix<double> *);
+
 
       template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF,
                                          Matrix<ComplexF> *);
@@ -448,6 +508,15 @@ namespace AprilMath {
                                               Matrix<ComplexF> *);
       template Matrix<ComplexF> *matDiv(Matrix<ComplexF> *, const ComplexF &,
                                         Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matMaskedFill(Matrix<ComplexF> *,
+                                               const Matrix<bool> *,
+                                               const ComplexF &,
+                                               Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matMaskedCopy(Matrix<ComplexF> *,
+                                               const Matrix<bool> *,
+                                               const Matrix<ComplexF> *,
+                                               Matrix<ComplexF> *);
+
       
       template SparseMatrix<float> *matSqrt(SparseMatrix<float> *,
                                             SparseMatrix<float> *);

@@ -1531,6 +1531,30 @@ namespace Basics {
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat masked_fill
+{
+  float value;
+  MatrixBool *mask;
+  MatrixFloat *dest;
+  LUABIND_GET_PARAMETER(1, MatrixBool, mask);
+  LUABIND_GET_PARAMETER(2, float, value);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, dest, 0);
+  matMaskedFill(obj, mask, value, dest);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat masked_copy
+{
+  MatrixFloat *value;
+  MatrixBool *mask;
+  MatrixFloat *dest;
+  LUABIND_GET_PARAMETER(1, MatrixBool, mask);
+  LUABIND_GET_PARAMETER(2, MatrixFloat, value);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, dest, 0);
+  matMaskedCopy(obj, mask, value, dest);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat div
 {
   LUABIND_CHECK_ARGN(==, 1);

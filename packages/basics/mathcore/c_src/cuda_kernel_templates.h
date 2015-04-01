@@ -696,15 +696,51 @@ namespace AprilMath {
     }
 
     /**
+     * @brief Executes the CUDA map kernel over three vectors.
+     *
+     * @tparam T1 - The type for input1 vector.
+     * @tparam T2 - The type for input2 vector.
+     * @tparam T3 - The type for input3 vector.
+     * @tparam O - The type for output vector.
+     * @tparam F - An operator implemented as a functor.
+     *
+     * @param input1 - The first input vector.
+     * @param input1_stride - The stride between consecutive values at input1.
+     * @param input2 - The second input vector.
+     * @param input2_stride - The stride between consecutive values at input2.
+     * @param input3 - The second input vector.
+     * @param input3_stride - The stride between consecutive values at input3.
+     * @param output - The output vector.
+     * @param output_stride - The stride between consecutive values at output.
+     * @param size - Size of the input and output vectors.
+     * @param map_op - The functor operator with the binary map function.
+     */
+    template<typename T1, typename T2, typename T3,
+             typename O, typename F>
+    __global__ void genericCudaMap3Kernel(const T1 *input1,
+                                          unsigned int input1_stride,
+                                          const T2 *input2,
+                                          unsigned int input2_stride,
+                                          const T3 *input3,
+                                          unsigned int input3_stride,
+                                          O *output,
+                                          unsigned int output_stride,
+                                          unsigned int size,
+                                          F map_op) {
+      for ( size_t i = blockIdx.x*blockDim.x + threadIdx.x;
+            i < size;
+            i += blockDim.x*gridDim.x ) {
+        output[i*output_stride] = map_op(input1[i*input1_stride],
+                                         input2[i*input2_stride],
+                                         input3[i*input3_stride]);
+      }
+    }
+
+    /**
      * @brief Performs a CUDA map over a vector and stores its result at
      * another vector.
      *
      * @note Input and output vectors can be the same.
-     *
-     * The reduce operations performed in a logarithmic way, reducing the
-     * size of the vector by a factor of two in every iteration. So, this
-     * function needs <tt>O(log N)</tt> sequential iterations to perform the
-     * required operation.
      *
      * @tparam T - The type for input vector.
      * @tparam O - The type for output vector.
@@ -741,11 +777,6 @@ namespace AprilMath {
      * another vector.
      *
      * @note Input1, input2 and output vectors can be the same.
-     *
-     * The reduce operations is performed in a logarithmic way, reducing the
-     * size of the vector by a factor of two in every iteration. So, this
-     * function needs <tt>O(log N)</tt> sequential iterations to perform the
-     * required operation.
      *
      * @tparam T1 - The type for input1 vector.
      * @tparam T2 - The type for input2 vector.
@@ -785,6 +816,62 @@ namespace AprilMath {
         (input1_ptr, input1_stride, input2_ptr, input2_stride,
          output_ptr, output_stride, N, map_op);
     } // function genericCudaMap1Call
+
+    /**
+     * @brief Performs a CUDA map over three vectors and stores its result at
+     * another vector.
+     *
+     * @note Input1, input2, input3, and output vectors can be the same.
+     *
+     * @tparam T1 - The type for input1 vector.
+     * @tparam T2 - The type for input2 vector.
+     * @tparam T3 - The type for input3 vector.
+     * @tparam F - An operator implemented as a functor.
+     *
+     * @param input1 - The first input vector.
+     * @param input1_stride - The stride between consecutive values at input1.
+     * @param input1_shift - The first valid position at input1.
+     * @param input2 - The second input vector.
+     * @param input2_stride - The stride between consecutive values at input2.
+     * @param input2_shift - The first valid position at input2.
+     * @param input3 - The second input vector.
+     * @param input3_stride - The stride between consecutive values at input3.
+     * @param input3_shift - The first valid position at input3.
+     * @param output - The output vector.
+     * @param output_stride - The stride between consecutive values at output.
+     * @param output_shift - The first valid position at output vector.
+     * @param map_op - The functor operator with the binary map.
+     */
+    template<typename T1, typename T2, typename T3,
+             typename O, typename F>
+    void genericCudaMap3Call(unsigned int N,
+                             const GPUMirroredMemoryBlock<T1> *input1,
+                             unsigned int input1_stride,
+                             unsigned int input1_shift,
+                             const GPUMirroredMemoryBlock<T2> *input2,
+                             unsigned int input2_stride,
+                             unsigned int input2_shift,
+                             const GPUMirroredMemoryBlock<T2> *input3,
+                             unsigned int input3_stride,
+                             unsigned int input3_shift,
+                             GPUMirroredMemoryBlock<O> *output,
+                             unsigned int output_stride,
+                             unsigned int output_shift,
+                             F map_op) {
+      if (N == 0u) return; // Nothing to do!
+      const T1 *input1_ptr = input1->getGPUForRead() + input1_shift;
+      const T2 *input2_ptr = input2->getGPUForRead() + input2_shift;
+      const T3 *input3_ptr = input3->getGPUForRead() + input3_shift;
+      O *output_ptr = output->getGPUForWrite() + output_shift;
+      dim3 block, grid;
+      int num_threads, num_blocks;
+      computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
+      genericCudaMap3Kernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
+        (input1_ptr, input1_stride,
+         input2_ptr, input2_stride,
+         input3_ptr, input3_stride,
+         output_ptr, output_stride, N, map_op);
+    } // function genericCudaMap3Call
     
   } // namespace CUDA
 
