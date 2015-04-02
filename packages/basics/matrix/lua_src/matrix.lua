@@ -77,11 +77,13 @@ matrix.ext.broadcast =
       "A binary operator which receives two matrices, called as func(a,b,...)",
       "A matrix",
       "Another matrix",
+      "A destination matrix [optional], nil by default",
       "Extra arguments to the binary operator [optional]",
     },
-    outputs = { "A new allocated matrix with the result of the broadcast" },
+    outputs = { {"The given destination matrix or a new allocated",
+                 "matrix with the result of the broadcast"} },
   } ..
-  function(func, a, b, ...)
+  function(func, a, b, result, ...)
     local function private_broadcast(result, b, b_dim, func, ...)
       local b  = b:squeeze()
       local sw = result:sliding_window{ size=b_dim, step=b_dim }
@@ -115,9 +117,24 @@ matrix.ext.broadcast =
     fill(a_dim, N)
     fill(b_dim, N)
     local shape  = result_shape(a_dim, b_dim)
-    local result = matrix(table.unpack(shape))
-    private_broadcast(result, a, a_dim, result.copy)
-    private_broadcast(result, b, b_dim, func, ...)
+    if result then
+      assert(#shape == result:num_dim(),
+             "Incorrect number of dimensions in result matrix")
+      for i=1,#shape do
+        april_assert(shape[i] == result:dim(i),
+                     "Incorrect size in dimension %d for result matrix, expected %d, found %d",
+                     i, shape[i], result:dim(i))
+      end
+    end
+    local result = result or matrix(table.unpack(shape))
+    if same_cpp_ref(result, b) then
+      private_broadcast(result, a, a_dim, func, ...)
+    elseif same_cpp_ref(result, a) then
+      private_broadcast(result, b, b_dim, func, ...)
+    else
+      private_broadcast(result, a, a_dim, result.copy)
+      private_broadcast(result, b, b_dim, func, ...)
+    end
     return result
   end
 
@@ -314,7 +331,7 @@ for _,method in ipairs{"adjust_range", "clamp", "cmul",
   end
 end
 
-function matrix.op.repmat(x, ...)
+function matrix.ext.repmat(x, ...)
   local arg = table.pack(...)
   local dim = x:dim()
   local result_dim = {}
@@ -332,7 +349,7 @@ function matrix.op.repmat(x, ...)
   return result
 end
 
-matrix.op.diag =
+matrix.ext.diag =
   april_doc{
     class = "function",
     summary = "Returns a matrix with diagonal elements of the given matrix",
@@ -365,7 +382,7 @@ matrix.op.diag =
     return ctor(N-math.abs(k)):linspace():map(get_map)
   end
 
-matrix.op.triu =
+matrix.ext.triu =
   april_doc{
     class = "function",
     summary = "Returns uppper triangular matrix taken from given matrix",
@@ -395,7 +412,7 @@ matrix.op.triu =
     return triu
   end
 
-matrix.op.tril =
+matrix.ext.tril =
   april_doc{
     class = "function",
     summary = "Returns lower triangular matrix taken from given matrix",
