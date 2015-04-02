@@ -11,6 +11,10 @@ Master branch release
 
 ### API Changes
 
+- Changed `matrix` metamethods `__index` and `__newindex`, allowing to use
+  `matrix` objects with standard Lua `operator[]`.
+- Added `matrix.masked_fill` and `matrix.masked_copy` matrix.
+- Added `matrix.indexed_fill` and `matrix.indexed_copy` matrix.
 - Added `ann.components.probabilistic_matrix`, and its corresponding
   specializations `ann.components.left_probabilistic_matrix` and
   `ann.components.right_probabilistic_matrix`.
