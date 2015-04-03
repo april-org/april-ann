@@ -46,13 +46,20 @@ matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
   matrix_class.fromCSVFilename = function(filename,args)
     local args = get_table_fields({
         [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
-        [matrix.options.default] = { mandatory=false } }, args)
+        [matrix.options.default] = { mandatory=false },
+        header = { type_match="boolean" } }, args)
+    local header = args.header args.header = nil
     args[matrix.options.empty] = true
     args[matrix.options.tab] = true
     local f = april_assert(io.open(filename),
                            "Unable to open %s", filename)
-    local ret = table.pack(matrix_class.read(archive_wrapper( f ), args))
+    local f = archive_wrapper( f )
+    if header then
+      header = string.tokenize(f:read("*l"), args[matrix.options.delim])
+    end
+    local ret = table.pack(matrix_class.read(f, args))
     f:close()
+    if header then table.insert(ret, header) end
     return table.unpack(ret)
   end
 end
