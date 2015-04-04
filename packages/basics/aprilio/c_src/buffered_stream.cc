@@ -32,7 +32,9 @@ extern "C" {
 
 namespace AprilIO {
   
-  BufferedStream::BufferedStream(size_t buf_size) : max_buffer_len(buf_size) {
+  BufferedStream::BufferedStream(size_t buf_size) :
+    StreamBuffer(),
+    max_buffer_len(buf_size) {
     in_buffer = new char[max_buffer_len];
     out_buffer = new char[max_buffer_len];
   }

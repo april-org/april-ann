@@ -18,12 +18,12 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "mse_loss_function.h"
 #include "loss_kernels.h"
 #include "token_matrix.h"
 
-using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Misc;
 using namespace AprilUtils;
 using namespace Basics;
 

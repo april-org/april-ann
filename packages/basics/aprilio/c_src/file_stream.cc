@@ -41,7 +41,7 @@ namespace AprilIO {
     ssize_t ret_value, total_size = 0;
     do {
       size_t len = max_size - total_size;
-      if ((ret_value = read(fd, dest, len)) > 0) {
+      if ((ret_value = read(fd, dest + total_size, len)) > 0) {
         total_size += ret_value;
       }
       else if (ret_value == 0) is_eof = true;
@@ -102,6 +102,7 @@ namespace AprilIO {
   FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
     fd = checkReturnValue(dup(::fileno(f)));
     flags = fcntl(fd, F_GETFL);
+    seekStream(SEEK_SET, ftell(f));
   }
   
   FileStream::FileStream(int f) : BufferedStream(), is_eof(false) {

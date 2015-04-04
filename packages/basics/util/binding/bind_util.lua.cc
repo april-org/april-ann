@@ -910,7 +910,7 @@ FILE **newfile (lua_State *L) {
   // stack: table stopwatch
   lua_setfield(L,-2,"clock1");
   // stack: table
-  AprilUtils::LuaTable opt(L,1);
+  AprilUtils::LuaTable opt(L,-1);
   opt.put("clock2", clock.get());
   //
   stopwatch *opt_clock1 = opt.get<stopwatch *>("clock1");

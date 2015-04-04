@@ -3,21 +3,8 @@ class.extend(matrixComplex, "t", matrixComplex.."transpose")
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixComplex)
 
-matrixComplex.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
-
-matrixComplex.meta_instance.__newindex =
-  matrix.__generic__.__make_generic_newindex__(matrixComplex)
-
-matrixComplex.meta_instance.__tostring =
-  matrix.__generic__.__make_generic_print__("MatrixComplex",
-                                            function(value)
-                                              return string.format("%26s",tostring(value))
-  end)
-
 matrixComplex.join =
   matrix.__generic__.__make_generic_join__(matrixComplex)
-
 
 matrixComplex.meta_instance.__eq = function(op1, op2)
   return op1:equals(op2)
@@ -606,3 +593,18 @@ april_set_doc(matrixComplex.__sliding_window__.."iterate",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",
 		outputs     = { "An iterator function" },
 })
+
+matrixComplex.meta_instance.__call =
+  matrix.__generic__.__make_generic_call__()
+
+matrixComplex.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrixComplex)
+
+matrix.__generic__.__make_generic_index__(matrixComplex)
+
+matrixComplex.meta_instance.__tostring =
+  matrix.__generic__.__make_generic_print__("MatrixComplex",
+                                            function(value)
+                                              return string.format("%26s",tostring(value))
+  end)
+

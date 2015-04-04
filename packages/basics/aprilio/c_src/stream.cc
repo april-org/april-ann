@@ -77,10 +77,11 @@ namespace AprilIO {
                               keep_delim)) ) {
       size_t in_buffer_available_size = getInBufferAvailableSize();
       size_t len = dest->put(buf, buf_len);
+      bool has_delim = keep_delim && len>0 && strchr(delim,buf[len-1]);
       moveInBuffer(len);
       dest_len += len;
       // delim true condition
-      if (len != in_buffer_available_size) break;
+      if (has_delim || len != in_buffer_available_size) break;
     }
     return dest_len;
   }
@@ -96,10 +97,11 @@ namespace AprilIO {
                               keep_delim)) ) {
       size_t in_buffer_available_size = getInBufferAvailableSize();
       memcpy(dest + dest_len, buf, buf_len);
+      bool has_delim = keep_delim && buf_len>0 && strchr(delim, buf[buf_len-1]);
       moveInBuffer(buf_len);
       dest_len += buf_len;
       // delim true condition
-      if (buf_len != in_buffer_available_size) break;
+      if (has_delim || buf_len != in_buffer_available_size) break;
     }
     return dest_len;
   }

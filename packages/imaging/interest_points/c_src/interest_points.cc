@@ -31,7 +31,7 @@
 #include <cstdio>
 #include "linear_least_squares.h"
 
-using AprilMath::MatrixExt::Operations::matFill;
+using AprilMath::MatrixExt::Initializers::matFill;
 using namespace AprilUtils;
 using namespace Basics;
 using namespace Imaging;

@@ -19,12 +19,12 @@ matrix.__generic__.__make_generic_call__ = function()
           april_assert(tonumber(a) and tonumber(b),
                        "The table for component %d must contain two numbers or none",i)
         end
+      elseif tt == "number" or tonumber(t) then
+	a = t
+	b = a
       elseif tt == "string" then
 	a = t:match("^(%d+)%:.*$") or 1
 	b = t:match("^.*%:(%d+)$") or dims[i]
-      elseif tt == "number" then
-	a = t
-	b = a
       else
 	error("The argument %d is not a table neither a string" % {i})
       end
@@ -44,18 +44,48 @@ matrix.__generic__.__make_generic_call__ = function()
   end
 end
 
+matrix.__generic__.__make_generic_index__ = function(matrix_class)
+  class.declare_functional_index(matrix_class,
+                                 function(self,key)
+                                   local tt = type(key)
+                                   if tt == "number" then
+                                     if self:num_dim() > 1 then
+                                       return self:select(1, key)
+                                     else
+                                       return self:get(key)
+                                     end
+                                   elseif tt == "table" then
+                                     return self(table.unpack(key))
+                                   end
+  end)
+end
+
 matrix.__generic__.__make_generic_newindex__ = function(matrix_class)
   assert(matrix_class and class.is_class(matrix_class),
          "Needs a class table as argument")
   return function(self,key,value)
-    assert(type(key) == "table", "Needs a table as key")
-    local m  = self(table.unpack(key))
+    local tk = type(key)
     local tv = type(value)
-    if tv == "number" or tv == "complex" then
-      m:fill(value)
+    if tk == "matrixBool" then
+      if tv == "number" or tv == "complex" or tb == "boolean" then
+        self:masked_fill(key, value)
+      else
+        self:masked_copy(key, value)
+      end
     else
-      assert(class.is_a(m, matrix_class), "Needs a number or a matrix as value")
-      m:copy(value)
+      if tk == "number" then
+        self = (self:num_dim() > 1) and self:select(1, key) or self(key)
+        key = {}
+      else
+        assert(tk == "table", "Needs a table as key")
+      end
+      local m  = self(table.unpack(key))
+      if tv == "number" or tv == "complex" or tb == "boolean" then
+        m:fill(value)
+      else
+        assert(class.is_a(m, matrix_class), "Needs a number or a matrix as value")
+        m:copy(value)
+      end
     end
   end
 end

@@ -24,7 +24,7 @@
 #include <cfloat>
 #include <cmath>
 #include "complex_number.h"
-#include "cuda_utils.h"
+#include "cuda_headers.h"
 #include "error_print.h"
 #include "unused_variable.h"
 

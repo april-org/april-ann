@@ -4,35 +4,35 @@ if #arg < 3 or #arg > 6 then
 	  string.basename(arg[0]))
   os.exit(128)
 end
-nbestfile            = arg[1]
-lm_file              = arg[2]
-voc_filename         = arg[3]
---trie_size            = tonumber(arg[4] or 24)
-use_bcc              = ((arg[4] or "yes") == "yes")
-use_ecc              = ((arg[5] or "yes") == "yes")
-cache_extra_set      = arg[6]
-unk_word             = "<unk>"
-begin_word           = "<s>"
-end_word             = "</s>"
-stop_word            = "<stop>"
-null_word            = "<NULL>"
+local nbestfile            = arg[1]
+local lm_file              = arg[2]
+local voc_filename         = arg[3]
+--local trie_size            = tonumber(arg[4] or 24)
+local use_bcc              = ((arg[4] or "yes") == "yes")
+local use_ecc              = ((arg[5] or "yes") == "yes")
+local cache_extra_set      = arg[6]
+local unk_word             = "<unk>"
+local begin_word           = "<s>"
+local end_word             = "</s>"
+local stop_word            = "<stop>"
+local null_word            = "<NULL>"
 --------------------------------------------------
 
-vocab     = lexClass.load(io.open(voc_filename))
-words     = vocab:getWordVocabulary()
-inv_words = table.invert(words)
-unk_id    = vocab:getWordId(unk_word)
+local vocab     = lexClass.load(io.open(voc_filename))
+local words     = vocab:getWordVocabulary()
+local inv_words = table.invert(words)
+local unk_id    = vocab:getWordId(unk_word)
 ------------------------------------------------------------------------
 
 collectgarbage("collect")
-lm = language_models.load(lm_file, vocab, begin_word, end_word)
+local lm = language_models.load(lm_file, vocab, begin_word, end_word)
 local lmi = lm:get_interface()
 collectgarbage("collect")
 --use_cache = lm:has_cache()
 
 ------------------------------------- GO!
 
-time=util.stopwatch()
+local time=util.stopwatch()
 time:go()
 local scores = {}
 local j=1
@@ -42,11 +42,11 @@ local prevn = nil
 --if cache_extra_set then
 --  cachef = io.open(cache_extra_set, "r")
 --end
---local last_best_line = nil
+local last_best_line = nil
 
 assert(lm:is_deterministic(),
        "Error: Expected a deterministic LM")
-nbestf = io.open(nbestfile, "r")
+local nbestf = io.open(nbestfile, "r")
 
 while true do
   local line = nbestf:read("*l")
@@ -68,9 +68,9 @@ while true do
     end
     --]]
 
-    result = lmi:get_queries()
+    local result = lmi:get_queries()
     for i=1,#result do
-      k,p,b = result:get(i)
+      local k,p,b = result:get(i)
       scores[b]= scores[b] + p
     end
     lmi:clear_queries()
@@ -116,5 +116,5 @@ while true do
 end
 nbestf:close()
 time:stop()
-a,b=time:read()
+local a,b=time:read()
 fprintf(io.stderr, "TIME: cpu %f (wall %f)\n", a, b)

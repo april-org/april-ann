@@ -9,6 +9,16 @@ local pairs = pairs
 local ipairs = ipairs
 local assert = assert
 
+-- Returns __index field from a metatable. When __index field is a function, it
+-- is expected to find index_table field with all the available methods.
+local function get_index(mt)
+  if type(mt.__index) == "function" then
+    return mt.index_table
+  else
+    return mt.__index
+  end
+end
+
 ------------------------------------------------------------------------------
 
 -- DEPRECATED
@@ -128,9 +138,9 @@ end
 function class_wrapper(obj,wrapper)
   local wrapper = wrapper or {}
   local current = obj
-  while (getmetatable(current) and getmetatable(current).__index and
-	 not rawequal(getmetatable(current).__index,current)) do
-    current = getmetatable(current).__index
+  while (getmetatable(current) and get_index(getmetatable(current)) and
+	 not rawequal(get_index(getmetatable(current)),current)) do
+    current = get_index(getmetatable(current))
     for i,v in pairs(current) do
       if rawget(wrapper,i) == nil then
 	if type(v) == "function" then
@@ -148,11 +158,11 @@ function class_wrapper(obj,wrapper)
       end -- if wrapper[i] == nil
     end -- for
   end -- while
-  if getmetatable(wrapper) and getmetatable(wrapper).__index then
-    if getmetatable(getmetatable(wrapper).__index) then
+  if getmetatable(wrapper) and get_index(getmetatable(wrapper)) then
+    if getmetatable(get_index(getmetatable(wrapper))) then
       error("class_wrapper not works with derived or nil_safe objects")
     else
-      setmetatable(getmetatable(wrapper).__index, getmetatable(obj))
+      setmetatable(get_index(getmetatable(wrapper)), getmetatable(obj))
     end
   else wrapper = class_instance(wrapper,
 				get_table_from_dotted_string(get_object_id(obj)))
@@ -1106,10 +1116,11 @@ function util.to_lua_string(data,format)
   elseif tt == "function" then
     return util.function_to_lua_string(data,format)
   elseif tt == "userdata" then
-    assert(getmetatable(data) and
-	     getmetatable(data).__index and
-	     getmetatable(data).__index.to_lua_string,
-	   "Userdata needs a to_lua_string(format) method")
+    local idx = getmetatable(data)
+    assert(idx, "Userdata needs a to_lua_string(format) method")
+    idx = get_index(idx)
+    assert(idx and idx.to_lua_string,
+           "Userdata needs a to_lua_string(format) method")
     return data:to_lua_string(format)
   else
     return tostring(data)

@@ -146,6 +146,52 @@ namespace AprilMath {
                                       const unsigned int SIZE_th  = DEFAULT_SIZE_TH);
 
     /**
+     * @brief Applies a span-based ternary MAP operation.
+     *
+     * The MAP operation must be a functor with the following header:
+     *
+     * - <tt>O functor(unsigned int N, const GPUMirroredMemoryBlock<T1> *input1, unsigned int input1_stride, unsigned int input1_shift, const GPUMirroredMemoryBlock<T2> *input2, unsigned int input2_stride, unsigned int input2_shift, const GPUMirroredMemoryBlock<T2> *input3, unsigned int input3_stride, unsigned int input3_shift, GPUMirroredMemoryBlock<T> *output, unsigned int output_stride, unsigned int output_shift, bool use_cuda);
+     *
+     * @tparam T1 - The type of input1 Basics::Matrix.
+     *
+     * @tparam T2 - The type of input2 Basics::Matrix.
+     *
+     * @tparam T3 - The type of input3 Basics::Matrix.
+     *
+     * @tparam O - The type of output Basics::Matrix.
+     *
+     * @tparam OP - The type of the functor operator, normally it can be derived
+     * from the given functor parameter.
+     *
+     * @param input1 - The input1 Basics::Matrix from where input spans will be
+     * taken.
+     *
+     * @param input2 - The input2 Basics::Matrix from where input spans will be
+     * taken.
+     *
+     * @param input3 - The input3 Basics::Matrix from where input spans will be
+     * taken.
+     *
+     * @param functor - The functor which computes the MAP operation over a span.
+     *
+     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
+     * all, a new Matrix of type @c O will be allocated with the needed space.
+     *
+     * @note It is possible that @c input1=dest or @c input2=dest or @c
+     * input3=dest and the computation will be done in-place.
+     *
+     * @note Uses OMP, if available, to improve the performance.
+     */
+    template<typename T1, typename T2, typename T3, typename O, typename OP>
+    Basics::Matrix<O> *MatrixSpanMap3(const Basics::Matrix<T1> *input1,
+                                      const Basics::Matrix<T2> *input2,
+                                      const Basics::Matrix<T3> *input3,
+                                      const OP &functor,
+                                      Basics::Matrix<O> *dest = 0,
+                                      const int N_th = DEFAULT_N_TH,
+                                      const unsigned int SIZE_th  = DEFAULT_SIZE_TH);
+
+    /**
      * @brief Applies a scalar-based binary MAP operation.
      *
      * The MAP operation must be a functor with the following header:
@@ -173,8 +219,8 @@ namespace AprilMath {
      * @note It is possible that @c input1=dest or @c input2=dest and the
      * computation will be done in-place.
      *
-     * @note This function is a wrapper over MatrixSpanMap1 which converts a
-     * scalar functor into span functor using ScalarToSpanMap1 struct.
+     * @note This function is a wrapper over MatrixSpanMap2 which converts a
+     * scalar functor into span functor using ScalarToSpanMap2 struct.
      *
      * @note Uses OMP, if available, to improve the performance.
      */
@@ -184,7 +230,53 @@ namespace AprilMath {
                                         const OP &functor,
                                         Basics::Matrix<O> *dest = 0,
                                         const int N_th = DEFAULT_N_TH,
-                                        const unsigned int SIZE_th = DEFAULT_SIZE_TH);    
+                                        const unsigned int SIZE_th = DEFAULT_SIZE_TH);
+    
+    /**
+     * @brief Applies a scalar-based ternary MAP operation.
+     *
+     * The MAP operation must be a functor with the following header:
+     *
+     * - <tt>O functor(const T1 &a, const T2 &b, const T3 &c);
+     *
+     * @tparam T1 - The type of input1 Basics::Matrix.
+     *
+     * @tparam T2 - The type of input2 Basics::Matrix.
+     *
+     * @tparam T3 - The type of input3 Basics::Matrix.
+     *
+     * @tparam O - The type of output Basics::Matrix.
+     *
+     * @tparam OP - The type of the functor operator, normally it can be derived
+     * from the given functor parameter.
+     *
+     * @param input1 - The input1 Basics::Matrix.
+     *
+     * @param input2 - The input2 Basics::Matrix.
+     *
+     * @param input3 - The input3 Basics::Matrix.
+     *
+     * @param functor - The functor which computes the MAP operation over scalars.
+     *
+     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
+     * all, a new Matrix of type @c O will be allocated with the needed space.
+     *
+     * @note It is possible that @c input1=dest or @c input2=dest or @c
+     * input3=dest and the computation will be done in-place.
+     *
+     * @note This function is a wrapper over MatrixSpanMap3 which converts a
+     * scalar functor into span functor using ScalarToSpanMap3 struct.
+     *
+     * @note Uses OMP, if available, to improve the performance.
+     */
+    template<typename T1, typename T2, typename T3, typename O, typename OP>
+    Basics::Matrix<O> *MatrixScalarMap3(const Basics::Matrix<T1> *input1,
+                                        const Basics::Matrix<T2> *input2,
+                                        const Basics::Matrix<T3> *input3,
+                                        const OP &functor,
+                                        Basics::Matrix<O> *dest = 0,
+                                        const int N_th = DEFAULT_N_TH,
+                                        const unsigned int SIZE_th = DEFAULT_SIZE_TH);
 
   } // namespace MatrixExt
 

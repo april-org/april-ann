@@ -22,11 +22,14 @@
 #include "c_string.h"
 #include "error_print.h"
 #include "exponential_distribution.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "smart_ptr.h"
 #include "utilMatrixFloat.h"
 
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Initializers;
 using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
 using AprilUtils::log_float;
 using AprilUtils::SharedPtr;
 using AprilIO::CStringStream;

@@ -73,7 +73,7 @@ namespace ANN {
       else {
         input_row_T = input_row->transpose();
       }
-      AprilMath::MatrixExt::Operations::
+      AprilMath::MatrixExt::BLAS::
         matCopy(output_row.get(), input_row_T.get());
     }
     return output_mat;

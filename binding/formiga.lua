@@ -206,6 +206,23 @@ formiga = {
 
 -- auxiliary functions
 
+local function os_mkdir(dir)
+  assert(os.execute("mkdir -p ".. dir))
+end
+
+local function os_rmRf(dir)
+  assert(os.execute("rm -Rf ".. dir))
+end
+
+local initialized = {}
+local function initialize_dir_once(dir)
+  if not initialized[dir] then
+    os_rmRf(dir)
+    os_mkdir(dir)
+  end
+  initialized[dir] = true
+end
+
 function table.invert(t)
   local n = {}
   for i,j in pairs(t) do n[j] = i end
@@ -441,8 +458,8 @@ function formiga.initialize ()
     formiga.global_properties.build_dir =
       formiga.os.compose_dir(formiga.os.cwd,
                              formiga.build_dir)
-    os.execute("mkdir -p "..formiga.global_properties.build_dir)
-    os.execute("mkdir -p "..formiga.os.compose_dir(formiga.global_properties.build_dir,"bin"))
+    os_mkdir(formiga.global_properties.build_dir)
+    os_mkdir(formiga.os.compose_dir(formiga.global_properties.build_dir,"bin"))
 
     formiga.lua_dot_c_path = formiga.os.get_lua_dot_c_path()
     formiga.lua_path=formiga.os.compose_dir(formiga.os.cwd,"lua","lua-5.2.2")
@@ -564,7 +581,7 @@ function package (t)
   else
     t.compile_mark_lua = false
   end
-
+  
   -- relate the package with the directory
   formiga.dir_to_package[formiga.current_package_dir] = t.name
   formiga.package_to_dir[t.name] = formiga.current_package_dir
@@ -601,6 +618,7 @@ function package (t)
       end
     end
   end
+
   return t
 end
 
@@ -949,7 +967,7 @@ function formiga.__object__ (t)
       end
       table.insert(command,formiga.compiler.compile_object.." "..thefile)
       dest_dir = formiga.os.compose_dir(build_dir, formiga.expand_properties(t.dest_dir,prop) or path)
-      os.execute("mkdir -p ".. dest_dir)
+      initialize_dir_once(dest_dir)
       table.insert(command,formiga.compiler.destination.." "..dest_dir..formiga.os.SEPDIR..file..".o")
       -- inclusion de librerias
       if t.libraries then
@@ -1160,7 +1178,7 @@ function formiga.__provide_bind__ (t)
   if (thefile) then
     path,file,extension = formiga.os.path_file_extension(thefile)
     dest_dir = formiga.os.compose_dir(build_dir, t.dest_dir or path, "binding")
-    os.execute("mkdir -p ".. dest_dir)
+    initialize_dir_once(dest_dir)
     dest_name = string.gsub(file,".lua",".h") -- TODO asumimos fichero es .lua.cc
     command = "lua "..
       formiga.os.compose_dir(formiga.os.cwd,"binding","luabind.lua ")..
@@ -1323,7 +1341,7 @@ function formiga.__c_unit_test__(t)
       command = table.concat(command," ")
       printverbose(0," [c_unit_test] "..thefile)
       printverbose(2," [c_unit_test command] "..command)
-      os.execute("mkdir -p ".. dest_dir)
+      os_mkdir(dest_dir)
       formiga.os.execute(command)
       local ok = formiga.os.execute(exec_name, true)
       if not ok then
@@ -1366,7 +1384,7 @@ function formiga.__build_bind__ (t)
   if (thefile) then
     path,file,extension = formiga.os.path_file_extension(thefile)
     dest_dir = formiga.os.compose_dir(build_dir, t.dest_dir or path, "binding")
-    os.execute("mkdir -p ".. dest_dir)
+    initialize_dir_once(dest_dir)
 
     dest_name = string.gsub(file,".lua",".cc") -- TODO asumimos fichero es .lua.cc
     dest_cfile = formiga.os.compose_dir(dest_dir,dest_name)
@@ -1470,7 +1488,7 @@ function formiga.__create_static_library__ (t)
                                           "lib")
   local destination = formiga.os.compose_dir(dest_dir, lib_name)
 
-  os.execute("mkdir -p "..dest_dir)
+  os_mkdir(dest_dir)
   os.execute("ar rcs "..destination.." "..formiga.get_all_non_binding_objects())
 end
 
@@ -1495,7 +1513,7 @@ function formiga.__copy_header_files__ (t)
                                  "*")
     dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
                                       "include",formiga.program_name,pkg)
-    os.execute("mkdir -p "..dest_dir)
+    os_mkdir(dest_dir)
     files = formiga.os.glob(dir)
     for _,f in ipairs(files) do
       -- copy only regular files
@@ -1636,7 +1654,7 @@ function formiga.__link_main_program__ (t)
      -- We generate a shared library which could be loaded in any Lua interperter
      local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
 							"lib")
-     os.execute("mkdir -p " .. shared_lib_dest_dir)
+     os_mkdir(shared_lib_dest_dir)
      local command = table.concat({ formiga.compiler.CPPcompiler,
 				    formiga.compiler.wall,
 				    formiga.compiler.destination,
@@ -1754,7 +1772,7 @@ function formiga.__document_src__ (t)
 					    formiga.doc_developer_dir,
 					    pack_dir,thefile)
     local path = formiga.os.path_file_extension(destfile)
-    os.execute("mkdir -p ".. path)
+    os_mkdir(path)
     f = io.open(destfile,"w")
     f:write(str_begin..content..str_end)
     f:close()
@@ -1811,7 +1829,7 @@ function formiga.__document_bind__ (t)
 					      pack_dir,newfile)
       local path = formiga.os.path_file_extension(destfile)
       --print("DESTFILE",destfile)
-      os.execute("mkdir -p ".. path)
+      os_mkdir(path)
       command = {
 	"lua",
 	"-e'lines_information=0'",
@@ -1851,7 +1869,7 @@ function formiga.__document_bind__ (t)
 					    formiga.doc_user_refman_dir,
 					    pack_dir,thefile)
     local path = formiga.os.path_file_extension(destfile)
-    os.execute("mkdir -p ".. path)
+    os_mkdir(path)
     f = io.open(destfile,"w")
     f:write(str_begin..content..str_end)
     f:close()
@@ -1908,7 +1926,7 @@ function formiga.__document_test__ (t)
 					    formiga.doc_user_refman_dir,
 					    pack_dir,thefile)
     local path = formiga.os.path_file_extension(destfile)
-    os.execute("mkdir -p ".. path)
+    os_mkdir(path)
     f = io.open(destfile,"w")
     --f:write(str_begin..content..str_end)
     f:write(content)
@@ -1997,7 +2015,7 @@ function formiga.__main_documentation__ (t)
   -- create redirect page
   local f_dir = formiga.os.compose_dir(formiga.os.cwd,
 				       formiga.documentation_dest_dir)
-  os.execute("mkdir -p "..f_dir)
+  os_mkdir(f_dir)
   local f = io.open(formiga.os.compose_dir(f_dir,"index.html"),"w")
   -- ojito!!! dest_url es RELATIVO desde f_dir
   local dest_url = formiga.os.compose_dir(formiga.doc_user_refman_dir,
@@ -2096,7 +2114,7 @@ function formiga.__main_documentation__ (t)
     if formiga.verbosity_level < 2 then
       command = command.." >/dev/null 2>/dev/null"
     end    
-    os.execute("mkdir -p "..dest_dir)
+    os_mkdir(dest_dir)
     print("ejecutamos",command)
     local ok,what,resul = os.execute(command)
     if not ok then
