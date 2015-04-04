@@ -14,9 +14,10 @@ function knn.kdtree.posteriorKNN(result, get_class_function)
   local posteriors = {}
   local cte
   local best,argbest=-math.huge,-1
+  local max=iterator(result):map(function(x) return -x[2] end):max()
   for i=1,#result do
     local c = get_class_function(result[i][1])
-    local logp = -result[i][2]
+    local logp = -result[i][2] - max
     posteriors[c] = (posteriors[c] and math.logadd(posteriors[c],logp)) or logp
     cte = (cte and math.logadd(cte,logp)) or logp
   end
