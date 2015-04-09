@@ -338,7 +338,7 @@ function image.image_cleaning.clean_image(img, net, params)
 
     local dsClean = dataset.matrix(mClean, paramsClean)
 
-    print(dsInput:patternSize(), net:get_input_size())
+    --print(dsInput:patternSize(), net:get_input_size())
     -- Use the dataset
     net:use_dataset {
         input_dataset = dsInput,
