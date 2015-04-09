@@ -81,6 +81,9 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   else if (dynamic_cast<FlattenANNComponent*>(value)) {
     lua_pushFlattenANNComponent(L, (FlattenANNComponent*)value);
   }
+  else if (dynamic_cast<ProbabilisticMatrixANNComponent*>(value)) {
+    lua_pushProbabilisticMatrixANNComponent(L, (ProbabilisticMatrixANNComponent*)value);
+  }
   else {
     lua_pushANNComponent(L, value);
   }
@@ -108,45 +111,45 @@ namespace AprilUtils {
 //BIND_END
 
 //BIND_HEADER_H
+#include "activation_function_component.h"
 #include "ann_component.h"
-#include "const_component.h"
-#include "dot_product_component.h"
 #include "bias_component.h"
-#include "hyperplane_component.h"
-#include "stack_component.h"
-#include "join_component.h"
-#include "copy_component.h"
-#include "select_component.h"
-#include "rewrap_component.h"
-#include "transpose_component.h"
-#include "slice_component.h"
-#include "flatten_component.h"
-#include "convolution_component.h"
-#include "convolution_bias_component.h"
-#include "maxpooling_component.h"
-#include "activation_function_component.h"
-#include "connection.h"
-#include "activation_function_component.h"
-#include "logistic_actf_component.h"
-#include "tanh_actf_component.h"
-#include "softsign_actf_component.h"
-#include "log_logistic_actf_component.h"
-#include "softmax_actf_component.h"
-#include "log_softmax_actf_component.h"
-#include "softplus_actf_component.h"
-#include "relu_actf_component.h"
-#include "hardtanh_actf_component.h"
-#include "sin_actf_component.h"
-#include "log_actf_component.h"
-#include "exp_actf_component.h"
-#include "linear_actf_component.h"
-#include "gaussian_noise_component.h"
-#include "salt_and_pepper_component.h"
-#include "dropout_component.h"
-#include "pca_whitening_component.h"
-#include "zca_whitening_component.h"
 #include "bind_function_interface.h"
+#include "connection.h"
+#include "const_component.h"
+#include "convolution_bias_component.h"
+#include "convolution_component.h"
+#include "copy_component.h"
+#include "dot_product_component.h"
+#include "dropout_component.h"
 #include "error_print.h"
+#include "exp_actf_component.h"
+#include "flatten_component.h"
+#include "gaussian_noise_component.h"
+#include "hardtanh_actf_component.h"
+#include "hyperplane_component.h"
+#include "join_component.h"
+#include "linear_actf_component.h"
+#include "log_actf_component.h"
+#include "log_logistic_actf_component.h"
+#include "log_softmax_actf_component.h"
+#include "logistic_actf_component.h"
+#include "maxpooling_component.h"
+#include "probabilistic_matrix_component.h"
+#include "pca_whitening_component.h"
+#include "relu_actf_component.h"
+#include "rewrap_component.h"
+#include "salt_and_pepper_component.h"
+#include "select_component.h"
+#include "sin_actf_component.h"
+#include "slice_component.h"
+#include "softmax_actf_component.h"
+#include "softplus_actf_component.h"
+#include "softsign_actf_component.h"
+#include "stack_component.h"
+#include "tanh_actf_component.h"
+#include "transpose_component.h"
+#include "zca_whitening_component.h"
 
 using namespace Functions;
 using namespace ANN;
@@ -634,6 +637,63 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_RETURN(DotProductANNComponent,
 		 dynamic_cast<DotProductANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//         ProbabilisticMatrixANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ProbabilisticMatrixANNComponent ann.components.probabilistic_matrix
+//BIND_CPP_CLASS    ProbabilisticMatrixANNComponent
+//BIND_SUBCLASS_OF  ProbabilisticMatrixANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ProbabilisticMatrixANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0, *weights_name=0, *side_str = 0;
+  unsigned int input_size=0, output_size=0;
+  ProbabilisticMatrixANNComponent::NormalizationSide side;
+  side = ProbabilisticMatrixANNComponent::LEFT;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "side", "name", "weights", 
+		       "input", "output", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, side, string, side_str, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
+    if (side_str != 0) {
+      if (strcmp(side_str, "left")==0) {
+        side = ProbabilisticMatrixANNComponent::LEFT;
+      }
+      else if (strcmp(side_str, "right")==0) {
+        side = ProbabilisticMatrixANNComponent::RIGHT;
+      }
+      else {
+        side = ProbabilisticMatrixANNComponent::LEFT; // avoid compiler warning
+        LUABIND_ERROR("Incorrect side string, expected 'left' or 'right'");
+      }
+    } // if (side_str != 0)
+  }
+  obj = new ProbabilisticMatrixANNComponent(side, name, weights_name,
+                                            input_size, output_size);
+  LUABIND_RETURN(ProbabilisticMatrixANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ProbabilisticMatrixANNComponent get_normalized_weights
+{
+  LUABIND_RETURN(MatrixFloat, obj->getNormalizedWeights());
+}
+//BIND_END
+
+//BIND_METHOD ProbabilisticMatrixANNComponent clone
+{
+  LUABIND_RETURN(ProbabilisticMatrixANNComponent,
+		 dynamic_cast<ProbabilisticMatrixANNComponent*>(obj->clone()));
 }
 //BIND_END
 

@@ -183,7 +183,7 @@ namespace Stats {
       const int *dims = x->getDimPtr();
       if (grads == 0) {
         grads = new Basics::MatrixFloat(2, dims);
-        AprilMath::MatrixExt::Operations::matZeros(grads);
+        AprilMath::MatrixExt::Initializers::matZeros(grads);
       }
       else if (grads->getNumDim() != 2 || grads->getDimSize(0) != dims[0] ||
                grads->getDimSize(1) != dims[1])

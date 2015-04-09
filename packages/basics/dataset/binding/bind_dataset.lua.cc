@@ -27,11 +27,11 @@
 #include "bind_tokens.h"
 #include "error_print.h"
 #include "fmeasure.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "MersenneTwister.h"
 
 using AprilUtils::constString;
-using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Initializers;
 
 //devuelve true si consigue leer "name" en la tabla que esté en el top
 // y en v[] deja los n primeros valores 

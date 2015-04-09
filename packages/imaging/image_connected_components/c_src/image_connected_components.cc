@@ -134,7 +134,7 @@ namespace Imaging {
     using rgb_colors::getIndexColor;
 
     Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->height(), img->width());
-    AprilMath::MatrixExt::Operations::matFill(m, FloatRGB(1, 1, 1));
+    AprilMath::MatrixExt::Initializers::matFill(m, FloatRGB(1, 1, 1));
     ImageFloatRGB *result = new ImageFloatRGB(m);
 
     int first = 0;

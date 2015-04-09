@@ -25,7 +25,7 @@
 #include "datasetToken.h"
 #include "function_interface.h"
 #include "matrixFloat.h"
-#include "matrix_operations.h"
+#include "matrix_ext.h"
 #include "smart_ptr.h"
 #include "token_base.h"
 #include "token_matrix.h"
@@ -35,7 +35,7 @@
 #include "unused_variable.h"
 #include "vector.h"
 
-using AprilMath::MatrixExt::Operations::matCopy;
+using AprilMath::MatrixExt::BLAS::matCopy;
 using AprilUtils::SharedPtr;
 using AprilUtils::vector;
 using AprilMath::FloatGPUMirroredMemoryBlock;

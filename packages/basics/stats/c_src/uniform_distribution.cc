@@ -78,7 +78,7 @@ namespace Stats {
       log_float one = log_float::one();
       log_float current_result = log_float::one();
       MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
-      MatrixFloat::const_iterator diff_it(diff->begin());  
+      MatrixFloat::const_iterator diff_it(diff->begin());
       while(low_it != low->end() && current_result > log_float::zero()) {
         if (*low_it <= *x_it && *x_it <= *high_it)
           current_result *= one / log_float::from_float(*diff_it);
@@ -109,12 +109,15 @@ namespace Stats {
       MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
       MatrixFloat::const_iterator diff_it(diff->begin());
       while(low_it != low->end() && current_result > log_float::zero()) {
-        if (*x_it < *low_it)
+        if (*x_it < *low_it) {
           current_result *= log_float::zero();
-        else if (*low_it <= *x_it && *x_it < *high_it)
+        }
+        else if (*low_it <= *x_it && *x_it < *high_it) {
           current_result *= log_float::from_float(*x_it - *low_it) / log_float::from_float(*diff_it);
-        else
+        }
+        else {
           current_result *= log_float::one();
+        }
         ++low_it;
         ++high_it;
         ++x_it;
@@ -149,6 +152,6 @@ namespace Stats {
   
   void UniformDistribution::updateParams() {
     AssignRef(diff, high->clone());
-    AprilMath::MatrixExt::Operations::matAxpy(diff, -1.0f, low);
+    AprilMath::MatrixExt::BLAS::matAxpy(diff, -1.0f, low);
   }
 }

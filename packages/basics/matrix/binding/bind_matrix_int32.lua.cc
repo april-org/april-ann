@@ -26,6 +26,15 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+#include "matrix_ext.h"
+using namespace AprilMath::MatrixExt::BLAS;
+using namespace AprilMath::MatrixExt::Boolean;
+using namespace AprilMath::MatrixExt::Initializers;
+using namespace AprilMath::MatrixExt::Misc;
+using namespace AprilMath::MatrixExt::LAPACK;
+using namespace AprilMath::MatrixExt::Operations;
+using namespace AprilMath::MatrixExt::Reductions;
+
 namespace AprilUtils {
   template<> Basics::MatrixInt32 *LuaTable::
   convertTo<Basics::MatrixInt32 *>(lua_State *L, int idx) {
@@ -409,21 +418,21 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_PARAMETER(1, string);
   int value;
   LUABIND_GET_PARAMETER(1,int,value);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixInt32, 
                  matFill(obj, static_cast<int32_t>(value)));
 }
 //BIND_END
 
 //BIND_METHOD MatrixInt32 zeros
 {
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixInt32, 
                  matZeros(obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixInt32 ones
 {
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixInt32, 
                  matOnes(obj));
 }
 //BIND_END
@@ -440,6 +449,12 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
     LUABIND_RETURN_FROM_STACK(-1);
   }
   else LUABIND_RETURN(int, d[pos-1]);
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
 }
 //BIND_END
 
@@ -536,7 +551,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_ARGN(==,1);
   int v;
   LUABIND_GET_PARAMETER(1, int, v);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixInt32, 
                  matDiag(obj, static_cast<int32_t>(v)));
 }
 //BIND_END
@@ -658,7 +673,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixInt32 *mat;
   LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
-  LUABIND_RETURN(MatrixInt32, AprilMath::MatrixExt::Operations::
+  LUABIND_RETURN(MatrixInt32, 
                  matCopy(obj, mat));
 }
 //BIND_END

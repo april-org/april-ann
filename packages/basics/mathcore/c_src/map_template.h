@@ -101,6 +101,53 @@ namespace AprilMath {
 #endif
   }
 
+  template<typename T1, typename T2, typename T3,
+           typename O, typename F>
+  void genericMap3Call(unsigned int N,
+                       const GPUMirroredMemoryBlock<T1> *input1,
+                       unsigned int input1_stride,
+                       unsigned int input1_shift,
+                       const GPUMirroredMemoryBlock<T2> *input2,
+                       unsigned int input2_stride,
+                       unsigned int input2_shift,
+                       const GPUMirroredMemoryBlock<T3> *input3,
+                       unsigned int input3_stride,
+                       unsigned int input3_shift,
+                       GPUMirroredMemoryBlock<O> *output,
+                       unsigned int output_stride,
+                       unsigned int output_shift,
+                       bool use_gpu,
+                       F map_op) {
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+    if (use_gpu) {
+      CUDA::genericCudaMap3Call(N,
+                                input1, input1_stride, input1_shift,
+                                input2, input2_stride, input2_shift,
+                                input3, input3_stride, input3_shift,
+                                output, output_stride, output_shift,
+                                map_op);
+    }
+    else {
+#endif
+      const T1 *input1_mem = input1->getPPALForRead() + input1_shift;
+      const T2 *input2_mem = input2->getPPALForRead() + input2_shift;
+      const T3 *input3_mem = input3->getPPALForRead() + input3_shift;
+      O *output_mem = output->getPPALForWrite() + output_shift;
+      for (unsigned int i=0; i<N; ++i,
+             output_mem+=output_stride,
+             input1_mem+=input1_stride,
+             input2_mem+=input2_stride,
+             input3_mem+=input3_stride) {
+        *output_mem = map_op(*input1_mem, *input2_mem, *input3_mem);
+      }
+#ifdef USE_CUDA
+    }
+#endif
+  }
+
   template<typename T, typename O, typename OP>
   struct ScalarToSpanMap1 {
     const OP functor;
@@ -136,6 +183,33 @@ namespace AprilMath {
                     bool use_cuda) const {
       genericMap2Call(N, input1, input1_stride, input1_shift,
                       input2, input2_stride, input2_shift,
+                      output, output_stride, output_shift,
+                      use_cuda, functor);
+    }
+  };
+
+  template<typename T1, typename T2, typename T3,
+           typename O, typename OP>
+  struct ScalarToSpanMap3 {
+    const OP functor;
+    ScalarToSpanMap3(const OP &functor) : functor(functor) { }
+    void operator()(unsigned int N,
+                    const GPUMirroredMemoryBlock<T1> *input1,
+                    unsigned int input1_stride,
+                    unsigned int input1_shift,
+                    const GPUMirroredMemoryBlock<T2> *input2,
+                    unsigned int input2_stride,
+                    unsigned int input2_shift,
+                    const GPUMirroredMemoryBlock<T3> *input3,
+                    unsigned int input3_stride,
+                    unsigned int input3_shift,
+                    GPUMirroredMemoryBlock<O> *output,
+                    unsigned int output_stride,
+                    unsigned int output_shift,
+                    bool use_cuda) const {
+      genericMap3Call(N, input1, input1_stride, input1_shift,
+                      input2, input2_stride, input2_shift,
+                      input3, input3_stride, input3_shift,
                       output, output_stride, output_shift,
                       use_cuda, functor);
     }

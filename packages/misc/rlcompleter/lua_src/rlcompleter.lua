@@ -2,6 +2,16 @@
 -- By Patrick Rapin; adapted by Reuben Thomas
 -- Adapted to APRIL-ANN by Francisco Zamora-Martinez, 2013
 
+-- Returns __index field from a metatable. When __index field is a function, it
+-- is expected to find index_table field with all the available methods.
+local function get_index(mt)
+  if type(mt.__index) == "function" then
+    return mt.index_table
+  else
+    return mt.__index
+  end
+end
+
 -- The list of Lua keywords
 local keywords = {
   'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for',
@@ -82,13 +92,14 @@ rlcompleter._set(
 	      local aux = v
 	      repeat
 		local mt = getmetatable(aux)
-		if mt.__index and luatype(mt.__index) == 'table' then
-		  for k,v in pairs(mt.__index) do
+                local idx = get_index(mt)
+		if idx and luatype(idx) == 'table' then
+		  for k,v in pairs(idx) do
 		    add(k)
 		  end
 		end
-                if rawequal(aux,mt.__index) then break end -- avoid infinite loops
-		aux = mt.__index
+                if rawequal(aux,idx) then break end -- avoid infinite loops
+		aux = idx
 	      until not aux or not getmetatable(aux)
 	    end
           elseif sep == '[' then

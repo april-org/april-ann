@@ -41,6 +41,16 @@ namespace AprilMath {
                                    const Basics::MatrixFloat *input,
                                    const Basics::MatrixFloat *target,
                                    float near_zero);
+
+      void matNonPairedCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::MatrixFloat *target,
+                                    float near_zero);
+
+      void matNonPairedCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::MatrixFloat *target,
+                                            float near_zero);
       
       void matMAEGradient(Basics::MatrixFloat *output,
                           const Basics::MatrixFloat *input,

@@ -1,6 +1,16 @@
 local COLWIDTH=70
 local DOC_TABLE = setmetatable({}, {__mode = "k" })
 
+-- Returns __index field from a metatable. When __index field is a function, it
+-- is expected to find index_table field with all the available methods.
+local function get_index(mt)
+  if type(mt.__index) == "function" then
+    return mt.index_table
+  else
+    return mt.__index
+  end
+end
+
 -- help documentation
 local allowed_classes = {
   ["class"]=true,
@@ -185,11 +195,11 @@ function april_help(object, verbosity)
     end
   end
   local function print_inheritance(title, object)
-    while ( getmetatable(object) and getmetatable(object).__index and
-            not rawequal(getmetatable(object).__index, object) ) do
+    while ( getmetatable(object) and get_index(getmetatable(object)) and
+            not rawequal(get_index(getmetatable(object)), object) ) do
       local mt = getmetatable(object)
       local superclass_name = (mt.id and mt.id:gsub(" class","")) or "UNKNOWN"
-      object = mt.__index
+      object = get_index(mt)
       process_pairs(title..superclass_name, { object },
                     function(k,v) return luatype(v) == "function" end)
     end
@@ -215,10 +225,10 @@ function april_help(object, verbosity)
     end
     -- metatable constructor and destructor
     print("--------------------------------------------------------------\n")
-    process_pairs("metatable", { mt, mt.__index },
+    process_pairs("metatable", { mt, get_index(mt) },
                   function(i,v) return luatype(v) == "function" end)
-    if mt.__index then
-      print_inheritance("inherited metatable from ", mt.__index)
+    if get_index(mt) then
+      print_inheritance("inherited metatable from ", get_index(mt))
     end
   end
   if luatype(object) == "table" then
@@ -260,12 +270,12 @@ function april_help(object, verbosity)
       print_result(funcs)
     end
     -- OBJECT meta_instance
-    if object.meta_instance and object.meta_instance.__index then
+    if object.meta_instance and get_index(object.meta_instance) then
       process_pairs("object metatable", { object.meta_instance })
-      process_pairs("object methods", { object.meta_instance.__index },
+      process_pairs("object methods", { get_index(object.meta_instance) },
                     function(i,v) return luatype(v) == "function" end)
       --
-      print_inheritance("inherited methods from ", object.meta_instance.__index)
+      print_inheritance("inherited methods from ", get_index(object.meta_instance))
     end
   end
   print()

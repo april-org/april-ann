@@ -3,21 +3,6 @@ class.extend(matrixBool, "t", matrixBool.."transpose")
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")
 
-matrixBool.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
-
-matrixBool.meta_instance.__newindex =
-  matrix.__generic__.__make_generic_newindex__(matrixBool)
-
-matrixBool.meta_instance.__tostring =
-  matrix.__generic__.__make_generic_print__("MatrixBool",
-                                            function(value)
-                                              return string.format("%s", value and "T" or "F")
-  end)
-
-matrixBool.join =
-  matrix.__generic__.__make_generic_join__(matrixBool)
-
 class.extend(matrixBool, "to_index",
              april_doc{
                class = "method",
@@ -103,3 +88,20 @@ matrixBool.meta_instance.__eq = function(op1, op2)
   op1:map(op2,function(x,y) eq = eq and (x == y) end)
   return eq
 end
+
+matrixBool.meta_instance.__call =
+  matrix.__generic__.__make_generic_call__()
+
+matrixBool.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrixBool)
+
+matrix.__generic__.__make_generic_index__(matrixBool)
+
+matrixBool.meta_instance.__tostring =
+  matrix.__generic__.__make_generic_print__("MatrixBool",
+                                            function(value)
+                                              return string.format("%s", value and "T" or "F")
+  end)
+
+matrixBool.join =
+  matrix.__generic__.__make_generic_join__(matrixBool)
