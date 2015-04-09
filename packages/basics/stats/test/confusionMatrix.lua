@@ -64,9 +64,12 @@ local myGT   = { "b", "a", "b", "a", "a", "b",  "c",  "a"}
 myConfMap:addData(myPred, myGT)
 
 print("Raw Confusion Matrix")
-myConfMap:printConfusion(tags)
+myConfMap:printConfusion(myConfMap)
 local cloneConf = myConfMap:clone()
 
+print("Confusion Matrix String")
+
+print(myConfMap:tostring())
 print("Deleting class c")
 myConfMap:clearGTClass(3)
 myConfMap:printConfusion(tags)
