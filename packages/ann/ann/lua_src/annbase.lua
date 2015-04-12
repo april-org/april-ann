@@ -489,7 +489,8 @@ ann.mlp.all_all.generate = april_doc {
   }
 } ..
   function(topology, tbl, first_count, names_prefix)
-    if type(tbl) ~= "table" then
+    if type(tbl) == "table" then
+      assert(not first_count and not names_prefix)
       first_count,names_prefix = tbl.first_count,tbl.names_prefix
     end
     local first_count  = first_count or 1
