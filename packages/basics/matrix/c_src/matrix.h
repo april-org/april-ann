@@ -59,6 +59,8 @@ namespace Basics {
     const char * const NCOLS_OPTION = "ncols";
     /// T option key indicating the expected number of rows.
     const char * const NROWS_OPTION = "nrows";
+    /// T option key indicating a map of strings into T values.
+    const char * const MAP_OPTION = "map";
   }
 
   // forward declaration
@@ -746,6 +748,10 @@ namespace Basics {
      * - MatrixIO::NROWS_OPTION if @c TAB_OPTION=true this key contains an
      *   int32_t value indicating the number of expected rows in the Matrix. By
      *   default it is 0, which is equals to a not defined state.
+     *
+     * - MatrixIO::MAP_OPTION if @c TAB_OPTION=true this key contains a
+     *   Lua table with a dictionary of strings to values, allowing to convert
+     *   ascii content into numerical data.
      *
      * @note When @c TAB_OPTION=true, if not given both @c NCOLS_OPTION and @c
      * NROWS_OPTION the parser will need two passes trough the data, first to

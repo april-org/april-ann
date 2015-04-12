@@ -157,6 +157,7 @@ namespace Basics {
 //BIND_STRING_CONSTANT matrix.options.default Basics::MatrixIO::DEFAULT_OPTION
 //BIND_STRING_CONSTANT matrix.options.ncols Basics::MatrixIO::NCOLS_OPTION
 //BIND_STRING_CONSTANT matrix.options.nrows Basics::MatrixIO::NROWS_OPTION
+//BIND_STRING_CONSTANT matrix.options.map Basics::MatrixIO::MAP_OPTION
 
 //BIND_LUACLASSNAME MatrixFloat matrix
 //BIND_CPP_CLASS MatrixFloat

@@ -47,7 +47,8 @@ matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
     local args = get_table_fields({
         [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
         [matrix.options.default] = { mandatory=false },
-        header = { type_match="boolean" } }, args)
+        header = { type_match="boolean" },
+        [matrix.options.map] = { mandatory=false, type_match="table", }, }, args)
     local header = args.header args.header = nil
     args[matrix.options.empty] = true
     args[matrix.options.tab] = true

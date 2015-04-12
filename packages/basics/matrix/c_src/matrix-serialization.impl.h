@@ -271,6 +271,8 @@ namespace Basics {
     T default_value         = options.opt(MatrixIO::DEFAULT_OPTION, T());
     int ncols               = options.opt<int>(MatrixIO::NCOLS_OPTION, 0);
     int nrows               = options.opt<int>(MatrixIO::NROWS_OPTION, 0);
+    const AprilUtils::LuaTable &map = options.opt(MatrixIO::MAP_OPTION,
+                                                  AprilUtils::LuaTable());
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -322,6 +324,7 @@ namespace Basics {
     mat = new Matrix<T>(2,dims);
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
+    bool use_map = !map.empty();
     if (read_empty) {
       // Allows delim at end of the token and therefore empty fields can be
       // identified and assigned to default_value.
@@ -335,7 +338,17 @@ namespace Basics {
             *data_it = default_value;
           }
           else {
-            ascii_extractor(token, *data_it);
+            char back = token[token.len()-1];
+            if (!ascii_extractor(token, *data_it)) {
+              if (read_empty && (strchr(delim, back) || strchr("\r\n", back))) {
+                april_assert(token.len() > 1u);
+                *data_it = map.opt((const char *)token, token.len() - 1u,
+                                   default_value);
+              }
+              else {
+                *data_it = map.opt(token, default_value);
+              }
+            }
           }
           ++data_it;
           ++num_cols_size_count;
@@ -351,8 +364,13 @@ namespace Basics {
       // Doesn't allow delim at end of the token and empty fields are forbidden
       while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
         int num_cols_size_count = 0;
-        while (data_it!=mat->end() &&
-               ascii_extractor(line, *data_it)) {
+        while (data_it!=mat->end()) {
+          token = line.extract_token(delim, read_empty);
+          if (!token) break;
+          if (!ascii_extractor(token, *data_it)) {
+            if (map.checkNil(token)) break;
+            *data_it = map.get<T>(token);
+          }
           ++data_it;
           ++num_cols_size_count;
         }

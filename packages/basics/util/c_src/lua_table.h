@@ -28,6 +28,7 @@ extern "C" {
 #include <typeinfo>
 
 #include "base.h"
+#include "constString.h"
 #include "error_print.h"
 #include "mystring.h"
 #include "referenced.h"
@@ -62,7 +63,10 @@ namespace AprilUtils {
     
     /// Destructor.
     ~LuaTable();
-
+    
+    /// Indicates if the LuaTable is empty.
+    bool empty() const;
+    
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
     
@@ -80,6 +84,11 @@ namespace AprilUtils {
       return checkNil(name.c_str());
     }
 
+    /// Checks if the field at the given key name is nil.
+    bool checkNil(constString &name) const {
+      return checkNil((const char *)(name), name.len());
+    }
+
     /// Checks if the field at the given key name is of the given type (a nil
     /// value will be taken as true).
     template<typename T>
@@ -87,10 +96,23 @@ namespace AprilUtils {
       return checkNilOrType<T>(name.c_str());
     }
 
+    /// Checks if the field at the given key name is of the given type (a nil
+    /// value will be taken as true).
+    template<typename T>
+    bool checkNilOrType(constString &name) const {
+      return checkNilOrType<T>((const char *)(name), name.len());
+    }
+
     /// Returns the value stored at the given key name field.
     template<typename T>
     T get(const string &name) const {
       return get<T>(name.c_str());
+    }
+
+    /// Returns the value stored at the given key name field.
+    template<typename T>
+    T get(constString &name) const {
+      return get<T>((const char *)(name), name.len());
     }
 
     /// Returns the value stored at the given key name field. In case the field
@@ -100,20 +122,54 @@ namespace AprilUtils {
       return opt<T>(name.c_str(), def_value);
     }
 
+    /// Returns the value stored at the given key name field. In case the field
+    /// is empty, it returns the given def_value argument.
+    template<typename T>
+    T opt(constString &name, const T def_value = T()) const {
+      return opt<T>((const char *)(name), name.len(), def_value);
+    }
+
+    /// Puts a new value into the table, using the given key name.
+    template<typename T>
+    LuaTable &put(constString &name, T value) {
+      return put<T>((const char *)(name), name.len(), value);
+    }
+
     /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, T value) {
-      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, value);
       lua_setfield(L, -2, name);
       lua_pop(L, 1);
       return *this;
     }
 
+    /// Puts a new value into the table, using the given key name.
+    template<typename T>
+    LuaTable &put(const char *name, size_t len, T value) {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushlstring(L, name, len);
+      pushInto(L, value);
+      lua_settable(L, -3);
+      lua_pop(L, 1);
+      return *this;
+    }
+
     /// Checks if the field at the given key name is nil.    
     bool checkNil(const char *name) const {
-      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
+      bool ret =  lua_isnil(L, -1);
+      lua_pop(L, 2);
+      return ret;
+    }
+
+    /// Checks if the field at the given key name is nil.    
+    bool checkNil(const char *name, size_t len) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushlstring(L, name, len);
+      lua_gettable(L, -2);
       bool ret =  lua_isnil(L, -1);
       lua_pop(L, 2);
       return ret;
@@ -123,8 +179,20 @@ namespace AprilUtils {
     /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(const char *name) const {
-      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
+      bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
+      lua_pop(L, 2);
+      return ret;
+    }
+
+    /// Checks if the field at the given key name is of the given type (a nil
+    /// value will be taken as true).
+    template<typename T>
+    bool checkNilOrType(const char *name, size_t len) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushlstring(L, name, len);
+      lua_gettable(L, -2);
       bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
       lua_pop(L, 2);
       return ret;
@@ -133,8 +201,21 @@ namespace AprilUtils {
     /// Returns the value stored at the given key name field.    
     template<typename T>
     T get(const char *name) const {
-      if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
+      if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
+      if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+      T v = convertTo<T>(L, -1);
+      lua_pop(L,2);
+      return v;
+    }
+
+    /// Returns the value stored at the given key name field.
+    template<typename T>
+    T get(const char *name, size_t len) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushlstring(L, name, len);
+      lua_gettable(L, -2);
       if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
       if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
       T v = convertTo<T>(L, -1);
@@ -146,12 +227,34 @@ namespace AprilUtils {
     /// is empty, it returns the given def_value argument.    
     template<typename T>
     T opt(const char *name, const T def_value = T()) const {
-      if (!checkAndGetRef()) {
+      if (!checkAndPushRef()) {
         lua_pop(L, 1);
         return def_value;
       }
       else {
         lua_getfield(L, -1, name);
+        T v(def_value);
+        if (!lua_isnil(L,-1)) {
+          if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+          v = convertTo<T>(L, -1);
+        }
+        lua_pop(L,2);
+        return v;
+      }
+      // return T();
+    }
+
+    /// Returns the value stored at the given key name field. In case the field
+    /// is empty, it returns the given def_value argument.    
+    template<typename T>
+    T opt(const char *name, size_t len, const T def_value = T()) const {
+      if (!checkAndPushRef()) {
+        lua_pop(L, 1);
+        return def_value;
+      }
+      else {
+        lua_pushlstring(L, name, len);
+        lua_gettable(L, -2);
         T v(def_value);
         if (!lua_isnil(L,-1)) {
           if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
@@ -202,7 +305,7 @@ namespace AprilUtils {
     void init(lua_State *L, int i);
     
     /// Checks ref != LUA_NOREF and pushes it into the Lua stack.
-    bool checkAndGetRef() const;
+    bool checkAndPushRef() const;
     
   };
   

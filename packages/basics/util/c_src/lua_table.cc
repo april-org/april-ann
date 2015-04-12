@@ -38,7 +38,7 @@ namespace AprilUtils {
   }
 
   LuaTable::LuaTable(const LuaTable &other) {
-    other.checkAndGetRef();
+    other.checkAndPushRef();
     init(other.L, -1);
     lua_pop(L, 1);
   }
@@ -47,9 +47,28 @@ namespace AprilUtils {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
   }
 
+  bool LuaTable::empty() const {
+    bool result;
+    if (!checkAndPushRef()) {
+      result = true;
+    }
+    else {
+      lua_pushnil(L);
+      if (lua_next(L, -2)) {
+        lua_pop(L, 2);
+        result = true;
+      }
+      else {
+        result = false;
+      }
+    }
+    lua_pop(L, 1);
+    return result;
+  }
+
   LuaTable &LuaTable::operator=(const LuaTable &other) {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
-    other.checkAndGetRef();
+    other.checkAndPushRef();
     init(other.L, -1);
     lua_pop(L, 1);
     return *this;
@@ -81,10 +100,10 @@ namespace AprilUtils {
     
   void LuaTable::pushTable(lua_State *L) {
     if (this->L != L) ERROR_EXIT(128, "Given incorrect lua_State\n");
-    checkAndGetRef();
+    checkAndPushRef();
   }
   
-  bool LuaTable::checkAndGetRef() const {
+  bool LuaTable::checkAndPushRef() const {
     if (ref == LUA_NOREF) {
       lua_pushnil(L); // just to be coherent, it always pushes a value
       return false;
@@ -196,7 +215,7 @@ namespace AprilUtils {
   // overload of get for const char *
   template<>
   const char *LuaTable::get<const char *>(const char *name) const {
-    if (!checkAndGetRef()) ERROR_EXIT(128, "Invalid reference\n");
+    if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
     lua_getfield(L, -1, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
     const char *str = lua_tostring(L, -1);
@@ -211,7 +230,7 @@ namespace AprilUtils {
   // overload of opt for const char *
   template<>
   const char *LuaTable::opt<const char *>(const char *name, const char *def) const {
-    if (!checkAndGetRef()) {
+    if (!checkAndPushRef()) {
       lua_pop(L, 1);
       return def;
     }
