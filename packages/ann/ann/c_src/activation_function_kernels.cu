@@ -114,6 +114,22 @@ namespace ANN {
                        output_errors);
     }
 
+    void applyLeakyReLU(Basics::MatrixFloat *output,
+                        const Basics::MatrixFloat *input,
+                        float leak) {
+      MatrixScalarMap1(input,
+                       AprilMath::Functors::m_leaky_relu<float>(leak),
+                       output);
+    }
+    
+    void applyLeakyReLUDerivative(Basics::MatrixFloat *output_errors,
+                                  const Basics::MatrixFloat *input_units,
+                                  float leak) {
+      MatrixScalarMap1(input_units,
+                       AprilMath::Functors::m_leaky_relu_der<float>(leak),
+                       output_errors);
+    }
+
     void applyLogLogistic(Basics::MatrixFloat *output,
                           const Basics::MatrixFloat *input) {
       MatrixScalarMap1(input,

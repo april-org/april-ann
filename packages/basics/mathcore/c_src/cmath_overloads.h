@@ -600,6 +600,17 @@ namespace AprilMath {
         return (value > T(0.0f)) ? (value) : T(0.0f);
       }
     };
+
+    /// Leaky Rectified Linear Unit (Leaky ReLU) function.
+    template<typename T>
+    struct m_leaky_relu {
+      T leak;
+      m_leaky_relu(T leak) : leak(leak) { }
+      /// Returns <tt> value if x>0, leak * x otherwise </tt>
+      APRIL_CUDA_EXPORT T operator()(const T &value) const {
+        return (value > T(0.0f)) ? (value) : leak*value;
+      }
+    };
     
     /// Less than comparison.
     template<typename T>
@@ -753,6 +764,9 @@ namespace AprilMath {
   /// @see Functors::m_relu
   template<typename T> APRIL_CUDA_EXPORT
   T m_relu(const T &a) { return Functors::m_relu<T>()(a); }
+  /// @see Functors::m_leaky_relu
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_leaky_relu(const T &a, T leak) { return Functors::m_relu<T>(leak)(a); }
   /// @see Functors::m_lt
   template<typename T> APRIL_CUDA_EXPORT
   bool m_lt(const T &a, const T &b) { return Functors::m_lt<T>()(a,b); }
@@ -951,6 +965,21 @@ namespace AprilMath {
         return (before_actf > T(0.0f)) ? T(1.0f) : T(0.0f);
       }
     };
+
+    /// Leaky ReLU derivative functor.
+    template<typename T>
+    struct m_leaky_relu_der {
+      T leak;
+      m_leaky_relu_der(T leak) : leak(leak) { }
+      /**
+       * @brief Computes <tt> x > T(0.0f) ? T(1.0f) : leak </tt>
+       * @note It receives the value before the activation, the input of
+       * AprilMath::m_relu function.
+       */
+      APRIL_CUDA_EXPORT T operator()(const T &before_actf) const {
+        return (before_actf > T(0.0f)) ? T(1.0f) : T(leak);
+      }
+    };
     
     /// Clamp derivative functor.
     template<typename T>
@@ -983,6 +1012,9 @@ namespace AprilMath {
   /// @see Functors::m_relu_der
   template<typename T> APRIL_CUDA_EXPORT
   T m_relu_der(const T &a) { return Functors::m_relu_der<T>()(a); }
+  /// @see Functors::m_leaky_relu_der
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_leaky_relu_der(const T &a, T leak) { return Functors::m_relu_der<T>(leak)(a); }
   /// @see Functors::m_clamp_der
   template<typename T> APRIL_CUDA_EXPORT
   T m_clamp_der(const T &a, const T &b, const T &c) { return Functors::m_clamp_der<T>()(a,b,c); }

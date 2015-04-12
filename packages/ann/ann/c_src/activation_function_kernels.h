@@ -60,6 +60,14 @@ namespace ANN {
     void applyReLUDerivative(Basics::MatrixFloat *output_errors,
                              const Basics::MatrixFloat *input_units);
 
+    void applyLeakyReLU(Basics::MatrixFloat *output,
+                        const Basics::MatrixFloat *input,
+                        float leak);
+    
+    void applyLeakyReLUDerivative(Basics::MatrixFloat *output_errors,
+                                  const Basics::MatrixFloat *input_units,
+                                  float leak);
+
     void applyLogLogistic(Basics::MatrixFloat *output,
                           const Basics::MatrixFloat *input);
     

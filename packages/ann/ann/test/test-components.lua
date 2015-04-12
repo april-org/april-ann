@@ -501,6 +501,29 @@ T("DOTPRODUCT + RELU TEST",
     end)
 end)
 
+----------------
+-- LEAKY RELU --
+----------------
+
+T("DOTPRODUCT + LEAKY RELU TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.leaky_relu() )
+                              end,
+                "mse", i, o, b, "LEAKY_RELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 -------------
 -- SOFTMAX --
 -------------

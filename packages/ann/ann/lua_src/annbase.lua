@@ -479,17 +479,19 @@ ann.mlp.all_all.generate = april_doc {
   params= {
     { "Topology description string as ",
       "'1024 inputs 128 logistc 10 log_softmax" },
-    { "First count parameter (count) ",
-      "[optional]. By default 1." },
-    { "Prefix for all component and weight names [optional].",
-      "By default is an empty string." },
+    { "A table with extra arguments. Positional arguments are given as",
+      "parameters designed by #n in topology string. Besides,",
+      "first_count and names_prefix keys can be given.", },
   },
   outputs= {
     {"A component object with the especified ",
      "neural network topology" }
   }
 } ..
-  function(topology, first_count, names_prefix)
+  function(topology, tbl, first_count, names_prefix)
+    if type(tbl) ~= "table" then
+      first_count,names_prefix = tbl.first_count,tbl.names_prefix
+    end
     local first_count  = first_count or 1
     local names_prefix = names_prefix or ""
     local thenet = ann.components.stack{ name=names_prefix.."stack" }
@@ -498,24 +500,43 @@ ann.mlp.all_all.generate = april_doc {
     local t      = string.tokenize(topology)
     local prev_size = tonumber(t[1])
     local names_order = {}
+    local rnd = random(75258)
     for i=3,#t,2 do
-      local size = tonumber(t[i])
       local actf = t[i+1]
-      thenet:push( ann.components.hyperplane{
-                     input=prev_size, output=size,
-                     bias_weights=names_prefix.."b" .. count,
-                     dot_product_weights=names_prefix.."w" .. count,
-                     name=names_prefix.."layer" .. count,
-                     bias_name=names_prefix.."b" .. count,
-                     dot_product_name=names_prefix.."w" .. count } )
-      table.insert(names_order, names_prefix.."b"..count)
-      table.insert(names_order, names_prefix.."w"..count)
-      if not ann.components.actf[actf] then
-        error("Incorrect activation function: " .. actf)
+      if actf:find("dropout") then
+        local prob = tonumber(t[i])
+        local seed = actf:match("dropout%((.*)%)")
+        if seed then
+          if seed:find("^#") then
+            assert(type(tbl) == "table",
+                   "Needs a table as second argument")
+            rnd = april_assert(tbl[tonumber(seed:sub(2))],
+                               "Unable to find element %s", seed)
+          else
+            seed = assert(tonumber(seed), "Unable to convert seed to number")
+            rnd = random(seed)
+          end
+        end -- if seed then
+        thenet:push( ann.components.dropout{ random=rnd, prob=prob } )
+      else
+        local size = tonumber(t[i])
+
+        thenet:push( ann.components.hyperplane{
+                       input=prev_size, output=size,
+                       bias_weights=names_prefix.."b" .. count,
+                       dot_product_weights=names_prefix.."w" .. count,
+                       name=names_prefix.."layer" .. count,
+                       bias_name=names_prefix.."b" .. count,
+                       dot_product_name=names_prefix.."w" .. count } )
+        table.insert(names_order, names_prefix.."b"..count)
+        table.insert(names_order, names_prefix.."w"..count)
+        if not ann.components.actf[actf] then
+          error("Incorrect activation function: " .. actf)
+        end
+        thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
+        count = count + 1
+        prev_size = size
       end
-      thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
-      count = count + 1
-      prev_size = size
     end
     local aux = get_lua_properties_table(thenet)
     aux.description  = topology
