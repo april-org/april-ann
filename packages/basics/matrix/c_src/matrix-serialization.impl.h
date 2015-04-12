@@ -340,13 +340,17 @@ namespace Basics {
           else {
             char back = token[token.len()-1];
             if (!ascii_extractor(token, *data_it)) {
-              if (read_empty && (strchr(delim, back) || strchr("\r\n", back))) {
-                april_assert(token.len() > 1u);
-                *data_it = map.opt((const char *)token, token.len() - 1u,
-                                   default_value);
-              }
-              else {
-                *data_it = map.opt(token, default_value);
+              if (use_map) {
+                size_t len = token.len();
+                if (read_empty && (strchr(delim, back) || strchr("\r\n", back))) {
+                  april_assert(token.len() > 1u);
+                  len -= 1u;
+
+                }
+                *data_it = map.opt((const char *)(token), len, default_value);
+              } // if (use_map)
+              else { // not use_map
+                break;
               }
             }
           }
@@ -368,8 +372,8 @@ namespace Basics {
           token = line.extract_token(delim, read_empty);
           if (!token) break;
           if (!ascii_extractor(token, *data_it)) {
-            if (map.checkNil(token)) break;
-            *data_it = map.get<T>(token);
+            if (!use_map || map.checkNil(token)) break;
+            *data_it = map.get<T>((const char *)(token), token.len());
           }
           ++data_it;
           ++num_cols_size_count;

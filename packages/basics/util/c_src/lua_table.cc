@@ -56,10 +56,10 @@ namespace AprilUtils {
       lua_pushnil(L);
       if (lua_next(L, -2)) {
         lua_pop(L, 2);
-        result = true;
+        result = false;
       }
       else {
-        result = false;
+        result = true;
       }
     }
     lua_pop(L, 1);

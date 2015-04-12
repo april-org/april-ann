@@ -28,7 +28,6 @@ extern "C" {
 #include <typeinfo>
 
 #include "base.h"
-#include "constString.h"
 #include "error_print.h"
 #include "mystring.h"
 #include "referenced.h"
@@ -84,23 +83,11 @@ namespace AprilUtils {
       return checkNil(name.c_str());
     }
 
-    /// Checks if the field at the given key name is nil.
-    bool checkNil(constString &name) const {
-      return checkNil((const char *)(name), name.len());
-    }
-
     /// Checks if the field at the given key name is of the given type (a nil
     /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(const string &name) const {
       return checkNilOrType<T>(name.c_str());
-    }
-
-    /// Checks if the field at the given key name is of the given type (a nil
-    /// value will be taken as true).
-    template<typename T>
-    bool checkNilOrType(constString &name) const {
-      return checkNilOrType<T>((const char *)(name), name.len());
     }
 
     /// Returns the value stored at the given key name field.
@@ -109,30 +96,11 @@ namespace AprilUtils {
       return get<T>(name.c_str());
     }
 
-    /// Returns the value stored at the given key name field.
-    template<typename T>
-    T get(constString &name) const {
-      return get<T>((const char *)(name), name.len());
-    }
-
     /// Returns the value stored at the given key name field. In case the field
     /// is empty, it returns the given def_value argument.
     template<typename T>
-    T opt(const string &name, const T def_value = T()) const {
+    T opt(const string &name, const T def_value) const {
       return opt<T>(name.c_str(), def_value);
-    }
-
-    /// Returns the value stored at the given key name field. In case the field
-    /// is empty, it returns the given def_value argument.
-    template<typename T>
-    T opt(constString &name, const T def_value = T()) const {
-      return opt<T>((const char *)(name), name.len(), def_value);
-    }
-
-    /// Puts a new value into the table, using the given key name.
-    template<typename T>
-    LuaTable &put(constString &name, T value) {
-      return put<T>((const char *)(name), name.len(), value);
     }
 
     /// Puts a new value into the table, using the given key name.
@@ -226,7 +194,7 @@ namespace AprilUtils {
     /// Returns the value stored at the given key name field. In case the field
     /// is empty, it returns the given def_value argument.    
     template<typename T>
-    T opt(const char *name, const T def_value = T()) const {
+    T opt(const char *name, const T def_value) const {
       if (!checkAndPushRef()) {
         lua_pop(L, 1);
         return def_value;
@@ -247,7 +215,7 @@ namespace AprilUtils {
     /// Returns the value stored at the given key name field. In case the field
     /// is empty, it returns the given def_value argument.    
     template<typename T>
-    T opt(const char *name, size_t len, const T def_value = T()) const {
+    T opt(const char *name, size_t len, const T def_value) const {
       if (!checkAndPushRef()) {
         lua_pop(L, 1);
         return def_value;
