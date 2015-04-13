@@ -17,6 +17,8 @@ local iterator = iterator
 local get_table_fields = get_table_fields
 local md = matrix.dict
 
+local MAX_SIZE_WO_COLLECT_GARBAGE = 400*1024*1024 -- 400 MB
+
 -----------------------------------------
 
 ------------------------------
@@ -1212,14 +1214,18 @@ trainable_supervised_trainer_methods.train_dataset =
     params.max_gradients_norm = nil
     params.mask_dataset       = nil
     params.bunch_size         = params.bunch_size or self.bunch_size
+    local bunch_mb_size = params.bunch_size * self:size() * 4
     -- set to ZERO the accumulated of loss
     loss:reset()
     if not mask_dataset then
       params.assert_input_size  = self:get_input_size()
       params.assert_output_size = self:get_output_size()
+      local k=0
       for input_bunch,output_bunch,bunch_indexes in trainable.dataset_pair_iterator(params) do
         self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
                         smooth_gradients, nil, max_gradients_norm)
+        k = k + bunch_mb_size
+        if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
       end
     else
       params.datasets = { params.input_dataset,
@@ -1230,9 +1236,12 @@ trainable_supervised_trainer_methods.train_dataset =
       params.assert_pattern_sizes = { self:get_input_size(),
                                       self:get_output_size(),
                                       self:get_output_size() }
+      local k=0
       for input_bunch,output_bunch,mask_bunch,bunch_indexes in trainable.dataset_multiple_iterator(params) do
         self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
                         smooth_gradients, mask_bunch, max_gradients_norm)
+        k = k + bunch_mb_size
+        if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
       end
     end
     return loss:get_accum_loss()
@@ -1412,13 +1421,17 @@ trainable_supervised_trainer_methods.validate_dataset =
     params.loss               = nil
     params.mask_dataset       = nil
     params.bunch_size         = params.bunch_size or self.bunch_size
+    local bunch_mb_size = params.bunch_size * self:size() * 4
     -- set to ZERO the accumulated of loss
     loss:reset()
     if not mask_dataset then
       params.assert_input_size  = self:get_input_size()
       params.assert_output_size = self:get_output_size()
+      local k=0
       for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
         self:validate_step(input_bunch, output_bunch, loss)
+        k = k + bunch_mb_size
+        if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
       end
     else
       params.datasets = { params.input_dataset,
@@ -1429,8 +1442,11 @@ trainable_supervised_trainer_methods.validate_dataset =
       params.assert_pattern_sizes = { self:get_input_size(),
                                       self:get_output_size(),
                                       self:get_output_size() }
+      local k=0
       for input_bunch,output_bunch in trainable.dataset_multiple_iterator(params) do
         self:validate_step(input_bunch, output_bunch, loss)
+        k = k + bunch_mb_size
+        if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
       end
     end
     return loss:get_accum_loss()
@@ -1502,11 +1518,15 @@ trainable_supervised_trainer_methods.use_dataset =
     params.datasets             = { params.input_dataset }
     params.assert_pattern_sizes = { self:get_input_size() }
     params.input_dataset, params.output_dataset = nil, nil
+    local bunch_mb_size = params.bunch_size * self:size() * 4
     local ann_component = self.ann_component
+    local k=0
     for input_bunch,bunch_indexes in trainable.dataset_multiple_iterator(params) do
       ann_component:reset()
       local output = ann_component:forward(input_bunch)
       output_dataset:putPatternBunch(bunch_indexes,output)
+      k = k + bunch_mb_size
+      if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
     end  
     return t.output_dataset
   end
