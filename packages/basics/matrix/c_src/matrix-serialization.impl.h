@@ -395,7 +395,7 @@ namespace Basics {
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
                            const AprilUtils::LuaTable &options) {
-    UNUSED_VARIABLE(options);
+    const char *delim = options.opt(MatrixIO::DELIM_OPTION, " ");
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     if (this->getNumDim() != 2) {
@@ -414,7 +414,7 @@ namespace Basics {
     for(typename Matrix<T>::const_iterator it(this->begin());
         it!=this->end();++it,++i) {
       ascii_coder(*it, stream);
-      stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : delim[0]));
     }
     if ((i % columns) != 0) {
       stream->printf("\n"); 

@@ -100,6 +100,7 @@ namespace AprilIO {
   }
 
   FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
+    fflush(f);
     fd = checkReturnValue(dup(::fileno(f)));
     flags = fcntl(fd, F_GETFL);
     seekStream(SEEK_SET, ftell(f));
