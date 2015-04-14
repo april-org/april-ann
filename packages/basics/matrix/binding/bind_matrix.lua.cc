@@ -816,14 +816,24 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat linspace
 {
-  int size = obj->size()-1;
+  int size_1 = obj->size()-1;
   float inf,sup;
   LUABIND_GET_OPTIONAL_PARAMETER(1, float, inf, 1.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, static_cast<float>(size+1));
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, static_cast<float>(size_1+1));
   int i = 0;
   float diff = sup-inf;
-  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i)
-    *it = (diff*i)/size + inf;
+  if (diff == size_1) {
+    i = static_cast<int>(inf);
+    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+      april_assert(i <= static_cast<int>(sup));
+      *it = static_cast<float>(i);
+    }
+  }
+  else {
+    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+      *it = (diff*i)/size_1 + inf;
+    }
+  }
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
