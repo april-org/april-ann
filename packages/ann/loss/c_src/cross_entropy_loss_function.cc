@@ -22,8 +22,10 @@
 #include "cross_entropy_loss_function.h"
 #include "loss_kernels.h"
 #include "token_matrix.h"
+#include "token_sparse_matrix.h"
 
 using namespace AprilMath::MatrixExt::LossOperations;
+using namespace AprilMath::MatrixExt::Initializers;
 using namespace AprilUtils;
 using namespace Basics;
 
@@ -38,25 +40,79 @@ namespace ANN {
   
   MatrixFloat *CrossEntropyLossFunction::computeLossBunch(Token *input,
 							  Token *target) {
-    MatrixFloat *input_mat, *target_mat;
-    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    int dim = input_mat->getDimSize(0);
-    MatrixFloat *loss_output = new MatrixFloat(1, &dim);
+    MatrixFloat *loss_output = 0;
+    switch(target->getTokenCode()) {
+    case table_of_token_codes::token_matrix:
+      {
+        MatrixFloat *input_mat, *target_mat;
+        throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+        int dim = input_mat->getDimSize(0);
+        loss_output = new MatrixFloat(1, &dim);
 #ifdef USE_CUDA
-    loss_output->setUseCuda(input_mat->getCudaFlag());
+        loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
-    
-    matCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
+        matCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
+        break;
+      } // case
+    case table_of_token_codes::token_sparse_matrix:
+      {
+        TokenMatrixFloat *input_mat_token;
+        TokenSparseMatrixFloat *target_mat_token;
+        input_mat_token  = input->convertToAndCheck<TokenMatrixFloat*>();
+        target_mat_token = target->convertToAndCheck<TokenSparseMatrixFloat*>();
+        MatrixFloat *input_mat = input_mat_token->getMatrix();
+        SparseMatrixFloat *target_mat = target_mat_token->getMatrix();
+        if (target_mat->getSparseFormat() != CSR_FORMAT) {
+          ERROR_EXIT(256, "Needs a CSR sparse matrix\n");
+        }
+        // TODO: add more error control
+        int dim = input_mat->getDimSize(0);
+        loss_output = new MatrixFloat(1, &dim);
+#ifdef USE_CUDA
+        loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
+        matCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
+        break;
+      } // case
+    default:
+      ERROR_EXIT(246, "Incorrect token type given as target\n");
+    } // switch
     return loss_output;
   }
 
   Token *CrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
-    MatrixFloat *input_mat, *target_mat;
-    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
-    TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
-    AssignRef<Token>(error_output, error_mat_token);
-    matCrossEntropyGradient(error_mat, input_mat, target_mat, NEAR_ZERO);
+    switch(target->getTokenCode()) {
+    case table_of_token_codes::token_matrix:
+      {
+        MatrixFloat *input_mat, *target_mat;
+        throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+        MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+        TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
+        AssignRef<Token>(error_output, error_mat_token);
+        matCrossEntropyGradient(error_mat, input_mat, target_mat, NEAR_ZERO);
+        break;
+      } // case
+    case table_of_token_codes::token_sparse_matrix:
+      {
+        TokenMatrixFloat *input_mat_token;
+        TokenSparseMatrixFloat *target_mat_token;
+        input_mat_token  = input->convertToAndCheck<TokenMatrixFloat*>();
+        target_mat_token = target->convertToAndCheck<TokenSparseMatrixFloat*>();
+        MatrixFloat *input_mat = input_mat_token->getMatrix();
+        SparseMatrixFloat *target_mat = target_mat_token->getMatrix();
+        if (target_mat->getSparseFormat() != CSR_FORMAT) {
+          ERROR_EXIT(256, "Needs a CSR sparse matrix\n");
+        }
+        // TODO: add more error control
+        MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+        TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
+        AssignRef<Token>(error_output, error_mat_token);
+        matCrossEntropyGradient(error_mat, input_mat, target_mat, NEAR_ZERO);
+        break;
+      } // case
+    default:
+      ERROR_EXIT(246, "Incorrect token type given as target\n");
+    } // switch
     return error_output;
   }
   

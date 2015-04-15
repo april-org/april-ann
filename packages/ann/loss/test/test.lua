@@ -88,4 +88,17 @@ T("LossTest", function()
                  end
                  return errors/20
     end)
+    
+    -- SPARSE TARGET IN CROSS ENTROPY
+    check_loss(matrix(10,20):uniformf(0.3,0.7,random(1234)):log(),
+               matrix.sparse.diag(20, 1.0)[{'1:10',':'}],
+               ann.loss.cross_entropy(),
+               function(i,t)
+                 local l = ann.loss.cross_entropy()
+                 return (l:compute_loss(i,t:to_dense()))
+               end,
+               function(i,t)
+                 local l = ann.loss.cross_entropy()
+                 return (l:gradient(i,t:to_dense()))
+    end)
 end)

@@ -27,7 +27,7 @@
 namespace AprilMath {
   namespace MatrixExt {
     namespace LossOperations {
-
+      
       void matMSE(Basics::MatrixFloat *output,
                   const Basics::MatrixFloat *input,
                   const Basics::MatrixFloat *target);
@@ -37,11 +37,21 @@ namespace AprilMath {
                            const Basics::MatrixFloat *target,
                            float near_zero);
 
+      void matCrossEntropy(Basics::MatrixFloat *output,
+                           const Basics::MatrixFloat *input,
+                           const Basics::SparseMatrixFloat *target,
+                           float near_zero);
+
       void matCrossEntropyGradient(Basics::MatrixFloat *output,
                                    const Basics::MatrixFloat *input,
                                    const Basics::MatrixFloat *target,
                                    float near_zero);
 
+      void matCrossEntropyGradient(Basics::MatrixFloat *output,
+                                   const Basics::MatrixFloat *input,
+                                   const Basics::SparseMatrixFloat *target,
+                                   float near_zero);
+        
       void matNonPairedCrossEntropy(Basics::MatrixFloat *output,
                                     const Basics::MatrixFloat *input,
                                     const Basics::MatrixFloat *target,
