@@ -52,8 +52,8 @@ namespace ANN {
         loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
         matCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
-        break;
       } // case
+      break;
     case table_of_token_codes::token_sparse_matrix:
       {
         TokenMatrixFloat *input_mat_token;
@@ -62,18 +62,15 @@ namespace ANN {
         target_mat_token = target->convertToAndCheck<TokenSparseMatrixFloat*>();
         MatrixFloat *input_mat = input_mat_token->getMatrix();
         SparseMatrixFloat *target_mat = target_mat_token->getMatrix();
-        if (target_mat->getSparseFormat() != CSR_FORMAT) {
-          ERROR_EXIT(256, "Needs a CSR sparse matrix\n");
-        }
-        // TODO: add more error control
+        // TODO: add error control
         int dim = input_mat->getDimSize(0);
         loss_output = new MatrixFloat(1, &dim);
 #ifdef USE_CUDA
         loss_output->setUseCuda(input_mat->getCudaFlag());
 #endif
         matCrossEntropy(loss_output, input_mat, target_mat, NEAR_ZERO);
-        break;
       } // case
+      break;
     default:
       ERROR_EXIT(246, "Incorrect token type given as target\n");
     } // switch

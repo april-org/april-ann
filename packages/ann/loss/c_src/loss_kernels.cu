@@ -187,18 +187,20 @@ namespace AprilMath {
         
       } // namespace Kernels
 
+      template <typename T>
       void matMSE(Basics::MatrixFloat *output,
                   const Basics::MatrixFloat *input,
-                  const Basics::MatrixFloat *target) {
+                  const T *target) {
         AprilUtils::SharedPtr<Basics::MatrixFloat>
           map_output( MatrixScalarMap2(input, target, Kernels::MSE(),
                                        input->cloneOnlyDims()) );
         matSum(map_output.get(), 1, output);
       }
       
+      template<typename T>
       void matCrossEntropy(Basics::MatrixFloat *output,
                            const Basics::MatrixFloat *input,
-                           const Basics::MatrixFloat *target,
+                           const T *target,
                            float near_zero) {
         Kernels::CrossEntropy cross_entropy(near_zero);
         AprilUtils::SharedPtr<Basics::MatrixFloat>
@@ -206,42 +208,7 @@ namespace AprilMath {
                                       input->cloneOnlyDims()));
         matSum(map_output.get(), 1, output);
       }
-
-      void matCrossEntropy(Basics::MatrixFloat *output,
-                           const Basics::MatrixFloat *input,
-                           const Basics::SparseMatrixFloat *target,
-                           float near_zero) {
-        Kernels::CrossEntropy cross_entropy(near_zero);
-        matZeros(output);
-        Basics::MatrixFloat::iterator output_it = output->begin();
-        Basics::MatrixFloat::const_iterator input_it = input->begin();
-        Basics::SparseMatrixFloat::const_iterator target_it = target->begin();
-        int dim = input->getDimSize(0);
-        int target_i, target_j=0;
-        for (int i=0; i<dim; ++i) {
-          april_assert(input_it != input->end());
-          april_assert(output_it != output->end());
-          for (int j=0; j<input->getDimSize(1); ++j) {
-            bool target_end = target_it == target->end();
-            if (!target_end) target_it.getCoords(target_i, target_j);
-            else target_i = dim;
-            float target;
-            if (target_i == i && target_j == j) {
-              // non-zero target
-              target = *target_it;
-              ++target_it;
-            }
-            else {
-              target = 0.0f;
-            }
-            *output_it += cross_entropy(*input_it, target);
-            //
-            ++input_it;
-          }
-          ++output_it;
-        }
-      }
-
+      
       void matNonPairedCrossEntropy(Basics::MatrixFloat *output,
                                     const Basics::MatrixFloat *input,
                                     const Basics::MatrixFloat *target,
@@ -254,46 +221,13 @@ namespace AprilMath {
       }      
       /////////////////////////////////////////////////////////////////////////
 
+      template<typename T>
       void matCrossEntropyGradient(Basics::MatrixFloat *output,
                                    const Basics::MatrixFloat *input,
-                                   const Basics::MatrixFloat *target,
+                                   const T *target,
                                    float near_zero) {
         Kernels::CrossEntropyGradient cross_entropy_gradient(near_zero);
         MatrixScalarMap2(input, target, cross_entropy_gradient, output);
-      }
-
-      void matCrossEntropyGradient(Basics::MatrixFloat *output,
-                                   const Basics::MatrixFloat *input,
-                                   const Basics::SparseMatrixFloat *target,
-                                   float near_zero) {
-        Kernels::CrossEntropyGradient cross_entropy_gradient(near_zero);
-        Basics::MatrixFloat::iterator output_it = output->begin();
-        Basics::MatrixFloat::const_iterator input_it = input->begin();
-        Basics::SparseMatrixFloat::const_iterator target_it = target->begin();
-        int dim = input->getDimSize(0);
-        int target_i, target_j=0;
-        for (int i=0; i<dim; ++i) {
-          april_assert(input_it != input->end());
-          april_assert(output_it != output->end());
-          for (int j=0; j<input->getDimSize(1); ++j) {
-            bool target_end = target_it == target->end();
-            if (!target_end) target_it.getCoords(target_i, target_j);
-            else target_i = dim;
-            float target;
-            if (target_i == i && target_j == j) {
-              // non-zero target
-              target = *target_it;
-              ++target_it;
-            }
-            else {
-              target = 0.0f;
-            }
-            *output_it = cross_entropy_gradient(*input_it, target);
-            //
-            ++input_it;
-            ++output_it;
-          }
-        }
       }
 
       void matNonPairedCrossEntropyGradient(Basics::MatrixFloat *output,
@@ -327,7 +261,38 @@ namespace AprilMath {
                                       input->cloneOnlyDims()));
         matSum(map_output.get(), 1, output);
       }
+      
+      /////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      
+      template void matMSE(Basics::MatrixFloat *output,
+                           const Basics::MatrixFloat *input,
+                           const Basics::MatrixFloat *target);
 
+      template void matMSE(Basics::MatrixFloat *output,
+                           const Basics::MatrixFloat *input,
+                           const Basics::SparseMatrixFloat *target);
+
+      template void matCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::MatrixFloat *target,
+                                    float near_zero);
+
+      template void matCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::SparseMatrixFloat *target,
+                                    float near_zero);
+
+      template void matCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::MatrixFloat *target,
+                                            float near_zero);
+      
+      template void matCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::SparseMatrixFloat *target,
+                                            float near_zero);
+      
       /////////////////////////////////////////////////////////////////////////
     } // namespace LossOperations
   } // namespace MatrixExt
