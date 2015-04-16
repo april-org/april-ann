@@ -47,7 +47,8 @@ matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
     local args = get_table_fields({
         [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
         [matrix.options.default] = { mandatory=false },
-        header = { type_match="boolean" } }, args)
+        header = { type_match="boolean" },
+        [matrix.options.map] = { mandatory=false, type_match="table", }, }, args)
     local header = args.header args.header = nil
     args[matrix.options.empty] = true
     args[matrix.options.tab] = true
@@ -100,6 +101,30 @@ matrix.__generic__.__make_generic_toTabFilename__ = function(matrix_class)
   end)
 end
 
+matrix.__generic__.__make_generic_toCSVFilename__ = function(matrix_class)
+  class.extend(matrix_class, "toCSVFilename",
+               function(self,filename,args)
+                 local args = get_table_fields({
+                     [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
+                     header = { type_match="table" }, }, args)
+                 local delim = args[matrix.options.delim]
+                 assert(#delim == 1, "delim should be a 1 character string")
+                 local header = args.header args.header = nil
+                 local f = april_assert(io.open(filename,"w"),
+                                        "Unable to open %s", filename)
+                 if header then
+                   f:write(table.concat(header, delim))
+                   f:write("\n")
+                 end
+                 local ret = table.pack(self:write(f,
+                                                   { [matrix.options.ascii] = true,
+                                                     [matrix.options.delim] = delim,
+                                                     [matrix.options.tab]   = true }))
+                 f:close()
+                 return table.unpack(ret)
+  end)
+end
+
 -- GENERIC TO STRING
 matrix.__generic__.__make_generic_toString__ = function(matrix_class, defmode)
   class.extend(matrix_class, "toString",
@@ -120,4 +145,5 @@ function matrix.__generic__.__make_all_serialization_methods__(matrix_class,
   matrix.__generic__.__make_generic_toTabFilename__(matrix_class)
   matrix.__generic__.__make_generic_toString__(matrix_class, defmode)
   matrix.__generic__.__make_generic_to_lua_string__(matrix_class, defmode)
+  matrix.__generic__.__make_generic_toCSVFilename__(matrix_class)
 end

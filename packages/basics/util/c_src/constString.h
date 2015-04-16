@@ -45,6 +45,7 @@ namespace AprilUtils {
 
     char operator [] (int i) const { return buffer[i]; }
     char operator [] (unsigned int i) const { return buffer[i]; }
+    char operator [] (size_t i) const { return buffer[i]; }
     // char operator [] (size_t i) const { return buffer[i]; }
 
     char *newString() const;

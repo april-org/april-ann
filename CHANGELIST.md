@@ -11,6 +11,8 @@ Master branch release
 
 ### API Changes
 
+- Added `matrix.sparse` as valid values for targets in `ann.loss.mse` and
+  `ann.loss.cross_entropy`.
 - Changed `matrix` metamethods `__index` and `__newindex`, allowing to use
   `matrix` objects with standard Lua `operator[]`.
 - Added `matrix.masked_fill` and `matrix.masked_copy` matrix.
@@ -46,6 +48,8 @@ Master branch release
 
 ### C/C++
 
+- Added `MatrixScalarMap2` which receives as `input2` a `SparaseMatrix`
+  instance. This functions needs to be generalized to work with CPU and CUDA.
 - The method `SparseMatrix<T>::fromDenseMatrix()` uses a `DOKBuilder` object
   to build the sparse matrix.
 - The conversion of a `Matrix<T>` into a `SparseMatrix<T>` has been changed from

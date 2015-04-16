@@ -271,6 +271,8 @@ namespace Basics {
     T default_value         = options.opt(MatrixIO::DEFAULT_OPTION, T());
     int ncols               = options.opt<int>(MatrixIO::NCOLS_OPTION, 0);
     int nrows               = options.opt<int>(MatrixIO::NROWS_OPTION, 0);
+    const AprilUtils::LuaTable &map = options.opt(MatrixIO::MAP_OPTION,
+                                                  AprilUtils::LuaTable());
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -322,6 +324,7 @@ namespace Basics {
     mat = new Matrix<T>(2,dims);
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
+    bool use_map = !map.empty();
     if (read_empty) {
       // Allows delim at end of the token and therefore empty fields can be
       // identified and assigned to default_value.
@@ -335,7 +338,21 @@ namespace Basics {
             *data_it = default_value;
           }
           else {
-            ascii_extractor(token, *data_it);
+            char back = token[token.len()-1];
+            if (!ascii_extractor(token, *data_it)) {
+              if (use_map) {
+                size_t len = token.len();
+                if (read_empty && (strchr(delim, back) || strchr("\r\n", back))) {
+                  april_assert(token.len() > 1u);
+                  len -= 1u;
+
+                }
+                *data_it = map.opt((const char *)(token), len, default_value);
+              } // if (use_map)
+              else { // not use_map
+                break;
+              }
+            }
           }
           ++data_it;
           ++num_cols_size_count;
@@ -351,8 +368,13 @@ namespace Basics {
       // Doesn't allow delim at end of the token and empty fields are forbidden
       while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
         int num_cols_size_count = 0;
-        while (data_it!=mat->end() &&
-               ascii_extractor(line, *data_it)) {
+        while (data_it!=mat->end()) {
+          token = line.extract_token(delim, read_empty);
+          if (!token) break;
+          if (!ascii_extractor(token, *data_it)) {
+            if (!use_map || map.checkNil(token)) break;
+            *data_it = map.get<T>((const char *)(token), token.len());
+          }
           ++data_it;
           ++num_cols_size_count;
         }
@@ -373,7 +395,7 @@ namespace Basics {
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
                            const AprilUtils::LuaTable &options) {
-    UNUSED_VARIABLE(options);
+    const char *delim = options.opt(MatrixIO::DELIM_OPTION, " ");
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     if (this->getNumDim() != 2) {
@@ -392,7 +414,7 @@ namespace Basics {
     for(typename Matrix<T>::const_iterator it(this->begin());
         it!=this->end();++it,++i) {
       ascii_coder(*it, stream);
-      stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : delim[0]));
     }
     if ((i % columns) != 0) {
       stream->printf("\n"); 

@@ -25,6 +25,7 @@
 #include "reduce_matrix.h"
 #include "smart_ptr.h"
 
+using namespace AprilMath::MatrixExt::Initializers;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
@@ -43,10 +44,9 @@ namespace AprilMath {
         };
         
         /////////////////////////////////////////////////////////////////////////
-        
+
         struct CrossEntropy {
           const float log_epsilon, log_1_epsilon, EPSILON;
-          
           CrossEntropy(float EPSILON) : log_epsilon(logf(EPSILON)),
                                         log_1_epsilon(logf(1.0f - EPSILON)),
                                         EPSILON(EPSILON) {
@@ -79,7 +79,7 @@ namespace AprilMath {
             return sum;
           }
         };
-
+        
         /////////////////////////////////////////////////////////////////////////
 
         struct NonPairedCrossEntropy {
@@ -187,18 +187,20 @@ namespace AprilMath {
         
       } // namespace Kernels
 
+      template <typename T>
       void matMSE(Basics::MatrixFloat *output,
                   const Basics::MatrixFloat *input,
-                  const Basics::MatrixFloat *target) {
+                  const T *target) {
         AprilUtils::SharedPtr<Basics::MatrixFloat>
           map_output( MatrixScalarMap2(input, target, Kernels::MSE(),
                                        input->cloneOnlyDims()) );
         matSum(map_output.get(), 1, output);
       }
       
+      template<typename T>
       void matCrossEntropy(Basics::MatrixFloat *output,
                            const Basics::MatrixFloat *input,
-                           const Basics::MatrixFloat *target,
+                           const T *target,
                            float near_zero) {
         Kernels::CrossEntropy cross_entropy(near_zero);
         AprilUtils::SharedPtr<Basics::MatrixFloat>
@@ -206,7 +208,7 @@ namespace AprilMath {
                                       input->cloneOnlyDims()));
         matSum(map_output.get(), 1, output);
       }
-
+      
       void matNonPairedCrossEntropy(Basics::MatrixFloat *output,
                                     const Basics::MatrixFloat *input,
                                     const Basics::MatrixFloat *target,
@@ -219,9 +221,10 @@ namespace AprilMath {
       }      
       /////////////////////////////////////////////////////////////////////////
 
+      template<typename T>
       void matCrossEntropyGradient(Basics::MatrixFloat *output,
                                    const Basics::MatrixFloat *input,
-                                   const Basics::MatrixFloat *target,
+                                   const T *target,
                                    float near_zero) {
         Kernels::CrossEntropyGradient cross_entropy_gradient(near_zero);
         MatrixScalarMap2(input, target, cross_entropy_gradient, output);
@@ -258,7 +261,38 @@ namespace AprilMath {
                                       input->cloneOnlyDims()));
         matSum(map_output.get(), 1, output);
       }
+      
+      /////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      
+      template void matMSE(Basics::MatrixFloat *output,
+                           const Basics::MatrixFloat *input,
+                           const Basics::MatrixFloat *target);
 
+      template void matMSE(Basics::MatrixFloat *output,
+                           const Basics::MatrixFloat *input,
+                           const Basics::SparseMatrixFloat *target);
+
+      template void matCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::MatrixFloat *target,
+                                    float near_zero);
+
+      template void matCrossEntropy(Basics::MatrixFloat *output,
+                                    const Basics::MatrixFloat *input,
+                                    const Basics::SparseMatrixFloat *target,
+                                    float near_zero);
+
+      template void matCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::MatrixFloat *target,
+                                            float near_zero);
+      
+      template void matCrossEntropyGradient(Basics::MatrixFloat *output,
+                                            const Basics::MatrixFloat *input,
+                                            const Basics::SparseMatrixFloat *target,
+                                            float near_zero);
+      
       /////////////////////////////////////////////////////////////////////////
     } // namespace LossOperations
   } // namespace MatrixExt

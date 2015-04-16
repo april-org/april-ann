@@ -18,7 +18,7 @@ local april_assert = april_assert
 
 -----------------------------------------
 
-local MAX_SIZE_WO_COLLECT_GARBAGE=50*1024*1024 -- 50 MB
+local MAX_SIZE_WO_COLLECT_GARBAGE=10*1024*1024 -- 10 MB
 
 -----------------------
 -- TRAINABLE CLASSES --
@@ -172,8 +172,7 @@ trainable.dataset_multiple_iterator =
       local num_ds
       --
       params.datasets = iterator(ipairs(params.distribution.datasets)):
-      map(function() return dataset.token.union() end):
-        table()
+      map(function() return dataset.token.union() end):table()
       --
       for i,v in ipairs(params.distribution) do
         local nump
@@ -226,7 +225,6 @@ trainable.dataset_multiple_iterator =
           i=i+1
           if i<= #ds_idx_table then
             return ds_idx_table[i]
-          else ds_idx_table = {}
           end
         end
       else

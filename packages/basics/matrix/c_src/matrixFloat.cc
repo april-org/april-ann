@@ -18,6 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <cmath>
+
 #include "binarizer.h"
 #include "check_floats.h"
 #include "constString.h"
@@ -62,7 +64,14 @@ namespace Basics {
     template<>
     void AsciiCoder<float>::operator()(const float &value,
                                        AprilIO::StreamInterface *stream) {
-      stream->printf("%.5g", value);
+      if (value <= 16777216.0f &&
+          value >= -16777216.0f &&
+          static_cast<float>(static_cast<int>(value)) == value) {
+        stream->printf("%d", static_cast<int>(value));
+      }
+      else {
+        stream->printf("%.5g", value);
+      }
     }
   
     template<>

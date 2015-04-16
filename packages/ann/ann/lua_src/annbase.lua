@@ -479,44 +479,115 @@ ann.mlp.all_all.generate = april_doc {
   params= {
     { "Topology description string as ",
       "'1024 inputs 128 logistc 10 log_softmax" },
-    { "First count parameter (count) ",
-      "[optional]. By default 1." },
-    { "Prefix for all component and weight names [optional].",
-      "By default is an empty string." },
+    { "A table with extra arguments. Positional arguments are given as",
+      "parameters designed by #n in topology options string. Besides,",
+      "first_count and names_prefix keys can be given.", },
   },
   outputs= {
-    {"A component object with the especified ",
+    {"A component object with the specified ",
      "neural network topology" }
   }
 } ..
-  function(topology, first_count, names_prefix)
-    local first_count  = first_count or 1
+  function(topology, tbl, first_count, names_prefix)
+    if type(tbl) == "table" then
+      assert(not first_count and not names_prefix)
+      first_count, names_prefix = tbl.first_count, tbl.names_prefix
+    else -- for back compatibility, it will be deprecated
+      first_count, names_prefix = tbl, first_count
+    end
+    local first_count  = tonumber(first_count or 1)
     local names_prefix = names_prefix or ""
     local thenet = ann.components.stack{ name=names_prefix.."stack" }
     local name   = "layer"
     local count  = first_count
-    local t      = string.tokenize(topology)
-    local prev_size = tonumber(t[1])
+    local prev_size
     local names_order = {}
-    for i=3,#t,2 do
-      local size = tonumber(t[i])
-      local actf = t[i+1]
-      thenet:push( ann.components.hyperplane{
-                     input=prev_size, output=size,
-                     bias_weights=names_prefix.."b" .. count,
-                     dot_product_weights=names_prefix.."w" .. count,
-                     name=names_prefix.."layer" .. count,
-                     bias_name=names_prefix.."b" .. count,
-                     dot_product_name=names_prefix.."w" .. count } )
-      table.insert(names_order, names_prefix.."b"..count)
-      table.insert(names_order, names_prefix.."w"..count)
-      if not ann.components.actf[actf] then
-        error("Incorrect activation function: " .. actf)
-      end
-      thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
-      count = count + 1
-      prev_size = size
+    -- RECURSIVE DESCENT PARSER
+    -- reads a token which can be any string and symbols of {}=
+    local tokenizer = coroutine.wrap(function()
+        local last = 1
+        for i=1,#topology do
+          local c = topology:sub(i,i)
+          if c:find("[%s%c,]") then
+            if last < i then coroutine.yield(topology:sub(last,i-1)) end
+            last = i+1
+          else -- if c is space or special then ... else
+            if c:find("[{}=]") then
+              if last < i then coroutine.yield(topology:sub(last,i-1)) end
+              coroutine.yield(c)
+              last = i+1
+            end -- if c in [{}=]
+          end -- if c is space or special then ... else ... end
+        end -- for i=1,#topology
+        if last < #topology then coroutine.yield(topology:sub(last)) end
+    end) -- coroutine.wrap(function()
+    -- reads a sequence of options delimited by braces
+    local function read_options(safe_tokenizer, params)
+      local options = {}
+      repeat
+        local tk = safe_tokenizer()
+        if tk ~= "}" then
+          local key = tk
+          assert(safe_tokenizer() == "=", "Incorrect topology string")
+          local value = safe_tokenizer()
+          if value:sub(1,1) == "#" then value = params[tonumber(value:sub(2))] end
+          local value = tonumber(value) or value
+          options[key] = value
+        end
+      until tk == "}"
+      return options
     end
+    -- reads ANN components from the topology string and push them into the
+    -- stacked model
+    local function read_component(tk0, tokenizer, params)
+      local safe_tokenizer = function()
+        return assert(tokenizer(), "Incorrect topology string")
+      end
+      local n0      = tonumber(tk0)
+      local kind    = tk0
+      local options = {}
+      if n0 then kind = safe_tokenizer() end
+      tk0 = tokenizer()
+      if tk0 == "{" then -- the string contains options for current component
+        options = read_options(safe_tokenizer, params)
+        tk0 = tokenizer()
+      end
+      -- push the corresponding components
+      if kind ~= "inputs" then
+        if n0 then -- hyperplane + activation function
+          local size = n0
+          local actf = kind
+          thenet:push( ann.components.hyperplane{
+                         input=prev_size, output=size,
+                         bias_weights=names_prefix.."b" .. count,
+                         dot_product_weights=names_prefix.."w" .. count,
+                         name=names_prefix.."layer" .. count,
+                         bias_name=names_prefix.."b" .. count,
+                         dot_product_name=names_prefix.."w" .. count } )
+          table.insert(names_order, names_prefix.."b"..count)
+          table.insert(names_order, names_prefix.."w"..count)
+          if not ann.components.actf[actf] then
+            error("Incorrect activation function: " .. actf)
+          end
+          options.name = names_prefix .. "actf" .. count
+          thenet:push( ann.components.actf[actf]( options ) )
+        else -- any other kind of component
+          options.name = names_prefix .. "component" .. count
+          local ctor = ann.components[kind] or ann.components.actf[kind]
+          assert(ctor, "Incorrect component name: " .. kind)
+          thenet:push( ctor( options ) )
+        end
+        count = count + 1
+      end -- if kind ~= "inputs"
+      prev_size = n0 or prev_size
+      return tk0
+    end
+    -- main loop of the parser
+    local tk0,component = tokenizer(),nil
+    while tk0 do
+      tk0 = read_component(tk0, tokenizer, tbl)
+    end
+    --
     local aux = get_lua_properties_table(thenet)
     aux.description  = topology
     aux.first_count  = first_count

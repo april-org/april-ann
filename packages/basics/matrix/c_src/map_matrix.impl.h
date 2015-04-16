@@ -53,6 +53,55 @@ namespace AprilMath {
       return MatrixSpanMap2(input1, input2, span_functor, dest, N_th, SIZE_th);
     }
 
+    template<typename T1, typename T2, typename O, typename OP>
+    Basics::Matrix<O> *MatrixScalarMap2(const Basics::Matrix<T1> *input1,
+                                        const Basics::SparseMatrix<T2> *input2,
+                                        const OP &functor,
+                                        Basics::Matrix<O> *dest,
+                                        const int N_th,
+                                        const unsigned int SIZE_th) {
+      // TODO: Implement using a CPU/CUDA wrapper
+      UNUSED_VARIABLE(N_th);
+      UNUSED_VARIABLE(SIZE_th);
+      april_assert(input1 != 0 && input2 != 0 && dest != 0);
+      if (input1->getNumDim() != 2) {
+        ERROR_EXIT(256, "Needs 2-dimensional matrices\n");
+      }
+      if (!input2->sameDim(input1)) {
+        ERROR_EXIT(256, "Incompatible matrix sizes\n");
+      }
+      if (input2->getSparseFormat() != CSR_FORMAT) {
+        ERROR_EXIT(256, "Needs a CSR sparse matrix\n");
+      }
+      int input2_i, input2_j=0;
+      typename Basics::Matrix<O>::iterator dest_it = dest->begin();
+      typename Basics::Matrix<T1>::const_iterator input1_it = input1->begin();
+      typename Basics::SparseMatrix<T2>::const_iterator input2_it = input2->begin();
+      for (int i=0; i<input1->getDimSize(0); ++i) {
+        april_assert(input1_it != input1->end());
+        april_assert(dest_it != dest->end());
+        for (int j=0; j<input1->getDimSize(1); ++j) {
+          bool input2_end = (input2_it == input2->end());
+          if (!input2_end) input2_it.getCoords(input2_i, input2_j);
+          else input2_i = input1->getDimSize(0);
+          T2 input2;
+          if (input2_i == i && input2_j == j) {
+            // non-zero input2
+            input2 = *input2_it;
+            ++input2_it;
+          }
+          else {
+            input2 = T2(0.0f);
+          }
+          *dest_it = functor(*input1_it, input2);
+          //
+          ++input1_it;
+          ++dest_it;
+        }
+      }
+      return dest;
+    }
+
     template<typename T1, typename T2, typename T3, typename O, typename OP>
     Basics::Matrix<O> *MatrixScalarMap3(const Basics::Matrix<T1> *input1,
                                         const Basics::Matrix<T2> *input2,

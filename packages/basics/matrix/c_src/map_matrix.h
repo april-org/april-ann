@@ -29,6 +29,10 @@ namespace Basics {
   // forward declaration
   template <typename T>
   class Matrix;
+
+  // forward declaration  
+  template <typename T>
+  class SparseMatrix;
 }
 
 namespace AprilMath {
@@ -54,8 +58,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over a span.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input=dest and the computation will be done
      * in-place.
@@ -65,7 +68,7 @@ namespace AprilMath {
     template<typename T, typename O, typename OP>
     Basics::Matrix<O> *MatrixSpanMap1(const Basics::Matrix<T> *input,
                                       const OP &functor,
-                                      Basics::Matrix<O> *dest = 0,
+                                      Basics::Matrix<O> *dest,
                                       const int N_th = DEFAULT_N_TH,
                                       const unsigned int SIZE_th = DEFAULT_SIZE_TH);
   
@@ -87,8 +90,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over scalars.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input=dest and the computation will be done
      * in-place.
@@ -101,7 +103,7 @@ namespace AprilMath {
     template<typename T, typename O, typename OP>
     Basics::Matrix<O> *MatrixScalarMap1(const Basics::Matrix<T> *input,
                                         const OP &functor,
-                                        Basics::Matrix<O> *dest = 0,
+                                        Basics::Matrix<O> *dest,
                                         const int N_th = DEFAULT_N_TH,
                                         const unsigned int SIZE_th = DEFAULT_SIZE_TH);
   
@@ -129,8 +131,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over a span.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input1=dest or @c input2=dest and the
      * computation will be done in-place.
@@ -141,7 +142,7 @@ namespace AprilMath {
     Basics::Matrix<O> *MatrixSpanMap2(const Basics::Matrix<T1> *input1,
                                       const Basics::Matrix<T2> *input2,
                                       const OP &functor,
-                                      Basics::Matrix<O> *dest = 0,
+                                      Basics::Matrix<O> *dest,
                                       const int N_th = DEFAULT_N_TH,
                                       const unsigned int SIZE_th  = DEFAULT_SIZE_TH);
 
@@ -174,8 +175,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over a span.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input1=dest or @c input2=dest or @c
      * input3=dest and the computation will be done in-place.
@@ -187,7 +187,7 @@ namespace AprilMath {
                                       const Basics::Matrix<T2> *input2,
                                       const Basics::Matrix<T3> *input3,
                                       const OP &functor,
-                                      Basics::Matrix<O> *dest = 0,
+                                      Basics::Matrix<O> *dest,
                                       const int N_th = DEFAULT_N_TH,
                                       const unsigned int SIZE_th  = DEFAULT_SIZE_TH);
 
@@ -213,8 +213,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over scalars.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input1=dest or @c input2=dest and the
      * computation will be done in-place.
@@ -228,8 +227,18 @@ namespace AprilMath {
     Basics::Matrix<O> *MatrixScalarMap2(const Basics::Matrix<T1> *input1,
                                         const Basics::Matrix<T2> *input2,
                                         const OP &functor,
-                                        Basics::Matrix<O> *dest = 0,
+                                        Basics::Matrix<O> *dest,
                                         const int N_th = DEFAULT_N_TH,
+                                        const unsigned int SIZE_th = DEFAULT_SIZE_TH);
+    /**
+     * @brief Applies a scalar-based binary MAP operation with a sparse matrix.
+     */
+    template<typename T1, typename T2, typename O, typename OP>
+    Basics::Matrix<O> *MatrixScalarMap2(const Basics::Matrix<T1> *input1,
+                                        const Basics::SparseMatrix<T2> *input2,
+                                        const OP &functor,
+                                        Basics::Matrix<O> *dest,
+                                        const int N_th = DEFAULT_SIZE_TH,
                                         const unsigned int SIZE_th = DEFAULT_SIZE_TH);
     
     /**
@@ -258,8 +267,7 @@ namespace AprilMath {
      *
      * @param functor - The functor which computes the MAP operation over scalars.
      *
-     * @param dest - The output Basics::Matrix. If @c NULL given or not given at
-     * all, a new Matrix of type @c O will be allocated with the needed space.
+     * @param dest - The output Basics::Matrix.
      *
      * @note It is possible that @c input1=dest or @c input2=dest or @c
      * input3=dest and the computation will be done in-place.
@@ -274,7 +282,7 @@ namespace AprilMath {
                                         const Basics::Matrix<T2> *input2,
                                         const Basics::Matrix<T3> *input3,
                                         const OP &functor,
-                                        Basics::Matrix<O> *dest = 0,
+                                        Basics::Matrix<O> *dest,
                                         const int N_th = DEFAULT_N_TH,
                                         const unsigned int SIZE_th = DEFAULT_SIZE_TH);
 

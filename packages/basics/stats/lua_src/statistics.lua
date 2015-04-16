@@ -600,6 +600,50 @@ confus_matrix_methods.printConfusion =
     printf("\t%d/%d %0.4f\t|\n", hits, total, acc)
   end
 
+confus_matrix_methods.tostring =
+  function(self)
+
+    local total_pred = {}
+
+    local t = {}
+
+    table.insert(t, "\t|\t Predicted ")
+
+    for i = 1, self.num_classes do
+      table.insert(t, ("\t\t"))
+    end
+
+    table.insert(t,"|\n")
+    table.insert(t, "______\t|")
+    for i = 1, self.num_classes do
+      table.insert(t, "\t___\t")
+    end
+
+    table.insert(t, "\t___\t\t|\n")
+    for i,v in ipairs(self.confusion) do
+
+      local tag = i
+      table.insert(t, string.format("%s\t|\t", tag))
+      
+      local recall, hits, total = self:getRecall(i)
+      table.insert(t, string.format("%s\t|\t %d/%d %0.4f\t|\n", table.concat(v, "\t|\t"), hits, total, recall))
+    end
+    table.insert(t, "______\t|")
+    for i = 1, self.num_classes do
+      table.insert(t, "\t___\t")
+    end
+
+    table.insert(t, "\t___\t|\n")
+    table.insert(t, "\t\t|")
+    for i = 1, self.num_classes do
+      table.insert(t, string.format("\t%0.4f\t|", self:getPrecision(i)))
+    end
+
+    local acc, hits, total = self:getAccuracy()
+    table.insert(t, string.format("\t%d/%d %0.4f\t|\n", hits, total, acc))
+
+    return table.concat(t,"")
+  end
 function confus_matrix_methods:printInf()
   
   printf("Samples %d, hits = %d, misses = %d (%0.4f)\n", self.samples, self.hits, self.misses, self.misses/self.total)

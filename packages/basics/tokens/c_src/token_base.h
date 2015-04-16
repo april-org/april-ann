@@ -64,10 +64,18 @@ namespace Basics {
     /// Templatized method which converts the given Token pointer to a Token child
     /// class
     template <typename T> T convertTo();
+
+    /// Templatized method which converts the given Token pointer to a Token child
+    /// class and throws an error in case of failure
+    template <typename T> T convertToAndCheck();
   
     /// Templatized method which converts the given const Token pointer to a const
     /// Token child class
     template <typename T> const T convertTo() const;
+
+    /// Templatized method which converts the given const Token pointer to a const
+    /// Token child class and throws an error in case of failure
+    template <typename T> const T convertToAndCheck() const;
   };
 
   /// TokenNull is a singleton class which represents a void Token.
@@ -123,6 +131,26 @@ namespace Basics {
     }
     const T result = dynamic_cast<const T>(this);
     april_assert(result != 0);
+    return result;
+  }
+
+  template <typename T>
+  T Token::convertToAndCheck() {
+    T result = this->convertTo<T>();
+    if (result == 0) {
+      ERROR_EXIT1(256, "Unable to convert the given token into %s",
+                  typeid(T).name());
+    }
+    return result;
+  }
+  
+  template <typename T>
+  const T Token::convertToAndCheck() const {
+    const T result = this->convertTo<T>();
+    if (result == 0) {
+      ERROR_EXIT1(256, "Unable to convert the given token into %s",
+                  typeid(T).name());
+    }
     return result;
   }
 

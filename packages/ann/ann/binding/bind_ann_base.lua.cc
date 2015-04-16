@@ -129,6 +129,7 @@ namespace AprilUtils {
 #include "hardtanh_actf_component.h"
 #include "hyperplane_component.h"
 #include "join_component.h"
+#include "leaky_relu_actf_component.h"
 #include "linear_actf_component.h"
 #include "log_actf_component.h"
 #include "log_logistic_actf_component.h"
@@ -1681,6 +1682,31 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   obj = new ReLUActfANNComponent(name);
   LUABIND_RETURN(ReLUActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//       LeakyReLUActfANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LeakyReLUActfANNComponent ann.components.actf.leaky_relu
+//BIND_CPP_CLASS    LeakyReLUActfANNComponent
+//BIND_SUBCLASS_OF  LeakyReLUActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LeakyReLUActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float leak=0.01f;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "leak", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, leak, float, leak, 0.01f);
+  }
+  obj = new LeakyReLUActfANNComponent(leak, name);
+  LUABIND_RETURN(LeakyReLUActfANNComponent, obj);  
 }
 //BIND_END
 
