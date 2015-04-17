@@ -1473,7 +1473,7 @@ trainable_supervised_trainer_methods.use_dataset =
       }, 
     params = {
       ["input_dataset"]  = "A dataset float or dataset token",
-      ["output_dataset"] = "A dataset float or dataset token [optional].",
+      ["output_dataset"] = "A dataset float [optional].",
       ["bunch_size"]     = 
         {
           "Bunch size (mini-batch). It is [optional] if bunch_size",
@@ -1498,17 +1498,13 @@ trainable_supervised_trainer_methods.use_dataset =
            "Execute build method before call this method")
     local nump        = params.input_dataset:numPatterns()
     local outsize     = self.ann_component:get_output_size()
-    if params.output_dataset then
-      if is_a(params.output_dataset, dataset) then
-        params.output_dataset = dataset.token.wrapper(params.output_dataset)
-      end
-    elseif is_a(params.input_dataset, dataset) then
-      params.output_dataset = dataset.matrix(matrix(nump, outsize))
-      t.output_dataset      = params.output_dataset
+    local result_ds   = params.output_dataset
+    if not params.output_dataset then
+      result_ds = dataset.matrix(matrix(nump, outsize))
+      params.output_dataset = out_ds
+    end
+    if is_a(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
-    else
-      params.output_dataset = dataset.token.vector(outsize)
-      t.output_dataset      = params.output_dataset
     end
     if is_a(params.input_dataset, dataset) then
       params.input_dataset = dataset.token.wrapper(params.input_dataset)
@@ -1527,8 +1523,8 @@ trainable_supervised_trainer_methods.use_dataset =
       output_dataset:putPatternBunch(bunch_indexes,output)
       k = k + bunch_mb_size
       if k > MAX_SIZE_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-    end  
-    return t.output_dataset
+    end
+    return result_ds
   end
 
 ------------------------------------------------------------------------
