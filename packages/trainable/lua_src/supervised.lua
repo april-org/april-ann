@@ -1498,11 +1498,10 @@ trainable_supervised_trainer_methods.use_dataset =
            "Execute build method before call this method")
     local nump        = params.input_dataset:numPatterns()
     local outsize     = self.ann_component:get_output_size()
-    local result_ds   = params.output_dataset
     if not params.output_dataset then
-      result_ds = dataset.matrix(matrix(nump, outsize))
-      params.output_dataset = out_ds
+      params.output_dataset = dataset.matrix(matrix(nump, outsize))
     end
+    local result_ds = params.output_dataset
     if is_a(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
