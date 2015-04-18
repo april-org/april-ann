@@ -17,6 +17,7 @@
      name = "test",
      lua_unit_test{
        file={
+         "test/test.lua",
 	 "test/test-components.lua",
 	 "test/test-sparse.lua",
        },
