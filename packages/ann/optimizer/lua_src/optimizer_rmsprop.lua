@@ -15,23 +15,27 @@ local md = matrix.dict
 local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 
 ------------------------------------
---------- ADADELTA METHOD ----------
+--------- RMSPROP METHOD ----------
 ------------------------------------
 
--- ADADELTA: An Adaptive Learning Rate Method
--- Matthew D. Zeiler
--- ArXiV.org 2012
--- http://arxiv.org/abs/1212.5701
+-- Tieleman, T. and Hinton, G. (2012),
+-- Lecture 6.5 - rmsprop, COURSERA: Neural Networks for Machine Learning
+-- http://climin.readthedocs.org/en/latest/rmsprop.html
+--
+-- TODO:
+-- RMSProp and equilibrated adaptive learning rates for non-convex optimization
+-- http://arxiv.org/pdf/1502.04390v1.pdf
 
-local adadelta, adadelta_methods = class("ann.optimizer.adadelta", ann.optimizer)
-ann.optimizer.adadelta = adadelta -- global environment
+local rmsprop, rmsprop_methods = class("ann.optimizer.rmsprop", ann.optimizer)
+ann.optimizer.rmsprop = rmsprop -- global environment
 
-function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
+function rmsprop:constructor(g_options, l_options, count, Eupdates, Erms)
   -- the base optimizer, with the supported learning parameters
   ann.optimizer.constructor(self,
                             {
-                              {"learning_rate", "Global learning rate (1.0)"},
-			      {"decay", "Decay rate (0.95)"},
+                              {"learning_rate", "Global learning rate (0.01)"},
+                              {"momentum", "Nesterov momentum (0.0)"},
+			      {"decay", "Decay rate (0.99)"},
 			      {"epsilon", "Epsilon constant (1e-06)"},
                               {"weight_decay", "Weight L2 regularization (0.0)"},
                               {"max_norm_penalty", "Weight max norm upper bound (0)"},
@@ -40,24 +44,36 @@ function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
 			    l_options,
 			    count)
   self.Eupdates = Eupdates or {}
-  self.Egradients = Egradients or {}
+  self.Erms = Erms or {}
   if not g_options then
     -- default values
-    self:set_option("learning_rate", 1.0)
-    self:set_option("decay", 0.95)
+    self:set_option("learning_rate", 0.01)
+    self:set_option("momentum", 0.0)
+    self:set_option("decay", 0.99)
     self:set_option("epsilon", 1e-06)
     self:set_option("weight_decay", 0.0)
     self:set_option("max_norm_penalty", 0.0)
   end
 end
 
-function adadelta_methods:execute(eval, weights)
+function rmsprop_methods:execute(eval, weights)
   local table = table
   local assert = assert
-  --
-  local origw = weights
-  local arg = table.pack( eval(origw) )
+  -- apply momentum to weights
+  local has_momentum = false
+  for wname,w in pairs(weights) do
+    local mt = self:get_option_of(wname, "momentum")
+    if mt > 0.0 then
+      local Eupdate = self.Eupdates[wname] or matrix.as(w):zeros()
+      has_momentum = true
+      w:axpy(-mt, Eupdate)
+      self.Eupdates[wname] = Eupdate
+    end
+  end
+  -- compute gradients
+  local arg = table.pack( eval(weights) )
   local tr_loss,gradients = table.unpack(arg)
+  
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
@@ -65,24 +81,29 @@ function adadelta_methods:execute(eval, weights)
   local count = self:get_count()
   for wname,w in pairs(weights) do
     local Eupdate     = self.Eupdates[wname] or matrix.as(w):zeros()
-    local Egradient   = self.Egradients[wname] or matrix.as(w):zeros()
-    local grad        = gradients[wname]
+    local Erms        = self.Erms[wname] or matrix.as(w):zeros()
+    local grad        = april_assert(gradients[wname],
+                                     "Not found gradients of %s", wname)
     -- learning options
     local lr          = self:get_option_of(wname, "learning_rate")
+    local mt          = self:get_option_of(wname, "momentum")
     local decay       = self:get_option_of(wname, "decay")
     local eps         = self:get_option_of(wname, "epsilon")
     local l2          = self:get_option_of(wname, "weight_decay")
     local mnp         = self:get_option_of(wname, "max_norm_penalty")
+    
     -- L2 regularization
     if l2 > 0.0 then grad:axpy(l2, w) end
-    -- accumulate gradients
-    Egradient[{}] = decay*Egradient + (1-decay)*grad^2
-    -- compute update on grad matrix
-    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps))
-    -- accumulate updates
-    Eupdate[{}] = decay*Eupdate + (1-decay)*update^2
-    -- apply update matrix to the weights
-    w:axpy(lr, update)
+    -- apply RMSProp with Nesterov momentum rules    
+    Erms:scal(decay):axpy(1 - decay, mop.cmul(grad, grad))
+    if mt > 0.0 then
+      local tmp = (Erms + eps):sqrt():div(lr):cmul(grad)
+      Eupdate:scal(mt):axpy(1.0, tmp)
+    else
+      Eupdate:copy(Erms):scalar_add(eps):sqrt():div(lr):cmul(grad)
+    end
+    -- apply update step
+    w:axpy(-1.0, Eupdate)
     -- constraints
     if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     -- weights normality check
@@ -90,8 +111,8 @@ function adadelta_methods:execute(eval, weights)
       w:prune_subnormal_and_check_normal()
     end
     --
-    self.Eupdates[wname] = Eupdate
-    self.Egradients[wname] = Egradient
+    self.Erms[wname] = Erms
+    if mt > 0.0 then self.Eupdates[wname] = Eupdate end
   end
   -- count one more update iteration
   self:count_one()
@@ -99,19 +120,19 @@ function adadelta_methods:execute(eval, weights)
   return table.unpack(arg)
 end
 
-function adadelta_methods:clone()
-  local obj = ann.optimizer.adadelta()
+function rmsprop_methods:clone()
+  local obj = ann.optimizer.rmsprop()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
   obj.Eupdates          = md.clone( self.Eupdates )
-  obj.Egradients        = md.clone( self.Egradients )
+  obj.Erms        = md.clone( self.Erms )
   return obj
 end
 
-function adadelta_methods:to_lua_string(format)
+function rmsprop_methods:to_lua_string(format)
   local format = format or "binary"
-  local str_t = { "ann.optimizer.adadelta(",
+  local str_t = { "ann.optimizer.rmsprop(",
 		  table.tostring(self.global_options),
 		  ",",
 		  table.tostring(self.layerwise_options),
@@ -120,14 +141,14 @@ function adadelta_methods:to_lua_string(format)
 		  ",",
 		  util.to_lua_string(self.Eupdates, format),
 		  ",",
-		  util.to_lua_string(self.Egradients, format),
+		  util.to_lua_string(self.Erms, format),
 		  ")" }
   return table.concat(str_t, "")
 end
 
-local adadelta_properties = {
+local rmsprop_properties = {
   gradient = true
 }
-function adadelta_methods:needs_property(property)
-  return adadelta_properties[property]
+function rmsprop_methods:needs_property(property)
+  return rmsprop_properties[property]
 end

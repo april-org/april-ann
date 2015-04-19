@@ -3,8 +3,8 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 local check = utest.check
 local T = utest.test
 --
-T("ADADELTAConvexTest", function()
-    local opt = ann.optimizer.adadelta()
+T("RMSPropConvexTest", function()
+    local opt = ann.optimizer.rmsprop()
     -- optimize quadractic function: f(x) = 3*x^2 - 2*x + 10
     local function f(x) return (3*x^2 - 2*x + 10):sum() end
     local function df_dx(x) return 6*x - 2 end
@@ -17,7 +17,7 @@ T("ADADELTAConvexTest", function()
     check.eq(x, matrix(1,1,{0.333}))
 end)
 
-T("ADADELTATestDigits", function()
+T("RMSPropTestDigits", function()
     -- un generador de valores aleatorios... y otros parametros
     bunch_size     = tonumber(arg[1]) or 64
     semilla        = 1234
@@ -26,21 +26,23 @@ T("ADADELTATestDigits", function()
     inf            = -0.1
     sup            =  0.1
     shuffle_random = random(5678)
+    learning_rate  = 0.001
+    momentum       = 0.4
     weight_decay   = 0.001
     max_epochs     = 10
 
     -- training and validation
     errors = {
-      {2.3053319, 2.3015521},
-      {2.1570034, 1.8272703},
-      {1.7826253, 1.9765174},
-      {1.4031528, 1.0635141},
-      {1.2507044, 0.9257209},
-      {0.7426600, 0.7414427},
-      {0.7360206, 0.5097144},
-      {0.6020166, 0.4537252},
-      {0.3055784, 0.3659463},
-      {0.2493757, 0.3132612},
+      {2.2983048, 2.3337903},
+      {1.8389291, 1.2901400},
+      {1.0636393, 0.7778704},
+      {0.5792997, 0.4687783},
+      {0.3335530, 0.3594898},
+      {0.2247733, 0.2889563},
+      {0.1688207, 0.2484314},
+      {0.1469830, 0.2232731},
+      {0.1109474, 0.2146144},
+      {0.1013973, 0.2133277},
     }
     epsilon = 0.01 -- 1% relative difference
 
@@ -94,9 +96,11 @@ T("ADADELTATestDigits", function()
     trainer = trainable.supervised_trainer(thenet,
                                            ann.loss.multi_class_cross_entropy(10),
                                            bunch_size,
-                                           ann.optimizer.adadelta())
+                                           ann.optimizer.rmsprop())
     trainer:build()
 
+    trainer:set_option("learning_rate", learning_rate)
+    trainer:set_option("momentum",      momentum)
     trainer:set_option("weight_decay",  weight_decay)
     -- bias has weight_decay of ZERO
     trainer:set_layerwise_option("b.", "weight_decay", 0)
