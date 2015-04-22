@@ -24,7 +24,7 @@ if autodiff then
         -- FIXME: ASGD is failing the test
         -- ann.optimizer.asgd():
         -- set_option("learning_rate", 0.08),
-        ann.optimizer.adadelta():set_option("learning_rate", 1.1),
+        ann.optimizer.adadelta():set_option("learning_rate", 1.0):set_option("momentum", 0.6),
         ann.optimizer.adagrad():set_option("learning_rate", 0.01),
         ann.optimizer.cg(),
         ann.optimizer.rprop(),
