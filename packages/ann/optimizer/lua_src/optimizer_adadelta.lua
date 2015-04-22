@@ -26,11 +26,12 @@ local MAX_UPDATES_WITHOUT_PRUNE = ann.optimizer.MAX_UPDATES_WITHOUT_PRUNE
 local adadelta, adadelta_methods = class("ann.optimizer.adadelta", ann.optimizer)
 ann.optimizer.adadelta = adadelta -- global environment
 
-function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
+function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients, update)
   -- the base optimizer, with the supported learning parameters
   ann.optimizer.constructor(self,
                             {
                               {"learning_rate", "Global learning rate (1.0)"},
+                              {"momentum", "Nesterov momentum (0.0)"},
 			      {"decay", "Decay rate (0.95)"},
 			      {"epsilon", "Epsilon constant (1e-06)"},
                               {"weight_decay", "Weight L2 regularization (0.0)"},
@@ -41,9 +42,11 @@ function adadelta:constructor(g_options, l_options, count, Eupdates, Egradients)
 			    count)
   self.Eupdates = Eupdates or {}
   self.Egradients = Egradients or {}
+  self.update = update or {}
   if not g_options then
     -- default values
     self:set_option("learning_rate", 1.0)
+    self:set_option("momentum", 0.0)
     self:set_option("decay", 0.95)
     self:set_option("epsilon", 1e-06)
     self:set_option("weight_decay", 0.0)
@@ -57,6 +60,15 @@ function adadelta_methods:execute(eval, weights)
   --
   local origw = weights
   local arg = table.pack( eval(origw) )
+  -- apply momentum to weights
+  for wname,w in pairs(weights) do
+    local mt = self:get_option_of(wname, "momentum")
+    if mt > 0.0 then
+      local update = self.update[wname] or matrix.as(w):zeros()
+      w:axpy(mt, update)
+      self.update[wname] = update
+    end
+  end
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
@@ -69,6 +81,7 @@ function adadelta_methods:execute(eval, weights)
     local grad        = gradients[wname]
     -- learning options
     local lr          = self:get_option_of(wname, "learning_rate")
+    local mt          = self:get_option_of(wname, "momentum")
     local decay       = self:get_option_of(wname, "decay")
     local eps         = self:get_option_of(wname, "epsilon")
     local l2          = self:get_option_of(wname, "weight_decay")
@@ -78,11 +91,11 @@ function adadelta_methods:execute(eval, weights)
     -- accumulate gradients
     Egradient[{}] = decay*Egradient + (1-decay)*grad^2
     -- compute update on grad matrix
-    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps))
+    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps)):scal(lr)
     -- accumulate updates
     Eupdate[{}] = decay*Eupdate + (1-decay)*update^2
     -- apply update matrix to the weights
-    w:axpy(lr, update)
+    w:axpy(1.0, update)
     -- constraints
     if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     -- weights normality check
@@ -92,6 +105,7 @@ function adadelta_methods:execute(eval, weights)
     --
     self.Eupdates[wname] = Eupdate
     self.Egradients[wname] = Egradient
+    if mt > 0.0 then self.update[wname] = update end
   end
   -- count one more update iteration
   self:count_one()
@@ -106,6 +120,7 @@ function adadelta_methods:clone()
   obj.global_options    = table.deep_copy(self.global_options)
   obj.Eupdates          = md.clone( self.Eupdates )
   obj.Egradients        = md.clone( self.Egradients )
+  obj.update            = md.clone( self.update )
   return obj
 end
 
@@ -121,6 +136,8 @@ function adadelta_methods:to_lua_string(format)
 		  util.to_lua_string(self.Eupdates, format),
 		  ",",
 		  util.to_lua_string(self.Egradients, format),
+                  ",",
+                  util.to_lua_string(self.update, format),
 		  ")" }
   return table.concat(str_t, "")
 end

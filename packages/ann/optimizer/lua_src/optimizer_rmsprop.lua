@@ -60,12 +60,10 @@ function rmsprop_methods:execute(eval, weights)
   local table = table
   local assert = assert
   -- apply momentum to weights
-  local has_momentum = false
   for wname,w in pairs(weights) do
     local mt = self:get_option_of(wname, "momentum")
     if mt > 0.0 then
       local Eupdate = self.Eupdates[wname] or matrix.as(w):zeros()
-      has_momentum = true
       w:axpy(-mt, Eupdate)
       self.Eupdates[wname] = Eupdate
     end
