@@ -79,6 +79,7 @@ function adadelta_methods:execute(eval, weights)
     local Eupdate     = self.Eupdates[wname] or matrix.as(w):zeros()
     local Egradient   = self.Egradients[wname] or matrix.as(w):zeros()
     local grad        = gradients[wname]
+    local update      = self.update[wname] or matrix.as(w):zeros()
     -- learning options
     local lr          = self:get_option_of(wname, "learning_rate")
     local mt          = self:get_option_of(wname, "momentum")
@@ -91,11 +92,11 @@ function adadelta_methods:execute(eval, weights)
     -- accumulate gradients
     Egradient[{}] = decay*Egradient + (1-decay)*grad^2
     -- compute update on grad matrix
-    local update = -mop.cmul(grad, mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps)):scal(lr)
+    update:copy(grad):cmul( mop.sqrt(Eupdate + eps) / mop.sqrt(Egradient + eps) ):scal(-1.0)
     -- accumulate updates
     Eupdate[{}] = decay*Eupdate + (1-decay)*update^2
     -- apply update matrix to the weights
-    w:axpy(1.0, update)
+    w:axpy(lr, update)
     -- constraints
     if mnp > 0.0 then ann.optimizer.utils.max_norm_penalty(w, mnp) end
     -- weights normality check
@@ -105,7 +106,7 @@ function adadelta_methods:execute(eval, weights)
     --
     self.Eupdates[wname] = Eupdate
     self.Egradients[wname] = Egradient
-    if mt > 0.0 then self.update[wname] = update end
+    self.update[wname] = update:scal(lr)
   end
   -- count one more update iteration
   self:count_one()
