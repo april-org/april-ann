@@ -3,7 +3,7 @@ mathcore.set_use_cuda_default(util.is_cuda_available())
 local check = utest.check
 local T = utest.test
 --
-T("SGDConvexTest", function()
+T("ADAGRADConvexTest", function()
     local opt = ann.optimizer.adagrad()
     -- optimize quadractic function: f(x) = 3*x^2 - 2*x + 10
     local function f(x) return (3*x^2 - 2*x + 10):sum() end
@@ -17,7 +17,7 @@ T("SGDConvexTest", function()
     check.eq(x, matrix(1,1,{0.333}))
 end)
 
-T("SGDTestDigits", function()
+T("ADAGRADTestDigits", function()
     -- un generador de valores aleatorios... y otros parametros
     bunch_size     = tonumber(arg[1]) or 64
     semilla        = 1234
