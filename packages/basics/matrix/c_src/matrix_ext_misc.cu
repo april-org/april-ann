@@ -207,27 +207,6 @@ namespace AprilMath {
 	return dest;
       }
 
-      AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, const int Na,
-                                                const int *b_dim, const int Nb) {
-        const int minN = AprilUtils::min(Na, Nb);
-        const int maxN = AprilUtils::max(Na, Nb);
-        int *shape = new int[maxN];
-        for (int i=0; i<minN; ++i) {
-          int n = a_dim[i], m = b_dim[i];
-          if (n != m && n != 1 && m != 1) {
-            ERROR_EXIT(256, "Not aligned matrix shapes\n");
-          }
-          shape[i] = AprilUtils::max(n, m);
-        }
-        if (maxN == Na) {
-          for (int i=minN; i<maxN; ++i) shape[i] = a_dim[i];
-        }
-        else {
-          for (int i=minN; i<maxN; ++i) shape[i] = b_dim[i];
-        }
-        return shape;
-      }
-      
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
