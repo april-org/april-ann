@@ -425,6 +425,11 @@ ascii
       check.eq(m1[{10,20,10}], matrix(1,1,1,{10}))
       check.eq(m1(10,20,10), matrix(1,1,1,{10}))
   end)
+
+  T("SqueezeAndRewrap", function()
+      local m = matrix(2,3,1,2,1,3):linear():squeeze()
+      check.eq(m, matrix(2,3,2,3):linear())
+  end)
   
   T("LargeMatrices", function()
       local m1 = matrix(300,200,100)

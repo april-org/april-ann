@@ -521,11 +521,18 @@ namespace Basics {
     /// For DEBUG purposes
     void print() const;
   
-    /// Modify sizes of matrix
+    /// Modify sizes of matrix, returns this if rewrap is not necessary
     Matrix<T> *rewrap(const int *new_dims, int len,
                       bool clone_if_not_contiguous=false);
 
-    /// Removes all singleton dimensions
+    /// Modify sizes of matrix, returns always a new instance
+    Matrix<T> *constRewrap(const int *new_dims, int len,
+                           bool clone_if_not_contiguous=false) const;
+
+    /// Removes all singleton dimensions, always returns a new instance
+    Matrix<T> *constSqueeze() const;
+
+    /// Removes all singleton dimensions, returns this when fails squeezing
     Matrix<T> *squeeze();
   
     /* Getters and setters */

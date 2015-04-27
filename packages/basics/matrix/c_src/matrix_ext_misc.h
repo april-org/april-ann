@@ -95,6 +95,86 @@ namespace AprilMath {
                                                    int wsize,
                                                    int wadvance,
                                                    Basics::Matrix<float> *dest=0);
+
+      /////////////////////////////////////////////////////////////////////////
+      
+      AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, const int Na,
+                                                const int *b_dim, const int Nb);
+
+      template<typename T, typename OP>
+      void broadcast(const OP &func, Basics::Matrix<T> *dest,
+                     const Basics::Matrix<T> *other) {
+        AprilUtils::SharedPtr< Basics::Matrix<T> > other_squeezed;
+        AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice;
+        AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice_squeezed;
+        other_squeezed = other->constSqueeze();
+        typename Basics::Matrix<T>::sliding_window
+          dest_sw(dest,
+                  dest->getDimPtr(),  // sub_matrix_size
+                  0,                  // offset
+                  dest->getDimPtr()); // step
+        while(!dest_sw.isEnd()) {
+          dest_slice = dest_sw.getMatrix(dest_slice.get());
+          if (dest_slice_squeezed.empty()) {
+            dest_slice_squeezed = dest_slice->squeeze();
+          }
+          AprilUtils::SharedPtr< Basics::Matrix<T> > out;
+          out = func(dest_slice_squeezed.get(),
+                     static_cast<const Basics::Matrix<T>*>(other_squeezed.get()));
+          if (out.get() != dest_slice_squeezed.get()) {
+            BLAS::matCopy(dest_slice_squeezed.get(), out.get());
+          }
+          dest_sw.next();
+        }
+      }
+      
+      template<typename T>
+      struct copyFunctor {
+        Basics::Matrix<T> *operator()(Basics::Matrix<T> *dest,
+                                      const Basics::Matrix<T> *source) const {
+          return BLAS::matCopy(dest, source);
+        }
+      };
+
+      /**
+       * @brief Similar to broadcasting in SciPy:
+       * http://wiki.scipy.org/EricsBroadcastingDoc
+       *
+       * The operator is called as: @c out=func(a,b) where 'a' can be input and
+       * output at the same time, 'b' is always input data.
+       *
+       * @note Matrix<T> *func(Matrix<T> *a, const Matrix<T> *b);
+       */
+      template<typename T, typename OP>
+      Basics::Matrix<T> *matBroadcast(const OP &func,
+                                      const Basics::Matrix<T> *a,
+                                      const Basics::Matrix<T> *b,
+                                      Basics::Matrix<T> *result = 0) {
+        const int *a_dim = a->getDimPtr(), *b_dim = b->getDimPtr();
+        const int Na = a->getNumDim(), Nb = b->getNumDim();
+        const int N = AprilUtils::max(Na, Nb);
+        AprilUtils::UniquePtr<int []> shape = resultShape(a_dim, Na, b_dim, Nb);
+        if (result == 0) {
+          result = new Basics::Matrix<T>(N, shape.get());
+        }
+        else {
+          if (!result->sameDim(shape.get(), N)) {
+            ERROR_EXIT(128, "Incompatible shape in result matrix\n");
+          }
+        }
+        if (result == b) {
+          broadcast(func, result, a);
+        }
+        else if (result == a) {
+          broadcast(func, result, b);
+        }
+        else {
+          broadcast(copyFunctor<T>(), result, a);
+          broadcast(func, result, b);
+        }
+        return result;
+      }
+
       
     } // namespace Misc
     

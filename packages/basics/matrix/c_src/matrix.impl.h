@@ -434,7 +434,77 @@ namespace Basics {
 #endif
     return obj;
   }
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::constRewrap(const int *new_dims, int len,
+                                    bool clone_if_not_contiguous) const {
+    bool need_clone = false;
+    Matrix<T> * obj;
+    if (!getIsContiguous()) {
+      if (!clone_if_not_contiguous) {
+        ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
+                   "clone it first\n");
+      }
+      else {
+        need_clone = true;
+      }
+    }
+    int new_size = 1;
+    for (int i=0; i<len; ++i) {
+      new_size *= new_dims[i];
+    }
+    if (new_size != size()) {
+      ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
+                  size(), new_size);
+    }
+    if (need_clone) {
+      AprilMath::GPUMirroredMemoryBlock<T> *new_data =
+        new AprilMath::GPUMirroredMemoryBlock<T>(new_size);
+      obj = new Matrix<T>(len, new_dims, new_data);
+      AprilUtils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
+                                                           this->getNumDim()) );
+      AprilMath::MatrixExt::BLAS::matCopy(aux.get(),this);
+    }
+    else {
+      obj = new Matrix<T>(len, new_dims,
+                          const_cast<AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
+                          offset);
+    }
+#ifdef USE_CUDA
+    obj->setUseCuda(use_cuda);
+#endif
+    return obj;
+  }
   
+  template <typename T>
+  Matrix<T> *Matrix<T>::constSqueeze() const {
+    int len = 0;
+    AprilUtils::UniquePtr<int []> sizes(new int[getNumDim()]);
+    AprilUtils::UniquePtr<int []> strides(new int[getNumDim()]);
+    for (int i=0; i<getNumDim(); ++i) {
+      int sz = getDimSize(i);
+      if (sz > 1) {
+        strides[len] = getStrideSize(i);
+        sizes[len++] = sz;
+      }
+    }
+    // matrices with 1x1x1x...x1 dimensions need the following sanity check
+    if (len == 0) {
+      strides[len] = 1;
+      sizes[len++] = 1;
+    }
+    Matrix<T> *obj =
+      new Matrix<T>(len, strides.get(), getOffset(), sizes.get(),
+                    size(), last_raw_pos,
+                    const_cast< AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
+                    use_cuda,
+                    const_cast< AprilUtils::MMappedDataReader*>(mmapped_data.get()));
+#ifdef USE_CUDA
+    obj->setUseCuda(use_cuda);
+#endif
+    return obj;
+  }
+
   template <typename T>
   Matrix<T> *Matrix<T>::squeeze() {
     int len = 0;
