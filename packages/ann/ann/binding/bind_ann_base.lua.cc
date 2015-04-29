@@ -136,6 +136,7 @@ namespace AprilUtils {
 #include "log_softmax_actf_component.h"
 #include "logistic_actf_component.h"
 #include "maxpooling_component.h"
+#include "prelu_actf_component.h"
 #include "probabilistic_matrix_component.h"
 #include "pca_whitening_component.h"
 #include "relu_actf_component.h"
@@ -1707,6 +1708,34 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   obj = new LeakyReLUActfANNComponent(leak, name);
   LUABIND_RETURN(LeakyReLUActfANNComponent, obj);  
+}
+//BIND_END
+
+///////////////////////////////////////////////////////
+//             PReLUActfANNComponent                 //
+///////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME PReLUActfANNComponent ann.components.actf.prelu
+//BIND_CPP_CLASS    PReLUActfANNComponent
+//BIND_SUBCLASS_OF  PReLUActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR PReLUActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0, *weights=0;
+  unsigned int size=0;
+  bool shared=false;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "size", "shared", "weights", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, shared, bool, shared, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+  }
+  obj = new PReLUActfANNComponent(shared, size, name, weights);
+  LUABIND_RETURN(PReLUActfANNComponent, obj);  
 }
 //BIND_END
 

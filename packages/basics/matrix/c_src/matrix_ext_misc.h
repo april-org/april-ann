@@ -209,6 +209,13 @@ namespace AprilMath {
         return BroadcastHelper::execute(func, a, b, result);
       }
       
+      /**
+       * @brief Changes the type of a matrix instance.
+       */
+      template <typename T, typename O>
+      Basics::Matrix<O> *matConvertTo(const Basics::Matrix<T> *input,
+                                      Basics::Matrix<O> *dest=0);
+      
     } // namespace Misc
     
   } // namespace MatrixExt

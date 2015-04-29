@@ -511,7 +511,7 @@ namespace Basics {
                     bool clone=true);
     /// Destructor
     virtual ~Matrix();
-  
+
     /// Constructor from a MMAP file
     static Matrix<T> *fromMMappedDataReader(AprilUtils::MMappedDataReader
                                             *mmapped_data);

@@ -524,6 +524,48 @@ T("DOTPRODUCT + LEAKY RELU TEST",
     end)
 end)
 
+-----------
+-- PRELU --
+-----------
+
+T("DOTPRODUCT + PRELU NON SHARED TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.prelu() )
+                              end,
+                "mse", i, o, b, "LEAKY_NON_SHARED_RELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+T("DOTPRODUCT + PRELU SHARED TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.prelu{ shared=true } )
+                              end,
+                "mse", i, o, b, "LEAKY_SHARED_RELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 -------------
 -- SOFTMAX --
 -------------

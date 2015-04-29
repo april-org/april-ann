@@ -35,6 +35,20 @@ using namespace AprilMath::MatrixExt::Reductions;
 namespace ANN {
   namespace Kernels {
     
+    template<typename T>
+    struct prelu {
+      T operator()(const float &x, const float &w) const {
+        return (x > T(0.0f)) ? (x) : (w*x);
+      }
+    };
+
+    template<typename T>
+    struct prelu_der {
+      T operator()(const float &x, const float &w) const {
+        return (x > T(0.0f)) ? T(1.0f) : (w);
+      }
+    };
+    
     void applyHardTanhDerivative(Basics::MatrixFloat *output_errors,
                                  const Basics::MatrixFloat *input_units,
                                  float inf, float sup) {
@@ -128,6 +142,36 @@ namespace ANN {
       MatrixScalarMap1(input_units,
                        AprilMath::Functors::m_leaky_relu_der<float>(leak),
                        output_errors);
+    }
+    
+    void applyPReLU(Basics::MatrixFloat *output,
+                    Basics::MatrixFloat *input,
+                    const Basics::MatrixFloat *w) {
+      april_assert(w->getDimSize(0) == input->getDimSize(1));
+      april_assert(w->getDimSize(1) == 1);
+      AprilUtils::SharedPtr<Basics::MatrixFloat> input_slice;
+      AprilUtils::SharedPtr<Basics::MatrixFloat> output_slice;
+      for (int i=0; i<input->getDimSize(0); ++i) {
+        input_slice = input->select(0, i, input_slice.get());
+        output_slice = output->select(0, i, output_slice.get());
+        MatrixScalarMap2(input_slice.get(), w, prelu<float>(),
+                         output_slice.get());        
+      }
+    }
+    
+    void applyPReLUDerivative(Basics::MatrixFloat *output_errors,
+                              Basics::MatrixFloat *input_units,
+                              const Basics::MatrixFloat *w) {
+      april_assert(w->getDimSize(0) == input_units->getDimSize(1));
+      april_assert(w->getDimSize(1) == 1);
+      AprilUtils::SharedPtr<Basics::MatrixFloat> input_slice;
+      AprilUtils::SharedPtr<Basics::MatrixFloat> output_slice;
+      for (int i=0; i<input_units->getDimSize(0); ++i) {
+        input_slice = input_units->select(0, i, input_slice.get());
+        output_slice = output_errors->select(0, i, output_slice.get());
+        MatrixScalarMap2(input_slice.get(), w, prelu_der<float>(),
+                         output_slice.get());
+      }
     }
 
     void applyLogLogistic(Basics::MatrixFloat *output,

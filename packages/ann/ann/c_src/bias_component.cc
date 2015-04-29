@@ -83,7 +83,7 @@ namespace ANN {
     // reset shared counter
     bias_vector->resetSharedCount();
   }
-
+  
   void BiasANNComponent::computeGradients(const char *name,
                                           AprilUtils::LuaTable &weight_grads_dict) {
     // count one use of the vector
