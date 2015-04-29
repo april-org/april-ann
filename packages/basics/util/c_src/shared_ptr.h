@@ -25,6 +25,7 @@
 #include "error_print.h"
 #include "ptr_ref.h"
 #include "referenced.h"
+#include "unique_ptr.h"
 #include "unused_variable.h"
 
 namespace AprilUtils {
@@ -116,6 +117,15 @@ namespace AprilUtils {
      */
     const T &operator*() const { return *get(); }
     
+    /**
+     * @brief Assignment operator, takes the ownership of the pointer and
+     * increases the reference.
+     */
+    SharedPtr<T,Referencer,Deleter> &operator=(UniquePtr<T,Referencer,Deleter> &other) {
+      reset(other.release());
+      return *this;
+    }
+
     /**
      * @brief Assignment operator, copies the pointer and increases the
      * reference.
