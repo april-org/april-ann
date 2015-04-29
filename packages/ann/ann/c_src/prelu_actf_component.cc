@@ -52,7 +52,7 @@ namespace ANN {
   void PReLUActfANNComponent::applyActivation(MatrixFloat *input_units,
                                               MatrixFloat *output_units) {
     if (shared) {
-      Kernels::applyLeakyReLU(output_units, input_units, (*weights)(0));
+      Kernels::applyLeakyReLU(output_units, input_units, (*weights)(0,0));
     }
     else {
       Kernels::applyPReLU(output_units, input_units, weights.get());
@@ -65,7 +65,7 @@ namespace ANN {
                                                   MatrixFloat *output_errors) {
     UNUSED_VARIABLE(output_units);
     if (shared) {
-      Kernels::applyLeakyReLUDerivative(output_errors, input_units, (*weights)(0));
+      Kernels::applyLeakyReLUDerivative(output_errors, input_units, (*weights)(0,0));
     }
     else {
       Kernels::applyPReLUDerivative(output_errors, input_units, weights.get());
@@ -96,10 +96,11 @@ namespace ANN {
     lt_zero_flt = matConvertTo(lt_zero.get(), lt_zero_flt.get());
     matCmul(lt_zero_flt.get(), input);
     if (shared) {
-      (*grads_mat)(0) = matSum(lt_zero_flt.get());
+      (*grads_mat)(0,0) += matSum(lt_zero_flt.get());
     }
     else {
-      matSum(lt_zero_flt.get(), 0, grads_mat);
+      // accumulated over previous gradients
+      matSum(lt_zero_flt.get(), 0, grads_mat, true);
     }
   }
 
