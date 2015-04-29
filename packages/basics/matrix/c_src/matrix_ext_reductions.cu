@@ -414,17 +414,18 @@ namespace AprilMath {
       template <typename T>
       Matrix<T> *matSum(Matrix<T> *obj,
                         int dim,
-                        Matrix<T> *dest) {
+                        Matrix<T> *dest,
+                        bool accumulated) {
         return MatrixScalarReduce1OverDimension(obj, dim,
                                                 AprilMath::Functors::r_add<T,T>(),
                                                 AprilMath::Functors::r_add<T,T>(),
-                                                T(0.0f), dest);
+                                                T(0.0f), dest, !accumulated);
       }
 
       // TODO: Implement using a wrapper for GPU/CPU computation.
       template <typename T>
       Matrix<T> *matSum(const SparseMatrix<T> *obj, int dim,
-                        Matrix<T> *dest) {
+                        Matrix<T> *dest, bool accumulated) {
         if (dim != 0 && dim != 1) {
           ERROR_EXIT1(128, "Incorrect given dimension %d\n", dim);
         }
@@ -434,13 +435,16 @@ namespace AprilMath {
               dest->getDimSize(ndim) != obj->getDimSize(ndim)) {
             ERROR_EXIT(128, "Incorrect matrix sizes\n");
           }
+          if (!accumulated) {
+            AprilMath::MatrixExt::Initializers::matZeros(dest);
+          }
         }
         else {
           int result_dims[2] = { obj->getDimSize(0), obj->getDimSize(1) };
           result_dims[dim] = 1;
           dest = new Matrix<T>(1, result_dims);
+          AprilMath::MatrixExt::Initializers::matZeros(dest);
         }
-        AprilMath::MatrixExt::Initializers::matZeros(dest);
         typename Matrix<T>::random_access_iterator dest_it(dest);
         int aux_dims[2] = { 0, 0 };
         for (typename SparseMatrix<T>::const_iterator it(obj->begin());
@@ -515,7 +519,8 @@ namespace AprilMath {
       template float matSum(const Matrix<float> *);
       template Matrix<float> *matSum(Matrix<float> *,
                                      int,
-                                     Matrix<float> *);
+                                     Matrix<float> *,
+                                     bool);
       template bool matEquals(const Matrix<float> *, const Matrix<float> *,
                               float);
       
@@ -538,7 +543,8 @@ namespace AprilMath {
       template double matSum(const Matrix<double> *);
       template Matrix<double> *matSum(Matrix<double> *,
                                       int,
-                                      Matrix<double> *);
+                                      Matrix<double> *,
+                                      bool);
       template bool matEquals(const Matrix<double> *, const Matrix<double> *,
                               float);
       
@@ -553,7 +559,8 @@ namespace AprilMath {
       template void matMinAndMax(const SparseMatrix<float> *, float &, float &);
       template float matSum(const SparseMatrix<float> *);
       template Matrix<float> *matSum(const SparseMatrix<float> *, int,
-                                     Matrix<float> *);
+                                     Matrix<float> *,
+                                     bool);
       template bool matEquals(const SparseMatrix<float> *,
                               const SparseMatrix<float> *,
                               float);      
@@ -561,7 +568,8 @@ namespace AprilMath {
       template ComplexF matSum(const Matrix<ComplexF> *);
       template Matrix<ComplexF> *matSum(Matrix<ComplexF> *,
                                         int,
-                                        Matrix<ComplexF> *);
+                                        Matrix<ComplexF> *,
+                                        bool);
       template bool matEquals(const Matrix<ComplexF> *, const Matrix<ComplexF> *,
                               float);
       
