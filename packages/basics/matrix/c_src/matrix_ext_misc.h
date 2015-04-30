@@ -204,12 +204,11 @@ namespace AprilMath {
        * @note Matrix<T> *func(Matrix<T> *a, const Matrix<T> *b);
        */
       template<typename T, typename OP>
-      static AprilUtils::SharedPtr< Basics::Matrix<T> >
-      matBroadcast(const OP &func,
-                   const Basics::Matrix<T> *a,
-                   const Basics::Matrix<T> *b,
-                   Basics::Matrix<T> *result = 0) {
-        return BroadcastHelper::execute(func, a, b, result);
+      static Basics::Matrix<T> *matBroadcast(const OP &func,
+                                             const Basics::Matrix<T> *a,
+                                             const Basics::Matrix<T> *b,
+                                             Basics::Matrix<T> *result = 0) {
+        return BroadcastHelper::execute(func, a, b, result).weakRelease();
       }
       
       /**
