@@ -122,14 +122,15 @@ namespace AprilMath {
         }
 
         template<typename T, typename OP>
-        static void broadcast(const OP &func, Basics::Matrix<T> *dest,
+        static void broadcast(const OP &func,
+                              AprilUtils::SharedPtr<Basics::Matrix<T> > dest,
                               const Basics::Matrix<T> *other) {
           AprilUtils::SharedPtr< Basics::Matrix<T> > other_squeezed;
           AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice;
           AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice_squeezed;
           other_squeezed = other->constSqueeze();
           typename Basics::Matrix<T>::sliding_window
-            dest_sw(dest,
+            dest_sw(dest.get(),
                     dest->getDimPtr(),  // sub_matrix_size
                     0,                  // offset
                     dest->getDimPtr()); // step
@@ -162,15 +163,16 @@ namespace AprilMath {
          * @see AprilMath::MatrixExt::Misc::matBroadcast
          */
         template<typename T, typename OP>
-        static Basics::Matrix<T> *execute(const OP &func,
-                                          const Basics::Matrix<T> *a,
-                                          const Basics::Matrix<T> *b,
-                                          Basics::Matrix<T> *result = 0) {
+        static AprilUtils::SharedPtr< Basics::Matrix<T> >
+        execute(const OP &func,
+                const Basics::Matrix<T> *a,
+                const Basics::Matrix<T> *b,
+                AprilUtils::SharedPtr< Basics::Matrix<T> > result = 0) {
           const int *a_dim = a->getDimPtr(), *b_dim = b->getDimPtr();
           const int Na = a->getNumDim(), Nb = b->getNumDim();
           const int N = AprilUtils::max(Na, Nb);
           AprilUtils::UniquePtr<int []> shape = resultShape(a_dim, Na, b_dim, Nb);
-          if (result == 0) {
+          if (result.empty()) {
             result = new Basics::Matrix<T>(N, shape.get());
           }
           else {
@@ -202,10 +204,11 @@ namespace AprilMath {
        * @note Matrix<T> *func(Matrix<T> *a, const Matrix<T> *b);
        */
       template<typename T, typename OP>
-      static Basics::Matrix<T> *matBroadcast(const OP &func,
-                                             const Basics::Matrix<T> *a,
-                                             const Basics::Matrix<T> *b,
-                                             Basics::Matrix<T> *result = 0) {
+      static AprilUtils::SharedPtr< Basics::Matrix<T> >
+      matBroadcast(const OP &func,
+                   const Basics::Matrix<T> *a,
+                   const Basics::Matrix<T> *b,
+                   Basics::Matrix<T> *result = 0) {
         return BroadcastHelper::execute(func, a, b, result);
       }
       
