@@ -89,18 +89,20 @@ namespace ANN {
     grads_mat->setUseCuda(use_cuda);
 #endif
     MatrixFloat *input = getInput()->convertTo<TokenMatrixFloat*>()->getMatrix();
+    MatrixFloat *error = getErrorInput()->convertTo<TokenMatrixFloat*>()->getMatrix();
+    //
     AprilUtils::SharedPtr<Basics::MatrixBool> lt_zero;
     lt_zero = new MatrixBool(input->getNumDim(), input->getDimPtr());
     lt_zero = matLT(input, 0.0f, lt_zero.get());
-    AprilUtils::SharedPtr<Basics::MatrixFloat> lt_zero_flt;
-    lt_zero_flt = matConvertTo(lt_zero.get(), lt_zero_flt.get());
-    matCmul(lt_zero_flt.get(), input);
+    AprilUtils::SharedPtr<Basics::MatrixFloat> error_units;
+    error_units = matConvertTo(lt_zero.get(), error_units.get());
+    error_units = matCmul(matCmul(error_units.get(), input), error);
     if (shared) {
-      (*grads_mat)(0,0) += matSum(lt_zero_flt.get());
+      (*grads_mat)(0,0) += matSum(error_units.get());
     }
     else {
       // accumulated over previous gradients
-      matSum(lt_zero_flt.get(), 0, grads_mat, true);
+      matSum(error_units.get(), 0, grads_mat, true);
     }
   }
 
@@ -128,12 +130,13 @@ namespace ANN {
                                     AprilUtils::LuaTable &weights_dict,
                                     AprilUtils::LuaTable &components_dict) {
     ActivationFunctionANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
-    unsigned int _size = (shared) ? 1 : getInputSize();
+    unsigned int _size = getInputSize();
     if (this->size != 0 && _size != 0 && this->size != _size) {
       ERROR_EXIT(128, "Incompatible sizes in build call\n");
     }
     if (_size != 0) this->size = _size;
     this->input_size = this->output_size = this->size;
+    if (this->size == 0) ERROR_EXIT(256, "Unable to allocate prelu weights\n");
     { // block for w variable
       MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
       if (w != 0) {

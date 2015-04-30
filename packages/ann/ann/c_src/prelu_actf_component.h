@@ -32,6 +32,9 @@ namespace ANN {
    * @brief Component for the PReLU activation function.
    *
    * @see http://arxiv.org/pdf/1502.01852.pdf
+   *
+   * @todo Add ability to work with multiple input/output planes, for
+   * convolutions.
    */
   class PReLUActfANNComponent : public ActivationFunctionANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(PReLUActfANNComponent);
