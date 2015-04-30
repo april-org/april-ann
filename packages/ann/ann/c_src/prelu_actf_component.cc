@@ -137,6 +137,8 @@ namespace ANN {
     if (_size != 0) this->size = _size;
     this->input_size = this->output_size = this->size;
     if (this->size == 0) ERROR_EXIT(256, "Unable to allocate prelu weights\n");
+    unsigned int weights_size = (shared) ? (1) : (this->size);
+    //
     { // block for w variable
       MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);
       if (w != 0) {
@@ -144,12 +146,13 @@ namespace ANN {
       }
       else {
         if (weights == 0) {
-          weights = Connections::build(1, this->size);
+          weights = Connections::build(1, weights_size);
         }
         weights_dict.put<MatrixFloat*>(getWeightsName(), weights.get());
       }
     } // end of block for w variable
-    if (weights->size() != static_cast<int>(this->size)) {
+    //
+    if (weights->size() != static_cast<int>(weights_size)) {
       ERROR_EXIT1(257, "Unexpected matrix size [%s]\n", name.c_str());
     }
   }

@@ -61,11 +61,13 @@ local val_output   = dataset.matrix(m2,
 
 local thenet = ann.mlp.all_all.
   generate(table.concat{"%d inputs 64 prelu$args ",
-                        "64 prelu$args 64 prelu$args ",
-                        "64 prelu$args 64 prelu$args ",
+                        "64 prelu$args dropout{ prob=0.5, random=#1 } ",
+                        "64 prelu$args dropout{ prob=0.5, random=#1 } ",
+                        "64 prelu$args dropout{ prob=0.5, random=#1 } ",
+                        "64 prelu$args dropout{ prob=0.5, random=#1 } ",
                         "10 log_softmax"}%{ train_input:patternSize(),
-                                            args = "{ shared=true }"})
---args = ""})
+                                            args = "{ shared=true }"},
+           { random(2392548) })
 
 local trainer = trainable.supervised_trainer(thenet,
                                              ann.loss.multi_class_cross_entropy(10),
