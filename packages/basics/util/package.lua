@@ -26,6 +26,7 @@ package{ name = "util",
        file={
 	 "test/test-functional-programming.lua",
 	 "test/test.lua",
+         "test/test_set.lua",
        },
      },
      c_unit_test{
