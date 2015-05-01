@@ -68,6 +68,14 @@ namespace ANN {
                                   const Basics::MatrixFloat *input_units,
                                   float leak);
 
+    void applyPReLU(Basics::MatrixFloat *output,
+                    Basics::MatrixFloat *input,
+                    const Basics::MatrixFloat *w);
+    
+    void applyPReLUDerivative(Basics::MatrixFloat *output_errors,
+                              Basics::MatrixFloat *input_units,
+                              const Basics::MatrixFloat *w);
+
     void applyLogLogistic(Basics::MatrixFloat *output,
                           const Basics::MatrixFloat *input);
     

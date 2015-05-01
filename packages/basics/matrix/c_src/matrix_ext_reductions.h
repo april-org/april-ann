@@ -170,13 +170,15 @@ namespace AprilMath {
        * @param obj - The source matrix object.
        * @param dim - The dimension (a value between 0 and @c obj->getNumDim()
        * @param dest - The destination matrix, if it is 0, a new matrix would be allocated.
+       * @param accumulated - Indicates if the sum has to be accumulated to dest.
        *
        * @result The given @c dest argument or a new allocated matrix with the sum values.
        */
       template <typename T>
       Basics::Matrix<T> *matSum(Basics::Matrix<T> *obj,
                                 int dim,
-                                Basics::Matrix<T> *dest=0);
+                                Basics::Matrix<T> *dest=0,
+                                bool accumulated=false);
 
       // TODO: Implement using a wrapper for GPU/CPU computation.
       /**
@@ -185,12 +187,14 @@ namespace AprilMath {
        * @param obj - The source matrix object.
        * @param dim - The dimension (a value between 0 and @c obj->getNumDim()
        * @param dest - The destination matrix, if it is 0, a new matrix would be allocated.
+       * @param accumulated - Indicates if the sum has to be accumulated to dest.
        *
        * @result The given @c dest argument or a new allocated matrix with the sum values.
        */
       template <typename T>
       Basics::Matrix<T> *matSum(const Basics::SparseMatrix<T> *obj, int dim,
-                                Basics::Matrix<T> *dest=0);
+                                Basics::Matrix<T> *dest=0,
+                                bool accumulated=false);
 
       /**** COMPONENT WISE OPERATIONS ****/
 

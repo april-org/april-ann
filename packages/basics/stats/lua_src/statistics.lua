@@ -958,6 +958,7 @@ april_set_doc(stats.boot,
 		},
 		params = {
 		  size = "Population size, it can be a table with several sizes",
+                  resample = "Resample value [optional] by default it is 1",
 		  R = "Number of repetitions, recommended minimum of 1000",
 		  statistic = {
 		    "A function witch receives as many matrixInt32 (with",
@@ -981,6 +982,7 @@ local function boot(self,params,...)
   local params = get_table_fields(
     {
       size        = { mandatory = true, },
+      resample    = { mandatory = false, type_match = "number", default = 1 },
       R           = { type_match = "number",   mandatory = true },
       statistic   = { type_match = "function", mandatory = true },
       verbose     = { mandatory = false },
@@ -993,31 +995,39 @@ local function boot(self,params,...)
          "Fields 'seed' and 'random' are forbidden together")
   local extra       = table.pack(...)
   local size        = params.size
+  local resample    = params.resample
   local repetitions = params.R
   local statistic   = params.statistic
   local ncores      = params.ncores
   local seed        = params.seed
   local rnd         = params.random or random(seed)
   local tsize       = type(size)
+  assert(resample > 0.0 and resample <= 1.0, "Incorrect resample value")
   assert(tsize == "number" or tsize == "table",
          "Needs a 'size' field with a number or a table of numbers")
   if tsize == "number" then size = { size } end
+  local resamples = {}
+  for i=1,#size do
+    resamples[i] = math.round(size[i]*resample)
+    assert(resamples[i] > 0, "Resample underflow, increase resample value")
+  end
   local get_row,N
   -- resample function executed in parallel using parallel_foreach
   local last_i = 0
-  local rnd_matrix = function(sz) return matrixInt32(sz):uniform(1,sz,rnd) end
+  local rnd_matrix = function(sz,rsmpls) return matrixInt32(rsmpls):uniform(1,sz,rnd) end
   local resample = function(i, id)
     collectgarbage("collect")
     -- this loop allows to synchronize the random number generator, allowing to
     -- produce the same exact result independently of ncores value
     for j=last_i+1,i-1 do
       for r=1,#size do
-        for k=1,size[r] do rnd:randInt(size[r]-1) end
+        for k=1,resamples[r] do rnd:randInt(size[r]-1) end
       end
     end
     last_i = i
     --
-    local sample = iterator(size):map(rnd_matrix):table()
+    local sample = iterator.zip(iterator(size),
+                                iterator(resamples)):map(rnd_matrix):table()
     local r = table.pack( statistic(multiple_unpack(sample, extra)) )
     if (not id or id == 0) and params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
@@ -1043,6 +1053,7 @@ stats.boot.ci =
       "This function returns the extremes of a confidence interval",
       "given the result of stats.boot function and the confidence value.",
       "It could compute the interval over a slice of the table.",
+      "This functions uses stats.boot.percentile() to compute the interval.",
     },
     params = {
       "The result of stats.boot function.",
@@ -1059,52 +1070,54 @@ stats.boot.ci =
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
            "Incorrect confidence value, it must be in range (0,1)")
-    local N = #data
-    assert(index > 0 and index <= N)
-    local med_conf_size = N*(1.0 - confidence)*0.5
-    local a_pos = math.max(1, math.round(med_conf_size))
-    local b_pos = math.min(N, math.round(N - med_conf_size))
-    local aux = iterator(ipairs(data)):select(2):field(index):table()
-    table.sort(aux)
-    return aux[a_pos],aux[b_pos]
+    local Pa = (1.0 - confidence)*0.5
+    local Pb = 1.0 - Pa
+    return stats.boot.percentile(data, { Pa, Pb }, index)
   end
 
-stats.boot.percentil =
+stats.boot.percentile =
   april_doc{
     class = "function",
-    summary = "Returns a percentil value from bootstrap output",
+    summary = "Returns a percentile value from bootstrap output following NIST method",
     description= {
-      "This function returns a percentil value",
-      "given the result of stats.boot function and the percentil number.",
-      "It could compute the percentil over a slice of the table.",
+      "This function returns a percentile value",
+      "given the result of stats.boot function and the percentile number.",
+      "It could compute the percentile over a slice of the table.",
     },
     params = {
       "The result of stats.boot function.",
-      "The percentil [optional], by default it is 0.5. It can be a table of several percentils",
-      "The statistic index for which you want compute the percentil [optional], by default it is 1",
+      "The percentile [optional], by default it is 0.5. It can be a table of several percentiles",
+      "The statistic index for which you want compute the percentile [optional], by default it is 1",
     },
     outputs = {
-      "The percentil value",
+      "The percentile value",
       "Another pecentil value",
       "..."
     },
   } ..
-  -- returns the percentil
-  function(data, percentil, index)
-    local percentil,index  = percentil or 0.95, index or 1
-    if type(percentil) ~= "table" then percentil = { percentil } end
+  -- returns the percentile
+  function(data, percentile, index)
+    local percentile,index  = percentile or 0.95, index or 1
+    if type(percentile) ~= "table" then percentile = { percentile } end
     local aux = iterator(ipairs(data)):select(2):field(index):table()
     table.sort(aux)
     local result_tbl = {}
-    for _,v in ipairs(percentil) do
-      assert(v > 0 and v < 1,
-             "Incorrect percentil value, it must be in range (0,1)")
+    for _,v in ipairs(percentile) do
+      assert(v >= 0.0 and v <= 1.0,
+             "Incorrect percentile value, it must be in range [0,1]")
       local N = #data
-      assert(index > 0 and index <= N)
-      local pos = N*v
+      assert(index > 0 and index <= #data[1])
+      local pos = (N+1)*v
       local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
-      local ratio = pos - pos_floor
-      local result = aux[pos_floor]*(1-ratio) + aux[pos_ceil]*ratio
+      local result
+      if pos_floor == 0 then
+        result = aux[1]
+      elseif pos_floor >= N then
+        result = aux[#aux]
+      else
+        local dec = pos - pos_floor
+        result = aux[pos_floor] + dec * (aux[pos_ceil] - aux[pos_floor])
+      end
       result_tbl[#result_tbl + 1] = result
     end
     return table.unpack(result_tbl)

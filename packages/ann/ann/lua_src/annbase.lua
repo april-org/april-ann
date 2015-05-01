@@ -531,7 +531,10 @@ ann.mlp.all_all.generate = april_doc {
           assert(safe_tokenizer() == "=", "Incorrect topology string")
           local value = safe_tokenizer()
           if value:sub(1,1) == "#" then value = params[tonumber(value:sub(2))] end
-          local value = tonumber(value) or value
+          if     value == "true"   then value = true
+          elseif value == "false"  then value = false
+          else                          value = tonumber(value) or value
+          end
           options[key] = value
         end
       until tk == "}"

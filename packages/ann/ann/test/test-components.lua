@@ -19,6 +19,7 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
+  for _,a in trainer:iterate_weights("a.*") do a:fill(0.25) end
   input  = matrix(b, i):uniformf(-1,1,rnd)
   if loss_name == "mse" then
     target = matrix(b, o):uniformf(-1,1,rnd)
@@ -517,6 +518,48 @@ T("DOTPRODUCT + LEAKY RELU TEST",
                     push( ann.components.actf.leaky_relu() )
                               end,
                 "mse", i, o, b, "LEAKY_RELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+-----------
+-- PRELU --
+-----------
+
+T("DOTPRODUCT + PRELU NON SHARED TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.prelu() )
+                              end,
+                "mse", i, o, b, "NON_SHARED_PRELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+T("DOTPRODUCT + PRELU SHARED TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.prelu{ shared=true } )
+                              end,
+                "mse", i, o, b, "SHARED_PRELU")
             end
           end
         end

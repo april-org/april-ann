@@ -27,6 +27,10 @@
 	 "test/test_convolution.lua",
        },
      },
+     -- FIXME: make it compile
+     -- c_unit_test{
+     -- file = { "test/test_matrix.cc" },
+     -- },
    },
    target{
      name = "provide",

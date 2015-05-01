@@ -207,6 +207,20 @@ namespace AprilMath {
 	return dest;
       }
 
+      template <typename T, typename O>
+      Basics::Matrix<O> *matConvertTo(const Basics::Matrix<T> *input,
+                                      Basics::Matrix<O> *dest) {
+        if (dest != 0) {
+          if (!dest->sameDim(input)) {
+            ERROR_EXIT(256, "Incompatible matrix sizes\n");
+          }
+        }
+        else {
+          dest = new Basics::Matrix<O>(input->getNumDim(), input->getDimPtr());
+        }
+        return MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(), dest);
+      }
+
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
@@ -217,7 +231,15 @@ namespace AprilMath {
       template Matrix<float> *matMultiply(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
-
+      template Matrix<float> *matConvertTo(const Matrix<bool> *,
+                                           Matrix<float> *);
+      template Matrix<float> *matConvertTo(const Matrix<double> *,
+                                           Matrix<float> *);
+      template Matrix<float> *matConvertTo(const Matrix<char> *,
+                                           Matrix<float> *);
+      template Matrix<float> *matConvertTo(const Matrix<int32_t> *,
+                                           Matrix<float> *);
+      
       template Matrix<double> *matAddition(const Matrix<double> *,
                                           const Matrix<double> *,
                                           Matrix<double> *);
@@ -227,8 +249,16 @@ namespace AprilMath {
                                               Matrix<double> *);
       template Matrix<double> *matMultiply(const Matrix<double> *,
                                           const Matrix<double> *,
-                                          Matrix<double> *);    
-
+                                          Matrix<double> *);
+      template Matrix<double> *matConvertTo(const Matrix<bool> *,
+                                            Matrix<double> *);
+      template Matrix<double> *matConvertTo(const Matrix<float> *,
+                                            Matrix<double> *);
+      template Matrix<double> *matConvertTo(const Matrix<char> *,
+                                            Matrix<double> *);
+      template Matrix<double> *matConvertTo(const Matrix<int32_t> *,
+                                            Matrix<double> *);
+      
 
       template Matrix<ComplexF> *matAddition(const Matrix<ComplexF> *,
                                           const Matrix<ComplexF> *,
@@ -239,7 +269,25 @@ namespace AprilMath {
                                                  Matrix<ComplexF> *);
       template Matrix<ComplexF> *matMultiply(const Matrix<ComplexF> *,
                                              const Matrix<ComplexF> *,
-                                             Matrix<ComplexF> *);    
+                                             Matrix<ComplexF> *);
+
+      template Matrix<char> *matConvertTo(const Matrix<bool> *,
+                                          Matrix<char> *);
+      template Matrix<char> *matConvertTo(const Matrix<float> *,
+                                          Matrix<char> *);
+      template Matrix<char> *matConvertTo(const Matrix<double> *,
+                                          Matrix<char> *);
+      template Matrix<char> *matConvertTo(const Matrix<int32_t> *,
+                                          Matrix<char> *);
+
+      template Matrix<int32_t> *matConvertTo(const Matrix<bool> *,
+                                             Matrix<int32_t> *);
+      template Matrix<int32_t> *matConvertTo(const Matrix<float> *,
+                                             Matrix<int32_t> *);
+      template Matrix<int32_t> *matConvertTo(const Matrix<double> *,
+                                             Matrix<int32_t> *);
+      template Matrix<int32_t> *matConvertTo(const Matrix<char> *,
+                                             Matrix<int32_t> *);
 
       
     } // namespace Misc

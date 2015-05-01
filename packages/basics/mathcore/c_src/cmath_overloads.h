@@ -535,6 +535,15 @@ namespace AprilMath {
         return a;
       }
     };
+
+    /// Cast functor, it can be used to cast vectors using map.
+    template<typename T, typename O>
+    struct m_cast {
+      /// Returns by value its given parameter.
+      APRIL_CUDA_EXPORT O operator()(const T &a) const {
+        return static_cast<O>(a);
+      }
+    };
     
     /// Implementation of <tt> p log(p) </tt>.
     template<typename T>
@@ -746,6 +755,9 @@ namespace AprilMath {
   /// @see Functors::m_identity
   template<typename T> APRIL_CUDA_EXPORT
   T m_identity(const T &a) { return Functors::m_identity<T>()(a); }
+  /// @see Functors::m_cast
+  template<typename T, typename O> APRIL_CUDA_EXPORT
+  O m_cast(const T &a) { return Functors::m_cast<T,O>()(a); }
   /// @see Functors::m_plogp
   template<typename T> APRIL_CUDA_EXPORT
   T m_plogp(const T &a) { return Functors::m_plogp<T>()(a); }

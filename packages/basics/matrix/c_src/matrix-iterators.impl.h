@@ -796,7 +796,7 @@ namespace Basics {
       dest->changeSubMatrixData(raw_pos, last_raw_pos + raw_pos);
       return dest;
     }
-    return 0; // this never happens
+    // this line is unreachable
   }
 
   template <typename T>
