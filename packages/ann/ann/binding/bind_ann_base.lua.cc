@@ -1434,18 +1434,20 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   float prob=0.5f, value=0.0f;
   unsigned int size=0;
   Basics::MTRand *random=0;
+  bool norm = true; // normalize_after_training
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "size", "prob", "value", "random",
+    check_table_fields(L, 1, "name", "size", "prob", "value", "random", "norm",
 		       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, value);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, norm, bool, norm, norm);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
   }
   if (!random) random = new Basics::MTRand();
-  obj = new DropoutANNComponent(random, value, prob, name, size);
+  obj = new DropoutANNComponent(random, value, prob, norm, name, size);
   LUABIND_RETURN(DropoutANNComponent, obj);  
 }
 //BIND_END

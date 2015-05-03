@@ -1549,6 +1549,7 @@ april_set_doc(ann.components.dropout,
 		  ["prob"]   = "Probability of noise [optional], by default it is 0.5",
 		  ["value"]  = "Mask value [optional], by default it is 0",
 		  ["random"] = "Random object instance [optional]",
+                  ["norm"] = "Boolean value indicating if apply normalization when not training [optional] by default it is true",
 		},
 		outputs= { "An instance of ann.components.dropout" }
 	      })

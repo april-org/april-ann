@@ -34,6 +34,7 @@ namespace ANN {
   DropoutANNComponent::DropoutANNComponent(MTRand *random,
 					   float value,
 					   float prob,
+                                           bool normalize_after_training,
 					   const char *name,
 					   unsigned int size) :
     StochasticANNComponent(random, name, 0, size, size),
@@ -44,6 +45,7 @@ namespace ANN {
     dropout_mask(0),
     value(value),
     prob(prob),
+    normalize_after_training(normalize_after_training),
     size(size) {
   }
   
@@ -64,7 +66,7 @@ namespace ANN {
 		  name.c_str());
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
-    if (prob > 0.0f) {
+    if (prob > 0.0f && (during_training || normalize_after_training)) {
       MatrixFloat *input_mat  = input->getMatrix();
 #ifdef USE_CUDA
       input_mat->setUseCuda(use_cuda);
@@ -74,24 +76,26 @@ namespace ANN {
       MatrixFloat *output_mat = output->getMatrix();
       // apply dropout
       if (during_training) {
-	if (dropout_mask == 0 || dropout_mask->size() != input_mat->size()) {
-	  if (dropout_mask) DecRef(dropout_mask);
-	  dropout_mask = new MatrixFloat(1, input_mat->size());
-	  IncRef(dropout_mask);
-	}
-	for (MatrixFloat::iterator it(dropout_mask->begin());
-	     it != dropout_mask->end(); ++it) {
-	  if (random->rand() < prob) *it = 0.0f;
-	  else *it = 1.0f;
-	}
-	// apply mask
+        if (dropout_mask == 0 || dropout_mask->size() != input_mat->size()) {
+          if (dropout_mask) DecRef(dropout_mask);
+          dropout_mask = new MatrixFloat(1, input_mat->size());
+          IncRef(dropout_mask);
+        }
+        for (MatrixFloat::iterator it(dropout_mask->begin());
+             it != dropout_mask->end(); ++it) {
+          if (random->rand() < prob) *it = 0.0f;
+          else *it = 1.0f;
+        }
+        // apply mask
         Kernels::applyDropoutMask(output_mat, dropout_mask, value);
-      }
-      else {
+      } // if during_training
+      else { // if not during_training
         matScal(output_mat, 1.0f - prob);
       }
+    } // apply dropout
+    else {
+      AssignRef(output, input);
     }
-    else AssignRef(output, input);
     return output;
   }
 
@@ -144,7 +148,7 @@ namespace ANN {
   ANNComponent *DropoutANNComponent::clone() {
     DropoutANNComponent *copy_component = new
       DropoutANNComponent(new MTRand(*getRandom()),
-			  value, prob,
+			  value, prob, normalize_after_training,
 			  name.c_str(),
 			  size);
     return copy_component;
@@ -168,9 +172,10 @@ namespace ANN {
   
   char *DropoutANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.dropout{ name='%s',size=%d,random=random(),value=%g,prob=%g}",
+    buffer.printf("ann.components.dropout{ name='%s',size=%d,random=random(),value=%g,prob=%g,norm=%s}",
 		  name.c_str(), size, // random->toLuaString(),
-		  value, prob);
+		  value, prob,
+                  (normalize_after_training) ? ("true") : ("false"));
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 }
