@@ -36,10 +36,10 @@ using namespace Basics;
 
 namespace ANN {
 
-  PReLUActfANNComponent::PReLUActfANNComponent(bool shared, unsigned int size,
+  PReLUActfANNComponent::PReLUActfANNComponent(bool scalar, unsigned int size,
                                                const char *name,
                                                const char *weights_name) :
-    ActivationFunctionANNComponent(name), size(size), shared(shared) {
+    ActivationFunctionANNComponent(name), size(size), scalar(scalar) {
     if (weights_name) {
       this->weights_name = string(weights_name);
     }
@@ -51,7 +51,7 @@ namespace ANN {
 
   void PReLUActfANNComponent::applyActivation(MatrixFloat *input_units,
                                               MatrixFloat *output_units) {
-    if (shared) {
+    if (scalar) {
       Kernels::applyLeakyReLU(output_units, input_units, (*weights)(0,0));
     }
     else {
@@ -64,7 +64,7 @@ namespace ANN {
                                                   MatrixFloat *input_errors,
                                                   MatrixFloat *output_errors) {
     UNUSED_VARIABLE(output_units);
-    if (shared) {
+    if (scalar) {
       Kernels::applyLeakyReLUDerivative(output_errors, input_units, (*weights)(0,0));
     }
     else {
@@ -97,7 +97,7 @@ namespace ANN {
     AprilUtils::SharedPtr<Basics::MatrixFloat> error_units;
     error_units = matConvertTo(lt_zero.get(), error_units.get());
     error_units = matCmul(matCmul(error_units.get(), input), error);
-    if (shared) {
+    if (scalar) {
       (*grads_mat)(0,0) += matSum(error_units.get());
     }
     else {
@@ -112,7 +112,7 @@ namespace ANN {
   }
   
   ANNComponent *PReLUActfANNComponent::clone() {
-    PReLUActfANNComponent *obj = new PReLUActfANNComponent(shared, size,
+    PReLUActfANNComponent *obj = new PReLUActfANNComponent(scalar, size,
                                                            name.c_str(),
                                                            weights_name.c_str());
     return obj;
@@ -120,8 +120,8 @@ namespace ANN {
 
   char *PReLUActfANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.actf.prelu{ name='%s', weights='%s', size=%u, shared=%s }",
-                  name.c_str(), weights_name.c_str(), size, shared ? "true" : "false");
+    buffer.printf("ann.components.actf.prelu{ name='%s', weights='%s', size=%u, scalar=%s }",
+                  name.c_str(), weights_name.c_str(), size, scalar ? "true" : "false");
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
@@ -137,7 +137,7 @@ namespace ANN {
     if (_size != 0) this->size = _size;
     this->input_size = this->output_size = this->size;
     if (this->size == 0) ERROR_EXIT(256, "Unable to allocate prelu weights\n");
-    unsigned int weights_size = (shared) ? (1) : (this->size);
+    unsigned int weights_size = (scalar) ? (1) : (this->size);
     //
     { // block for w variable
       MatrixFloat *w = weights_dict.opt<MatrixFloat*>(getWeightsName(), 0);

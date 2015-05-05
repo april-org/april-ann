@@ -66,7 +66,7 @@ local thenet = ann.mlp.all_all.
                         "64 prelu$args dropout{ prob=0.5, random=#1 } ",
                         "64 prelu$args dropout{ prob=0.5, random=#1 } ",
                         "10 log_softmax"}%{ train_input:patternSize(),
-                                            args = "{ shared=true }"},
+                                            args = "{ scalar=true }"},
            { random(2392548) })
 
 local trainer = trainable.supervised_trainer(thenet,

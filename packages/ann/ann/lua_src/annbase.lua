@@ -8,6 +8,27 @@ class.extend(ann.components.base, "get_is_recurrent",
 
 ----------------------------------------------------------------------
 
+ann.components.const_mul = function(m, t)
+  if tonumber(m) then
+    m = matrix{ m }
+  elseif type(m) == "table" then
+    m = matrix(m)
+  else
+    assert(class.is_a(m, matrix), "Needs a matrix as first argument")
+  end
+  assert(m:num_dim() == 1, "Needs a one-dimensional matrix as first argument")
+  local scalar = (m:size() == 1)
+  local t = iterator(pairs(t or {})):table() -- shallow copy
+  t.scalar = scalar
+  if not scalar then t.size = m:size() end
+  local c = ann.components.mul(t)
+  local wname = c:get_weights_name()
+  c:build{ weights = { [wname] = m } }
+  return ann.components.const{ component = c }
+end
+
+----------------------------------------------------------------------
+
 ann.components.left_probabilistic_matrix = function(t)
   t.side = "left"
   return ann.components.probabilistic_matrix(t)

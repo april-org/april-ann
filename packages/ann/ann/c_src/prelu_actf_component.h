@@ -40,7 +40,7 @@ namespace ANN {
     APRIL_DISALLOW_COPY_AND_ASSIGN(PReLUActfANNComponent);
     AprilUtils::SharedPtr<Basics::MatrixFloat> weights;
     unsigned int size;
-    bool shared;
+    bool scalar;
   protected:
     virtual void applyActivation(Basics::MatrixFloat *input_units,
                                  Basics::MatrixFloat *output_units);
@@ -49,7 +49,7 @@ namespace ANN {
 				     Basics::MatrixFloat *input_errors,
 				     Basics::MatrixFloat *output_errors);
   public:
-    PReLUActfANNComponent(bool shared = false, unsigned int size = 0,
+    PReLUActfANNComponent(bool scalar = false, unsigned int size = 0,
                           const char *name = 0, const char *weights_name = 0);
     virtual ~PReLUActfANNComponent();
     virtual ANNComponent *clone();

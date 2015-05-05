@@ -529,7 +529,7 @@ end)
 -- PRELU --
 -----------
 
-T("DOTPRODUCT + PRELU NON SHARED TEST",
+T("DOTPRODUCT + PRELU NON SCALAR TEST",
   function()
     check(function()
         for i=1,4 do
@@ -540,7 +540,7 @@ T("DOTPRODUCT + PRELU NON SHARED TEST",
                     push( ann.components.dot_product{ input=i, output=o } ):
                     push( ann.components.actf.prelu() )
                               end,
-                "mse", i, o, b, "NON_SHARED_PRELU")
+                "mse", i, o, b, "NON_SCALAR_PRELU")
             end
           end
         end
@@ -548,7 +548,7 @@ T("DOTPRODUCT + PRELU NON SHARED TEST",
     end)
 end)
 
-T("DOTPRODUCT + PRELU SHARED TEST",
+T("DOTPRODUCT + PRELU SCALAR TEST",
   function()
     check(function()
         for i=1,4 do
@@ -557,9 +557,94 @@ T("DOTPRODUCT + PRELU SHARED TEST",
               check_component(function()
                   return ann.components.stack():
                     push( ann.components.dot_product{ input=i, output=o } ):
-                    push( ann.components.actf.prelu{ shared=true } )
+                    push( ann.components.actf.prelu{ scalar=true } )
                               end,
-                "mse", i, o, b, "SHARED_PRELU")
+                "mse", i, o, b, "SCALAR_PRELU")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+
+---------
+-- MUL --
+---------
+
+T("DOTPRODUCT + MUL NON SCALAR TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.mul() )
+                              end,
+                "mse", i, o, b, "NON_SCALAR_MUL")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+T("DOTPRODUCT + MUL SCALAR TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.mul{ scalar=true } )
+                              end,
+                "mse", i, o, b, "SCALAR_MUL")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+---------------
+-- CONST_MUL --
+---------------
+
+T("DOTPRODUCT + CONST_MUL NON SCALAR TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.const_mul(matrix(o):uniformf()) )
+                              end,
+                "mse", i, o, b, "NON_SCALAR_CONST_MUL")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+T("DOTPRODUCT + CONST_MUL SCALAR TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=1,3 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.const_mul(matrix(1):uniformf()) )
+                              end,
+                "mse", i, o, b, "SCALAR_CONST_MUL")
             end
           end
         end
