@@ -623,7 +623,7 @@ T("DOTPRODUCT + CONST_MUL NON SCALAR TEST",
               check_component(function()
                   return ann.components.stack():
                     push( ann.components.dot_product{ input=i, output=o } ):
-                    push( ann.components.const_mul(matrix(o):uniformf()) )
+                    push( ann.components.const_mul{ data=matrix(o):uniformf() } )
                               end,
                 "mse", i, o, b, "NON_SCALAR_CONST_MUL")
             end
@@ -642,7 +642,7 @@ T("DOTPRODUCT + CONST_MUL SCALAR TEST",
               check_component(function()
                   return ann.components.stack():
                     push( ann.components.dot_product{ input=i, output=o } ):
-                    push( ann.components.const_mul(matrix(1):uniformf()) )
+                    push( ann.components.const_mul{ data=matrix(1):uniformf() } )
                               end,
                 "mse", i, o, b, "SCALAR_CONST_MUL")
             end
