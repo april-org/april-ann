@@ -8,6 +8,33 @@ class.extend(ann.components.base, "get_is_recurrent",
 
 ----------------------------------------------------------------------
 
+ann.components.const_mul = function(t)
+  local params = get_table_fields(
+    {
+      data    = { mandatory=true },
+      weights = { type_match="string" },
+      name    = { type_match="string" },
+    }, t)
+  local m = params.data
+  params.data = nil
+  if tonumber(m) then
+    m = matrix{ m }
+  elseif type(m) == "table" then
+    m = matrix(m)
+  else
+    assert(class.is_a(m, matrix), "Needs a matrix, table or number in 'data' field")
+  end
+  assert(m:num_dim() == 1, "Needs a one-dimensional matrix")
+  params.scalar = (m:size() == 1)
+  if not params.scalar then params.size = m:size() end
+  local c = ann.components.mul(params)
+  local wname = c:get_weights_name()
+  c:build{ weights = { [wname] = m } }
+  return ann.components.const{ component = c }
+end
+
+----------------------------------------------------------------------
+
 ann.components.left_probabilistic_matrix = function(t)
   t.side = "left"
   return ann.components.probabilistic_matrix(t)
@@ -559,7 +586,6 @@ ann.mlp.all_all.generate = april_doc {
       if kind ~= "inputs" then
         if n0 then -- hyperplane + activation function
           local size = n0
-          local actf = kind
           thenet:push( ann.components.hyperplane{
                          input=prev_size, output=size,
                          bias_weights=names_prefix.."b" .. count,
@@ -569,15 +595,14 @@ ann.mlp.all_all.generate = april_doc {
                          dot_product_name=names_prefix.."w" .. count } )
           table.insert(names_order, names_prefix.."b"..count)
           table.insert(names_order, names_prefix.."w"..count)
-          if not ann.components.actf[actf] then
-            error("Incorrect activation function: " .. actf)
-          end
+          local ctor = ann.components.actf[kind] or ann.components[kind]
+          assert(ctor, "Incorrect component class: " .. kind)
           options.name = names_prefix .. "actf" .. count
-          thenet:push( ann.components.actf[actf]( options ) )
+          thenet:push( ctor( options ) )
         else -- any other kind of component
           options.name = names_prefix .. "component" .. count
           local ctor = ann.components[kind] or ann.components.actf[kind]
-          assert(ctor, "Incorrect component name: " .. kind)
+          assert(ctor, "Incorrect component class: " .. kind)
           thenet:push( ctor( options ) )
         end
         count = count + 1
@@ -1549,6 +1574,7 @@ april_set_doc(ann.components.dropout,
 		  ["prob"]   = "Probability of noise [optional], by default it is 0.5",
 		  ["value"]  = "Mask value [optional], by default it is 0",
 		  ["random"] = "Random object instance [optional]",
+                  ["norm"] = "Boolean value indicating if apply normalization when not training [optional] by default it is true",
 		},
 		outputs= { "An instance of ann.components.dropout" }
 	      })

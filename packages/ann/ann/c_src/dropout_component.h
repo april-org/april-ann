@@ -40,10 +40,12 @@ namespace ANN {
     Basics::MatrixFloat      *dropout_mask;
     float            value;
     float            prob;
+    bool             normalize_after_training;
     unsigned int     size;
     
   public:
     DropoutANNComponent(Basics::MTRand *random, float value, float prob,
+                        bool normalize_after_training=true,
 			const char *name=0,
 			unsigned int size=0);
     virtual ~DropoutANNComponent();

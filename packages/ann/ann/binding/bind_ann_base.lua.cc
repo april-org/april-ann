@@ -136,6 +136,7 @@ namespace AprilUtils {
 #include "log_softmax_actf_component.h"
 #include "logistic_actf_component.h"
 #include "maxpooling_component.h"
+#include "mul_component.h"
 #include "prelu_actf_component.h"
 #include "probabilistic_matrix_component.h"
 #include "pca_whitening_component.h"
@@ -729,6 +730,42 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_RETURN(BiasANNComponent,
 		 dynamic_cast<BiasANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                MulANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MulANNComponent ann.components.mul
+//BIND_CPP_CLASS    MulANNComponent
+//BIND_SUBCLASS_OF  MulANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR MulANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  bool scalar = false;
+  const char *name=0, *weights_name=0;
+  unsigned int size=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "weights", "size", "scalar",
+                       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, scalar, bool, scalar, scalar);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+  }
+  obj = new MulANNComponent(size, scalar, name, weights_name);
+  LUABIND_RETURN(MulANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD MulANNComponent clone
+{
+  LUABIND_RETURN(MulANNComponent,
+		 dynamic_cast<MulANNComponent*>(obj->clone()));
 }
 //BIND_END
 
@@ -1434,18 +1471,20 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   float prob=0.5f, value=0.0f;
   unsigned int size=0;
   Basics::MTRand *random=0;
+  bool norm = true; // normalize_after_training
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "size", "prob", "value", "random",
+    check_table_fields(L, 1, "name", "size", "prob", "value", "random", "norm",
 		       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, value);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, norm, bool, norm, norm);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
   }
   if (!random) random = new Basics::MTRand();
-  obj = new DropoutANNComponent(random, value, prob, name, size);
+  obj = new DropoutANNComponent(random, value, prob, norm, name, size);
   LUABIND_RETURN(DropoutANNComponent, obj);  
 }
 //BIND_END
@@ -1725,16 +1764,16 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   int argn = lua_gettop(L);
   const char *name=0, *weights=0;
   unsigned int size=0;
-  bool shared=false;
+  bool scalar=false;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "size", "shared", "weights", (const char *)0);
+    check_table_fields(L, 1, "name", "size", "scalar", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, shared, bool, shared, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, scalar, bool, scalar, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
   }
-  obj = new PReLUActfANNComponent(shared, size, name, weights);
+  obj = new PReLUActfANNComponent(scalar, size, name, weights);
   LUABIND_RETURN(PReLUActfANNComponent, obj);  
 }
 //BIND_END

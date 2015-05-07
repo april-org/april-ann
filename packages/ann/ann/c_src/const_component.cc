@@ -65,14 +65,13 @@ namespace ANN {
     AprilUtils::SharedPtr<AprilIO::CStringStream>
       stream(new AprilIO::CStringStream());
     char *component_str = component->toLuaString();
-    AprilUtils::string component_weights_str( component_weights.toLuaString() );
+    AprilUtils::string component_weights_str = component_weights.toLuaString();
     stream->printf("ann.components.const{ name='%s', component=%s:build{ weights=%s } }",
                    name.c_str(),
 		   component_str,
                    component_weights_str.c_str());
     stream->put("\0",1); // forces a \0 at the end of the buffer
     delete[] component_str;
-    delete[] component_weights_str;
     return stream->releaseString();
   }
 }
