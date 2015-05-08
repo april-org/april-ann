@@ -664,9 +664,9 @@ ann.mlp.all_all.load = april_doc{
       local bias    = weights_table[bname]
       local weights = weights_table[wname]
       local colsize = weights:get_input_size() + 1
-      bias:load{ w=w, oldw=oldw, first_pos=pos, column_size=colsize }
-      pos = weights:load{ w=w, oldw=oldw,
-                          first_pos=pos+1, column_size=colsize } - 1
+      ann.connections.load(bias, { w=w, oldw=oldw, first_pos=pos, column_size=colsize })
+      pos = ann.connections.load(weights, { w=w, oldw=oldw,
+                                            first_pos=pos+1, column_size=colsize }) - 1
     end
     return model
   end
