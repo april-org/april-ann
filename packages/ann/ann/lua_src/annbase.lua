@@ -620,6 +620,7 @@ ann.mlp.all_all.generate = april_doc {
     aux.description  = topology
     aux.first_count  = first_count
     aux.names_prefix = names_prefix
+    aux.names_order  = names_order
     return thenet
   end
 
@@ -657,10 +658,11 @@ ann.mlp.all_all.load = april_doc{
     local w     = data[2]
     local oldw  = data[3] or w
     local _,weights_table,_ = model:build()
+    local names_order = get_lua_properties_table(model).names_order
     local pos = 0
-    for i=1,#model.names_order,2 do
-      local bname   = model.names_order[i]
-      local wname   = model.names_order[i+1]
+    for i=1,#names_order,2 do
+      local bname   = names_order[i]
+      local wname   = names_order[i+1]
       local bias    = weights_table[bname]
       local weights = weights_table[wname]
       local colsize = ann.connections.get_input_size(weights) + 1
