@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "logbase.h"
 #include "referenced.h"
+#include "smart_ptr.h"
 #include "unused_variable.h"
 #include "vector.h"
 
@@ -130,6 +131,28 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
+    /**
+     * @brief Iterator for basic arcs in a language model.
+     *
+     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
+     * all possible words given a state excluding back-off transitions.
+     */
+    class BasicArcIterator {
+      AprilUtils::SharedPtr<LMInterface> lm;
+      Key key;
+      Key arc;
+      Score threshold;
+    public:
+      BasicArcIterator(LMInterface *lm, Key k, Key a, Score th) :
+        lm(lm), key(k), arc(a), threshold(th) {
+      }
+      BasicArcIterator(const BasicArcIterator &other) :
+        lm(other.lm), key(other.key),
+        arc(other.arc), threshold(other.threshold) {
+      }
+      
+    };
+    
   protected:
     /// Auxiliary result vector.
     AprilUtils::vector<KeyScoreBurdenTuple> result;
@@ -154,6 +177,24 @@ namespace LanguageModels {
     virtual LMModel<Key, Score>* getLMModel() {
       return model;
     }
+    
+    /**
+     * @brief Returns an BasicArcIterator for basic arcs outgoing from key state.
+     *
+     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
+     * all possible words given a state excluding back-off transitions.
+     */
+    virtual BasicArcIterator beginBasicArcs(Key key, Score threshold) = 0;
+
+    /**
+     * @brief Returns an end BasicArcIterator for basic arcs outgoing from key state.
+     *
+     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
+     * all possible words given a state excluding back-off transitions.
+     */
+    virtual BasicArcIterator endBasicArcs(Key key, Score threshold) = 0;
+
+    virtual Key getNextBasicArc(BasicArcIterator it) = 0;
     
     // -------------- individual LM queries -------------
 
