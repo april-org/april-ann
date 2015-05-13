@@ -21,11 +21,13 @@
  */
 //BIND_HEADER_C
 #include "bind_dataset.h"
+#include "bind_function_interface.h"
 #include "bind_LM_interface.h"
 #include "LM_interface.h"
 
 using namespace AprilUtils;
 using namespace Basics;
+using namespace Functions;
 //BIND_END
 
 //BIND_HEADER_H

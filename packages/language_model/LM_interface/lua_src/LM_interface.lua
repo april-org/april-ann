@@ -58,7 +58,7 @@ class.extend(language_models.__basic_arcs_iterator__,
                end
 end)
 
-class.extend_metatable(language_models.__basic_arcs_iterator__,
-                       "__pairs",
-                       class.consult(language_models.__basic_arcs_iterator__,
-                                     "iterate"))
+class.extend_metamethod(language_models.__basic_arcs_iterator__,
+                        "__pairs",
+                        class.consult(language_models.__basic_arcs_iterator__,
+                                      "iterate"))

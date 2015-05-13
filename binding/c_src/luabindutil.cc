@@ -2,6 +2,58 @@
 #include <cstring>
 #include <cstdarg>
 
+#define CAST_TABLE_NAME "cast"
+#define CAST_TO_TABLE_NAME "to"
+#define CAST_FINAL_TABLE_NAME "final"
+
+void pushCastTable(lua_State *L) {
+  // stack:
+  lua_getglobal(L, CAST_TABLE_NAME);
+  if (lua_isnil(L, -1)) {
+    // stack: nil
+    lua_pop(L, 1);
+    // stack:
+    lua_newtable(L);
+    // stack: cast
+    lua_pushstring(L, CAST_TO_TABLE_NAME);
+    // stack: cast "to"
+    lua_newtable(L);
+    // stack: cast "to" to
+    lua_rawset(L, -3);
+    // stack: cast
+    lua_setglobal(L, CAST_TABLE_NAME);
+    // stack:
+    lua_getglobal(L, CAST_TABLE_NAME);
+  }
+  // stack: cast
+}
+
+// n should be < 0
+void checkTable(lua_State *L, int n, const char *name) {
+  lua_pushstring(L, name);
+  lua_rawget(L, n - 1);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    lua_pushstring(L, name);
+    lua_newtable(L);
+    lua_rawset(L, n - 2);
+    lua_pushstring(L, name);
+    lua_rawget(L, n - 1);
+  }
+}
+
+void insertCast(lua_State *L, const char *derived, const char *base,
+                int (*c_function)(lua_State *)) {
+  pushCastTable(L);
+  lua_pushstring(L, CAST_TO_TABLE_NAME);
+  lua_rawget(L, -2);
+  checkTable(L, -1, base);
+  lua_pushstring(L, derived);
+  lua_pushcfunction(L, c_function);
+  lua_rawset(L, -3);
+  lua_pop(L, 3);
+}
+
 bool lua_isFILE(lua_State *L, int idx) {
   void *ud;
   luaL_checkany(L, idx);

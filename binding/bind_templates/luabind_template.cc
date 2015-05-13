@@ -34,6 +34,9 @@ $$HEADER_C$$
 
 #include "luabindutil.h"
 
+extern void pushCastTable(lua_State *L);
+extern void insertCast(lua_State *L, const char *derived, const char *base,
+                       int (*c_function)(lua_State *));
 
 /*LUA
   -- Esta funcion creara un nombre de tablas
@@ -540,10 +543,36 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   return 0;
 }
 
+
+//LUA for childclass,parentclass in pairs(PARENT_CLASS) do
+int lua_cast_$$parentclass$$_to_$$childclass$$(lua_State *L) {
+  if (lua_gettop(L) != 1) {
+    lua_pushfstring(L, "cast.to requires 1 argument");
+    lua_error(L);
+  }
+  $$parentclass$$ *parent = lua_to$$parentclass$$(L, 1);
+  if (parent == 0) {
+    lua_pushfstring(L, "Unexpected object type");
+    lua_error(L);
+  }
+  $$childclass$$ *child = dynamic_cast<$$childclass$$*>(parent);
+  if (child == 0) {
+    lua_pushfstring(L, "Unable casting to the given type");
+    lua_error(L);
+  }
+  lua_push$$childclass$$(L, child);
+  return 1;
+}
+//LUA end
+
 int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   UNUSED_VARIABLE(L);
   DEBUG("lua_register_subclasses_$$FILENAME2$$ (begin)");
   //LUA for childclass, parentclass in pairs(PARENT_CLASS) do
+  
+  insertCast(L, "$$(LUANAME[childclass] or childclass)$$",
+             "$$(LUANAME[parentclass] or parentclass)$$",
+             lua_cast_$$parentclass$$_to_$$childclass$$);
   
   // buscamos la metatabla de la clase child
   lua_pushstring(L,"luabind_classes");
