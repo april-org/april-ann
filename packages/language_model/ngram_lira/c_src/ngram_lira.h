@@ -226,10 +226,10 @@ namespace LanguageModels {
         last_transition = other->last_transition;
       }
 
-      virtual StateControl *clone() {
-        NgramLiraStateControl *state = new NgramLiraStateControl(*this);
-        state->copy(this);
-        return state;
+      virtual StateControl *clone() const {
+        return new NgramLiraStateControl(this->arc,
+                                         this->first_transition,
+                                         this->last_transition);
       }
       
       virtual void moveToNext(LMInterface *lm, Score threshold) {
@@ -243,7 +243,7 @@ namespace LanguageModels {
     
   protected:
     NgramLiraInterface(NgramLiraModel *lira_model) :
-    LMInterface<Key,Score>(lira_model) {
+      LMInterface<Key,Score>(lira_model) {
     }
     
   public:

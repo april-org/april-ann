@@ -23,6 +23,7 @@
 
 #include "error_print.h"
 #include "referenced.h"
+#include "unused_variable.h"
 
 namespace AprilUtils {
 

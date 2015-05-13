@@ -38,14 +38,14 @@ using namespace LanguageModels;
 using namespace LanguageModels::QueryFilters;
 
 class BasicArcsIteratorUInt32Logfloat : public Referenced {
-  LMInterfaceUInt32LogFloat *lmi;
-  LMInterfaceUInt32LogFloat::BasicArcsIterator it;
+  AprilUtils::SharedPtr<LMInterfaceUInt32LogFloat> lmi;
   uint32_t key;
+  LMInterfaceUInt32LogFloat::BasicArcsIterator it;
 public:
   BasicArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
-                                  uint32_t key, log_float th) :
-    lmi(lmi), key(k) {
-    it = lmi->beginBasicArcs(k, th);
+                                  uint32_t k,
+                                  AprilUtils::log_float th) :
+    lmi(lmi), key(k), it(lmi->beginBasicArcs(k, th)) {
   }
   uint32_t get() {
     return *it;
@@ -53,7 +53,7 @@ public:
   void next() {
     ++it;
   }
-  void isEnd() {
+  bool isEnd() {
     return it != lmi->endBasicArcs(key);
   }
 };
@@ -123,7 +123,7 @@ public:
 
 //BIND_METHOD BasicArcsIteratorUInt32Logfloat get
 {
-  LUABIND_RETURN(unsigned int, obj->get());
+  LUABIND_RETURN(uint, obj->get());
 }
 //BIND_END
 

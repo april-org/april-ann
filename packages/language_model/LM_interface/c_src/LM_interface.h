@@ -102,7 +102,7 @@ namespace LanguageModels {
       Burden(int32_t id_key, int32_t id_word) :
         id_key(id_key), id_word(id_word) {}
       Burden(const Burden &other) :
-      id_key(other.id_key), id_word(other.id_word) { }
+        id_key(other.id_key), id_word(other.id_word) { }
     };
     
     /**
@@ -140,8 +140,6 @@ namespace LanguageModels {
      * to declare the interface between the iterator and the language model.
      * Derived classes from LMInterface are required to implement properly the
      * StateControl class.
-     *
-     * @note This class needs a referenced pointer to a language model.
      */
     class BasicArcsIterator {
     public:
@@ -157,7 +155,9 @@ namespace LanguageModels {
        */
       class StateControl {
         friend class BasicArcsIterator;
-        
+      public:
+        virtual ~StateControl() {}
+      private:
         /**
          * @brief This method traverses until next arc which is above threshold
          *
@@ -181,41 +181,43 @@ namespace LanguageModels {
         virtual void copy(const StateControl *other) = 0;
         
         /// Returns a deep copy of this.
-        virtual StateControl *clone() = 0;
+        virtual StateControl *clone() const = 0;
       };
       
     private:
-      AprilUtils::SharedPtr<LMInterface> lm;
+      LMInterface *lm;
       Score threshold;
       AprilUtils::UniquePtr<StateControl> state;
       
     public:
+      BasicArcsIterator() {}
       BasicArcsIterator(const BasicArcsIterator &other) :
         lm(lm), threshold(threshold), state(other.state->clone()) {}
 
-      BasicArcsIterator(AprilUtils::SharedPtr<LMInterface> lm, Score th,
-                       AprilUtils::UniquePtr<StateControl> state) :
+      BasicArcsIterator(LMInterface *lm, Score th,
+                        AprilUtils::UniquePtr<StateControl> state) :
         lm(lm), threshold(th), state(state) {}
       
-      virtual bool operator!=(const BasicArcsIterator &other) {
+      virtual bool operator!=(const BasicArcsIterator &other) const {
         return (*this) != other;
       }
-      virtual bool operator==(const BasicArcsIterator &other) {
+      virtual bool operator==(const BasicArcsIterator &other) const {
         return ( this->lm==other.lm &&
                  this->threshold==other.threshold &&
-                 state->equals(&other) );
+                 state->equals(other.state.get()) );
       }
       virtual BasicArcsIterator &operator=(const BasicArcsIterator &other) {
         lm = other.lm;
         threshold = other.threshold;
-        state->copy(other);
+        state->copy(other.state.get());
         return *this;
       }
       virtual BasicArcsIterator &operator++() {
-        state->moveToNext(lm.get(), threshold);
+        state->moveToNext(lm, threshold);
+        return *this;
       }
-      virtual const WordType &operator*() const {
-        return state->getWord();
+      virtual WordType operator*() {
+        return state->getWord(lm);
       }
     };
     
@@ -377,7 +379,7 @@ namespace LanguageModels {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename AprilUtils::vector<WordIdScoreTuple>::iterator it = words.begin();
-        it != words.end(); ++it)
+           it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 
