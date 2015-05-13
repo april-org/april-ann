@@ -233,6 +233,7 @@ namespace LanguageModels {
       }
       
       virtual void moveToNext(LMInterface *lm, Score threshold) {
+        // Returns an iterator with arc=length(transition_table)
         // TODO: implement
       }
       
