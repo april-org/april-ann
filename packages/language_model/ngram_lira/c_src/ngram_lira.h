@@ -190,6 +190,57 @@ namespace LanguageModels {
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
 
+    /**
+     * @brief For Lira Ngrams, StateControl is derived to contain an unsigned
+     * integer property indicating the arc number in
+     * NgramLiraModel::transition_table array, among two more integers with
+     * first and last transitions in former table.
+     */
+    class NgramLiraStateControl :
+      public LMInterface::BasicArcIterator::StateControl {
+      friend class NgramLiraInterface;
+      
+      unsigned int arc, first_transition, last_transition;
+      
+      static const NgramLiraStateControl *checkOther(const StateControl *other_) {
+        const NgramLiraStateControl *other =
+          dynamic_cast<const NgramLiraStateControl*>(other_);
+        april_assert(other != 0);
+        return other;
+      }
+      
+      NgramLiraStateControl(unsigned int arc,
+                            unsigned int first_tr,
+                            unsigned int last_tr) :
+        arc(arc), first_transition(first_tr), last_transition(last_tr) {}
+      
+      virtual bool equals(const StateControl *other_) const {
+        const NgramLiraStateControl *other = checkOther(other_);
+        return arc==other->arc;
+      }
+      
+      virtual void copy(const StateControl *other_) {
+        const NgramLiraStateControl *other = checkOther(other_);
+        arc = other->arc;
+        first_transition = other->first_transition;
+        last_transition = other->last_transition;
+      }
+
+      virtual StateControl *clone() {
+        NgramLiraStateControl *state = new NgramLiraStateControl(*this);
+        state->copy(this);
+        return state;
+      }
+      
+      virtual void moveToNext(LMInterface *lm, Score threshold) {
+        // TODO: implement
+      }
+      
+      virtual WordScoreTuple getWordScore(LMInterface *lm) {
+        // TODO: implement
+      }
+    };
+    
   protected:
     NgramLiraInterface(NgramLiraModel *lira_model) :
     LMInterface<Key,Score>(lira_model) {
@@ -198,6 +249,15 @@ namespace LanguageModels {
   public:
     virtual ~NgramLiraInterface() {
     }
+
+    virtual BasicArcIterator beginBasicArcs(Key key, Score threshold) {
+      // TODO: implement
+    }
+    
+    virtual BasicArcIterator endBasicArcs(Key key) {
+      // TODO: implement
+    }
+
     
     virtual void get(Key key, WordType word, Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,

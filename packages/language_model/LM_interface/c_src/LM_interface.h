@@ -143,46 +143,106 @@ namespace LanguageModels {
      * @brief Iterator for basic arcs in a language model.
      *
      * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
-     * all possible words given a state excluding back-off transitions.
+     * all possible words in transitions from a given state, excluding back-off
+     * transitions. An abstract class, BasicArcIterator::StateControl, is used
+     * to declare the interface between the iterator and the language model.
+     * Derived classes from LMInterface are required to implement properly the
+     * StateControl class.
      *
      * @note This class needs a referenced pointer to a language model.
      */
     class BasicArcIterator {
-      AprilUtils::SharedPtr<LMInterface> lm;
-      Key key;
-      Key arc;
-      Score threshold;
-      WordScoreTuple word_score;
     public:
-      BasicArcIterator(AprilUtils::SharedPtr<LMInterface> lm,
-                       Key k, Key a, Score th) :
-        lm(lm), key(k), arc(a), threshold(th) {
-        word_score = lm->getBasicArc(key, arc);
+      
+      /**
+       * @brief This class implements the basic API needed for traverse
+       * languages models using BasicArcIterator class.
+       *
+       * @note The API receives a LMInterface pointer in methods which needs
+       * to access LM data structures. So, minimum state is required in this
+       * class, just to represent a position in the language model. The caller
+       * is responsible to perform the call with the proper LM pointer.
+       */
+      class StateControl {
+        friend class BasicArcIterator;
+        
+        /**
+         * @brief This method traverses until next arc which is above threshold
+         *
+         * @note This method will update the state with <b>end</b> iterator state
+         * when necessary.
+         */
+        virtual void moveToNext(LMInterface *lm, Score threshold) = 0;
+        
+        /**
+         * @brief This method returns a word,score pair
+         *
+         * @note If this method is called when state is <b>end</b>, the returned
+         * value is undefined.
+         */
+        virtual WordScoreTuple getWordScore(LMInterface *lm) = 0;
+        
+        /// Compares two StateControl objects.
+        virtual bool equals(const StateControl *other) const = 0;
+        
+        /// Copies other into this.
+        virtual void copy(const StateControl *other) = 0;
+        
+        /// Returns a deep copy of this.
+        virtual StateControl *clone() = 0;
+      };
+      
+    private:
+      AprilUtils::SharedPtr<LMInterface> lm;
+      Score threshold;
+      AprilUtils::UniquePtr<StateControl> state;
+      WordScoreTuple word_score;   ///< Used for memoization of current state
+      bool is_word_score_initialized;
+      
+      void checkWordScore() {
+        if (!is_word_score_initialized) {
+          word_score = state->getWordScore(lm.get());
+          is_word_score_initialized = true;
+        }
       }
       
+    public:
       BasicArcIterator(const BasicArcIterator &other) :
-        lm(other.lm), key(other.key), arc(other.arc),
-        threshold(other.threshold) {
-      }
+        lm(lm), threshold(threshold), state(other.state->clone()),
+        word_score(other.word_score),
+        is_word_score_initialized(other.is_word_score_initialized) {}
+
+      BasicArcIterator(AprilUtils::SharedPtr<LMInterface> lm, Score th,
+                       AprilUtils::UniquePtr<StateControl> state) :
+        lm(lm), threshold(th), state(state),
+        is_word_score_initialized(false) {}
       
-      BasicArcIterator &operator=(const BasicArcIterator &other) {
+      virtual bool operator!=(const BasicArcIterator &other) {
+        return (*this) != other;
+      }
+      virtual bool operator==(const BasicArcIterator &other) {
+        return ( this->lm==other.lm &&
+                 this->threshold==other.threshold &&
+                 state->equals(&other) );
+      }
+      virtual BasicArcIterator &operator=(const BasicArcIterator &other) {
         lm = other.lm;
-        key = other.key;
-        arc = other.arc;
         threshold = other.threshold;
-      }
-      
-      BasicArcIterator &operator++() {
-        arc = lm->getNextBasicArc(key, arc);
-        word_score = lm->getBasicArc(key, arc);
+        state->copy(other);
+        word_score = other.word_score;
+        is_word_score_initialized = other.is_word_score_initialized;
         return *this;
       }
-      
-      const WordScoreTuple &operator*() const {
+      virtual BasicArcIterator &operator++() {
+        state->moveToNext(lm.get(), threshold);
+        is_word_score_initialized = false;
+      }
+      virtual const WordScoreTuple &operator*() const {
+        checkWordScore();
         return word_score;
       }
-      
-      const WordScoreTuple *operator->() const {
+      virtual const WordScoreTuple *operator->() const {
+        checkWordScore();
         return &word_score;
       }
     };
@@ -215,44 +275,22 @@ namespace LanguageModels {
     /**
      * @brief Returns an BasicArcIterator for basic arcs outgoing from key state.
      *
-     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
-     * all possible words given a state excluding back-off transitions.
+     * This method returns an iterator to the first transition with probability
+     * above the given threshold.
+     *
+     * @see BasicArcIterator class
      */
     virtual BasicArcIterator beginBasicArcs(Key key, Score threshold) = 0;
 
     /**
      * @brief Returns an end BasicArcIterator for basic arcs outgoing from key state.
      *
-     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
-     * all possible words given a state excluding back-off transitions.
+     * This method returns the first invalid iterator related with the given
+     * key.
+     *
+     * @see BasicArcIterator class
      */
     virtual BasicArcIterator endBasicArcs(Key key) = 0;
-    
-    /**
-     * @brief Returns the next Key refering to a basic arc given context,arc
-     * keys
-     *
-     * This method is used by BasicArcIterator to traverse all arcs from any
-     * Key context.
-     *
-     * @note This method is expected to return an <b>invalid arc</b> when there
-     * are no more arcs. This <b>invalid arc</b> should be the same arc used in
-     * method endBasicArcs to build the end iterator object.
-     */
-    virtual Key getNextBasicArc(Key key, Key arc) const = 0;
-    
-    /**
-     * @brief Returns the WordScoreTuple corresponding to the given context,arc
-     * keys
-     *
-     * This method is used by BasicArcIterator to consult for word,score pair
-     * corresponding to iterator position.
-     *
-     * @note An <b>invalid arc</b> would be given to this method, in this case
-     * the returned value is undefined and not important. See method
-     * getNextBasicArc() for more information.
-     */
-    virtual WordScoreTuple getBasicArc(Key key, Key arc) const = 0;
     
     // -------------- individual LM queries -------------
 
