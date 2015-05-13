@@ -37,6 +37,27 @@ using namespace Basics;
 using namespace LanguageModels;
 using namespace LanguageModels::QueryFilters;
 
+class BasicArcsIteratorUInt32Logfloat : public Referenced {
+  LMInterfaceUInt32LogFloat *lmi;
+  LMInterfaceUInt32LogFloat::BasicArcsIterator it;
+  uint32_t key;
+public:
+  BasicArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
+                                  uint32_t key, log_float th) :
+    lmi(lmi), key(k) {
+    it = lmi->beginBasicArcs(k, th);
+  }
+  uint32_t get() {
+    return *it;
+  }
+  void next() {
+    ++it;
+  }
+  void isEnd() {
+    return it != lmi->endBasicArcs(key);
+  }
+};
+
 class QueryResultUInt32LogFloat : public Referenced {
   LMInterfaceUInt32LogFloat *lm_interface;
   const AprilUtils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
@@ -87,6 +108,35 @@ public:
   }
 };
 
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BasicArcsIteratorUInt32Logfloat language_models.__basic_arcs_iterator__
+//BIND_CPP_CLASS BasicArcsIteratorUInt32Logfloat
+
+//BIND_CONSTRUCTOR BasicArcsIteratorUInt32Logfloat
+{
+  LUABIND_ERROR("FORBIDDEN!!! call method basic_arcs_iterator of a language model");
+}
+//BIND_END
+
+//BIND_METHOD BasicArcsIteratorUInt32Logfloat get
+{
+  LUABIND_RETURN(unsigned int, obj->get());
+}
+//BIND_END
+
+//BIND_METHOD BasicArcsIteratorUInt32Logfloat next
+{
+  obj->next();
+}
+//BIND_END
+
+//BIND_METHOD BasicArcsIteratorUInt32Logfloat is_end
+{
+  LUABIND_RETURN(bool, obj->isEnd());
+}
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////

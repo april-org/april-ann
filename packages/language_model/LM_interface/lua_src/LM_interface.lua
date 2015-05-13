@@ -36,10 +36,29 @@ local function set_iterator_metatable(it_class)
   local metatable = it_class.meta_instance
   metatable.__len = generic_len
   metatable.__ipairs = generic_ipairs
-  class.extend(it_class, "iterate",metatable.__ipairs)
+  class.extend(it_class, "iterate", metatable.__ipairs)
 end
 ---------------------------------------------------------------------------
 
 set_iterator_metatable(language_models.__query_result__)
 set_iterator_metatable(language_models.__get_result__)
 set_iterator_metatable(language_models.__next_keys_result__)
+
+---------------------------------------------------------------------------
+
+class.extend(language_models.__basic_arcs_iterator__,
+             "iterate",
+             function()
+               return function()
+                 if not self:is_end() then
+                   local w = self:get()
+                   self:next()
+                   return w
+                 end
+               end
+end)
+
+class.extend_metatable(language_models.__basic_arcs_iterator__,
+                       "__pairs",
+                       class.consult(language_models.__basic_arcs_iterator__,
+                                     "iterate"))

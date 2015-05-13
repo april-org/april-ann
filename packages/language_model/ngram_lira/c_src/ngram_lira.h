@@ -197,7 +197,7 @@ namespace LanguageModels {
      * first and last transitions in former table.
      */
     class NgramLiraStateControl :
-      public LMInterface::BasicArcIterator::StateControl {
+      public LMInterface::BasicArcsIterator::StateControl {
       friend class NgramLiraInterface;
       
       unsigned int arc, first_transition, last_transition;
@@ -236,7 +236,7 @@ namespace LanguageModels {
         // TODO: implement
       }
       
-      virtual WordScoreTuple getWordScore(LMInterface *lm) {
+      virtual WordType getWord(LMInterface *lm) {
         // TODO: implement
       }
     };
@@ -250,11 +250,11 @@ namespace LanguageModels {
     virtual ~NgramLiraInterface() {
     }
 
-    virtual BasicArcIterator beginBasicArcs(Key key, Score threshold) {
+    virtual BasicArcsIterator beginBasicArcs(Key key, Score threshold) {
       // TODO: implement
     }
     
-    virtual BasicArcIterator endBasicArcs(Key key) {
+    virtual BasicArcsIterator endBasicArcs(Key key) {
       // TODO: implement
     }
 

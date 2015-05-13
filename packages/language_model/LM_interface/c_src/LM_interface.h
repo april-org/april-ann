@@ -131,32 +131,24 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
-    struct WordScoreTuple {
-      WordType word;
-      Score score;
-      WordScoreTuple() {}
-      WordScoreTuple(WordType w, Score s) :
-        word(w), score(s) {}
-    };
-    
     /**
      * @brief Iterator for basic arcs in a language model.
      *
      * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
      * all possible words in transitions from a given state, excluding back-off
-     * transitions. An abstract class, BasicArcIterator::StateControl, is used
+     * transitions. An abstract class, BasicArcsIterator::StateControl, is used
      * to declare the interface between the iterator and the language model.
      * Derived classes from LMInterface are required to implement properly the
      * StateControl class.
      *
      * @note This class needs a referenced pointer to a language model.
      */
-    class BasicArcIterator {
+    class BasicArcsIterator {
     public:
       
       /**
        * @brief This class implements the basic API needed for traverse
-       * languages models using BasicArcIterator class.
+       * languages models using BasicArcsIterator class.
        *
        * @note The API receives a LMInterface pointer in methods which needs
        * to access LM data structures. So, minimum state is required in this
@@ -164,7 +156,7 @@ namespace LanguageModels {
        * is responsible to perform the call with the proper LM pointer.
        */
       class StateControl {
-        friend class BasicArcIterator;
+        friend class BasicArcsIterator;
         
         /**
          * @brief This method traverses until next arc which is above threshold
@@ -175,12 +167,12 @@ namespace LanguageModels {
         virtual void moveToNext(LMInterface *lm, Score threshold) = 0;
         
         /**
-         * @brief This method returns a word,score pair
+         * @brief This method returns a word
          *
          * @note If this method is called when state is <b>end</b>, the returned
          * value is undefined.
          */
-        virtual WordScoreTuple getWordScore(LMInterface *lm) = 0;
+        virtual WordType getWord(LMInterface *lm) = 0;
         
         /// Compares two StateControl objects.
         virtual bool equals(const StateControl *other) const = 0;
@@ -196,54 +188,34 @@ namespace LanguageModels {
       AprilUtils::SharedPtr<LMInterface> lm;
       Score threshold;
       AprilUtils::UniquePtr<StateControl> state;
-      WordScoreTuple word_score;   ///< Used for memoization of current state
-      bool is_word_score_initialized;
-      
-      void checkWordScore() {
-        if (!is_word_score_initialized) {
-          word_score = state->getWordScore(lm.get());
-          is_word_score_initialized = true;
-        }
-      }
       
     public:
-      BasicArcIterator(const BasicArcIterator &other) :
-        lm(lm), threshold(threshold), state(other.state->clone()),
-        word_score(other.word_score),
-        is_word_score_initialized(other.is_word_score_initialized) {}
+      BasicArcsIterator(const BasicArcsIterator &other) :
+        lm(lm), threshold(threshold), state(other.state->clone()) {}
 
-      BasicArcIterator(AprilUtils::SharedPtr<LMInterface> lm, Score th,
+      BasicArcsIterator(AprilUtils::SharedPtr<LMInterface> lm, Score th,
                        AprilUtils::UniquePtr<StateControl> state) :
-        lm(lm), threshold(th), state(state),
-        is_word_score_initialized(false) {}
+        lm(lm), threshold(th), state(state) {}
       
-      virtual bool operator!=(const BasicArcIterator &other) {
+      virtual bool operator!=(const BasicArcsIterator &other) {
         return (*this) != other;
       }
-      virtual bool operator==(const BasicArcIterator &other) {
+      virtual bool operator==(const BasicArcsIterator &other) {
         return ( this->lm==other.lm &&
                  this->threshold==other.threshold &&
                  state->equals(&other) );
       }
-      virtual BasicArcIterator &operator=(const BasicArcIterator &other) {
+      virtual BasicArcsIterator &operator=(const BasicArcsIterator &other) {
         lm = other.lm;
         threshold = other.threshold;
         state->copy(other);
-        word_score = other.word_score;
-        is_word_score_initialized = other.is_word_score_initialized;
         return *this;
       }
-      virtual BasicArcIterator &operator++() {
+      virtual BasicArcsIterator &operator++() {
         state->moveToNext(lm.get(), threshold);
-        is_word_score_initialized = false;
       }
-      virtual const WordScoreTuple &operator*() const {
-        checkWordScore();
-        return word_score;
-      }
-      virtual const WordScoreTuple *operator->() const {
-        checkWordScore();
-        return &word_score;
+      virtual const WordType &operator*() const {
+        return state->getWord();
       }
     };
     
@@ -273,24 +245,24 @@ namespace LanguageModels {
     }
     
     /**
-     * @brief Returns an BasicArcIterator for basic arcs outgoing from key state.
+     * @brief Returns an BasicArcsIterator for basic arcs outgoing from key state.
      *
      * This method returns an iterator to the first transition with probability
      * above the given threshold.
      *
-     * @see BasicArcIterator class
+     * @see BasicArcsIterator class
      */
-    virtual BasicArcIterator beginBasicArcs(Key key, Score threshold) = 0;
+    virtual BasicArcsIterator beginBasicArcs(Key key, Score threshold) = 0;
 
     /**
-     * @brief Returns an end BasicArcIterator for basic arcs outgoing from key state.
+     * @brief Returns an end BasicArcsIterator for basic arcs outgoing from key state.
      *
      * This method returns the first invalid iterator related with the given
      * key.
      *
-     * @see BasicArcIterator class
+     * @see BasicArcsIterator class
      */
-    virtual BasicArcIterator endBasicArcs(Key key) = 0;
+    virtual BasicArcsIterator endBasicArcs(Key key) = 0;
     
     // -------------- individual LM queries -------------
 
