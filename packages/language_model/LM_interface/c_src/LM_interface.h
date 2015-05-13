@@ -131,26 +131,60 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
+    struct WordScoreTuple {
+      WordType word;
+      Score score;
+      WordScoreTuple() {}
+      WordScoreTuple(WordType w, Score s) :
+        word(w), score(s) {}
+    };
+    
     /**
      * @brief Iterator for basic arcs in a language model.
      *
      * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
      * all possible words given a state excluding back-off transitions.
+     *
+     * @note This class needs a referenced pointer to a language model.
      */
     class BasicArcIterator {
       AprilUtils::SharedPtr<LMInterface> lm;
       Key key;
       Key arc;
       Score threshold;
+      WordScoreTuple word_score;
     public:
-      BasicArcIterator(LMInterface *lm, Key k, Key a, Score th) :
+      BasicArcIterator(AprilUtils::SharedPtr<LMInterface> lm,
+                       Key k, Key a, Score th) :
         lm(lm), key(k), arc(a), threshold(th) {
-      }
-      BasicArcIterator(const BasicArcIterator &other) :
-        lm(other.lm), key(other.key),
-        arc(other.arc), threshold(other.threshold) {
+        word_score = lm->getBasicArc(key, arc);
       }
       
+      BasicArcIterator(const BasicArcIterator &other) :
+        lm(other.lm), key(other.key), arc(other.arc),
+        threshold(other.threshold) {
+      }
+      
+      BasicArcIterator &operator=(const BasicArcIterator &other) {
+        lm = other.lm;
+        key = other.key;
+        arc = other.arc;
+        threshold = other.threshold;
+      }
+      
+      BasicArcIterator &operator++() {
+        arc = lm->getNextBasicArc(key, arc);
+        word_score = lm->getBasicArc(key, arc);
+        return *this;
+      }
+      
+      const WordScoreTuple &operator*() const {
+        return word_score;
+      }
+      
+      const WordScoreTuple *operator->() const {
+        return &word_score;
+      }
     };
     
   protected:
@@ -192,9 +226,33 @@ namespace LanguageModels {
      * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
      * all possible words given a state excluding back-off transitions.
      */
-    virtual BasicArcIterator endBasicArcs(Key key, Score threshold) = 0;
-
-    virtual Key getNextBasicArc(BasicArcIterator it) = 0;
+    virtual BasicArcIterator endBasicArcs(Key key) = 0;
+    
+    /**
+     * @brief Returns the next Key refering to a basic arc given context,arc
+     * keys
+     *
+     * This method is used by BasicArcIterator to traverse all arcs from any
+     * Key context.
+     *
+     * @note This method is expected to return an <b>invalid arc</b> when there
+     * are no more arcs. This <b>invalid arc</b> should be the same arc used in
+     * method endBasicArcs to build the end iterator object.
+     */
+    virtual Key getNextBasicArc(Key key, Key arc) const = 0;
+    
+    /**
+     * @brief Returns the WordScoreTuple corresponding to the given context,arc
+     * keys
+     *
+     * This method is used by BasicArcIterator to consult for word,score pair
+     * corresponding to iterator position.
+     *
+     * @note An <b>invalid arc</b> would be given to this method, in this case
+     * the returned value is undefined and not important. See method
+     * getNextBasicArc() for more information.
+     */
+    virtual WordScoreTuple getBasicArc(Key key, Key arc) const = 0;
     
     // -------------- individual LM queries -------------
 
