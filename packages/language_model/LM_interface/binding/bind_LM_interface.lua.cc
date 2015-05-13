@@ -45,6 +45,7 @@ public:
   BasicArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
                                   uint32_t k,
                                   AprilUtils::log_float th) :
+    Referenced(),
     lmi(lmi), key(k), it(lmi->beginBasicArcs(k, th)) {
   }
   uint32_t get() {
@@ -356,6 +357,18 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD LMInterfaceUInt32LogFloat basic_arcs_iterator
+{
+  unsigned int key;
+  LUABIND_GET_PARAMETER(1, uint, key);
+  float log_threshold;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold, log_float::zero().log());
+  log_float threshold = log_float(log_threshold);
+  LUABIND_RETURN(BasicArcsIteratorUInt32Logfloat,
+                 new BasicArcsIteratorUInt32Logfloat(obj, key, threshold));
+}
+//BIND_END
+
 //BIND_METHOD LMInterfaceUInt32LogFloat get
 {
   uint32_t key, word;
@@ -369,7 +382,7 @@ public:
     check_table_fields(L, 3, "threshold", "id_key", "id_word", "result",
 		       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
-					 log_float::zero());
+					 log_float::zero().log());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, result, GetResultUInt32LogFloat,
@@ -420,7 +433,7 @@ public:
   if (lua_istable(L,3)) {
     check_table_fields(L, 3, "threshold", "id_key", "id_word", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
-					 log_float::zero());
+					 log_float::zero().log());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
     threshold = log_float(log_threshold);
@@ -454,7 +467,8 @@ public:
   uint32_t key;
   LUABIND_GET_PARAMETER(1, uint, key);
   float log_threshold;
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold, log_float::zero());
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold,
+                                 log_float::zero().log());
   log_float threshold = log_float(log_threshold);
   LUABIND_RETURN(float, obj->getFinalScore(key, threshold).log());
 }
