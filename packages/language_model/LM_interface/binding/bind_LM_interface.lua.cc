@@ -114,7 +114,7 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LuaArcsIteratorUInt32Logfloat language_models.__basic_arcs_iterator__
+//BIND_LUACLASSNAME LuaArcsIteratorUInt32Logfloat language_models.__arcs_iterator__
 //BIND_CPP_CLASS LuaArcsIteratorUInt32Logfloat
 
 //BIND_CONSTRUCTOR LuaArcsIteratorUInt32Logfloat
