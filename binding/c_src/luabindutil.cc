@@ -2,56 +2,59 @@
 #include <cstring>
 #include <cstdarg>
 
-#define CAST_TABLE_NAME "cast"
-#define CAST_TO_TABLE_NAME "to"
-#define CAST_FINAL_TABLE_NAME "final"
+#define CAST_REGISTRY_FIELD_NAME "luabind_cast"
 
 void pushCastTable(lua_State *L) {
   // stack:
-  lua_getglobal(L, CAST_TABLE_NAME);
+  lua_getfield(L, LUA_REGISTRYINDEX, CAST_REGISTRY_FIELD_NAME);
+  // stack: registry.luabind_cast
   if (lua_isnil(L, -1)) {
     // stack: nil
     lua_pop(L, 1);
     // stack:
     lua_newtable(L);
-    // stack: cast
-    lua_pushstring(L, CAST_TO_TABLE_NAME);
-    // stack: cast "to"
-    lua_newtable(L);
-    // stack: cast "to" to
-    lua_rawset(L, -3);
-    // stack: cast
-    lua_setglobal(L, CAST_TABLE_NAME);
-    // stack:
-    lua_getglobal(L, CAST_TABLE_NAME);
+    // stack: table
+    lua_pushvalue(L, -1);
+    // stack: table table
+    lua_setfield(L, LUA_REGISTRYINDEX, CAST_REGISTRY_FIELD_NAME);
+    // stack: table
   }
   // stack: cast
 }
 
 // n should be < 0
 void checkTable(lua_State *L, int n, const char *name) {
-  lua_pushstring(L, name);
-  lua_rawget(L, n - 1);
+  // stack:
+  lua_getfield(L, n, name);
+  // stack: table
   if (lua_isnil(L, -1)) {
+    // stack: nil
     lua_pop(L, 1);
-    lua_pushstring(L, name);
+    // stack:
     lua_newtable(L);
-    lua_rawset(L, n - 2);
-    lua_pushstring(L, name);
-    lua_rawget(L, n - 1);
+    // stack: table
+    lua_pushvalue(L, -1);
+    // stack: table table
+    lua_setfield(L, n - 2, name);
+    // stack: table
   }
+  // stack: table
 }
 
 void insertCast(lua_State *L, const char *derived, const char *base,
                 int (*c_function)(lua_State *)) {
+  // stack:
   pushCastTable(L);
-  lua_pushstring(L, CAST_TO_TABLE_NAME);
-  lua_rawget(L, -2);
+  // stack: registry.luabind_cast
   checkTable(L, -1, base);
+  // stack: registry.luabind_cast registry.luabind_cast[base]
   lua_pushstring(L, derived);
+  // stack: registry.luabind_cast registry.luabind_cast[base] "derived"
   lua_pushcfunction(L, c_function);
+  // stack: registry.luabind_cast registry.luabind_cast[base] "derived" func
   lua_rawset(L, -3);
-  lua_pop(L, 3);
+  // stack: registry.luabind_cast registry.luabind_cast[base]
+  lua_pop(L, 2);
 }
 
 bool lua_isFILE(lua_State *L, int idx) {

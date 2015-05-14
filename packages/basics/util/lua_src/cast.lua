@@ -1,12 +1,17 @@
 cast = cast or {}
-cast.to = cast.to or {}
 
+local registry = debug.getregistry()
+registry.luabind_cast = registry.luabind_cast or {}
+local luabind_cast = registry.luabind_cast
+assert(type(luabind_cast) == "table",
+       "Registry 'luabind_cast' field should be a table")
+       
 local function try_cast(obj, cls_id)
   local obj_id = type(obj)
   assert(obj_id ~= cls_id)
-  local to = cast.to[obj_id]
-  if to then
-    local f = to[cls_id]
+  local tbl = luabind_cast[obj_id]
+  if tbl then
+    local f = tbl[cls_id]
     if f then return f(obj) end
   end
   return nil,"Unable to locate cast function"
@@ -28,11 +33,10 @@ local function lookup(obj, metainst)
   return obj,msg
 end
 
-setmetatable(cast.to, {
-               __call = function(self, obj, cls)
-                 assert(class.is_class(cls), "Needs a class as 2nd argument")
-                 local metainst = assert(cls.meta_instance,
-                                         "Needs a target class as 2nd argument")
-                 return lookup(obj, metainst)
-               end
-})
+assert(not cast.to, "cast.to has been set, it cannot be overwritten")
+cast.to = function(obj, cls)
+  assert(class.is_class(cls), "Needs a class as 2nd argument")
+  local metainst = assert(cls.meta_instance,
+                          "Needs a target class as 2nd argument")
+  return lookup(obj, metainst)
+end

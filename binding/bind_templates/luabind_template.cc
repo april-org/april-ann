@@ -547,7 +547,7 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
 //LUA for childclass,parentclass in pairs(PARENT_CLASS) do
 int lua_cast_$$parentclass$$_to_$$childclass$$(lua_State *L) {
   if (lua_gettop(L) != 1) {
-    lua_pushfstring(L, "cast.to requires 1 argument");
+    lua_pushfstring(L, "lua_cast requires 1 argument");
     lua_error(L);
   }
   $$parentclass$$ *parent = lua_to$$parentclass$$(L, 1);
