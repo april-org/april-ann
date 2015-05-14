@@ -47,14 +47,6 @@ namespace LanguageModels {
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);
 
-    virtual BasicArcsIterator beginBasicArcs(Key key, Score threshold) {
-      return lira_interface->beginBasicArcs(key, threshold);
-    }
-    
-    virtual BasicArcsIterator endBasicArcs(Key key) {
-      return lira_interface->endBasicArcs(key);
-    }
-    
   protected:
     friend class BunchHashedNgramLiraLM;
     BunchHashedNgramLiraLMInterface(BunchHashedNgramLiraLM *model,

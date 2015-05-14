@@ -39,16 +39,15 @@ using namespace Functions;
 using namespace LanguageModels;
 using namespace LanguageModels::QueryFilters;
 
-class BasicArcsIteratorUInt32Logfloat : public Referenced {
+class LuaArcsIteratorUInt32Logfloat : public Referenced {
   AprilUtils::SharedPtr<LMInterfaceUInt32LogFloat> lmi;
   uint32_t key;
-  LMInterfaceUInt32LogFloat::BasicArcsIterator it;
+  LMInterfaceUInt32LogFloat::ArcsIterator it;
 public:
-  BasicArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
-                                  uint32_t k,
-                                  AprilUtils::log_float th) :
+  LuaArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
+                                LMInterfaceUInt32LogFloat::ArcsIterator &it) :
     Referenced(),
-    lmi(lmi), key(k), it(lmi->beginBasicArcs(k, th)) {
+    lmi(lmi), it(it) {
   }
   uint32_t get() {
     return *it;
@@ -57,7 +56,7 @@ public:
     ++it;
   }
   bool isEnd() {
-    return it != lmi->endBasicArcs(key);
+    return it.isEnd();
   }
 };
 
@@ -115,28 +114,28 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME BasicArcsIteratorUInt32Logfloat language_models.__basic_arcs_iterator__
-//BIND_CPP_CLASS BasicArcsIteratorUInt32Logfloat
+//BIND_LUACLASSNAME LuaArcsIteratorUInt32Logfloat language_models.__basic_arcs_iterator__
+//BIND_CPP_CLASS LuaArcsIteratorUInt32Logfloat
 
-//BIND_CONSTRUCTOR BasicArcsIteratorUInt32Logfloat
+//BIND_CONSTRUCTOR LuaArcsIteratorUInt32Logfloat
 {
-  LUABIND_ERROR("FORBIDDEN!!! call method basic_arcs_iterator of a language model");
+  LUABIND_ERROR("FORBIDDEN!!! call the corresponding method in language model");
 }
 //BIND_END
 
-//BIND_METHOD BasicArcsIteratorUInt32Logfloat get
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat get
 {
   LUABIND_RETURN(uint, obj->get());
 }
 //BIND_END
 
-//BIND_METHOD BasicArcsIteratorUInt32Logfloat next
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat next
 {
   obj->next();
 }
 //BIND_END
 
-//BIND_METHOD BasicArcsIteratorUInt32Logfloat is_end
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat is_end
 {
   LUABIND_RETURN(bool, obj->isEnd());
 }
@@ -356,18 +355,6 @@ public:
 //BIND_CONSTRUCTOR LMInterfaceUInt32LogFloat
 {
   LUABIND_ERROR("Abstract class!!!");
-}
-//BIND_END
-
-//BIND_METHOD LMInterfaceUInt32LogFloat basic_arcs_iterator
-{
-  unsigned int key;
-  LUABIND_GET_PARAMETER(1, uint, key);
-  float log_threshold;
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold, log_float::zero().log());
-  log_float threshold = log_float(log_threshold);
-  LUABIND_RETURN(BasicArcsIteratorUInt32Logfloat,
-                 new BasicArcsIteratorUInt32Logfloat(obj, key, threshold));
 }
 //BIND_END
 

@@ -46,9 +46,9 @@ set_iterator_metatable(language_models.__next_keys_result__)
 
 ---------------------------------------------------------------------------
 
-class.extend(language_models.__basic_arcs_iterator__,
+class.extend(language_models.__arcs_iterator__,
              "iterate",
-             function()
+             function(self)
                return function()
                  if not self:is_end() then
                    local w = self:get()
@@ -58,7 +58,7 @@ class.extend(language_models.__basic_arcs_iterator__,
                end
 end)
 
-class.extend_metamethod(language_models.__basic_arcs_iterator__,
-                        "__pairs",
-                        class.consult(language_models.__basic_arcs_iterator__,
-                                      "iterate"))
+-- class.extend_metamethod(language_models.__arcs_iterator__,
+--                         "__pairs",
+--                         class.consult(language_models.__arcs_iterator__,
+--                                       "iterate"))

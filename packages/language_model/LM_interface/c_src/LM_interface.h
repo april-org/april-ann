@@ -132,21 +132,25 @@ namespace LanguageModels {
     };
     
     /**
-     * @brief Iterator for basic arcs in a language model.
+     * @brief Arcs iterator in a language model.
      *
-     * Basic arcs are direct outgoing transitions, i.e. in ngram models they are
-     * all possible words in transitions from a given state, excluding back-off
-     * transitions. An abstract class, BasicArcsIterator::StateControl, is used
-     * to declare the interface between the iterator and the language model.
-     * Derived classes from LMInterface are required to implement properly the
-     * StateControl class.
+     * Language models can different kinds of iterators for traverse different
+     * arc kinds. For instance, in ngram models, once can traverse all arcs
+     * outgoing from a given state ignoring backoff transitions. On the other
+     * hand, once can traverse only backoff transitions, ignoring non-backoff
+     * transitions. Language models implement different methods in final
+     * classes, allowing to traverse the desired kind of arcs. The iterators are
+     * generic, allowing to export them in the same way into Lua. An abstract
+     * class, ArcsIterator::StateControl, is used to declare the interface
+     * between the iterator and the language model. Derived classes from
+     * LMInterface are required to implement properly the StateControl class.
      */
-    class BasicArcsIterator {
+    class ArcsIterator {
     public:
       
       /**
        * @brief This class implements the basic API needed for traverse
-       * languages models using BasicArcsIterator class.
+       * languages models using ArcsIterator class.
        *
        * @note The API receives a LMInterface pointer in methods which needs
        * to access LM data structures. So, minimum state is required in this
@@ -154,7 +158,7 @@ namespace LanguageModels {
        * is responsible to perform the call with the proper LM pointer.
        */
       class StateControl {
-        friend class BasicArcsIterator;
+        friend class ArcsIterator;
       public:
         virtual ~StateControl() {}
       private:
@@ -182,6 +186,9 @@ namespace LanguageModels {
         
         /// Returns a deep copy of this.
         virtual StateControl *clone() const = 0;
+        
+        /// Indicates if we achieved the end.
+        virtual bool isEnd(LMInterface *lm) const = 0;
       };
       
     private:
@@ -190,34 +197,37 @@ namespace LanguageModels {
       AprilUtils::UniquePtr<StateControl> state;
       
     public:
-      BasicArcsIterator() {}
-      BasicArcsIterator(const BasicArcsIterator &other) :
+      ArcsIterator() {}
+      ArcsIterator(const ArcsIterator &other) :
         lm(lm), threshold(threshold), state(other.state->clone()) {}
 
-      BasicArcsIterator(LMInterface *lm, Score th,
-                        AprilUtils::UniquePtr<StateControl> state) :
+      ArcsIterator(LMInterface *lm, Score th,
+                   AprilUtils::UniquePtr<StateControl> state) :
         lm(lm), threshold(th), state(state) {}
       
-      virtual bool operator!=(const BasicArcsIterator &other) const {
+      virtual bool operator!=(const ArcsIterator &other) const {
         return (*this) != other;
       }
-      virtual bool operator==(const BasicArcsIterator &other) const {
+      virtual bool operator==(const ArcsIterator &other) const {
         return ( this->lm==other.lm &&
                  this->threshold==other.threshold &&
                  state->equals(other.state.get()) );
       }
-      virtual BasicArcsIterator &operator=(const BasicArcsIterator &other) {
+      virtual ArcsIterator &operator=(const ArcsIterator &other) {
         lm = other.lm;
         threshold = other.threshold;
         state->copy(other.state.get());
         return *this;
       }
-      virtual BasicArcsIterator &operator++() {
+      virtual ArcsIterator &operator++() {
         state->moveToNext(lm, threshold);
         return *this;
       }
       virtual WordType operator*() {
         return state->getWord(lm);
+      }
+      virtual bool isEnd() const {
+        return state->isEnd(lm);
       }
     };
     
@@ -246,25 +256,25 @@ namespace LanguageModels {
       return model;
     }
     
-    /**
-     * @brief Returns an BasicArcsIterator for basic arcs outgoing from key state.
-     *
-     * This method returns an iterator to the first transition with probability
-     * above the given threshold.
-     *
-     * @see BasicArcsIterator class
-     */
-    virtual BasicArcsIterator beginBasicArcs(Key key, Score threshold) = 0;
+    // /**
+    //  * @brief Returns an ArcsIterator for basic arcs outgoing from key state.
+    //  *
+    //  * This method returns an iterator to the first transition with probability
+    //  * above the given threshold.
+    //  *
+    //  * @see ArcsIterator class
+    //  */
+    // virtual ArcsIterator beginArcs(Key key, Score threshold) = 0;
 
-    /**
-     * @brief Returns an end BasicArcsIterator for basic arcs outgoing from key state.
-     *
-     * This method returns the first invalid iterator related with the given
-     * key.
-     *
-     * @see BasicArcsIterator class
-     */
-    virtual BasicArcsIterator endBasicArcs(Key key) = 0;
+    // /**
+    //  * @brief Returns an end ArcsIterator for basic arcs outgoing from key state.
+    //  *
+    //  * This method returns the first invalid iterator related with the given
+    //  * key.
+    //  *
+    //  * @see ArcsIterator class
+    //  */
+    // virtual ArcsIterator endArcs(Key key) = 0;
     
     // -------------- individual LM queries -------------
 

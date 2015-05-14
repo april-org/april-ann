@@ -39,14 +39,6 @@ namespace LanguageModels {
     
     virtual ~HistoryBasedNgramLiraLMInterface();
 
-    virtual BasicArcsIterator beginBasicArcs(Key key, Score threshold) {
-      return lira_interface->beginBasicArcs(key, threshold);
-    }
-    
-    virtual BasicArcsIterator endBasicArcs(Key key) {
-      return lira_interface->endBasicArcs(key);
-    }
-
   protected:
     friend class HistoryBasedNgramLiraLM;
     HistoryBasedNgramLiraLMInterface(HistoryBasedNgramLiraLM *model,
