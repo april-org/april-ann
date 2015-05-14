@@ -557,8 +557,9 @@ int lua_cast_$$parentclass$$_to_$$childclass$$(lua_State *L) {
   }
   $$childclass$$ *child = dynamic_cast<$$childclass$$*>(parent);
   if (child == 0) {
+    lua_pushnil(L);
     lua_pushfstring(L, "Unable casting to the given type");
-    lua_error(L);
+    return 2;
   }
   lua_push$$childclass$$(L, child);
   return 1;

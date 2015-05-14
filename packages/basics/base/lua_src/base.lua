@@ -18,35 +18,3 @@ make_deprecated_function = function(name, new_name, new_func)
     end
   end
 end
-
-cast = cast or {}
-cast.to = cast.to or {}
-
-local function lookup(obj, obj_id, cls)
-
-end
-
-setmetatable(cast.to, {
-               __call = function(self, obj, cls)
-                 local obj_id = type(obj)
-                 local meta = assert(cls.meta_instance,
-                                     "Needs a target class as 2nd argument")
-                 local f
-                 while not f do
-                   local cls_id = assert(meta.id)
-                   if cls_id == obj_id then return obj end
-                   local to = cast.to[obj_id]
-                   if to then f = to[cls_id] end
-                   if not f then
-                     local meta2 = assert(getmetatable(meta.__index),
-                                          "Incorrect derived class")
-                     print(meta, meta2)
-                     if raweq(meta, meta2) then
-                       assert("Unable casting to given class")
-                     end
-                     meta = meta2
-                   end
-                 end
-                 return f(obj)
-               end
-})
