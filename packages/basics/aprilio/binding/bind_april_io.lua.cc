@@ -40,13 +40,14 @@ int callFileStreamConstructor(lua_State *L) {
   StreamInterface *stream = new T(path, mode);
   if (stream->isOpened()) {
     lua_pushStreamInterface(L, stream);
+    return 1;
   }
   else {
     lua_pushnil(L);
     if (stream->hasError()) lua_pushstring(L, stream->getErrorMsg());
     delete stream;
+    return 2;
   }
-  return 1;
 }
 
 template<typename T>

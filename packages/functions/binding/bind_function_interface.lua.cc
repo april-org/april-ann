@@ -64,7 +64,7 @@ using Basics::Token;
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME IdentityFunction functions
+//BIND_LUACLASSNAME IdentityFunction functions.identity
 //BIND_CPP_CLASS IdentityFunction
 //BIND_SUBCLASS_OF IdentityFunction FunctionInterface
 

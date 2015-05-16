@@ -192,13 +192,21 @@ namespace LanguageModels {
     
     void incRef() {
       HistoryBasedLMInterface<Key,Score>::incRef();
-      BunchHashedLMInterface<Key,Score>::incRef();
+      //BunchHashedLMInterface<Key,Score>::incRef();
     }
 
     bool decRef() {
       HistoryBasedLMInterface<Key,Score>::decRef();
-      BunchHashedLMInterface<Key,Score>::decRef();
+      //BunchHashedLMInterface<Key,Score>::decRef();
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
+    }
+
+    virtual void setLuaRef(int lua_ref) {
+      HistoryBasedLMInterface<Key,Score>::setLuaRef(lua_ref);
+    }
+    
+    virtual int getLuaRef() const {
+      HistoryBasedLMInterface<Key,Score>::getLuaRef();
     }
 
     Basics::Token* applyQueryFilter(Basics::Token* token) {
@@ -292,15 +300,23 @@ namespace LanguageModels {
       return bunch_filter.get();
     }
 
-    void incRef() {
+    virtual void incRef() {
       HistoryBasedLM<Key,Score>::incRef();
-      BunchHashedLM<Key,Score>::incRef();
+      //BunchHashedLM<Key,Score>::incRef();
     }
 
-    bool decRef() {
+    virtual bool decRef() {
       HistoryBasedLM<Key,Score>::decRef();
-      BunchHashedLM<Key,Score>::decRef();
+      //BunchHashedLM<Key,Score>::decRef();
       return (HistoryBasedLM<Key,Score>::getRef() <= 0);
+    }
+    
+    virtual void setLuaRef(int lua_ref) {
+      HistoryBasedLM<Key,Score>::setLuaRef(lua_ref);
+    }
+    
+    virtual int getLuaRef() const {
+      HistoryBasedLM<Key,Score>::getLuaRef();
     }
   };
 
