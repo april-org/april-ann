@@ -196,53 +196,60 @@ namespace LanguageModels {
      * NgramLiraModel::transition_table array, among two more integers with
      * first and last transitions in former table.
      */
-    class NgramLiraStateControl :
+    class NgramLiraNoBackoffStateControl :
       public LMInterface::ArcsIterator::StateControl {
       friend class NgramLiraInterface;
       
-      unsigned int arc, first_transition, last_transition;
+      unsigned int current_transition, last_transition;
       
-      static const NgramLiraStateControl *checkOther(const StateControl *other_) {
-        const NgramLiraStateControl *other =
-          dynamic_cast<const NgramLiraStateControl*>(other_);
+      static const NgramLiraNoBackoffStateControl *checkOther(const StateControl *other_) {
+        const NgramLiraNoBackoffStateControl *other =
+          dynamic_cast<const NgramLiraNoBackoffStateControl*>(other_);
         april_assert(other != 0);
         return other;
       }
       
-      NgramLiraStateControl(unsigned int arc,
-                            unsigned int first_tr,
-                            unsigned int last_tr) :
-        arc(arc), first_transition(first_tr), last_transition(last_tr) {}
+      NgramLiraNoBackoffStateControl(unsigned int current_tr,
+                                     unsigned int last_tr) :
+        current_transition(current_tr), last_transition(last_tr) {}
       
       virtual bool equals(const StateControl *other_) const {
-        const NgramLiraStateControl *other = checkOther(other_);
-        return arc==other->arc;
+        const NgramLiraNoBackoffStateControl *other = checkOther(other_);
+        return
+          current_transition == other->current_transition &&
+          last_transition == other->last_transition;
       }
       
       virtual void copy(const StateControl *other_) {
-        const NgramLiraStateControl *other = checkOther(other_);
-        arc = other->arc;
-        first_transition = other->first_transition;
-        last_transition = other->last_transition;
+        const NgramLiraNoBackoffStateControl *other = checkOther(other_);
+        current_transition = other->current_transition;
+        last_transition    = other->last_transition;
       }
 
       virtual StateControl *clone() const {
-        return new NgramLiraStateControl(this->arc,
-                                         this->first_transition,
-                                         this->last_transition);
+        return new NgramLiraNoBackoffStateControl(this->current_transition,
+                                                  this->last_transition);
       }
       
       virtual void moveToNext(LMInterface *lm, Score threshold) {
-        // Returns an iterator with arc=length(transition_table)
-        // TODO: implement
+        NgramLiraModel* m = static_cast<NgramLiraModel*>(lm->model);
+        WordType *twt = m->transition_words_table;
+        while (current_transition < last_transition) {
+          ++current_transition;
+          if (m->transition_table[current_transition]>=threshold)
+            return;
+        }
+        return;
       }
       
       virtual WordType getWord(LMInterface *lm) {
-        // TODO: implement
+        NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->model);
+        WordType *twt = lira_model->transition_words_table;
+        return twt[current_transition];
       }
       
       virtual bool isEnd(LMInterface *lm) const {
-        // TODO: implement
+        return current_transition>=last_transition;
       }
     };
     
@@ -256,13 +263,33 @@ namespace LanguageModels {
     }
 
     virtual ArcsIterator beginNonBackoffArcs(Key key, Score threshold) {
-      // TODO: implement
+      NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->model);
+      // determine initial and final transition indexes
+      unsigned int first_tr;
+      unsigned int last_tr;
+
+      if (key < lira_model->first_state_binary_search) {
+        int linear_index = 0;
+        while(lira_model->linear_search_table[linear_index].first_state <= key)
+          linear_index++;
+        // -1 because the search stopped too late ;)
+        LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
+        // range of transitions during the search:
+        first_tr = (key - info->first_state)*info->fan_out + info->first_index;
+        last_tr  = first_tr + info->fan_out;
+      } else {
+        first_tr  = lira_model->first_transition[st];
+        last_tr = lira_model->first_transition[st+1] - 1;
+      }
+
+      AprilUtils::UniquePtr<StateControl> st = 
+        new NgramLiraNoBackoffStateControl(first_tr,last_tr);
+      return ArcsIterator(this,threshold,st);
     }
     
     virtual ArcsIterator endNonBackoffArcs(Key key) {
       // TODO: implement
     }
-
     
     virtual void get(Key key, WordType word, Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
