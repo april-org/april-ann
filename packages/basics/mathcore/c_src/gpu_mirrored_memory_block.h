@@ -623,10 +623,11 @@ namespace AprilMath {
     GPUMirroredMemoryBlock(unsigned int sz) :
       GPUMirroredMemoryBlockBase(sz*sizeof(T)) {
 #ifndef NDEBUG
+      T nan = AprilMath::Limits<T>::quiet_NaN();
       // Initialization to NaN allows to find not initialized memory blocks.
       T *mem = getPPALForWrite();
       for (unsigned int i=0; i<getSize(); ++i) {
-        mem[i] = AprilMath::Limits<T>::quiet_NaN();
+        mem[i] = nan;
       }
 #endif
     }
