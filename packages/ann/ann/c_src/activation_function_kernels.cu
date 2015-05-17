@@ -37,14 +37,14 @@ namespace ANN {
     
     template<typename T>
     struct prelu {
-      T operator()(const float &x, const float &w) const {
+      APRIL_CUDA_EXPORT T operator()(const float &x, const float &w) const {
         return (x > T(0.0f)) ? (x) : (w*x);
       }
     };
 
     template<typename T>
     struct prelu_der {
-      T operator()(const float &x, const float &w) const {
+      APRIL_CUDA_EXPORT T operator()(const float &x, const float &w) const {
         return (x > T(0.0f)) ? T(1.0f) : (w);
       }
     };
