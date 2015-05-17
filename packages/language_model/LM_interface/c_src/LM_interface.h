@@ -160,6 +160,7 @@ namespace LanguageModels {
       class StateControl {
         friend class ArcsIterator;
       public:
+
         virtual ~StateControl() {}
       private:
         /**

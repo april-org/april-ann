@@ -232,23 +232,23 @@ namespace LanguageModels {
       }
       
       virtual void moveToNext(LMInterface *lm, Score threshold) {
-        NgramLiraModel* m = static_cast<NgramLiraModel*>(lm->model);
-        WordType *twt = m->transition_words_table;
+        NgramLiraModel* m = static_cast<NgramLiraModel*>(lm->getLMModel());
         while (current_transition < last_transition) {
           ++current_transition;
-          if (m->transition_table[current_transition]>=threshold)
+          if (m->transition_table[current_transition].prob >= threshold)
             return;
         }
         return;
       }
       
       virtual WordType getWord(LMInterface *lm) {
-        NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->model);
+        NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->getLMModel());
         WordType *twt = lira_model->transition_words_table;
         return twt[current_transition];
       }
       
       virtual bool isEnd(LMInterface *lm) const {
+        UNUSED_VARIABLE(lm);
         return current_transition>=last_transition;
       }
     };
@@ -262,8 +262,9 @@ namespace LanguageModels {
     virtual ~NgramLiraInterface() {
     }
 
+    /// Returns an ArcsIterator to non-backoff transitions.
     virtual ArcsIterator beginNonBackoffArcs(Key key, Score threshold) {
-      NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->model);
+      NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(getLMModel());
       // determine initial and final transition indexes
       unsigned int first_tr;
       unsigned int last_tr;
@@ -278,19 +279,15 @@ namespace LanguageModels {
         first_tr = (key - info->first_state)*info->fan_out + info->first_index;
         last_tr  = first_tr + info->fan_out;
       } else {
-        first_tr  = lira_model->first_transition[st];
-        last_tr = lira_model->first_transition[st+1] - 1;
+        first_tr  = lira_model->first_transition[key];
+        last_tr = lira_model->first_transition[key + 1] - 1;
       }
 
-      AprilUtils::UniquePtr<StateControl> st = 
-        new NgramLiraNoBackoffStateControl(first_tr,last_tr);
+      AprilUtils::UniquePtr<LMInterface::ArcsIterator::StateControl> st;
+      st = new NgramLiraNoBackoffStateControl(first_tr,last_tr);
       return ArcsIterator(this,threshold,st);
     }
-    
-    virtual ArcsIterator endNonBackoffArcs(Key key) {
-      // TODO: implement
-    }
-    
+        
     virtual void get(Key key, WordType word, Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);
