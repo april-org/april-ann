@@ -250,8 +250,9 @@ int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
         int luabind_num_returned_values = 0;
 	$$class.constructor$$
 	DEBUG("lua_new_$$ClassName$$ (end)");
-        if (luabind_num_returned_values != 1) {
-          LUABIND_ERROR("constructors must return 1 (and only 1) value");
+        if (luabind_num_returned_values<1 || luabind_num_returned_values>2) {
+          LUABIND_ERROR("constructors must return 1 value, or nil and an "
+                        "error message string (2 values) in case of error");
         }
 	return luabind_num_returned_values;
 }
