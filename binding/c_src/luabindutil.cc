@@ -5,6 +5,14 @@
 #define PARENTS_REGISTRY_FIELD_NAME "luabind_parents"
 #define CAST_REGISTRY_FIELD_NAME "luabind_cast"
 
+void makeWeakTable(lua_State *L) {
+  lua_newtable(L);
+  lua_pushstring(L, "__mode");
+  lua_pushstring(L, "v");
+  lua_rawset(L, -3);
+  lua_setmetatable(L, -2);
+}
+
 void pushOrCreateTable(lua_State *L, int n, const char *field) {
   // stack:
   lua_getfield(L, n, field);

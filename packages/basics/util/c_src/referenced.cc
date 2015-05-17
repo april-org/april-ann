@@ -61,10 +61,11 @@ Referenced::~Referenced() {
     fprintf(stderr,"Warning: destroying %p with reference %d!=0\n",this,refs);
   }
 #endif
+#ifdef __DEBUG__
   if (lua_ref != LUA_NOREF) {
-    lua_State *L = Base::getGlobalLuaState();
-    luaL_unref(L, LUA_REGISTRYINDEX, lua_ref);
+    fprintf(stderr,"Warning: destroying %p with a reference in registry\n",this);
   }
+#endif
 }
 void Referenced::incRef() { 
   refs++; 
