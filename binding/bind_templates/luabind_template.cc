@@ -470,17 +470,14 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
   $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,1);
   int luabind_num_returned_values = 0;
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (begin)", obj);
-  // BUG: doing this ends with non referenced objects and problems with garbage
-  // collector
-  // lua_remove(L,1);
-  lua_pushvalue(L, 1);
-  int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-  lua_remove(L,1); // methods do not need the instance pointer
+  // to avoid early deletion of the object in case of garbage collection
+  IncRef(obj);
+  lua_remove(L,1);
   // CODE:
   {
     $$code$$
       }
-  luaL_unref(L, LUA_REGISTRYINDEX, ref);
+  DecRef(obj);
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (end)", obj);
   return luabind_num_returned_values;
 }
