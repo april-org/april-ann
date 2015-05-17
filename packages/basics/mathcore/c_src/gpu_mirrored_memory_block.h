@@ -46,6 +46,7 @@ extern "C" {
 #include "error_print.h"
 #include "aligned_memory.h"
 #include "mmapped_data.h"
+#include "smart_ptr.h"
 
 #ifndef NO_POOL
 #include "hash_table.h"
@@ -107,7 +108,7 @@ namespace AprilMath {
     };
     static PoolFreeBeforeExit pool_free_before_exit;
 #endif
-    size_t size;
+    const size_t size;
     union {
       char *char_mem;
       mutable void *mem_ppal;
@@ -118,7 +119,7 @@ namespace AprilMath {
     bool    pinned;
 #endif
     mutable unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
-    AprilUtils::MMappedDataReader *mmapped_data;
+    AprilUtils::SharedPtr<AprilUtils::MMappedDataReader> mmapped_data;
     
     void setConst() {
       status = status | CONST_MASK;
@@ -338,11 +339,10 @@ namespace AprilMath {
     }
   
     GPUMirroredMemoryBlockBase(AprilUtils::MMappedDataReader *mmapped_data) :
-      Referenced() {
-      this->size     = *(mmapped_data->get<size_t>());
+      Referenced(),
+      size(*(mmapped_data->get<size_t>())),
+      mmapped_data(mmapped_data) {
       this->char_mem = mmapped_data->get<char>(this->size);
-      this->mmapped_data = mmapped_data;
-      IncRef(mmapped_data);
       this->status = 0;
       this->setMMapped();
 #ifdef USE_CUDA
@@ -357,7 +357,6 @@ namespace AprilMath {
                                void *mem) : Referenced(), size(sz),
                                             mem_ppal(mem) {
       status = 0;
-      mmapped_data = 0;
 #ifdef USE_CUDA
       unsetUpdatedGPU();
       setUpdatedPPAL();
@@ -370,7 +369,6 @@ namespace AprilMath {
                                const void *mem) : Referenced(), size(sz),
                                                   const_mem_ppal(mem) {
       status = 0;
-      mmapped_data = 0;
       setConst();
 #ifdef USE_CUDA
       unsetUpdatedGPU();
@@ -384,7 +382,6 @@ namespace AprilMath {
     GPUMirroredMemoryBlockBase(size_t sz) : Referenced(),
                                             size(sz) {
       status = 0;
-      mmapped_data = 0;
       setAllocated();
 #ifdef USE_CUDA
       setUpdatedGPU();
@@ -499,7 +496,6 @@ namespace AprilMath {
         else munmap(mem_ppal, size);
       }
 #endif
-      if (isMMapped() && mmapped_data != 0) DecRef(mmapped_data);
     }
 
 #ifdef USE_CUDA
@@ -626,7 +622,8 @@ namespace AprilMath {
       T nan = AprilMath::Limits<T>::quiet_NaN();
       // Initialization to NaN allows to find not initialized memory blocks.
       T *mem = getPPALForWrite();
-      for (unsigned int i=0; i<getSize(); ++i) {
+      unsigned int len = getSize();
+      for (unsigned int i=0; i<len; ++i) {
         mem[i] = nan;
       }
 #endif
