@@ -128,8 +128,13 @@ namespace ANN {
                  unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
       use_cuda(AprilMath::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT) {
-      if (name) this->name = AprilUtils::string(name);
-      else generateDefaultName();
+      if (name) {
+        this->name = AprilUtils::string(name);
+        ++next_name_id; // increase the counter in any case
+      }
+      else {
+        generateDefaultName();
+      }
       if (weights_name) this->weights_name = AprilUtils::string(weights_name);
     }
     
