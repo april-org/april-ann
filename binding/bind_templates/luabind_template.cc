@@ -365,6 +365,9 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_pushstring(L,"__index");
 	  lua_pushvalue(L,instance_methods);
 	  lua_settable(L,meta_instance);
+	  lua_pushstring(L,"index_table");
+	  lua_pushvalue(L,instance_methods);
+	  lua_settable(L,meta_instance);
 	  lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");  //table's (class) id...
 	  lua_pushboolean(L,1);
 	  lua_settable(L,instance_methods);
@@ -416,7 +419,7 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_gettable(L, class_table);
 	  // stack: meta_instance class_table
 	  meta_instance = lua_gettop(L);
-	  lua_pushstring(L,"__index");
+	  lua_pushstring(L,"index_table");
 	  lua_gettable(L, meta_instance);
 	  // stack: instance_methods meta_instance class_table
 	  instance_methods = lua_gettop(L);
@@ -652,7 +655,7 @@ int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   // pila =  ... luabind_clases luabind_clases[childclass] "metainstance"
   lua_rawget(L,-2); // class_table
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance
-  lua_pushstring(L,"__index");
+  lua_pushstring(L,"index_table");
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance "__index"
   lua_rawget(L,-2);
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance child_metainstance[__index]

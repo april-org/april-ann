@@ -31,7 +31,7 @@
 -----------------------------
 local class = {
   _NAME = "class",
-  _VERSION = "0.1",
+  _VERSION = "0.4",
 }
 
 -- a list of class tables declared using class function
@@ -53,7 +53,7 @@ if aprilann_available then type = luatype or type end
 
 -- Given two object meta_instance, sets the second as parent of the first.
 local function set_parent(child, parent)
-  setmetatable(child.__index, parent)
+  setmetatable(child.index_table, parent)
 end
 
 -- Checks if the type of the given object is "table"
@@ -66,15 +66,15 @@ local function has_metainstance(t)
 end
 
 -- Checks if the given object is a class table and returns its
--- meta_instance.__index table.
+-- meta_instance.index_table.
 local function has_class_instance_index_metamethod(t)
-  return has_metainstance(t) and t.meta_instance.__index
+  return has_metainstance(t) and t.meta_instance.index_table
 end
 
--- Checks if the given object is a class instance and returns its __index
+-- Checks if the given object is a class instance and returns its index_table
 -- metamethod.
 local function has_instance_index_metamethod(t)
-  return t and getmetatable(t) and getmetatable(t).__index
+  return t and getmetatable(t) and getmetatable(t).index_table
 end
 
 -- Converts a Lua object in an instance of the given class.
@@ -96,7 +96,7 @@ end
 function class.find(class_name)
   local cls = class_tables_list[class_name]
   if cls then
-    return class_tables_list[class_name],cls.meta_instance.__index
+    return class_tables_list[class_name],cls.meta_instance.index_table
   end
 end
 
@@ -117,16 +117,9 @@ function class.is_a(object_instance, base_class_table)
   if not class.of(object_instance) then return false end
   assert(has_metainstance(base_class_table),
          "Needs a class table as 2nd parameter")
-  local base_class_meta = (base_class_table.meta_instance or {}).__index
-  local object_table    = object_instance
-  local _is_a           = false
-  while not _is_a and object_table do
-    local index = has_instance_index_metamethod(object_table)
-    if rawequal(index, object_table) then break end
-    if index then _is_a = rawequal(index, base_class_meta) end
-    object_table = index
-  end
-  return _is_a
+  local id = (base_class_table.meta_instance or {}).id
+  local ok,result = pcall(function() return object_instance["is_" .. id] ~= nil end)
+  return ok and result
 end
 
 -- Returns the super class table of a given derived class table. Throws an error
@@ -200,10 +193,7 @@ end
 function class.extend(class_table, key, value)
   local index = has_class_instance_index_metamethod(class_table)
   assert(index, "The given 1st parameter is not a class")
-  if type(index) == "function" then
-    index = class_table.meta_instance.index_table
-    assert(index, "Needs an index_table field")
-  end
+  assert(type(index) == "table")
   index[key] = value
 end
 
@@ -231,7 +221,7 @@ end
 -- @param obj - A Lua class instance.
 -- @return boolean
 function class.is_derived(obj)
-  return getmetatable((getmetatable(obj) or { __index={} }).__index) ~= nil
+  return getmetatable((getmetatable(obj) or {}).cls or {}).parent ~= nil
 end
 
 -- Returns true/false if the given Lua value is a class table.
@@ -249,9 +239,6 @@ function class.declare_functional_index(cls, func)
   assert(class.is_class(cls), "Needs a class as first argument")
   assert(type(func) == "function", "Needs a function as second argument")
   local old_index = cls.meta_instance.__index
-  if type(old_index) ~= "function" then
-    cls.meta_instance.index_table = old_index
-  end
   if type(old_index) ~= "function" then
     cls.meta_instance.__index = function(self,key)
       local v = func(self,key)
@@ -333,8 +320,9 @@ local class_call_metamethod = function(self, class_name, parentclass, class_tabl
     id         = class_name,
     cls        = class_table,
     __tostring = function(self) return "instance of " .. class_name end,
-    __index    = { },
+    __index    = { ["is_"..class_name] = true },
   }
+  meta_instance.index_table = meta_instance.__index
   meta_instance.__gc = function(self)
     if self.__instance__ then
       class_table.destructor(self)

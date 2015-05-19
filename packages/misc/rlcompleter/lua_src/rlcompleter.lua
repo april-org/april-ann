@@ -2,14 +2,9 @@
 -- By Patrick Rapin; adapted by Reuben Thomas
 -- Adapted to APRIL-ANN by Francisco Zamora-Martinez, 2013
 
--- Returns __index field from a metatable. When __index field is a function, it
--- is expected to find index_table field with all the available methods.
+-- Returns index_table field from a metatable, which is a copy of __index table.
 local function get_index(mt)
-  if type(mt.__index) == "function" then
-    return mt.index_table
-  else
-    return mt.__index
-  end
+  return mt.index_table
 end
 
 -- The list of Lua keywords
