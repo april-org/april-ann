@@ -275,9 +275,10 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
     // Hacemos un DecRef para borrar la referencia a este objeto
     DecRef(obj);
   }
-  // FIXME: This warning is due to the META_INSTANCE table, which is a metatable
-  // of itself and has a __gc method, so at the end of APRIL execution, the __gc
-  // is executed with a NULL pointer
+  // FIXME: This warning is due to the META_INSTANCE tables with other
+  // META_INSTANCEs as metatable (inheritance), so a __gc metamethod which is
+  // executed at the end of APRIL execution, receiving __gc call a table
+  // as argument, leading into obj=0 when calling to lua_rawget...
   else {
     DEBUG_OBJ("lua_delete_$$ClassName$$ WARNING!! NULL pointer", obj);
   }
@@ -459,6 +460,18 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (end)");
 }
 
+// to avoid early deletion of the object in case of garbage collection
+struct luabind_reference_handler_$$ClassName$$ {
+  $$ClassName$$ *ref;
+  luabind_reference_handler_$$ClassName$$($$ClassName$$ *ref) :
+    ref(ref) {
+    IncRef(ref);
+  }
+  ~luabind_reference_handler_$$ClassName$$() {
+    DecRef(ref);
+  }
+};
+
 //LUA for MethodName,code in pairs(class.methods) do
 #undef FUNCTION_NAME
 #define FUNCTION_NAME "$$(LUANAME[ClassName] or ClassName)$$:$$MethodName$$"
@@ -475,13 +488,12 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
   int luabind_num_returned_values = 0;
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (begin)", obj);
   // to avoid early deletion of the object in case of garbage collection
-  IncRef(obj);
+  luabind_reference_handler_$$ClassName$$ ref_handler(obj);
   lua_remove(L,1);
   // CODE:
   {
     $$code$$
       }
-  DecRef(obj);
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (end)", obj);
   return luabind_num_returned_values;
 }
