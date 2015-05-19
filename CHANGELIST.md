@@ -6,11 +6,14 @@ Master branch release
 
 ### Unstable changes
 
+- Added `matrix.broadcast` utility (similar to broadcast in numpy).
 - Added `ProbablisitcMatrixANNComponent`, which allow to implement probabilistic
   mixtures of posteriors and/or likelihoods.
 
 ### API Changes
 
+- Added `cast.to` to dynamic cast C++ objects pushed into Lua, allowing to
+  convert base class objects into any of its derived classes.
 - Added `matrix.sparse` as valid values for targets in `ann.loss.mse` and
   `ann.loss.cross_entropy`.
 - Changed `matrix` metamethods `__index` and `__newindex`, allowing to use
@@ -42,12 +45,16 @@ Master branch release
 
 ### Bugs removed
 
+- Solved problems when chaining methods in Lua, some objects end to be garbage
+  collected.
+- Improved support of strings in auto-completion (rlcompleter package).
 - Solved bug at `SparseMatrix<T>` when reading it from a file.
 - Solved bug in `Image<T>::rotate90_cw` methods.
 - Solved bug in `SparseMatrix::toDense()` method.
 
 ### C/C++
 
+- Adding iterators to language models.
 - Added `MatrixScalarMap2` which receives as `input2` a `SparaseMatrix`
   instance. This functions needs to be generalized to work with CPU and CUDA.
 - The method `SparseMatrix<T>::fromDenseMatrix()` uses a `DOKBuilder` object
@@ -58,6 +65,8 @@ Master branch release
 
 ### Other
 
+- Minor changes in `class.lua`.
+- Improved binding to avoid multiple object copies when pushing C++ objects.
 - Added Git commit hash and compilation time.
 
 v0.4.0
