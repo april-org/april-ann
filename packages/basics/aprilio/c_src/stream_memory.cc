@@ -32,7 +32,9 @@ namespace AprilIO {
     do {
       dest->clear();
       source->get(dest, "\n\r", keep_delim);
-    } while ((dest->size() > 0) && ((*dest)[0] == '#'));
+    } while ( ((dest->size() > 0) && ((*dest)[0] == '#')) ||
+              // ignore empty lines
+              ((dest->size() == 1) && ((*dest)[0] == '\r' || (*dest)[0] == '\n')) );
     return dest->size();
   }
   
