@@ -102,6 +102,14 @@ namespace Matlab {
     if (llabs(num) >= 2147483648)
       ERROR_PRINT("The integer can't be represented using int32 precision\n");
   }
+  template<> inline void sanity_check_int32_precision<uint32_t>(uint32_t num) {
+    if (num >= 2147483648)
+      ERROR_PRINT("The integer can't be represented using int32 precision\n");
+  }
+  template<> inline void sanity_check_int32_precision<uint64_t>(uint64_t num) {
+    if (num >= 2147483648)
+      ERROR_PRINT("The integer can't be represented using int32 precision\n");
+  }
   template<> inline void sanity_check_int32_precision<int8_t>(int8_t num) {
     UNUSED_VARIABLE(num);
   }

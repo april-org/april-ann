@@ -68,8 +68,8 @@ namespace Imaging {
     }
 
     T getpixel_bilinear(float x, float y, T default_value) const {
-      float fx = fabsf(x - trunc(x));
-      float fy = fabsf(y - trunc(y));
+      float fx = fabsf(x - static_cast<float>(trunc(x)));
+      float fy = fabsf(y - static_cast<float>(trunc(y)));
       float dx = (x >= 0.0f ? 1.0f : -1.0f);
       float dy = (y >= 0.0f ? 1.0f : -1.0f);
       T h1 = (1-fx)*getpixel(int(x), int(y), default_value) + fx*getpixel(int(x+dx), int(y), default_value);

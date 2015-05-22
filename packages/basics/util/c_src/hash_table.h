@@ -58,15 +58,16 @@ namespace AprilUtils {
     
     // Para ser un "Pair associative container" el value_type deberia ser
     // un std::pair.
-    typedef KeyType         key_type;
-    typedef DataType        data_type;
+    typedef KeyType          key_type;
+    typedef DataType         data_type;
     typedef pair<const key_type, data_type> 
     value_type;
-    typedef value_type&     reference;
-    typedef const reference const_reference;
-    typedef value_type*     pointer;
-    typedef ptrdiff_t       difference_type;
-    typedef size_t          size_type;
+    typedef value_type&      reference;
+    typedef const value_type const_value;
+    typedef const_value&     const_reference;
+    typedef value_type*      pointer;
+    typedef ptrdiff_t        difference_type;
+    typedef size_t           size_type;
 
     struct node {
       value_type value;
@@ -151,15 +152,16 @@ namespace AprilUtils {
     public:
       // Para ser un "Pair associative container" el value_type deberia ser
       // un std::pair. Bueno, que le vamos a hacer :_(
-      typedef KeyType         key_type;
-      typedef DataType        data_type;
+      typedef KeyType          key_type;
+      typedef DataType         data_type;
       typedef pair<const key_type, data_type> 
       value_type;
-      typedef value_type&     reference;
-      typedef const reference const_reference;
-      typedef value_type*     pointer;
-      typedef ptrdiff_t       difference_type;
-      typedef size_t          size_type;
+      typedef value_type&      reference;
+      typedef const value_type const_value;
+      typedef const_value&     const_reference;
+      typedef value_type*      pointer;
+      typedef ptrdiff_t        difference_type;
+      typedef size_t           size_type;
       //typedef std::forward_iterator_tag iterator_category;
 	
       iterator(): h(0), index(0), ptr(0) {}
@@ -225,15 +227,16 @@ namespace AprilUtils {
     public:
       // Para ser un "Pair associative container" el value_type deberia ser
       // un std::pair. Bueno, que le vamos a hacer :_(
-      typedef KeyType         key_type;
-      typedef DataType        data_type;
+      typedef KeyType          key_type;
+      typedef DataType         data_type;
       typedef pair<const key_type, data_type> 
       value_type;
-      typedef value_type&     reference;
-      typedef const reference const_reference;
-      typedef value_type*     pointer;
-      typedef ptrdiff_t       difference_type;
-      typedef size_t          size_type;
+      typedef value_type&      reference;
+      typedef const value_type const_value;
+      typedef const_value&     const_reference;
+      typedef value_type*      pointer;
+      typedef ptrdiff_t        difference_type;
+      typedef size_t           size_type;
       //typedef std::forward_iterator_tag iterator_category;
 
       const_iterator(): h(0), index(0), ptr(0) {}
