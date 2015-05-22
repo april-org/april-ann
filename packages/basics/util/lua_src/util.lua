@@ -496,20 +496,15 @@ end
 
 -- auxiliary function for fast development of reductions
 function math.lnot(a)
-  assert(a, "Needs one argument, you can use bind function to freeze any arg")
   return not a
 end
 -- auxiliary function for fast development of reductions
 function math.lor(a,b)
-  assert(a and b,
-         "Needs one argument, you can use bind function to freeze any arg")
   return a or b
 end
 
 -- auxiliary function for fast development of reductions
 function math.land(a,b)
-  assert(a and b,
-         "Needs one argument, you can use bind function to freeze any arg")
   return a and b
 end
 
