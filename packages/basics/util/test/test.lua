@@ -43,3 +43,10 @@ T("SerializationTest", function()
     check.eq(t2.a[2],3)
     check.eq(type(t2.c), "util.stopwatch")
 end)
+
+T("LambdaTest", function()
+    local f = lambda'|x|3*x'
+    local g = bind(lambda'|f,x|f(x)^2', f)
+    check.eq(f(4),12)
+    check.eq(g(4),144)
+end)
