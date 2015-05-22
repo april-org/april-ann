@@ -1370,7 +1370,6 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   int argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_PARAMETER(1, DataSetFloat);
   DataSetFloat *ds;
-  const char *major_str;
   LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
   obj = new DataSetFloat2TokenWrapper(ds);
   LUABIND_RETURN(DataSetFloat2TokenWrapper, obj);

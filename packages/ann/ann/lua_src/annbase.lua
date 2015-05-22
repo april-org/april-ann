@@ -30,7 +30,8 @@ ann.components.const_mul = function(t)
   local c = ann.components.mul(params)
   local wname = c:get_weights_name()
   c:build{ weights = { [wname] = m } }
-  return ann.components.const{ component = c }
+  local const_name = c:get_name() .. "_const"
+  return ann.components.const{ component = c, name = const_name }
 end
 
 ----------------------------------------------------------------------

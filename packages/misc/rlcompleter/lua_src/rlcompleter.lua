@@ -2,14 +2,14 @@
 -- By Patrick Rapin; adapted by Reuben Thomas
 -- Adapted to APRIL-ANN by Francisco Zamora-Martinez, 2013
 
--- Returns __index field from a metatable. When __index field is a function, it
--- is expected to find index_table field with all the available methods.
+-- scape all characters to avoid problems with Lua regular expressions
+local function scape(str)
+  return str:gsub("(.)","%%%1")
+end
+
+-- Returns index_table field from a metatable, which is a copy of __index table.
 local function get_index(mt)
-  if type(mt.__index) == "function" then
-    return mt.index_table
-  else
-    return mt.__index
-  end
+  return mt.index_table
 end
 
 -- The list of Lua keywords
@@ -118,7 +118,7 @@ rlcompleter._set(
         add_globals()
       end
     end
-
+    
     -- This complex function tries to simplify the input line, by removing
     -- literal strings, full table constructors and balanced groups of
     -- parentheses. Returns the sub-expression preceding the word, the
@@ -139,8 +139,10 @@ rlcompleter._set(
         end
         local idx, startpat, endpat
         if (idx1 or math.huge) < (idx2 or math.huge) then
+          equals = scape(equals)
           idx, startpat, endpat = idx1, "%[" .. equals .. "%[", "%]" .. equals .. "%]"
         else
+          sign = scape(sign)
           idx, startpat, endpat = idx2, sign, sign
         end
         if expr:sub(idx):find("^" .. startpat .. ".-" .. endpat) then

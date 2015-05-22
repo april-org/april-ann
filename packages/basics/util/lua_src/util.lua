@@ -217,6 +217,28 @@ function bind(func, ...)
   end
 end
 
+-- inspired by Penlight string_lambda:
+-- http://stevedonovan.github.io/Penlight/api/libraries/pl.utils.html#string_lambda
+local lambda
+do
+  local memory = {}
+  lambda = setmetatable({ clear = function() memory = {} end, },
+    {
+      __call = function(self,fstr)
+        local fun = memory[fstr]
+        if not fun then
+          local args,code = fstr:match("^%s*|(.+)|(.+)$")
+          assert(args and code, "Needs args and code sections, e.g., |args|code")
+          local fun_src = ("return function(%s) return %s end"):format(args,code)
+          fun = assert(loadstring(fun_src))()
+          memory[fstr] = fun
+        end
+        return fun      
+      end,
+                       })
+end
+_G.lambda = lambda -- declare as global
+
 -- unpacks together several tables, by recursion (it is limited to short tables)
 local function private_munpack(i, j, m, ...)
   local n = select('#', ...)

@@ -23,7 +23,7 @@ local function lookup(obj, metainst)
   -- base case
   if obj_id == cls_id then return obj end
   -- general case, traverse cls table recursively
-  local metainst2 = getmetatable(metainst.__index)
+  local metainst2 = getmetatable(metainst.index_table)
   if not metainst2 then return nil,"Incorrect derived class" end
   if rawequal(metainst, metainst2) then
     return nil,"Unable casting to given class"
