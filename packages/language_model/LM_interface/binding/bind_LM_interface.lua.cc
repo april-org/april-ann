@@ -45,7 +45,7 @@ class LuaArcsIteratorUInt32Logfloat : public Referenced {
   LMInterfaceUInt32LogFloat::ArcsIterator it;
 public:
   LuaArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
-                                LMInterfaceUInt32LogFloat::ArcsIterator &it) :
+                                LMInterfaceUInt32LogFloat::ArcsIterator const &it) :
     Referenced(),
     lmi(lmi), it(it) {
   }

@@ -199,8 +199,8 @@ namespace LanguageModels {
       
     public:
       ArcsIterator() {}
-      ArcsIterator(const ArcsIterator &other) :
-        lm(lm), threshold(threshold), state(other.state->clone()) {}
+      ArcsIterator(ArcsIterator const &other) :
+        lm(other.lm), threshold(other.threshold), state(other.state->clone()) {}
 
       ArcsIterator(LMInterface *lm, Score th,
                    AprilUtils::UniquePtr<StateControl> state) :
@@ -214,7 +214,7 @@ namespace LanguageModels {
                  this->threshold==other.threshold &&
                  state->equals(other.state.get()) );
       }
-      virtual ArcsIterator &operator=(const ArcsIterator &other) {
+      virtual ArcsIterator &operator=(ArcsIterator const &other) {
         lm = other.lm;
         threshold = other.threshold;
         state->copy(other.state.get());
