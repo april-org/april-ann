@@ -36,7 +36,8 @@ local function blira_load_function(filename,
 				   final_ngram_word,
 				   extra)
   -- estadistico binario
-  lm_model = ngram.lira.model.load_binary{
+  lm_model = ngram.lira.model{
+    binary=true,
     filename=filename,
     vocabulary=dictionary:getWordVocabulary(),
     final_word=dictionary:getWordId(final_ngram_word),

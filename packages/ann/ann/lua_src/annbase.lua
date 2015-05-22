@@ -30,7 +30,8 @@ ann.components.const_mul = function(t)
   local c = ann.components.mul(params)
   local wname = c:get_weights_name()
   c:build{ weights = { [wname] = m } }
-  return ann.components.const{ component = c }
+  local const_name = c:get_name() .. "_const"
+  return ann.components.const{ component = c, name = const_name }
 end
 
 ----------------------------------------------------------------------
@@ -620,6 +621,7 @@ ann.mlp.all_all.generate = april_doc {
     aux.description  = topology
     aux.first_count  = first_count
     aux.names_prefix = names_prefix
+    aux.names_order  = names_order
     return thenet
   end
 
@@ -657,16 +659,17 @@ ann.mlp.all_all.load = april_doc{
     local w     = data[2]
     local oldw  = data[3] or w
     local _,weights_table,_ = model:build()
+    local names_order = get_lua_properties_table(model).names_order
     local pos = 0
-    for i=1,#model.names_order,2 do
-      local bname   = model.names_order[i]
-      local wname   = model.names_order[i+1]
+    for i=1,#names_order,2 do
+      local bname   = names_order[i]
+      local wname   = names_order[i+1]
       local bias    = weights_table[bname]
       local weights = weights_table[wname]
-      local colsize = weights:get_input_size() + 1
-      bias:load{ w=w, oldw=oldw, first_pos=pos, column_size=colsize }
-      pos = weights:load{ w=w, oldw=oldw,
-                          first_pos=pos+1, column_size=colsize } - 1
+      local colsize = ann.connections.get_input_size(weights) + 1
+      ann.connections.load(bias, { w=w, oldw=oldw, first_pos=pos, column_size=colsize })
+      pos = ann.connections.load(weights, { w=w, oldw=oldw,
+                                            first_pos=pos+1, column_size=colsize }) - 1
     end
     return model
   end

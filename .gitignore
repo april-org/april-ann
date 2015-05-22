@@ -1,4 +1,6 @@
 gmon.out
+.dir-locals.el
+april_tools
 
 # ignores any shell script
 ##########################
