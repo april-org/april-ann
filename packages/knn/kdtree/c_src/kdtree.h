@@ -49,7 +49,7 @@ namespace KNN {
     struct MedianCompare {
       const int axis;
       MedianCompare(int axis) : axis(axis) { }
-      bool operator()(const Point<T> &a, const Point<T> &b) {
+      bool operator()(const Point<T> &a, const Point<T> &b) const {
 	return a[axis] < b[axis];
       }
     };

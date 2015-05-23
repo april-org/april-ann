@@ -310,7 +310,7 @@ namespace Basics {
       struct inverse_sort_compare {
         const Matrix<T> *m;
         inverse_sort_compare(const Matrix<T> *m) : m(m) { }
-        bool operator()(const int &a, const int &b) {
+        bool operator()(const int &a, const int &b) const {
           const int a_sz = m->matrixSize[a];
           const int b_sz = m->matrixSize[b];
           if (a_sz == b_sz) {

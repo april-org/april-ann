@@ -1906,3 +1906,21 @@ namespace Basics {
   LUABIND_RETURN(FloatGPUMirroredMemoryBlock, obj->getRawDataAccess());
 }
 //BIND_END
+
+//BIND_METHOD MatrixFloat order
+{
+  MatrixInt32 *dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixInt32, dest, 0);
+  dest = matOrder(obj, dest);
+  LUABIND_RETURN(MatrixInt32, dest);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat order_rank
+{
+  MatrixInt32 *dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixInt32, dest, 0);
+  dest = matOrderRank(obj, dest);
+  LUABIND_RETURN(MatrixInt32, dest);
+}
+//BIND_END

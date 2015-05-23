@@ -138,38 +138,6 @@ matrix.ext.broadcast =
     return result
   end
 
-class.extend(matrix, "order",
-             april_doc{
-               class = "method",
-               summary = "Returns a permutation of the matrix which sorts its data",
-               outputs = { "A matrixInt32 instance" },
-             } ..
-               function(self)
-                 local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
-                 local t = iterator(range(1,self:size())):table()
-                 table.sort(t, function(a,b)
-                              return self:get(a) < self:get(b)
-                 end)
-                 return matrixInt32(t)
-end)
-
-class.extend(matrix, "order_rank",
-             april_doc{
-               class = "method",
-               summary = "Returns the sorted rank of the matrix values",
-               outputs = { "A matrixInt32 instance" },
-             } ..
-               function(self)
-                 local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 tensor")
-                 local t = iterator(range(1,self:size())):table()
-                 table.sort(t, function(a,b)
-                              return self:get(a) < self:get(b)
-                 end)
-                 return matrixInt32(table.invert(t))
-end)
-
 class.extend(matrix, "index",
              april_doc{
                class = "method",
