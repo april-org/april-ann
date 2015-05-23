@@ -1123,6 +1123,78 @@ stats.boot.percentile =
     return table.unpack(result_tbl)
   end
 
+stats.percentile =
+  april_doc{
+    class = "function",
+    summary = "Returns a percentile value from a matrix (should be a vector)",
+    params = {
+      "The result of stats.boot function.",
+      "A percentile",
+      "Another percentile",
+      "...",
+    },
+    outputs = {
+      "The percentile value",
+      "Another percentile value",
+      "..."
+    },
+  } ..
+  -- returns the percentile
+  function(data, ...)
+    local data = data:squeeze()
+    assert(data:num_dim() == 1, "Needs a data vector")
+    local order = data:order()
+    local result_tbl = {}
+    for _,v in ipairs(table.pack(...)) do
+      assert(v >= 0.0 and v <= 1.0,
+             "Incorrect percentile value, it must be in range [0,1]")
+      local N = data:size()
+      local pos = (N+1)*v
+      local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
+      local result
+      if pos_floor == 0 then
+        result = data[order[1]]
+      elseif pos_floor >= N then
+        result = data[order[data:size()]]
+      else
+        local dec = pos - pos_floor
+        local a,b = data[order[pos_floor]],data[order[pos_ceil]]
+        result = a + dec * (b - a)
+      end
+      result_tbl[#result_tbl + 1] = result
+    end
+    return table.unpack(result_tbl)
+  end
+
+stats.summary = function(data)
+  local data = data:squeeze()
+  assert(data:num_dim() == 1, "Needs a data vector")
+  local var,mean = stats.var(data)
+  local order = data:order()
+  local p0,p25,p50,p75,p100 = stats.percentile(data,
+                                               0.00, 0.25, 0.50, 0.75, 1.00)
+  return setmetatable({
+      sd = math.sqrt(var),
+      mean = mean,
+      p0 = p0,
+      p25 = p25,
+      p50 = p50,
+      p75 = p75,
+      p100 = p100,
+                      },
+    {
+      __tostring = function(self)
+        local header = iterator{"Mean","SD","Min","Q1","Median","Q3","Max"}:
+          map(bind(string.format, "%8s")):concat(" ")
+        local data = iterator{self.mean, self.sd,
+                              self.p0, self.p25, self.p50,
+                              self.p75, self.p100 }:
+          map(bind(string.format, "%8.4g")):concat(" ")
+        return table.concat({header, data}, "\n")
+      end
+  })
+end
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
