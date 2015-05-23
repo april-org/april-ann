@@ -206,7 +206,7 @@ namespace LanguageModels {
     }
     
     virtual int getLuaRef() const {
-      HistoryBasedLMInterface<Key,Score>::getLuaRef();
+      return HistoryBasedLMInterface<Key,Score>::getLuaRef();
     }
 
     Basics::Token* applyQueryFilter(Basics::Token* token) {
@@ -316,7 +316,7 @@ namespace LanguageModels {
     }
     
     virtual int getLuaRef() const {
-      HistoryBasedLM<Key,Score>::getLuaRef();
+      return HistoryBasedLM<Key,Score>::getLuaRef();
     }
   };
 

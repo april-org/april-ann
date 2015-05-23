@@ -208,10 +208,6 @@ function lexClass_methods:pairsTblSize()
   return self.cobj:size()
 end
 
-function lexClass_methods:size()
-  error("OBSOLOTE: lexClass:size()")
-end
-
 function lexClass_methods:getCObject()
   return self.cobj
 end

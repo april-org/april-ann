@@ -3,12 +3,6 @@ local same_cpp_ref = matrix.meta_instance.__eq
 --
 class.extend(matrix, "t", matrix.."transpose")
 
--- sliding window iteration
-class.extend_metamethod(matrix.__sliding_window__, "__call",
-                        function(self)
-                          return self:iterate()
-end)
-
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrix)
 
