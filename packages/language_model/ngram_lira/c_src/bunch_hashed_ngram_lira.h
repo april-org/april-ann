@@ -46,11 +46,12 @@ namespace LanguageModels {
     virtual void get(Key key, WordType word, Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);
+
   protected:
     friend class BunchHashedNgramLiraLM;
     BunchHashedNgramLiraLMInterface(BunchHashedNgramLiraLM *model,
-				     NgramLiraModel *lira_model);
-
+                                    NgramLiraModel *lira_model);
+    
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size);
   private:

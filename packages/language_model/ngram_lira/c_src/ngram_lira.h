@@ -190,15 +190,104 @@ namespace LanguageModels {
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
 
+    /**
+     * @brief For Lira Ngrams, StateControl is derived to contain an unsigned
+     * integer property indicating the arc number in
+     * NgramLiraModel::transition_table array, among two more integers with
+     * first and last transitions in former table.
+     */
+    class NgramLiraNoBackoffStateControl :
+      public LMInterface::ArcsIterator::StateControl {
+      friend class NgramLiraInterface;
+      
+      unsigned int current_transition, last_transition;
+      
+      static const NgramLiraNoBackoffStateControl *checkOther(const StateControl *other_) {
+        const NgramLiraNoBackoffStateControl *other =
+          dynamic_cast<const NgramLiraNoBackoffStateControl*>(other_);
+        april_assert(other != 0);
+        return other;
+      }
+      
+      NgramLiraNoBackoffStateControl(unsigned int current_tr,
+                                     unsigned int last_tr) :
+        current_transition(current_tr), last_transition(last_tr) {}
+      
+      virtual bool equals(const StateControl *other_) const {
+        const NgramLiraNoBackoffStateControl *other = checkOther(other_);
+        return
+          current_transition == other->current_transition &&
+          last_transition == other->last_transition;
+      }
+      
+      virtual void copy(const StateControl *other_) {
+        const NgramLiraNoBackoffStateControl *other = checkOther(other_);
+        current_transition = other->current_transition;
+        last_transition    = other->last_transition;
+      }
+
+      virtual StateControl *clone() const {
+        return new NgramLiraNoBackoffStateControl(this->current_transition,
+                                                  this->last_transition);
+      }
+      
+      virtual void moveToNext(LMInterface *lm, Score threshold) {
+        NgramLiraModel* m = static_cast<NgramLiraModel*>(lm->getLMModel());
+        while (current_transition < last_transition) {
+          ++current_transition;
+          if (m->transition_table[current_transition].prob >= threshold)
+            return;
+        }
+        return;
+      }
+      
+      virtual WordType getWord(LMInterface *lm) {
+        NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(lm->getLMModel());
+        WordType *twt = lira_model->transition_words_table;
+        return twt[current_transition];
+      }
+      
+      virtual bool isEnd(LMInterface *lm) const {
+        UNUSED_VARIABLE(lm);
+        return current_transition>=last_transition;
+      }
+    };
+    
   protected:
     NgramLiraInterface(NgramLiraModel *lira_model) :
-    LMInterface<Key,Score>(lira_model) {
+      LMInterface<Key,Score>(lira_model) {
     }
     
   public:
     virtual ~NgramLiraInterface() {
     }
-    
+
+    /// Returns an ArcsIterator to non-backoff transitions.
+    virtual ArcsIterator beginNonBackoffArcs(Key key, Score threshold) {
+      NgramLiraModel* lira_model = static_cast<NgramLiraModel*>(getLMModel());
+      // determine initial and final transition indexes
+      unsigned int first_tr;
+      unsigned int last_tr;
+
+      if (key < lira_model->first_state_binary_search) {
+        int linear_index = 0;
+        while(lira_model->linear_search_table[linear_index].first_state <= key)
+          linear_index++;
+        // -1 because the search stopped too late ;)
+        LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
+        // range of transitions during the search:
+        first_tr = (key - info->first_state)*info->fan_out + info->first_index;
+        last_tr  = first_tr + info->fan_out;
+      } else {
+        first_tr  = lira_model->first_transition[key];
+        last_tr = lira_model->first_transition[key + 1] - 1;
+      }
+
+      AprilUtils::UniquePtr<LMInterface::ArcsIterator::StateControl> st;
+      st = new NgramLiraNoBackoffStateControl(first_tr,last_tr);
+      return ArcsIterator(this,threshold,st);
+    }
+        
     virtual void get(Key key, WordType word, Burden burden,
                      AprilUtils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold);

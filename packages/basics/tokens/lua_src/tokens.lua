@@ -23,3 +23,10 @@ class.declare_functional_index(tokens.vector.bunch,
                                  local k = tonumber(key)
                                  return (k and self:at(k)) or nil
 end)
+
+class.extend_metamethod(tokens.vector.bunch,
+                        "__newindex",
+                        function(self,key,value)
+                          local k = assert(tonumber(key), "Needs a number key")
+                          return self:set(k,value)
+end)

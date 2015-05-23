@@ -62,11 +62,6 @@ end
 
 ------------------------------------------------------------------------------
 
-function iscallable(obj)
-  local t = luatype(obj)
-  return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
-end
-
 function april_assert(condition, ...)
    if not condition then
      if next({...}) then
@@ -518,20 +513,15 @@ end
 
 -- auxiliary function for fast development of reductions
 function math.lnot(a)
-  assert(a, "Needs one argument, you can use bind function to freeze any arg")
   return not a
 end
 -- auxiliary function for fast development of reductions
 function math.lor(a,b)
-  assert(a and b,
-         "Needs one argument, you can use bind function to freeze any arg")
   return a or b
 end
 
 -- auxiliary function for fast development of reductions
 function math.land(a,b)
-  assert(a and b,
-         "Needs one argument, you can use bind function to freeze any arg")
   return a and b
 end
 

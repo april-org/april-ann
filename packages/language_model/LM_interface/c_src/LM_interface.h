@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include "logbase.h"
 #include "referenced.h"
+#include "smart_ptr.h"
 #include "unused_variable.h"
 #include "vector.h"
 
@@ -101,7 +102,7 @@ namespace LanguageModels {
       Burden(int32_t id_key, int32_t id_word) :
         id_key(id_key), id_word(id_word) {}
       Burden(const Burden &other) :
-      id_key(other.id_key), id_word(other.id_word) { }
+        id_key(other.id_key), id_word(other.id_word) { }
     };
     
     /**
@@ -130,6 +131,107 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
+    /**
+     * @brief Arcs iterator in a language model.
+     *
+     * Language models can different kinds of iterators for traverse different
+     * arc kinds. For instance, in ngram models, once can traverse all arcs
+     * outgoing from a given state ignoring backoff transitions. On the other
+     * hand, once can traverse only backoff transitions, ignoring non-backoff
+     * transitions. Language models implement different methods in final
+     * classes, allowing to traverse the desired kind of arcs. The iterators are
+     * generic, allowing to export them in the same way into Lua. An abstract
+     * class, ArcsIterator::StateControl, is used to declare the interface
+     * between the iterator and the language model. Derived classes from
+     * LMInterface are required to implement properly the StateControl class.
+     */
+    class ArcsIterator {
+    public:
+      
+      /**
+       * @brief This class implements the basic API needed for traverse
+       * languages models using ArcsIterator class.
+       *
+       * @note The API receives a LMInterface pointer in methods which needs
+       * to access LM data structures. So, minimum state is required in this
+       * class, just to represent a position in the language model. The caller
+       * is responsible to perform the call with the proper LM pointer.
+       */
+      class StateControl {
+        friend class ArcsIterator;
+      public:
+
+        virtual ~StateControl() {}
+      private:
+        /**
+         * @brief This method traverses until next arc which is above threshold
+         *
+         * @note This method will update the state with <b>end</b> iterator state
+         * when necessary.
+         */
+        virtual void moveToNext(LMInterface *lm, Score threshold) = 0;
+        
+        /**
+         * @brief This method returns a word
+         *
+         * @note If this method is called when state is <b>end</b>, the returned
+         * value is undefined.
+         */
+        virtual WordType getWord(LMInterface *lm) = 0;
+        
+        /// Compares two StateControl objects.
+        virtual bool equals(const StateControl *other) const = 0;
+        
+        /// Copies other into this.
+        virtual void copy(const StateControl *other) = 0;
+        
+        /// Returns a deep copy of this.
+        virtual StateControl *clone() const = 0;
+        
+        /// Indicates if we achieved the end.
+        virtual bool isEnd(LMInterface *lm) const = 0;
+      };
+      
+    private:
+      LMInterface *lm;
+      Score threshold;
+      AprilUtils::UniquePtr<StateControl> state;
+      
+    public:
+      ArcsIterator() {}
+      ArcsIterator(ArcsIterator const &other) :
+        lm(other.lm), threshold(other.threshold), state(other.state->clone()) {}
+
+      ArcsIterator(LMInterface *lm, Score th,
+                   AprilUtils::UniquePtr<StateControl> state) :
+        lm(lm), threshold(th), state(state) {}
+      
+      virtual bool operator!=(const ArcsIterator &other) const {
+        return (*this) != other;
+      }
+      virtual bool operator==(const ArcsIterator &other) const {
+        return ( this->lm==other.lm &&
+                 this->threshold==other.threshold &&
+                 state->equals(other.state.get()) );
+      }
+      virtual ArcsIterator &operator=(ArcsIterator const &other) {
+        lm = other.lm;
+        threshold = other.threshold;
+        state->copy(other.state.get());
+        return *this;
+      }
+      virtual ArcsIterator &operator++() {
+        state->moveToNext(lm, threshold);
+        return *this;
+      }
+      virtual WordType operator*() {
+        return state->getWord(lm);
+      }
+      virtual bool isEnd() const {
+        return state->isEnd(lm);
+      }
+    };
+    
   protected:
     /// Auxiliary result vector.
     AprilUtils::vector<KeyScoreBurdenTuple> result;
@@ -154,6 +256,26 @@ namespace LanguageModels {
     virtual LMModel<Key, Score>* getLMModel() {
       return model;
     }
+    
+    // /**
+    //  * @brief Returns an ArcsIterator for basic arcs outgoing from key state.
+    //  *
+    //  * This method returns an iterator to the first transition with probability
+    //  * above the given threshold.
+    //  *
+    //  * @see ArcsIterator class
+    //  */
+    // virtual ArcsIterator beginArcs(Key key, Score threshold) = 0;
+
+    // /**
+    //  * @brief Returns an end ArcsIterator for basic arcs outgoing from key state.
+    //  *
+    //  * This method returns the first invalid iterator related with the given
+    //  * key.
+    //  *
+    //  * @see ArcsIterator class
+    //  */
+    // virtual ArcsIterator endArcs(Key key) = 0;
     
     // -------------- individual LM queries -------------
 
@@ -268,7 +390,7 @@ namespace LanguageModels {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename AprilUtils::vector<WordIdScoreTuple>::iterator it = words.begin();
-        it != words.end(); ++it)
+           it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 

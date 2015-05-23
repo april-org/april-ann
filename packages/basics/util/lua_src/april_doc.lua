@@ -1,14 +1,8 @@
 local COLWIDTH=70
 local DOC_TABLE = setmetatable({}, {__mode = "k" })
 
--- Returns __index field from a metatable. When __index field is a function, it
--- is expected to find index_table field with all the available methods.
 local function get_index(mt)
-  if type(mt.__index) == "function" then
-    return mt.index_table
-  else
-    return mt.__index
-  end
+  return mt.index_table
 end
 
 -- help documentation

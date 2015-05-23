@@ -188,6 +188,22 @@ using namespace LanguageModels;
 }
 //BIND_END
 
+//BIND_METHOD NgramLiraInterface non_backoff_arcs_iterator
+{
+  unsigned int key;
+  LUABIND_GET_PARAMETER(1, uint, key);
+  float log_threshold;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold,
+                                 log_float::zero().log());
+  log_float threshold = log_float(log_threshold);
+  LMInterfaceUInt32LogFloat::ArcsIterator arcs_it =
+    obj->beginNonBackoffArcs(key, threshold);
+  LuaArcsIteratorUInt32Logfloat *lua_arcs_it = new
+    LuaArcsIteratorUInt32Logfloat(obj, arcs_it);
+  LUABIND_RETURN(LuaArcsIteratorUInt32Logfloat, lua_arcs_it);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME HistoryBasedNgramLiraLM ngram.lira.history_based_model

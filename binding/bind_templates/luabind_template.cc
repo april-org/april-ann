@@ -34,6 +34,16 @@ $$HEADER_C$$
 
 #include "luabindutil.h"
 
+extern void makeWeakTable(lua_State *L);
+extern void pushOrCreateTable(lua_State *L, int n, const char *field);
+extern void insertCast(lua_State *L, const char *derived, const char *base,
+                       int (*c_function)(lua_State *));
+extern void setParentsAtRegistry(lua_State *L,
+                                 const char *parent,
+                                 const char *child);
+extern int isDerived(lua_State *L,
+                     const char *child,
+                     const char *parent);
 
 /*LUA
   -- Esta funcion creara un nombre de tablas
@@ -136,36 +146,93 @@ int lua_is$$ClassName$$(lua_State *L, int index){
 }
 
 void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
-        // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to removes
-        // our instance
-        IncRef(obj);
-	//
-	$$ClassName$$ **ptr;
-	
-	DEBUG("lua_push$$ClassName$$ (begin)");
-	ptr = static_cast<$$ClassName$$**>( 
-	      lua_newuserdata(L,sizeof($$ClassName$$*)) ); // instance
-	*ptr = obj;
-	// pila =  ptr
-	// le asociamos al userdata la metatabla que le corresponde
-	lua_pushstring(L,"luabind_classes");
-	// pila =  ptr, "luabind_clases"
-	lua_rawget(L,LUA_REGISTRYINDEX);
-	// pila =  ptr, luabind_clases
-	lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
-	// pila =  ptr, luabind_clases  ClassName
-	lua_rawget(L,-2);
-	// pila =  ptr, luabind_clases luabind_clases[ClassName]
-	DEBUG_OBJ("lua_push$$ClassName$$",obj);
-	lua_pushstring(L,"meta_instance");
-	// pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
-	lua_rawget(L,-2); // class_table
-	// pila =  ptr, table:luabind_clases luabind_clases[ClassName] metainstance
-	lua_setmetatable(L,-4); // obj_index
-	// pila =  ptr, table:luabind_clases luabind_clases[ClassName]
-	lua_pop(L,2);
-	// pila = ptr
+        int lua_ref = obj->getLuaRef();
+        if (lua_ref == LUA_NOREF) {
+          // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to removes
+          // our instance
+          IncRef(obj);
 
+          //
+          $$ClassName$$ **ptr;
+	
+          DEBUG("lua_push$$ClassName$$ (begin)");
+          ptr = static_cast<$$ClassName$$**>( 
+	      lua_newuserdata(L,sizeof($$ClassName$$*)) ); // instance
+          *ptr = obj;
+          // pila =  ptr
+          pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+          // pila =  ptr refs
+          lua_pushvalue(L, -2);
+          // pila =  ptr refs ptr
+          lua_ref = luaL_ref(L, -2);
+          // pila =  ptr refs
+          lua_pop(L, 1);
+          // pila =  ptr
+          // asociamos la referencia al objeto
+          obj->setLuaRef(lua_ref);
+          // le asociamos al userdata la metatabla que le corresponde
+          lua_pushstring(L,"luabind_classes");
+          // pila =  ptr, "luabind_clases"
+          lua_rawget(L,LUA_REGISTRYINDEX);
+          // pila =  ptr, luabind_clases
+          lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
+          // pila =  ptr, luabind_clases  ClassName
+          lua_rawget(L,-2);
+          // pila =  ptr, luabind_clases luabind_clases[ClassName]
+          DEBUG_OBJ("lua_push$$ClassName$$",obj);
+          lua_pushstring(L,"meta_instance");
+          // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
+          lua_rawget(L,-2); // class_table
+          // pila =  ptr, table:luabind_clases luabind_clases[ClassName] metainstance
+          lua_setmetatable(L,-4); // obj_index
+          // pila =  ptr, table:luabind_clases luabind_clases[ClassName]
+          lua_pop(L,2);
+          // pila = ptr
+        }
+        else {
+          pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+          // pila = refs
+          lua_rawgeti(L, -1, lua_ref);
+          // pila = refs ptr
+          lua_remove(L, -2);
+          // pila = ptr
+          lua_getmetatable(L, -1);
+          // pila = ptr metatable
+          lua_pushstring(L, "id");
+          // pila = ptr metatable "id"
+          lua_rawget(L, -2);
+          // pila = ptr metatable current_string
+          const char *current = lua_tostring(L, -1);
+          if (isDerived(L, "$$(LUANAME[ClassName] or ClassName)$$", current)) {
+            // pila = ptr metatable current_string
+            lua_pop(L, 2);
+            // buscamos la metatabla que corresponde al objeto
+            lua_pushstring(L,"luabind_classes");
+            // pila =  ptr, "luabind_clases"
+            lua_rawget(L,LUA_REGISTRYINDEX);
+            // pila =  ptr, luabind_clases
+            lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
+            // pila =  ptr, luabind_clases  ClassName
+            lua_rawget(L,-2);
+            // pila =  ptr, luabind_clases luabind_clases[ClassName]
+            DEBUG_OBJ("lua_push$$ClassName$$",obj);
+            lua_pushstring(L,"meta_instance");
+            // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
+            lua_rawget(L,-2); // class_table
+            // pila =  ptr, table:luabind_clases luabind_clases[ClassName] obj_metainstance
+            lua_setmetatable(L, -4); // obj index
+            // pila =  ptr, table:luabind_clases luabind_clases[ClassName]
+            lua_pop(L,2);
+            // pila = ptr
+          }
+          else {
+            // pila = ptr metatable current_string
+            lua_pop(L, 2);
+            // pila = ptr
+          }
+        }
+        
+        
 	DEBUG("lua_push$$ClassName$$ (end)");
 }
 
@@ -183,32 +250,38 @@ int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
         int luabind_num_returned_values = 0;
 	$$class.constructor$$
 	DEBUG("lua_new_$$ClassName$$ (end)");
-        if (luabind_num_returned_values != 1) {
-          LUABIND_ERROR("constructors must return 1 (and only 1) value");
+        if (luabind_num_returned_values<1 || luabind_num_returned_values>2) {
+          LUABIND_ERROR("constructors must return 1 value, or nil and an "
+                        "error message string (2 values) in case of error");
         }
 	return luabind_num_returned_values;
 }
 
 int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
-  // stops garbage collector to avoid problems with reference counting
-  int is_running = lua_gc(L, LUA_GCISRUNNING, 0);
-  if (is_running) lua_gc(L, LUA_GCSTOP, 0);
   $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,1);
   if (obj != 0) {
     DEBUG_OBJ("lua_delete_$$ClassName$$ (begin)",obj);
     $$class.destructor$$
     DEBUG_OBJ("lua_delete_$$ClassName$$ (end)",obj);
+    /*
+      int lua_ref = obj->getLuaRef();
+      if (lua_ref != LUA_NOREF) {
+      pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+      luaL_unref(L, -1, lua_ref);
+      lua_pop(L, 1);
+      }
+    */
+    obj->setLuaRef(LUA_NOREF);
     // Hacemos un DecRef para borrar la referencia a este objeto
     DecRef(obj);
   }
-  // FIXME: This warning is due to the META_INSTANCE table, which is a metatable
-  // of itself and has a __gc method, so at the end of APRIL execution, the __gc
-  // is executed with a NULL pointer
+  // FIXME: This warning is due to the META_INSTANCE tables with other
+  // META_INSTANCEs as metatable (inheritance), so a __gc metamethod which is
+  // executed at the end of APRIL execution, receiving __gc call a table
+  // as argument, leading into obj=0 when calling to lua_rawget...
   else {
     DEBUG_OBJ("lua_delete_$$ClassName$$ WARNING!! NULL pointer", obj);
   }
-  // restart the garbage collector
-  if (is_running) lua_gc(L, LUA_GCRESTART, 0);
   return 0;
 }
 
@@ -293,6 +366,9 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_pushstring(L,"__index");
 	  lua_pushvalue(L,instance_methods);
 	  lua_settable(L,meta_instance);
+	  lua_pushstring(L,"index_table");
+	  lua_pushvalue(L,instance_methods);
+	  lua_settable(L,meta_instance);
 	  lua_pushstring(L,"is_$$(LUANAME[ClassName] or ClassName)$$");  //table's (class) id...
 	  lua_pushboolean(L,1);
 	  lua_settable(L,instance_methods);
@@ -344,7 +420,7 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_gettable(L, class_table);
 	  // stack: meta_instance class_table
 	  meta_instance = lua_gettop(L);
-	  lua_pushstring(L,"__index");
+	  lua_pushstring(L,"index_table");
 	  lua_gettable(L, meta_instance);
 	  // stack: instance_methods meta_instance class_table
 	  instance_methods = lua_gettop(L);
@@ -384,15 +460,24 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (end)");
 }
 
+// to avoid early deletion of the object in case of garbage collection
+struct luabind_reference_handler_$$ClassName$$ {
+  $$ClassName$$ *ref;
+  luabind_reference_handler_$$ClassName$$($$ClassName$$ *ref) :
+    ref(ref) {
+    IncRef(ref);
+  }
+  ~luabind_reference_handler_$$ClassName$$() {
+    DecRef(ref);
+  }
+};
+
 //LUA for MethodName,code in pairs(class.methods) do
 #undef FUNCTION_NAME
 #define FUNCTION_NAME "$$(LUANAME[ClassName] or ClassName)$$:$$MethodName$$"
 #include "luabindmacros.h"
 
 int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
-  // stops garbage collector to avoid problems with reference counting
-  int is_running = lua_gc(L, LUA_GCISRUNNING, 0);
-  if (is_running) lua_gc(L, LUA_GCSTOP, 0);
   //Comprobamos que el primer elemento sea el userdata que esperamos
   if (!lua_is$$ClassName$$(L,1)) {
       lua_pushstring(L, "First argument of $$MethodName$$ must be of type "
@@ -402,14 +487,14 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
   $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,1);
   int luabind_num_returned_values = 0;
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (begin)", obj);
-  lua_remove(L,1); // methods do not need the instance pointer	
+  // to avoid early deletion of the object in case of garbage collection
+  luabind_reference_handler_$$ClassName$$ ref_handler(obj);
+  lua_remove(L,1);
   // CODE:
   {
     $$code$$
       }
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (end)", obj);
-  // restart the garbage collector
-  if (is_running) lua_gc(L, LUA_GCRESTART, 0);
   return luabind_num_returned_values;
 }
 //LUA end
@@ -422,16 +507,11 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
 int lua_call_class_$$ClassName$$_$$ClassMethodName$$(lua_State *L){
 	
 	DEBUG("lua_call_class_$$ClassName$$_$$ClassMethodName$$");
-        // stops garbage collector to avoid problems with reference counting
-        int is_running = lua_gc(L, LUA_GCISRUNNING, 0);
-        if (is_running) lua_gc(L, LUA_GCSTOP, 0);
         int luabind_num_returned_values = 0;
 	// CODE:
 	{
 	  $$code$$
 	}
-	// restart the garbage collector
-        if (is_running) lua_gc(L, LUA_GCRESTART, 0);
 	return luabind_num_returned_values;
 }
 //LUA end
@@ -445,15 +525,10 @@ int lua_call_class_$$ClassName$$_$$ClassMethodName$$(lua_State *L){
 #include "luabindmacros.h"
 
 static int lua_call_$$string.gsub(func_name,"%p","_")$$(lua_State *L){
-  // stops garbage collector to avoid problems with reference counting
-  int is_running = lua_gc(L, LUA_GCISRUNNING, 0);
-  if (is_running) lua_gc(L, LUA_GCSTOP, 0);
   lua_remove(L,1);  // primer parametro es la metatabla __call(table,...)
   DEBUG("lua_call_$$string.gsub(func_name,"%p","_")$$ (begin)");
   int luabind_num_returned_values = 0;
   $$code$$
-  // restart the garbage collector
-  if (is_running) lua_gc(L, LUA_GCRESTART, 0);
   DEBUG("lua_call_$$string.gsub(func_name,"%p","_")$$ (end)");
   return luabind_num_returned_values;
 }
@@ -540,10 +615,44 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   return 0;
 }
 
+
+//LUA for childclass,parentclass in pairs(PARENT_CLASS) do
+int lua_cast_$$parentclass$$_to_$$childclass$$(lua_State *L) {
+  if (lua_gettop(L) != 1) {
+    lua_pushfstring(L, "lua_cast requires 1 argument");
+    lua_error(L);
+  }
+  $$parentclass$$ *parent = lua_to$$parentclass$$(L, 1);
+  if (parent == 0) {
+    lua_pushfstring(L, "Unexpected object type");
+    lua_error(L);
+  }
+  $$childclass$$ *child = dynamic_cast<$$childclass$$*>(parent);
+  if (child == 0) {
+    lua_pushnil(L);
+    lua_pushfstring(L, "Unable casting to the given type");
+    return 2;
+  }
+  lua_push$$childclass$$(L, child);
+  return 1;
+}
+//LUA end
+
 int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   UNUSED_VARIABLE(L);
   DEBUG("lua_register_subclasses_$$FILENAME2$$ (begin)");
+  pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+  makeWeakTable(L);
+  lua_pop(L, 1);
   //LUA for childclass, parentclass in pairs(PARENT_CLASS) do
+  
+  setParentsAtRegistry(L,
+                       "$$(LUANAME[parentclass] or parentclass)$$",
+                       "$$(LUANAME[childclass] or childclass)$$");
+  
+  insertCast(L, "$$(LUANAME[childclass] or childclass)$$",
+             "$$(LUANAME[parentclass] or parentclass)$$",
+             lua_cast_$$parentclass$$_to_$$childclass$$);
   
   // buscamos la metatabla de la clase child
   lua_pushstring(L,"luabind_classes");
@@ -558,7 +667,7 @@ int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   // pila =  ... luabind_clases luabind_clases[childclass] "metainstance"
   lua_rawget(L,-2); // class_table
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance
-  lua_pushstring(L,"__index");
+  lua_pushstring(L,"index_table");
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance "__index"
   lua_rawget(L,-2);
   // pila =  ... luabind_clases luabind_clases[childclass] child_metainstance child_metainstance[__index]

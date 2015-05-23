@@ -21,11 +21,13 @@
  */
 //BIND_HEADER_C
 #include "bind_dataset.h"
+#include "bind_function_interface.h"
 #include "bind_LM_interface.h"
 #include "LM_interface.h"
 
 using namespace AprilUtils;
 using namespace Basics;
+using namespace Functions;
 //BIND_END
 
 //BIND_HEADER_H
@@ -36,6 +38,27 @@ using namespace Basics;
 #include "skip_function.h"
 using namespace LanguageModels;
 using namespace LanguageModels::QueryFilters;
+
+class LuaArcsIteratorUInt32Logfloat : public Referenced {
+  AprilUtils::SharedPtr<LMInterfaceUInt32LogFloat> lmi;
+  uint32_t key;
+  LMInterfaceUInt32LogFloat::ArcsIterator it;
+public:
+  LuaArcsIteratorUInt32Logfloat(LMInterfaceUInt32LogFloat *lmi,
+                                LMInterfaceUInt32LogFloat::ArcsIterator const &it) :
+    Referenced(),
+    lmi(lmi), it(it) {
+  }
+  uint32_t get() {
+    return *it;
+  }
+  void next() {
+    ++it;
+  }
+  bool isEnd() {
+    return it.isEnd();
+  }
+};
 
 class QueryResultUInt32LogFloat : public Referenced {
   LMInterfaceUInt32LogFloat *lm_interface;
@@ -87,6 +110,35 @@ public:
   }
 };
 
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LuaArcsIteratorUInt32Logfloat language_models.__arcs_iterator__
+//BIND_CPP_CLASS LuaArcsIteratorUInt32Logfloat
+
+//BIND_CONSTRUCTOR LuaArcsIteratorUInt32Logfloat
+{
+  LUABIND_ERROR("FORBIDDEN!!! call the corresponding method in language model");
+}
+//BIND_END
+
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat get
+{
+  LUABIND_RETURN(uint, obj->get());
+}
+//BIND_END
+
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat next
+{
+  obj->next();
+}
+//BIND_END
+
+//BIND_METHOD LuaArcsIteratorUInt32Logfloat is_end
+{
+  LUABIND_RETURN(bool, obj->isEnd());
+}
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -319,7 +371,7 @@ public:
     check_table_fields(L, 3, "threshold", "id_key", "id_word", "result",
 		       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
-					 log_float::zero());
+					 log_float::zero().log());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, result, GetResultUInt32LogFloat,
@@ -370,7 +422,7 @@ public:
   if (lua_istable(L,3)) {
     check_table_fields(L, 3, "threshold", "id_key", "id_word", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
-					 log_float::zero());
+					 log_float::zero().log());
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
     threshold = log_float(log_threshold);
@@ -404,7 +456,8 @@ public:
   uint32_t key;
   LUABIND_GET_PARAMETER(1, uint, key);
   float log_threshold;
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold, log_float::zero());
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold,
+                                 log_float::zero().log());
   log_float threshold = log_float(log_threshold);
   LUABIND_RETURN(float, obj->getFinalScore(key, threshold).log());
 }
