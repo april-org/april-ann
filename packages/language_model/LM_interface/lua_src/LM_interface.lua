@@ -58,6 +58,12 @@ class.extend(language_models.__arcs_iterator__,
                end
 end)
 
+class.extend_metamethod(language_models.__arcs_iterator__,
+                        "__call",
+                        function(self)
+                          return self:iterate()
+end)
+
 -- class.extend_metamethod(language_models.__arcs_iterator__,
 --                         "__pairs",
 --                         class.consult(language_models.__arcs_iterator__,
