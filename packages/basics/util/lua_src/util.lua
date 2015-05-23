@@ -62,11 +62,6 @@ end
 
 ------------------------------------------------------------------------------
 
-function iscallable(obj)
-  local t = luatype(obj)
-  return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
-end
-
 function april_assert(condition, ...)
    if not condition then
      if next({...}) then
