@@ -43,24 +43,28 @@ matrix.ext.iterate =
     params = {
       "A matrix instance (any kind of matrix type)",
       "A dimension number [optional], by default it is 1 (row traversal)",
+      "Step [optional], by default it is 1. It can be negative",
     },
     outputs = {
       "An instance of iterator class",
     },
   } ..
-  function(self,dim)
-    local dim = dim or 1
+  function(self,dim,step)
+    local dim  = dim or 1
+    local step = step or 1
+    assert(step ~= 0, "Unable to iterate with step=0")
     local d = self:dim()
     assert(dim > 0 and dim <= #d, "Out-of-bounds dimension number")
-    local slice = self:select(dim,1)
-    return iterator(function(state,pos)
-        local self,slice,dim,sz = table.unpack(state)
-        pos = pos + 1
-        if pos <= d[dim] then
-          slice = (pos == 1 and slice) or self:select(dim,pos)
-          return pos,slice
-        end
-                    end, {self,slice,dim,d[dim]}, 0)
+    local slice
+    return
+      iterator(function(state,pos)
+          local self,slice,dim,sz = table.unpack(state)
+          pos = pos + step
+          if pos <= d[dim] and pos >= 1 then
+            slice = self:select(dim,pos,slice)
+            return pos,slice
+          end end,
+        {self,slice,dim,d[dim]}, step>0 and 0 or d[dim]+1)
   end
 
 matrix.ext.broadcast =
