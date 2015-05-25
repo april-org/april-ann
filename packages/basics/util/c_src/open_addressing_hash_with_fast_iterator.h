@@ -89,14 +89,15 @@ namespace AprilUtils {
 	value(k,d), stamp(stmp) {}
     };
 
-    typedef KeyType         key_type;
-    typedef DataType        data_type;
+    typedef KeyType          key_type;
+    typedef DataType         data_type;
     typedef pair<const key_type, data_type> value_type;
-    typedef value_type&     reference;
-    typedef const reference const_reference;
-    typedef value_type*     pointer;
-    typedef ptrdiff_t       difference_type;
-    typedef size_t          size_type;
+    typedef value_type&      reference;
+    typedef const value_type const_value;
+    typedef const_value&     const_reference;
+    typedef value_type*      pointer;
+    typedef ptrdiff_t        difference_type;
+    typedef size_t           size_type;
 
   private:
     node *buckets;  // vector of nodes
@@ -157,14 +158,15 @@ namespace AprilUtils {
 	h(h), index(index) {}
 
     public:
-      typedef KeyType         key_type;
-      typedef DataType        data_type;
+      typedef KeyType          key_type;
+      typedef DataType         data_type;
       typedef pair<const key_type, data_type> value_type;
-      typedef value_type&     reference;
-      typedef const reference const_reference;
-      typedef value_type*     pointer;
-      typedef ptrdiff_t       difference_type;
-      typedef size_t          size_type;
+      typedef value_type&      reference;
+      typedef const value_type const_value;
+      typedef const_value&     const_reference;
+      typedef value_type*      pointer;
+      typedef ptrdiff_t        difference_type;
+      typedef size_t           size_type;
 
       iterator(): h(0), index(0) {}
       iterator(const iterator &other):
@@ -220,14 +222,15 @@ namespace AprilUtils {
 	h(h), index(index) {}
 
     public:
-      typedef KeyType         key_type;
-      typedef DataType        data_type;
+      typedef KeyType          key_type;
+      typedef DataType         data_type;
       typedef pair<const key_type, data_type> value_type;
-      typedef value_type&     reference;
-      typedef const reference const_reference;
-      typedef value_type*     pointer;
-      typedef ptrdiff_t       difference_type;
-      typedef size_t          size_type;
+      typedef value_type&      reference;
+      typedef const value_type const_value;
+      typedef const_value&     const_reference;
+      typedef value_type*      pointer;
+      typedef ptrdiff_t        difference_type;
+      typedef size_t           size_type;
 
       const_iterator(): h(0), index(0) {}
         
