@@ -174,8 +174,12 @@ do
         local n = 0
         local non_st = {}
         for k,v in pairs(data) do
+          local tk = type(k)
           local tv = type(v)
-          if tv == "number" or tv == "string" then non_st[k]=v n=n+1 end
+          if (tk=="number" or tk=="string") and (tv=="number" or tv=="string") then
+            non_st[k]=v
+            n=n+1
+          end
         end
         -- creates a new table, and subsequently traverses all its content
         destination:write("%s[%d]="%{varname,id})
@@ -189,8 +193,9 @@ do
         destination:write("\n")
         for k,v in pairs(data) do
           if not non_st[k] then
+            local kstr = transform(map, varname, k, destination, format)
             local vstr = transform(map, varname, v, destination, format)
-            destination:write("%s[%d][%s]=%s\n"%{varname,id,value2str(k),vstr})
+            destination:write("%s[%d][%s]=%s\n"%{varname,id,kstr,vstr})
           end
         end
       elseif tt == "function" then
