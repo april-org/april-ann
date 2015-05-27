@@ -115,6 +115,11 @@ end
 -- forward declaration
 local serialize
 do
+  local non_structured = {
+    string=true,
+    number=true,
+    boolean=true,
+  }
   -- mapper class, it allows to map any Lua object to integers, allowing to
   -- enumerate uniquely all serialized objects
   local mapper_mt = {
@@ -157,12 +162,25 @@ do
     else return tostring(data)
     end
   end
+  local function non_structured_split(data)
+    local n = 0
+    local non_st = {}
+    for k,v in pairs(data) do
+      local tk = type(k)
+      local tv = type(v)
+      if non_structured[tk] and non_structured[tv] then
+        non_st[k]=v
+        n=n+1
+      end
+    end
+    return n,non_st
+  end
   -- transforms a given Lua object (data), returning a string with the
   -- transformed object
   local function transform(map, varname, data, destination, format)
     local tt = type(data)
     -- plain types are returned as is
-    if tt == "number" or tt == "string" then return value2str(data, tt) end
+    if non_structured[tt] then return value2str(data, tt) end
     local id = map:consult(data)
     -- If data is not found in the map, it is necessary to process it and
     -- transform all of its dependencies. Otherwise, the id is used to retrieve
@@ -171,25 +189,11 @@ do
       id = map:add(data)
       if tt == "table" then
         -- split table into non-structured table data (string and numbers)
-        local n = 0
-        local non_st = {}
-        for k,v in pairs(data) do
-          local tk = type(k)
-          local tv = type(v)
-          if (tk=="number" or tk=="string") and (tv=="number" or tv=="string") then
-            non_st[k]=v
-            n=n+1
-          end
-        end
+        local n,non_st = non_structured_split(data)
         -- creates a new table, and subsequently traverses all its content
         destination:write("%s[%d]="%{varname,id})
-        if n==0 then
-          -- empty table
-          destination:write("{}")
-        else
-          -- table initialized with data
-          destination:write(table.tostring(non_st))
-        end
+        if n==0 then destination:write("{}") -- empty table
+        else destination:write(table.tostring(non_st)) end -- table with data
         destination:write("\n")
         for k,v in pairs(data) do
           if not non_st[k] then
