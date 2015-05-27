@@ -170,11 +170,28 @@ do
     if not id then
       id = map:add(data)
       if tt == "table" then
-        -- creates a new table, and subsequently traverses all its content
-        destination:write("%s[%d]={}\n"%{varname,id})
+        -- split table into non-structured table data (string and numbers)
+        local n = 0
+        local non_st = {}
         for k,v in pairs(data) do
-          local vstr = transform(map, varname, v, destination, format)
-          destination:write("%s[%d][%s]=%s\n"%{varname,id,value2str(k),vstr})
+          local tv = type(v)
+          if tv == "number" or tv == "string" then non_st[k]=v n=n+1 end
+        end
+        -- creates a new table, and subsequently traverses all its content
+        destination:write("%s[%d]="%{varname,id})
+        if n==0 then
+          -- empty table
+          destination:write("{}")
+        else
+          -- table initialized with data
+          destination:write(table.tostring(non_st))
+        end
+        destination:write("\n")
+        for k,v in pairs(data) do
+          if not non_st[k] then
+            local vstr = transform(map, varname, v, destination, format)
+            destination:write("%s[%d][%s]=%s\n"%{varname,id,value2str(k),vstr})
+          end
         end
       elseif tt == "function" then
         -- serializes the function with all of its upvalues
@@ -202,9 +219,12 @@ do
                "Userdata needs a function called ctor_name to be serializable")
         local params = table.pack( data:ctor_params_table() )
         local ctor_name = data:ctor_name()
-        local params_str = transform(map, varname, params, destination, format)
-        destination:write("%s[%d]=%s(table.unpack(%s))\n"%
-                            {varname,id,ctor_name,params_str})
+        local params_str = ""
+        if #params > 0 then
+          params_str = transform(map, varname, params, destination, format)
+          params_str = "table.unpack(%s)"%{params_str}
+        end
+        destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})
       else
         -- general case
         local value = value2str(data)
@@ -241,7 +261,7 @@ do
       destination:write("\n")
       destination:write("local %s={}\n"%{varname})
       local str = transform(map, "_", data, destination, format)
-      destination:write("return %s%s\n"%{str,version_info})
+      destination:write("return %s%s"%{str,version_info})
       if type(destination) == "table" then
         return destination:concat()
       else

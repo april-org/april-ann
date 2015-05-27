@@ -43,21 +43,30 @@ namespace AprilIO {
 
     /// Writes the object data into dest, and it could be retrieved by read.
     virtual void write(StreamInterface *dest,
-                       const AprilUtils::LuaTable &options) = 0;
-    
-    /**
-     * @brief Writes a Lua string which can be instantiated to get the object.
-     *
-     * Some classes implement this method as derived of this in C++ but others
-     * implement it in Lua pure code.
-     *
-     * @note THIS METHOD IS A FUTURE FEATURE, IT IS NOT BEEN USED ANYWHERE.
-     */
-    virtual void toLuaString(StreamInterface *dest,
-                             const AprilUtils::LuaTable &options) {
+                       const AprilUtils::LuaTable &options) {
       UNUSED_VARIABLE(dest);
       UNUSED_VARIABLE(options);
-      ERROR_EXIT(128, "Unable to instantiate into a Lua string\n");
+      ERROR_EXIT(128, "Unable to use write method\n");
+    }
+    
+    virtual const char *luaCtorName() const {
+      ERROR_EXIT(128, "Unable to retrieve Lua ctor name\n");
+      return 0;
+    }
+
+    /**
+     * @brief Stores into an AprilUtils::LuaTable all the parameters of this
+     * object.
+     *
+     * The parameters will use to serialize the object, and them will be given
+     * to the Lua binding constructor to retrieve a serialized object.
+     *
+     * @returns The number of items pushed into Lua stack.
+     */
+    virtual int exportParamsToLua(lua_State *L) {
+      UNUSED_VARIABLE(L);
+      ERROR_EXIT(128, "Unable to export parameters to Lua\n");
+      return 0;
     }
   };
 

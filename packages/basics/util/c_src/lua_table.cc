@@ -117,6 +117,11 @@ namespace AprilUtils {
   ///////////////////////////////////////////////////////////////////////////
 
   template<>
+  uint32_t LuaTable::convertTo<uint32_t>(lua_State *L, int idx) {
+    return static_cast<uint32_t>(lua_tonumber(L, idx));
+  }
+  
+  template<>
   int LuaTable::convertTo<int>(lua_State *L, int idx) {
     return lua_tointeger(L, idx);
   }
@@ -151,6 +156,11 @@ namespace AprilUtils {
   }
   
   template<>
+  void LuaTable::pushInto<uint32_t>(lua_State *L, uint32_t value) {
+    lua_pushnumber(L, static_cast<double>(value));
+  }
+  
+  template<>
   void LuaTable::pushInto<int>(lua_State *L, int value) {
     lua_pushnumber(L, static_cast<double>(value));
   }
@@ -182,6 +192,11 @@ namespace AprilUtils {
     lua_pushstring(L, value);
   }
 
+  template<>
+  bool LuaTable::checkType<uint32_t>(lua_State *L, int idx) {
+    return lua_isnumber(L, idx);
+  }
+  
   template<>
   bool LuaTable::checkType<int>(lua_State *L, int idx) {
     return lua_isnumber(L, idx);

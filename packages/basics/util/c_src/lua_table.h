@@ -21,6 +21,8 @@
 #ifndef LUA_TABLE_H
 #define LUA_TABLE_H
 extern "C" {
+#include <stdint.h>
+
 #include "lauxlib.h"
 #include "lualib.h"
 #include "lua.h"
@@ -45,16 +47,16 @@ namespace AprilUtils {
    * specializing the static template methods: convertTo(), pushInto() and
    * checkType().
    *
-   * @note All keys are forced to be strings, so, it works with dictionary style
-   * Lua tables, not with arrays.
+   * @note Keys can be strings and or integers.
    */
   class LuaTable {
     
-    class LHSAccessor {
+    /// To implement left hand side operator[] in LuaTable class
+    class LHSAccessorByString {
     public:
-      LHSAccessor(LuaTable *table, const char * const name) :
+      LHSAccessorByString(LuaTable *table, const char * const name) :
         table(table),name(name) {}
-      LHSAccessor(const LHSAccessor &other) :
+      LHSAccessorByString(const LHSAccessorByString &other) :
         table(other.table),name(other.name) {}
       template<typename T>
       LuaTable &operator=(T value) {
@@ -63,6 +65,22 @@ namespace AprilUtils {
     private:
       LuaTable *table;
       const char * const name;
+    };
+
+    /// To implement left hand side operator[] in LuaTable class
+    class LHSAccessorByInteger {
+    public:
+      LHSAccessorByInteger(LuaTable *table, int n) :
+        table(table),n(n) {}
+      LHSAccessorByInteger(const LHSAccessorByInteger &other) :
+        table(other.table),n(other.n) {}
+      template<typename T>
+      LuaTable &operator=(T value) {
+        return table->put<T>(n, value);
+      }
+    private:
+      LuaTable *table;
+      const int n;
     };
     
   public:
@@ -85,22 +103,16 @@ namespace AprilUtils {
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
     
-    template<typename T>
-    T operator[](const char *name) const {
-      return get<T>(name);
+    LHSAccessorByString operator[](const char *name) {
+      return LHSAccessorByString(this, name);
     }
     
-    template<typename T>
-    T operator[](const string &name) const {
-      return get<T>(name);
+    LHSAccessorByString operator[](const string &name) {
+      return LHSAccessorByString(this, name.c_str());
     }
 
-    LHSAccessor operator[](const char *name) {
-      return LHSAccessor(this, name);
-    }
-    
-    LHSAccessor operator[](const string &name) {
-      return LHSAccessor(this, name.c_str());
+    LHSAccessorByInteger operator[](int n) {
+      return LHSAccessorByInteger(this, n);
     }
     
     /// Returns a C++ string with the Lua representation of the table.
@@ -111,7 +123,7 @@ namespace AprilUtils {
     LuaTable &put(const string &name, T value) {
       return put<T>(name.c_str(), value);
     }
-    
+
     /// Checks if the field at the given key name is nil.
     bool checkNil(const string &name) const {
       return checkNil(name.c_str());
@@ -147,6 +159,17 @@ namespace AprilUtils {
       return *this;
     }
 
+    /// Puts a new value into the table, using the given key number.
+    template<typename T>
+    LuaTable &put(int n, T value) {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushnumber(L, n);
+      pushInto(L, value);
+      lua_settable(L, -3);
+      lua_pop(L, 1);
+      return *this;
+    }
+
     /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, size_t len, T value) {
@@ -162,6 +185,16 @@ namespace AprilUtils {
     bool checkNil(const char *name) const {
       if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
+      bool ret =  lua_isnil(L, -1);
+      lua_pop(L, 2);
+      return ret;
+    }
+
+    /// Checks if the field at the given key number is nil.
+    bool checkNil(int n) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushnumber(L, n);
+      lua_gettable(L, -2);
       bool ret =  lua_isnil(L, -1);
       lua_pop(L, 2);
       return ret;
@@ -183,6 +216,18 @@ namespace AprilUtils {
     bool checkNilOrType(const char *name) const {
       if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
       lua_getfield(L, -1, name);
+      bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
+      lua_pop(L, 2);
+      return ret;
+    }
+
+    /// Checks if the field at the given key number is of the given type (a nil
+    /// value will be taken as true).
+    template<typename T>
+    bool checkNilOrType(int n) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushnumber(L, n);
+      lua_gettable(L, -2);
       bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
       lua_pop(L, 2);
       return ret;
@@ -212,6 +257,19 @@ namespace AprilUtils {
       return v;
     }
 
+    /// Returns the value stored at the given key number field.
+    template<typename T>
+    T get(int n) const {
+      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      lua_pushnumber(L, n);
+      lua_gettable(L, -2);
+      if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %d\n", n);
+      if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+      T v = convertTo<T>(L, -1);
+      lua_pop(L,2);
+      return v;
+    }
+
     /// Returns the value stored at the given key name field.
     template<typename T>
     T get(const char *name, size_t len) const {
@@ -235,6 +293,28 @@ namespace AprilUtils {
       }
       else {
         lua_getfield(L, -1, name);
+        T v(def_value);
+        if (!lua_isnil(L,-1)) {
+          if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+          v = convertTo<T>(L, -1);
+        }
+        lua_pop(L,2);
+        return v;
+      }
+      // return T();
+    }
+
+    /// Returns the value stored at the given key number field. In case the field
+    /// is empty, it returns the given def_value argument.    
+    template<typename T>
+    T opt(int n, const T def_value) const {
+      if (!checkAndPushRef()) {
+        lua_pop(L, 1);
+        return def_value;
+      }
+      else {
+        lua_pushnumber(L, n);
+        lua_gettable(L, -2);
         T v(def_value);
         if (!lua_isnil(L,-1)) {
           if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
@@ -312,6 +392,7 @@ namespace AprilUtils {
   };
   
   // Basic data types specializations.
+  template<> uint32_t LuaTable::convertTo<uint32_t>(lua_State *L, int idx);
   template<> int LuaTable::convertTo<int>(lua_State *L, int idx);
   template<> float LuaTable::convertTo<float>(lua_State *L, int idx);
   template<> double LuaTable::convertTo<double>(lua_State *L, int idx);
@@ -320,6 +401,7 @@ namespace AprilUtils {
   template<> string LuaTable::convertTo<string>(lua_State *L, int idx);
   template<> LuaTable LuaTable::convertTo<LuaTable>(lua_State *L, int idx);
   
+  template<> void LuaTable::pushInto<uint32_t>(lua_State *L, uint32_t value);
   template<> void LuaTable::pushInto<int>(lua_State *L, int value);
   template<> void LuaTable::pushInto<float>(lua_State *L, float value);
   template<> void LuaTable::pushInto<double>(lua_State *L, double value);
@@ -330,6 +412,7 @@ namespace AprilUtils {
                                                    const char *value);
   template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value);
 
+  template<> bool LuaTable::checkType<uint32_t>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<int>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<float>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<double>(lua_State *L, int idx);

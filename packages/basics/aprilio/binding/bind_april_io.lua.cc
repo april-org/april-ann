@@ -96,10 +96,13 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
   if (s_casted == 0) return 0;
   return s_casted;
 }
+
 //BIND_END
 
 //BIND_HEADER_C
 #include "april_assert.h"
+#include "bind_util.h"
+
 namespace AprilIO {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
@@ -547,5 +550,17 @@ namespace AprilIO {
   }
   obj->write(dest.get(), options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
+}
+//BIND_END
+
+//BIND_METHOD Serializable ctor_name
+{
+  LUABIND_RETURN(string, obj->luaCtorName());
+}
+//BIND_END
+
+//BIND_METHOD Serializable ctor_params_table
+{
+  LUABIND_INCREASE_NUM_RETURNS(obj->exportParamsToLua(L));
 }
 //BIND_END

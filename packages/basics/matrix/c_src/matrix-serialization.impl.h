@@ -373,7 +373,7 @@ namespace Basics {
           token = line.extract_token(delim, read_empty);
           if (!token) break;
           if (!ascii_extractor(token, *data_it)) {
-            if (!use_map || map.checkNil(token)) break;
+            if (!use_map || map.checkNil((const char *)token)) break;
             *data_it = map.get<T>((const char *)(token), token.len());
           }
           ++data_it;
