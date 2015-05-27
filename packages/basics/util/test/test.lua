@@ -44,6 +44,13 @@ T("SerializationTest", function()
     check.eq(type(t2.c), "util.stopwatch")
 end)
 
+T("LambdaTest", function()
+    local f = lambda'|x|3*x'
+    local g = bind(lambda'|f,x|f(x)^2', f)
+    check.eq(f(4),12)
+    check.eq(g(4),144)
+end)
+
 T("CastTest", function()
     local tmp = os.tmpname()
     local f = aprilio.stream.file(tmp, "w")
