@@ -49,6 +49,22 @@ namespace AprilUtils {
    * Lua tables, not with arrays.
    */
   class LuaTable {
+    
+    class LHSAccessor {
+    public:
+      LHSAccessor(LuaTable *table, const char * const name) :
+        table(table),name(name) {}
+      LHSAccessor(const LHSAccessor &other) :
+        table(other.table),name(other.name) {}
+      template<typename T>
+      LuaTable &operator=(T value) {
+        return table->put<T>(name, value);
+      }
+    private:
+      LuaTable *table;
+      const char * const name;
+    };
+    
   public:
     
     /// Constructor for a new LuaTable in the registry.
@@ -68,6 +84,24 @@ namespace AprilUtils {
     
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
+    
+    template<typename T>
+    T operator[](const char *name) const {
+      return get<T>(name);
+    }
+    
+    template<typename T>
+    T operator[](const string &name) const {
+      return get<T>(name);
+    }
+
+    LHSAccessor operator[](const char *name) {
+      return LHSAccessor(this, name);
+    }
+    
+    LHSAccessor operator[](const string &name) {
+      return LHSAccessor(this, name.c_str());
+    }
     
     /// Returns a C++ string with the Lua representation of the table.
     string toLuaString();

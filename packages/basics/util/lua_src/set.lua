@@ -17,7 +17,7 @@ function set_methods:add(v)
     k = self.n
     data[v] = k
   end
-  return self
+  return k
 end
 
 function set_methods:clear()
