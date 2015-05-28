@@ -265,6 +265,11 @@ do
       --
       local map = mapper()
       local destination = destination or lua_string_stream()
+      local do_close = false
+      if type(destination)=="string" then
+        destination = io.open(destination)
+        do_close = true
+      end
       local varname = "_"
       destination:write(MAGIC)
       destination:write("\n")
@@ -273,7 +278,7 @@ do
       destination:write("return %s%s"%{str,version_info})
       if type(destination) == "table" then
         return destination:concat()
-      else
+      elseif do_close then
         destination:close()
       end
     end

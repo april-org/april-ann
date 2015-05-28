@@ -28,9 +28,10 @@ rlcompleter._set(
   function (word, line, startpos, endpos)
     -- Helper function registering possible completion words, verifying matches.
     local matches = {}
-    local function add(value)
+    local function add(value, _word)
+      _word = _word or word
       value = tostring(value)
-      if value:match("^" .. word) then
+      if value:match("^" .. _word:gsub("%.","%%.")) then
         matches[#matches + 1] = value
       end
     end
@@ -42,14 +43,15 @@ rlcompleter._set(
     local function filename_list(str)
       local path, name = str:match("(.*)[\\/]+(.*)")
       path = (path or ".") .. "/"
+      local path2 = path:sub(2)
       name = name or str
       local d = rlcompleter.dir(path)
       if d then
 	for f in d:iterate() do
-	  if rlcompleter.dir.isdir(path .. f) then
-	    add(f .. "/")
+          if rlcompleter.dir.isdir(path .. f) then
+	    add(path2 .. f .. "/", path2 .. name)
 	  else
-	    add(f)
+	    add(path2 .. f, path2 .. name)
 	  end
 	end
       else
