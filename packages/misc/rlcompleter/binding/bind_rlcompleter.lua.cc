@@ -92,20 +92,6 @@ static int luaL_typerror(lua_State *L, int narg, const char *tname)
 }
 #endif
 
-/* Directory iterator */
-static int dir_iter (lua_State *L) {
-  DIRRef *d = lua_toDIRRef(L, lua_upvalueindex(1));
-  struct dirent *entry;
-  if (d && d->d) {
-    if ((entry = readdir(d->d)) != NULL) {
-      lua_pushstring(L, entry->d_name);
-      return 1;
-    }
-    else return 0;  /* no more values to return */
-  }
-  else return 0; /* an error occurs */
-}
-
 /* This function is called repeatedly by rl_completion_matches inside
    do_completion, each time returning one element from the Lua table. */
 static char *iterator(const char* text, int state)
@@ -133,14 +119,14 @@ static char **do_completion (const char *text, int start, int end)
   lua_pushlightuserdata(storedL, (void *)iterator);
   lua_gettable(storedL, LUA_REGISTRYINDEX);
 
-  rl_completion_suppress_append = 1;
+  rl_completion_suppress_append = 0;
 
   if (lua_isfunction(storedL, -1)) {
     lua_pushstring(storedL, text);
     lua_pushstring(storedL, rl_line_buffer);
     lua_pushinteger(storedL, start + 1);
     lua_pushinteger(storedL, end + 1);
-    if (!lua_pcall(storedL, 4, 1, 0) && lua_istable(storedL, -1))
+    if (lua_pcall(storedL, 4, 1, 0)==LUA_OK && lua_istable(storedL, -1))
       matches = rl_completion_matches (text, iterator);
   }
   lua_settop(storedL, oldtop);
@@ -153,14 +139,6 @@ extern "C" {
 #include <dirent.h>
 }
 #include "referenced.h"
-class DIRRef : public Referenced {
-public:
-  DIR *d;
-  DIRRef() : d(0) { }
-  virtual ~DIRRef() {
-    if (d) closedir(d);
-  }
-};
 //BIND_END
 
 //BIND_FUNCTION rlcompleter._set
@@ -189,54 +167,12 @@ public:
 }
 //BIND_END
 
-//BIND_LUACLASSNAME  DIRRef rlcompleter.dir
-//BIND_CPP_CLASS     DIRRef
-
-//BIND_CONSTRUCTOR DIRRef
-{
-  const char *path;
-  LUABIND_GET_PARAMETER(1, string, path);
-  /* try to open the given directory */
-  obj = new DIRRef();
-  obj->d = opendir(path);
-  if (obj->d == NULL)  { /* error opening the directory? */
-    fprintf(stderr, "\nCannot open %s: %s\n", path, strerror(errno));
-    delete obj;
-    LUABIND_RETURN_NIL();
-  }
-  else LUABIND_RETURN(DIRRef, obj);
-}
-//BIND_END
-
-//BIND_METHOD DIRRef iterate
-{
-  /* creates and returns the iterator function
-     (its sole upvalue, the directory userdatum,
-     is already on the stack top */
-  lua_pushDIRRef(L, obj);
-  lua_pushcclosure(L, dir_iter, 1);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD DIRRef isdir
-{
-  const char *path;
-  LUABIND_GET_PARAMETER(1, string, path);
-  struct stat aux;
-  int r = lstat(path, &aux);
-  if (r != 0)
-    LUABIND_FERROR2("Unable to lstat %s: %s", path, strerror(errno));
-  LUABIND_RETURN(boolean, S_ISDIR(aux.st_mode));
-}
-//BIND_END
-
 //BIND_STATIC_CONSTRUCTOR rlcompleter
 {
   storedL = L;
   rl_basic_word_break_characters = breaks;
-  rl_completer_word_break_characters = breaks;
-  rl_attempted_completion_function = do_completion;
+  // rl_completer_word_break_characters = breaks;
   rl_completer_quote_characters = quotes;
+  rl_attempted_completion_function = do_completion;
 }
 //BIND_END

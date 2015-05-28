@@ -2,8 +2,8 @@
 -- By Patrick Rapin; adapted by Reuben Thomas
 -- Adapted to APRIL-ANN by Francisco Zamora-Martinez, 2013
 
--- scape all characters to avoid problems with Lua regular expressions
-local function scape(str)
+-- escape all characters to avoid problems with Lua regular expressions
+local function escape(str)
   return str:gsub("(.)","%%%1")
 end
 
@@ -28,37 +28,13 @@ rlcompleter._set(
   function (word, line, startpos, endpos)
     -- Helper function registering possible completion words, verifying matches.
     local matches = {}
-    local function add(value, _word)
-      _word = _word or word
+    local function add(value)
       value = tostring(value)
-      if value:match("^" .. _word:gsub("%.","%%.")) then
+      if value:match("^" .. word) then
         matches[#matches + 1] = value
       end
     end
     
-    -- This function does the same job as the default completion of readline,
-    -- completing paths and filenames. Rewritten because
-    -- rl_basic_word_break_characters is different.
-    -- Uses binding functions for directory traversal (based on LuaFileSystem)
-    local function filename_list(str)
-      local path, name = str:match("(.*)[\\/]+(.*)")
-      path = (path or ".") .. "/"
-      local path2 = path:sub(2)
-      name = name or str
-      local d = rlcompleter.dir(path)
-      if d then
-	for f in d:iterate() do
-          if rlcompleter.dir.isdir(path .. f) then
-	    add(path2 .. f .. "/", path2 .. name)
-	  else
-	    add(path2 .. f, path2 .. name)
-	  end
-	end
-      else
-	add("")
-      end
-    end
-
     -- This function is called in a context where a keyword or a global
     -- variable can be inserted. Local variables cannot be listed!
     local function add_globals()
@@ -75,7 +51,7 @@ rlcompleter._set(
     -- variables and function prototype completion.
     local function contextual_list(expr, sep, str)
       if str then
-        return filename_list(str)
+        return
       end
       if expr and expr ~= "" then
         local v = load("return " .. expr)
@@ -116,9 +92,7 @@ rlcompleter._set(
           end
         end
       end
-      if #matches == 0 then
-        add_globals()
-      end
+      if #matches == 0 then add_globals() end
     end
     
     -- This complex function tries to simplify the input line, by removing
@@ -141,10 +115,10 @@ rlcompleter._set(
         end
         local idx, startpat, endpat
         if (idx1 or math.huge) < (idx2 or math.huge) then
-          equals = scape(equals)
+          -- equals = escape(equals)
           idx, startpat, endpat = idx1, "%[" .. equals .. "%[", "%]" .. equals .. "%]"
         else
-          sign = scape(sign)
+          -- sign = escape(sign)
           idx, startpat, endpat = idx2, sign, sign
         end
         if expr:sub(idx):find("^" .. startpat .. ".-" .. endpat) then
@@ -168,34 +142,6 @@ rlcompleter._set(
     local str, expr, sep = simplify_expression(line:sub(1, endpos))
 
     contextual_list(expr, sep, str)
-
-    -- FIXME: Is this feature good to be really used?
-    if false and #matches == 1 and word == matches[1] then
-      print("\n----------------- DOCUMENTATION ----------------------")
-      local m  = matches[1]
-      local id = expr or ""
-      local mt
-      if expr and #expr > 0 then
-	local v = load("return " .. expr)
-	if v then	
-	  v = v()
-	  if v then mt = getmetatable(v) end
-	  if mt and mt.id then id = mt.id:match("^[^%s]+") end
-	end
-      end
-      local prefix = id
-      if #prefix > 0 then prefix = prefix .. "." end
-      april_print_doc(prefix .. m, 2)
-      local v = load("return " .. prefix .. m)
-      if v then
-	v = v()
-	if v then mt = getmetatable(v) end
-	if mt and mt.__call then
-	  april_print_doc(prefix .. m .. ".__call", 2)
-	end
-      end
-      print("------------------------------------------------------")
-    end
     
     return matches
   end
