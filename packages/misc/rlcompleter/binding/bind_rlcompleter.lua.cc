@@ -64,7 +64,7 @@ extern "C" {
 }
 #include "unused_variable.h"
 
-char breaks[] = " \t\n\"\\'><=;:+-*/%^~#{}()[].,";
+char breaks[] = " \t\n\"\\'><=;:+-*%^~#{}()[].,";
 char quotes[] = "\"'";
 extern int   rl_completion_suppress_append;
 #ifdef __APPLE__
