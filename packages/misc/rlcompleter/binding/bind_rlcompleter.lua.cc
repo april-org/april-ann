@@ -119,7 +119,7 @@ static char **do_completion (const char *text, int start, int end)
   lua_pushlightuserdata(storedL, (void *)iterator);
   lua_gettable(storedL, LUA_REGISTRYINDEX);
 
-  rl_completion_suppress_append = 0;
+  rl_completion_suppress_append = 1;
 
   if (lua_isfunction(storedL, -1)) {
     lua_pushstring(storedL, text);
