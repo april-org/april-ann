@@ -33,4 +33,43 @@ namespace AprilUtils {
   void aprilPrint(const AprilMath::ComplexD &v) {
     printf("%f%c%fi", v.real(), (v.img()>+0.0)?'+':' ', v.img());
   }
+
+  template<>
+  unsigned int binarizer::binary_size<AprilMath::ComplexF>(){
+    return 10;
+  }
+  template<>
+  unsigned int binarizer::binary_size<AprilMath::ComplexD>() {
+    return 20;
+  }
+
+  template<>
+  void binarizer::
+  code<AprilMath::ComplexF>(const AprilMath::ComplexF &value, char *b) {
+    binarizer::code_float(value.real(), b);
+    binarizer::code_float(value.img(), b+5);
+  }
+
+  template<>
+  void binarizer::
+  code<AprilMath::ComplexD>(const AprilMath::ComplexD &value, char *b) {
+    binarizer::code_double(value.real(), b);
+    binarizer::code_double(value.img(), b+10);
+  }
+
+  template<>
+  AprilMath::ComplexF binarizer::decode<AprilMath::ComplexF>(const char *b) {
+    float real, img;
+    real = binarizer::decode_float(b);
+    img = binarizer::decode_float(b+5);
+    return AprilMath::ComplexF(real,img);
+  }
+
+  template<>
+  AprilMath::ComplexD binarizer::decode<AprilMath::ComplexD>(const char *b) {
+    double real, img;
+    real = binarizer::decode_float(b);
+    img = binarizer::decode_float(b+5);
+    return AprilMath::ComplexD(real,img);
+  }
 }

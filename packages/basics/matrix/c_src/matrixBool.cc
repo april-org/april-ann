@@ -70,9 +70,15 @@ namespace Basics {
       ERROR_EXIT(128, "Bool type has not binary option\n");
 
     }
-
+    
     /////////////////////////////////////////////////////////////////////////////
 
+    template<>
+    const char *Matrix<float>::ctorName() const {
+      return "matrixBool.deserialize";
+    }
+
+    
   } // namespace MatrixIO
 
   ///////////////////////////////////////////////////////////////////////////////

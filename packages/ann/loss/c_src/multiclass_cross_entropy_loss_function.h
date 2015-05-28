@@ -43,6 +43,9 @@ namespace ANN {
       return new MultiClassCrossEntropyLossFunction(this);
     }
     virtual char *toLuaString();
+    virtual const char *ctorName() const {
+      return "ann.loss.multi_class_cross_entropy";
+    }
   };
   
   ///////////////////////////////////
@@ -63,6 +66,9 @@ namespace ANN {
       return new NonPairedMultiClassCrossEntropyLossFunction(this);
     }
     virtual char *toLuaString();
+    virtual const char *ctorName() const {
+      return "ann.loss.non_paired_multi_class_cross_entropy";
+    }
   };
 }
 

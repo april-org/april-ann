@@ -559,7 +559,7 @@ namespace AprilIO {
 }
 //BIND_END
 
-//BIND_METHOD Serializable ctor_params_table
+//BIND_METHOD Serializable ctor_params
 {
   LUABIND_INCREASE_NUM_RETURNS(obj->exportParamsToLua(L));
 }

@@ -80,6 +80,11 @@ namespace Basics {
   } // namespace MatrixIO
 
   /////////////////////////////////////////////////////////////////////////////
+
+  template<>
+  const char *Matrix<ComplexF>::ctorName() const {
+    return "matrixComplex.deserialize";
+  }
   
   template class Matrix<ComplexF>;
 

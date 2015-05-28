@@ -171,6 +171,11 @@ function metropolis_methods:clone()
   return obj
 end
 
+function metropolis_methods:ctor_name() return "bayesian.optimizer.hmc" end
+function metropolis_methods:ctor_params()
+  return self.global_options,self.layerwise_options,self.count,self.state
+end
+
 function metropolis_methods:to_lua_string(format)
   local format = format or "binary"
   local str_t = { "ann.optimizer.metropolis(",

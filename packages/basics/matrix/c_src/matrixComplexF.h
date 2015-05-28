@@ -57,6 +57,9 @@ namespace Basics {
 
   //////////////////////////////////////////////////////////////////////////////
 
+  template<>
+  const char *Matrix<AprilMath::ComplexF>::ctorName() const;
+  
   typedef Matrix<AprilMath::ComplexF> MatrixComplexF;
 
 } // namespace Basics

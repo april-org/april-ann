@@ -30,13 +30,15 @@ using namespace AprilMath;
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "error_print.h"
+#include "bind_aprilio.h"
 
 namespace AprilMath {
   
 #define FUNCTION_NAME "Constructor"
-  template<typename T>
+  template<typename T, typename K>
   void GPUMirroredMemoryBlockConstructor(lua_State *L,
-                                         GPUMirroredMemoryBlock<T> *&obj) {
+                                         GPUMirroredMemoryBlock<T> *&obj,
+                                         K luaToFunc = luaL_checknumber) {
     unsigned int N;
     if (lua_istable(L,1)) N = lua_rawlen(L,1);
     else LUABIND_GET_PARAMETER(1,uint,N);
@@ -46,7 +48,7 @@ namespace AprilMath {
       for (unsigned int i=0; i<N; ++i) {
         lua_pushinteger(L, i+1);
         lua_gettable(L, -2);
-        LUABIND_GET_PARAMETER(-1,number,ptr[i]);
+        ptr[i] = static_cast<T>(luaToFunc(L, -1));
         lua_pop(L,1);
       }
     }
@@ -54,13 +56,14 @@ namespace AprilMath {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "raw_set"
-  template<typename T>
+  template<typename T, typename K>
   void GPUMirroredMemoryBlockSet(lua_State *L,
-                                 GPUMirroredMemoryBlock<T> *obj) {
+                                 GPUMirroredMemoryBlock<T> *obj,
+                                 K luaToFunc = luaL_checknumber) {
     T value;
     unsigned int i;
     LUABIND_GET_PARAMETER(1,uint,i);
-    LUABIND_GET_PARAMETER(2,number,value);
+    value = static_cast<T>(luaToFunc(L, 2));
     if (i >= obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
     T *ptr = obj->getPPALForWrite();
     ptr[i] = value;
@@ -115,8 +118,13 @@ namespace AprilMath {
 
 ////////////////////////////////////////////////////////////////////////////
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+
+////////////////////////////////////////////////////////////////////////////
+
 //BIND_LUACLASSNAME FloatGPUMirroredMemoryBlock mathcore.block.float
 //BIND_CPP_CLASS FloatGPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF Serializable
 
 //BIND_CONSTRUCTOR FloatGPUMirroredMemoryBlock
 {
@@ -158,6 +166,7 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME DoubleGPUMirroredMemoryBlock mathcore.block.double
 //BIND_CPP_CLASS DoubleGPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF Serializable
 
 //BIND_CONSTRUCTOR DoubleGPUMirroredMemoryBlock
 {
@@ -199,6 +208,7 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME Int32GPUMirroredMemoryBlock mathcore.block.int32
 //BIND_CPP_CLASS Int32GPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF Serializable
 
 //BIND_CONSTRUCTOR Int32GPUMirroredMemoryBlock
 {
@@ -229,6 +239,90 @@ namespace AprilMath {
 //BIND_END
 
 //BIND_METHOD Int32GPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BoolGPUMirroredMemoryBlock mathcore.block.bool
+//BIND_CPP_CLASS BoolGPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF Serializable
+
+//BIND_CONSTRUCTOR BoolGPUMirroredMemoryBlock
+{
+  LUABIND_CHECK_ARGN(==,1);
+  GPUMirroredMemoryBlockConstructor(L,obj);
+  LUABIND_RETURN(BoolGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD BoolGPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD BoolGPUMirroredMemoryBlock raw_set
+{
+  LUABIND_CHECK_ARGN(==,2);
+  GPUMirroredMemoryBlockSet(L,obj);
+  LUABIND_RETURN(BoolGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD BoolGPUMirroredMemoryBlock raw_get
+{
+  LUABIND_RETURN(boolean,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD BoolGPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ComplexFGPUMirroredMemoryBlock mathcore.block.complex
+//BIND_CPP_CLASS ComplexFGPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF Serializable
+
+//BIND_CONSTRUCTOR ComplexFGPUMirroredMemoryBlock
+{
+  LUABIND_CHECK_ARGN(==,1);
+  GPUMirroredMemoryBlockConstructor(L,obj,lua_toComplexF);
+  LUABIND_RETURN(ComplexFGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD ComplexFGPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD ComplexFGPUMirroredMemoryBlock raw_set
+{
+  LUABIND_CHECK_ARGN(==,2);
+  GPUMirroredMemoryBlockSet(L,obj,lua_toComplexF);
+  LUABIND_RETURN(ComplexFGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD ComplexFGPUMirroredMemoryBlock raw_get
+{
+  LUABIND_RETURN(boolean,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD ComplexFGPUMirroredMemoryBlock get_reference_string
 {
   char buff[128];
   sprintf(buff,"data= %p", (void*)obj);

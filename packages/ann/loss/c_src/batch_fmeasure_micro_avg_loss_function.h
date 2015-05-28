@@ -62,6 +62,17 @@ namespace ANN {
       return new BatchFMeasureMicroAvgLossFunction(this);
     }
     virtual char *toLuaString();
+    virtual const char *ctorName() const {
+      return "ann.loss.batch_fmeasure_micro_avg";
+    }
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilUtils::LuaTable t(L);
+      t["size"] = size;
+      t["beta"] = beta;
+      t["complement"] = complement_output;
+      t.pushTable(L);
+      return 1;
+    }
   };
 }
 

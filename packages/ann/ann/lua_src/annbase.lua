@@ -161,6 +161,13 @@ function ann_wrapper_methods:copy_components()
   return {}
 end
 
+function ann_wrapper_methods:ctor_name()
+  error("Impossible to serialize a wrapper component")
+end
+function ann_wrapper_methods:ctor_params()
+  error("Impossible to serialize a wrapper component")
+end
+
 function ann_wrapper_methods:to_lua_string()
   error("Impossible to serialize a wrapper component")
 end
@@ -200,7 +207,6 @@ ann.components.lua,lua_component_methods = class("ann.components.lua",
                                                  ann.components.base)
 
 ann.components.lua.constructor = function(self, tbl)
-  tbl = tbl or {}
   local tbl = get_table_fields({
       name = { type_match="string" },
       input = { type_match="number" },
@@ -209,6 +215,14 @@ ann.components.lua.constructor = function(self, tbl)
   self.name = tbl.name or ann.generate_name()
   self.input_size = tbl.input
   self.output_size = tbl.output
+end
+
+lua_component_methods.ctor_name = function(self)
+  return class.obj_id(self)
+end
+
+lua_component_methods.ctor_params = function(self)
+  return { name=self.name, input=self.input_size, output=self.output_size }
 end
 
 lua_component_methods.set_input = function(self,tk)

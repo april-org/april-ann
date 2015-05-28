@@ -86,6 +86,11 @@ namespace Basics {
   
 
   } // namespace MatrixIO
+
+  template<>
+  const char *Matrix<float>::ctorName() const {
+    return "matrix.deserialize";
+  }
   
   template <>
   void Matrix<float>::pruneSubnormalAndCheckNormal() {

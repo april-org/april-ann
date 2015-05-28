@@ -35,6 +35,78 @@ namespace AprilMath {
     new GPUMirroredMemoryBlockBase::PoolType(1024);
 #endif
 
+  template<>
+  const char *GPUMirroredMemoryBlock<float>::ctorName() const {
+    return "mathcore.block.float.deserialize";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<double>::ctorName() const {
+    return "mathcore.block.double.deserialize";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<ComplexF>::ctorName() const {
+    return "mathcore.block.complex.deserialize";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<int32_t>::ctorName() const {
+    return "mathcore.block.int32.deserialize";
+  }
+
+  template<>
+  int GPUMirroredMemoryBlock<float>::exportParamsToLua(lua_State *L) {
+
+  }
+  template<>
+  int GPUMirroredMemoryBlock<double>::exportParamsToLua(lua_State *L) {
+    AprilIO::OutputLuaStringStream destination(L);
+    const int columns = 16;
+    char b[10];
+    const double *ptr = getPPALForRead();
+    unsigned int i;
+    for (i=0; i<getSize(); ++i) {
+      AprilUtils::binarizer::code_double(ptr[i], b);
+      destination.put(b, 10);
+      if ((i+1) % columns == 0) destination.printf("\n");
+    }
+    if ((i % columns) != 0) destination.printf("\n");
+    destination.push(L);
+    return 1;
+  }
+  template<>
+  int GPUMirroredMemoryBlock<ComplexF>::exportParamsToLua(lua_State *L) {
+    AprilIO::OutputLuaStringStream destination(L);
+    const int columns = 16;
+    char b[5];
+    const ComplexF *ptr = getPPALForRead();
+    unsigned int i;
+    for (i=0; i<getSize(); ++i) {
+      AprilUtils::binarizer::code_float(ptr[i].real(), b);
+      destination.put(b, 5);
+      AprilUtils::binarizer::code_float(ptr[i].img(), b);
+      destination.put(b, 5);
+      if ((i+1) % columns == 0) destination.printf("\n");
+    }
+    if ((i % columns) != 0) destination.printf("\n");
+    destination.push(L);
+    return 1;
+  }
+  template<>
+  int GPUMirroredMemoryBlock<int32_t>::exportParamsToLua(lua_State *L) {
+    AprilIO::OutputLuaStringStream destination(L);
+    const int columns = 16;
+    char b[5];
+    const int32_t *ptr = getPPALForRead();
+    unsigned int i;
+    for (i=0; i<getSize(); ++i) {
+      AprilUtils::binarizer::code_int32(ptr[i], b);
+      destination.put(b, 5);
+      if ((i+1) % columns == 0) destination.printf("\n");
+    }
+    if ((i % columns) != 0) destination.printf("\n");
+    destination.push(L);
+    return 1;
+  }
+  
   template class GPUMirroredMemoryBlock<float>;
   template class GPUMirroredMemoryBlock<double>;
   template class GPUMirroredMemoryBlock<int32_t>;

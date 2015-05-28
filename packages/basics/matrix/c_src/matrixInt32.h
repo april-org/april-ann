@@ -54,6 +54,9 @@ namespace Basics {
   } // namespace MatrixIO
   
   //////////////////////////////////////////////////////////////////////////////
+
+  template<>
+  const char *Matrix<int32_t>::ctorName() const;
   
   typedef Matrix<int32_t> MatrixInt32;
 

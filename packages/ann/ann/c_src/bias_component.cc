@@ -32,15 +32,15 @@ namespace ANN {
 
   BiasANNComponent::BiasANNComponent(unsigned int size,
 				     const char *name,
-				     const char *weights_name) :
+				     const char *weights_name,
+                                     MatrixFloat *matrix) :
     VirtualMatrixANNComponent(name, weights_name, size, size),
-    bias_vector(0) {
+    bias_vector(matrix) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("b");
   }
 
   BiasANNComponent::~BiasANNComponent() {
-    if (bias_vector) DecRef(bias_vector);
   }
 
   MatrixFloat *BiasANNComponent::privateDoForward(MatrixFloat* input,
@@ -55,7 +55,7 @@ namespace ANN {
     // linear transfer of input to output
     MatrixFloat *output = input->clone();
     // bias
-    MatrixFloat *bias_ptr = bias_vector;
+    MatrixFloat *bias_ptr = bias_vector.get();
     if (bunch_size == 1) {
       matAxpy(output, 1.0f, bias_ptr);
     }
@@ -94,7 +94,7 @@ namespace ANN {
       matZeros(grads_mat);
       weight_grads_dict.put(name, grads_mat);
     }
-    else if (!grads_mat->sameDim(bias_vector)) {
+    else if (!grads_mat->sameDim(bias_vector.get())) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     }
 #ifdef USE_CUDA
@@ -148,9 +148,9 @@ namespace ANN {
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name, 0);
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (w != 0) {
-      AssignRef(bias_vector, w);
+      bias_vector = w;
       // printf("COPY OF BIAS FROM HASH %s\n", weights_name.c_str());
-      if (!Connections::checkInputOutputSizes(bias_vector,
+      if (!Connections::checkInputOutputSizes(bias_vector.get(),
 					      weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
@@ -159,29 +159,28 @@ namespace ANN {
 		    name.c_str());
     }
     else {
-      if (bias_vector == 0) {
+      if (bias_vector.empty()) {
 	// printf("NEW OF BIAS %s\n", weights_name.c_str());
 	bias_vector = Connections::build(weights_input_size,
 					 weights_output_size);
-	IncRef(bias_vector);
       }
       // else printf("USING PREVIOUS BIAS %s\n", weights_name.c_str());
-      weights_dict.put(weights_name, bias_vector);
+      weights_dict.put(weights_name, bias_vector.get());
     }
   }
 
   void BiasANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
-    if (bias_vector == 0)
+    if (bias_vector.empty())
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name, 0);
-    if (w != 0 && w != bias_vector)
+    if (w != 0 && w != bias_vector.get())
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
     else if (w == 0) {
-      weights_dict.put(weights_name, bias_vector);
+      weights_dict.put(weights_name, bias_vector.get());
     }
   }
 

@@ -28,7 +28,7 @@
 namespace Basics {
 
   namespace MatrixIO {
-      
+    
     /* Especialization of MatrixFloat ascii and binary extractors, sizers and
        coders */
     template<>
@@ -58,6 +58,9 @@ namespace Basics {
   } // namespace MatrixIO
     
   //////////////////////////////////////////////////////////////////////////
+
+  template<>
+  const char *Matrix<float>::ctorName() const;
   
   template <>
   void Matrix<float>::pruneSubnormalAndCheckNormal();

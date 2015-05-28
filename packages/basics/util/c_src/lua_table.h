@@ -82,6 +82,46 @@ namespace AprilUtils {
       LuaTable *table;
       const int n;
     };
+
+    /// To implement right hand side operator[] in LuaTable class
+    class RHSAccessorByString {
+    public:
+      RHSAccessorByString(const LuaTable *table, const char * const name) :
+        table(table),name(name) {}
+      RHSAccessorByString(const RHSAccessorByString &other) :
+        table(other.table),name(other.name) {}
+      template<typename T>
+      T get() const {
+        return table->get<T>(name);
+      }
+      template<typename T>
+      T opt(const T def_value) const {
+        return table->opt<T>(name, def_value);
+      }
+    private:
+      const LuaTable *table;
+      const char * const name;
+    };
+    
+    /// To implement right hand side operator[] in LuaTable class
+    class RHSAccessorByInteger {
+    public:
+      RHSAccessorByInteger(const LuaTable *table, int n) :
+        table(table),n(n) {}
+      RHSAccessorByInteger(const RHSAccessorByInteger &other) :
+        table(other.table),n(other.n) {}
+      template<typename T>
+      T get() const {
+        return table->get<T>(n);
+      }
+      template<typename T>
+      T opt(const T def_value) const {
+        return table->opt<T>(n, def_value);
+      }
+    private:
+      const LuaTable *table;
+      const int n;
+    };
     
   public:
     
@@ -102,6 +142,18 @@ namespace AprilUtils {
     
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
+
+    RHSAccessorByString operator[](const char *name) const {
+      return RHSAccessorByString(this, name);
+    }
+    
+    RHSAccessorByString operator[](const string &name) const {
+      return RHSAccessorByString(this, name.c_str());
+    }
+
+    RHSAccessorByInteger operator[](int n) const {
+      return RHSAccessorByInteger(this, n);
+    }
     
     LHSAccessorByString operator[](const char *name) {
       return LHSAccessorByString(this, name);

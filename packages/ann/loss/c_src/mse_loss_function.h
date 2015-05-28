@@ -40,6 +40,9 @@ namespace ANN {
       return new MSELossFunction(this);
     }
     virtual char *toLuaString();
+    virtual const char *ctorName() const {
+      return "ann.loss.mse";
+    }
   };
 }
 

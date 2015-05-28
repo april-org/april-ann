@@ -52,6 +52,9 @@ namespace Basics {
                                        AprilIO::StreamInterface *stream);
 
   } // namespace MatrixIO
+
+  template<>
+  const char *Matrix<bool>::ctorName() const;
   
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<bool> MatrixBool;

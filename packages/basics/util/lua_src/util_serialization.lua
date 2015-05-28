@@ -38,6 +38,7 @@ function util.function_to_lua_string(func,format)
 end
 
 function table.tostring(t,format)
+  format = format or "binary"
   if t.to_lua_string then return t:to_lua_string(format) end
   local out  = {}
   -- first serialize the array part of the table
@@ -177,7 +178,7 @@ do
   end
   -- transforms a given Lua object (data), returning a string with the
   -- transformed object
-  local function transform(map, varname, data, destination, format)
+  local function transform(map, varname, data, destination)
     local tt = type(data)
     -- plain types are returned as is
     if non_structured[tt] then return value2str(data, tt) end
@@ -197,8 +198,8 @@ do
         destination:write("\n")
         for k,v in pairs(data) do
           if not non_st[k] then
-            local kstr = transform(map, varname, k, destination, format)
-            local vstr = transform(map, varname, v, destination, format)
+            local kstr = transform(map, varname, k, destination)
+            local vstr = transform(map, varname, v, destination)
             destination:write("%s[%d][%s]=%s\n"%{varname,id,kstr,vstr})
           end
         end
@@ -216,7 +217,7 @@ do
           if name ~= "_ENV" then upvalues[i] = value end
           i = i + 1
         end
-        local upv_str = transform(map, varname, upvalues, destination, format)
+        local upv_str = transform(map, varname, upvalues, destination)
         local func_dump = "load(%s)"%{ szstr(string.dump(data)) }
         destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
                             {varname,id,func_dump,upv_str})
@@ -226,11 +227,11 @@ do
                "Userdata needs a function called ctor_params_table to be serializable")
         assert(data.ctor_name,
                "Userdata needs a function called ctor_name to be serializable")
-        local params = table.pack( data:ctor_params_table() )
+        local params = table.pack( data:ctor_params() )
         local ctor_name = data:ctor_name()
         local params_str = ""
         if #params > 0 then
-          params_str = transform(map, varname, params, destination, format)
+          params_str = transform(map, varname, params, destination)
           params_str = "table.unpack(%s)"%{params_str}
         end
         destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})

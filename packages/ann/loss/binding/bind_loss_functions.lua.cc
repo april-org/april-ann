@@ -20,8 +20,9 @@
  *
  */
 //BIND_HEADER_C
-#include "bind_tokens.h"
+#include "bind_aprilio.h"
 #include "bind_matrix.h"
+#include "bind_tokens.h"
 #include "token_matrix.h"
 
 using namespace AprilMath::MatrixExt::Reductions;
@@ -45,8 +46,11 @@ using namespace ANN;
 //                   LossFunction                  //
 /////////////////////////////////////////////////////
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+
 //BIND_LUACLASSNAME LossFunction ann.loss
 //BIND_CPP_CLASS    LossFunction
+//BIND_SUBCLASS_OF  LossFunction Serializable
 
 //BIND_CONSTRUCTOR LossFunction
 {

@@ -21,7 +21,7 @@
 #ifndef LOSSFUNCTION_H
 #define LOSSFUNCTION_H
 
-#include "referenced.h"
+#include "serializable.h"
 #include "token_base.h"
 #include "token_matrix.h"
 #include "matrixFloat.h"
@@ -31,7 +31,7 @@
 namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the loss_functions must complain.
-  class LossFunction : public Referenced {
+  class LossFunction : public AprilIO::Serializable {
     AprilUtils::RunningStat acc_loss;
   protected:
     Basics::Token *error_output;
@@ -82,7 +82,7 @@ namespace ANN {
     
   public:
     LossFunction(unsigned int size) :
-    Referenced(), error_output(0), size(size) {
+    Serializable(), error_output(0), size(size) {
     }
     virtual ~LossFunction() {
       if (error_output) DecRef(error_output);

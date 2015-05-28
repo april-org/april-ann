@@ -705,6 +705,26 @@ namespace Basics {
     Matrix<T> *padding(int pad_value, T default_value=T()) const;
     
     // SERIALIZATION
+
+    virtual const char *ctorName() const {
+      ERROR_EXIT(128, "Serialization not implemented\n");
+      return 0;
+    }
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilUtils::LuaTable t(L);
+      AprilUtils::LuaTable sizes(L);
+      AprilUtils::LuaTable stride(L);
+      for (int i=0; i<getNumDim(); ++i) {
+        sizes[i+1] = getDimSize(i);
+        stride[i+1] = getStrideSize(i);
+      }
+      t["sizes"]  = sizes;
+      t["stride"] = stride;
+      t["offset"] = getOffset();
+      t["data"]   = getRawDataAccess();
+      t.pushTable(L);
+      return 1;
+    }
     
     /**
      * @brief Writes the Matrix into a stream.

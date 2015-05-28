@@ -87,6 +87,11 @@ function priors_methods:compute_neg_log_prior(weights)
   return -logprob
 end
 
+function priors_methods:ctor_name() return "bayesian.priors" end
+function priors_methods:ctor_params()
+  return self.tree,self.order,self.outcomes
+end
+
 function priors_methods:to_lua_string()
   return "bayesian.priors(%s,%s,%s)"%{ table.tostring(self.tree,"binary"),
                                        table.tostring(self.order,"binary"),
