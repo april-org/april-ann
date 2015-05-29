@@ -44,7 +44,7 @@ namespace ANN {
       return new ZeroOneLossFunction(this);
     }
     virtual char *toLuaString();
-    virtual const char *ctorName() const {
+    virtual const char *luaCtorName() const {
       return "ann.loss.zero_one";
     }
     virtual int exportParamsToLua(lua_State *L) {

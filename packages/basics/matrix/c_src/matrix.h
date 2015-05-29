@@ -488,10 +488,11 @@ namespace Basics {
 
   public:
     /********** Constructors ***********/
-    /// Full constructor given numDim, dim, data, offset
+    /// Full constructor given numDim, dim, data, offset, stride
     Matrix(int numDim, const int* dim,
            AprilMath::GPUMirroredMemoryBlock<T> *data = 0,
-           int offset = 0);
+           int offset = 0,
+           const int* stride = 0);
   
     /// Constructor with variadic arguments.
     explicit Matrix(int numDim, int d1, ...);
@@ -706,7 +707,7 @@ namespace Basics {
     
     // SERIALIZATION
 
-    virtual const char *ctorName() const {
+    virtual const char *luaCtorName() const {
       ERROR_EXIT(128, "Serialization not implemented\n");
       return 0;
     }
@@ -792,7 +793,7 @@ namespace Basics {
   private:
     void allocate_memory(int size);
     void release_memory();
-    void initialize(const int *dim);
+    void initialize(const int *dim, int offset=0, const int *stride=0);
 
     static AprilUtils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest,

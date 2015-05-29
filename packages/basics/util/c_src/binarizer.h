@@ -49,6 +49,7 @@ namespace AprilUtils {
     template<typename T>
     static unsigned int binary_size() {
       ERROR_EXIT(128, "Not implemented\n");
+      return 0;
     }
     template<typename T>
     static void code(const T &value, char *b) {

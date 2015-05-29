@@ -54,7 +54,7 @@ namespace Basics {
   } // namespace MatrixIO
 
   template<>
-  const char *Matrix<bool>::ctorName() const;
+  const char *Matrix<bool>::luaCtorName() const;
   
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<bool> MatrixBool;

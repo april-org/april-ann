@@ -734,6 +734,12 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixBool deserialize
+{
+  LUABIND_RETURN(MatrixBool, deserializeMatrixLuaMethod<bool>(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixBool read
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixBool, bool);

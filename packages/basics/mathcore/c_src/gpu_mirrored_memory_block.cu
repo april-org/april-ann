@@ -36,23 +36,23 @@ namespace AprilMath {
 #endif
 
   template<>
-  const char *GPUMirroredMemoryBlock<float>::ctorName() const {
+  const char *GPUMirroredMemoryBlock<float>::luaCtorName() const {
     return "mathcore.block.float.read";
   }
   template<>
-  const char *GPUMirroredMemoryBlock<double>::ctorName() const {
+  const char *GPUMirroredMemoryBlock<double>::luaCtorName() const {
     return "mathcore.block.double.read";
   }
   template<>
-  const char *GPUMirroredMemoryBlock<ComplexF>::ctorName() const {
-    return "mathcore.block.complex.read";
-  }
-  template<>
-  const char *GPUMirroredMemoryBlock<int32_t>::ctorName() const {
+  const char *GPUMirroredMemoryBlock<int32_t>::luaCtorName() const {
     return "mathcore.block.int32.read";
   }
   template<>
-  const char *GPUMirroredMemoryBlock<bool>::ctorName() const {
+  const char *GPUMirroredMemoryBlock<ComplexF>::luaCtorName() const {
+    return "mathcore.block.complex.read";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<bool>::luaCtorName() const {
     return "mathcore.block.bool.read";
   }
   
@@ -60,4 +60,5 @@ namespace AprilMath {
   template class GPUMirroredMemoryBlock<double>;
   template class GPUMirroredMemoryBlock<int32_t>;
   template class GPUMirroredMemoryBlock<ComplexF>;
+  template class GPUMirroredMemoryBlock<bool>;
 } // namespace AprilMath

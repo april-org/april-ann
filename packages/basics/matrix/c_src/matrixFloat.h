@@ -60,7 +60,7 @@ namespace Basics {
   //////////////////////////////////////////////////////////////////////////
 
   template<>
-  const char *Matrix<float>::ctorName() const;
+  const char *Matrix<float>::luaCtorName() const;
   
   template <>
   void Matrix<float>::pruneSubnormalAndCheckNormal();

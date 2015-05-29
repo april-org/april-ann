@@ -88,7 +88,7 @@ namespace Basics {
   } // namespace MatrixIO
 
   template<>
-  const char *Matrix<float>::ctorName() const {
+  const char *Matrix<float>::luaCtorName() const {
     return "matrix.deserialize";
   }
   

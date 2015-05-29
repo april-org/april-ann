@@ -223,27 +223,29 @@ do
         destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
                             {varname,id,func_dump,upv_str})
       elseif class.of(data) then
-        local serialize = getmatatable(data).__serialize
+        local serialize = getmetatable(data).serialize
         if serialize then
           destination:write("%s[%d]="%{varname,id})
           if destination.is_lua_string_stream then
-            destination:write("[[%s]]"%{data:serialize(nil, "binary")})
+            destination:write("%s"%{serialize(data)})
           else
-            data:serialize(destination, "binary")
+            serialize(data, destination)
           end
           destination:write("\n")
         else
           -- it is an object, so we need to use its introspection methods
-          assert(data.ctor_params_table,
+          assert(data.ctor_params,
                  "Userdata needs a function called ctor_params_table to be serializable")
           assert(data.ctor_name,
                  "Userdata needs a function called ctor_name to be serializable")
           local params = table.pack( data:ctor_params() )
           local ctor_name = data:ctor_name()
           local params_str = ""
-          if #params > 0 then
+          if params.n > 0 then
+            local needs_unpack = true
+            if params.n == 1 then params = params[1] needs_unpack=false end
             params_str = transform(map, varname, params, destination)
-            params_str = "table.unpack(%s)"%{params_str}
+            if needs_unpack then params_str = "table.unpack(%s)"%{params_str} end
           end
           destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})
         end

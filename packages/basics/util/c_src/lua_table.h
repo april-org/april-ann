@@ -35,6 +35,26 @@ extern "C" {
 #include "referenced.h"
 #include "unused_variable.h"
 
+#define DECLARE_LUA_TABLE_BIND_SPECIALIZATION(type)                     \
+  namespace AprilUtils {                                                \
+    template<> type *LuaTable::convertTo<type *>(lua_State *L, int idx); \
+    template<> void LuaTable::pushInto<type *>(lua_State *L, type *value); \
+    template<> bool LuaTable::checkType<type *>(lua_State *L, int idx); \
+  }
+
+#define IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(type)                   \
+  namespace AprilUtils {                                                \
+    template<> type *LuaTable::convertTo<type *>(lua_State *L, int idx) { \
+      return lua_to##type(L, idx);                                      \
+    }                                                                   \
+    template<> void LuaTable::pushInto<type *>(lua_State *L, type *value) { \
+      lua_push##type(L, value);                                         \
+    }                                                                   \
+    template<> bool LuaTable::checkType<type *>(lua_State *L, int idx) { \
+      return lua_is##type(L, idx);                                      \
+    }                                                                   \
+  }
+
 namespace AprilUtils {
 
   /**
@@ -62,6 +82,14 @@ namespace AprilUtils {
       LuaTable &operator=(T value) {
         return table->put<T>(name, value);
       }
+      template<typename T>
+      T get() const {
+        return table->get<T>(name);
+      }
+      template<typename T>
+      T opt(const T def_value) const {
+        return table->opt<T>(name, def_value);
+      }
     private:
       LuaTable *table;
       const char * const name;
@@ -77,6 +105,14 @@ namespace AprilUtils {
       template<typename T>
       LuaTable &operator=(T value) {
         return table->put<T>(n, value);
+      }
+      template<typename T>
+      T get() const {
+        return table->get<T>(n);
+      }
+      template<typename T>
+      T opt(const T def_value) const {
+        return table->opt<T>(n, def_value);
       }
     private:
       LuaTable *table;
@@ -140,6 +176,9 @@ namespace AprilUtils {
     /// Indicates if the LuaTable is empty.
     bool empty() const;
     
+    /// Executes length operator in Lua
+    size_t length() const;
+    
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
 
@@ -154,7 +193,7 @@ namespace AprilUtils {
     RHSAccessorByInteger operator[](int n) const {
       return RHSAccessorByInteger(this, n);
     }
-    
+
     LHSAccessorByString operator[](const char *name) {
       return LHSAccessorByString(this, name);
     }

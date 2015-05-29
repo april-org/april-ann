@@ -40,6 +40,7 @@ extern "C" {
 #include "c_string.h"
 #include "cmath_overloads.h"
 #include "lua_string.h"
+#include "lua_table.h"
 #include "referenced.h"
 #include "complex_number.h"
 #include "unused_variable.h"
@@ -812,11 +813,6 @@ namespace AprilMath {
       ptr = this;
       return other;
     }
-
-    virtual const char *ctorName() const {
-      ERROR_EXIT(128, "Serialization not implemented\n");
-      return 0;
-    }
     
     static GPUMirroredMemoryBlock<T> *
     read(AprilIO::StreamInterface *source,
@@ -865,6 +861,11 @@ namespace AprilMath {
       }
       if ((i % columns) != 0) destination->printf("\n");
     }
+
+    virtual const char *luaCtorName() const {
+      ERROR_EXIT(128, "Serialization not implemented\n");
+      return 0;
+    }
     
     virtual int exportParamsToLua(lua_State *L) {
       AprilIO::OutputLuaStringStream destination(L);
@@ -876,15 +877,15 @@ namespace AprilMath {
   };
 
   template<>
-  const char *GPUMirroredMemoryBlock<float>::ctorName() const;
+  const char *GPUMirroredMemoryBlock<float>::luaCtorName() const;
   template<>
-  const char *GPUMirroredMemoryBlock<double>::ctorName() const;
+  const char *GPUMirroredMemoryBlock<double>::luaCtorName() const;
   template<>
-  const char *GPUMirroredMemoryBlock<ComplexF>::ctorName() const;
+  const char *GPUMirroredMemoryBlock<int32_t>::luaCtorName() const;
   template<>
-  const char *GPUMirroredMemoryBlock<int32_t>::ctorName() const;
+  const char *GPUMirroredMemoryBlock<ComplexF>::luaCtorName() const;
   template<>
-  const char *GPUMirroredMemoryBlock<bool>::ctorName() const;
+  const char *GPUMirroredMemoryBlock<bool>::luaCtorName() const;
   
   // typedef for referring to float memory blocks
   typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
@@ -894,5 +895,11 @@ namespace AprilMath {
   typedef GPUMirroredMemoryBlock<bool>     BoolGPUMirroredMemoryBlock;
 
 } // namespace AprilMath
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::FloatGPUMirroredMemoryBlock);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::DoubleGPUMirroredMemoryBlock);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::Int32GPUMirroredMemoryBlock);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::ComplexFGPUMirroredMemoryBlock);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::BoolGPUMirroredMemoryBlock);
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H

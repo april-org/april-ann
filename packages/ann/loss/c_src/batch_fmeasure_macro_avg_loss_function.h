@@ -60,7 +60,7 @@ namespace ANN {
       return new BatchFMeasureMacroAvgLossFunction(this);
     }
     virtual char *toLuaString();
-    virtual const char *ctorName() const {
+    virtual const char *luaCtorName() const {
       return "ann.loss.batch_fmeasure_macro_avg";
     }
     virtual int exportParamsToLua(lua_State *L) {

@@ -37,6 +37,12 @@ using namespace AprilMath;
 
 typedef bool boolean;
 
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(FloatGPUMirroredMemoryBlock);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(DoubleGPUMirroredMemoryBlock);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(Int32GPUMirroredMemoryBlock);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(ComplexFGPUMirroredMemoryBlock);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(BoolGPUMirroredMemoryBlock);
+
 #define MAKE_READ_BLOCK_LUA_METHOD(BlockType, Type) do {        \
     BlockType *obj = readBlockLuaMethod<Type>(L);               \
     if (obj == 0) {                                             \
@@ -49,12 +55,16 @@ typedef bool boolean;
 
 template<typename T>
 GPUMirroredMemoryBlock<T> *readBlockLuaMethod(lua_State *L) {
-  AprilIO::StreamInterface *stream =
-    lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-  if (stream == 0) luaL_error(L, "Needs a stream as first argument");
-  AprilUtils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
+  if (lua_isstring(L, 1)) {
+    stream = new InputLuaStringStream(L, 1);
+  }
+  else {
+    stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
+  }
   AprilUtils::LuaTable options(L,2);
-  return GPUMirroredMemoryBlock<T>::read(ptr.get(), options); 
+  return GPUMirroredMemoryBlock<T>::read(stream.get(), options); 
 }
 
 namespace MathCoreBinding {

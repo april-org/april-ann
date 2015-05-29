@@ -70,7 +70,7 @@ namespace Basics {
   } // namespace MatrixIO
 
   template<>
-  const char *Matrix<int32_t>::ctorName() const {
+  const char *Matrix<int32_t>::luaCtorName() const {
     return "matrixInt32.deserialize";
   }
   

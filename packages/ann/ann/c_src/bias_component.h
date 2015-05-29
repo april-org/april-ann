@@ -55,7 +55,7 @@ namespace ANN {
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
     virtual char *toLuaString();
-    virtual const char *ctorName() const {
+    virtual const char *luaCtorName() const {
       return "ann.components.bias";
     }
     virtual int exportParamsToLua(lua_State *L) {

@@ -42,15 +42,17 @@ namespace Basics {
   const unsigned int Matrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
 
   template <typename T>
-  void Matrix<T>::initialize(const int *dim) {
+  void Matrix<T>::initialize(const int *dim, int offset, const int *_stride) {
+    last_raw_pos = offset;
     total_size=1;
     for(int i=numDim-1; i>=0; --i) {
-      stride[i] = total_size;
+      stride[i] = (_stride == 0) ? total_size : _stride[i];
       total_size *= dim[i];
       matrixSize[i] = dim[i];
       april_assert(matrixSize[i] > 0);
+      last_raw_pos += stride[i] * dim[i];
     }
-    last_raw_pos = total_size-1;
+    last_raw_pos -= 1;
   }
 
   /// Allocation of memory for data pointer. It is Referenced for sharing.
@@ -93,7 +95,8 @@ namespace Basics {
   Matrix<T>::Matrix(int numDim,
                     const int* dim,
                     AprilMath::GPUMirroredMemoryBlock<T> *data,
-                    int offset) :
+                    int offset,
+                    const int* _stride) :
     AprilIO::Serializable(), shared_count(0),
     numDim(numDim),
     offset(offset),
@@ -103,13 +106,13 @@ namespace Basics {
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
-    initialize(dim);
-    last_raw_pos += offset;
-    if (this->data.empty()) allocate_memory(total_size);
+    initialize(dim, offset, _stride);
+    april_assert(total_size <= last_raw_pos);
+    if (this->data.empty()) allocate_memory(last_raw_pos + 1);
     else {
-      if (static_cast<int>(this->data->getSize()) < offset + size())
+      if (static_cast<int>(this->data->getSize()) <= last_raw_pos)
         ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
-                    size(), data->getSize());
+                    last_raw_pos+1, data->getSize());
     }
     april_assert(offset >= 0);
   }

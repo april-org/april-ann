@@ -82,7 +82,7 @@ namespace Basics {
   /////////////////////////////////////////////////////////////////////////////
 
   template<>
-  const char *Matrix<ComplexF>::ctorName() const {
+  const char *Matrix<ComplexF>::luaCtorName() const {
     return "matrixComplex.deserialize";
   }
   

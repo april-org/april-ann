@@ -56,7 +56,7 @@ namespace Basics {
   //////////////////////////////////////////////////////////////////////////////
 
   template<>
-  const char *Matrix<int32_t>::ctorName() const;
+  const char *Matrix<int32_t>::luaCtorName() const;
   
   typedef Matrix<int32_t> MatrixInt32;
 

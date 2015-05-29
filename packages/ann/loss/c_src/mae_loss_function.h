@@ -40,7 +40,7 @@ namespace ANN {
       return new MAELossFunction(this);
     }
     virtual char *toLuaString();
-    virtual const char *ctorName() const {
+    virtual const char *luaCtorName() const {
       return "ann.loss.mae";
     }
   };

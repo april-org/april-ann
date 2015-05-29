@@ -56,7 +56,7 @@ namespace Basics {
   } // namespace MatrixIO
 
   template<>
-  const char *Matrix<double>::ctorName() const;
+  const char *Matrix<double>::luaCtorName() const;
   
 }
 

@@ -118,7 +118,9 @@ static bool check_number(lua_State *L, int i, T &dest) {
 
 //BIND_HEADER_H
 #include "bind_april_io.h"
+#include "gpu_mirrored_memory_block.h"
 #include "matrixFloat.h"
+#include "luabindutil.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
 
@@ -137,7 +139,45 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   } while(false)
 
 namespace Basics {
-
+  
+  template<typename T>
+  Matrix<T> *deserializeMatrixLuaMethod(lua_State *L) {
+    check_table_fields(L, 1, "stride", "sizes", "data", "offset", 
+                       (const char *)0);
+    int offset;
+    AprilUtils::UniquePtr<int []> sizes;
+    AprilUtils::UniquePtr<int []> stride;
+    AprilUtils::LuaTable t(L, 1); // to get data pointer
+    AprilMath::GPUMirroredMemoryBlock<T> *data;
+    data = t["data"].get<AprilMath::GPUMirroredMemoryBlock<T>*>();
+    lua_getfield(L, 1, "offset");
+    offset = lua_toint(L, -1);
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "sizes");
+    size_t len = luaL_len(L, -1);
+    sizes  = new int[len];
+    stride = new int[len];
+    for (unsigned int i=0; i<len; ++i) {
+      lua_rawgeti(L, -1, i+1);
+      sizes[i] = lua_toint(L, -1);
+      lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "stride");
+    if (luaL_len(L, -1) != len) {
+      ERROR_EXIT(128, "Incompatible table sizes\n");
+    }
+    for (unsigned int i=0; i<len; ++i) {
+      lua_rawgeti(L, -1, i+1);
+      stride[i] = lua_toint(L, -1);
+      lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    Matrix<T> *obj = new Matrix<T>(static_cast<int>(len), sizes.get(), data,
+                                   offset, stride.get());
+    return obj;
+  }
+  
   template<typename T>
   Matrix<T> *readMatrixLuaMethod(lua_State *L) {
     AprilIO::StreamInterface *stream =
@@ -1768,6 +1808,12 @@ namespace Basics {
 //BIND_END
 
 //// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD MatrixFloat deserialize
+{
+  LUABIND_RETURN(MatrixFloat, deserializeMatrixLuaMethod<float>(L));
+}
+//BIND_END
 
 //BIND_CLASS_METHOD MatrixFloat read
 {

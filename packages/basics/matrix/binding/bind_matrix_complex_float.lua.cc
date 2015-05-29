@@ -987,6 +987,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixComplexF deserialize
+{
+  LUABIND_RETURN(MatrixComplexF, deserializeMatrixLuaMethod<ComplexF>(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixComplexF read
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);

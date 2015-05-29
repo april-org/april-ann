@@ -671,6 +671,12 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixDouble deserialize
+{
+  LUABIND_RETURN(MatrixDouble, deserializeMatrixLuaMethod<double>(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixDouble read
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixDouble, double);

@@ -65,6 +65,13 @@ namespace AprilUtils {
     lua_pop(L, 1);
     return result;
   }
+  
+  size_t LuaTable::length() const {
+    if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+    int len = luaL_len(L, -1);
+    lua_pop(L, 1);
+    return static_cast<size_t>(len);
+  }
 
   LuaTable &LuaTable::operator=(const LuaTable &other) {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);

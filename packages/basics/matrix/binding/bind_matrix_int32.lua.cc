@@ -701,6 +701,12 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixInt32 deserialize
+{
+  LUABIND_RETURN(MatrixInt32, deserializeMatrixLuaMethod<int32_t>(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixInt32 read
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
