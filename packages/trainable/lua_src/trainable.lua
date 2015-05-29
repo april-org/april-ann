@@ -323,7 +323,7 @@ trainable.dataset_multiple_iterator =
 ------------------------------------
 
 local train_holdout, train_holdout_methods =
-  class("trainable.train_holdout_validation")
+  class("trainable.train_holdout_validation", aprilio.lua_serializable)
 trainable = trainable or {} -- global environment
 trainable.train_holdout_validation = train_holdout -- global environment
 
@@ -547,18 +547,11 @@ train_holdout_methods.is_best =
     return state.current_epoch == state.best_epoch
   end
 
-function train_holdout_methods:to_lua_string(format)
-  local insert = table.insert
-  local t = { }
-  insert(t, "trainable.train_holdout_validation(")
-  --
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.params, format))
-  insert(t, ",")
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.state, format))
-  insert(t, "\n)")
-  return table.concat(t, "")
+function train_holdout_methods:ctor_name()
+  return "trainable.train_holdout_validation"
+end
+function train_holdout_methods:ctor_params()
+  return self.params, self.state
 end
 
 train_holdout_methods.save =
@@ -627,7 +620,7 @@ trainable.train_holdout_validation.load =
 ------------------------------------
 
 local train_wo_validation,train_wo_validation_methods =
-  class("trainable.train_wo_validation")
+  class("trainable.train_wo_validation", aprilio.lua_serializable)
 trainable = trainable or {} -- global environment
 trainable.train_wo_validation = train_wo_validation -- global environment
 
@@ -807,18 +800,11 @@ train_wo_validation_methods.get_state_string =
                          state.train_improvement)
   end
 
-function train_wo_validation_methods:to_lua_string(format)
-  local insert = table.insert
-  local t = { }
-  insert(t, "trainable.train_wo_validation(")
-  --
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.params, format))
-  insert(t, ",")
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.state, format))
-  insert(t, "\n)")
-  return table.concat(t, "")
+function train_wo_validation_methods:ctor_name()
+  return "trainable.train_wo_validation"
+end
+function train_wo_validation_methods:ctor_params()
+  return self.params, self.state
 end
 
 train_wo_validation_methods.save =

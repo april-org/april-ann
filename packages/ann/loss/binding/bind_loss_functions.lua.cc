@@ -140,14 +140,6 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD LossFunction to_lua_string
-{
-  char *str = obj->toLuaString();
-  LUABIND_RETURN(string, str);
-  delete[] str;
-}
-//BIND_END
-
 /////////////////////////////////////////////////////
 //                       MSE                       //
 /////////////////////////////////////////////////////

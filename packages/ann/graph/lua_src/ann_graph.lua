@@ -884,33 +884,6 @@ ann_graph_methods.ctor_params = function(self)
   return self.name, ext_order, cnns, (self.backprop==math.huge) and math.huge or self.backstep
 end
 
-ann_graph_methods.to_lua_string = function(self, format)
-  -- After saving, the BPTT is truncated, so, it is recommended to avoid
-  -- saving when learning a sequence, it is better to clone after any
-  -- sequence learning.
-  local cnns = {}
-  if not rawget(self,"order") then ann_graph_topsort(self) end
-  local ext_order = iterator(self.order):table()
-  ext_order[#ext_order+1] = self.input_name
-  ext_order[#ext_order+1] = self.output_name
-  local ext_obj2id = table.invert(ext_order)
-  for id,dst in ipairs(ext_order) do
-    cnns[id] = {
-      iterator(ipairs(self.nodes[dst].in_edges)):
-      map(function(j,src) return j,ext_obj2id[src] end):table(),
-      iterator(ipairs(self.nodes[dst].in_delay_values)):table(),
-      id,
-    }
-  end
-  local str = {
-    "ann.graph(", "%q"%{self.name} , ",",
-    util.to_lua_string(ext_order, format), ",",
-    util.to_lua_string(cnns, format), ",",
-    (self.backprop==math.huge) and "math.huge" or tostring(self.backstep), ")",
-  }
-  return table.concat(str)
-end
-
 ann_graph_methods.set_use_cuda = function(self, v)
   for k,v in pairs(self.nodes) do
     if type(k) ~= "string" then
@@ -1102,10 +1075,6 @@ end
 
 index_methods.ctor_params = function(self)
   return self.n,self.name
-end
-
-index_methods.to_lua_string = function(self, format)
-  return "ann.graph.index(%d,%q)" % {self.n, self.name}
 end
 
 ---------------------------------------------------------------------------

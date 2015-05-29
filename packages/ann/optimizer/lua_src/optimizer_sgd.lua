@@ -108,18 +108,14 @@ function sgd_methods:clone()
   return obj
 end
 
-function sgd_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.sgd(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.update, format),
-		  ")" }
-  return table.concat(str_t, "")
+function sgd_methods:ctor_name()
+  return "ann.optimizer.sgd"
+end
+function sgd_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.update
 end
 
 local sgd_properties = {

@@ -346,14 +346,6 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent to_lua_string
-{
-  char *str = obj->toLuaString();
-  LUABIND_RETURN(string, str);
-  delete[] str;
-}
-//BIND_END
-
 //BIND_METHOD ANNComponent get_name
 {
   LUABIND_RETURN(string, obj->getName().c_str());

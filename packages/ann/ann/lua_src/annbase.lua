@@ -362,13 +362,6 @@ lua_component_methods.clone = function(self)
                          output=self:get_output_size() }
 end
 
-lua_component_methods.to_lua_string = function(self, format)
-  return "%s{ name=%q, input=%d output=%d }" % {get_object_id(self),
-                                                self.name,
-                                                self:get_input_size(),
-                                                self:get_output_size()}
-end
-
 lua_component_methods.set_use_cuda = function(self, v)
   self.use_cuda = v
 end

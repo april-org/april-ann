@@ -26,7 +26,7 @@ local MAX_SIZE_WO_COLLECT_GARBAGE = 400*1024*1024 -- 400 MB
 ------------------------------
 
 local trainable_supervised_trainer,trainable_supervised_trainer_methods =
-  class("trainable.supervised_trainer")
+  class("trainable.supervised_trainer", aprilio.lua_serializable)
 trainable = trainable or {} -- global environment
 trainable.supervised_trainer = trainable_supervised_trainer -- global environment
 
@@ -346,54 +346,21 @@ trainable_supervised_trainer_methods.set_max_gradients_norm =
 
 ------------------------------------------------------------------------
 
-function trainable_supervised_trainer_methods:to_lua_string(format)
-  assert(self.is_built, "The component is not built")
-  local t = { }
-  table.insert(t, "trainable.supervised_trainer{ ")
-  table.insert(t, "model=")
-  table.insert(t, self.ann_component:to_lua_string(format))
-  table.insert(t, ",\n")
-  table.insert(t, "connections={")
-  for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table[wname]
-    local w = cobj
-    table.insert(t, string.format("\n[%q] = ", wname))
-    table.insert(t, w:to_lua_string(format))
-    table.insert(t, ",")
-  end
-  table.insert(t, "\n},\n")
-  if self.loss_function then
-    table.insert(t, "loss=")
-    table.insert(t, self.loss_function:to_lua_string(format))
-    table.insert(t, ",\n")
-  end
-  if self.optimizer then
-    table.insert(t, "optimizer=")
-    table.insert(t, self.optimizer:to_lua_string(format))
-    table.insert(t, ",\n")
-  end
-  if self.bunch_size then
-    table.insert(t, "bunch_size=")
-    table.insert(t, self.bunch_size)
-    table.insert(t, ",\n")
-  end
-  if self.smooth_gradients ~= nil then
-    table.insert(t, "smooth_gradients=")
-    table.insert(t, tostring(self.smooth_gradients))
-    table.insert(t, ",\n")
-  end
-  if self.max_gradients_norm ~= nil then
-    table.insert(t, "max_gradients_norm=")
-    table.insert(t, tostring(self.max_gradients_norm))
-    table.insert(t, ",\n")
-  end
-  table.insert(t, "}")
-  return table.concat(t, "")
+function trainable_supervised_trainer_methods:ctor_name()
+  return "trainable.supervised_trainer"
 end
-
-------------------------------------------------------------------------
-
-trainable_supervised_trainer_methods.save = util.serialize
+function trainable_supervised_trainer_methods:ctor_params()
+  assert(self.is_built, "The component is not built")
+  return {
+    model = self.ann_component,
+    connections = self.weights_table,
+    loss = self.loss_function,
+    optimizer = self.optimizer,
+    bunch_size = self.bunch_size,
+    smooth_gradients = self.smooth_gradients,
+    max_gradients_norm = self.max_gradients_norm,
+  }
+end
 
 ------------------------------------------------------------------------
 

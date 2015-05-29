@@ -43,7 +43,6 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new ZeroOneLossFunction(this);
     }
-    virtual char *toLuaString();
     virtual const char *luaCtorName() const {
       return "ann.loss.zero_one";
     }

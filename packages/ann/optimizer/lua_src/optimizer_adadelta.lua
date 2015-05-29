@@ -125,22 +125,16 @@ function adadelta_methods:clone()
   return obj
 end
 
-function adadelta_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.adadelta(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.Eupdates, format),
-		  ",",
-		  util.to_lua_string(self.Egradients, format),
-                  ",",
-                  util.to_lua_string(self.update, format),
-		  ")" }
-  return table.concat(str_t, "")
+function adadelta_methods:ctor_name()
+  return "ann.optimizer.adadelta"
+end
+function adadelta_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.Eupdates,
+  self.Egradients,
+  self.update
 end
 
 local adadelta_properties = {

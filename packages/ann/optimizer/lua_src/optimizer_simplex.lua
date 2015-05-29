@@ -252,26 +252,17 @@ function simplex_methods:clone()
   return obj
 end
 
-function simplex_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.simplex(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.lambda0, format),
-		  ",",
-		  util.to_lua_string(self.lambdaR, format),
-		  ",",
-		  util.to_lua_string(self.lambdaE, format),
-		  ",",
-		  util.to_lua_string(self.lambdaC, format),
-		  ",",
-		  util.to_lua_string(self.lambdaP, format),
-		  ",",
-		  util.to_lua_string(self.candidates, format),
-		  ")" }
-  return table.concat(str_t, "")
+function simplex_methods:ctor_name()
+  return "ann.optimizer.simplex"
+end
+function simplex_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.lambda0,
+  self.lambdaR,
+  self.lambdaE,
+  self.lambdaC,
+  self.lambdaP,
+  self.candidates
 end

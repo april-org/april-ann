@@ -115,7 +115,6 @@ namespace ANN {
     virtual Basics::Token *computeGradient(Basics::Token *input,
                                            Basics::Token *target) = 0;
     virtual LossFunction *clone() = 0;
-    virtual char *toLuaString() = 0;
     /////////////////////////////////////////////////////////////////
   };
 }

@@ -323,12 +323,6 @@ using Basics::Dice;
 }
 //BIND_END
 
-//BIND_METHOD MTRand to_lua_string
-{
-  LUABIND_RETURN(string, obj->toLuaString());
-}
-//BIND_END
-
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME Dice random.dice

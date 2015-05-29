@@ -61,7 +61,6 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new BatchFMeasureMicroAvgLossFunction(this);
     }
-    virtual char *toLuaString();
     virtual const char *luaCtorName() const {
       return "ann.loss.batch_fmeasure_micro_avg";
     }
