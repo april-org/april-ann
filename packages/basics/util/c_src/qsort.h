@@ -40,7 +40,7 @@ namespace AprilUtils {
 
   // use specified comparison function
   template<typename T, typename Compare>
-  inline void InsertionSort(T v[], int low, int high, Compare compare) {
+  inline void InsertionSort(T v[], int low, int high, const Compare &compare) {
     int i,j;
     T aux;
     for (i = low+1; i <= high; i++) {
@@ -64,7 +64,7 @@ namespace AprilUtils {
 
   // use specified comparison function
   template<typename T, typename Compare>
-  inline T med3(T v[], int low, int high, Compare compare) {
+  inline T med3(T v[], int low, int high, const Compare &compare) {
     int cnt = (low+high)/2;
     if (compare(v[cnt] ,v[low])) swap(v[low],v[cnt]);
     if (compare(v[high],v[low])) swap(v[low],v[high]);
@@ -96,7 +96,7 @@ namespace AprilUtils {
 
   // use specified comparison function
   template<typename T, typename Compare>
-  inline int partition(T v[], int low, int high, Compare compare) {
+  inline int partition(T v[], int low, int high, const Compare &compare) {
     // precondition: low+1 < high
     int izq,der;
     T piv = med3(v,low,high, compare);
@@ -141,7 +141,7 @@ namespace AprilUtils {
 
   // use specified comparison function
   template<typename T, typename Compare>
-  void Sort(T v[], int low, int high, Compare compare) {
+  void Sort(T v[], int low, int high, const Compare &compare) {
     const int MIN_SIZE = 8;
     // Stack space optimization: the smaller partition is dealt with recursively,
     // and then the bigger one is sorted by tail recursion/iteration, this way
@@ -189,7 +189,7 @@ namespace AprilUtils {
   }
 
   template<typename T, typename Compare>
-  void Sort(T v[], int sze, Compare compare) {
+  void Sort(T v[], int sze, const Compare &compare) {
     Sort(v,0,sze-1, compare);
   }
 
@@ -209,7 +209,7 @@ namespace AprilUtils {
   }
 
   template<typename T, typename Compare>
-  T Selection(T v[], int sze, int k, Compare cmp) {
+  T Selection(T v[], int sze, int k, const Compare &cmp) {
     const int MIN_SIZE = 8;
     int low=0,high=sze-1,q;
     while (high - low >= MIN_SIZE) {

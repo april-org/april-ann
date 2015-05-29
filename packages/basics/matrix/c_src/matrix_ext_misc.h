@@ -40,6 +40,16 @@ namespace AprilMath {
 
       //////////////////// OTHER MATH OPERATIONS ////////////////////
 
+      /// To be called from Lua.
+      template <typename T>
+      Basics::Matrix<int32_t> *matOrder(const Basics::Matrix<T> *m,
+                                        Basics::Matrix<int32_t> *dest = 0);
+      
+      /// To be called from Lua.
+      template <typename T>
+      Basics::Matrix<int32_t> *matOrderRank(const Basics::Matrix<T> *m,
+                                            Basics::Matrix<int32_t> *dest = 0);
+      
       /**
        * @brief Returns the result of \f$ C = A + B \f$
        *

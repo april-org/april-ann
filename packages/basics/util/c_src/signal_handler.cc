@@ -26,7 +26,7 @@
 #include "error_print.h"
 
 /// Table which contains the Lua function references
-#define TABLE_NAME "__signal__"
+#define TABLE_NAME "april_signal"
 
 namespace AprilUtils {
   /// The mapping between signals and Lua function references

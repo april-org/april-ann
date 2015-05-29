@@ -79,7 +79,7 @@ using namespace ANN;
   argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_ARGN(>=,1);
   LUABIND_CHECK_ARGN(<=,2);
-  float tr_loss;
+  float tr_loss = 0.0f;
   MatrixFloat *loss;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, MatrixFloat);

@@ -651,8 +651,8 @@ ann.mlp.all_all.load = april_doc{
 } ..
 -- this function is for retro-compatibility
   function(filename)
-    print("DEPRECATED: this method is deprecated, please use standard ANN "..
-            "components and trainable.supervised_trainer objects")
+    fprintf(io.stderr, "DEPRECATED: this method is deprecated, please use standard ANN "..
+              "components and trainable.supervised_trainer objects\n")
     local c     = loadfile(filename)
     local data  = c()
     local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)

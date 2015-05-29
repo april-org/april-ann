@@ -89,7 +89,7 @@ namespace Basics {
   template <typename T>
   struct SparseMatrixIndicesCmp {
     bool operator()(const AprilUtils::pair<int,T> &a,
-                    const AprilUtils::pair<int,T> &b) {
+                    const AprilUtils::pair<int,T> &b) const {
       return a.first < b.first;
     }
   };
@@ -133,8 +133,8 @@ namespace Basics {
                                                             values_ptr[j]));
         april_assert(aux_index_sorted.size() > 0);
         AprilUtils::Sort(aux_index_sorted.begin(),
-                          0, static_cast<int>(aux_index_sorted.size())-1,
-                          SparseMatrixIndicesCmp<T>());
+                         0, static_cast<int>(aux_index_sorted.size())-1,
+                         SparseMatrixIndicesCmp<T>());
         int k=0;
         for (int j=first_index_ptr[i]; j<first_index_ptr[i+1]; ++j, ++k) {
           indices_ptr[j] = aux_index_sorted[k].first;

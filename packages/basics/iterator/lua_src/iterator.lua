@@ -137,6 +137,13 @@ local function apply(apply_func, f, s, v)
   end
 end
 
+local function iscallable(obj)
+  local t = type(obj)
+  if t == "function" then return true end
+  if t == "table" or t == "userdata" then return (getmetatable(obj) or {}).__call end
+  return false
+end
+
 --------------------------------------------------------------------
 --------------------------------------------------------------------
 --------------------------------------------------------------------
@@ -218,11 +225,12 @@ function iterator:constructor(f, s, v)
   if class.is_a(f, iterator) then
     assert(not s and not v, "Given s and v parameters with an iterator object")
     f,s,v = f:get()
-  elseif type(f) == "table" then
+  elseif not iscallable(f) and type(f) == "table" then
     if #f == 0 then f,s,v = iterator(pairs(f)):select(2):get()
     else f,s,v = iterator(ipairs(f)):select(2):get()
     end    
   end
+  assert(iscallable(f), "Needs a Lua iterator tripplete, a table, a function or a callable table")
   self.f,self.s,self.v = f,s,v
 end
 
@@ -530,6 +538,7 @@ end
 -- In APRIL-ANN this module is defined at global environment
 if aprilann_available then
   _G.apply = apply
+  _G.iscallable = iscallable
   _G.iterator = iterator
   _G.iterable_filter = filter
   _G.iterable_map = map

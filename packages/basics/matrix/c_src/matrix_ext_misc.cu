@@ -46,7 +46,66 @@ namespace AprilMath {
     
     namespace Misc {
       //////////////////// OTHER MATH OPERATIONS ////////////////////
-    
+
+      /// For the implementation of matOrder() function.
+      template <typename T>
+      struct MatOrderCompare {
+        typename Matrix<T>::const_random_access_iterator data;
+        MatOrderCompare(Matrix<T> *m) : data(m) {}
+        bool operator()(const int32_t &a, const int32_t &b) const {
+          return data(a-1) < data(b-1);
+        }
+      };
+      
+      template <typename T>
+      Matrix<int32_t> *matOrder(const Matrix<T> *m, Matrix<int32_t> *dest) {
+        AprilUtils::SharedPtr< Matrix<T> > squeezed(m->constSqueeze());
+        if (squeezed->getNumDim() > 1) {
+          ERROR_EXIT(128, "Needs a rank 1 matrix object\n");
+        }
+        if (dest == 0) {
+          dest = new Matrix<int32_t>(1, squeezed->size());
+        }
+        else {
+          if (squeezed->size() != dest->size()) {
+            ERROR_EXIT(128, "Incorrect destination size\n");
+          }
+          if (!squeezed->getIsContiguous()) {
+            ERROR_EXIT(128, "Destination matrix should be contiguous\n");
+          }
+        }
+        int i=1; // WARNING: we start counting at 1, instead of 0
+        for (Matrix<int32_t>::iterator it = dest->begin();
+             it!=dest->end(); ++it) {
+          *it = i++;
+        }
+        int32_t *ptr = dest->getRawDataAccess()->getPPALForReadAndWrite();
+        MatOrderCompare<T> cmp(squeezed.get());
+        AprilUtils::Sort(ptr, 0, dest->size()-1, cmp);
+        return dest;
+      }
+
+      template <typename T>
+      Matrix<int32_t> *matOrderRank(const Matrix<T> *m, Matrix<int32_t> *dest) {
+        AprilUtils::SharedPtr< Matrix<int32_t> > aux = matOrder(m);
+        if (dest == 0) {
+          dest = new Matrix<int32_t>(1, aux->size());
+        }
+        else {
+          if (aux->size() != dest->size()) {
+            ERROR_EXIT(128, "Incorrect destination size\n");
+          }
+        }
+
+        Matrix<int32_t>::random_access_iterator dst_it(dest);
+        int i=1; // WARNING: we start counting at 1, instead of 0
+        for (Matrix<int32_t>::const_iterator src_it = aux->begin();
+             src_it != aux->end(); ++src_it) {
+          dst_it( *src_it - 1 ) = i++;
+        }
+        return dest;
+      }
+      
       template <typename T>
       Matrix<T> *matAddition(const Matrix<T> *a,
                              const Matrix<T> *b,
@@ -221,6 +280,12 @@ namespace AprilMath {
         return MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(), dest);
       }
 
+      template Matrix<int32_t> *matOrder(const Matrix<float> *,
+                                         Matrix<int32_t> *);
+
+      template Matrix<int32_t> *matOrderRank(const Matrix<float> *,
+                                             Matrix<int32_t> *);
+      
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
@@ -239,6 +304,13 @@ namespace AprilMath {
                                            Matrix<float> *);
       template Matrix<float> *matConvertTo(const Matrix<int32_t> *,
                                            Matrix<float> *);
+
+
+      template Matrix<int32_t> *matOrder(const Matrix<double> *,
+                                         Matrix<int32_t> *);
+
+      template Matrix<int32_t> *matOrderRank(const Matrix<double> *,
+                                             Matrix<int32_t> *);
       
       template Matrix<double> *matAddition(const Matrix<double> *,
                                           const Matrix<double> *,
@@ -280,6 +352,13 @@ namespace AprilMath {
       template Matrix<char> *matConvertTo(const Matrix<int32_t> *,
                                           Matrix<char> *);
 
+      
+      template Matrix<int32_t> *matOrder(const Matrix<int32_t> *,
+                                               Matrix<int32_t> *);
+      
+      template Matrix<int32_t> *matOrderRank(const Matrix<int32_t> *,
+                                             Matrix<int32_t> *);
+      
       template Matrix<int32_t> *matConvertTo(const Matrix<bool> *,
                                              Matrix<int32_t> *);
       template Matrix<int32_t> *matConvertTo(const Matrix<float> *,

@@ -129,7 +129,6 @@ trainable.dataset_multiple_iterator =
         bunch_size     = { type_match = "number", mandatory = true },
         shuffle        = { isa_match  = random,   mandatory = false, default=nil },
         replacement    = { type_match = "number", mandatory = false, default=nil },
-        bunch_major    = { type_match = "string", mandatory = false, default="row_major" },
         assert_pattern_sizes = { type_match = "table", mandatory = false,
                                  default={ } },
       }, t)
@@ -151,8 +150,7 @@ trainable.dataset_multiple_iterator =
                            nump, ds:numPatterns())
             else nump = ds:numPatterns()
             end
-            return is_a(ds,dataset) and dataset.token.wrapper(ds,
-                                                              params.bunch_major) or ds
+            return is_a(ds,dataset) and dataset.token.wrapper(ds) or ds
 	end):
         table(), nump
     end

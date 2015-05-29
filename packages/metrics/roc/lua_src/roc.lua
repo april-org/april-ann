@@ -8,6 +8,7 @@ local function check_matrix(m)
             (#dim == 2 and
                (dim[1] == 1 or dim[2] == 1)),
           "Needs a row or column vector" )
+  return #dim == 1 and m:rewrap(m:size(),1) or m
 end
 
 --
@@ -35,7 +36,6 @@ roc.constructor =
     },
   } ..
   function(self,outputs,targets)
-    self.data = {}
     self.P = 0
     self.N = 0
     if outputs or targets then self:add(outputs,targets) end
@@ -51,15 +51,17 @@ roc_methods.add =
     },
   } ..
   function(self,outputs,targets)
-    check_matrix(outputs)
-    check_matrix(targets)
+    local outputs = check_matrix(outputs)
+    local targets = check_matrix(targets)
     local data,P,N = self.data,0,0
-    outputs:map(targets, function(out,tgt)
-                  data[#data+1] = {out,tgt}
-                  if tgt > 0.5 then P=P+1 else N=N+1 end
-    end) -- output,target
-    self.P = self.P + P
-    self.N = self.N + N
+    if not data then
+      self.data = matrix.join(2, outputs, targets)
+    else
+      self.data = matrix.join(1, data, matrix.join(2, outputs, targets))
+    end
+    local ones = targets:gt(0.5):count_ones()
+    self.P = self.P + ones
+    self.N = self.N + targets:size() - ones
   end
 
 roc_methods.compute_curve =
@@ -75,21 +77,21 @@ roc_methods.compute_curve =
     local data = self.data
     local P = self.P
     local N = self.N
-    table.sort(data, function(a,b) return a[1]>b[1] end)
-    local result = { }
+    local data = data:index(1,data:select(2,1):order())
+    local result = {}
     local TP,FP = 0,0
     local prev_th,j = -math.huge,0
-    for i=1,#data do
-      if data[i][1] ~= prev_th then
+    for i,row in matrix.ext.iterate(data, 1, -1) do
+      if row[1] ~= prev_th then
         local TPR,FPR = TP/P,FP/N
-	table.insert(result, FPR)        -- 1
-	table.insert(result, TPR)        -- 2
-	table.insert(result, data[i][1]) -- 3
-	table.insert(result, data[i][2]) -- 4
+	table.insert(result, FPR)    -- 1
+	table.insert(result, TPR)    -- 2
+	table.insert(result, row[1]) -- 3
+	table.insert(result, row[2]) -- 4
         j=j+1
-        prev_th = data[i][1]
+        prev_th = row[1]
       end
-      if data[i][2] > 0.5 then
+      if row[2] > 0.5 then
         TP = TP + 1
       else
         FP = FP + 1
@@ -125,7 +127,7 @@ roc_methods.reset =
     summary="Resets all the intermediate data",
   } ..
   function(self)
-    self.data = {}
+    self.data = nil
     self.P    = 0
     self.N    = 0
     collectgarbage("collect")

@@ -1383,7 +1383,7 @@ ann.graph.test = function()
     a = { out_edges = { 'b', 'c' }, out_delay_values = { 0, 0 } },
     b = { out_edges = { 'c', 'd' }, out_delay_values = { 0, 0 } },
     c = { out_edges = { 'd' }, out_delay_values = { 0 } },
-    d = { out_edges = { } },
+    d = { out_edges = { }, out_delay_values = { } },
   }
   --
   local result,recurrent = reverse( topological_sort(nodes, 'a') )

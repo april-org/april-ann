@@ -2,6 +2,135 @@
 #include <cstring>
 #include <cstdarg>
 
+#define PARENTS_REGISTRY_FIELD_NAME "luabind_parents"
+#define CAST_REGISTRY_FIELD_NAME "luabind_cast"
+
+void makeWeakTable(lua_State *L) {
+  lua_newtable(L);
+  lua_pushstring(L, "__mode");
+  lua_pushstring(L, "v");
+  lua_rawset(L, -3);
+  lua_setmetatable(L, -2);
+}
+
+void pushOrCreateTable(lua_State *L, int n, const char *field) {
+  // stack:
+  lua_getfield(L, n, field);
+  // stack: [n].field
+  if (lua_isnil(L, -1)) {
+    // stack: nil
+    lua_pop(L, 1);
+    // stack:
+    lua_newtable(L);
+    // stack: table
+    lua_pushvalue(L, -1);
+    int top = lua_gettop(L);
+    // stack: table table
+    if (n < 0 && -n <= top) { // relative index from top
+      lua_setfield(L, n - 2, field);
+      // stack: table
+    }
+    else { // absolute index or pseudo-index
+      lua_setfield(L, n, field);
+      // stack: table
+    }
+  }
+  // stack: [n].field
+}
+
+int isDerived(lua_State *L,
+              const char *child,
+              const char *parent) {
+  int result = 0;
+  // stack:
+  pushOrCreateTable(L, LUA_REGISTRYINDEX, PARENTS_REGISTRY_FIELD_NAME);
+  // stack: parents
+  lua_pushstring(L, child);
+  // stack: parents child_string
+  lua_rawget(L, -2);
+  // stack: parents child_table
+  if (lua_isnil(L, -1)) {
+    // stack: parents nil
+    lua_pop(L, 2);
+    // stack:
+  }
+  else {
+    lua_pushstring(L, parent);
+    // stack: parents child_table parent_string
+    lua_rawget(L, -2);
+    // stack: parents child_table value
+    if (!lua_isnil(L, -1)) {
+      result = 1;
+    }
+    // stack: parents child_table value
+    lua_pop(L, 3);
+    // stack:
+  }
+  return result;
+}
+
+void setParentsAtRegistry(lua_State *L,
+                          const char *parent,
+                          const char *child) {
+  int top = lua_gettop(L);
+  // stack:
+  pushOrCreateTable(L, LUA_REGISTRYINDEX, PARENTS_REGISTRY_FIELD_NAME);
+  // stack: parents
+  pushOrCreateTable(L, -1, child);
+  // stack: parents child_table
+  lua_pushstring(L, parent);
+  // stack: parents child_table parent_name
+  while(lua_gettop(L) != top+2) { // while not empty stack
+    // stack: ... parent_name
+    lua_pushvalue(L, -1);
+    // stack: ... parent_name parent_name
+    lua_pushboolean(L, 1);
+    // stack: ... parent_name parent_name true
+    lua_rawset(L, top + 2);
+    // stack: ... parent_name
+    lua_rawget(L, top + 1);
+    // stack: ... parent_table
+    if (!lua_isnil(L, -1)) {
+      int tbl = lua_gettop(L);
+      lua_pushnil(L); // first key for lua_next
+      // stack: ... parent_table nil
+      while (lua_next(L, tbl) != 0) {
+        // stack: ... parent_table ... key value
+        lua_pop(L, 1);
+        // stack: ... parent_table ... key
+        lua_pushvalue(L, -1);
+        // stack: ... parent_table ... key key
+      }
+      // stack: ... parent_table ...
+      lua_remove(L, tbl);
+      // stack: ... more names
+    }
+    else {
+      lua_pop(L, 1);
+      // stack: ...
+    }
+  }
+  // stack: parents child_table
+  lua_pop(L, 2);
+  // stack:
+}
+
+void insertCast(lua_State *L, const char *derived, const char *base,
+                int (*c_function)(lua_State *)) {
+  // stack:
+  pushOrCreateTable(L, LUA_REGISTRYINDEX, CAST_REGISTRY_FIELD_NAME);
+  // stack: registry.luabind_cast
+  pushOrCreateTable(L, -1, base);
+  // stack: registry.luabind_cast registry.luabind_cast[base]
+  lua_pushstring(L, derived);
+  // stack: registry.luabind_cast registry.luabind_cast[base] "derived"
+  lua_pushcfunction(L, c_function);
+  // stack: registry.luabind_cast registry.luabind_cast[base] "derived" func
+  lua_rawset(L, -3);
+  // stack: registry.luabind_cast registry.luabind_cast[base]
+  lua_pop(L, 2);
+}
+
 bool lua_isFILE(lua_State *L, int idx) {
   void *ud;
   luaL_checkany(L, idx);

@@ -39,14 +39,17 @@
  * @c IncRef and @c DecRef in an automatic way.
  */
 class Referenced {
- protected:
-  int refs;
+ private:
+  int refs;    ///< Number of living references of this object.
+  int lua_ref; ///< Reference in Lua registry, it is initialized at binding.
  public:
   Referenced();
   virtual ~Referenced();
   virtual void incRef();
   virtual bool decRef();
   virtual int  getRef() const;
+  virtual void setLuaRef(int lua_ref);
+  virtual int getLuaRef() const;
 };
 
 /**

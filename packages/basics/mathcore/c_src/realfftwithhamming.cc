@@ -209,8 +209,8 @@ namespace AprilMath {
 
     // after unshuffling, tmp contains:
     // re(0),re(vSize/2),re(1),im(1),re(2),im(2),...,re(vSize/2-1),im(vSize/2-1)
-  
-    output[0] = fabsf(tmp[0]);
+    
+    output[0] = fabsf(static_cast<float>(tmp[0]));
     double *aux;
     for (i=1,aux=tmp+2;i<halfnFFT;i++) {
       //output[i] = sqrt(aux[0]*aux[0]+aux[1]*aux[1]);
