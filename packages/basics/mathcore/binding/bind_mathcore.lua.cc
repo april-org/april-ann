@@ -26,19 +26,66 @@ using namespace AprilMath;
 
 //BIND_HEADER_C
 #include "bind_complex.h"
+#include "bind_mathcore.h"
 #include "cmath_overloads.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "error_print.h"
-#include "bind_aprilio.h"
+#include "bind_april_io.h"
+
+using namespace AprilMath;
+
+typedef bool boolean;
+
+#define MAKE_READ_BLOCK_LUA_METHOD(BlockType, Type) do {        \
+    BlockType *obj = readBlockLuaMethod<Type>(L);               \
+    if (obj == 0) {                                             \
+      luaL_error(L, "Error happens reading from file stream");  \
+    }                                                           \
+    else {                                                      \
+      lua_push##BlockType(L, obj);                              \
+    }                                                           \
+  } while(false)
+
+template<typename T>
+GPUMirroredMemoryBlock<T> *readBlockLuaMethod(lua_State *L) {
+  AprilIO::StreamInterface *stream =
+    lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+  if (stream == 0) luaL_error(L, "Needs a stream as first argument");
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
+  AprilUtils::LuaTable options(L,2);
+  return GPUMirroredMemoryBlock<T>::read(ptr.get(), options); 
+}
+
+namespace MathCoreBinding {
+  template<typename T> T luaToFunc(lua_State *L, int n) {
+    UNUSED_VARIABLE(L);
+    UNUSED_VARIABLE(n);
+    ERROR_EXIT(128, "Not implemented\n");
+  }
+  template<> float luaToFunc(lua_State *L, int n) {
+    return static_cast<float>(lua_tonumber(L, n));
+  }
+  template<> double luaToFunc(lua_State *L, int n) {
+    return lua_tonumber(L, n);
+  }
+  template<> int32_t luaToFunc(lua_State *L, int n) {
+    return static_cast<int32_t>(lua_tonumber(L, n));
+  }
+  template<> ComplexF luaToFunc(lua_State *L, int n) {
+    return lua_toComplexF(L, n);
+  }
+  template<> bool luaToFunc(lua_State *L, int n) {
+    return static_cast<bool>(lua_toboolean(L, n));
+  }
+}
 
 namespace AprilMath {
   
 #define FUNCTION_NAME "Constructor"
-  template<typename T, typename K>
+  template<typename T>
   void GPUMirroredMemoryBlockConstructor(lua_State *L,
-                                         GPUMirroredMemoryBlock<T> *&obj,
-                                         K luaToFunc = luaL_checknumber) {
+                                         GPUMirroredMemoryBlock<T> *&obj) {
     unsigned int N;
     if (lua_istable(L,1)) N = lua_rawlen(L,1);
     else LUABIND_GET_PARAMETER(1,uint,N);
@@ -48,7 +95,7 @@ namespace AprilMath {
       for (unsigned int i=0; i<N; ++i) {
         lua_pushinteger(L, i+1);
         lua_gettable(L, -2);
-        ptr[i] = static_cast<T>(luaToFunc(L, -1));
+        ptr[i] = MathCoreBinding::luaToFunc<T>(L, -1);
         lua_pop(L,1);
       }
     }
@@ -56,14 +103,13 @@ namespace AprilMath {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "raw_set"
-  template<typename T, typename K>
+  template<typename T>
   void GPUMirroredMemoryBlockSet(lua_State *L,
-                                 GPUMirroredMemoryBlock<T> *obj,
-                                 K luaToFunc = luaL_checknumber) {
+                                 GPUMirroredMemoryBlock<T> *obj) {
     T value;
     unsigned int i;
     LUABIND_GET_PARAMETER(1,uint,i);
-    value = static_cast<T>(luaToFunc(L, 2));
+    value = MathCoreBinding::luaToFunc<T>(L, 2);
     if (i >= obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
     T *ptr = obj->getPPALForWrite();
     ptr[i] = value;
@@ -124,13 +170,20 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME FloatGPUMirroredMemoryBlock mathcore.block.float
 //BIND_CPP_CLASS FloatGPUMirroredMemoryBlock
-//BIND_SUBCLASS_OF Serializable
+//BIND_SUBCLASS_OF FloatGPUMirroredMemoryBlock Serializable
 
 //BIND_CONSTRUCTOR FloatGPUMirroredMemoryBlock
 {
   LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(FloatGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD FloatGPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(FloatGPUMirroredMemoryBlock, float);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -166,13 +219,20 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME DoubleGPUMirroredMemoryBlock mathcore.block.double
 //BIND_CPP_CLASS DoubleGPUMirroredMemoryBlock
-//BIND_SUBCLASS_OF Serializable
+//BIND_SUBCLASS_OF DoubleGPUMirroredMemoryBlock Serializable
 
 //BIND_CONSTRUCTOR DoubleGPUMirroredMemoryBlock
 {
   LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(DoubleGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD DoubleGPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(DoubleGPUMirroredMemoryBlock, double);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -208,13 +268,20 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME Int32GPUMirroredMemoryBlock mathcore.block.int32
 //BIND_CPP_CLASS Int32GPUMirroredMemoryBlock
-//BIND_SUBCLASS_OF Serializable
+//BIND_SUBCLASS_OF Int32GPUMirroredMemoryBlock Serializable
 
 //BIND_CONSTRUCTOR Int32GPUMirroredMemoryBlock
 {
   LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD Int32GPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(Int32GPUMirroredMemoryBlock, int);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -250,13 +317,20 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME BoolGPUMirroredMemoryBlock mathcore.block.bool
 //BIND_CPP_CLASS BoolGPUMirroredMemoryBlock
-//BIND_SUBCLASS_OF Serializable
+//BIND_SUBCLASS_OF BoolGPUMirroredMemoryBlock Serializable
 
 //BIND_CONSTRUCTOR BoolGPUMirroredMemoryBlock
 {
   LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(BoolGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD BoolGPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(BoolGPUMirroredMemoryBlock, boolean);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -292,13 +366,20 @@ namespace AprilMath {
 
 //BIND_LUACLASSNAME ComplexFGPUMirroredMemoryBlock mathcore.block.complex
 //BIND_CPP_CLASS ComplexFGPUMirroredMemoryBlock
-//BIND_SUBCLASS_OF Serializable
+//BIND_SUBCLASS_OF ComplexFGPUMirroredMemoryBlock Serializable
 
 //BIND_CONSTRUCTOR ComplexFGPUMirroredMemoryBlock
 {
   LUABIND_CHECK_ARGN(==,1);
-  GPUMirroredMemoryBlockConstructor(L,obj,lua_toComplexF);
+  GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(ComplexFGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD ComplexFGPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(ComplexFGPUMirroredMemoryBlock, ComplexF);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -311,14 +392,14 @@ namespace AprilMath {
 //BIND_METHOD ComplexFGPUMirroredMemoryBlock raw_set
 {
   LUABIND_CHECK_ARGN(==,2);
-  GPUMirroredMemoryBlockSet(L,obj,lua_toComplexF);
+  GPUMirroredMemoryBlockSet(L,obj);
   LUABIND_RETURN(ComplexFGPUMirroredMemoryBlock,obj);
 }
 //BIND_END
 
 //BIND_METHOD ComplexFGPUMirroredMemoryBlock raw_get
 {
-  LUABIND_RETURN(boolean,GPUMirroredMemoryBlockGet(L,obj));
+  LUABIND_RETURN(ComplexF,GPUMirroredMemoryBlockGet(L,obj));
 }
 //BIND_END
 

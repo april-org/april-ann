@@ -65,14 +65,13 @@ namespace Basics {
     }
 
     /////////////////////////////////////////////////////////////////////////////
-
-    template<>
-    const char *Matrix<double>::ctorName() const {
-      return "matrixDouble.deserialize";
-    }
-
     
   } // namespace MatrixIO
+  
+  template<>
+  const char *Matrix<double>::ctorName() const {
+    return "matrixDouble.deserialize";
+  }
   
   /////////////////////////////////////////////////////////////////////////
   

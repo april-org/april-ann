@@ -402,7 +402,7 @@ namespace AprilUtils {
   template<>
   AprilMath::ComplexF binarizer::decode<AprilMath::ComplexF>(const char *b);
   template<>
-  AprilMath::ComplexF binarizer::decode<AprilMath::ComplexF>(const char *b);
+  AprilMath::ComplexD binarizer::decode<AprilMath::ComplexD>(const char *b);
   ////////////////////////////////////////////////////////////////////////////
   
   // This section allows to push complex numbers from C++ into Lua by calling

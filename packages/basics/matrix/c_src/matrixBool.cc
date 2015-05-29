@@ -72,14 +72,14 @@ namespace Basics {
     }
     
     /////////////////////////////////////////////////////////////////////////////
-
-    template<>
-    const char *Matrix<float>::ctorName() const {
-      return "matrixBool.deserialize";
-    }
-
     
   } // namespace MatrixIO
+
+  template<>
+  const char *Matrix<float>::ctorName() const {
+    return "matrixBool.deserialize";
+  }
+
 
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<bool>;

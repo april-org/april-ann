@@ -615,35 +615,6 @@ namespace AprilMath {
       return new GPUMirroredMemoryBlock<T>(mmapped_data);
     }
     
-    static GPUMirroredMemoryBlock<T> *
-    deserialize(AprilIO::StreamInterface *source) {
-      AprilUtils::SharedPtr<AprilIO::CStringStream>
-        c_str(new AprilIO::CStringStream());;
-      AprilUtils::constString line;
-      line = readULine(source, c_str.get());
-      if (!line) {
-        ERROR_EXIT(128, "Incorrect line!!!\n");
-      }
-      const unsigned int len = AprilUtils::binarizer::binary_size<T>();
-      unsigned int sz;
-      if (!line.extract_unsigned_int(&sz)) {
-        ERROR_EXIT(128, "Incorrect line!!!\n");
-      }
-      GPUMirroredMemoryBlock<T> *obj = new GPUMirroredMemoryBlock<T>(sz);
-      T *ptr = obj->getPPALForWrite();
-      for (unsigned int i=0; i<sz; ++i) {
-        if (!line) {
-          line = readULine(source, c_str.get());
-          if (!line) {
-            ERROR_EXIT(128, "Incorrect line!!!\n");
-          }
-        }
-        ptr[i] = AprilUtils::binarizer::decode<T>((const char *)line);
-        line.skip(len);
-      }
-      return obj;
-    }
-    
     /// Constructor from non-allocated memory, does not free mem pointer.
     GPUMirroredMemoryBlock(unsigned int sz, T *mem) :
       GPUMirroredMemoryBlockBase(sz*sizeof(T), mem) { }
@@ -846,10 +817,42 @@ namespace AprilMath {
       ERROR_EXIT(128, "Serialization not implemented\n");
       return 0;
     }
-
-    virtual int exportParamsToLua(lua_State *L) {
-      AprilIO::OutputLuaStringStream destination(L);
-      destination.printf("%u\n", getSize());
+    
+    static GPUMirroredMemoryBlock<T> *
+    read(AprilIO::StreamInterface *source,
+         const AprilUtils::LuaTable &options) {
+      UNUSED_VARIABLE(options);
+      AprilUtils::SharedPtr<AprilIO::CStringStream>
+        c_str(new AprilIO::CStringStream());;
+      AprilUtils::constString line;
+      line = readULine(source, c_str.get());
+      if (!line) {
+        ERROR_EXIT(128, "Incorrect line!!!\n");
+      }
+      const unsigned int len = AprilUtils::binarizer::binary_size<T>();
+      unsigned int sz;
+      if (!line.extract_unsigned_int(&sz)) {
+        ERROR_EXIT(128, "Incorrect line!!!\n");
+      }
+      GPUMirroredMemoryBlock<T> *obj = new GPUMirroredMemoryBlock<T>(sz);
+      T *ptr = obj->getPPALForWrite();
+      for (unsigned int i=0; i<sz; ++i) {
+        if (!line) {
+          line = readULine(source, c_str.get());
+          if (!line) {
+            ERROR_EXIT(128, "Incorrect line!!!\n");
+          }
+        }
+        ptr[i] = AprilUtils::binarizer::decode<T>((const char *)line);
+        line.skip(len);
+      }
+      return obj;
+    }
+    
+    virtual void write(AprilIO::StreamInterface *destination,
+                       const AprilUtils::LuaTable &options) {
+      UNUSED_VARIABLE(options);
+      destination->printf("%u\n", getSize());
       const int columns = 16;
       const unsigned int len = AprilUtils::binarizer::binary_size<T>();
       AprilUtils::UniquePtr<char []> b = new char[len];
@@ -857,10 +860,16 @@ namespace AprilMath {
       unsigned int i;
       for (i=0; i<getSize(); ++i) {
         AprilUtils::binarizer::code(ptr[i], b.get());
-        destination.put(b.get(), len);
-        if ((i+1) % columns == 0) destination.printf("\n");
+        destination->put(b.get(), len);
+        if ((i+1) % columns == 0) destination->printf("\n");
       }
-      if ((i % columns) != 0) destination.printf("\n");
+      if ((i % columns) != 0) destination->printf("\n");
+    }
+    
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilIO::OutputLuaStringStream destination(L);
+      AprilUtils::LuaTable options(L);
+      write(&destination, options);
       destination.push(L);
       return 1;
     }
@@ -874,12 +883,15 @@ namespace AprilMath {
   const char *GPUMirroredMemoryBlock<ComplexF>::ctorName() const;
   template<>
   const char *GPUMirroredMemoryBlock<int32_t>::ctorName() const;
+  template<>
+  const char *GPUMirroredMemoryBlock<bool>::ctorName() const;
   
   // typedef for referring to float memory blocks
   typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
+  typedef GPUMirroredMemoryBlock<bool>     BoolGPUMirroredMemoryBlock;
 
 } // namespace AprilMath
 

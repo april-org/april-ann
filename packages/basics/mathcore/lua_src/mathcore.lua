@@ -16,6 +16,20 @@ local function make_block_tostring(name, str)
   end
 end
 
+local function make_serialize(cls)
+  cls.meta_instance.__serialize = function(self,stream,format)
+    if not stream then
+      local result = self:write(nil,format)
+      return table.concat{ self:ctor_name(), "[[", result, "]]" }
+    else
+      stream:write(self:ctor_name())
+      stream:write("[[")
+      self:write(stream,format)
+      stream:write("]]")
+    end
+  end
+end
+
 local function make_index_function(cls)
   class.declare_functional_index(cls,
                                  function(obj,key)
@@ -51,14 +65,28 @@ mathcore.block.int32.meta_instance.__tostring =
                         return string.format("% 11d", value)
   end)
 
+mathcore.block.bool.meta_instance.__tostring =
+  make_block_tostring("Bool block",
+                      function(value)
+                        return string.format("% 11d", value)
+  end)
+
+make_serialize(mathcore.block.float)
+make_serialize(mathcore.block.double)
+make_serialize(mathcore.block.int32)
+make_serialize(mathcore.block.bool)
+
 make_index_function(mathcore.block.float)
 make_index_function(mathcore.block.double)
 make_index_function(mathcore.block.int32)
+make_index_function(mathcore.block.bool)
 
 mathcore.block.float.meta_instance.__newindex = new_index_function
 mathcore.block.double.meta_instance.__newindex = new_index_function
 mathcore.block.int32.meta_instance.__newindex = new_index_function
+mathcore.block.bool.meta_instance.__newindex = new_index_function
 
 mathcore.block.float.meta_instance.__call = call_function
 mathcore.block.double.meta_instance.__call = call_function
 mathcore.block.int32.meta_instance.__call = call_function
+mathcore.block.bool.meta_instance.__call = call_function
