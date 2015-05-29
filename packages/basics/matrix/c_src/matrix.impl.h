@@ -50,9 +50,8 @@ namespace Basics {
       total_size *= dim[i];
       matrixSize[i] = dim[i];
       april_assert(matrixSize[i] > 0);
-      last_raw_pos += stride[i] * dim[i];
+      last_raw_pos += stride[i] * (dim[i]-1);
     }
-    last_raw_pos -= 1;
   }
 
   /// Allocation of memory for data pointer. It is Referenced for sharing.
@@ -107,7 +106,7 @@ namespace Basics {
     stride     = new int[numDim];
     matrixSize = new int[numDim];
     initialize(dim, offset, _stride);
-    april_assert(total_size <= last_raw_pos);
+    april_assert(total_size <= last_raw_pos+1);
     if (this->data.empty()) allocate_memory(last_raw_pos + 1);
     else {
       if (static_cast<int>(this->data->getSize()) <= last_raw_pos)
