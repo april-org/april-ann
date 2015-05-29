@@ -62,6 +62,8 @@ class.extend(aprilio.serializable, "to_lua_string", to_lua_string)
 
 local lua_serializable,
 lua_serializable_methods = class("aprilio.lua_serializable")
+-- global declaration
+aprilio.lua_serializable = lua_serializable
 
 lua_serializable_methods.to_lua_string = to_lua_string
 lua_serializable_methods.ctor_name = function()
