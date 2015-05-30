@@ -34,22 +34,7 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-namespace AprilUtils {
-  template<> Basics::MatrixDouble *LuaTable::
-  convertTo<Basics::MatrixDouble *>(lua_State *L, int idx) {
-    return lua_toMatrixDouble(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<Basics::MatrixDouble *>(lua_State *L, Basics::MatrixDouble *value) {
-    lua_pushMatrixDouble(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<Basics::MatrixDouble *>(lua_State *L, int idx) {
-    return lua_isMatrixDouble(L, idx);
-  }
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixDouble);
 
 namespace Basics {
 #define FUNCTION_NAME "read_vector"
@@ -165,41 +150,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_CONSTRUCTOR MatrixDouble
 {
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-    }
-  }
-  MatrixDouble* obj;
-  obj = new MatrixDouble(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int i=1;
-    for (MatrixDouble::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
-      lua_rawgeti(L,argn,i);
-      double v = luaL_checknumber(L,-1);
-      *it = v;
-      lua_remove(L,-1);
-    }
-  }
-  delete[] dim;
-  LUABIND_RETURN(MatrixDouble,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::constructor(L));
 }
 //BIND_END
 
@@ -673,14 +624,15 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_CLASS_METHOD MatrixDouble deserialize
 {
-  LUABIND_RETURN(MatrixDouble, deserializeMatrixLuaMethod<double>(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
+                               deserialize(L));
 }
 //BIND_END
 
 //BIND_CLASS_METHOD MatrixDouble read
 {
-  MAKE_READ_MATRIX_LUA_METHOD(MatrixDouble, double);
-  LUABIND_INCREASE_NUM_RETURNS(1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
+                               read(L));
 }
 //BIND_END
 

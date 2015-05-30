@@ -38,23 +38,7 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-namespace AprilUtils {
-  template<> Basics::SparseMatrixFloat *LuaTable::
-  convertTo<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
-    return lua_toSparseMatrixFloat(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<Basics::SparseMatrixFloat *>(lua_State *L,
-                                        Basics::SparseMatrixFloat *value) {
-    lua_pushSparseMatrixFloat(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<Basics::SparseMatrixFloat *>(lua_State *L, int idx) {
-    return lua_isSparseMatrixFloat(L, idx);
-  }
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SparseMatrixFloat);
 
 namespace Basics {
   int sparseMatrixFloatIteratorFunction(lua_State *L) {
@@ -96,7 +80,7 @@ namespace Basics {
   };
 
 #define MAKE_READ_SPARSE_MATRIX_LUA_METHOD(MatrixType, Type) do {       \
-    MatrixType *obj = readSparseMatrixLuaMethod<Type>(L);               \
+    MatrixType *obj = readSparse<Type>(L);               \
     if (obj == 0) {                                                     \
       luaL_error(L, "Error happens reading from file stream");          \
     }                                                                   \
@@ -106,7 +90,7 @@ namespace Basics {
   } while(false)
   
   template<typename T>
-  SparseMatrix<T> *readSparseMatrixLuaMethod(lua_State *L) {
+  SparseMatrix<T> *readSparse(lua_State *L) {
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
     AprilUtils::SharedPtr<AprilIO::StreamInterface> ptr(stream);

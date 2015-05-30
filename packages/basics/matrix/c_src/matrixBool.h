@@ -61,4 +61,8 @@ namespace Basics {
 
 } // namespace Basics
 
+////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MatrixBool);
+
 #endif // MATRIX_BOOL_H

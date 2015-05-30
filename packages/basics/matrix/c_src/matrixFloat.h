@@ -73,16 +73,6 @@ namespace Basics {
 
 ////////////////////////////////////////////////////////////////////////////
 
-namespace AprilUtils {
-
-  template<> Basics::MatrixFloat *LuaTable::
-  convertTo<Basics::MatrixFloat *>(lua_State *L, int idx);
-  
-  template<> void LuaTable::
-  pushInto<Basics::MatrixFloat *>(lua_State *L, Basics::MatrixFloat *value);
-
-  template<> bool LuaTable::
-  checkType<Basics::MatrixFloat *>(lua_State *L, int idx);
-}
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MatrixFloat);
 
 #endif // MATRIXFLOAT_H

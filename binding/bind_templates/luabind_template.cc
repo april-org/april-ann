@@ -360,9 +360,10 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_pushstring(L,"__gc");
 	  lua_pushcfunction(L,lua_delete_$$ClassName$$_$$FILENAME2$$);
 	  lua_settable(L,meta_instance);
-	  lua_pushstring(L,"__eq");
-	  lua_pushcfunction(L,equaluserdata);
-	  lua_settable(L,meta_instance);
+          // Unnecessary when we only create userdata once for each C++ object.
+	  // lua_pushstring(L,"__eq");
+	  // lua_pushcfunction(L,equaluserdata);
+	  // lua_settable(L,meta_instance);
 	  lua_pushstring(L,"__index");
 	  lua_pushvalue(L,instance_methods);
 	  lua_settable(L,meta_instance);

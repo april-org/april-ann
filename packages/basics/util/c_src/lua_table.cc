@@ -129,8 +129,8 @@ namespace AprilUtils {
   }
   
   template<>
-  int LuaTable::convertTo<int>(lua_State *L, int idx) {
-    return lua_tointeger(L, idx);
+  int LuaTable::convertTo<int32_t>(lua_State *L, int idx) {
+    return static_cast<int32_t>(lua_tonumber(L, idx));
   }
 
   template<>
@@ -168,7 +168,7 @@ namespace AprilUtils {
   }
   
   template<>
-  void LuaTable::pushInto<int>(lua_State *L, int value) {
+  void LuaTable::pushInto<int32_t>(lua_State *L, int32_t value) {
     lua_pushnumber(L, static_cast<double>(value));
   }
 
@@ -205,7 +205,7 @@ namespace AprilUtils {
   }
   
   template<>
-  bool LuaTable::checkType<int>(lua_State *L, int idx) {
+  bool LuaTable::checkType<int32_t>(lua_State *L, int idx) {
     return lua_isnumber(L, idx);
   }
   
@@ -241,10 +241,8 @@ namespace AprilUtils {
     lua_getfield(L, -1, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
     const char *str = lua_tostring(L, -1);
-    // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
-    // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
-    // string is referenced in a table, so, as far as the table exists, the
-    // string will also exists.
+    // NOTE: it is safe to pop because the string is referenced in a table, so,
+    // as far as the table exists, the string will also exists.
     lua_pop(L, 2);
     return str;
   }
@@ -263,10 +261,8 @@ namespace AprilUtils {
         return def;
       }
       const char *str = lua_tostring(L,-1);
-      // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
-      // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
-      // string is referenced in a table, so, as far as the table exists, the
-      // string will also exists.
+      // NOTE: it is safe to pop because the string is referenced in a table,
+      // so, as far as the table exists, the string will also exists.
       lua_pop(L, 2);
       return str;
     }

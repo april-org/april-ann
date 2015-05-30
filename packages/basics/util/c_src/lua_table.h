@@ -35,6 +35,17 @@ extern "C" {
 #include "referenced.h"
 #include "unused_variable.h"
 
+/**
+ * @brief Macro for declaration of template specializations for
+ * AprilUtils::LuaTable class.
+ *
+ * Example of use:
+ * @code
+ * DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MatrixFloat);
+ * @endcode
+ *
+ * @note This macro accepts any argument, even with namespaces.
+ */
 #define DECLARE_LUA_TABLE_BIND_SPECIALIZATION(type)                     \
   namespace AprilUtils {                                                \
     template<> type *LuaTable::convertTo<type *>(lua_State *L, int idx); \
@@ -42,6 +53,19 @@ extern "C" {
     template<> bool LuaTable::checkType<type *>(lua_State *L, int idx); \
   }
 
+/**
+ * @brief Macro for implementation of template specializations for
+ * AprilUtils::LuaTable class.
+ *
+ * @note This macro doesn't accepts arguments with namespaces.
+ *
+ * This macro is normally called in C++ bindings. Example of use:
+ * @code
+ * using Basics::MatrixFloat; // requires namespace using
+ * ...
+ * IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixFloat);
+ * @endcode
+ */
 #define IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(type)                   \
   namespace AprilUtils {                                                \
     template<> type *LuaTable::convertTo<type *>(lua_State *L, int idx) { \
@@ -65,13 +89,38 @@ namespace AprilUtils {
    * destructor. Template methods for put(), get(), and opt() operations are
    * defined. It is possible to specialize this methods in new C++ types by
    * specializing the static template methods: convertTo(), pushInto() and
-   * checkType().
+   * checkType(). Operator[] has been overloaded to allow array and
+   * dictionary access, as the following code.
+   * @code
+   * table["foo"] = bar1;
+   * table[1] = bar2;
+   * bar1 = table["foo"].get<BarType>();
+   * bar1 = table["foo"].opt<BarType>(DefaultFooValue);
+   * bar2 = table[1].opt<BarType>(DefaultFooValue);
+   * @endcode
    *
    * @note Keys can be strings and or integers.
+   *
+   * @note Static template methods convertTo(), pushInto() and checkType() can
+   * be used in C++ code to operate with Lua end.
+   *
+   * @see IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION and
+   * DECLARE_LUA_TABLE_BIND_SPECIALIZATION macros.
    */
   class LuaTable {
     
-    /// To implement left hand side operator[] in LuaTable class
+    /**
+     * @brief Implements a helper for left hand side operator[] of LuaTable
+     * class.
+     *
+     * This helper allow to use LuaTable in the following way:
+     *
+     * @code
+     * table["foo"] = bar;
+     * bar = table["foo"].get<BarType>();
+     * bar = table["foo"].opt<BarType>(DefaultFooValue);
+     * @endcode
+     */
     class LHSAccessorByString {
     public:
       LHSAccessorByString(LuaTable *table, const char * const name) :
@@ -95,7 +144,18 @@ namespace AprilUtils {
       const char * const name;
     };
 
-    /// To implement left hand side operator[] in LuaTable class
+    /**
+     * @brief Implements a helper for left hand side operator[] of LuaTable
+     * class.
+     *
+     * This helper allow to use LuaTable in the following way:
+     *
+     * @code
+     * table[1] = bar;
+     * bar = table[1].get<BarType>();
+     * bar = table[1].opt<BarType>(DefaultValue);
+     * @endcode
+     */
     class LHSAccessorByInteger {
     public:
       LHSAccessorByInteger(LuaTable *table, int n) :
@@ -119,7 +179,17 @@ namespace AprilUtils {
       const int n;
     };
 
-    /// To implement right hand side operator[] in LuaTable class
+    /**
+     * @brief Implements a helper for right hand side operator[] of LuaTable
+     * class.
+     *
+     * This helper allow to use LuaTable in the following way:
+     *
+     * @code
+     * bar = table["foo"].get<BarType>();
+     * bar = table["foo"].opt<BarType>(DefaultFooValue);
+     * @endcode
+     */
     class RHSAccessorByString {
     public:
       RHSAccessorByString(const LuaTable *table, const char * const name) :
@@ -138,8 +208,18 @@ namespace AprilUtils {
       const LuaTable *table;
       const char * const name;
     };
-    
-    /// To implement right hand side operator[] in LuaTable class
+
+    /**
+     * @brief Implements a helper for right hand side operator[] of LuaTable
+     * class.
+     *
+     * This helper allow to use LuaTable in the following way:
+     *
+     * @code
+     * bar = table[1].get<BarType>();
+     * bar = table[1].opt<BarType>(DefaultFooValue);
+     * @endcode
+     */
     class RHSAccessorByInteger {
     public:
       RHSAccessorByInteger(const LuaTable *table, int n) :
@@ -182,26 +262,32 @@ namespace AprilUtils {
     /// Copy operator.
     LuaTable &operator=(const LuaTable &other);
 
+    /// See RHSAccessorByString
     RHSAccessorByString operator[](const char *name) const {
       return RHSAccessorByString(this, name);
     }
-    
+
+    /// See RHSAccessorByString
     RHSAccessorByString operator[](const string &name) const {
       return RHSAccessorByString(this, name.c_str());
     }
 
+    /// See RHSAccessorByInteger
     RHSAccessorByInteger operator[](int n) const {
       return RHSAccessorByInteger(this, n);
     }
 
+    /// See LHSAccessorByString
     LHSAccessorByString operator[](const char *name) {
       return LHSAccessorByString(this, name);
     }
-    
+
+    /// See LHSAccessorByString
     LHSAccessorByString operator[](const string &name) {
       return LHSAccessorByString(this, name.c_str());
     }
-
+    
+    /// See LHSAccessorByInteger
     LHSAccessorByInteger operator[](int n) {
       return LHSAccessorByInteger(this, n);
     }
@@ -484,7 +570,7 @@ namespace AprilUtils {
   
   // Basic data types specializations.
   template<> uint32_t LuaTable::convertTo<uint32_t>(lua_State *L, int idx);
-  template<> int LuaTable::convertTo<int>(lua_State *L, int idx);
+  template<> int32_t LuaTable::convertTo<int32_t>(lua_State *L, int idx);
   template<> float LuaTable::convertTo<float>(lua_State *L, int idx);
   template<> double LuaTable::convertTo<double>(lua_State *L, int idx);
   template<> bool LuaTable::convertTo<bool>(lua_State *L, int idx);
@@ -493,7 +579,7 @@ namespace AprilUtils {
   template<> LuaTable LuaTable::convertTo<LuaTable>(lua_State *L, int idx);
   
   template<> void LuaTable::pushInto<uint32_t>(lua_State *L, uint32_t value);
-  template<> void LuaTable::pushInto<int>(lua_State *L, int value);
+  template<> void LuaTable::pushInto<int32_t>(lua_State *L, int32_t value);
   template<> void LuaTable::pushInto<float>(lua_State *L, float value);
   template<> void LuaTable::pushInto<double>(lua_State *L, double value);
   template<> void LuaTable::pushInto<bool>(lua_State *L, bool value);
@@ -504,7 +590,7 @@ namespace AprilUtils {
   template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value);
 
   template<> bool LuaTable::checkType<uint32_t>(lua_State *L, int idx);
-  template<> bool LuaTable::checkType<int>(lua_State *L, int idx);
+  template<> bool LuaTable::checkType<int32_t>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<float>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<double>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<bool>(lua_State *L, int idx);

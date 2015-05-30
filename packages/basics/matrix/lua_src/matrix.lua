@@ -1,6 +1,3 @@
--- capture comparisong of cpp reference
-local same_cpp_ref = matrix.meta_instance.__eq
---
 class.extend(matrix, "t", matrix.."transpose")
 
 -- serialization
@@ -96,7 +93,7 @@ matrix.ext.broadcast =
         slice = sw:get_matrix(slice)
         local slice = slice:squeeze()
         local out   = func(slice, b, ...)
-        if not same_cpp_ref(out, slice) then
+        if not rawequal(out, slice) then
           slice:copy(out)
         end
         sw:next()
@@ -131,9 +128,9 @@ matrix.ext.broadcast =
       end
     end
     local result = result or matrix(table.unpack(shape))
-    if same_cpp_ref(result, b) then
+    if rawequal(result, b) then
       private_broadcast(result, a, a_dim, func, ...)
-    elseif same_cpp_ref(result, a) then
+    elseif rawequal(result, a) then
       private_broadcast(result, b, b_dim, func, ...)
     else
       private_broadcast(result, a, a_dim, result.copy)
