@@ -243,6 +243,19 @@ namespace AprilUtils {
     
     /// Constructor for a new LuaTable in the registry.
     LuaTable(lua_State *L = Base::getGlobalLuaState());
+
+    /// Constructor for a new LuaTable in the registry containing C array data.
+    template<typename T>
+    LuaTable(const T *vec, size_t len,
+             lua_State *L = Base::getGlobalLuaState()) {
+      lua_newtable(L);
+      init(L, -1);
+      for (unsigned int i=0; i<len; ++i) {
+        pushInto<T>(L, vec[i]);
+        lua_rawseti(L, -2, i+1);
+      }
+      lua_pop(L, 1);
+    }
     
     /// Constructor for a LuaTable in a given Lua stack position.
     LuaTable(lua_State *L, int n);

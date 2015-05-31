@@ -118,9 +118,12 @@ namespace Basics {
   template<typename T>
   class MatrixBindings {
   public:
-
+#define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
+#define BEGIN_CLASS_METHOD(name) static int name(lua_State *L)
+    
 #define FUNCTION_NAME "constructor"
-    static int constructor(lua_State *L) {
+    BEGIN_CLASS_METHOD(constructor)
+    {
       int i,argn;
       argn = lua_gettop(L); // number of arguments
       LUABIND_CHECK_ARGN(>=, 1);
@@ -187,7 +190,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "rewrap"
-    static int rewrap(lua_State *L, Matrix<T> *obj) {
+    BEGIN_METHOD(rewrap)
+    {
       LUABIND_CHECK_ARGN(>=, 1);
       int ndims;
       ndims = lua_gettop(L); // number of dimensions
@@ -212,7 +216,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "get_reference_string"
-    static int get_reference_string(lua_State *L, Matrix<T> *obj) {
+    BEGIN_METHOD(get_reference_string)
+    {
       char buff[128];
       sprintf(buff,"%p data= %p",
               (void*)obj,
@@ -223,7 +228,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "copy_from_table"
-    static int copy_from_table(lua_State *L, Matrix<T> *obj) {
+    BEGIN_METHOD(copy_from_table)
+    {
       LUABIND_CHECK_ARGN(==, 1);
       LUABIND_CHECK_PARAMETER(1, table);
       int veclen;
@@ -247,7 +253,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "get"
-    static int get(lua_State *L, Matrix<T> *obj) {
+    BEGIN_METHOD(get)
+    {
       int argn = lua_gettop(L); // number of arguments
       if (argn != obj->getNumDim())
         LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
@@ -293,7 +300,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "set"
-    static int set(lua_State *L, Matrix<T> *obj) {
+    BEGIN_METHOD(set)
+    {
       int argn = lua_gettop(L); // number of arguments
       if (argn != obj->getNumDim()+1)
         LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+1);
@@ -340,9 +348,65 @@ namespace Basics {
       return 1;
     }
 #undef FUNCTION_NAME
-    
+
+#define FUNCTION_NAME "raw_get"
+    BEGIN_METHOD(raw_get)
+    {
+      int raw_pos;
+      LUABIND_GET_PARAMETER(1, int, raw_pos);
+      AprilUtils::LuaTable::pushInto(L, (*obj)[raw_pos]);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "raw_set"
+    BEGIN_METHOD(raw_set)
+    {
+      int raw_pos;
+      LUABIND_GET_PARAMETER(1, int, raw_pos);
+      T value = AprilUtils::LuaTable::convertTo<T>(L, 2);      
+      (*obj)[raw_pos] = value;
+      AprilUtils::LuaTable::pushInto(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "set_use_cuda"
+    BEGIN_METHOD(set_use_cuda)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      LUABIND_CHECK_PARAMETER(1, bool);
+      bool v;
+      LUABIND_GET_PARAMETER(1,bool, v);
+      obj->setUseCuda(v);
+      AprilUtils::LuaTable::pushInto(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "dim"
+    BEGIN_METHOD(dim)
+    {
+      LUABIND_CHECK_ARGN(>=, 0);
+      LUABIND_CHECK_ARGN(<=, 1);
+      int pos;
+      const int *d=obj->getDimPtr();
+      LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+      if (pos < 1) {
+        AprilUtils::LuaTable vec(d, obj->getNumDim(), L);
+        vec.pushTable(L);
+        return 1;
+      }
+      else {
+        lua_pushint(L, d[pos-1]);
+        return 1;
+      }
+    }
+#undef FUNCTION_NAME
+
 #define FUNCTION_NAME "deserialize"
-    static int deserialize(lua_State *L) {
+    BEGIN_CLASS_METHOD(deserialize)
+    {
       check_table_fields(L, 1, "stride", "sizes", "data", "offset", 
                          (const char *)0);
       int offset;
@@ -382,9 +446,10 @@ namespace Basics {
       return 1;
     }
 #undef FUNCTION_NAME
-    
+
 #define FUNCTION_NAME "read"
-    static int read(lua_State *L) {
+    BEGIN_CLASS_METHOD(read)
+    {
       AprilIO::StreamInterface *stream =
         lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
       if (stream == 0) LUABIND_ERROR("Needs a stream as first argument");
@@ -401,6 +466,8 @@ namespace Basics {
     }
 #undef FUNCTION_NAME
   };
+#undef BEGIN_METHOD
+#undef BEGIN_CLASS_METHOD
 }
 //BIND_END
 
@@ -566,20 +633,13 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat raw_get
 {
-  int raw_pos;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_RETURN(float, (*obj)[raw_pos]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::raw_get(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat raw_set
 {
-  int raw_pos;
-  float value;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_GET_PARAMETER(2, float, value);
-  (*obj)[raw_pos] = value;
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::raw_set(L,obj));
 }
 //BIND_END
 
@@ -591,27 +651,13 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat set_use_cuda
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, bool);
-  bool v;
-  LUABIND_GET_PARAMETER(1,bool, v);
-  obj->setUseCuda(v);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::set_use_cuda(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat dim
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *d=obj->getDimPtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, d[pos-1]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::dim(L,obj));
 }
 //BIND_END
 
