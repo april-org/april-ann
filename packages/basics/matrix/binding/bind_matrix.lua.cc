@@ -395,15 +395,114 @@ namespace Basics {
       if (pos < 1) {
         AprilUtils::LuaTable vec(d, obj->getNumDim(), L);
         vec.pushTable(L);
-        return 1;
       }
       else {
         lua_pushint(L, d[pos-1]);
-        return 1;
       }
+      return 1;
     }
 #undef FUNCTION_NAME
 
+#define FUNCTION_NAME "stride"
+    BEGIN_METHOD(stride)
+    {
+      LUABIND_CHECK_ARGN(>=, 0);
+      LUABIND_CHECK_ARGN(<=, 1);
+      int pos;
+      const int *s=obj->getStridePtr();
+      LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+      if (pos < 1) {
+        AprilUtils::LuaTable vec(s, obj->getNumDim(), L);
+        vec.pushTable(L);
+      }
+      else {
+        lua_pushint(L, s[pos-1]);
+      }
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "slice"
+    BEGIN_METHOD(slice)
+    {
+      LUABIND_CHECK_ARGN(>=,2);
+      LUABIND_CHECK_ARGN(<=,3);
+      LUABIND_CHECK_PARAMETER(1, table);
+      LUABIND_CHECK_PARAMETER(2, table);
+      AprilUtils::UniquePtr<int []> coords, sizes;
+      int coords_len, sizes_len;
+      bool clone;
+      LUABIND_TABLE_GETN(1, coords_len);
+      LUABIND_TABLE_GETN(2, sizes_len);
+      if (coords_len != sizes_len || coords_len != obj->getNumDim())
+        LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
+                        "found %d and %d\n",
+                        obj->getNumDim(), coords_len, sizes_len);
+      coords = new int[coords_len];
+      sizes  = new int[sizes_len];
+      LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
+      LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
+      LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
+      for (int i=0; i<sizes_len; ++i) {
+        if (coords[i] < 0 || sizes[i] < 1 ||
+            sizes[i]+coords[i] > obj->getDimSize(i)) {
+          LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
+        }
+      }
+      Matrix<T> *obj2 = new Matrix<T>(obj, coords.get(), sizes.get(), clone);
+      AprilUtils::LuaTable::pushInto(L, obj2);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "select"
+    BEGIN_METHOD(select)
+    {
+      LUABIND_CHECK_ARGN(>=,2);
+      LUABIND_CHECK_ARGN(<=,3);
+      LUABIND_CHECK_PARAMETER(1, int);
+      LUABIND_CHECK_PARAMETER(2, int);
+      int dim, index;
+      Matrix<T> *dest = 0;
+      LUABIND_GET_PARAMETER(1, int, dim);
+      LUABIND_GET_PARAMETER(2, int, index);
+      int n = lua_gettop(L);
+      if (n == 3) dest = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, 3);
+      Matrix<T> *obj2 = obj->select(dim-1, index-1, dest);
+      AprilUtils::LuaTable::pushInto(L, obj2);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "as"
+    BEGIN_CLASS_METHOD(as)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      Matrix<T> *m;
+      m = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, 1);
+      AprilUtils::LuaTable::pushInto(L, m->cloneOnlyDims());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "transpose"
+    BEGIN_METHOD(transpose)
+    {
+      int argn;
+      argn = lua_gettop(L);
+      if (argn == 0) {
+        AprilUtils::LuaTable::pushInto(L, obj->transpose());
+      }
+      else {
+        int d1,d2;
+        LUABIND_GET_PARAMETER(1, int, d1);
+        LUABIND_GET_PARAMETER(2, int, d2);
+        AprilUtils::LuaTable::pushInto(L, obj->transpose(d1-1, d2-1));
+      }
+      return 1;
+    }
+#undef FUNCTION_NAME
+    
 #define FUNCTION_NAME "deserialize"
     BEGIN_CLASS_METHOD(deserialize)
     {
@@ -669,61 +768,19 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat stride
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *s=obj->getStridePtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, s, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, s[pos-1]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::stride(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat slice
 {
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, table);
-  LUABIND_CHECK_PARAMETER(2, table);
-  AprilUtils::UniquePtr<int []> coords, sizes;
-  int coords_len, sizes_len;
-  bool clone;
-  LUABIND_TABLE_GETN(1, coords_len);
-  LUABIND_TABLE_GETN(2, sizes_len);
-  if (coords_len != sizes_len || coords_len != obj->getNumDim())
-    LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
-		    "found %d and %d\n",
-		    obj->getNumDim(), coords_len, sizes_len);
-  coords = new int[coords_len];
-  sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
-  LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
-  for (int i=0; i<sizes_len; ++i)
-    if (coords[i] < 0 || sizes[i] < 1 ||
-	sizes[i]+coords[i] > obj->getDimSize(i))
-      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
-  MatrixFloat *obj2 = new MatrixFloat(obj, coords.get(), sizes.get(), clone);
-  LUABIND_RETURN(MatrixFloat, obj2);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::slice(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat select
 {
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(2, int);
-  int dim, index;
-  MatrixFloat *dest;
-  LUABIND_GET_PARAMETER(1, int, dim);
-  LUABIND_GET_PARAMETER(2, int, index);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, dest, 0);
-  MatrixFloat *obj2 = obj->select(dim-1, index-1, dest);
-  LUABIND_RETURN(MatrixFloat, obj2);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::select(L,obj));
 }
 //BIND_END
 
@@ -733,34 +790,20 @@ namespace Basics {
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  MatrixFloat *obj2 = obj->clone();
-  LUABIND_RETURN(MatrixFloat,obj2);
+  LUABIND_RETURN(MatrixFloat, obj->clone());
 }
 //BIND_END
 
 // returns a matrix with size as the given matrix, but without data copy
 //BIND_CLASS_METHOD MatrixFloat as
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *m;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-  LUABIND_RETURN(MatrixFloat,m->cloneOnlyDims());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::as(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat transpose
 {
-  int argn;
-  argn = lua_gettop(L);
-  if (argn == 0) {
-    LUABIND_RETURN(MatrixFloat, obj->transpose());
-  }
-  else {
-    int d1,d2;
-    LUABIND_GET_PARAMETER(1, int, d1);
-    LUABIND_GET_PARAMETER(2, int, d2);
-    LUABIND_RETURN(MatrixFloat, obj->transpose(d1-1, d2-1));
-  }
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::transpose(L,obj));
 }
 //BIND_END
 
