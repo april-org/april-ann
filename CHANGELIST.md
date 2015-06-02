@@ -45,6 +45,8 @@ Master branch release
 
 ### Bugs removed
 
+- FloatRGB bug solved on equal (+=, -=, ...) operators. This bug affected 
+  ImageRGB operations such as resize.
 - Solved problems when chaining methods in Lua, some objects end to be garbage
   collected.
 - Improved support of strings in auto-completion (rlcompleter package).
