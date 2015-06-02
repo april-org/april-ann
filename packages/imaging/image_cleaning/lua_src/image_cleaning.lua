@@ -311,6 +311,11 @@ function image.image_cleaning.getParametersFromString(param_str, old)
         params.horizontal = tonumber(horizontal)
     end
 
+    s = string.match(param_str, "s_(%d+)")
+    if s then
+        params.scale = tonumber(s)
+    end
+
     params.old = old
     --[[for i, v in pairs(params) do
         
