@@ -797,7 +797,7 @@ namespace Basics {
 // returns a matrix with size as the given matrix, but without data copy
 //BIND_CLASS_METHOD MatrixFloat as
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::as(L,obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::as(L));
 }
 //BIND_END
 
