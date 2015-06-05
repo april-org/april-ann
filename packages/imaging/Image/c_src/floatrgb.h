@@ -52,15 +52,15 @@ namespace Imaging {
   FloatRGB operator * (float x, FloatRGB y);
   FloatRGB operator / (float x, FloatRGB y);
 
-  FloatRGB operator += (FloatRGB x, FloatRGB y);
-  FloatRGB operator -= (FloatRGB x, FloatRGB y);
-  FloatRGB operator *= (FloatRGB x, FloatRGB y);
-  FloatRGB operator /= (FloatRGB x, FloatRGB y);
+  FloatRGB & operator += (FloatRGB &x, FloatRGB y);
+  FloatRGB & operator -= (FloatRGB &x, FloatRGB y);
+  FloatRGB & operator *= (FloatRGB &x, FloatRGB y);
+  FloatRGB & operator /= (FloatRGB &x, FloatRGB y);
 
-  FloatRGB operator += (FloatRGB x, float y);
-  FloatRGB operator -= (FloatRGB x, float y);
-  FloatRGB operator *= (FloatRGB x, float y);
-  FloatRGB operator /= (FloatRGB x, float y);
+  FloatRGB & operator += (FloatRGB &x, float y);
+  FloatRGB & operator -= (FloatRGB &x, float y);
+  FloatRGB & operator *= (FloatRGB &x, float y);
+  FloatRGB & operator /= (FloatRGB &x, float y);
 
 } // namespace Imaging
 

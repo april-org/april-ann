@@ -83,44 +83,52 @@ namespace Imaging {
     return FloatRGB(x)/y;
   }
 
-  FloatRGB operator += (FloatRGB x, FloatRGB y)
+  FloatRGB & operator += (FloatRGB &x, FloatRGB y)
   {
-    return (x = x + y);
+    x = x + y;
+    return x;
   }
 
-  FloatRGB operator -= (FloatRGB x, FloatRGB y)
+  FloatRGB & operator -= (FloatRGB &x, FloatRGB y)
   {
-    return (x = x - y);
+    x = x - y;
+    return x;
   }
 
-  FloatRGB operator *= (FloatRGB x, FloatRGB y)
+  FloatRGB & operator *= (FloatRGB &x, FloatRGB y)
   {
-    return (x = x * y);
+    x = x * y;
+    return x;
   }
 
-  FloatRGB operator /= (FloatRGB x, FloatRGB y)
+  FloatRGB & operator /= (FloatRGB &x, FloatRGB y)
   {
-    return (x = x / y);
+    x = x / y;
+    return x;
   }
 
-  FloatRGB operator += (FloatRGB x, float y)
+  FloatRGB & operator += (FloatRGB &x, float y)
   {
-    return (x = x + y);
+    x = x + y;
+    return x;
   }
 
-  FloatRGB operator -= (FloatRGB x, float y)
+  FloatRGB & operator -= (FloatRGB &x, float y)
   {
-    return (x = x - y);
+    x = x - y;
+    return x;
   }
 
-  FloatRGB operator *= (FloatRGB x, float y)
+  FloatRGB & operator *= (FloatRGB &x, float y)
   {
-    return (x = x * y);
+    x = x * y;
+    return x;
   }
 
-  FloatRGB operator /= (FloatRGB x, float y)
+  FloatRGB & operator /= (FloatRGB &x, float y)
   {
-    return (x = x / y);
+    x = x / y;
+    return x;
   }
 
 } // namespace Imaging
