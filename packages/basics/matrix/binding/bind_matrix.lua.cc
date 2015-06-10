@@ -564,6 +564,88 @@ namespace Basics {
       return 1;
     }
 #undef FUNCTION_NAME
+
+#define FUNCTION_NAME "fromMMap"
+    BEGIN_CLASS_METHOD(fromMMap)
+    {
+      LUABIND_CHECK_ARGN(>=, 1);
+      LUABIND_CHECK_ARGN(<=, 3);
+      LUABIND_CHECK_PARAMETER(1, string);
+      const char *filename;
+      bool write, shared;
+      LUABIND_GET_PARAMETER(1,string,filename);
+      LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
+      LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
+      AprilUtils::SharedPtr<AprilUtils::MMappedDataReader> mmapped_data;
+      mmapped_data = new AprilUtils::MMappedDataReader(filename,write,shared);
+      Matrix<T> *obj = Matrix<T>::fromMMappedDataReader(mmapped_data.get());
+      AprilUtils::LuaTable::pushInto<Matrix<T>*>(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "toMMap"
+    BEGIN_METHOD(toMMap)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      const char *filename;
+      LUABIND_GET_PARAMETER(1, string, filename);
+      AprilUtils::SharedPtr<AprilUtils::MMappedDataWriter> mmapped_data;
+      mmapped_data = new AprilUtils::MMappedDataWriter(filename);
+      obj->toMMappedDataWriter(mmapped_data.get());
+      return 0;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "map"
+    BEGIN_METHOD(map)
+    {
+      int argn;
+      int N;
+      argn = lua_gettop(L); // number of arguments
+      N = argn-1;
+      AprilUtils::UniquePtr<Matrix<T>* []> v;
+      AprilUtils::UniquePtr<typename Matrix<T>::const_iterator []> list_it;
+      if (N > 0) {
+        v = new Matrix<T>*[N];
+        list_it = new typename Matrix<T>::const_iterator[N];
+      }
+      for (int i=0; i<N; ++i) {
+        if (!AprilUtils::LuaTable::checkType<Matrix<T>*>(L, i+1)) {
+          LUABIND_FERROR1("Expected a matrix at position: ", i+1);
+        }
+        v[i] = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, i+1);
+        if (!v[i]->sameDim(obj)) {
+          LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+        }
+        list_it[i] = v[i]->begin();
+      }
+      LUABIND_CHECK_PARAMETER(argn, function);
+      for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it) {
+        // copy the Lua function, lua_call will pop this copy
+        lua_pushvalue(L, argn);
+        // push the self matrix value
+        AprilUtils::LuaTable::pushInto(L, *it);
+        // push the value of the rest of given matrices
+        for (int j=0; j<N; ++j) {
+          AprilUtils::LuaTable::pushInto(L, *list_it[j]);
+          ++list_it[j];
+        }
+        // CALL
+        lua_call(L, N+1, 1);
+        // pop the result, a number
+        if (!lua_isnil(L, -1)) {
+          if (!AprilUtils::LuaTable::checkType<T>(L, -1)) {
+            LUABIND_ERROR("Incorrect returned value type");
+          }
+          *it = AprilUtils::LuaTable::convertTo<T>(L, -1);
+        }
+        lua_pop(L, 1);
+      }
+      AprilUtils::LuaTable::pushInto(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
   };
 #undef BEGIN_METHOD
 #undef BEGIN_CLASS_METHOD
@@ -827,62 +909,20 @@ namespace Basics {
   {
     LUABIND_CHECK_ARGN(==, 0);
     LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixFloat, float, *obj);
-    LUABIND_RETURN_FROM_STACK(-1);
+    LUABIND_INCREASE_NUM_RETURNS(1);
   }
 //BIND_END
 
 //BIND_METHOD MatrixFloat contiguous
 {
-  if (obj->getIsContiguous())
-    LUABIND_RETURN(MatrixFloat, obj);
-  else
-    LUABIND_RETURN(MatrixFloat, obj->clone());
+  if (obj->getIsContiguous()) LUABIND_RETURN(MatrixFloat, obj);
+  else LUABIND_RETURN(MatrixFloat, obj->clone());
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat map
 {
-  int argn;
-  int N;
-  argn = lua_gettop(L); // number of arguments
-  N = argn-1;
-  MatrixFloat **v = 0;
-  MatrixFloat::const_iterator *list_it = 0;
-  if (N > 0) {
-    v = new MatrixFloat*[N];
-    list_it = new MatrixFloat::const_iterator[N];
-  }
-  for (int i=0; i<N; ++i) {
-    LUABIND_CHECK_PARAMETER(i+1, MatrixFloat);
-    LUABIND_GET_PARAMETER(i+1, MatrixFloat, v[i]);
-    if (!v[i]->sameDim(obj))
-      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
-    list_it[i] = v[i]->begin();
-  }
-  LUABIND_CHECK_PARAMETER(argn, function);
-  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
-    // copy the Lua function, lua_call will pop this copy
-    lua_pushvalue(L, argn);
-    // push the self matrix value
-    lua_pushfloat(L, *it);
-    // push the value of the rest of given matrices
-    for (int j=0; j<N; ++j) {
-      lua_pushfloat(L, *list_it[j]);
-      ++list_it[j];
-    }
-    // CALL
-    lua_call(L, N+1, 1);
-    // pop the result, a number
-    if (!lua_isnil(L, -1)) {
-      if (!lua_isfloat(L, -1))
-	LUABIND_ERROR("Incorrect returned value type, expected NIL or FLOAT\n");
-      *it = lua_tofloat(L, -1);
-    }
-    lua_pop(L, 1);
-  }
-  delete[] v;
-  delete[] list_it;
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::map(L, obj));
 }
 //BIND_END
 
@@ -1961,33 +2001,13 @@ namespace Basics {
 
 //BIND_CLASS_METHOD MatrixFloat fromMMap
 {
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 3);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  bool write, shared;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
-  LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
-  AprilUtils::MMappedDataReader *mmapped_data;
-  mmapped_data = new AprilUtils::MMappedDataReader(filename,write,shared);
-  IncRef(mmapped_data);
-  MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
-  DecRef(mmapped_data);
-  LUABIND_RETURN(MatrixFloat,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::fromMMap(L));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat toMMap
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  AprilUtils::MMappedDataWriter *mmapped_data;
-  mmapped_data = new AprilUtils::MMappedDataWriter(filename);
-  IncRef(mmapped_data);
-  obj->toMMappedDataWriter(mmapped_data);
-  DecRef(mmapped_data);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::toMMap(L, obj));
 }
 //BIND_END
 
