@@ -827,10 +827,22 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", (const char *)0);
+    check_table_fields(L, 1, "name", "components", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new StackANNComponent(name);
+  if (argn == 1) {
+    lua_getfield(L, 1, "components");
+    if (!lua_isnil(l, -1)) {
+      for (int i=1; i<luaL_len(L, -1); ++i) {
+        lua_rawgeti(L, -1, i);
+        ANNComponent *c = lua_toANNComponent(L, -1);
+        obj->pushComponent(c);
+        lua_pop(L, 1);
+      }
+    }
+    lua_pop(L, 1);
+  }
   LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END

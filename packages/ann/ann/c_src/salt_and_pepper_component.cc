@@ -130,4 +130,19 @@ namespace ANN {
 		  zero, one, prob);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+
+  const char *SaltAndPepperANNComponent::luaCtorName() const {
+    return "ann.components.salt_and_pepper";
+  }
+  int SaltAndPepperANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"]   = name.c_str();
+    t["size"]   = input_size;
+    t["random"] = random;
+    t["zero"]   = zero;
+    t["one"]    = one;
+    t["prob"]   = prob;
+    t.pushTable(L);
+    return 1;
+  }
 }

@@ -156,4 +156,16 @@ namespace ANN {
       ERROR_EXIT1(257, "Unexpected matrix size [%s]\n", name.c_str());
     }
   }
+
+  const char *PReLUActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.prelu";
+  }
+  int PReLUActfANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    t["weights"] = weights_name.c_str();
+    t["size"] = size;
+    t["scalar"] = scalar ? "true" : "false";
+    t["matrix"] = weights.get();
+  }
 }

@@ -111,4 +111,20 @@ namespace ANN {
     }
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+
+  const char *TransposeANNComponent::luaCtorName() const {
+    return "ann.components.transpose";
+  }
+  int TransposeANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    if (!which.empty()) {
+      AprilUtils::LuaTable dims(L);
+      t["dims"] = dims;
+      dims[1] = which[0]+1;
+      dims[2] = which[1]+1;
+    }
+    t.pushTable(L);
+    return 1;
+  }
 }

@@ -33,6 +33,7 @@ extern "C" {
 #include "error_print.h"
 #include "mystring.h"
 #include "referenced.h"
+#include "smart_ptr.h"
 #include "unused_variable.h"
 
 /**
@@ -313,7 +314,7 @@ namespace AprilUtils {
     LuaTable &put(const string &name, T value) {
       return put<T>(name.c_str(), value);
     }
-
+    
     /// Checks if the field at the given key name is nil.
     bool checkNil(const string &name) const {
       return checkNil(name.c_str());
@@ -339,6 +340,12 @@ namespace AprilUtils {
       return opt<T>(name.c_str(), def_value);
     }
 
+    /// Puts a new value into the table, using the given key name.
+    template<typename K>
+    LuaTable &put(const char *name, AprilUtils::SharedPtr<K> value) {
+      return put<K>(name.c_str(), value.get());
+    }
+    
     /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, T value) {

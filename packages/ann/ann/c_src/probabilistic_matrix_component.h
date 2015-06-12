@@ -75,7 +75,8 @@ namespace ANN {
     ProbabilisticMatrixANNComponent(NormalizationSide side,
                                     const char *name=0, const char *weights_name=0,
                                     unsigned int input_size  = 0,
-                                    unsigned int output_size = 0);
+                                    unsigned int output_size = 0,
+                                    Basics::MatrixFloat *matrix = 0);
     virtual ~ProbabilisticMatrixANNComponent();
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
@@ -89,6 +90,9 @@ namespace ANN {
     Basics::MatrixFloat *getNormalizedWeights() {
       return normalized_weights_mat.get();
     }
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

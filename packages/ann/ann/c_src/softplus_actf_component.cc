@@ -59,4 +59,7 @@ namespace ANN {
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
+  const char *SoftplusActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.softplus";
+  }
 }

@@ -610,6 +610,15 @@ namespace ANN {
       UNUSED_VARIABLE(weight_grads);
     }
     
+    // default implementation
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilUtils::LuaTable t(L);
+      t["name"] = name.c_str();
+      if (!weights_name.empty()) t["weights"] = weights_name.c_str();
+      t.pushTable(L);
+      return 1;
+    }
+
   };
 } // namespace ANN
 
