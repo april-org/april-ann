@@ -643,6 +643,17 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
+//BIND_METHOD stopwatch ctor_name
+{
+  LUABIND_RETURN(string, "util.stopwatch");
+}
+//BIND_END
+
+//BIND_METHOD stopwatch ctor_params
+{
+}
+//BIND_END
+
 // FIXME: nanosleep puede volver antes, en tal caso para avisar a lua
 // se podría devolver el booleano que devuelve (y que estamos
 // ignorando) y el tiempo restante :P
