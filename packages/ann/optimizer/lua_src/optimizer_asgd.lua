@@ -101,7 +101,7 @@ function asgd_methods:clone()
 end
 
 function asgd_methods:ctor_name()
-  return "ann.optimizer.adagrad"
+  return "ann.optimizer.asgd"
 end
 function asgd_methods:ctor_params()
   return self.global_options,
