@@ -56,9 +56,7 @@ namespace ANN {
     return obj;
   }
 
-  char *LogLogisticActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.log_logistic{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *LogLogisticActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.log_logistic";
   }
 }

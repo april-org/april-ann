@@ -55,11 +55,14 @@ namespace ANN {
     return obj;
   }
 
-  char *LeakyReLUActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.leaky_relu{ name='%s', leak=%f }",
-                  name.c_str(), leak);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *LeakyReLUActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.leaky_relu";
   }
-
+  int LeakyReLUActfANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["leak"] = leak;
+    t.pushTable(L);
+    return 1;
+  }
 }

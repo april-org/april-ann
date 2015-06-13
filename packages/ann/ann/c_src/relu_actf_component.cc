@@ -53,12 +53,6 @@ namespace ANN {
     return obj;
   }
 
-  char *ReLUActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.relu{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   const char *ReLUActfANNComponent::luaCtorName() const {
     return "ann.components.actf.relu";
   }

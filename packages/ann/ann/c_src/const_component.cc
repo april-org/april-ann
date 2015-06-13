@@ -61,17 +61,14 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
   }
   
-  char *ConstANNComponent::toLuaString() {
-    AprilUtils::SharedPtr<AprilIO::CStringStream>
-      stream(new AprilIO::CStringStream());
-    char *component_str = component->toLuaString();
-    AprilUtils::string component_weights_str = component_weights.toLuaString();
-    stream->printf("ann.components.const{ name='%s', component=%s:build{ weights=%s } }",
-                   name.c_str(),
-		   component_str,
-                   component_weights_str.c_str());
-    stream->put("\0",1); // forces a \0 at the end of the buffer
-    delete[] component_str;
-    return stream->releaseString();
+  const char *ConstANNComponent::luaCtorName() const {
+    return "ann.components.const";
+  }
+  int ConstANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["component"] = component;
+    t.pushTable(L);
+    return 1;
   }
 }

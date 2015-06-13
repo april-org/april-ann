@@ -258,18 +258,6 @@ namespace Basics {
     pNext = &state[N-left];
   }
 
-  char *MTRand::toLuaString() const {
-    uint32_t randState[ SAVE ];
-    save( randState );
-    //
-    AprilUtils::buffer_list buffer;
-    buffer.printf("random():fromTable{");
-    for (unsigned int i=0; i<SAVE; ++i)
-      buffer.printf(" %u,", randState[i]);
-    buffer.printf(" }");
-    return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
-  }
-  
   const char *MTRand::luaCtorName() const {
     return "random():fromTable";
   }

@@ -54,8 +54,6 @@ namespace ANN {
     virtual ~PReLUActfANNComponent();
     virtual ANNComponent *clone();
 
-    virtual char *toLuaString();
-
     virtual void computeGradients(const char *weights_name,
                                   AprilUtils::LuaTable &weight_grads);
 

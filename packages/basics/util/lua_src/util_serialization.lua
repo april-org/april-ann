@@ -243,7 +243,11 @@ do
           local params_str = ""
           if params.n > 0 then
             local needs_unpack = true
-            if params.n == 1 then params = params[1] needs_unpack=false end
+            if params.n == 1 then
+              params = params[1] needs_unpack=false
+            else
+              params.n = nil
+            end
             params_str = transform(map, varname, params, destination)
             if needs_unpack then params_str = "table.unpack(%s)"%{params_str} end
           end
@@ -282,7 +286,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io.open(destination)
+        destination = io.open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -325,7 +329,7 @@ local deserialize =
       result = table.pack( loader(...) )
     elseif iscallable(from) then
       local f = load(from())
-      return f(...)
+      result = table.pack( f(...) )
     else
       assert(destination.read, "Needs a string or an open file")
       result = deserialize(destination:read("*a"))

@@ -33,7 +33,7 @@ namespace ANN {
    * @brief An abstract class that defines the basic interface that
    * the activation functions should fulfill.
    *
-   * This class implements all methods of ANNComponent but toLuaString(), and
+   * This class implements all methods of ANNComponent, and
    * declare two protected abstract methods: applyActivation() and
    * multiplyDerivatives().
    */
@@ -104,6 +104,8 @@ namespace ANN {
 		       AprilUtils::LuaTable &weights_dict,
 		       AprilUtils::LuaTable &components_dict);
 
+    // virtual const char *luaCtorName() const;
+    // virtual int exportParamsToLua(lua_State *L);
   };
 }
 

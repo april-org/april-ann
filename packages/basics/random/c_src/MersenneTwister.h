@@ -123,8 +123,7 @@ namespace Basics {
     // Saving and loading generator state
     void save( uint32_t* saveArray ) const;  // to array of size SAVE
     void load( uint32_t *const loadArray );  // from such array
-    char *toLuaString() const;
-
+    
     // friend std::ostream& operator<<( std::ostream& os, const MTRand& mtrand );
     // friend std::istream& operator>>( std::istream& is, MTRand& mtrand );
 

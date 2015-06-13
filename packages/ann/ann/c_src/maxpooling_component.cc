@@ -275,17 +275,21 @@ namespace ANN {
     return component;
   }
   
-  char *MaxPoolingANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.max_pooling{ name='%s', kernel={",
-		  name.c_str());
-    for (int i=0; i<input_num_dims; ++i)
-      buffer.printf("%d,", kernel_dims[i+1]);
-    buffer.printf("}, step={");
-    for (int i=0; i<input_num_dims; ++i)
-      buffer.printf("%d,", kernel_step[i+1]);
-    buffer.printf("} }");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *MaxPoolingANNComponent::luaCtorName() const {
+    return "ann.components.max_pooling";
+  }
+  
+  int MaxPoolingANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L), kernel(L), step(L);
+    t["name"]   = name;
+    t["kernel"] = kernel;
+    t["step"]   = step;
+    for (int i=1; i<=input_num_dims; ++i) {
+      kernel[i] = kernel_dims[i];
+      step[i]   = kernel_step[i];
+    }
+    t.pushTable(L);
+    return 1;
   }
   //////////////////////////////////////////////////////////////////////////
 }

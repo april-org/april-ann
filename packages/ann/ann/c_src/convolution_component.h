@@ -101,7 +101,8 @@ namespace ANN {
 			    const int *_kernel_dims,  // input_num_dims
 			    const int *_kernel_step,  // step
 			    int num_output_planes,      // hidden layer size
-			    const char *name=0, const char *weights_name=0);
+			    const char *name=0, const char *weights_name=0,
+                            Basics::MatrixFloat *matrix=0);
     virtual ~ConvolutionANNComponent();
     virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
 				      AprilUtils::vector<unsigned int> &output_size) {
@@ -118,13 +119,13 @@ namespace ANN {
                        AprilUtils::LuaTable &components_dict);
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
 
-    virtual char *toLuaString();
-    
     const int *getKernelShape(int &n) const {
       n = input_num_dims;
       return kernel_dims + 1;
     }
-    
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

@@ -118,17 +118,17 @@ namespace ANN {
     UNUSED_VARIABLE(components_dict);
   }
   
-  char *PCAWhiteningANNComponent::toLuaString() {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", false);
-    stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
-                   name.c_str());
-    U->write(stream.get(), options);
-    stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), options);
-    stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, takeN);
-    stream->put("\0",1); // forces a \0 at the end of the buffer
-    return stream->releaseString();
+  const char *PCAWhiteningANNComponent::luaCtorName() const {
+    return "ann.components.pca_whitening";
+  }
+  int PCAWhiteningANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    t["U"] = U;
+    t["S"] = S;
+    t["epsilon"] = epsilon;
+    t["takeN"] = takeN;
+    t.pushTable(L);
+    return 1;
   }
 }

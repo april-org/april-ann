@@ -284,16 +284,6 @@ namespace ANN {
     }
   }  
 
-  char *ProbabilisticMatrixANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.probabilistic_matrix{ side='%s',"
-                  "name='%s',weights='%s',input=%d,output=%d }",
-                  (side == LEFT) ? "left" : "right",
-		  getName().c_str(), getWeightsName().c_str(),
-		  getInputSize(), getOutputSize());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   const char *ProbabilisticMatrixANNComponent::luaCtorName() const {
     return "ann.components.probabilistic_matrix";
   }

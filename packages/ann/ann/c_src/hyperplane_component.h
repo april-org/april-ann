@@ -46,7 +46,9 @@ namespace ANN {
 			   const char *bias_weights_name,
 			   unsigned int input_size=0,
 			   unsigned int output_size=0,
-			   bool transpose_weights=false);
+			   bool transpose_weights=false,
+                           Basics::MatrixFloat *wmatrix=0,
+                           Basics::MatrixFloat *bmatrix=0);
     virtual ~HyperplaneANNComponent();
 
     virtual Basics::Token *getInput();
@@ -105,7 +107,8 @@ namespace ANN {
       bias->debugInfo();
     }
 
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

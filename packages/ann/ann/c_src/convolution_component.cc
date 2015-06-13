@@ -74,9 +74,10 @@ namespace ANN {
 						   const int *_kernel_step,
 						   int num_output_planes,
 						   const char *name,
-						   const char *weights_name) :
+						   const char *weights_name,
+                                                   MatrixFloat *matrix) :
     VirtualMatrixANNComponent(name, weights_name, 0, 0),
-    weights_matrix(0),
+    weights_matrix(matrix),
     number_input_windows(0),
     kernel_size(1),
     hidden_size(num_output_planes),
@@ -113,6 +114,7 @@ namespace ANN {
     input_window_rewrap[1]  = static_cast<int>(kernel_size);
     output_window_rewrap[0] = 0;
     output_window_rewrap[1] = static_cast<int>(hidden_size);
+    if (weights_matrix) IncRef(weights_matrix);
   }
   
   ConvolutionANNComponent::~ConvolutionANNComponent() {
@@ -418,18 +420,22 @@ namespace ANN {
     }
   }  
 
-  char *ConvolutionANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.convolution{ name='%s',weights='%s',"
-		  "n=%d, kernel={", name.c_str(), weights_name.c_str(),
-		  hidden_size);
-    for (int i=0; i<input_num_dims; ++i)
-      buffer.printf("%d,", kernel_dims[i+1]);
-    buffer.printf("}, step={");
-    for (int i=0; i<input_num_dims; ++i)
-      buffer.printf("%d,", kernel_step[i+1]);
-    buffer.printf("} }");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *ConvolutionANNComponent::luaCtorName() const {
+    return "ann.components.convolution";
+  }
+  int ConvolutionANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L), kernel(L), step(L);
+    t["name"] = name;
+    t["weights_name"] = weights_name;
+    t["n"] = hidden_size;
+    t["kernel"] = kernel;
+    t["step"] = step;
+    for (int i=1; i<=input_num_dims; ++i) {
+      kernel[i] = kernel_dims[i];
+      step[i]   = kernel_step[i];
+    }
+    t.pushTable(L);
+    return 1;
   }
   //////////////////////////////////////////////////////////////////////////
 }

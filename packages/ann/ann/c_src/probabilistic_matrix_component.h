@@ -85,8 +85,6 @@ namespace ANN {
 		       AprilUtils::LuaTable &components_dict);
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
-    virtual char *toLuaString();
-    
     Basics::MatrixFloat *getNormalizedWeights() {
       return normalized_weights_mat.get();
     }

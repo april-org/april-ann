@@ -343,7 +343,7 @@ namespace AprilUtils {
     /// Puts a new value into the table, using the given key name.
     template<typename K>
     LuaTable &put(const char *name, AprilUtils::SharedPtr<K> value) {
-      return put<K>(name.c_str(), value.get());
+      return put<K>(name, value.get());
     }
     
     /// Puts a new value into the table, using the given key name.
@@ -356,6 +356,12 @@ namespace AprilUtils {
       return *this;
     }
 
+    /// Puts a new value into the table, using the given key name.
+    template<typename K>
+    LuaTable &put(int n, AprilUtils::SharedPtr<K> value) {
+      return put<K>(n, value.get());
+    }
+    
     /// Puts a new value into the table, using the given key number.
     template<typename T>
     LuaTable &put(int n, T value) {
@@ -603,6 +609,7 @@ namespace AprilUtils {
   template<> void LuaTable::pushInto<float>(lua_State *L, float value);
   template<> void LuaTable::pushInto<double>(lua_State *L, double value);
   template<> void LuaTable::pushInto<bool>(lua_State *L, bool value);
+  template<> void LuaTable::pushInto<string>(lua_State *L, string value);
   template<> void LuaTable::pushInto<const string &>(lua_State *L,
                                                      const string &value);
   template<> void LuaTable::pushInto<const char *>(lua_State *L,

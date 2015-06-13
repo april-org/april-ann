@@ -36,9 +36,11 @@ namespace ANN {
   MulANNComponent::MulANNComponent(unsigned int size,
                                    bool scalar,
                                    const char *name,
-                                   const char *weights_name) :
+                                   const char *weights_name,
+                                   MatrixFloat *matrix) :
     VirtualMatrixANNComponent(name, weights_name, size, size),
-    scalar(scalar)
+    scalar(scalar),
+    mul_vector(matrix)
   {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("m");
@@ -198,11 +200,18 @@ namespace ANN {
     }
   }
 
-  char *MulANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.mul{ size=%d, scalar=%s, name='%s', weights='%s' }",
-		  input_size, (scalar) ? "true" : "false",
-                  name.c_str(), weights_name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *MulANNComponent::luaCtorName() const {
+    return "ann.components.mul";
+  }
+  
+  int MulANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["size"]    = input_size;
+    t["scalar"]  = scalar;
+    t["name"]    = name;
+    t["weights"] = weights_name;
+    t["matrix"]  = mul_vector;
+    t.pushTable(L);
+    return 1;
   }
 }

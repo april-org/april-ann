@@ -52,12 +52,6 @@ namespace ANN {
     return obj;
   }
 
-  char *SinActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.sin{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   const char *SinActfANNComponent::luaCtorName() const {
     return "ann.components.actf.sin";
   }

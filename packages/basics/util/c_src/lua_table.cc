@@ -188,9 +188,28 @@ namespace AprilUtils {
   }
 
   template<>
+  void LuaTable::pushInto<string>(lua_State *L, string value) {
+    size_t len = value.size();
+    if (len>0 && value.back() == '\0') {
+      april_assert(len-1 == strlen(value.c_str()));
+      lua_pushstring(L, value.c_str());
+    }
+    else {
+      lua_pushlstring(L, value.c_str(), len);
+    }
+  }
+  
+  template<>
   void LuaTable::pushInto<const string &>(lua_State *L,
                                           const string &value) {
-    lua_pushlstring(L, value.c_str(), value.size());
+    size_t len = value.size();
+    if (len>0 && value.back() == '\0') {
+      april_assert(len-1 == strlen(value.c_str()));
+      lua_pushstring(L, value.c_str());
+    }
+    else {
+      lua_pushlstring(L, value.c_str(), len);
+    }
   }
 
   template<>

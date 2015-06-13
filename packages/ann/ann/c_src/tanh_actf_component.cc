@@ -53,12 +53,6 @@ namespace ANN {
     return obj;
   }
 
-  char *TanhActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.tanh{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   const char *TanhActfANNComponent::luaCtorName() const {
     return "ann.components.actf.tanh";
   }

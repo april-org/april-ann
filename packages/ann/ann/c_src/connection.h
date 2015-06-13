@@ -77,8 +77,6 @@ namespace ANN {
 				      Basics::MatrixFloat *data,
 				      unsigned int first_weight_pos,
 				      unsigned int column_size);
-    
-    static char *toLuaString(Basics::MatrixFloat *weights);
   };
 }
 #endif

@@ -100,18 +100,6 @@ namespace ANN {
     return transpose_component;
   }
   
-  char *TransposeANNComponent::toLuaString() {
-    buffer_list buffer;
-    if (!which.empty()) {
-      buffer.printf("ann.components.transpose{ name='%s', dims={%d,%d} }",
-                    name.c_str(), which[0]+1, which[1]+1);
-    }
-    else {
-      buffer.printf("ann.components.transpose{ name='%s' }", name.c_str());
-    }
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   const char *TransposeANNComponent::luaCtorName() const {
     return "ann.components.transpose";
   }

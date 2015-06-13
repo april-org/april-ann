@@ -53,9 +53,19 @@ end)
 ---------------------------------------------------------------------------
 
 local function to_lua_string(self, ...)
-  return "%s(table.unpack(%s))"% {
-    self:ctor_name(),
-    table.tostring(table.pack(self:ctor_params()), ...) }
+  local params = table.pack(self:ctor_params())
+  local params_str = ""
+  if params.n > 0 then
+    local needs_unpack = true
+    if params.n == 1 then
+      params = params[1] needs_unpack=false
+    else
+      params.n = nil
+    end
+    params_str = table.tostring(params, ...)
+    if needs_unpack then params_str = "table.unpack(%s)"%{params_str} end
+  end
+  return "%s(%s)"% { self:ctor_name(), params_str }
 end
 
 class.extend(aprilio.serializable, "to_lua_string", to_lua_string)

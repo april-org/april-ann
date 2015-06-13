@@ -184,10 +184,4 @@ namespace ANN {
     }
   }
 
-  char *BiasANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.bias{ size=%d, name='%s', weights='%s' }",
-		  input_size, name.c_str(), weights_name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
 }

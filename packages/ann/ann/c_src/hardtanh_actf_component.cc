@@ -53,11 +53,16 @@ namespace ANN {
     return obj;
   }
   
-  char *HardtanhActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.hardtanh{ name='%s', inf=%g, sup=%g }",
-		  name.c_str(), inf, sup);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *HardtanhActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.hardtanh";
   }
-
+  
+  int HardtanhActfANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["inf"]  = inf;
+    t["sup"]  = sup;
+    t.pushTable(L);
+    return 1;
+  }
 }

@@ -62,7 +62,8 @@ namespace ANN {
     ConvolutionBiasANNComponent(int input_num_dims,
 				unsigned int num_output_planes,   // hidden layer size
 				const char *name=0,
-				const char *bias_name=0);
+				const char *bias_name=0,
+                                Basics::MatrixFloat *matrix=0);
     virtual ~ConvolutionBiasANNComponent();
     virtual void precomputeOutputSize(const AprilUtils::vector<unsigned int> &input_size,
 				      AprilUtils::vector<unsigned int> &output_size) {
@@ -74,8 +75,9 @@ namespace ANN {
 		       AprilUtils::LuaTable &weights_dict,
 		       AprilUtils::LuaTable &components_dict);
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
-    virtual char *toLuaString();
-
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 
