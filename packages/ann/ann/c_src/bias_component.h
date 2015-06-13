@@ -54,18 +54,8 @@ namespace ANN {
 		       AprilUtils::LuaTable &components_dict);
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
-    virtual const char *luaCtorName() const {
-      return "ann.components.bias";
-    }
-    virtual int exportParamsToLua(lua_State *L) {
-      AprilUtils::LuaTable t(L);
-      t["name"]    = name;
-      t["weights"] = weights_name;
-      t["size"]    = getOutputSize();
-      t["matrix"]  = bias_vector;
-      t.pushTable(L);
-      return 1;
-    }
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
   
 }

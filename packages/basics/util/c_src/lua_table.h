@@ -341,12 +341,6 @@ namespace AprilUtils {
     }
 
     /// Puts a new value into the table, using the given key name.
-    template<typename K>
-    LuaTable &put(const char *name, AprilUtils::SharedPtr<K> value) {
-      return put<K>(name, value.get());
-    }
-    
-    /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, T value) {
       if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
@@ -354,12 +348,6 @@ namespace AprilUtils {
       lua_setfield(L, -2, name);
       lua_pop(L, 1);
       return *this;
-    }
-
-    /// Puts a new value into the table, using the given key name.
-    template<typename K>
-    LuaTable &put(int n, AprilUtils::SharedPtr<K> value) {
-      return put<K>(n, value.get());
     }
     
     /// Puts a new value into the table, using the given key number.

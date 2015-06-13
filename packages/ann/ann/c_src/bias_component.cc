@@ -184,4 +184,16 @@ namespace ANN {
     }
   }
 
+  const char *BiasANNComponent::luaCtorName() const {
+    return "ann.components.bias";
+  }
+  int BiasANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"]    = name;
+    t["weights"] = weights_name;
+    t["size"]    = getOutputSize();
+    t["matrix"]  = bias_vector.get();
+    t.pushTable(L);
+    return 1;
+  }
 }

@@ -210,7 +210,7 @@ namespace ANN {
     t["scalar"]  = scalar;
     t["name"]    = name;
     t["weights"] = weights_name;
-    t["matrix"]  = mul_vector;
+    t["matrix"]  = mul_vector.get();
     t.pushTable(L);
     return 1;
   }
