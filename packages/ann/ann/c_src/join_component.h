@@ -133,7 +133,8 @@ namespace ANN {
 	components[i]->debugInfo();
     }
 
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

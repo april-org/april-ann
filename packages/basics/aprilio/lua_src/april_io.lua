@@ -52,6 +52,41 @@ end)
 
 ---------------------------------------------------------------------------
 
+local function to_lua_string(self, ...)
+  local params = table.pack(self:ctor_params())
+  local params_str = ""
+  if params.n > 0 then
+    local needs_unpack = true
+    if params.n == 1 then
+      params = params[1] needs_unpack=false
+    else
+      params.n = nil
+    end
+    params_str = table.tostring(params, ...)
+    if needs_unpack then params_str = "table.unpack(%s)"%{params_str} end
+  end
+  return "%s(%s)"% { self:ctor_name(), params_str }
+end
+
+class.extend(aprilio.serializable, "to_lua_string", to_lua_string)
+
+local lua_serializable,
+lua_serializable_methods = class("aprilio.lua_serializable")
+-- global declaration
+aprilio.lua_serializable = lua_serializable
+
+lua_serializable_methods.to_lua_string = to_lua_string
+lua_serializable_methods.ctor_name = function()
+  error("Serialization not implemented")
+end
+lua_serializable_methods.ctor_params = function()
+  error("Serialization not implemented")
+end
+lua_serializable_methods.save = util.serialize
+lua_serializable.load         = util.deserialize
+
+---------------------------------------------------------------------------
+
 april_set_doc(aprilio.serializable.."write", {
 		class = "method",
 		summary = "It allows to store an object into a stream.",

@@ -43,7 +43,14 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new ZeroOneLossFunction(this);
     }
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const {
+      return "ann.loss.zero_one";
+    }
+    virtual int exportParamsToLua(lua_State *L) {
+      lua_pushinteger(L, size);
+      lua_pushnumber(L, TH);
+      return 2;
+    }
   };
 }
 

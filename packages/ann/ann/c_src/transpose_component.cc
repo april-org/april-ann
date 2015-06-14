@@ -100,15 +100,19 @@ namespace ANN {
     return transpose_component;
   }
   
-  char *TransposeANNComponent::toLuaString() {
-    buffer_list buffer;
+  const char *TransposeANNComponent::luaCtorName() const {
+    return "ann.components.transpose";
+  }
+  int TransposeANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
     if (!which.empty()) {
-      buffer.printf("ann.components.transpose{ name='%s', dims={%d,%d} }",
-                    name.c_str(), which[0]+1, which[1]+1);
+      AprilUtils::LuaTable dims(L);
+      t["dims"] = dims;
+      dims[1] = which[0]+1;
+      dims[2] = which[1]+1;
     }
-    else {
-      buffer.printf("ann.components.transpose{ name='%s' }", name.c_str());
-    }
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    t.pushTable(L);
+    return 1;
   }
 }

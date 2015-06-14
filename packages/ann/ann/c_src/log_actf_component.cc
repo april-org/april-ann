@@ -52,10 +52,7 @@ namespace ANN {
     return obj;
   }
 
-  char *LogActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.log{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *LogActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.log";
   }
-
 }

@@ -1,6 +1,6 @@
  package{ name = "random",
    version = "1.0",
-   depends = { "util" },
+   depends = { "util", "aprilio" },
    keywords = { "random" },
    description = "Mersenne Twister random number generator",
    -- targets como en ant

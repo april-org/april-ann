@@ -32,6 +32,7 @@
 #define NAN sqrtf(-1.0f)
 #endif
 
+#include "binarizer.h"
 #include "constString.h"
 #include "lua_table.h"
 #include "error_print.h"
@@ -384,6 +385,24 @@ namespace AprilUtils {
   void aprilPrint(const AprilMath::ComplexF &v);
   void aprilPrint(const AprilMath::ComplexD &v);
 
+  template<>
+  unsigned int binarizer::binary_size<AprilMath::ComplexF>();
+
+  template<>
+  unsigned int binarizer::binary_size<AprilMath::ComplexD>();
+
+  template<>
+  void binarizer::
+  code<AprilMath::ComplexF>(const AprilMath::ComplexF &value, char *b);
+
+  template<>
+  void binarizer::
+  code<AprilMath::ComplexD>(const AprilMath::ComplexD &value, char *b);
+
+  template<>
+  AprilMath::ComplexF binarizer::decode<AprilMath::ComplexF>(const char *b);
+  template<>
+  AprilMath::ComplexD binarizer::decode<AprilMath::ComplexD>(const char *b);
   ////////////////////////////////////////////////////////////////////////////
   
   // This section allows to push complex numbers from C++ into Lua by calling

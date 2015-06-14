@@ -53,10 +53,7 @@ namespace ANN {
     return obj;
   }
 
-  char *SoftsignActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.softsign{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *SoftsignActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.softsign";
   }
-
 }

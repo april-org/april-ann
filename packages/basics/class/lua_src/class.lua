@@ -142,6 +142,11 @@ function class.of(obj)
   return (getmetatable(obj) or {}).cls
 end
 
+-- Returns the class id of the given object instance.
+function class.obj_id(obj)
+  return (getmetatable(obj) or {}).id
+end
+
 -- Returns the value associated with the given key at the given
 -- class_table. Throws an error if the 1st parameter is not a class table.
 --

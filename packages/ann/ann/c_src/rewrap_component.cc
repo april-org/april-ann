@@ -93,11 +93,16 @@ namespace ANN {
     ANNComponent::build(sz, sz, weights_dict, components_dict);
   }
   
-  char *RewrapANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.rewrap{ name='%s', size={", name.c_str());
-    for (int i=1; i<n; ++i) buffer.printf(" %d,", rewrap_dims[i]);
-    buffer.printf("} }");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *RewrapANNComponent::luaCtorName() const {
+    return "ann.components.rewrap";
+  }
+  int RewrapANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    AprilUtils::LuaTable size(L);
+    t["name"] = name.c_str();
+    t["size"] = size;
+    for (int i=1; i<n; ++i) size[i] = rewrap_dims[i];
+    t.pushTable(L);
+    return 1;
   }
 }

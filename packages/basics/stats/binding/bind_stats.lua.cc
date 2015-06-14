@@ -71,6 +71,9 @@ using namespace Stats;
 //BIND_LUACLASSNAME StatisticalDistributionBase stats.dist
 //BIND_CPP_CLASS    StatisticalDistributionBase
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF  StatisticalDistributionBase Serializable
+
 //BIND_CONSTRUCTOR StatisticalDistributionBase
 {
   LUABIND_ERROR("Abstract class");
@@ -179,22 +182,6 @@ using namespace Stats;
 //BIND_METHOD StatisticalDistributionBase size
 {
   LUABIND_RETURN(uint, obj->getSize());
-}
-//BIND_END
-
-//BIND_METHOD StatisticalDistributionBase to_lua_string
-{
-  const char *format;
-  bool is_ascii = false;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, format, "binary");
-  if (strcmp(format,"ascii") == 0)
-    is_ascii = true;
-  else if (strcmp(format,"binary") != 0)
-    LUABIND_FERROR1("Incorrect format, expected 'ascii' or 'binary', given '%s'",
-                    format);
-  char *str = obj->toLuaString(is_ascii);
-  LUABIND_RETURN(string, str);
-  delete[] str;
 }
 //BIND_END
 

@@ -65,7 +65,8 @@ namespace ANN {
     DotProductANNComponent(const char *name=0, const char *weights_name=0,
 			   unsigned int input_size  = 0,
 			   unsigned int output_size = 0,
-			   bool transpose_weights   = false);
+			   bool transpose_weights   = false,
+                           Basics::MatrixFloat *matrix = 0);
     virtual ~DotProductANNComponent();
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
@@ -74,9 +75,10 @@ namespace ANN {
 		       AprilUtils::LuaTable &components_dict);
     virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
-    virtual char *toLuaString();
-    
     bool transposed() { return transpose_weights == CblasTrans; }
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

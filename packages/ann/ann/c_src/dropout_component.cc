@@ -170,12 +170,18 @@ namespace ANN {
 		  input_size, output_size, name.c_str());
   }
   
-  char *DropoutANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.dropout{ name='%s',size=%d,random=random(),value=%g,prob=%g,norm=%s}",
-		  name.c_str(), size, // random->toLuaString(),
-		  value, prob,
-                  (normalize_after_training) ? ("true") : ("false"));
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *DropoutANNComponent::luaCtorName() const {
+    return "ann.components.dropout";
+  }
+  int DropoutANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["size"] = size;
+    t["random"] = random;
+    t["value"] = value;
+    t["prob"] = prob;
+    t["norm"] = normalize_after_training;
+    t.pushTable(L);
+    return 1;
   }
 }

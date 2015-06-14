@@ -38,13 +38,17 @@ namespace ANN {
 						 const char *bias_weights_name,
 						 unsigned int input_size,
 						 unsigned int output_size,
-						 bool transpose_weights) :
+						 bool transpose_weights,
+                                                 MatrixFloat *wmatrix,
+                                                 MatrixFloat *bmatrix) :
     ANNComponent(name, 0, input_size, output_size),
     dot_product(new DotProductANNComponent(dot_product_name,
 					   dot_product_weights_name,
 					   input_size, output_size,
-					   transpose_weights)),
-    bias(new BiasANNComponent(output_size, bias_name, bias_weights_name)) {
+					   transpose_weights,
+                                           wmatrix)),
+    bias(new BiasANNComponent(output_size, bias_name,
+                              bias_weights_name, bmatrix)) {
     IncRef(dot_product);
     IncRef(bias);
   }
@@ -145,20 +149,24 @@ namespace ANN {
     return component;
   }
 
-  char *HyperplaneANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.hyperplane{ name='%s',"
-		  "dot_product_name='%s', bias_name='%s',"
-		  "dot_product_weights='%s', bias_weights='%s',"
-		  "input=%d, output=%d, transpose=%s }",
-		  name.c_str(),
-		  static_cast<const ANNComponent*>(dot_product)->getName().c_str(),
-                  static_cast<const ANNComponent*>(bias)->getName().c_str(),
-		  static_cast<const ANNComponent*>(dot_product)->getWeightsName().c_str(),
-                  static_cast<const ANNComponent*>(bias)->getWeightsName().c_str(),
-		  input_size, output_size,
-		  (dot_product->transposed())?"true":"false");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *HyperplaneANNComponent::luaCtorName() const {
+    return "ann.components.hyperplane";
   }
-
+  int HyperplaneANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L), weights(L);
+    dot_product->copyWeights(weights);
+    bias->copyWeights(weights);
+    t["name"] = name;
+    t["dot_product_name"] = dot_product->getName();
+    t["bias_name"] = bias->getName();
+    t["dot_product_weights"] = dot_product->getWeightsName();
+    t["bias_weights"] = bias->getWeightsName();
+    t["input"] = input_size;
+    t["output"] = output_size;
+    t["transpose"] = dot_product->transposed();
+    t["wmatrix"] = weights[dot_product->getWeightsName()].get<MatrixFloat*>();
+    t["bmatrix"] = weights[bias->getWeightsName()].get<MatrixFloat*>();
+    t.pushTable(L);
+    return 1;
+  }
 }

@@ -141,12 +141,13 @@ namespace Stats {
   StatisticalDistributionBase *BinomialDistribution::clone() {
     return new BinomialDistribution(n->clone(), p->clone());
   }
-  
-  char *BinomialDistribution::toLuaString(bool is_ascii) const {
-    UNUSED_VARIABLE(is_ascii);
-    buffer_list buffer;
-    buffer.printf("stats.dist.binomial(%d, %g)", ni, pf);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+
+  const char *BinomialDistribution::luaCtorName() const {
+    return "stats.dist.binomial";
   }
-  
+  int BinomialDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, ni);
+    AprilUtils::LuaTable::pushInto(L, pf);
+    return 2;
+  }
 }

@@ -136,9 +136,4 @@ namespace ANN {
     return 0;
   }
 
-  char *ZeroOneLossFunction::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.loss.zero_one(%d,%f)", size, TH);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
 }

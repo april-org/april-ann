@@ -35,22 +35,7 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-namespace AprilUtils {
-  template<> Basics::MatrixInt32 *LuaTable::
-  convertTo<Basics::MatrixInt32 *>(lua_State *L, int idx) {
-    return lua_toMatrixInt32(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<Basics::MatrixInt32 *>(lua_State *L, Basics::MatrixInt32 *value) {
-    lua_pushMatrixInt32(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<Basics::MatrixInt32 *>(lua_State *L, int idx) {
-    return lua_isMatrixInt32(L, idx);
-  }
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixInt32);
 
 namespace Basics {
 
@@ -174,41 +159,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //BIND_CONSTRUCTOR MatrixInt32
 {
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-    }
-  }
-  MatrixInt32* obj;
-  obj = new MatrixInt32(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int i=1;
-    for (MatrixInt32::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
-      lua_rawgeti(L,argn,i);
-      int32_t v = luaL_checkint(L,-1);
-      *it = v;
-      lua_remove(L,-1);
-    }
-  }
-  delete[] dim;
-  LUABIND_RETURN(MatrixInt32,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::constructor(L));
 }
 //BIND_END
 
@@ -701,10 +652,17 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixInt32 deserialize
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::
+                               deserialize(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixInt32 read
 {
-  MAKE_READ_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
-  LUABIND_INCREASE_NUM_RETURNS(1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::
+                               read(L));
 }
 //BIND_END
 

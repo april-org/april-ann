@@ -56,10 +56,12 @@ function ann_autoencoders_ae:constructor(t)
     }
     return obj
   end
-  -- the to_lua_string method
-  self.to_lua_string = function(self,format)
-    return string.format("ann.autoencoders.ae(%s)",
-                         table.tostring(self.params))
+  -- serialization methods
+  self.ctor_name = function(self)
+    return "ann.autoencoders.ae(%s)"
+  end
+  self.ctor_params = function(self)
+    return self.params
   end
   -- the build method 
   self.build = function(self,...)

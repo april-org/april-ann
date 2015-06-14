@@ -51,10 +51,7 @@ namespace ANN {
     return obj;
   }
 
-  char *SoftmaxActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.softmax{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *SoftmaxActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.softmax";
   }
-
 }

@@ -327,15 +327,14 @@ function cg_methods:clone()
   return obj
 end
 
-function cg_methods:to_lua_string(format)
-  local str_t = { "ann.optimizer.cg(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ")" }
-  return table.concat(str_t, "")
+function cg_methods:ctor_name()
+  return "ann.optimizer.cg"
+end
+function cg_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.aw
 end
 
 local cg_properties = {

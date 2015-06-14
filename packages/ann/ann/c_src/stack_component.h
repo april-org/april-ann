@@ -125,9 +125,10 @@ namespace ANN {
       }
     }
 
-    virtual char *toLuaString();
-    
     unsigned int size() { return components.size(); }
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

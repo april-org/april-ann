@@ -859,7 +859,11 @@ ann_graph_methods.clone = function(self)
   return graph
 end
 
-ann_graph_methods.to_lua_string = function(self, format)
+ann_graph_methods.ctor_name = function(self)
+  return "ann.graph"
+end
+
+ann_graph_methods.ctor_params = function(self)
   -- After saving, the BPTT is truncated, so, it is recommended to avoid
   -- saving when learning a sequence, it is better to clone after any
   -- sequence learning.
@@ -877,13 +881,7 @@ ann_graph_methods.to_lua_string = function(self, format)
       id,
     }
   end
-  local str = {
-    "ann.graph(", "%q"%{self.name} , ",",
-    util.to_lua_string(ext_order, format), ",",
-    util.to_lua_string(cnns, format), ",",
-    (self.backprop==math.huge) and "math.huge" or tostring(self.backstep), ")",
-  }
-  return table.concat(str)
+  return self.name, ext_order, cnns, (self.backprop==math.huge) and math.huge or self.backstep
 end
 
 ann_graph_methods.set_use_cuda = function(self, v)
@@ -1071,8 +1069,12 @@ index_methods.clone = function(self)
   return ann.graph.index(self.n, self.name)
 end
 
-index_methods.to_lua_string = function(self, format)
-  return "ann.graph.index(%d,%q)" % {self.n, self.name}
+index_methods.ctor_name = function(self)
+  return "ann.graph.index"
+end
+
+index_methods.ctor_params = function(self)
+  return self.n,self.name
 end
 
 ---------------------------------------------------------------------------

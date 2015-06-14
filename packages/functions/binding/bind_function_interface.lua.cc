@@ -20,6 +20,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_april_io.h"
 #include "bind_tokens.h"
 //BIND_END
 
@@ -30,8 +31,11 @@ using namespace Functions;
 using Basics::Token;
 //BIND_END
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+
 //BIND_LUACLASSNAME FunctionInterface functions
 //BIND_CPP_CLASS    FunctionInterface
+//BIND_SUBCLASS_OF  FunctionInterface Serializable
 
 //BIND_CONSTRUCTOR FunctionInterface
 {

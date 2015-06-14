@@ -546,9 +546,25 @@ namespace Basics {
     /// dimensions in row-major order. If the SparseMatrix is in CSR format, the
     /// resulting vector is a row vector, otherwise, it is a column vector.
     SparseMatrix<T> *asVector() const;  
-
     
     // SERIALIZATION
+    
+    virtual const char *luaCtorName() const {
+      if (sparse_format == CSR_FORMAT) return "matrix.sparse.csr";
+      else return "matrix.sparse.csc";
+    }
+    virtual int exportParamsToLua(lua_State *L) {
+      lua_pushnumber(L, matrixSize[0]);
+      lua_pushnumber(L, matrixSize[1]);
+      AprilUtils::LuaTable::
+        pushInto<AprilMath::GPUMirroredMemoryBlock<T>*>(L, values.get());
+      AprilUtils::LuaTable::
+        pushInto<AprilMath::Int32GPUMirroredMemoryBlock*>(L, indices.get());
+      AprilUtils::LuaTable::
+        pushInto<AprilMath::Int32GPUMirroredMemoryBlock*>(L, first_index.get());
+      return 5;
+    }
+
 
     /**
      * @brief Reads the SparseMatrix from a stream.

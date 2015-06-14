@@ -42,7 +42,9 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new CrossEntropyLossFunction(this);
     }
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const {
+      return "ann.loss.cross_entropy";
+    }
   };
 
   //////////////////////////////////////////////////////////
@@ -63,7 +65,9 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new NonPairedCrossEntropyLossFunction(this);
     }
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const {
+      return "ann.loss.non_paired_cross_entropy";
+    }
   };
 
 }

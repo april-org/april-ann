@@ -73,6 +73,13 @@ namespace Basics {
 
   } // namespace MatrixIO
 
+  template<>
+  int Matrix<char>::exportParamsToLua(lua_State *L) {
+    UNUSED_VARIABLE(L);
+    ERROR_EXIT(128, "Serialization of matrixChar not implemented\n");
+    return 0;
+  }
+  
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<char>;
 

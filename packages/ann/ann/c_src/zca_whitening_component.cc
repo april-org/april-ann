@@ -82,17 +82,18 @@ namespace ANN {
     return component;
   }
   
-  char *ZCAWhiteningANNComponent::toLuaString() {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", false);
-    stream->printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[",
-                   name.c_str());
-    U->write(stream.get(), options);
-    stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), options);
-    stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, getTakeN());
-    stream->put("\0",1); // forces a \0 at the end of the buffer
-    return stream->releaseString();
+  const char *ZCAWhiteningANNComponent::luaCtorName() const {
+    return "ann.components.zca_whitening";
+  }
+  
+  int ZCAWhiteningANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    t["U"] = U;
+    t["S"] = S;
+    t["epsilon"] = epsilon;
+    t["takeN"] = takeN;
+    t.pushTable(L);
+    return 1;
   }
 }

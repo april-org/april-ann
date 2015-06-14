@@ -132,19 +132,15 @@ function rprop_methods:clone()
   return obj
 end
 
-function rprop_methods:to_lua_string(format)
-  local str_t = { "ann.optimizer.rprop(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.steps, format),
-		  ",",
-		  util.to_lua_string(self.old_signs, format),
-		  ")" }
-  return table.concat(str_t, "")
+function rprop_methods:ctor_name()
+  return "ann.optimizer.rprop"
+end
+function rprop_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.steps,
+  self.old_signs
 end
 
 local rprop_properties = {

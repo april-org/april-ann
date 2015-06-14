@@ -205,10 +205,16 @@ namespace ANN {
 		  name.c_str());
   }
   
-  char *CopyANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.copy{ name='%s',times=%d,input=%d,output=%d }",
-		  name.c_str(), times, input_size, output_size);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *CopyANNComponent::luaCtorName() const {
+    return "ann.components.copy";
+  }
+  int CopyANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["times"] = times;
+    t["input"] = input_size;
+    t["output"] = output_size;
+    t.pushTable(L);
+    return 1;
   }
 }

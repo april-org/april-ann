@@ -35,8 +35,30 @@ namespace AprilMath {
     new GPUMirroredMemoryBlockBase::PoolType(1024);
 #endif
 
+  template<>
+  const char *GPUMirroredMemoryBlock<float>::luaCtorName() const {
+    return "mathcore.block.float.read";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<double>::luaCtorName() const {
+    return "mathcore.block.double.read";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<int32_t>::luaCtorName() const {
+    return "mathcore.block.int32.read";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<ComplexF>::luaCtorName() const {
+    return "mathcore.block.complex.read";
+  }
+  template<>
+  const char *GPUMirroredMemoryBlock<bool>::luaCtorName() const {
+    return "mathcore.block.bool.read";
+  }
+  
   template class GPUMirroredMemoryBlock<float>;
   template class GPUMirroredMemoryBlock<double>;
   template class GPUMirroredMemoryBlock<int32_t>;
   template class GPUMirroredMemoryBlock<ComplexF>;
+  template class GPUMirroredMemoryBlock<bool>;
 } // namespace AprilMath

@@ -143,19 +143,16 @@ namespace Stats {
   StatisticalDistributionBase *GeneralNormalDistribution::clone() {
     return new GeneralNormalDistribution(mean->clone(), cov->clone());
   }
-  
-  char *GeneralNormalDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", is_ascii);
-    stream->put("stats.dist.normal(matrix.fromString[[");
-    mean->write(stream.get(), options);
-    stream->put("]], matrix.fromString[[");
-    cov->write(stream.get(), options);
-    stream->put("]])\0",4);
-    return stream->releaseString();
-  }
 
+  const char *GeneralNormalDistribution::luaCtorName() const {
+    return "stats.dist.normal";
+  }
+  int GeneralNormalDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, mean);
+    AprilUtils::LuaTable::pushInto(L, cov);
+    return 2;
+  }
+  
   ////////////////////////////////////////////////////////////////////////////
 
   DiagonalNormalDistribution::DiagonalNormalDistribution(MatrixFloat *mean,
@@ -271,17 +268,14 @@ namespace Stats {
   StatisticalDistributionBase *DiagonalNormalDistribution::clone() {
     return new DiagonalNormalDistribution(mean->clone(), cov->clone());
   }
-  
-  char *DiagonalNormalDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", is_ascii);
-    stream->put("stats.dist.normal(matrix.fromString[[");
-    mean->write(stream.get(), options);
-    stream->put("]], matrix.sparse.fromString[[");
-    cov->write(stream.get(), options);
-    stream->put("]])\0",4); // forces a \0 at the end of the buffer
-    return stream->releaseString();
+
+  const char *DiagonalNormalDistribution::luaCtorName() const {
+    return "stats.dist.normal";
+  }
+  int DiagonalNormalDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, mean);
+    AprilUtils::LuaTable::pushInto(L, cov);
+    return 2;
   }
   
   ////////////////////////////////////////////////////////////////////////////
@@ -325,14 +319,15 @@ namespace Stats {
   StatisticalDistributionBase *StandardNormalDistribution::clone() {
     return new StandardNormalDistribution();
   }
-  
-  char *StandardNormalDistribution::toLuaString(bool is_ascii) const {
-    UNUSED_VARIABLE(is_ascii);
-    AprilUtils::buffer_list buffer;
-    buffer.printf("stats.dist.normal()");
-    return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
-  }
 
+  const char *StandardNormalDistribution::luaCtorName() const {
+    return "stats.dist.normal";
+  }
+  int StandardNormalDistribution::exportParamsToLua(lua_State *L) {
+    UNUSED_VARIABLE(L);
+    return 0;
+  }
+  
   ////////////////////////////////////////////////////////////////////////////  
 
   GeneralLogNormalDistribution::GeneralLogNormalDistribution(MatrixFloat *mean,
@@ -399,21 +394,17 @@ namespace Stats {
     return new GeneralLogNormalDistribution(mean->clone(), cov->clone(),
                                             location->clone());
   }
-  
-  char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", is_ascii);
-    stream->put("stats.dist.lognormal(matrix.fromString[[");
-    mean->write(stream.get(), options);
-    stream->put("]], matrix.fromString[[");
-    cov->write(stream.get(), options);
-    stream->put("]], matrix.fromString[[");
-    location->write(stream.get(), options);
-    stream->put("]])\0",4); // forces a \0 at the end of the buffer
-    return stream->releaseString();
-  }
 
+  const char *GeneralLogNormalDistribution::luaCtorName() const {
+    return "stats.dist.lognormal";
+  }
+  int GeneralLogNormalDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, mean);
+    AprilUtils::LuaTable::pushInto(L, cov);
+    AprilUtils::LuaTable::pushInto(L, location);
+    return 3;
+  }
+  
   ////////////////////////////////////////////////////////////////////////////
 
   DiagonalLogNormalDistribution::DiagonalLogNormalDistribution(MatrixFloat *mean,
@@ -479,19 +470,15 @@ namespace Stats {
     return new DiagonalLogNormalDistribution(mean->clone(), cov->clone(),
                                              location->clone());
   }
-  
-  char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", is_ascii);
-    stream->put("stats.dist.lognormal(matrix.fromString[[");
-    mean->write(stream.get(), options);
-    stream->put("]], matrix.sparse.fromString[[");
-    cov->write(stream.get(), options);
-    stream->put("]], matrix.fromString[[");
-    location->write(stream.get(), options);
-    stream->put("]])\0",4); // forces a \0 at the end of the buffer
-    return stream->releaseString();
+
+  const char *DiagonalLogNormalDistribution::luaCtorName() const {
+    return "stats.dist.lognormal";
+  }
+  int DiagonalLogNormalDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, mean);
+    AprilUtils::LuaTable::pushInto(L, cov);
+    AprilUtils::LuaTable::pushInto(L, location);
+    return 3;
   }
   
 }

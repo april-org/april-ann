@@ -34,6 +34,7 @@ extern "C" {
 
 #include "constString.h"
 #include "error_print.h"
+#include "lua_table.h"
 #include "referenced.h"
 #include "unused_variable.h"
 
@@ -277,5 +278,7 @@ namespace AprilIO {
   };
   
 } // namespace AprilIO
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilIO::StreamInterface);
 
 #endif // STREAM_H

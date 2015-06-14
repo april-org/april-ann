@@ -20,8 +20,9 @@
  *
  */
 //BIND_HEADER_C
-#include "bind_tokens.h"
+#include "bind_april_io.h"
 #include "bind_matrix.h"
+#include "bind_tokens.h"
 #include "token_matrix.h"
 
 using namespace AprilMath::MatrixExt::Reductions;
@@ -45,8 +46,11 @@ using namespace ANN;
 //                   LossFunction                  //
 /////////////////////////////////////////////////////
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+
 //BIND_LUACLASSNAME LossFunction ann.loss
 //BIND_CPP_CLASS    LossFunction
+//BIND_SUBCLASS_OF  LossFunction Serializable
 
 //BIND_CONSTRUCTOR LossFunction
 {
@@ -133,14 +137,6 @@ using namespace ANN;
 //BIND_METHOD LossFunction clone
 {
   LUABIND_RETURN(LossFunction, obj->clone());
-}
-//BIND_END
-
-//BIND_METHOD LossFunction to_lua_string
-{
-  char *str = obj->toLuaString();
-  LUABIND_RETURN(string, str);
-  delete[] str;
 }
 //BIND_END
 

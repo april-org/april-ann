@@ -44,7 +44,9 @@ namespace Stats {
     ExponentialDistribution(Basics::MatrixFloat *lambda);
     virtual ~ExponentialDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
   
 }

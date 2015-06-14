@@ -54,6 +54,9 @@ namespace Basics {
   } // namespace MatrixIO
   
   //////////////////////////////////////////////////////////////////////////////
+
+  template<>
+  const char *Matrix<int32_t>::luaCtorName() const;
   
   typedef Matrix<int32_t> MatrixInt32;
 
@@ -61,16 +64,6 @@ namespace Basics {
 
 ////////////////////////////////////////////////////////////////////////////
 
-namespace AprilUtils {
-
-  template<> Basics::MatrixInt32 *LuaTable::
-  convertTo<Basics::MatrixInt32 *>(lua_State *L, int idx);
-  
-  template<> void LuaTable::
-  pushInto<Basics::MatrixInt32 *>(lua_State *L, Basics::MatrixInt32 *value);
-
-  template<> bool LuaTable::
-  checkType<Basics::MatrixInt32 *>(lua_State *L, int idx);
-}
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MatrixInt32);
 
 #endif // MATRIX_INT_H

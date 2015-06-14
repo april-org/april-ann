@@ -17,7 +17,7 @@ function set_methods:add(v)
     k = self.n
     data[v] = k
   end
-  return self
+  return k
 end
 
 function set_methods:clear()
@@ -30,14 +30,12 @@ function set_methods:clone()
   return set( iterator(pairs(self.data)):select(1):table() )
 end
 
-function set_methods:to_lua_string()
-  local t = {
-    "set{",
-    iterator(pairs(self.data)):select(1):
-      map(bind(string.format, nil, "%q")):concat(","),
-    "}",
-  }
-  return table.concat(t)
+function set_methods:ctor_name()
+  return "set"
+end
+
+function set_methods:ctor_params()
+  return self.data
 end
 
 function set_methods:discard(v)

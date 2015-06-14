@@ -118,11 +118,17 @@ namespace ANN {
 		  name.c_str());
   }
   
-  char *GaussianNoiseANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.gaussian_noise{ name='%s',size=%d,random=random(),mean=%g,var=%g }",
-		  name.c_str(), input_size, // random->toLuaString(),
-		  mean, variance);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *GaussianNoiseANNComponent::luaCtorName() const {
+    return "ann.components.gaussian_noise";
+  }
+  int GaussianNoiseANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"]   = name;
+    t["size"]   = input_size;
+    t["random"] = random;
+    t["mean"]   = mean;
+    t["var"]    = variance;
+    t.pushTable(L);
+    return 1;
   }
 }

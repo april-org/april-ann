@@ -18,7 +18,7 @@ namespace Basics {
     seed(); 
   }
 
-  MTRand::MTRand(const MTRand& r) : Referenced() {
+  MTRand::MTRand(const MTRand& r) : Serializable() {
     register uint32_t *s = state;
     const register uint32_t *t = r.state;
     register int i = N;
@@ -258,16 +258,19 @@ namespace Basics {
     pNext = &state[N-left];
   }
 
-  char *MTRand::toLuaString() const {
+  const char *MTRand::luaCtorName() const {
+    return "random():fromTable";
+  }
+  
+  int MTRand::exportParamsToLua(lua_State *L) {
     uint32_t randState[ SAVE ];
     save( randState );
-    //
-    AprilUtils::buffer_list buffer;
-    buffer.printf("random():fromTable{");
-    for (unsigned int i=0; i<SAVE; ++i)
-      buffer.printf(" %u,", randState[i]);
-    buffer.printf(" }");
-    return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
+    AprilUtils::LuaTable table(L);
+    for (unsigned int i=0; i<SAVE; ++i) {
+      table[i+1] = randState[i];
+    }
+    table.pushTable(L);
+    return 1;
   }
 
 } // namespace Basics

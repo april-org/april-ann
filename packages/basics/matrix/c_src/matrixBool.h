@@ -52,10 +52,17 @@ namespace Basics {
                                        AprilIO::StreamInterface *stream);
 
   } // namespace MatrixIO
+
+  template<>
+  const char *Matrix<bool>::luaCtorName() const;
   
   ///////////////////////////////////////////////////////////////////////////////
   typedef Matrix<bool> MatrixBool;
 
 } // namespace Basics
+
+////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MatrixBool);
 
 #endif // MATRIX_BOOL_H

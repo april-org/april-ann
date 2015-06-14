@@ -41,9 +41,10 @@ extern const char *__COMMIT_HASH__;
 extern const char *__APRILANN_VERSION_MAJOR__;
 extern const char *__APRILANN_VERSION_MINOR__;
 
-int lua_isLuaTable(lua_State *L, int idx);
-AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx);
-void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &tbl);
+int lua_isLuaTable(lua_State *L, int index);
+AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int index);
+AprilUtils::LuaTable luaL_optLuaTable(lua_State *L, int index);
+void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &table);
 
 //BIND_END
 
@@ -67,16 +68,21 @@ extern "C" {
 #include "omp_utils.h"
 #include "smart_ptr.h"
 
-int lua_isLuaTable(lua_State *L, int idx) {
-  return lua_istable(L, idx);
+int lua_isLuaTable(lua_State *L, int index) {
+  return lua_istable(L, index);
 }
 
-AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int idx) {
-  return AprilUtils::LuaTable(L, idx);
+AprilUtils::LuaTable lua_toLuaTable(lua_State *L, int index) {
+  return AprilUtils::LuaTable(L, index);
 }
 
-void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &tbl) {
-  tbl.pushTable(L);
+AprilUtils::LuaTable luaL_optLuaTable(lua_State *L, int index) {
+  if (lua_gettop(L) >= index) return AprilUtils::LuaTable(L, index);
+  else return AprilUtils::LuaTable(L);
+}
+
+void lua_pushLuaTable(lua_State *L, AprilUtils::LuaTable &table) {
+  table.pushTable(L);
 }
 
 namespace AprilUtils {
@@ -634,6 +640,17 @@ FILE **newfile (lua_State *L) {
 //BIND_METHOD stopwatch to_lua_string
 {
   LUABIND_RETURN(string, "util.stopwatch()");
+}
+//BIND_END
+
+//BIND_METHOD stopwatch ctor_name
+{
+  LUABIND_RETURN(string, "util.stopwatch");
+}
+//BIND_END
+
+//BIND_METHOD stopwatch ctor_params
+{
 }
 //BIND_END
 

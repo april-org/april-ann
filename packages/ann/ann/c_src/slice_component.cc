@@ -111,13 +111,21 @@ namespace ANN {
 		  input_size, output_size);
   }
   
-  char *SliceANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.slice{ name='%s', size={", name.c_str());
-    for (int i=1; i<n; ++i) buffer.printf(" %d,", slice_size[i]);
-    buffer.printf("}, pos={");
-    for (int i=1; i<n; ++i) buffer.printf(" %d,", slice_offset[i] + 1);
-    buffer.printf("} }");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *SliceANNComponent::luaCtorName() const {
+    return "ann.components.slice";
+  }
+  int SliceANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    AprilUtils::LuaTable size(L);
+    AprilUtils::LuaTable pos(L);
+    t["name"] = name.c_str();
+    t["size"] = size;
+    t["pos"]  = pos;
+    for (int i=0; i<n; ++i) {
+      size[i+1] = slice_size[i];
+      pos[i+1]  = slice_offset[i] + 1;
+    }
+    t.pushTable(L);
+    return 1;
   }
 }

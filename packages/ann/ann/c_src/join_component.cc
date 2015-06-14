@@ -343,15 +343,17 @@ namespace ANN {
     return c;
   }
 
-  char *JoinANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.join{ name='%s' }", name.c_str());
-    for (unsigned int i=0; i<components.size(); ++i) {
-      char *aux = components[i]->toLuaString();
-      buffer.printf(":add(%s)", aux);
-      delete[] aux;
-    }
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *JoinANNComponent::luaCtorName() const {
+    return "ann.components.join";
   }
-  
+  int JoinANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L), c(L);
+    t["name"] = name;
+    t["components"] = c;
+    for (unsigned int i=0; i<components.size(); ++i) {
+      c[i+1] = components[i];
+    }
+    t.pushTable(L);
+    return 1;
+  }
 }
