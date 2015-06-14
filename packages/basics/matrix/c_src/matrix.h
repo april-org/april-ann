@@ -488,10 +488,11 @@ namespace Basics {
 
   public:
     /********** Constructors ***********/
-    /// Full constructor given numDim, dim, data, offset
+    /// Full constructor given numDim, dim, data, offset, stride
     Matrix(int numDim, const int* dim,
            AprilMath::GPUMirroredMemoryBlock<T> *data = 0,
-           int offset = 0);
+           int offset = 0,
+           const int* stride = 0);
   
     /// Constructor with variadic arguments.
     explicit Matrix(int numDim, int d1, ...);
@@ -705,6 +706,26 @@ namespace Basics {
     Matrix<T> *padding(int pad_value, T default_value=T()) const;
     
     // SERIALIZATION
+
+    virtual const char *luaCtorName() const {
+      ERROR_EXIT(128, "Serialization not implemented\n");
+      return 0;
+    }
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilUtils::LuaTable t(L);
+      AprilUtils::LuaTable sizes(L);
+      AprilUtils::LuaTable stride(L);
+      for (int i=0; i<getNumDim(); ++i) {
+        sizes[i+1] = getDimSize(i);
+        stride[i+1] = getStrideSize(i);
+      }
+      t["sizes"]  = sizes;
+      t["stride"] = stride;
+      t["offset"] = getOffset();
+      t["data"]   = getRawDataAccess();
+      t.pushTable(L);
+      return 1;
+    }
     
     /**
      * @brief Writes the Matrix into a stream.
@@ -772,7 +793,7 @@ namespace Basics {
   private:
     void allocate_memory(int size);
     void release_memory();
-    void initialize(const int *dim);
+    void initialize(const int *dim, int offset=0, const int *stride=0);
 
     static AprilUtils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest,

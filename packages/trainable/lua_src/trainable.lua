@@ -323,7 +323,7 @@ trainable.dataset_multiple_iterator =
 ------------------------------------
 
 local train_holdout, train_holdout_methods =
-  class("trainable.train_holdout_validation")
+  class("trainable.train_holdout_validation", aprilio.lua_serializable)
 trainable = trainable or {} -- global environment
 trainable.train_holdout_validation = train_holdout -- global environment
 
@@ -547,78 +547,18 @@ train_holdout_methods.is_best =
     return state.current_epoch == state.best_epoch
   end
 
-function train_holdout_methods:to_lua_string(format)
-  local insert = table.insert
-  local t = { }
-  insert(t, "trainable.train_holdout_validation(")
-  --
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.params, format))
-  insert(t, ",")
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.state, format))
-  insert(t, "\n)")
-  return table.concat(t, "")
+function train_holdout_methods:ctor_name()
+  return "trainable.train_holdout_validation"
+end
+function train_holdout_methods:ctor_params()
+  return self.params, self.state
 end
 
-train_holdout_methods.save =
-  april_doc{
-    class = "method",
-    summary = "Saves the training in a filename",
-    description = {
-      "Saves the training in a filename.",
-      "If the filename exists, it is renamed as filename.bak",
-    },
-    params={
-      "The filename",
-      { "The format for matrix data ('ascii' or 'binary'),",
-        "[optional] by default 'binary'", },
-      {
-        "Extra data dictionary (a table) [optional].",
-        "It is useful to store random objects.",
-        "The serialization of this objects is automatic",
-        "if they has a 'to_lua_string(format)' method, or",
-        "if they are Lua standard types (number, string, table).",
-      },
-    },
-  } ..
-  function(self,filename,format,extra)
-    assert(format==nil or luatype(format)=="string",
-           "Second argument is a string with the format: 'binary' or 'ascii'")
-    local f = io.open(filename, "r")
-    if f then
-      f:close()
-      os.execute(string.format("mv -f %s %s.bak", filename, filename))
-    end
-    local f = io.open(filename, "w") or error("Unable to open " .. filename)
-    f:write("return ")
-    f:write(self:to_lua_string(format))
-    if extra then
-      f:write(",\n")
-      f:write(table.tostring(extra, format))
-    end
-    f:write("\n")
-    f:close()
-  end
+train_holdout_methods.save = function()
+  error("Removed, use util.serialize()")
+end
 
-trainable.train_holdout_validation.load =
-  april_doc{
-    class = "function",
-    summary = "Loads the training from a filename",
-    params={
-      "The filename",
-    },
-    outputs = {
-      "A train_holdout_methods instance",
-      "A table with extra saved data or nil if not given when saving",
-    },
-  } ..
-  function(filename)
-    local f = loadfile(filename) or error("Unable to open " .. filename)
-    local obj,extra = f()
-    april_assert(obj, "Impossible to load chunk from file %s", filename)
-    return obj,extra
-  end
+trainable.train_holdout_validation.load = util.deserialize
 
 -------------------------------------------------------------------------------
 
@@ -627,7 +567,7 @@ trainable.train_holdout_validation.load =
 ------------------------------------
 
 local train_wo_validation,train_wo_validation_methods =
-  class("trainable.train_wo_validation")
+  class("trainable.train_wo_validation", aprilio.lua_serializable)
 trainable = trainable or {} -- global environment
 trainable.train_wo_validation = train_wo_validation -- global environment
 
@@ -807,60 +747,18 @@ train_wo_validation_methods.get_state_string =
                          state.train_improvement)
   end
 
-function train_wo_validation_methods:to_lua_string(format)
-  local insert = table.insert
-  local t = { }
-  insert(t, "trainable.train_wo_validation(")
-  --
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.params, format))
-  insert(t, ",")
-  insert(t, "\n\t")
-  insert(t, table.tostring(self.state, format))
-  insert(t, "\n)")
-  return table.concat(t, "")
+function train_wo_validation_methods:ctor_name()
+  return "trainable.train_wo_validation"
+end
+function train_wo_validation_methods:ctor_params()
+  return self.params, self.state
 end
 
-train_wo_validation_methods.save =
-  april_doc{
-    class = "method",
-    summary = "Saves the training in a filename",
-    description = {
-      "Saves the training in a filename.",
-      "If the filename exists, it is renamed as filename.bak",
-    },
-    params={
-      "The filename",
-      { "The format for matrix data ('ascii' or 'binary'),",
-        "[optional] by default 'binary'", },
-      {
-        "Extra data dictionary (a table) [optional].",
-        "It is useful to store random objects.",
-        "The serialization of this objects is automatic",
-        "if they has a 'to_lua_string(format)' method, or",
-        "if they are Lua standard types (number, string, table).",
-      },
-    }
-  } ..
-  function(...)
-    return train_holdout_methods.save(...)
-  end
+train_wo_validation_methods.save = function()
+  error("Removed, use util.serialize()")
+end
 
-trainable.train_wo_validation.load = 
-  april_doc{
-    class = "function",
-    summary = "Loads the training from a filename",
-    params={
-      "The filename",
-    },
-    outputs = {
-      "A train_wo_validation_methods instance",
-      "A table with extra saved data or nil if not given when saving",
-    },
-  } ..
-  function(...)
-    return trainable.train_holdout_validation.load(...)
-  end
+trainable.train_wo_validation.load = util.deserialize
 
 -------------------------------------------------------------------------------
 

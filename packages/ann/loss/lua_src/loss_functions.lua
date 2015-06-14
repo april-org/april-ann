@@ -66,10 +66,11 @@ function ann_loss_lincomb_methods:clone()
   return ann.loss.linear_combination(util.clone(self.params))
 end
 
-function ann_loss_lincomb_methods:to_lua_string()
-  return table.concat{"ann.loss.linear_combination(",
-                      util.to_lua_string(self.params),
-                      ")"}
+function ann_loss_lincomb_methods:ctor_name()
+  return "ann.loss.linear_combination"
+end
+function ann_loss_lincomb_methods:ctor_params()
+  return self.params
 end
 
 ---------------------------

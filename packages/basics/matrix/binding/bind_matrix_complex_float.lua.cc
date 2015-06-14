@@ -36,22 +36,7 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-namespace AprilUtils {
-  template<> Basics::MatrixComplexF *LuaTable::
-  convertTo<Basics::MatrixComplexF *>(lua_State *L, int idx) {
-    return lua_toMatrixComplexF(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<Basics::MatrixComplexF *>(lua_State *L, Basics::MatrixComplexF *value) {
-    lua_pushMatrixComplexF(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<Basics::MatrixComplexF *>(lua_State *L, int idx) {
-    return lua_isMatrixComplexF(L, idx);
-  }
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixComplexF);
 
 namespace Basics {
 #define FUNCTION_NAME "read_vector"
@@ -184,44 +169,7 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 /// implicitamente.
 //DOC_END
 {
-  int i,argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
-  int *dim;
-  if (ndims == 0) { // caso matrix{valores}
-    ndims = 1;
-    dim = new int[ndims];
-    LUABIND_TABLE_GETN(1, dim[0]);
-  } else {
-    dim = new int[ndims];
-    for (i=1; i <= ndims; i++) {
-      if (!lua_isnumber(L,i))
-	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
-	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
-			" be a number and is a %s)",
-			i, lua_typename(L,i));
-      dim[i-1] = (int)lua_tonumber(L,i);
-      if (dim[i-1] <= 0)
-	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-    }
-  }
-  MatrixComplexF* obj;
-  obj = new MatrixComplexF(ndims,dim);
-  if (lua_istable(L,argn)) {
-    int len;
-    LUABIND_TABLE_GETN(argn, len);
-    if (len != obj->size())
-      LUABIND_FERROR2("Incorrect number of elements at the given table, "
-		      "found %d, expected %d", len, obj->size());
-    int i=1;
-    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
-      lua_rawgeti(L,argn,i);
-      *it = lua_toComplexF(L, -1);
-    }
-  }
-  delete[] dim;
-  LUABIND_RETURN(MatrixComplexF,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::constructor(L));
 }
 //BIND_END
 
@@ -987,10 +935,17 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //// MATRIX SERIALIZATION ////
 
+//BIND_CLASS_METHOD MatrixComplexF deserialize
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::
+                               deserialize(L));
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixComplexF read
 {
-  MAKE_READ_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);
-  LUABIND_INCREASE_NUM_RETURNS(1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::
+                               read(L));
 }
 //BIND_END
 

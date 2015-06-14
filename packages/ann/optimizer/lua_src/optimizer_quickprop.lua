@@ -145,20 +145,15 @@ function quickprop_methods:clone()
   return obj
 end
 
-function quickprop_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.quickprop(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.update, format),
-		  ",",
-		  util.to_lua_string(self.lastg, format),
-		  ")" }
-  return table.concat(str_t, "")
+function quickprop_methods:ctor_name()
+  return "ann.optimizer.quickprop"
+end
+function quickprop_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.update,
+  self.lastg
 end
 
 local quickprop_properties = {

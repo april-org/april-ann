@@ -163,14 +163,18 @@ namespace ANN {
     return component;
   }
 
-  char *StackANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.stack{ name='%s' }", name.c_str());
+  const char *StackANNComponent::luaCtorName() const {
+    return "ann.components.stack";
+  }
+  int StackANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    AprilUtils::LuaTable c(L);
+    t["components"] = c;
     for (unsigned int i=0; i<components.size(); ++i) {
-      char *aux = components[i]->toLuaString();
-      buffer.printf(":push(%s)", aux);
-      delete[] aux;
+      c[i+1] = components[i];
     }
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    t.pushTable(L);
+    return 1;
   }
 }

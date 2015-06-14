@@ -104,18 +104,14 @@ function adagrad_methods:clone()
   return obj
 end
 
-function adagrad_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.adagrad(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ",",
-		  util.to_lua_string(self.Egradients, format),
-		  ")" }
-  return table.concat(str_t, "")
+function adagrad_methods:ctor_name()
+  return "ann.optimizer.adagrad"
+end
+function adagrad_methods:ctor_params()
+  return self.global_options,
+  self.layerwise_options,
+  self.count,
+  self.Egradients
 end
 
 local adagrad_properties = {

@@ -359,4 +359,66 @@ namespace AprilUtils {
     return rb-dest_buffer;
   }
 
+  template<>
+  unsigned int binarizer::binary_size<float>() {
+    return 5u;
+  }
+  template<>
+  unsigned int binarizer::binary_size<double>() {
+    return 10u;
+  }
+  template<>
+  unsigned int binarizer::binary_size<int32_t>() {
+    return 5u;
+  }
+  template<>
+  unsigned int binarizer::binary_size<char>() {
+    return 1u;
+  }
+  template<>
+  unsigned int binarizer::binary_size<bool>() {
+    return 1u;
+  }
+
+  template<>
+  void binarizer::code<float>(const float &value, char *b) {
+    binarizer::code_float(value, b);
+  }
+  template<>
+  void binarizer::code<double>(const double &value, char *b) {
+    binarizer::code_double(value, b);
+  }
+  template<>
+  void binarizer::code<int32_t>(const int32_t &value, char *b) {
+    binarizer::code_int32(value, b);
+  }
+  template<>
+  void binarizer::code<char>(const char &value, char *b) {
+    *b = value;
+  }
+  template<>
+  void binarizer::code<bool>(const bool &value, char *b) {
+    *b = value ? '1' : '0';
+  }
+
+  template<>
+  float binarizer::decode<float>(const char *b) {
+    return binarizer::decode_float(b);
+  }
+  template<>
+  double binarizer::decode<double>(const char *b) {
+    return binarizer::decode_double(b);
+  }
+  template<>
+  int32_t binarizer::decode<int32_t>(const char *b) {
+    return binarizer::decode_int32(b);
+  }
+  template<>
+  char binarizer::decode<char>(const char *b) {
+    return *b;
+  }
+  template<>
+  bool binarizer::decode<bool>(const char *b) {
+    return ( (*b) == '1' ) ? true : false;
+  }
 } // namespace AprilUtils

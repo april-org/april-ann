@@ -44,7 +44,9 @@ namespace Stats {
     BetaDistribution(Basics::MatrixFloat *alpha, Basics::MatrixFloat *beta);
     virtual ~BetaDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
   
 }

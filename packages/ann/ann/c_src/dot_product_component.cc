@@ -45,12 +45,14 @@ namespace ANN {
 						 const char *weights_name,
 						 unsigned int input_size,
 						 unsigned int output_size,
-						 bool transpose_weights) :
+						 bool transpose_weights,
+                                                 MatrixFloat *matrix) :
     MatrixInputSwitchANNComponent(name, weights_name, input_size, output_size),
-    weights_matrix(0) {
+    weights_matrix(matrix) {
     setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
+    if (weights_matrix) IncRef(weights_matrix);
   }
   
   DotProductANNComponent::~DotProductANNComponent() {
@@ -309,14 +311,19 @@ namespace ANN {
     }
   }  
 
-  char *DotProductANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.dot_product{ name='%s',weights='%s',"
-		  "input=%d,output=%d,transpose=%s }",
-		  getName().c_str(), getWeightsName().c_str(),
-		  getInputSize(), getOutputSize(),
-		  (transpose_weights==CblasTrans)?"true":"false");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *DotProductANNComponent::luaCtorName() const {
+    return "ann.components.dot_product";
+  }
+  int DotProductANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"]      = getName();
+    t["weights"]   = getWeightsName();
+    t["input"]     = getInputSize();
+    t["output"]    = getOutputSize();
+    t["transpose"] = transposed();
+    t["matrix"]    = weights_matrix;
+    t.pushTable(L);
+    return 1;
   }
   //////////////////////////////////////////////////////////////////////////
 }

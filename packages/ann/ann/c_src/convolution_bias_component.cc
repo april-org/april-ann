@@ -84,9 +84,10 @@ namespace ANN {
   ConvolutionBiasANNComponent(int num_dims,
 			      unsigned int num_output_planes,
 			      const char *name,
-			      const char *bias_name) :
+			      const char *bias_name,
+                              MatrixFloat *matrix) :
     VirtualMatrixANNComponent(name, bias_name, 0, 0),
-    bias_vector(0),
+    bias_vector(matrix),
     bias_matrix(0),
     hidden_size(num_output_planes),
     num_dims(num_dims),
@@ -104,6 +105,7 @@ namespace ANN {
       window_size[i] = 1;
       window_step[i] = 1;
     }
+    if (bias_vector) IncRef(bias_vector);
   }
   
   ConvolutionBiasANNComponent::~ConvolutionBiasANNComponent() {
@@ -273,12 +275,17 @@ namespace ANN {
     }
   }  
 
-  char *ConvolutionBiasANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.convolution_bias{ name='%s',weights='%s', "
-		  "n=%d, ndims=%d }", name.c_str(), weights_name.c_str(),
-		  hidden_size, num_dims);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *ConvolutionBiasANNComponent::luaCtorName() const {
+    return "ann.components.convolution_bias";
+  }
+  int ConvolutionBiasANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["weights"] = bias_vector;
+    t["n"] = hidden_size;
+    t["ndims"] = num_dims;
+    t.pushTable(L);
+    return 1;
   }
   //////////////////////////////////////////////////////////////////////////
 }

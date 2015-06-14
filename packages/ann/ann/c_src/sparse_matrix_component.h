@@ -125,7 +125,9 @@ namespace ANN {
       AprilUtils::LuaTable &components_dict) = 0;
     */
     // virtual void copyWeights(AprilUtils::LuaTable &weights_dict) = 0;
-    // virtual char *toLuaString() = 0;
+    
+    // virtual const char *luaCtorName() const;
+    // virtual int exportParamsToLua(lua_State *L);
   };
   
 }

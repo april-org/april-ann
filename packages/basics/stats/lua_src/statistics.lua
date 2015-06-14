@@ -86,6 +86,25 @@ stats.var =
     return x:pow(2):sum(dim)/(sz-1),mean
   end
 
+stats.std =
+  april_doc{
+    class = "function",
+    summary = "Computes standard deviation over a dimension",
+    params = { "A matrix",
+               "A dimension number [optional].", },
+    outputs = {
+      "A new allocated matrix or a number if not dim given",
+      "The mean used to center the data",
+    },
+  } ..
+  function(x,dim)
+    local result,center = stats.var(x,dim)
+    if dim then result:sqrt()
+    else result = math.sqrt(result)
+    end
+    return result,center
+  end
+
 stats.cov =
   april_doc{
     class = "function",
@@ -1128,7 +1147,7 @@ stats.percentile =
     class = "function",
     summary = "Returns a percentile value from a matrix (should be a vector)",
     params = {
-      "The result of stats.boot function.",
+      "A one-dimensional matrix (a vector).",
       "A percentile",
       "Another percentile",
       "...",

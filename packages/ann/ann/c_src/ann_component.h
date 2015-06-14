@@ -519,22 +519,6 @@ namespace ANN {
     }
     
     /**
-     * @brief Returns a string with Lua code for its instantiation in non-built state.
-     *
-     * @return A C string buffer.
-     *
-     * @note ANNComponent's are instantiated only with the non-trainable
-     * parameters. Its trainable weight parameters had to be given in build
-     * method.
-     */
-    virtual char *toLuaString() {
-      AprilUtils::buffer_list buffer;
-      buffer.printf("ann.components.base{ name='%s', weights='%s', size=%d }",
-		    name.c_str(), weights_name.c_str(), input_size);
-      return buffer.to_string(AprilUtils::buffer_list::NULL_TERMINATED);
-    }
-
-    /**
      * @brief Generates a name.
      *
      * The name is generated with the given prefix.
@@ -609,7 +593,18 @@ namespace ANN {
       UNUSED_VARIABLE(weights_name);
       UNUSED_VARIABLE(weight_grads);
     }
+
+    // virtual const char *luaCtorName() const;
     
+    // default implementation
+    virtual int exportParamsToLua(lua_State *L) {
+      AprilUtils::LuaTable t(L);
+      t["name"] = name;
+      if (!weights_name.empty()) t["weights"] = weights_name;
+      t.pushTable(L);
+      return 1;
+    }
+
   };
 } // namespace ANN
 

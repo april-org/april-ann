@@ -170,18 +170,18 @@ function trainable_qlearning_trainer_methods:save(filename,format)
   util.serialize(self, filename, format)
 end
 
-function trainable_qlearning_trainer_methods:to_lua_string(format)
-  return string.format("trainable.qlearning_trainer{%s}",
-                       table.tostring({
-                                        sup_trainer = self.tr,
-                                        noise = self.noise,
-                                        discount = self.discount,
-                                        lambda = self.lambda,
-                                        traces = self.traces,
-                                        gradients = self.gradients,
-                                        clampQ = self.clampQ,
-                                      },
-                                      format))
+function trainable_qlearning_trainer_methods:ctor_name()
+  return "trainable.qlearning_trainer"
+end
+
+function trainable_qlearning_trainer_methods:ctor_params()
+  return { sup_trainer = self.tr,
+           noise = self.noise,
+           discount = self.discount,
+           lambda = self.lambda,
+           traces = self.traces,
+           gradients = self.gradients,
+           clampQ = self.clampQ, }
 end
 
 ------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
  package{ name = "functions",
    version = "1.0",
-   depends = { "util", "tokens" },
+   depends = { "util", "tokens", "aprilio" },
    keywords = { "Functions" },
    description = "Define interfaces and methods for work with functions",
    -- targets como en ant

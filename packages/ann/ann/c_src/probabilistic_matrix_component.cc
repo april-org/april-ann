@@ -48,8 +48,10 @@ namespace ANN {
                                   const char *name,
                                   const char *weights_name,
                                   unsigned int input_size,
-                                  unsigned int output_size) :
+                                  unsigned int output_size,
+                                  MatrixFloat *matrix) :
     VirtualMatrixANNComponent(name, weights_name, input_size, output_size),
+    weights_mat(matrix),
     needs_weights_normalization(true),
     side(side) {
     setInputContiguousProperty(true);
@@ -251,18 +253,17 @@ namespace ANN {
                     getName().c_str());
     }
     else {
-      if (weights_mat == 0) {
+      if (weights_mat.empty()) {
 	// printf("NEW OF WEIGHTS %s\n", weights_name.c_str());
 	weights_mat = Connections::build(weights_input_size,
                                          weights_output_size);
-	IncRef(weights_mat);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       weights_dict.put<MatrixFloat*>(getWeightsName(), weights_mat.get());
     }
     normalized_weights_mat = weights_mat->cloneOnlyDims();
     if (side == LEFT) {
-      T_weights_mat         = weights_mat->transpose();
+      T_weights_mat            = weights_mat->transpose();
       T_normalized_weights_mat = normalized_weights_mat->transpose();
     }
   }
@@ -283,14 +284,19 @@ namespace ANN {
     }
   }  
 
-  char *ProbabilisticMatrixANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.probabilistic_matrix{ side='%s',"
-                  "name='%s',weights='%s',input=%d,output=%d }",
-                  (side == LEFT) ? "left" : "right",
-		  getName().c_str(), getWeightsName().c_str(),
-		  getInputSize(), getOutputSize());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *ProbabilisticMatrixANNComponent::luaCtorName() const {
+    return "ann.components.probabilistic_matrix";
+  }
+  int ProbabilisticMatrixANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["side"]    = (side == LEFT) ? "left" : "right";
+    t["name"]    = getName().c_str();
+    t["weights"] = getWeightsName().c_str();
+    t["input"]   = getInputSize();
+    t["output"]  = getOutputSize();
+    t["matrix"]  = weights_mat.get();
+    t.pushTable(L);
+    return 1;
   }
   //////////////////////////////////////////////////////////////////////////
 }

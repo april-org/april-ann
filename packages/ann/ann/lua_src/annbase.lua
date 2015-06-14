@@ -161,7 +161,10 @@ function ann_wrapper_methods:copy_components()
   return {}
 end
 
-function ann_wrapper_methods:to_lua_string()
+function ann_wrapper_methods:ctor_name()
+  error("Impossible to serialize a wrapper component")
+end
+function ann_wrapper_methods:ctor_params()
   error("Impossible to serialize a wrapper component")
 end
 
@@ -200,7 +203,6 @@ ann.components.lua,lua_component_methods = class("ann.components.lua",
                                                  ann.components.base)
 
 ann.components.lua.constructor = function(self, tbl)
-  tbl = tbl or {}
   local tbl = get_table_fields({
       name = { type_match="string" },
       input = { type_match="number" },
@@ -209,6 +211,14 @@ ann.components.lua.constructor = function(self, tbl)
   self.name = tbl.name or ann.generate_name()
   self.input_size = tbl.input
   self.output_size = tbl.output
+end
+
+lua_component_methods.ctor_name = function(self)
+  return class.obj_id(self)
+end
+
+lua_component_methods.ctor_params = function(self)
+  return { name=self.name, input=self.input_size, output=self.output_size }
 end
 
 lua_component_methods.set_input = function(self,tk)
@@ -348,13 +358,6 @@ lua_component_methods.clone = function(self)
                          output=self:get_output_size() }
 end
 
-lua_component_methods.to_lua_string = function(self, format)
-  return "%s{ name=%q, input=%d output=%d }" % {get_object_id(self),
-                                                self.name,
-                                                self:get_input_size(),
-                                                self:get_output_size()}
-end
-
 lua_component_methods.set_use_cuda = function(self, v)
   self.use_cuda = v
 end
@@ -438,35 +441,11 @@ end
 
 ----------------------------------------------------------------------
 
-ann.save = april_doc{
-  class="function",
-  summary="Saves a component with its weights",
-  params={
-    "A component instance",
-    "A filename string",
-  },
-} ..
-  function(c, filename, format)
-    local format = format or "binary"
-    local f =  io.open(filename, "w")
-    f:write(string.format("return %s:build{ weights=%s }\n",
-                          c:to_lua_string(format),
-                          c:copy_weights():to_lua_string(format)))
-    f:close()
-  end
+ann.save = function()
+  error("Not available, use util.serialize instead")
+end
 
-ann.load = april_doc{
-  class="function",
-  summary="Loads a component and its weights, saved with ann.save",
-  params={
-    "A filename string",
-  },
-  outputs = { "An ANN component in built-state" },
-} ..
-  function(filename)
-    local c,_,_ = dofile(filename)
-    return c
-  end
+ann.load = util.deserialize
 ----------------------------------------------------------------------
 
 april_set_doc(ann.mlp,

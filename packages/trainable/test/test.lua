@@ -91,12 +91,11 @@ while train_func:execute(function()
                            print(tr,va)
 			   return trainer,tr,va
 			 end) do
-  train_func:save(tmpname, "binary", { shuffle = training_data.shuffle })
-  train_func,extra = trainable.train_holdout_validation.load(tmpname)
-  training_data.shuffle = extra.shuffle
+  util.serialize({ train_func, training_data.shuffle }, tmpname)
+  train_func,training_data.shuffle = table.unpack((util.deserialize(tmpname)))
 end
-train_func:save(tmpname, "ascii")
-train_func = trainable.train_holdout_validation.load(tmpname)
+util.serialize(train_func, tmpname)
+train_func = util.deserialize(tmpname)
 os.remove(tmpname)
 os.remove(tmpname..".bak")
 clock:stop()
@@ -127,4 +126,4 @@ end
 
 local img = ann.connections.input_filters_image(best:weights("w1"), {16,16})
 ImageIO.write(img, "/tmp/filters.png")
-trainer:save("wop.lua")
+util.serialize(trainer, "wop.lua")

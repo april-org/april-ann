@@ -70,12 +70,6 @@ namespace ANN {
     return error_output;
   }
 
-  char *MultiClassCrossEntropyLossFunction::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.loss.multi_class_cross_entropy(%d)", size);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-  
   /////////////////////////////////////////////////
 
   NonPairedMultiClassCrossEntropyLossFunction::
@@ -123,9 +117,4 @@ namespace ANN {
     return error_output;
   }
 
-  char *NonPairedMultiClassCrossEntropyLossFunction::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.loss.non_paired_multi_class_cross_entropy(%d)", size);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
 }

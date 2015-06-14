@@ -194,18 +194,6 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
-//BIND_FUNCTION ann.connections.to_lua_string
-{
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1,MatrixFloat);
-  Basics::MatrixFloat *obj;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
-  char *str = Connections::toLuaString(obj);
-  LUABIND_RETURN(string, str);
-  delete[] str;
-}
-//BIND_END
-
 //BIND_FUNCTION ann.connections.load
 {
   LUABIND_CHECK_ARGN(==,2);
@@ -343,14 +331,6 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 //BIND_FUNCTION ann.components.reset_id_counters
 {
   ANNComponent::resetIdCounters();
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent to_lua_string
-{
-  char *str = obj->toLuaString();
-  LUABIND_RETURN(string, str);
-  delete[] str;
 }
 //BIND_END
 
@@ -618,20 +598,23 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *name=0, *weights_name=0;
   unsigned int input_size=0, output_size=0;
   bool transpose_weights=false;
+  MatrixFloat *matrix = 0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "weights", 
-		       "input", "output", "transpose", (const char *)0);
+		       "input", "output", "transpose",
+                       "matrix", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, transpose, bool, transpose_weights,
 					 false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   }
   obj = new DotProductANNComponent(name, weights_name,
 				   input_size, output_size,
-				   transpose_weights);
+				   transpose_weights, matrix);
   LUABIND_RETURN(DotProductANNComponent, obj);
 }
 //BIND_END
@@ -714,14 +697,17 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   int argn = lua_gettop(L);
   const char *name=0, *weights_name=0;
   unsigned int size=0;
+  MatrixFloat *matrix=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "weights", "size", (const char *)0);
+    check_table_fields(L, 1, "name", "weights", "size",
+                       "matrix", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   }
-  obj = new BiasANNComponent(size, name, weights_name);
+  obj = new BiasANNComponent(size, name, weights_name, matrix);
   LUABIND_RETURN(BiasANNComponent, obj);
 }
 //BIND_END
@@ -748,16 +734,18 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   bool scalar = false;
   const char *name=0, *weights_name=0;
   unsigned int size=0;
+  MatrixFloat *matrix = 0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "weights", "size", "scalar",
+    check_table_fields(L, 1, "name", "weights", "size", "scalar", "matrix",
                        (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, scalar, bool, scalar, scalar);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   }
-  obj = new MulANNComponent(size, scalar, name, weights_name);
+  obj = new MulANNComponent(size, scalar, name, weights_name, matrix);
   LUABIND_RETURN(MulANNComponent, obj);
 }
 //BIND_END
@@ -786,11 +774,13 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *dot_product_weights=0, *bias_weights=0;
   unsigned int input_size=0, output_size=0;
   bool transpose_weights=false;
+  MatrixFloat *wmatrix=0, *bmatrix=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "dot_product_name", "bias_name",
 		       "dot_product_weights", "bias_weights",
-		       "input", "output", "transpose", (const char *)0);
+		       "input", "output", "transpose", "wmatrix", "bmatrix",
+                       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, dot_product_name, string, dot_product_name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias_name, string, bias_name, 0);
@@ -800,12 +790,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, transpose, bool, transpose_weights,
 					 false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, wmatrix, MatrixFloat, wmatrix, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bmatrix, MatrixFloat, bmatrix, 0);
   }
   obj = new HyperplaneANNComponent(name,
 				   dot_product_name, bias_name,
 				   dot_product_weights, bias_weights,
 				   input_size, output_size,
-				   transpose_weights);
+				   transpose_weights, wmatrix, bmatrix);
   LUABIND_RETURN(HyperplaneANNComponent, obj);
 }
 //BIND_END
@@ -832,10 +824,22 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", (const char *)0);
+    check_table_fields(L, 1, "name", "components", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new StackANNComponent(name);
+  if (argn >= 1) {
+    lua_getfield(L, 1, "components");
+    if (!lua_isnil(L, -1)) {
+      for (int i=1; i<=luaL_len(L, -1); ++i) {
+        lua_rawgeti(L, -1, i);
+        ANNComponent *c = lua_toANNComponent(L, -1);
+        obj->pushComponent(c);
+        lua_pop(L, 1);
+      }
+    }
+    lua_pop(L, 1);
+  }
   LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
@@ -929,10 +933,22 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", (const char *)0);
+    check_table_fields(L, 1, "name", "components", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new JoinANNComponent(name);
+  if (argn >= 1) {
+    lua_getfield(L, 1, "components");
+    if (!lua_isnil(L, -1)) {
+      for (int i=1; i<=luaL_len(L, -1); ++i) {
+        lua_rawgeti(L, -1, i);
+        ANNComponent *c = lua_toANNComponent(L, -1);
+        obj->addComponent(c);
+        lua_pop(L, 1);
+      }
+    }
+    lua_pop(L, 1);
+  }
   LUABIND_RETURN(JoinANNComponent, obj);
 }
 //BIND_END
@@ -1196,8 +1212,9 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_CHECK_PARAMETER(1, table);
   const char *name=0, *weights=0;
   int *kernel, *step, n, input_planes_dim;
+  MatrixFloat *matrix=0;
   check_table_fields(L, 1, "name", "weights", "kernel", "input_planes_dim",
-		     "step", "n", (const char *)0);
+		     "step", "n", "matrix", (const char *)0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
 				       input_planes_dim, -1);
   if (input_planes_dim > 1) {
@@ -1208,6 +1225,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
   //
   lua_getfield(L, 1, "kernel");
@@ -1235,7 +1253,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   lua_pop(L, 1);
   obj = new ConvolutionANNComponent(size, kernel, step, n,
-				    name, weights);
+				    name, weights, matrix);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;
   delete[] step;
@@ -1273,13 +1291,16 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   LUABIND_CHECK_PARAMETER(1, table);
   const char *name=0, *weights=0;
   int n, ndims;
-  check_table_fields(L, 1, "name", "weights", "n", "ndims", (const char *)0);
+  MatrixFloat *matrix=0;
+  check_table_fields(L, 1, "name", "weights", "n", "ndims", "matrix",
+                     (const char *)0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
   LUABIND_GET_TABLE_PARAMETER(1, ndims, int, ndims);
   //
-  obj = new ConvolutionBiasANNComponent(ndims, n, name, weights);
+  obj = new ConvolutionBiasANNComponent(ndims, n, name, weights, matrix);
   LUABIND_RETURN(ConvolutionBiasANNComponent, obj);
 }
 //BIND_END

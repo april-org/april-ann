@@ -39,7 +39,9 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new MAELossFunction(this);
     }
-    virtual char *toLuaString();
+    virtual const char *luaCtorName() const {
+      return "ann.loss.mae";
+    }
   };
 }
 

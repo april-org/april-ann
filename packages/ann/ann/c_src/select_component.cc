@@ -94,10 +94,15 @@ namespace ANN {
 			weights_dict, components_dict);
   }
   
-  char *SelectANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.select{ name='%s',dimension=%d,index=%d }",
-		  name.c_str(), dimension, index);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *SelectANNComponent::luaCtorName() const {
+    return "ann.components.select";
+  }
+  int SelectANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    t["dimension"] = dimension;
+    t["index"] = index;
+    t.pushTable(L);
+    return 1;
   }
 }

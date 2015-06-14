@@ -65,6 +65,13 @@ namespace AprilUtils {
     lua_pop(L, 1);
     return result;
   }
+  
+  size_t LuaTable::length() const {
+    if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+    int len = luaL_len(L, -1);
+    lua_pop(L, 1);
+    return static_cast<size_t>(len);
+  }
 
   LuaTable &LuaTable::operator=(const LuaTable &other) {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
@@ -117,8 +124,13 @@ namespace AprilUtils {
   ///////////////////////////////////////////////////////////////////////////
 
   template<>
-  int LuaTable::convertTo<int>(lua_State *L, int idx) {
-    return lua_tointeger(L, idx);
+  uint32_t LuaTable::convertTo<uint32_t>(lua_State *L, int idx) {
+    return static_cast<uint32_t>(lua_tonumber(L, idx));
+  }
+  
+  template<>
+  int LuaTable::convertTo<int32_t>(lua_State *L, int idx) {
+    return static_cast<int32_t>(lua_tonumber(L, idx));
   }
 
   template<>
@@ -151,7 +163,12 @@ namespace AprilUtils {
   }
   
   template<>
-  void LuaTable::pushInto<int>(lua_State *L, int value) {
+  void LuaTable::pushInto<uint32_t>(lua_State *L, uint32_t value) {
+    lua_pushnumber(L, static_cast<double>(value));
+  }
+  
+  template<>
+  void LuaTable::pushInto<int32_t>(lua_State *L, int32_t value) {
     lua_pushnumber(L, static_cast<double>(value));
   }
 
@@ -171,9 +188,28 @@ namespace AprilUtils {
   }
 
   template<>
+  void LuaTable::pushInto<string>(lua_State *L, string value) {
+    size_t len = value.size();
+    if (len>0 && value.back() == '\0') {
+      april_assert(len-1 == strlen(value.c_str()));
+      lua_pushstring(L, value.c_str());
+    }
+    else {
+      lua_pushlstring(L, value.c_str(), len);
+    }
+  }
+  
+  template<>
   void LuaTable::pushInto<const string &>(lua_State *L,
                                           const string &value) {
-    lua_pushlstring(L, value.c_str(), value.size());
+    size_t len = value.size();
+    if (len>0 && value.back() == '\0') {
+      april_assert(len-1 == strlen(value.c_str()));
+      lua_pushstring(L, value.c_str());
+    }
+    else {
+      lua_pushlstring(L, value.c_str(), len);
+    }
   }
 
   template<>
@@ -183,7 +219,12 @@ namespace AprilUtils {
   }
 
   template<>
-  bool LuaTable::checkType<int>(lua_State *L, int idx) {
+  bool LuaTable::checkType<uint32_t>(lua_State *L, int idx) {
+    return lua_isnumber(L, idx);
+  }
+  
+  template<>
+  bool LuaTable::checkType<int32_t>(lua_State *L, int idx) {
     return lua_isnumber(L, idx);
   }
   
@@ -219,10 +260,8 @@ namespace AprilUtils {
     lua_getfield(L, -1, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
     const char *str = lua_tostring(L, -1);
-    // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
-    // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
-    // string is referenced in a table, so, as far as the table exists, the
-    // string will also exists.
+    // NOTE: it is safe to pop because the string is referenced in a table, so,
+    // as far as the table exists, the string will also exists.
     lua_pop(L, 2);
     return str;
   }
@@ -241,10 +280,8 @@ namespace AprilUtils {
         return def;
       }
       const char *str = lua_tostring(L,-1);
-      // NOTE: it is safe to pop becase: 1) garbage collection has been stopped in
-      // C/C++ environment, it has shown to be better in APRIL-ANN binding; 2) the
-      // string is referenced in a table, so, as far as the table exists, the
-      // string will also exists.
+      // NOTE: it is safe to pop because the string is referenced in a table,
+      // so, as far as the table exists, the string will also exists.
       lua_pop(L, 2);
       return str;
     }

@@ -1,6 +1,6 @@
 package{ name = "mathcore",
    version = "1.0",
-   depends = { "util", "complex" },
+   depends = { "util", "complex", "aprilio" },
    keywords = { },
    description = "Math library",
    -- targets como en ant

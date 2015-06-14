@@ -1,9 +1,7 @@
 class.extend(matrix.sparse, "t", matrix.sparse .. "transpose")
 
 -- the constructor
-matrix.sparse.csr = function(...)
-  return matrix.sparse(...)
-end
+matrix.sparse.csr = matrix.sparse
 
 -- serialization
 matrix.__generic__.__make_generic_fromFilename__(matrix.sparse)

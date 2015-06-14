@@ -56,12 +56,10 @@ namespace ANN {
     return obj;
   }
 
-  char *LogisticActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.logistic{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *LogisticActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.logistic";
   }
-
+  
   ///////////////////////////////////////////////////////////////////////
 
   SparseLogisticActfANNComponent::
@@ -80,14 +78,6 @@ namespace ANN {
     return obj;
   }
 
-  char *SparseLogisticActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.sparse_logistic{ "
-                  "name='%s', penalty=%f, sparsity=%f  }",
-                  name.c_str(), this->beta, this->target_avg_act);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
- 
   void SparseLogisticActfANNComponent::multiplyDerivatives(MatrixFloat *input_units,
                                                            MatrixFloat *output_units,
                                                            MatrixFloat *input_errors,
@@ -132,5 +122,17 @@ namespace ANN {
     delete aux;
     delete sparse_gradients;
     delete sparse_errors;
+  }
+
+  const char *SparseLogisticActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.sparse_logistic";
+  }
+  int SparseLogisticActfANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name;
+    t["penalty"] = beta;
+    t["sparsity"] = target_avg_act;
+    t.pushTable(L);
+    return 1;
   }
 }

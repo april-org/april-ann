@@ -118,13 +118,6 @@ namespace ANN {
     return obj;
   }
 
-  char *PReLUActfANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.actf.prelu{ name='%s', weights='%s', size=%u, scalar=%s }",
-                  name.c_str(), weights_name.c_str(), size, scalar ? "true" : "false");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
-  }
-
   void PReLUActfANNComponent::build(unsigned int _input_size,
                                     unsigned int _output_size,
                                     AprilUtils::LuaTable &weights_dict,
@@ -155,5 +148,19 @@ namespace ANN {
     if (weights->size() != static_cast<int>(weights_size)) {
       ERROR_EXIT1(257, "Unexpected matrix size [%s]\n", name.c_str());
     }
+  }
+
+  const char *PReLUActfANNComponent::luaCtorName() const {
+    return "ann.components.actf.prelu";
+  }
+  int PReLUActfANNComponent::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable t(L);
+    t["name"] = name.c_str();
+    t["weights"] = weights_name.c_str();
+    t["size"] = size;
+    t["scalar"] = scalar ? "true" : "false";
+    t["matrix"] = weights.get();
+    t.pushTable(L);
+    return 1;
   }
 }

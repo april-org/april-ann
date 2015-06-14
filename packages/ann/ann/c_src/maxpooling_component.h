@@ -114,8 +114,8 @@ namespace ANN {
     }
     virtual ANNComponent *clone();
     
-    virtual char *toLuaString();
-
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 }
 

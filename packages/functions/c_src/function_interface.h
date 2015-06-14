@@ -24,7 +24,7 @@
 #define FUNCTION_INTERFACE_H
 
 #include "error_print.h"
-#include "referenced.h"
+#include "serializable.h"
 #include "token_base.h"
 
 /// Generic functions that receive and produce Basics::Token pointers.
@@ -37,9 +37,9 @@ namespace Functions {
      calculates output vector given input vector. Every function is feeded with
      an input Token and produces an output Token.
    */
-  class FunctionInterface : public Referenced {
+  class FunctionInterface : public AprilIO::Serializable {
   public:
-    FunctionInterface() : Referenced() { }
+    FunctionInterface() : Serializable() { }
     virtual ~FunctionInterface() {
     }
     /// It returns the input (or domain) size of the function.

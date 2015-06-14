@@ -22,6 +22,7 @@
 //BIND_END
 
 //BIND_HEADER_H
+#include "bind_april_io.h"
 #include "MersenneTwister.h"
 #include "dice.h"
 #include "utilLua.h"
@@ -29,8 +30,11 @@ using Basics::MTRand;
 using Basics::Dice;
 //BIND_END
 
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+
 //BIND_LUACLASSNAME MTRand random
 //BIND_CPP_CLASS MTRand
+//BIND_SUBCLASS_OF MTRand Serializable
 
 //BIND_CONSTRUCTOR MTRand
 //DOC_BEGIN
@@ -319,11 +323,7 @@ using Basics::Dice;
 }
 //BIND_END
 
-//BIND_METHOD MTRand to_lua_string
-{
-  LUABIND_RETURN(string, obj->toLuaString());
-}
-//BIND_END
+/////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME Dice random.dice
 //BIND_CPP_CLASS Dice

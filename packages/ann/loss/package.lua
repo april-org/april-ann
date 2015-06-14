@@ -1,6 +1,6 @@
  package{ name = "ann.loss",
    version = "1.0",
-   depends = { "tokens", "matrix" },
+   depends = { "tokens", "matrix", "aprilio" },
    keywords = { "Loss functions ANNs" },
    description = "Define loss functions for gradient descent ANN training",
    -- targets como en ant

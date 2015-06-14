@@ -70,10 +70,16 @@ namespace Basics {
       ERROR_EXIT(128, "Bool type has not binary option\n");
 
     }
-
+    
     /////////////////////////////////////////////////////////////////////////////
-
+    
   } // namespace MatrixIO
+
+  template<>
+  const char *Matrix<bool>::luaCtorName() const {
+    return "matrixBool.deserialize";
+  }
+
 
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<bool>;

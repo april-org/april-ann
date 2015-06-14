@@ -114,6 +114,9 @@ namespace ANN {
       virtual void setState(AprilUtils::LuaTable &dict) {
       }
     */
+
+    // virtual const char *luaCtorName() const;
+    // virtual int exportParamsToLua(lua_State *L);
     
   };
 }

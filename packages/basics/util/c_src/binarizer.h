@@ -25,6 +25,9 @@ extern "C" {
 #include <stdint.h>
 }
 
+#include "error_print.h"
+#include "unused_variable.h"
+
 namespace AprilUtils {
 
   // glibc defines these ones in string.h 
@@ -42,7 +45,25 @@ namespace AprilUtils {
 
   public:
     static void init();
-  
+
+    template<typename T>
+    static unsigned int binary_size() {
+      ERROR_EXIT(128, "Not implemented\n");
+      return 0;
+    }
+    template<typename T>
+    static void code(const T &value, char *b) {
+      UNUSED_VARIABLE(value);
+      UNUSED_VARIABLE(b);
+      ERROR_EXIT(128, "Not implemented\n");
+    }
+    template<typename T>
+    static T decode(const char *b) {
+      UNUSED_VARIABLE(b);
+      ERROR_EXIT(128, "Not implemented\n");
+      return T(0.0f);
+    }
+    
     static void code_uint32(uint32_t i, char b[5]);
     static void code_int32 ( int32_t i, char b[5]);
     static uint32_t decode_uint32(const char b[5]);
@@ -109,6 +130,39 @@ namespace AprilUtils {
                                  bool with_newlines=true);
   
   };
+  
+  template<>
+  unsigned int binarizer::binary_size<float>();
+  template<>
+  unsigned int binarizer::binary_size<double>();
+  template<>
+  unsigned int binarizer::binary_size<int32_t>();
+  template<>
+  unsigned int binarizer::binary_size<char>();
+  template<>
+  unsigned int binarizer::binary_size<bool>();
+
+  template<>
+  void binarizer::code<float>(const float &value, char *b);
+  template<>
+  void binarizer::code<double>(const double &value, char *b);
+  template<>
+  void binarizer::code<int32_t>(const int32_t &value, char *b);
+  template<>
+  void binarizer::code<char>(const char &value, char *b);
+  template<>
+  void binarizer::code<bool>(const bool &value, char *b);
+
+  template<>
+  float binarizer::decode<float>(const char *b);
+  template<>
+  double binarizer::decode<double>(const char *b);
+  template<>
+  int32_t binarizer::decode<int32_t>(const char *b);
+  template<>
+  char binarizer::decode<char>(const char *b);
+  template<>
+  bool binarizer::decode<bool>(const char *b);
 
 } // namespace AprilUtils
 

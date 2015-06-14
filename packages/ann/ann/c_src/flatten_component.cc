@@ -82,9 +82,7 @@ namespace ANN {
 			weights_dict, components_dict);
   }
   
-  char *FlattenANNComponent::toLuaString() {
-    buffer_list buffer;
-    buffer.printf("ann.components.flatten{ name='%s' }", name.c_str());
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *FlattenANNComponent::luaCtorName() const {
+    return "ann.components.flatten";
   }
 }

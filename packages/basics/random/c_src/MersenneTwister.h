@@ -65,11 +65,11 @@
 #include <time.h>
 #include <math.h>
 #include <stdint.h>
-#include "referenced.h"
+#include "serializable.h"
 
 namespace Basics {
 
-  class MTRand : public Referenced {
+  class MTRand : public AprilIO::Serializable {
     // Data
   public:
 
@@ -123,14 +123,16 @@ namespace Basics {
     // Saving and loading generator state
     void save( uint32_t* saveArray ) const;  // to array of size SAVE
     void load( uint32_t *const loadArray );  // from such array
-    char *toLuaString() const;
-
+    
     // friend std::ostream& operator<<( std::ostream& os, const MTRand& mtrand );
     // friend std::istream& operator>>( std::istream& is, MTRand& mtrand );
 
     //
     void shuffle(int size, int *vector);
-
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
+    
   protected:
     void initialize( const uint32_t oneSeed );
     void reload();
