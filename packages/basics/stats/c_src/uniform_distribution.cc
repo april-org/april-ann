@@ -137,17 +137,14 @@ namespace Stats {
   StatisticalDistributionBase *UniformDistribution::clone() {
     return new UniformDistribution(low->clone(), high->clone());
   }
-
-  char *UniformDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    AprilUtils::LuaTable options;
-    options.put("ascii", is_ascii);
-    stream->put("stats.dist.uniform(matrix.fromString[[");
-    low->write(stream.get(), options);
-    stream->put("]], matrix.fromString[[");
-    high->write(stream.get(), options);
-    stream->put("]])\0",4);
-    return stream->releaseString();
+  
+  const char *UniformDistribution::luaCtorName() const {
+    return "stats.dist.uniform";
+  }
+  int UniformDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, low);
+    AprilUtils::LuaTable::pushInto(L, high);
+    return 2;
   }
   
   void UniformDistribution::updateParams() {

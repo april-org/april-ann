@@ -27,14 +27,54 @@ extern "C" {
 #include "lua.h"
 }
 
+#include "base.h"
 #include "error_print.h"
 #include "lua_table.h"
+#include "mystring.h"
 #include "referenced.h"
 #include "stream.h"
 #include "unused_variable.h"
 
 namespace AprilIO {
 
+  /// Uses Lua util.serialize function to write the given object.
+  template<typename T>
+  void serialize(T object, StreamInterface *dest) {
+    lua_State *L = Base::getGlobalLuaState();
+    lua_getglobal(L, "util");
+    lua_getfield(L, -1, "serialize");
+    AprilUtils::LuaTable::pushInto(L, object);
+    AprilUtils::LuaTable::pushInto(L, dest);
+    lua_call(L, 2, 0);
+    lua_pop(L, 1);
+  }
+
+  /// Uses Lua util.serialize function to write the given object into a string;
+  template<typename T>
+  AprilUtils::string serialize(T object) {
+    lua_State *L = Base::getGlobalLuaState();
+    lua_getglobal(L, "util");
+    lua_getfield(L, -1, "serialize");
+    AprilUtils::LuaTable::pushInto(L, object);
+    lua_call(L, 2, 1);
+    AprilUtils::string result(lua_tostring(L, -1));
+    lua_pop(L, 2);
+    return result;
+  }
+
+  /// Uses Lua util.deserialize function to retrieve an object.
+  template<typename T>
+  T deserialize(StreamInterface *dest) {
+    lua_State *L = Base::getGlobalLuaState();
+    lua_getglobal(L, "util");
+    lua_getfield(L, -1, "deserialize");
+    AprilUtils::LuaTable::pushInto(L, dest);
+    lua_call(L, 1, 1);
+    T obj = AprilUtils::LuaTable::convertTo<T>(L, -1);
+    lua_pop(L, 2);
+    return obj;
+  }
+  
   /**
    * @brief This class defines the basic API for serializable classes.
    */

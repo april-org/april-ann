@@ -176,20 +176,6 @@ function metropolis_methods:ctor_params()
   return self.global_options,self.layerwise_options,self.count,self.state
 end
 
-function metropolis_methods:to_lua_string(format)
-  local format = format or "binary"
-  local str_t = { "ann.optimizer.metropolis(",
-                  table.tostring(self.global_options),
-                  ",",
-                  table.tostring(self.layerwise_options),
-                  ",",
-                  tostring(self.count),
-                  ",",
-                  table.tostring(self.state),
-                  ")" }
-  return table.concat(str_t, "")
-end
-
 function metropolis_methods:start_burnin()
   self.state.samples  = {}
   self.state.energies = {}

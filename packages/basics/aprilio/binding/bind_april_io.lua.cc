@@ -103,6 +103,8 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
 #include "april_assert.h"
 #include "bind_util.h"
 
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(StreamInterface);
+
 namespace AprilIO {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,

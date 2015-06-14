@@ -100,11 +100,13 @@ namespace Stats {
     return new BetaDistribution(alpha->clone(), beta->clone());
   }
   
-  char *BetaDistribution::toLuaString(bool is_ascii) const {
-    UNUSED_VARIABLE(is_ascii);
-    buffer_list buffer;
-    buffer.printf("stats.dist.beta(%g, %g)", alphaf, betaf);
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  const char *BetaDistribution::luaCtorName() const {
+    return "stats.dist.beta";
+  }
+  int BetaDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, alphaf);
+    AprilUtils::LuaTable::pushInto(L, betaf);
+    return 2;
   }
   
 }

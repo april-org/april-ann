@@ -49,9 +49,11 @@ namespace Stats {
                               Basics::MatrixFloat *cov);
     virtual ~GeneralNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
-
+  
   /// Normal distribution with diagonal covariance sparse matrix
   class DiagonalNormalDistribution : public StatisticalDistributionBase {
   protected:
@@ -75,7 +77,9 @@ namespace Stats {
                                Basics::SparseMatrixFloat *cov);
     virtual ~DiagonalNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 
   /// Normal distribution with mean=0 and var=1
@@ -96,7 +100,9 @@ namespace Stats {
     StandardNormalDistribution();
     virtual ~StandardNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
   
 
@@ -120,7 +126,9 @@ namespace Stats {
                                  Basics::MatrixFloat *location=0);
     virtual ~GeneralLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 
   /// Log-LogNormal distribution with diagonal covariance sparse matrix
@@ -143,7 +151,9 @@ namespace Stats {
                                   Basics::MatrixFloat *location=0);
     virtual ~DiagonalLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual char *toLuaString(bool is_ascii) const;
+    
+    virtual const char *luaCtorName() const;
+    virtual int exportParamsToLua(lua_State *L);
   };
 
 }

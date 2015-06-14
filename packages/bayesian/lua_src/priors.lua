@@ -92,12 +92,6 @@ function priors_methods:ctor_params()
   return self.tree,self.order,self.outcomes
 end
 
-function priors_methods:to_lua_string()
-  return "bayesian.priors(%s,%s,%s)"%{ table.tostring(self.tree,"binary"),
-                                       table.tostring(self.order,"binary"),
-                                       table.tostring(self.outcomes,"binary") }
-end
-
 function priors_methods:value(name, value)
   april_assert(not self.tree[name], "Redifition of value '%s'", target)
   table.insert(self.order, name)

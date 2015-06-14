@@ -25,7 +25,7 @@
 #include "logbase.h"
 #include "matrixFloat.h"
 #include "MersenneTwister.h"
-#include "referenced.h"
+#include "serializable.h"
 
 /// Classes related with statistical functions and distributions.
 namespace Stats {
@@ -38,7 +38,7 @@ namespace Stats {
    * All the methods work with two-dimensional matrices where first dimension is
    * the bunch_size (like ANN components).
    */
-  class StatisticalDistributionBase : public Referenced {
+  class StatisticalDistributionBase : public AprilIO::Serializable {
     unsigned int size;
     
   protected:
@@ -87,7 +87,7 @@ namespace Stats {
     /**
      * @param size - The size of the distribution data points.
      */
-    StatisticalDistributionBase(unsigned int size) : Referenced(), size(size) {}
+    StatisticalDistributionBase(unsigned int size) : Serializable(), size(size) {}
     virtual ~StatisticalDistributionBase() {}
     /**
      * @brief Public part of sample method, where arguments will be checked.
@@ -207,14 +207,9 @@ namespace Stats {
      * @return A deep copy (clone) of the caller object.
      */
     virtual StatisticalDistributionBase *clone() = 0;
-    /**
-     * @param is_ascii - A bool indicating if the Matrix data will be stored in
-     * ascii (or binary) format.
-     *
-     * @return A Lua string representation of the caller object, useful for
-     * serialization purposes.
-     */
-    virtual char *toLuaString(bool is_ascii) const = 0;
+
+    // virtual const char *luaCtorName() const;
+    // virtual int exportParamsToLua(lua_State *L);
   };
   
   ////////////////////////////////////////////////////////////////////////////

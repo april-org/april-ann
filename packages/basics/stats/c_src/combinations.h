@@ -57,7 +57,7 @@ namespace Stats {
       if (n > 20u) {
         long double result = roundl(expl(lget(n, k)));
         if (result > static_cast<long double>(AprilMath::Limits<uint32_t>::max())) {
-          ERROR_EXIT(256, "Overflow in 32 bits unsigned integer\n");
+          ERROR_EXIT(256, "Overflow in 32 bits unsigned integer, use logarithmic method\n");
         }
         return static_cast<uint32_t>(result);
       }

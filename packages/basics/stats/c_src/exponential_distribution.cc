@@ -130,13 +130,11 @@ namespace Stats {
     return new ExponentialDistribution(lambda->clone());
   }
   
-  char *ExponentialDistribution::toLuaString(bool is_ascii) const {
-    SharedPtr<CStringStream> stream(new CStringStream());
-    stream->put("stats.dist.exponential(matrix.fromString[[");
-    AprilUtils::LuaTable options;
-    lambda->write( stream.get(), options.put("ascii", is_ascii) );
-    stream->put("]])\0",4); // forces a \0 at the end of the buffer
-    return stream->releaseString();
+  const char *ExponentialDistribution::luaCtorName() const {
+    return "stats.dist.exponential";
   }
-  
+  int ExponentialDistribution::exportParamsToLua(lua_State *L) {
+    AprilUtils::LuaTable::pushInto(L, lambda);
+    return 1;
+  }
 }

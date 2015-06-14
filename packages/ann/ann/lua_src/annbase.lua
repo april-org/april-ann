@@ -168,10 +168,6 @@ function ann_wrapper_methods:ctor_params()
   error("Impossible to serialize a wrapper component")
 end
 
-function ann_wrapper_methods:to_lua_string()
-  error("Impossible to serialize a wrapper component")
-end
-
 function ann_wrapper_methods:get_name()
   error("Not implemented in wrapper component")
 end
@@ -445,35 +441,11 @@ end
 
 ----------------------------------------------------------------------
 
-ann.save = april_doc{
-  class="function",
-  summary="Saves a component with its weights",
-  params={
-    "A component instance",
-    "A filename string",
-  },
-} ..
-  function(c, filename, format)
-    local format = format or "binary"
-    local f =  io.open(filename, "w")
-    f:write(string.format("return %s:build{ weights=%s }\n",
-                          c:to_lua_string(format),
-                          c:copy_weights():to_lua_string(format)))
-    f:close()
-  end
+ann.save = function()
+  error("Not available, use util.serialize instead")
+end
 
-ann.load = april_doc{
-  class="function",
-  summary="Loads a component and its weights, saved with ann.save",
-  params={
-    "A filename string",
-  },
-  outputs = { "An ANN component in built-state" },
-} ..
-  function(filename)
-    local c,_,_ = dofile(filename)
-    return c
-  end
+ann.load = util.deserialize
 ----------------------------------------------------------------------
 
 april_set_doc(ann.mlp,
