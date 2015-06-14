@@ -235,7 +235,7 @@ do
         else
           -- it is an object, so we need to use its introspection methods
           assert(data.ctor_params,
-                 "Userdata needs a function called ctor_params_table to be serializable")
+                 "Userdata needs a function called ctor_params to be serializable")
           assert(data.ctor_name,
                  "Userdata needs a function called ctor_name to be serializable")
           local params = table.pack( data:ctor_params() )

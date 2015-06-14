@@ -602,38 +602,15 @@ function math.clamp(value,lower,upper)
 end
 
 function math.median(t, ini, fin)
-  local ini,fin = ini or 1, fin or #t
-  local len     = fin-ini+1
-  local mpos    = math.floor((ini+fin)/2)
-  local median  = t[mpos]
-  if len % 2 == 0 then
-    median = (median + t[mpos+1])/2
-  end
-  return median
+  error("Removed, use a matrix and stats.percentile() instead")
 end
 
--- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
-  local ini,fin = ini or 1, fin or #t
-  local total=0
-  local suma=0
-  total = fin - ini + 1
-  for i=ini,fin do
-    suma = suma + t[i]
-  end
-  return suma/total,total
+  error("Removed, use a matrix and stats.amean() instead")
 end
 
--- calcula la desviacion tipica de una tabla o subtabla
 function math.std(t, ini, fin)
-  local ini,fin = ini or 1, fin or #t
-  local mean,total = math.mean(t, ini, fin)
-  local suma_sqr=0
-  for i=ini,fin do
-    local value = mean - t[i]
-    suma_sqr = suma_sqr + value*value
-  end
-  return math.sqrt(suma_sqr/(total-1)),total
+  error("Removed, use a matrix and stats.std() instead")
 end
 
 -- computes the sign of a number

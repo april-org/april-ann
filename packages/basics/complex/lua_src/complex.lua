@@ -6,6 +6,12 @@ local function get_operands(op1,op2)
   elseif t2 == "string" then op2 = complex(op2) end  
   return op1,op2
 end
+
+class.extend(complex, "ctor_name", function(self) return "complex" end)
+class.extend(complex, "ctor_params", function(self) return self:plane() end)
+class.extend(complex, "to_lua_string",
+             function(self) return "complex(%g,%g)"%{ self:plane() } end)
+
 complex.meta_instance.__tostring = function(self)
   return string.format("% g%+gi", self:plane())
 end
