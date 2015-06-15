@@ -38,8 +38,10 @@ namespace ANN {
 
   PReLUActfANNComponent::PReLUActfANNComponent(bool scalar, unsigned int size,
                                                const char *name,
-                                               const char *weights_name) :
-    ActivationFunctionANNComponent(name), size(size), scalar(scalar) {
+                                               const char *weights_name,
+                                               MatrixFloat *matrix) :
+    ActivationFunctionANNComponent(name),
+    weights(matrix), size(size), scalar(scalar) {
     if (weights_name) {
       this->weights_name = string(weights_name);
     }

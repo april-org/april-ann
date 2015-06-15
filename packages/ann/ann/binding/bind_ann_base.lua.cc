@@ -1786,15 +1786,18 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   const char *name=0, *weights=0;
   unsigned int size=0;
   bool scalar=false;
+  MatrixFloat *matrix=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "size", "scalar", "weights", (const char *)0);
+    check_table_fields(L, 1, "name", "size", "scalar", "weights", "matrix",
+                       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, scalar, bool, scalar, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, matrix, MatrixFloat, matrix, 0);
   }
-  obj = new PReLUActfANNComponent(scalar, size, name, weights);
+  obj = new PReLUActfANNComponent(scalar, size, name, weights, matrix);
   LUABIND_RETURN(PReLUActfANNComponent, obj);  
 }
 //BIND_END
