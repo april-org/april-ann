@@ -4,6 +4,12 @@ if [ -z $APRILANN_CONFIGURED ]; then
     export PATH="`pwd`"/lua/bin:`pwd`/bin:$PATH
 #export LUA_PATH="`pwd`""/binding/?.lua;?"
 fi
+if [ -z $LUA_HISTSIZE ]; then
+    export LUA_HISTSIZE=500
+fi
+if [ -z $LUA_HISTORY ]; then
+    export LUA_HISTORY=~/.lua_history
+fi
 export LUA_DIR="`pwd`"/lua/lua-5.2.2
 (make -C $LUA_DIR            &&
  make -C $LUA_DIR install    &&
