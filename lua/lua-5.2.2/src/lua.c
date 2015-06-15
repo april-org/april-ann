@@ -347,7 +347,7 @@ static int lua_rl_getmetaindex(lua_State *L)
 {
   if (!lua_getmetatable(L, -1)) { lua_pop(L, 1); return 0; }
   lua_pushstring(L, "__index");
-  lua_rawget(L, -2);
+  lua_rawget(L, -2); if (lua_isfunction(L, -1)) { lua_pop(L, 1); lua_pushstring(L, "index_table"); lua_rawget(L, -2); }
   lua_replace(L, -2);
   if (lua_isnil(L, -1) || lua_rawequal(L, -1, -2)) { lua_pop(L, 2); return 0; }
   lua_replace(L, -2);
@@ -414,8 +414,8 @@ static char **lua_rl_complete(const char *text, int start, int end)
 	      (*s != '_' || text[dot] == '_')) {
 	    int suf = ' ';  /* Default suffix is a space. */
 	    switch (lua_type(L, -1)) {
-	    case LUA_TTABLE:	suf = '.'; break;  /* No way to guess ':'. */
-	    case LUA_TFUNCTION:	suf = '('; break;
+	    case LUA_TTABLE:    suf = '\0'; break;  /* No way to guess ':'. */
+	    case LUA_TFUNCTION:	suf = '(';  break;
 	    case LUA_TUSERDATA:
 	      if (lua_getmetatable(L, -1)) { lua_pop(L, 1); suf = ':'; }
 	      break;
