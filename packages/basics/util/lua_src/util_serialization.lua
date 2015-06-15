@@ -54,7 +54,7 @@ function table.tostring(t,format)
       value = v:to_lua_string(format)
     elseif tt == "function" then
       value = util.function_to_lua_string(v,format)
-    else value = tostring(v)
+    else value = (v==math.huge) and "math.huge" or tostring(v)
     end
     table.insert(out, value)
     j=j+1
@@ -71,7 +71,8 @@ function table.tostring(t,format)
     local value
     if luatype(i) == "string" then
       key = string.format("[%q]=",i)
-    elseif tonumber(i) then key = "["..i.."]".."="
+    elseif tonumber(i) then
+      key = "[".. ( (i==math.huge) and "math.huge" or i ) .."]".."="
     else key = string.format("[%q]=",tostring(i))
     end
     local tt = luatype(v)
@@ -82,7 +83,7 @@ function table.tostring(t,format)
       value = v:to_lua_string(format)
     elseif tt == "function" then
       value = util.function_to_lua_string(v,format)
-    else value = tostring(v)
+    else value = (v == math.huge) and "math.huge" or tostring(v)
     end
     table.insert(out, key .. value)
   end
@@ -109,7 +110,7 @@ function util.to_lua_string(data,format)
            "Userdata needs a to_lua_string(format) method")
     return data:to_lua_string(format)
   else
-    return tostring(data)
+    return (data==math.huge) and "math.huge" or tostring(data)
   end
 end
 
@@ -161,7 +162,7 @@ do
     local tt = tt or type(data)
     assert(tt ~= "thread", "Unable to serialize coroutines")
     if tt == "string" then return "%q"%{data}
-    else return tostring(data)
+    else return (data == math.huge) and "math.huge" or tostring(data)
     end
   end
   local function non_structured_split(data)
