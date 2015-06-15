@@ -95,7 +95,6 @@ namespace InterestPoints
 
   Imaging::ImageFloat *get_image_area_from_dataset(Basics::DataSetFloat *ds_out, Basics::DataSetFloat *indexed, int width, int height, int num_classes, float threshold = 0.8); 
   Basics::MatrixFloat * get_indexes_from_colored(Imaging::ImageFloat *img, Imaging::ImageFloat *img2=NULL);
-
   Imaging::ImageFloat *refine_colored(Imaging::ImageFloat *img, Basics::MatrixFloat *mat, int num_classes = 3);
   struct interest_point:AprilUtils::Point<int> {
     bool natural_type;
