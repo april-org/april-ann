@@ -118,6 +118,12 @@ namespace Basics {
   template<typename T>
   class MatrixBindings {
   public:
+
+    template<typename O>
+    static Matrix<O> *matrixCast(Matrix<T> *obj) {
+      
+    }
+
 #define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
 #define BEGIN_CLASS_METHOD(name) static int name(lua_State *L)
     
@@ -185,6 +191,40 @@ namespace Basics {
         }
       } // else { !checkType(L,argn) }
       AprilUtils::LuaTable::pushInto(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "cast_type"
+    BEGIN_METHOD(cast_type)
+    {
+      LUABIND_CHECK_ARGN(==,1);
+      const char *type;
+      LUABIND_GET_PARAMETER(1, string, type);
+      if (!strcmp(type,"float")) {
+        Matrix<float> *obj2 = matrixCast<T,float>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"bool")) {
+        Matrix<bool> *obj2 = matrixCast<T,bool>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"int32")) {
+        Matrix<int32_t> *obj2 = matrixCast<T,int32_t>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"double")) {
+        Matrix<double> *obj2 = matrixCast<T,double>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"complex_float")) {
+        //Matrix<ComplexF> *obj2 = matrixCast<T,ComplexF>(obj);
+        //AprilUtils::LuaTable::pushInto(L, obj2);
+        LUABIND_ERROR("Not implemented");
+      }
+      else {
+        LUABIND_ERROR("Unknown type %s", type);
+      }
       return 1;
     }
 #undef FUNCTION_NAME
