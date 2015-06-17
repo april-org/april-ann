@@ -14,6 +14,24 @@ local input = matrix(5,3,{ 0, 1, 0,
 local sparse_input = matrix.sparse.csr(input)
 local e = matrix(5,4):uniformf(0,1,random(2384))
 --
+T("JoinAndSparseTest",
+  function()
+    local j = ann.components.join()
+    j:add( ann.components.dot_product{ input=3, output=2, matrix=matrix(2,3):uniformf(-1,1,random(1234)) } )
+    j:add( ann.components.dot_product{ input=3, output=2, matrix=matrix(2,3):uniformf(-1,1,random(5825)) } )
+    j:build()
+    local i1 = matrix.sparse.diag{1,2,3}
+    local i2 = matrix.sparse.diag{4,5,6}
+    local o = j:forward( tokens.vector.bunch{ i1, i2 } )
+    local o2 = j:forward( matrix.sparse(matrix(3,6, {
+                                                 1,0,0,4,0,0,
+                                                 0,2,0,0,5,0,
+                                                 0,0,3,0,0,6, })) )
+    check.eq(o, o2)
+    check.eq(i1 * j:copy_weights().w1:t(), o[{':','1:2'}])
+    check.eq(i2 * j:copy_weights().w2:t(), o[{':','3:4'}])
+end)
+--
 T("SparseDotProductTest",
   function()
     for _,aux in ipairs({ {w,false},
