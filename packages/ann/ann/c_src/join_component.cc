@@ -21,6 +21,7 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "join_component.h"
+#include "token_sparse_matrix.h"
 
 using namespace AprilMath;
 using namespace AprilMath::MatrixExt::BLAS;
@@ -90,7 +91,36 @@ namespace ANN {
 #endif
 	  coords[1] += sz;
 	  TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
-	  AssignRef<Token>((*result_vector_token)[i], component_mat_token);
+	  (*result_vector_token)[i] = component_mat_token;
+	}
+	break;
+      }
+    case table_of_token_codes::token_sparse_matrix:
+      {
+	segmented_input = false;
+	TokenSparseMatrixFloat *input_mat_token;
+	input_mat_token = input_token->convertTo<TokenSparseMatrixFloat*>();
+	SparseMatrixFloat *input_mat = input_mat_token->getMatrix();
+	ASSERT_MATRIX(input_mat);
+#ifdef USE_CUDA
+	input_mat->setUseCuda(use_cuda);
+#endif
+	unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(1));
+	april_assert(mat_pat_size==input_size && "Incorrect token matrix size");
+	int sizes[2]  = { input_mat->getDimSize(0),
+			  input_mat->getDimSize(1) };
+	int coords[2] = { 0, 0 };
+	for (unsigned int i=0; i<result_vector_token->size(); ++i) {
+	  const unsigned int sz = components[i]->getInputSize();
+	  // submatrix at coords with sizes, deep copy of original matrix
+	  sizes[1] = sz;
+	  SparseMatrixFloat *output_mat = new SparseMatrixFloat(input_mat,coords,sizes);
+#ifdef USE_CUDA
+	  output_mat->setUseCuda(use_cuda);
+#endif
+	  coords[1] += sz;
+	  TokenSparseMatrixFloat *component_mat_token = new TokenSparseMatrixFloat(output_mat);
+	  (*result_vector_token)[i] = component_mat_token;
 	}
 	break;
       }
@@ -101,6 +131,7 @@ namespace ANN {
 	input_vector_token = input_token->convertTo<TokenBunchVector*>();
 	switch((*input_vector_token)[0]->getTokenCode()) {
 	case table_of_token_codes::token_matrix:
+        case table_of_token_codes::token_sparse_matrix:
 	  if (result_vector_token->size() != input_vector_token->size())
 	    ERROR_EXIT3(128, "Incorrect number of components at input vector, "
 			"expected %u and found %u [%s]\n",
@@ -109,13 +140,13 @@ namespace ANN {
 			name.c_str());
 	  // for each component we assign its matrix
 	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	    AssignRef((*result_vector_token)[i], (*input_vector_token)[i]);
+	    (*result_vector_token)[i] = (*input_vector_token)[i];
 	  break;
 	case table_of_token_codes::vector_Tokens:
 	  // for each component we reserve a vector for bunch_size patterns
 	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	    AssignRef<Token>((*result_vector_token)[i],
-			      new TokenBunchVector(input_vector_token->size()));
+	    (*result_vector_token)[i] =
+              new TokenBunchVector(input_vector_token->size());
 	  // for each pattern
 	  for (unsigned int b=0; b<input_vector_token->size(); ++b) {
 	    TokenBunchVector *pattern_token;
@@ -128,25 +159,26 @@ namespace ANN {
 	    // for each component
 	    for (unsigned int i=0; i<result_vector_token->size(); ++i) {
 	      (*(*result_vector_token)[i]->convertTo<TokenBunchVector*>())[b] = (*pattern_token)[i];
-	      IncRef((*pattern_token)[i]);
 	    }
 	  }
 	  break;
 	default:
-	  ERROR_EXIT2(128, "Incorrect token type %d [%s]\n",
+	  ERROR_EXIT2(128, "Incorrect token type 0x%x [%s]\n",
 		      input_vector_token->getTokenCode(), name.c_str());
 	}
 	break;
       }
     default:
-      ERROR_EXIT1(129, "Incorrect token type [%s]", name.c_str());
+      ERROR_EXIT2(129, "Incorrect token type 0x%x [%s]",
+                  input_token->getTokenCode(), name.c_str());
     }
   }
   
   void JoinANNComponent::buildErrorInputBunchVector(TokenBunchVector *&vector_token,
 						    Token *token) {
     if (token->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect token type [%s]\n", name.c_str());
+      ERROR_EXIT2(128, "Incorrect token type 0x%x [%s]\n",
+                  token->getTokenCode(), name.c_str());
     //
     TokenMatrixFloat *mat_token = token->convertTo<TokenMatrixFloat*>();
     MatrixFloat *mat = mat_token->getMatrix();
@@ -165,7 +197,7 @@ namespace ANN {
       MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
       coords[1] += sz;
       TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(component_mat);
-      AssignRef<Token>((*vector_token)[i], component_mat_token);
+      (*vector_token)[i] = component_mat_token;
     }
   }
   
@@ -173,8 +205,8 @@ namespace ANN {
 							    bool is_output) {
     MatrixFloat *full_mat, *aux_mat;
     if ((*token)[0]->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT2(128,"Incorrect token type at TokenBunchVector pos %d [%s]\n",
-		  0,name.c_str());
+      ERROR_EXIT3(128,"Incorrect token type 0x%x at TokenBunchVector pos %d [%s]\n",
+		  (*token)[0]->getTokenCode(), 0,name.c_str());
     aux_mat  = (*token)[0]->convertTo<TokenMatrixFloat*>()->getMatrix();
     int sizes[2]  = { aux_mat->getDimSize(0),
 		      (is_output) ?
@@ -187,7 +219,8 @@ namespace ANN {
 #endif
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_matrix)
-	ERROR_EXIT1(128, "Incorrect token type [%s]\n", name.c_str());
+	ERROR_EXIT2(128, "Incorrect token type 0x%x [%s]\n",
+                    (*token)[i]->getTokenCode(), name.c_str());
       aux_mat = (*token)[i]->convertTo<TokenMatrixFloat*>()->getMatrix();
       ASSERT_MATRIX(aux_mat);
       const unsigned int sz = ( (is_output) ?
@@ -218,9 +251,8 @@ namespace ANN {
     // more simpler a decoupled code
     buildInputBunchVector(input_vector, _input);
     for (unsigned int i=0; i<components.size(); ++i)
-      AssignRef<Token>((*output_vector)[i],
-			components[i]->doForward((*input_vector)[i],
-						 during_training));
+      (*output_vector)[i] = components[i]->doForward((*input_vector)[i].get(),
+                                                     during_training);
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
     AssignRef(output, buildMatrixFloatToken(output_vector, true));
@@ -241,8 +273,8 @@ namespace ANN {
     // more simpler a decoupled code
     buildErrorInputBunchVector(error_input_vector, _error_input);
     for (unsigned int i=0; i<components.size(); ++i)
-      AssignRef((*error_output_vector)[i],
-		components[i]->doBackprop((*error_input_vector)[i]));
+      (*error_output_vector)[i] =
+        components[i]->doBackprop((*error_input_vector)[i].get());
     // error_output_vector has the gradients of each component stored as
     // array. Depending on the received input, this vector would be returned as
     // it is, or gradients will be stored as a TokenMatrixFloat joining all

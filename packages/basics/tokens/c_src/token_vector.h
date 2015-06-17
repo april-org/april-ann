@@ -22,6 +22,7 @@
 #define TOKEN_VECTOR_H
 
 #include "pair.h"
+#include "smart_ptr.h"
 #include "token_base.h"
 #include "vector.h"
 
@@ -68,7 +69,7 @@ namespace Basics {
   typedef TokenVector<int32_t>  TokenVectorInt32;
   typedef TokenVector<uint32_t> TokenVectorUint32;
   typedef TokenVector<char>     TokenVectorChar;
-  typedef TokenVector<Token*>   TokenBunchVector;
+  typedef TokenVector<AprilUtils::SharedPtr<Token> > TokenBunchVector;
 
   /* forward declarations */
 
@@ -149,29 +150,14 @@ namespace Basics {
   // ------------------------- vector token -------------------------
 
   template <>
-  TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength);
+  AprilUtils::buffer_list* TokenVector<AprilUtils::SharedPtr<Token> >::toString();
 
   template <>
-  TokenVector<Token*>::TokenVector(const AprilUtils::vector<Token*> &vec);
-
-  template<>
-  void TokenVector<Token*>::clear();
-
-  template<>
-  void TokenVector<Token*>::push_back(Token* const &data);
+  AprilUtils::buffer_list* TokenVector<AprilUtils::SharedPtr<Token> >::debugString(const char *prefix,
+                                                                                   int debugLevel);
 
   template <>
-  TokenVector<Token*>::~TokenVector();
-
-  template <>
-  AprilUtils::buffer_list* TokenVector<Token*>::toString();
-
-  template <>
-  AprilUtils::buffer_list* TokenVector<Token*>::debugString(const char *prefix,
-                                                             int debugLevel);
-
-  template <>
-  TokenCode TokenVector<Token*>::getTokenCode() const;
+  TokenCode TokenVector<AprilUtils::SharedPtr<Token> >::getTokenCode() const;
 
   template <>
   Token *TokenVector<Token*>::fromString(AprilUtils::constString &cs);
