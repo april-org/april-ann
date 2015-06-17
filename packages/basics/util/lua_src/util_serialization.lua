@@ -304,7 +304,8 @@ do
     end
 end
 
-local deserialize =
+local deserialize
+deserialize =
   april_doc{
     class = "function",
     summary = "Deserializes an object from a filename or a string",
