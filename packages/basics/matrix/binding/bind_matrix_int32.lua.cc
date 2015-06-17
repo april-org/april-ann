@@ -612,12 +612,6 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_METHOD MatrixInt32 to_float
-{
-  LUABIND_RETURN(MatrixFloat, convertFromMatrixInt32ToMatrixFloat(obj));
-}
-//BIND_END
-
 //BIND_METHOD MatrixInt32 copy
 {
   int argn;
@@ -671,5 +665,17 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 //BIND_METHOD MatrixInt32 data
 {
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawDataAccess());
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::convert_to(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::equals(L,obj));
 }
 //BIND_END

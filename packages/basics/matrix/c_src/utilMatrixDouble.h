@@ -26,9 +26,6 @@
 
 namespace Basics {
 
-  MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat);
-  
-
 } // namespace Basics
 
 #endif // UTILMATRIXDOUBLE_H

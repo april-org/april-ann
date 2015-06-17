@@ -144,7 +144,7 @@ T("L1TestDigits", function()
     for wname,w in trainer:iterate_weights("w.*") do
       local v = w:clone():abs():min()
       check.TRUE(v == 0 or v > L1_norm)
-      check.gt(w:eq(0.0):to_float():sum(), 0)
-      -- print(w:eq(0.0):to_float():sum())
+      check.gt(w:eq(0.0):convert_to("float"):sum(), 0)
+      -- print(w:eq(0.0):convert_to("float"):sum())
     end
 end)

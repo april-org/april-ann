@@ -3,27 +3,18 @@ class.extend(matrixBool, "t", matrixBool.."transpose")
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")
 
-class.extend(matrixBool, "to_index",
-             april_doc{
-               class = "method",
-               summary = "Returns a matrixInt32 with the list of true indices",
-               description = "Requires a rank 1 matrix",
-               outputs = { "A matrixInt32 instance", },
-             } ..
-               function(self)
-                 local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
-                 local ones = self:count_ones()
-                 if ones == 0 then return nil end
-                 local result = matrixInt32(ones)
-                 local idx,pos=0,0
-                 self:map(function(x)
-                     idx=idx+1
-                     if x then pos=pos+1 result:set(pos,idx) end
-                 end)
-                 assert(pos == ones)
-                 return result
+class.extend(matrixBool, "flatten",
+             function(self)
+               return self:rewrap(self:size())
 end)
+
+april_set_doc(matrixBool.."to_index",
+              {
+                class = "method",
+                summary = "Returns a matrixInt32 with the list of true indices",
+                description = "Requires a rank 1 matrix",
+                outputs = { "A matrixInt32 instance", },
+})
 
 class.extend(matrixBool, "land",
              april_doc{

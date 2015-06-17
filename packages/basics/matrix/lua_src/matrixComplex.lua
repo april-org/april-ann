@@ -1,5 +1,10 @@
 class.extend(matrixComplex, "t", matrixComplex.."transpose")
 
+class.extend(matrixComplex, "flatten",
+             function(self)
+               return self:rewrap(self:size())
+end)
+
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixComplex)
 

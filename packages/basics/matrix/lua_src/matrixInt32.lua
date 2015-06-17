@@ -1,5 +1,10 @@
 class.extend(matrixInt32, "t", matrixInt32.."transpose")
 
+class.extend(matrixInt32, "flatten",
+             function(self)
+               return self:rewrap(self:size())
+end)
+
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixInt32)
 

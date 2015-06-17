@@ -26,7 +26,7 @@ local ann_optimizer_utils = ann.optimizer.utils
 -- be a number of a matrix with L1 for every weight), and an optional update
 -- matrix (for momentum purposes, it can be nil)
 function ann_optimizer_utils.l1_truncate_gradient(w, l1, update)
-  local z = mop.abs(w):gt(l1):to_float() -- which weights won't cross zero
+  local z = mop.abs(w):gt(l1):convert_to("float") -- which weights won't cross zero
   -- compute L1 update
   local u = mop.sign(w)
   if type(l1) == "number" then u:scal(l1) else u:cmul(l1) end

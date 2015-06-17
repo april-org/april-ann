@@ -277,8 +277,52 @@ namespace AprilMath {
         else {
           dest = new Basics::Matrix<O>(input->getNumDim(), input->getDimPtr());
         }
-        return MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(), dest);
+        return MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(),
+                                     dest);
       }
+
+      // TODO: Use this function in matrixBool count_zeros, count_ones, ...
+      template <typename T>
+      int matCount(const Basics::Matrix<T> *input, T value) {
+        return MatrixScalarReduce1(input,
+                                   AprilMath::make_r_map1<T,int>
+                                   (AprilMath::m_curried_eq<T>(value),
+                                    AprilMath::Functors::r_add<bool,int>()),
+                                   AprilMath::Functors::r_add<int,int>(),
+                                   0);
+      }
+      
+      template <typename T>
+      Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,
+                                                 Basics::Matrix<int32_t> *dest) {
+        AprilUtils::SharedPtr<Matrix<T> > sq_input = input->constSqueeze();
+        if (input->getNumDim() != 1) {
+          ERROR_EXIT(128, "Needs a rank 1 matrix\n");
+        }
+        int non_zeros = input->size() - matCount(input, T(0.0));
+        if (non_zeros == 0) return 0;
+        if (dest != 0) {
+          if (dest->size() != non_zeros) {
+            ERROR_EXIT(256, "Incompatible matrix sizes\n");
+          }
+        }
+        else {
+          dest = new Basics::Matrix<int32_t>(1, &non_zeros);
+        }
+        int k=0;
+        Basics::Matrix<int32_t>::iterator dest_it = dest->begin();
+        for (typename Basics::Matrix<T>::const_iterator it = input->begin();
+             it != input->end(); ++it) {
+          if (*it != T(0.0)) {
+            april_assert(dest_it != dest->end());
+            *dest_it = ++k; // first index is 1, to be compatible with Lua
+            ++dest_it;
+          }
+        }
+        april_assert(dest_it == dest->end());
+        return dest;
+      }
+      
 
       template Matrix<int32_t> *matOrder(const Matrix<float> *,
                                          Matrix<int32_t> *);
@@ -296,6 +340,8 @@ namespace AprilMath {
       template Matrix<float> *matMultiply(const Matrix<float> *,
                                           const Matrix<float> *,
                                           Matrix<float> *);
+      template Matrix<float> *matConvertTo(const Matrix<float> *,
+                                           Matrix<float> *);
       template Matrix<float> *matConvertTo(const Matrix<bool> *,
                                            Matrix<float> *);
       template Matrix<float> *matConvertTo(const Matrix<double> *,
@@ -304,6 +350,8 @@ namespace AprilMath {
                                            Matrix<float> *);
       template Matrix<float> *matConvertTo(const Matrix<int32_t> *,
                                            Matrix<float> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<float> *input,
+                                                  Basics::Matrix<int32_t> *dest);
 
 
       template Matrix<int32_t> *matOrder(const Matrix<double> *,
@@ -322,6 +370,8 @@ namespace AprilMath {
       template Matrix<double> *matMultiply(const Matrix<double> *,
                                           const Matrix<double> *,
                                           Matrix<double> *);
+      template Matrix<double> *matConvertTo(const Matrix<double> *,
+                                            Matrix<double> *);
       template Matrix<double> *matConvertTo(const Matrix<bool> *,
                                             Matrix<double> *);
       template Matrix<double> *matConvertTo(const Matrix<float> *,
@@ -330,6 +380,8 @@ namespace AprilMath {
                                             Matrix<double> *);
       template Matrix<double> *matConvertTo(const Matrix<int32_t> *,
                                             Matrix<double> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<double> *input,
+                                                  Basics::Matrix<int32_t> *dest);
       
 
       template Matrix<ComplexF> *matAddition(const Matrix<ComplexF> *,
@@ -342,7 +394,10 @@ namespace AprilMath {
       template Matrix<ComplexF> *matMultiply(const Matrix<ComplexF> *,
                                              const Matrix<ComplexF> *,
                                              Matrix<ComplexF> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<ComplexF> *input,
+                                                  Basics::Matrix<int32_t> *dest);
 
+      
       template Matrix<char> *matConvertTo(const Matrix<bool> *,
                                           Matrix<char> *);
       template Matrix<char> *matConvertTo(const Matrix<float> *,
@@ -351,14 +406,16 @@ namespace AprilMath {
                                           Matrix<char> *);
       template Matrix<char> *matConvertTo(const Matrix<int32_t> *,
                                           Matrix<char> *);
+      template Matrix<char> *matConvertTo(const Matrix<char> *,
+                                          Matrix<char> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<char> *input,
+                                                  Basics::Matrix<int32_t> *dest);
 
       
       template Matrix<int32_t> *matOrder(const Matrix<int32_t> *,
-                                               Matrix<int32_t> *);
-      
+                                         Matrix<int32_t> *);
       template Matrix<int32_t> *matOrderRank(const Matrix<int32_t> *,
                                              Matrix<int32_t> *);
-      
       template Matrix<int32_t> *matConvertTo(const Matrix<bool> *,
                                              Matrix<int32_t> *);
       template Matrix<int32_t> *matConvertTo(const Matrix<float> *,
@@ -367,7 +424,24 @@ namespace AprilMath {
                                              Matrix<int32_t> *);
       template Matrix<int32_t> *matConvertTo(const Matrix<char> *,
                                              Matrix<int32_t> *);
+      template Matrix<int32_t> *matConvertTo(const Matrix<int32_t> *,
+                                             Matrix<int32_t> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<int32_t> *input,
+                                                  Basics::Matrix<int32_t> *dest);
 
+      
+      template Matrix<bool> *matConvertTo(const Matrix<float> *,
+                                          Matrix<bool> *);
+      template Matrix<bool> *matConvertTo(const Matrix<double> *,
+                                          Matrix<bool> *);
+      template Matrix<bool> *matConvertTo(const Matrix<int32_t> *,
+                                          Matrix<bool> *);
+      template Matrix<bool> *matConvertTo(const Matrix<char> *,
+                                          Matrix<bool> *);
+      template Matrix<bool> *matConvertTo(const Matrix<bool> *,
+                                          Matrix<bool> *);
+      template Matrix<int32_t> *matNonZeroIndices(const Matrix<bool> *input,
+                                                  Basics::Matrix<int32_t> *dest);
       
     } // namespace Misc
     

@@ -603,12 +603,6 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_METHOD MatrixDouble to_float
-{
-  LUABIND_RETURN(MatrixFloat, convertFromMatrixDoubleToMatrixFloat(obj));
-}
-//BIND_END
-
 //BIND_METHOD MatrixDouble copy
 {
   int argn;
@@ -641,5 +635,17 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 //BIND_METHOD MatrixDouble data
 {
   LUABIND_RETURN(DoubleGPUMirroredMemoryBlock, obj->getRawDataAccess());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::convert_to(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::equals(L,obj));
 }
 //BIND_END

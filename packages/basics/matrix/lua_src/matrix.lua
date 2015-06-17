@@ -6,6 +6,11 @@ matrix.__generic__.__make_all_serialization_methods__(matrix)
 matrix.join =
   matrix.__generic__.__make_generic_join__(matrix)
 
+class.extend(matrix, "flatten",
+             function(self)
+               return self:rewrap(self:size())
+end)
+
 -- ADDING PSEUDO-INVERSE METHODcond
 class.extend(matrix, "pinv",
              function(self)
