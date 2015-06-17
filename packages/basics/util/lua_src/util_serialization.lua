@@ -327,7 +327,7 @@ deserialize =
         loader = assert( loadstring(destination) )
       else
         if destination:find("%.gz$") then
-          return deserialize( io.open(destination) )
+          loader = assert( loadstring(io.open(destination):read("*a")) )
         else
           loader = assert( loadfile(destination) )
         end
