@@ -1004,7 +1004,7 @@ namespace Imaging {
       for (int col = 0; col < width; ++col)
       {
           for(int row = 0; row < height; ++row) 
-              if ((*this)(col,row) > threshold) total++;
+              if ((*this)(col,row) >= threshold) total++;
           
       }
       Basics::MatrixFloat *m_pixels = new Basics::MatrixFloat(1, total);
@@ -1016,7 +1016,7 @@ namespace Imaging {
               float value = (*this)(col,row);
               float index = (row)*width+col+1;
 
-              if ((*this)(col,row) > threshold) {
+              if ((*this)(col,row) >= threshold) {
                   (*m_pixels)(current) = index;
                   current++;
               }
