@@ -24,3 +24,8 @@ matrixDouble.meta_instance.__tostring =
 
 matrixDouble.join =
   matrix.__generic__.__make_generic_join__(matrixDouble)
+
+matrixDouble.meta_instance.__eq = function(op1, op2)
+  if type(op1) == "number" or type(op2) == "number" then return false end
+  return op1:equals(op2)
+end
