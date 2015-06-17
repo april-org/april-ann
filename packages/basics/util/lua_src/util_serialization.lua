@@ -326,7 +326,11 @@ deserialize =
         -- it is a previously serialized string
         loader = assert( loadstring(destination) )
       else
-        loader = assert( loadfile(destination) )
+        if destination:find("%.gz$") then
+          return deserialize( io.open(destination) )
+        else
+          loader = assert( loadfile(destination) )
+        end
       end
       result = table.pack( loader(...) )
     elseif iscallable(from) then
