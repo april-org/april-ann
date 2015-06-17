@@ -337,13 +337,13 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
 {
   LUABIND_CHECK_ARGN(==, 2);
   unsigned int pos;
-  Token *token;
+  AprilUtils::SharedPtr<Token> token;
   LUABIND_CHECK_PARAMETER(1, uint);
   LUABIND_CHECK_PARAMETER(2, AuxToken);
   LUABIND_GET_PARAMETER(1, uint, pos);
   LUABIND_GET_PARAMETER(2, AuxToken, token);
-  (*obj)[pos-1] = token;
-  IncRef(token);
+  (*obj)[pos-1] = token.get();
+  IncRef(token.get());
   LUABIND_RETURN(TokenBunchVector, obj);
 }
 //BIND_END
