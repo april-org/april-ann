@@ -189,6 +189,44 @@ namespace Basics {
     }
 #undef FUNCTION_NAME
 
+#define FUNCTION_NAME "convert_to"
+    BEGIN_METHOD(convert_to)
+    {
+      LUABIND_CHECK_ARGN(==,1);
+      const char *type;
+      LUABIND_GET_PARAMETER(1, string, type);
+      if (!strcmp(type,"float")) {
+        Matrix<float> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,float>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"bool")) {
+        Matrix<bool> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,bool>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"int32")) {
+        Matrix<int32_t> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,int32_t>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"double")) {
+        Matrix<double> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,double>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else if (!strcmp(type,"char")) {
+        Matrix<char> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,char>(obj);
+        AprilUtils::LuaTable::pushInto(L, obj2);
+      }
+      else {
+        LUABIND_FERROR1("Not implemented casting for type %s", type);
+      }
+      return 1;
+    }
+#undef FUNCTION_NAME
+
 #define FUNCTION_NAME "rewrap"
     BEGIN_METHOD(rewrap)
     {
@@ -646,7 +684,39 @@ namespace Basics {
       return 1;
     }
 #undef FUNCTION_NAME
+
+#define FUNCTION_NAME "to_index"
+    BEGIN_METHOD(to_index)
+    {
+      MatrixInt32 *m = AprilMath::MatrixExt::Misc::matNonZeroIndices(obj);
+      AprilUtils::LuaTable::pushInto(L, m);
+      return 1;
+    }
+#undef FUNCTION_NAME
+    
+#define FUNCTION_NAME "equals"
+    BEGIN_METHOD(equals)
+    {
+      Matrix<T> *other;
+      float epsilon;
+      other = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L,1);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 0.05f); // 5% error
+#ifdef USE_CUDA
+      obj->update();
+      other->update();
+#endif
+      if (AprilMath::MatrixExt::Reductions::matEquals(obj, other, epsilon)) {
+        lua_pushboolean(L, true);
+      }
+      else {
+        lua_pushboolean(L, false);
+      }
+      return 1;
+    }
+#undef FUNCTION_NAME
+
   };
+  
 #undef BEGIN_METHOD
 #undef BEGIN_CLASS_METHOD
 }
@@ -1283,20 +1353,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat equals
 {
-  MatrixFloat *other;
-  float epsilon;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, other);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 0.05f); // 5% error
-#ifdef USE_CUDA
-  obj->update();
-  other->update();
-#endif
-  if (matEquals(obj, other, epsilon)) {
-    LUABIND_RETURN(boolean, true);
-  }
-  else {
-    LUABIND_RETURN(boolean, false);
-  }
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::equals(L,obj));
 }
 //BIND_END
 
@@ -2125,5 +2182,11 @@ namespace Basics {
   LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixInt32, dest, 0);
   dest = matOrderRank(obj, dest);
   LUABIND_RETURN(MatrixInt32, dest);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::convert_to(L,obj));
 }
 //BIND_END

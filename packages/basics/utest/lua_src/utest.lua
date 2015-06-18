@@ -73,10 +73,12 @@ utest.finish = function()
   end
   write(0, "%sOk%s\n", ansi.fg.bright_green, ansi.fg.default)
 end
+local selected_tests
 local function register()
   -- global
   utest.__initialized__ = {}
   setmetatable(utest.__initialized__, { __gc = utest.finish })
+  if not selected_tests then utest.select_tests(arg) end
 end
 --
 local check = function (func,error_msg)
@@ -163,11 +165,11 @@ utest.check.FALSE = function(a, ...)
   return check(function() return not a end, ...)
 end
 --
-local selected_tests
 utest.test = function(name, test_func)
   assert( test_name == NONAMED )
   assert( type(name) == "string", "Needs a string as first argument" )
   assert( type(test_func) == "function", "Needs a function as second argument")
+  if not utest.__initialized__ then register() end
   if selected_tests and not selected_tests[name] then return end
   test_name = name
   local ok,msg = xpcall(test_func,debug.traceback)
@@ -187,8 +189,9 @@ end
 --
 utest.select_tests = function(arg)
   if #arg > 0 then selected_tests = table.invert(arg)
-  else selected_tests = nil
+  else selected_tests = {}
   end
 end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })
+-- global call to select test from command line arguments

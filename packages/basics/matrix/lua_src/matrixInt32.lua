@@ -1,5 +1,10 @@
 class.extend(matrixInt32, "t", matrixInt32.."transpose")
 
+class.extend(matrixInt32, "flatten",
+             function(self)
+               return self:rewrap(self:size())
+end)
+
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixInt32)
 
@@ -22,13 +27,5 @@ matrixInt32.join =
 
 matrixInt32.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
-  local d1,d2 = op1:dim(),op2:dim()
-  if #d1 ~= #d2 then return false end
-  local eq_size = iterator.zip(iterator(ipairs(d1)):select(2),
-                               iterator(ipairs(d2)):select(2)):
-  reduce(function(acc,a,b) return acc and (a==b) end, true)
-  if not eq_size then return false end
-  local eq = true
-  op1:map(op2, function(x,y) eq = eq and (x==y) end)
-  return eq
+  return op1:equals(op2)
 end

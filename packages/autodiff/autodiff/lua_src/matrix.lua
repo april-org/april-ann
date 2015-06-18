@@ -565,7 +565,7 @@ autodiff.op[MATRIX] = {
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
-		       return a:clone():lt(b):to_float()
+		       return a:clone():lt(b):convert_to("float")
 		     end,
 		     function(self, seed, result)
 		       return result
@@ -573,7 +573,7 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name,
-					 ':clone():lt(', b.var_name, '):to_float()' }
+					 ':clone():lt(', b.var_name, '):convert_to("float")' }
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)
@@ -592,7 +592,7 @@ autodiff.op[MATRIX] = {
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
-		       return a:clone():gt(b):to_float()
+		       return a:clone():gt(b):convert_to("float")
 		     end,
 		     function(self, seed, result)
 		       return result
@@ -600,7 +600,7 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name,
-					 ':clone():gt(', b.var_name, '):to_float()' }
+					 ':clone():gt(', b.var_name, '):convert_to("float")' }
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)

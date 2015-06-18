@@ -572,6 +572,15 @@ namespace AprilMath {
                                         bool);
       template bool matEquals(const Matrix<ComplexF> *, const Matrix<ComplexF> *,
                               float);
+
+      template bool matEquals(const Matrix<int32_t> *, const Matrix<int32_t> *,
+                              float);
+
+      template bool matEquals(const Matrix<char> *, const Matrix<char> *,
+                              float);
+
+      template bool matEquals(const Matrix<bool> *, const Matrix<bool> *,
+                              float);
       
     } // namespace Reductions
     
