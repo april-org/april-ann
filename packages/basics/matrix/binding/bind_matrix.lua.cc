@@ -102,6 +102,7 @@ static bool check_number(lua_State *L, int i, T &dest) {
 
 //BIND_HEADER_H
 #include "bind_april_io.h"
+#include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"
 #include "matrixFloat.h"
 #include "luabindmacros.h"
@@ -771,15 +772,15 @@ namespace Basics {
     BEGIN_METHOD(uniform)
     {
       int lower, upper;
-      AprilUtils::SharedPtr<MTRand> random;
+      AprilUtils::SharedPtr<Basics::MTRand> random;
       LUABIND_GET_PARAMETER(1, int, lower);
       LUABIND_GET_PARAMETER(2, int, upper);
       LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
       if (lower > upper) {
         LUABIND_ERROR("First argument must be <= second argument");
       }
-      if (random == 0) random = new MTRand();
-      for (Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
+      if (random == 0) random = new Basics::MTRand();
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
         *it = static_cast<T>(random->randInt(upper - lower)) + lower;
       }
       AprilUtils::LuaTable::pushInto(L, obj);
@@ -791,7 +792,7 @@ namespace Basics {
     BEGIN_METHOD(uniformf)
     {
       T lower = T(0.0f), upper = T(1.0f);
-      AprilUtils::SharedPtr<MTRand> random;
+      AprilUtils::SharedPtr<Basics::MTRand> random;
 
       LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
       LUABIND_GET_OPTIONAL_PARAMETER(2, float, upper, 1.0f);
@@ -799,8 +800,8 @@ namespace Basics {
       if (lower > upper) {
         LUABIND_ERROR("First argument must be <= second argument");
       }
-      if (random == 0) random = new MTRand();
-      for (Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
+      if (random == 0) random = new Basics::MTRand();
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
         *it = static_cast<T>(random->rand(upper - lower) + lower);
       }
       AprilUtils::LuaTable::pushInto(L, obj);
@@ -818,13 +819,13 @@ namespace Basics {
       T diff = sup-inf;
       if (diff == size_1) {
         i = static_cast<int>(inf);
-        for (Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+        for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
           april_assert(i <= static_cast<int>(sup));
           *it = static_cast<T>(i);
         }
       }
       else {
-        for (Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+        for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
           *it = (diff*i)/size_1 + inf;
         }
       }
@@ -844,7 +845,7 @@ namespace Basics {
       inf = AprilMath::m_log(inf)/AprilMath::m_log(base);
       sup = AprilMath::m_log(sup)/AprilMath::m_log(base);
       T diff = sup-inf;
-      for (Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+      for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
         *it = AprilMath::m_pow(base, (diff*i)/size + inf);
       }
       AprilUtils::LuaTable::pushInto(L, obj);
@@ -859,7 +860,7 @@ namespace Basics {
       LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
       LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
       int k=lower;
-      for (Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
         *it = static_cast<T>(k);
       }
       AprilUtils::LuaTable::pushInto(L, obj);
