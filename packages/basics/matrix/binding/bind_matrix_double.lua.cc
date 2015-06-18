@@ -162,18 +162,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble rewrap
 {
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims;
-  ndims = lua_gettop(L); // number of dimensions
-  int *dims = new int[ndims];
-  for (int i=1; i <= ndims; i++) {
-    LUABIND_GET_PARAMETER(i, int, dims[i-1]);
-    if (dims[i-1] <= 0)
-      LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-  }
-  MatrixDouble *new_obj = obj->rewrap(dims, ndims);
-  delete[] dims;
-  LUABIND_RETURN(MatrixDouble,new_obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::rewrap(L,obj));
 }
 //BIND_END
 
@@ -185,13 +174,11 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble get_reference_string
 {
-  char buff[128];
-  sprintf(buff,"%p data= %p",
-	  (void*)obj,
-	  (void*)obj->getRawDataAccess());
-  LUABIND_RETURN(string, buff);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
+                               get_reference_string(L,obj));
 }
 //BIND_END
+
 
 //BIND_METHOD MatrixDouble copy_from_table
 //DOC_BEGIN
@@ -201,20 +188,8 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 ///@param matrix_values Tabla con los elementos de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  int veclen;
-  LUABIND_TABLE_GETN(1, veclen);
-  if (veclen != obj->size())
-    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size());
-  int i=1;
-  for (MatrixDouble::iterator it(obj->begin()); it != obj->end(); ++i, ++it) {
-    lua_rawgeti(L,1,i);
-    double v = luaL_checknumber(L,-1);
-    *it = v;
-    lua_remove(L,-1);
-  }
-  LUABIND_RETURN(MatrixDouble, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
+                               copy_from_table(L,obj));
 }
 //BIND_END
 
@@ -225,47 +200,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->getNumDim())
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
-  double ret;
-  if (obj->getNumDim() == 1) {
-    int v1;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    ret = (*obj)(v1-1);
-  }
-  else if (obj->getNumDim() == 2) {
-    int v1, v2;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getDimSize(1));
-    }
-    ret = (*obj)(v1-1, v2-1);
-  }
-  else {
-    int *coords = new int[obj->getNumDim()];
-    for (int i=0; i<obj->getNumDim(); ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getDimSize(i));
-      }
-      coords[i]--;
-    }
-    ret = (*obj)(coords, obj->getNumDim());
-    delete[] coords;
-  }
-  LUABIND_RETURN(double, ret);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get(L,obj));
 }
 //BIND_END
 
@@ -278,50 +213,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->getNumDim()+1)
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+1);
-  double value;
-  if (obj->getNumDim() == 1) {
-    int v1;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,double,value);
-    (*obj)(v1-1) = value;
-  }
-  else if (obj->getNumDim() == 2) {
-    int v1, v2;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getDimSize(1));
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,double,value);
-    (*obj)(v1-1, v2-1) = value;
-  }
-  else {
-    int *coords = new int[obj->getNumDim()];
-    for (int i=0; i<obj->getNumDim(); ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getDimSize(i));
-      }
-      coords[i]--;
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,double,value);
-    (*obj)(coords, obj->getNumDim()) = value;
-    delete[] coords;
-  }
-  LUABIND_RETURN(MatrixDouble, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::set(L,obj));
 }
 //BIND_END
 
@@ -333,20 +225,185 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble raw_get
 {
-  int raw_pos;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_RETURN(double, (*obj)[raw_pos]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::raw_get(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble raw_set
 {
-  int raw_pos;
-  int value;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_GET_PARAMETER(2, int, value);
-  (*obj)[raw_pos] = static_cast<double>(value);
-  LUABIND_RETURN(MatrixDouble, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::raw_set(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble get_use_cuda
+{
+  LUABIND_RETURN(bool, obj->getCudaFlag());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble set_use_cuda
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::set_use_cuda(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble dim
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::dim(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble num_dim
+{
+  LUABIND_RETURN(int, obj->getNumDim());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble stride
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::stride(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble slice
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::slice(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble select
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::select(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble clone
+//DOC_BEGIN
+// matrix *clone()
+/// Devuelve un <em>clon</em> de la matriz.
+//DOC_END
+{
+  LUABIND_RETURN(MatrixDouble, obj->clone());
+}
+//BIND_END
+
+// returns a matrix with size as the given matrix, but without data copy
+//BIND_CLASS_METHOD MatrixDouble as
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::as(L));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble transpose
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::transpose(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble isfinite
+//DOC_BEGIN
+// bool isfinite
+/// Devuelve false si algun valor es nan o infinito.
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  bool resul=true;
+  for (MatrixDouble::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
+    if ((*it) - (*it) != 0.0f) resul = false;
+  LUABIND_RETURN(boolean,resul);
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble toTable
+// Permite salvar una matriz en una tabla lua
+// TODO: Tener en cuenta las dimensiones de la matriz
+  {
+    LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixDouble, double, *obj);
+    LUABIND_INCREASE_NUM_RETURNS(1);
+  }
+//BIND_END
+
+//BIND_METHOD MatrixDouble contiguous
+{
+  LUABIND_RETURN(MatrixDouble, obj->getIsContiguous() ? obj : obj->clone());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble map
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::map(L, obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble diagonalize
+{
+  LUABIND_RETURN(MatrixDouble, obj->diagonalize());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble get_shared_count
+{
+  LUABIND_RETURN(uint, obj->getSharedCount());
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble reset_shared_count
+{
+  obj->resetSharedCount();
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble add_to_shared_count
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::add_to_shared_count(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble update
+{
+  obj->update();
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble padding_all
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::padding_all(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble padding
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::padding(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble uniform
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::uniform(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble uniformf
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::uniformf(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble linspace
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::linspace(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble logspace
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::logspace(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble linear
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::linear(L,obj));
 }
 //BIND_END
 
@@ -379,115 +436,6 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_METHOD MatrixDouble dim
-{
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *d=obj->getDimPtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, d[pos-1]);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble num_dim
-{
-  LUABIND_RETURN(int, obj->getNumDim());
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble stride
-{
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *s=obj->getStridePtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, s, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, s[pos-1]);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble slice
-{
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, table);
-  LUABIND_CHECK_PARAMETER(2, table);
-  int *coords, *sizes, coords_len, sizes_len;
-  bool clone;
-  LUABIND_TABLE_GETN(1, coords_len);
-  LUABIND_TABLE_GETN(2, sizes_len);
-  if (coords_len != sizes_len || coords_len != obj->getNumDim())
-    LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
-		    "found %d and %d\n",
-		    obj->getNumDim(), coords_len, sizes_len);
-  coords = new int[coords_len];
-  sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
-  LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  for (int i=0; i<sizes_len; ++i)
-    if (coords[i] < 0 || sizes[i] < 1 ||
-	sizes[i]+coords[i] > obj->getDimSize(i))
-      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
-  MatrixDouble *obj2 = new MatrixDouble(obj, coords, sizes, clone);
-  LUABIND_RETURN(MatrixDouble, obj2);
-  delete[] coords;
-  delete[] sizes;
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble select
-{
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(2, int);
-  int dim, index;
-  MatrixDouble *dest;
-  LUABIND_GET_PARAMETER(1, int, dim);
-  LUABIND_GET_PARAMETER(2, int, index);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixDouble, dest, 0);
-  MatrixDouble *obj2 = obj->select(dim-1, index-1, dest);
-  LUABIND_RETURN(MatrixDouble, obj2);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble clone
-//DOC_BEGIN
-// matrix *clone()
-/// Devuelve un <em>clon</em> de la matriz.
-//DOC_END
-{
-  MatrixDouble *obj2 = obj->clone();
-  LUABIND_RETURN(MatrixDouble,obj2);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble transpose
-{
-  int argn;
-  argn = lua_gettop(L);
-  if (argn == 0) {
-    LUABIND_RETURN(MatrixDouble, obj->transpose());
-  }
-  else {
-    int d1,d2;
-    LUABIND_GET_PARAMETER(1, int, d1);
-    LUABIND_GET_PARAMETER(2, int, d2);
-    LUABIND_RETURN(MatrixDouble, obj->transpose(d1-1, d2-1));
-  }
-}
-//BIND_END
-
 //BIND_METHOD MatrixDouble diag
 {
   LUABIND_CHECK_ARGN(==,1);
@@ -495,67 +443,6 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
   LUABIND_GET_PARAMETER(1, double, v);
   LUABIND_RETURN(MatrixDouble, 
                  matDiag(obj,v));
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble toTable
-// Permite salvar una matriz en una tabla lua
-// TODO: Tener en cuenta las dimensiones de la matriz
-  {
-    LUABIND_CHECK_ARGN(==, 0);
-    lua_createtable(L, obj->size(), 0);
-    int index = 1;
-    for (MatrixDouble::iterator it(obj->begin()); it != obj->end(); ++it) {
-      lua_pushint(L, *it);
-      lua_rawseti(L, -2, index++);
-    }
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixDouble map
-{
-  int argn;
-  int N;
-  argn = lua_gettop(L); // number of arguments
-  N = argn-1;
-  MatrixDouble **v = 0;
-  MatrixDouble::const_iterator *list_it = 0;
-  if (N > 0) {
-    v = new MatrixDouble*[N];
-    list_it = new MatrixDouble::const_iterator[N];
-  }
-  for (int i=0; i<N; ++i) {
-    LUABIND_CHECK_PARAMETER(i+1, MatrixDouble);
-    LUABIND_GET_PARAMETER(i+1, MatrixDouble, v[i]);
-    if (!v[i]->sameDim(obj))
-      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
-    list_it[i] = v[i]->begin();
-  }
-  LUABIND_CHECK_PARAMETER(argn, function);
-  for (MatrixDouble::iterator it(obj->begin()); it!=obj->end(); ++it) {
-    // copy the Lua function, lua_call will pop this copy
-    lua_pushvalue(L, argn);
-    // push the self matrix value
-    lua_pushdouble(L, *it);
-    // push the value of the rest of given matrices
-    for (int j=0; j<N; ++j) {
-      lua_pushdouble(L, *list_it[j]);
-      ++list_it[j];
-    }
-    // CALL
-    lua_call(L, N+1, 1);
-    // pop the result, a number
-    if (!lua_isnil(L, -1)) {
-      if (!lua_isdouble(L, -1))
-	LUABIND_ERROR("Incorrect returned value type, expected NIL or DOUBLE\n");
-      *it = lua_todouble(L, -1);
-    }
-    lua_pop(L, 1);
-  }
-  delete[] v;
-  delete[] list_it;
-  LUABIND_RETURN(MatrixDouble, obj);
 }
 //BIND_END
 
@@ -618,15 +505,25 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_CLASS_METHOD MatrixDouble deserialize
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
-                               deserialize(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::deserialize(L));
 }
 //BIND_END
 
 //BIND_CLASS_METHOD MatrixDouble read
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
-                               read(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::read(L));
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixDouble fromMMap
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::fromMMap(L));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble toMMap
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::toMMap(L, obj));
 }
 //BIND_END
 
