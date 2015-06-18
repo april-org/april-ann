@@ -334,20 +334,20 @@ ascii
                                     8,   17,  6,
                                     19,  20, 21,
                                     22,  24, 11 }), "max(1) a")
-      check.eq(b:to_float(), matrix(1, 4, 3, { 2, 1, 1,
-                                               1, 2, 1,
-                                               2, 2, 2,
-                                               2, 1, 2 }), "max(1) b")
+      check.eq(b:convert_to("float"), matrix(1, 4, 3, { 2, 1, 1,
+                                                        1, 2, 1,
+                                                        2, 2, 2,
+                                                        2, 1, 2 }), "max(1) b")
       local a,b = m:max(2)
       check.eq(a, matrix(2, 1, 3, { 12, 24, 18,
                                     22, 23, 21 }), "max(2) a")
-      check.eq(b:to_float(), matrix(2, 1, 3, { 1, 4, 1,
-                                               4, 4, 3 }), "max(2) b")
+      check.eq(b:convert_to("float"), matrix(2, 1, 3, { 1, 4, 1,
+                                                        4, 4, 3 }), "max(2) b")
       local a,b = m:max(3)
       check.eq(a, matrix(2, 4, 1, { 18, 8, 16, 24,
                                     15, 17, 21, 23 }), "max(3) a")
-      check.eq(b:to_float(), matrix(2, 4, 1, { 3, 1, 2, 2,
-                                               3, 2, 3, 2 }), "max(3) b")
+      check.eq(b:convert_to("float"), matrix(2, 4, 1, { 3, 1, 2, 2,
+                                                        3, 2, 3, 2 }), "max(3) b")
   end)
 
   T("MinTest", function()
@@ -370,20 +370,20 @@ ascii
                                     4,    5,  3,
                                     7,   16,  9,
                                     10,  23,  1 }), "min(1) a")
-      check.eq(b:to_float(), matrix(1, 4, 3, { 1, 2, 2,
-                                               2, 1, 2,
-                                               1, 1, 1,
-                                               1, 2, 1 }), "min(1) b")
+      check.eq(b:convert_to("float"), matrix(1, 4, 3, { 1, 2, 2,
+                                                        2, 1, 2,
+                                                        1, 1, 1,
+                                                        1, 2, 1 }), "min(1) b")
       local a,b = m:min(2)
       check.eq(a, matrix(2, 1, 3, {  7,  5,  1,
                                      4,  2,  3 }), "min(2) a")
-      check.eq(b:to_float(), matrix(2, 1, 3, { 3, 2, 4,
-                                               2, 1, 2 }), "min(2) b")
+      check.eq(b:convert_to("float"), matrix(2, 1, 3, { 3, 2, 4,
+                                                        2, 1, 2 }), "min(2) b")
       local a,b = m:min(3)
       check.eq(a, matrix(2, 4, 1, { 12, 5,  7,  1,
                                     2,  3, 19, 11 }), "min(3) a")
-      check.eq(b:to_float(), matrix(2, 4, 1, { 1, 2, 1, 3,
-                                               2, 3, 1, 3 }), "min(3) b")
+      check.eq(b:convert_to("float"), matrix(2, 4, 1, { 1, 2, 1, 3,
+                                                        2, 3, 1, 3 }), "min(3) b")
   end)
 
   T("BrodacastTest", function()
@@ -468,6 +468,26 @@ ascii
       check.eq(-20, (m1:min(1):min(1):min()))
       check.eq(-20, (m1:select(3,1):min()))
       check.eq(-20, (m1:select(3,1):min(1):min()))
+  end)
+
+  T("MatrixCastingTest", function()
+      local m = matrix.fromString[[4 5
+ascii
+-0.61696 -0.0046727 0.24422 0.63568 -0.12454 0.22422 0.57072 0.54272 0.55995
+0.72134 -0.45481 -0.69873 -0.44707 -0.60296 0.60374 0.63033 0.91628 -0.68237
+0.75187 -0.76772
+]]
+      local gt_0 = m:gt(0)
+      for src in iterator{ "bool", "double", "float", "int32", "char" } do
+        local gt_0 = gt_0:convert_to(src)
+        check.eq(gt_0, gt_0:convert_to("double"):convert_to(src), "double->"..src)
+        check.eq(gt_0, gt_0:convert_to("float"):convert_to(src), "float->"..src)
+        check.eq(gt_0, gt_0:convert_to("int32"):convert_to(src), "int32->"..src)
+        check.eq(gt_0, gt_0:convert_to("char"):convert_to(src), "char->"..src)
+        check.eq(gt_0, gt_0:convert_to("bool"):convert_to(src), "bool->"..src)
+      end
+      local gt_idx = gt_0:flatten():to_index()
+      check.eq(gt_idx, matrixInt32{3,4,6,7,8,9,10,15,16,17,19}, "to_index()")
   end)
 end
 

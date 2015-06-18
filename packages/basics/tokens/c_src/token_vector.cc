@@ -289,45 +289,9 @@ namespace Basics {
 
 
   // ------------------------- vector token -------------------------
-
+  
   template <>
-  TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength) :
-    TokenVectorGeneric(),
-    vec(vec, vec+vlength) {
-    for (unsigned int i=0; i<vlength; ++i) IncRef(vec[i]);
-  }
-
-  template <>
-  TokenVector<Token*>::TokenVector(const vector<Token*> &vec) :
-    TokenVectorGeneric(),
-    vec(vec) {
-    for (unsigned int i=0; i<vec.size(); ++i) IncRef(vec[i]);
-  }
-
-  template<>
-  void TokenVector<Token*>::clear() {
-    for (unsigned int i=0; i<vec.size(); ++i) {
-      if (vec[i]) {
-        DecRef(vec[i]);
-        vec[i] = 0;
-      }
-    }
-    vec.clear();
-  }
-
-  template<>
-  void TokenVector<Token*>::push_back(Token* const &data) {
-    if (data) IncRef(data);
-    vec.push_back(data);
-  }
-
-  template <>
-  TokenVector<Token*>::~TokenVector() {
-    for (unsigned int i=0; i<vec.size(); ++i) if (vec[i]) DecRef(vec[i]);
-  }
-
-  template <>
-  buffer_list* TokenVector<Token*>::toString() {
+  buffer_list* TokenVector<AprilUtils::SharedPtr<Token> >::toString() {
     /*
       buffer_list *resul = new buffer_list;
       char b[5];
@@ -342,8 +306,8 @@ namespace Basics {
   }
 
   template <>
-  buffer_list* TokenVector<Token*>::debugString(const char *prefix,
-                                                int debugLevel) {
+  buffer_list* TokenVector<AprilUtils::SharedPtr<Token> >::debugString(const char *prefix,
+                                                                       int debugLevel) {
     // TODO: de momento ignoramos debugLevel
     UNUSED_VARIABLE(debugLevel);
     buffer_list *resul = new buffer_list;
@@ -353,12 +317,12 @@ namespace Basics {
   }
 
   template <>
-  TokenCode TokenVector<Token*>::getTokenCode() const {
+  TokenCode TokenVector<AprilUtils::SharedPtr<Token> >::getTokenCode() const {
     return table_of_token_codes::vector_Tokens;
   }
 
   template <>
-  Token *TokenVector<Token*>::fromString(constString &cs) {
+  Token *TokenVector<AprilUtils::SharedPtr<Token> >::fromString(constString &cs) {
     UNUSED_VARIABLE(cs);
     /*
       uint32_t size;
@@ -382,6 +346,6 @@ namespace Basics {
   template class TokenVector<int32_t>;
   template class TokenVector<uint32_t>;
   template class TokenVector<char>;
-  template class TokenVector<Token*>;
+  template class TokenVector<AprilUtils::SharedPtr<Token> >;
 
 } // namespace Basics

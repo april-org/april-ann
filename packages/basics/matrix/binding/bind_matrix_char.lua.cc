@@ -602,3 +602,14 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //////////////////////////////////////////////////////////////////////
 
+//BIND_METHOD MatrixChar convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::convert_to(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::equals(L,obj));
+}
+//BIND_END

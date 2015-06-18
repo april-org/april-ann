@@ -20,7 +20,7 @@ T("MatrixTest", function()
  0.564968    0.322677   -1.05338    -1.69783     1.7779      0.523945    0.810198    0.865949   -1.6916      0.827797]]
     local tgt = matrixDouble.read(aprilio.stream.input_lua_string(data),
                                   { tab=true })
-    check.eq(tgt:to_float(), test1.x:to_float())
+    check.eq(tgt:convert_to("float"), test1.x:convert_to("float"))
 end)
 
 T("CellArrayTest", function()
@@ -30,8 +30,8 @@ T("CellArrayTest", function()
                                  { tab=true })
     local tgt2=matrixDouble.read(aprilio.stream.input_lua_string(data2),
                                  { tab=true })
-    check.eq(test2.C:get(1,1):to_float(), tgt1:to_float())
-    check.eq(test2.C:get(1,2):to_float(), tgt2:to_float())
+    check.eq(test2.C:get(1,1):convert_to("float"), tgt1:convert_to("float"))
+    check.eq(test2.C:get(1,2):convert_to("float"), tgt2:convert_to("float"))
 end)
 
 T("StructTest", function()

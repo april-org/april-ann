@@ -581,21 +581,6 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 }
 //BIND_END
 
-//BIND_METHOD MatrixBool to_float
-{
-  MatrixFloat *result = new MatrixFloat(obj->getNumDim(),
-                                        obj->getDimPtr());
-  MatrixBool::const_iterator bool_it(obj->begin());
-  MatrixFloat::iterator float_it(result->begin());
-  while(bool_it != obj->end()) {
-    *float_it = (*bool_it) ? (1.0f) : (0.0f);
-    ++bool_it;
-    ++float_it;
-  }
-  LUABIND_RETURN(MatrixFloat, result);
-}
-//BIND_END
-
 //BIND_METHOD MatrixBool copy
 {
   int argn;
@@ -715,3 +700,20 @@ typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 
 //////////////////////////////////////////////////////////////////////
 
+//BIND_METHOD MatrixBool convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<bool>::convert_to(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool to_index
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<bool>::to_index(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixBool equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<bool>::equals(L,obj));
+}
+//BIND_END

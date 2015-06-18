@@ -63,7 +63,6 @@ namespace ANN {
 	for (unsigned int i=0; i<times; ++i) {
 	  // FIXME: clone or not to clone? that is the question :(
 	  (*output)[i] = input;
-	  IncRef(input);
 	}
       }
       break;
@@ -74,11 +73,9 @@ namespace ANN {
 	for (unsigned int i=0; i<input_bunch->size(); ++i) {
 	  TokenBunchVector *current = new TokenBunchVector(times);
 	  (*output)[i] = current;
-	  IncRef(current);
 	  for (unsigned int j=0; j<times; ++j) {
 	    (*current)[j] = (*input_bunch)[j];
 	    // FIXME: clone or not to clone? that is the question :(
-	    IncRef((*current)[j]);
 	  }
 	}
       }
@@ -107,7 +104,7 @@ namespace ANN {
 		  name.c_str());
     
     // the first is only copied
-    Token *current = (*error_input)[0];
+    AprilUtils::SharedPtr<Token> current = (*error_input)[0];
     if (current->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT1(128, "Incorrect token type, expected token matrix [%s]\n",
 		  name.c_str());
@@ -156,7 +153,7 @@ namespace ANN {
     
     // The rest of tokens
     for (unsigned int i=1; i<times; ++i) {
-      Token *current = (*error_input)[i];
+      AprilUtils::SharedPtr<Token> current = (*error_input)[i];
       if (current->getTokenCode() != table_of_token_codes::token_matrix)
 	ERROR_EXIT1(128, "Incorrect token type, expected token matrix [%s]\n",
 		    name.c_str());

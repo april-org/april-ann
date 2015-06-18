@@ -26,8 +26,6 @@
 
 namespace Basics {
   
-  MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat);
-  
 } // namespace Basics
 
 #endif // UTILMATRIXINT32_H

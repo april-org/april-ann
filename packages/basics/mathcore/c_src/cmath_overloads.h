@@ -814,7 +814,7 @@ namespace AprilMath {
     template<typename T>
     struct m_neq {
       /// It uses AprilMath::m_eq function.
-      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) {
+      APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) const {
         return !(AprilMath::m_eq(a,b));
       }
     };
@@ -1292,7 +1292,7 @@ namespace AprilMath {
   struct m_curried_lt {
     const T value;
     m_curried_lt(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return AprilMath::m_lt(a, value);
     }
   };
@@ -1301,7 +1301,7 @@ namespace AprilMath {
   struct m_curried_gt {
     const T value;
     m_curried_gt(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return AprilMath::m_gt(a, value);
     }
   };
@@ -1314,14 +1314,14 @@ namespace AprilMath {
         ERROR_EXIT(128, "For NaN comparison use m_curried_eq_nan\n");
       }
     }
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return (a == value);
     }
   };
 
   template<typename T>
   struct m_curried_eq_nan {
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return AprilMath::m_isnan(a);
     }
   };
@@ -1334,14 +1334,14 @@ namespace AprilMath {
         ERROR_EXIT(128, "For NaN comparison use m_curried_eq_nan\n");
       }
     }
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return !(a == value);
     }
   };
 
   template<typename T>
   struct m_curried_neq_nan {
-    APRIL_CUDA_EXPORT bool operator()(const T &a) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a) const {
       return !(AprilMath::m_isnan(a));
     }
   };
@@ -1350,7 +1350,7 @@ namespace AprilMath {
   struct m_curried_add {
     const T value;
     m_curried_add(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
+    APRIL_CUDA_EXPORT T operator()(const T &a) const {
       return a + value;
     }
   };
@@ -1359,7 +1359,7 @@ namespace AprilMath {
   struct m_curried_mul {
     const T value;
     m_curried_mul(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
+    APRIL_CUDA_EXPORT T operator()(const T &a) const {
       return a*value;
     }
   };
@@ -1368,7 +1368,7 @@ namespace AprilMath {
   struct m_curried_div {
     const T value;
     m_curried_div(const T &value) : value(value) { }
-    APRIL_CUDA_EXPORT T operator()(const T &a) {
+    APRIL_CUDA_EXPORT T operator()(const T &a) const {
       return value/a;
     }
   };
@@ -1377,7 +1377,7 @@ namespace AprilMath {
   struct m_curried_relative_equals {
     const float epsilon;
     m_curried_relative_equals(const float &epsilon) : epsilon(epsilon) { }
-    APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) {
+    APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) const {
       return AprilMath::m_relative_equals(a, b, epsilon);
     }
   };

@@ -6,12 +6,18 @@ Master branch release
 
 ### Unstable changes
 
+- Serialization and deserilization have been updated with more robust and
+  reusable API, implemented in `util.serialize()` and `util.deserialize()`
+  functions.
 - Added `matrix.broadcast` utility (similar to broadcast in numpy).
 - Added `ProbablisitcMatrixANNComponent`, which allow to implement probabilistic
   mixtures of posteriors and/or likelihoods.
 
 ### API Changes
 
+- Serializable objects API have been augmented with methods `ctor_name()` and
+  `ctor_params()` in Lua, refered to `luaCtorName()` and `luaCtorParams()` in
+  C++.
 - Added `cast.to` to dynamic cast C++ objects pushed into Lua, allowing to
   convert base class objects into any of its derived classes.
 - Added `matrix.sparse` as valid values for targets in `ann.loss.mse` and

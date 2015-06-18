@@ -228,6 +228,13 @@ namespace AprilMath {
       Basics::Matrix<O> *matConvertTo(const Basics::Matrix<T> *input,
                                       Basics::Matrix<O> *dest=0);
       
+      /**
+       * @brief Converts into MatrixInt32 with all non-zero indices.
+       */
+      template <typename T>
+      Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,
+                                                 Basics::Matrix<int32_t> *dest=0);
+      
     } // namespace Misc
     
   } // namespace MatrixExt

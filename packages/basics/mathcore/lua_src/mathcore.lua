@@ -1,3 +1,7 @@
+-- global NaN and inf definition
+nan = mathcore.limits.double.quiet_NaN()
+inf = mathcore.limits.double.infinity()
+
 local MAX = 4
 local function make_block_tostring(name, str)
   return function(b)

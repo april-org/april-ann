@@ -69,14 +69,11 @@ char quotes[] = "\"'";
 extern int   rl_completion_suppress_append;
 #ifdef __APPLE__
 #ifdef __HOMEBREW__
-extern const char *rl_basic_word_break_characters;
 extern const char *rl_completer_quote_characters;
 #else
-extern char *rl_basic_word_break_characters;
 extern char *rl_completer_quote_characters;
 #endif
 #else
-extern const char *rl_basic_word_break_characters;
 extern const char *rl_completer_quote_characters;
 #endif
 /* Static copy of Lua state, as readline has no per-use state */
@@ -170,8 +167,8 @@ extern "C" {
 //BIND_STATIC_CONSTRUCTOR rlcompleter
 {
   storedL = L;
-  rl_basic_word_break_characters = breaks;
-  // rl_completer_word_break_characters = breaks;
+  // rl_basic_word_break_characters = breaks;
+  rl_completer_word_break_characters = breaks;
   rl_completer_quote_characters = quotes;
   rl_attempted_completion_function = do_completion;
 }

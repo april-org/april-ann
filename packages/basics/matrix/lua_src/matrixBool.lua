@@ -3,27 +3,18 @@ class.extend(matrixBool, "t", matrixBool.."transpose")
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")
 
-class.extend(matrixBool, "to_index",
-             april_doc{
-               class = "method",
-               summary = "Returns a matrixInt32 with the list of true indices",
-               description = "Requires a rank 1 matrix",
-               outputs = { "A matrixInt32 instance", },
-             } ..
-               function(self)
-                 local self = self:squeeze()
-                 assert(#self:dim() == 1, "Needs a rank 1 matrix")
-                 local ones = self:count_ones()
-                 if ones == 0 then return nil end
-                 local result = matrixInt32(ones)
-                 local idx,pos=0,0
-                 self:map(function(x)
-                     idx=idx+1
-                     if x then pos=pos+1 result:set(pos,idx) end
-                 end)
-                 assert(pos == ones)
-                 return result
+class.extend(matrixBool, "flatten",
+             function(self)
+               return self:rewrap(self:size())
 end)
+
+april_set_doc(matrixBool.."to_index",
+              {
+                class = "method",
+                summary = "Returns a matrixInt32 with the list of true indices",
+                description = "Requires a rank 1 matrix",
+                outputs = { "A matrixInt32 instance", },
+})
 
 class.extend(matrixBool, "land",
              april_doc{
@@ -74,19 +65,8 @@ matrixBool.meta_instance.__mul = function(op1, op2)
 end
 
 matrixBool.meta_instance.__eq = function(op1, op2)
-  if class.is_a(op1, matrix) then op1 = matrixBool(op1)
-  elseif class.is_a(op2, matrix) then op2 = matrixBool(op2) end
-  assert(class.is_a(op1, matrixBool) and class.is_a(op2, matrixBool),
-         "Needs two matrixBool arguments")
-  local d1,d2 = op1:dim(),op2:dim()
-  if #d1 ~= #d2 then return false end
-  local eq_size = iterator.zip(iterator(ipairs(d1)):select(2),
-                               iterator(ipairs(d2)):select(2)):
-  reduce(function(acc,a,b) return acc and (a==b) end, true)
-  if not eq_size then return false end
-  local eq = true
-  op1:map(op2,function(x,y) eq = eq and (x == y) end)
-  return eq
+  if type(op1) == "number" or type(op2) == "number" then return false end
+  return op1:equals(op2)
 end
 
 matrixBool.meta_instance.__call =
