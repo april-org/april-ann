@@ -471,7 +471,12 @@ ascii
   end)
 
   T("MatrixCastingTest", function()
-      local m = matrix(4,5):uniformf(-1,1,random(1234))
+      local m = matrix.fromString[[4 5
+ascii
+-0.61696 -0.0046727 0.24422 0.63568 -0.12454 0.22422 0.57072 0.54272 0.55995
+0.72134 -0.45481 -0.69873 -0.44707 -0.60296 0.60374 0.63033 0.91628 -0.68237
+0.75187 -0.76772
+]]
       local gt_0 = m:gt(0)
       for src in iterator{ "bool", "double", "float", "int32", "char" } do
         local gt_0 = gt_0:convert_to(src)
@@ -482,6 +487,7 @@ ascii
         check.eq(gt_0, gt_0:convert_to("bool"):convert_to(src), "bool->"..src)
       end
       local gt_idx = gt_0:flatten():to_index()
+      check.eq(gt_idx, matrixInt32{3,4,6,7,8,9,10,15,16,17,19}, "to_index()")
   end)
 end
 
