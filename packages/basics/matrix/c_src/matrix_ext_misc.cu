@@ -313,9 +313,10 @@ namespace AprilMath {
         Basics::Matrix<int32_t>::iterator dest_it = dest->begin();
         for (typename Basics::Matrix<T>::const_iterator it = input->begin();
              it != input->end(); ++it) {
+          ++k; // first index is 1, to be compatible with Lua
           if (*it != T(0.0)) {
             april_assert(dest_it != dest->end());
-            *dest_it = ++k; // first index is 1, to be compatible with Lua
+            *dest_it = k;
             ++dest_it;
           }
         }
