@@ -47,29 +47,6 @@ using namespace AprilMath::MatrixExt::Reductions;
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixFloat);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindow);
 
-#define FUNCTION_NAME "read_vector"
-static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-  int *v = 0;
-  lua_getfield(L, 1, key);
-  if (!lua_isnil(L, -1)) {
-    LUABIND_CHECK_PARAMETER(-1, table);
-    int table_len;
-    LUABIND_TABLE_GETN(-1, table_len);
-    if (table_len != num_dim)
-      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-		      key, num_dim, table_len);
-    v = new int[num_dim];
-    for(int i=0; i < num_dim; i++) {
-      lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-      lua_pop(L,1);
-    }
-  }
-  lua_pop(L, 1);
-  return v;
-}
-#undef FUNCTION_NAME
-
 int sliding_window_iterator_function(lua_State *L) {
   SlidingWindow *obj = lua_toSlidingWindow(L,1);
   if (obj->isEnd()) {
@@ -140,6 +117,30 @@ namespace Basics {
     static void lua_push(lua_State *L, K obj) {
       lua_push(L, obj);
     }
+
+#define FUNCTION_NAME "read_vector"
+    template<typename K>
+    static K *read_vector(lua_State *L, const char *key, int num_dim, K add) {
+      K *v = 0;
+      lua_getfield(L, 1, key);
+      if (!lua_isnil(L, -1)) {
+        LUABIND_CHECK_PARAMETER(-1, table);
+        int table_len;
+        LUABIND_TABLE_GETN(-1, table_len);
+        if (table_len != num_dim)
+          LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+                          key, num_dim, table_len);
+        v = new K[num_dim];
+        for(int i=0; i < num_dim; i++) {
+          lua_rawgeti(L, -1, i+1);
+          v[i] = lua_to<K>(L,-1) + add;
+          lua_pop(L,1);
+        }
+      }
+      lua_pop(L, 1);
+      return v;
+    }
+#undef FUNCTION_NAME
     
   public:
 #define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
@@ -901,11 +902,11 @@ namespace Basics {
                            "numSteps",
                            "orderStep",
                            (const char*)0);
-        offset = read_vector(L, "offset", num_dim, 0);
-        sub_matrix_size = read_vector(L, "size", num_dim, 0);
-        step = read_vector(L, "step", num_dim, 0);
-        num_steps = read_vector(L, "numSteps", num_dim, 0);
-        order_step = read_vector(L, "orderStep", num_dim, -1);
+        offset = read_vector<int>(L, "offset", num_dim, 0);
+        sub_matrix_size = read_vector<int>(L, "size", num_dim, 0);
+        step = read_vector<int>(L, "step", num_dim, 0);
+        num_steps = read_vector<int>(L, "numSteps", num_dim, 0);
+        order_step = read_vector<int>(L, "orderStep", num_dim, -1);
       }
       K *window = new K(obj,
                         sub_matrix_size.get(),
