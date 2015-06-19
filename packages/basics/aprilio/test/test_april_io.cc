@@ -106,11 +106,15 @@ namespace AprilIO {
       EXPECT_FALSE( ptr->hasError() );
       aux[N1] = '\0';
       EXPECT_STREQ( aux.get(), LINE1 );
+      ptr->get(aux.get(), N, "\r\n"); // blankline
       // LINE 2
       EXPECT_EQ( ptr->get(aux.get(), N, "\r\n"), N2 );
       EXPECT_FALSE( ptr->hasError() );
       aux[N2] = '\0';
       EXPECT_STREQ( aux.get(), LINE2 );
+      ptr->get(aux.get(), N, "\r\n"); // blankline
+      ptr->get(aux.get(), N, "\r\n"); // blankline
+      ptr->get(aux.get(), N, "\r\n"); // blankline
       // LINE 3
       EXPECT_EQ( ptr->get(aux.get(), N, "\r\n"), N3 );
       EXPECT_FALSE( ptr->hasError() );
@@ -143,6 +147,7 @@ namespace AprilIO {
       EXPECT_EQ( c_str->get(aux.get(), N1), N1 );
       aux[N1] = '\0';
       EXPECT_STREQ( aux.get(), LINE1 );
+      ptr->get(aux.get(), N, "\r\n"); // blankline
       // LINE 2
       EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N2 );
       EXPECT_FALSE( ptr->hasError() );
@@ -150,6 +155,9 @@ namespace AprilIO {
       EXPECT_EQ( c_str->get(aux.get(), N2), N2 );
       aux[N2] = '\0';
       EXPECT_STREQ( aux.get(), LINE2 );
+      ptr->get(aux.get(), N, "\r\n"); // blankline
+      ptr->get(aux.get(), N, "\r\n"); // blankline
+      ptr->get(aux.get(), N, "\r\n"); // blankline
       // LINE 3
       EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N3 );
       EXPECT_FALSE( ptr->hasError() );

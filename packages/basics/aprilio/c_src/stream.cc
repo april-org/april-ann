@@ -69,7 +69,6 @@ namespace AprilIO {
                            const char *delim, bool keep_delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
-    if (!keep_delim) trimInBuffer(delim, 1);
     while( this->good() &&
            !dest->hasError() &&
            dest_len < max_size &&
@@ -83,6 +82,7 @@ namespace AprilIO {
       // delim true condition
       if (has_delim || len != in_buffer_available_size) break;
     }
+    if (!keep_delim) trimInBuffer(delim, 1);
     return dest_len;
   }
   
@@ -90,7 +90,6 @@ namespace AprilIO {
                            bool keep_delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
-    if (!keep_delim) trimInBuffer(delim, 1);
     while( dest_len < max_size &&
            this->good() &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim,
@@ -103,6 +102,7 @@ namespace AprilIO {
       // delim true condition
       if (has_delim || buf_len != in_buffer_available_size) break;
     }
+    if (!keep_delim) trimInBuffer(delim, 1);
     return dest_len;
   }
 
