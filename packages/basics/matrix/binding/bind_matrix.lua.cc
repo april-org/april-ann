@@ -115,7 +115,7 @@ namespace Basics {
 
     template<typename K>
     static void lua_push(lua_State *L, K obj) {
-      lua_push(L, obj);
+      AprilUtils::LuaTable::pushInto(L, obj);
     }
 
 #define FUNCTION_NAME "read_vector"

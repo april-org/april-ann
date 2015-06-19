@@ -62,6 +62,7 @@ namespace AprilIO {
   }
 
   void FileStream::closeStream() {
+    seekStream(SEEK_CUR, -getInBufferAvailableSize());
     if (checkReturnValue(::close(fd)) == 0) fd = -1;
   }
   
