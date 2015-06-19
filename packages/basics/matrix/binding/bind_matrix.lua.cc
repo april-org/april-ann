@@ -101,8 +101,8 @@ namespace Basics {
     
     template<typename K>
     static K lua_to(lua_State *L, int n) {
-      if (!AprilUtils::LuaTable::checkType(L,n)) {
-        ERROR_EXIT(128, "Incorrect argument type at position %d\n", n);
+      if (!AprilUtils::LuaTable::checkType<K>(L,n)) {
+        ERROR_EXIT1(128, "Incorrect argument type at position %d\n", n);
       }
       return AprilUtils::LuaTable::convertTo<K>(L, n);
     }
@@ -884,8 +884,8 @@ namespace Basics {
 #undef FUNCTION_NAME
 
 #define FUNCTION_NAME "sliding_window"
-    template<typename K>
-    static int sliding_window(lua_State *L, Basics::Matrix<T> *obj) {
+    BEGIN_METHOD(sliding_window)
+    {
       AprilUtils::UniquePtr<int []> sub_matrix_size, offset,
         step, num_steps, order_step;
       int argn = lua_gettop(L); // number of arguments
@@ -908,12 +908,13 @@ namespace Basics {
         num_steps = read_vector<int>(L, "numSteps", num_dim, 0);
         order_step = read_vector<int>(L, "orderStep", num_dim, -1);
       }
-      K *window = new K(obj,
-                        sub_matrix_size.get(),
-                        offset.get(),
-                        step.get(),
-                        num_steps.get(),
-                        order_step.get());
+      typename Matrix<T>::sliding_window *window =
+        new typename Matrix<T>::sliding_window(obj,
+                                               sub_matrix_size.get(),
+                                               offset.get(),
+                                               step.get(),
+                                               num_steps.get(),
+                                               order_step.get());
       lua_push(L, window);
       return 1;
     }
@@ -924,7 +925,8 @@ namespace Basics {
     {
       T rmin = lua_to<T>(L,1);
       T rmax = lua_to<T>(L,2);
-      lua_push(L, matAdjustRange(obj, rmin, rmax));
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matAdjustRange(obj, rmin, rmax));
       return 1;
     }
 #undef FUNCTION_NAME
@@ -1281,8 +1283,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat sliding_window
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::
-                               sliding_window<SlidingWindow>(L,obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::sliding_window(L,obj));
 }
 //BIND_END
 
