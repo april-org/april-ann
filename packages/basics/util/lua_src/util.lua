@@ -670,6 +670,10 @@ end
 
 string.dirname = string.get_path -- synonim
 
+function string.words_of(t)
+  return string.gmatch(t, "[^%s]+")
+end
+
 function string.lines_of(t)
   return string.gmatch(t,"[^\n]+")
 end

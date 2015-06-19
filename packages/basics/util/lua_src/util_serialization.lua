@@ -280,8 +280,8 @@ do
     function(data, destination, format)
       local version = { util.version() } table.insert(version, os.date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
-      local version_info = ",\n%s\n%s\n"%{ comment,
-                                           util.to_lua_string(version, format) }
+      local version_info = "\n%s\n-- %s\n"%{ comment,
+                                             util.to_lua_string(version, format) }
       --
       local map = mapper()
       local destination = destination or lua_string_stream()
