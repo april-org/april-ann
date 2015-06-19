@@ -121,8 +121,6 @@ namespace AprilIO {
       aux[N3] = '\0';
       EXPECT_STREQ( aux.get(), LINE3 );
     }
-    EXPECT_FALSE( ptr->eof() );
-    EXPECT_EQ( ptr->get(aux.get(), N), 1u ); // just in case to force EOF read
     EXPECT_TRUE( ptr->eof() );
     ptr->close();
     EXPECT_FALSE( ptr->hasError() );
@@ -169,8 +167,6 @@ namespace AprilIO {
       EXPECT_FALSE( c_str->hasError() );
       EXPECT_EQ( c_str->size(), (N1+N2+N3)*(i+1) );
     }
-    EXPECT_FALSE( ptr->eof() );
-    EXPECT_EQ( ptr->get(aux.get(), N), 1u ); // just in case to force EOF read
     EXPECT_TRUE( ptr->eof() );
     ptr->close();
     EXPECT_FALSE( ptr->hasError() );
