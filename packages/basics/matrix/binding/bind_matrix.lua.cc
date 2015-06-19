@@ -525,11 +525,9 @@ namespace Basics {
       LUABIND_CHECK_PARAMETER(1, int);
       LUABIND_CHECK_PARAMETER(2, int);
       int dim, index;
-      Matrix<T> *dest = 0;
       LUABIND_GET_PARAMETER(1, int, dim);
       LUABIND_GET_PARAMETER(2, int, index);
-      int n = lua_gettop(L);
-      if (n == 3) dest = lua_to<Matrix<T>*>(L, 3);
+      Matrix<T> *dest = lua_opt<Matrix<T>*>(L, 3, 0);
       Matrix<T> *obj2 = obj->select(dim-1, index-1, dest);
       lua_push(L, obj2);
       return 1;
