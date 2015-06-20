@@ -24,14 +24,6 @@ extern "C" {
 #include "utilMatrixFloat.h"
 #include "utilMatrixInt32.h"
 
-using namespace AprilMath::MatrixExt::BLAS;
-using namespace AprilMath::MatrixExt::Boolean;
-using namespace AprilMath::MatrixExt::Initializers;
-using namespace AprilMath::MatrixExt::Misc;
-using namespace AprilMath::MatrixExt::LAPACK;
-using namespace AprilMath::MatrixExt::Operations;
-using namespace AprilMath::MatrixExt::Reductions;
-
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixInt32);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32);
 
@@ -41,6 +33,10 @@ IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32);
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"
+#include "matrixBool.h"
+#include "matrixChar.h"
+#include "matrixComplexF.h"
+#include "matrixInt32.h"
 #include "matrixFloat.h"
 #include "luabindmacros.h"
 #include "luabindutil.h"
@@ -50,7 +46,7 @@ using namespace Basics;
 
 typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
-DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32;);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32);
 
 #include "matrix_binding.h"
 
@@ -125,6 +121,30 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32;);
 //DOC_END
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::constructor(L));
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixInt32 as
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::as(L));
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixInt32 deserialize
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::deserialize(L));
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixInt32 read
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::read(L));
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixInt32 fromMMap
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<int32_t>::fromMMap(L));
 }
 //BIND_END
 

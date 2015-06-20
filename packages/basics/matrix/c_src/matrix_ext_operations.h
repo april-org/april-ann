@@ -499,12 +499,6 @@ namespace AprilMath {
                                        const Basics::Matrix<T> *obj2,
                                        Basics::Matrix<T> *dest=0);
 
-      /**
-       * @brief Indicates if the matrix numbers are finite or note.
-       */
-      template <typename T>
-      Basics::Matrix<T> *matIsFinite(const Basics::Matrix<T> *obj);      
-
     } // namespace Operations
     
   } // namespace MatrixExt

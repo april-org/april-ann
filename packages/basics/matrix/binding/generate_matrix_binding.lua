@@ -2,9 +2,21 @@ function dirname(path_with_filename, sep)
   local sep=sep or'/'
   return path_with_filename:match("(.*"..sep..")") or "./"
 end
+function basename(path)
+  local name = string.match(path, "([^/]+)$")
+  return name
+end
 local root = dirname(arg[0])
 
-local methods = {
+local function get_timestamp(filename)
+  local f = io.popen(table.concat{"find ", root, filename,
+                                  " -printf '%h/%f %T@\n' 2> /dev/null ",
+                                  "| cut -d' ' -f 2" })
+  return tonumber(f:read("*l")) or 0
+end
+local script_timestamp = get_timestamp(basename(arg[0]))
+
+local matrix_methods = {
   float = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
     "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
@@ -61,8 +73,8 @@ local methods = {
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "isfinite", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
-    "padding_all", "padding", "uniform", "uniformf", "linspace", "logspace",
-    "linear", "sliding_window", "is_contiguous",
+    "padding_all", "padding",
+    "sliding_window", "is_contiguous",
     "prune_subnormal_and_check_normal", "adjust_range", "diag", "fill",
     "zeros", "ones", "min", "max", "equals", "clamp", "add", "scalar_add",
     "sub", "mul", "cmul", "plogp", "log", "log1p", "exp", "sqrt", "pow", "tan",
@@ -103,13 +115,25 @@ local methods = {
   },
 }
 
-local class_methods = {
+local matrix_class_methods = {
   float = {
-    "as", "deserialize", "read", "fromMMap", "fromPNM", "fromHEX",
+    "as", "deserialize", "read", "fromMMap",
+  },
+  double = {
+    "as", "deserialize", "read", "fromMMap",
+  },
+  char = {
+    "as", "deserialize", "read", "fromMMap",
+  },
+  int32_t = {
+    "as", "deserialize", "read", "fromMMap",
+  },
+  ComplexF = {
+    "as", "deserialize", "read", "fromMMap",
   },
 }
 
-local class_method_binding = [[
+local matrix_class_method_binding = [[
 //BIND_CLASS_METHOD %s %s
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<%s>::%s(L));
@@ -118,7 +142,7 @@ local class_method_binding = [[
 
 ]]
 
-local method_binding = [[
+local matrix_method_binding = [[
 //BIND_METHOD %s %s
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<%s>::%s(L,obj));
@@ -127,39 +151,53 @@ local method_binding = [[
 
 ]]
 
-for _,arg in ipairs{
-  { "float", "MatrixFloat", "matrix", "template.txt", "bind_matrix.lua.cc" },
-  { "double", "MatrixDouble", "matrixDouble", "template.txt", "bind_matrix_double.lua.cc" },
-  { "int32_t", "MatrixInt32", "matrixInt32", "template.txt", "bind_matrix_int32.lua.cc" },
-  { "char", "MatrixChar", "matrixChar", "template.txt", "bind_matrix_char.lua.cc" },
-  { "ComplexF", "MatrixComplex", "matrixComplex", "template.txt", "bind_matrix_complex_float.lua.cc" },
-  { "bool", "MatrixBool", "matrixBool", "template.txt", "bind_matrix_bool.lua.cc" },
-} do
+local function generate_binding(data,
+                                class_methods, methods,
+                                class_method_binding, method_binding)
+  for _,arg in ipairs(data) do
 
-  local T          = arg[1]
-  local MATRIX_T   = arg[2]
-  local MATRIX_Lua = arg[3]
-  local input      = arg[4]
-  local output     = arg[5]
-  
-  local template = io.open(root .. input):read("*a")
-  local f = io.open(root .. output, "w")
-  
-  f:write((template:gsub("%$%$([^$]+)%$%$", { T          = T,
-                                              MATRIX_T   = MATRIX_T,
-                                              MATRIX_Lua = MATRIX_Lua, })))
-  local generated = {}
-  for _,name in ipairs(class_methods[T] or {}) do
-    assert(not generated[name])
-    f:write((class_method_binding:format(MATRIX_T, name, T, name)))
-    generated[name] = true
-  end
+    local T          = arg[1]
+    local MATRIX_T   = arg[2]
+    local MATRIX_Lua = arg[3]
+    local input      = arg[4]
+    local output     = arg[5]
 
-  f:write("///////////////////////////////////////////////////////////\n\n")
-  for _,name in ipairs(methods[T] or {}) do
-    assert(not generated[name])
-    f:write((method_binding:format(MATRIX_T, name, T, name)))
-    generated[name] = true
+    local input_timestamp  = get_timestamp(input)
+    local output_timestamp = get_timestamp(output)
+    if input_timestamp > output_timestamp or script_timestamp > output_timestamp then
+      local template = io.open(root .. input):read("*a")
+      local f = io.open(root .. output, "w")
+      
+      f:write((template:gsub("%$%$([^$]+)%$%$", { T          = T,
+                                                  MATRIX_T   = MATRIX_T,
+                                                  MATRIX_Lua = MATRIX_Lua, })))
+      local generated = {}
+      for _,name in ipairs(class_methods[T] or {}) do
+        assert(not generated[name])
+        f:write((class_method_binding:format(MATRIX_T, name, T, name)))
+        generated[name] = true
+      end
+
+      f:write("///////////////////////////////////////////////////////////\n\n")
+      for _,name in ipairs(methods[T] or {}) do
+        assert(not generated[name])
+        f:write((method_binding:format(MATRIX_T, name, T, name)))
+        generated[name] = true
+      end
+      f:close()
+    end
   end
-  f:close()
 end
+
+local matrix_binding_data = {
+  { "float", "MatrixFloat", "matrix", "matrix_template.lua.cc", "bind_matrix.lua.cc" },
+  { "double", "MatrixDouble", "matrixDouble", "matrix_template.lua.cc", "bind_matrix_double.lua.cc" },
+  { "int32_t", "MatrixInt32", "matrixInt32", "matrix_template.lua.cc", "bind_matrix_int32.lua.cc" },
+  { "char", "MatrixChar", "matrixChar", "matrix_template.lua.cc", "bind_matrix_char.lua.cc" },
+  { "ComplexF", "MatrixComplexF", "matrixComplex", "matrix_template.lua.cc", "bind_matrix_complex_float.lua.cc" },
+  { "bool", "MatrixBool", "matrixBool", "matrix_template.lua.cc", "bind_matrix_bool.lua.cc" },
+}
+
+generate_binding(matrix_binding_data,
+                 matrix_class_methods, matrix_methods,
+                 matrix_class_method_binding, matrix_method_binding)

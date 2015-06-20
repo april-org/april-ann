@@ -131,7 +131,7 @@ namespace Basics {
         //
         const Key sizes(d0, d1);
         // put all coordinates of the dictionary into a vector, it will be
-        // sorted after to build the result sparse matrix
+        // sorted after to build the sparse matrix object
         AprilUtils::vector<Key> coordinates(data.size());
         unsigned int i=0;
         for (typename DictType::const_iterator it = data.begin();
@@ -194,8 +194,8 @@ namespace Basics {
                                  const unsigned int NNZ,
                                  AprilUtils::vector<Key> &coordinates,
                                  CMP compare) const {
-        AprilMath::FloatGPUMirroredMemoryBlock *values =
-          new AprilMath::FloatGPUMirroredMemoryBlock(NNZ);
+        AprilMath::GPUMirroredMemoryBlock<T> *values =
+          new AprilMath::GPUMirroredMemoryBlock<T>(NNZ);
         AprilMath::Int32GPUMirroredMemoryBlock *indices =
           new AprilMath::Int32GPUMirroredMemoryBlock(NNZ);
         AprilMath::Int32GPUMirroredMemoryBlock *first_index =
@@ -611,5 +611,7 @@ namespace Basics {
 #include "sparse_matrix-serialization.impl.h"
 
 #include "sparse_matrixFloat.h"
+#include "sparse_matrixDouble.h"
+#include "sparse_matrixComplexF.h"
 
 #endif // SPARSE_MATRIX_H

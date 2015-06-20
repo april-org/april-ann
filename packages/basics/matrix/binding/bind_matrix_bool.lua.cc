@@ -24,14 +24,6 @@ extern "C" {
 #include "utilMatrixFloat.h"
 #include "utilMatrixInt32.h"
 
-using namespace AprilMath::MatrixExt::BLAS;
-using namespace AprilMath::MatrixExt::Boolean;
-using namespace AprilMath::MatrixExt::Initializers;
-using namespace AprilMath::MatrixExt::Misc;
-using namespace AprilMath::MatrixExt::LAPACK;
-using namespace AprilMath::MatrixExt::Operations;
-using namespace AprilMath::MatrixExt::Reductions;
-
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixBool);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool);
 
@@ -41,6 +33,10 @@ IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool);
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"
+#include "matrixBool.h"
+#include "matrixChar.h"
+#include "matrixComplexF.h"
+#include "matrixInt32.h"
 #include "matrixFloat.h"
 #include "luabindmacros.h"
 #include "luabindutil.h"
@@ -50,7 +46,7 @@ using namespace Basics;
 
 typedef MatrixBool::sliding_window SlidingWindowMatrixBool;
 
-DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool;);
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool);
 
 #include "matrix_binding.h"
 

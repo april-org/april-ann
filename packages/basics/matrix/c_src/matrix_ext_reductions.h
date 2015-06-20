@@ -208,6 +208,12 @@ namespace AprilMath {
       bool matEquals(const Basics::SparseMatrix<T> *a,
                      const Basics::SparseMatrix<T> *b,
                      float epsilon);
+
+      /**
+       * @brief Indicates if the matrix numbers are finite or note.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matIsFinite(const Basics::Matrix<T> *obj);      
       
     } // namespace Reductions
     

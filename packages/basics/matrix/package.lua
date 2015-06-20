@@ -36,14 +36,17 @@
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
+     exec{ command = [[lua binding/generate_matrix_binding.lua]] },
      provide_bind{ file = "binding/bind_matrix.lua.cc", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_sparse_matrix.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_complex_float.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_double.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_int32.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_char.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_bool.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_referenced_vector.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_sparse_matrix.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_sparse_matrix_double.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_sparse_matrix_complex_float.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_options.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_ext.lua.cc", dest_dir = "include" },
    },
@@ -70,10 +73,6 @@
 	dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_sparse_matrix.lua.cc",
-	dest_dir = "build",
-     },
-     build_bind{
         file = "binding/bind_matrix_complex_float.lua.cc",
         dest_dir = "build",
      },
@@ -96,6 +95,18 @@
      build_bind{
         file = "binding/bind_referenced_vector.lua.cc",
         dest_dir = "build",
+     },
+     build_bind{
+       file = "binding/bind_sparse_matrix.lua.cc",
+       dest_dir = "build",
+     },
+     build_bind{
+       file = "binding/bind_sparse_matrix_double.lua.cc",
+       dest_dir = "build",
+     },
+     build_bind{
+       file = "binding/bind_sparse_matrix_complex_float.lua.cc",
+       dest_dir = "build",
      },
      build_bind{
        file = "binding/bind_matrix_options.lua.cc",

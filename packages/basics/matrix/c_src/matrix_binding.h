@@ -21,6 +21,7 @@
 #ifndef MATRIX_BINDING_H
 #define MATRIX_BINDING_H
 extern "C" {
+#include <ctype.h>
 #include <lua.h>
 }
 
@@ -87,7 +88,7 @@ namespace Basics {
 #undef FUNCTION_NAME
 
     static int sliding_window_iterator_function(lua_State *L) {
-      Matrix<T>::sliding_window *obj = lua_to<Matrix<T>::sliding_window*>(L,1);
+      typename Matrix<T>::sliding_window *obj = lua_to<typename Matrix<T>::sliding_window*>(L,1);
       if (obj->isEnd()) {
         lua_pushnil(L);
         return 1;
@@ -101,14 +102,14 @@ namespace Basics {
   public:
 #define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
 #define BEGIN_CLASS_METHOD(name) static int name(lua_State *L)
-#define BEGIN_SW_METHOD(name)    static int name(lua_State *L, Matrix<T>::sliding_window *obj)
+#define BEGIN_SW_METHOD(name)    static int name(lua_State *L, typename Matrix<T>::sliding_window *obj)
 
     //////////////////////////////////////////////////////////////////////////
 
 #define FUNCTION_NAME "sliding_window binding"
     BEGIN_SW_METHOD(get_matrix)
     {
-      lua_push(obj->getMatrix(lua_opt<Matrix<T>*>(L, 1, 0)));
+      lua_push(L, obj->getMatrix(lua_opt<Matrix<T>*>(L, 1, 0)));
       return 1;
     }
 
@@ -132,12 +133,6 @@ namespace Basics {
     BEGIN_SW_METHOD(num_windows)
     {
       lua_push(L, obj->numWindows());
-      return 1;
-    }
-
-    BEGIN_SW_METHOD(num_windows)
-    {
-      lua_push(L, obj->num_windows());
       return 1;
     }
 
@@ -175,7 +170,7 @@ namespace Basics {
         AprilUtils::UniquePtr<int []> dim = new int[1];
         dim[0] = len;
         Matrix<T> *obj = new Matrix<T>(1, dim.get());
-        for (Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, ++data) {
+        for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, ++data) {
           april_assert(data != '\0');
           *it = static_cast<T>(*data);
         }
@@ -609,11 +604,11 @@ namespace Basics {
     {
       AprilIO::StreamInterface *stream =
         lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-      if (stream == 0) LUABIND_ERROR("Needs a stream as first argument");
+      if (!stream) LUABIND_ERROR("Needs a stream as first argument");
       AprilUtils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
       AprilUtils::LuaTable options(L,2);
       Matrix<T> *obj = Matrix<T>::read(ptr.get(), options);
-      if (obj == 0) {
+      if (!obj) {
         LUABIND_ERROR("Error happens reading from file stream");
       }
       else {
@@ -698,6 +693,12 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(num_dim)
+    {
+      lua_push(L, obj->getNumDim());
+      return 1;
+    }
+    
     BEGIN_METHOD(to_index)
     {
       MatrixInt32 *m = AprilMath::MatrixExt::Misc::matNonZeroIndices(obj);
@@ -773,7 +774,7 @@ namespace Basics {
       if (lower > upper) {
         LUABIND_ERROR("First argument must be <= second argument");
       }
-      if (random == 0) random = new Basics::MTRand();
+      if (!random) random = new Basics::MTRand();
       for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
         *it = static_cast<T>(random->randInt(upper - lower)) + lower;
       }
@@ -792,7 +793,7 @@ namespace Basics {
       if (lower > upper) {
         LUABIND_ERROR("First argument must be <= second argument");
       }
-      if (random == 0) random = new Basics::MTRand();
+      if (!random) random = new Basics::MTRand();
       for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
         *it = static_cast<T>(random->rand(upper - lower) + lower);
       }
@@ -996,7 +997,7 @@ namespace Basics {
       LUABIND_CHECK_ARGN(==,1);
       T v = lua_to<T>(L,1);
       AprilMath::MatrixExt::Initializers::matDiag(obj, v);
-      lua_push(obj);
+      lua_push(L, obj);
       return 1;
     }
 
@@ -1016,19 +1017,20 @@ namespace Basics {
       else {
         value = lua_to<T>(L,1);
       }
-      lua_push(L, AprilMath::MatrixExt::Operations::matFill(obj,value));
+      lua_push(L, AprilMath::MatrixExt::Initializers::matFill(obj,value));
       return 1;
     }
 
     BEGIN_METHOD(zeros)
     {
-      lua_push(L, AprilMath::MatrixExt::Operations::matZeros(obj));
+      lua_push(L, AprilMath::MatrixExt::Initializers::matZeros(obj));
       return 1;
     }
 
     BEGIN_METHOD(ones)
     {
-      lua_push(L, AprilMath::MatrixExt::Operations::matOnes(obj));
+      lua_push(L, AprilMath::MatrixExt::Initializers::matOnes(obj));
+      return 1;
     }
 
     BEGIN_METHOD(min)
@@ -1043,10 +1045,10 @@ namespace Basics {
         // case over a dimension
         int dim;
         LUABIND_GET_PARAMETER(1, int, dim);
-        AprilUtils::SharedPtr<Matrix<T>> dest;
-        AprilUtils::SharedPtr<Matrix<int32_t>> argmin;
+        AprilUtils::SharedPtr<Matrix<T> > dest;
+        AprilUtils::SharedPtr<Matrix<int32_t> > argmin;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmin = lua_opt<Matrix<int32_t>*>(L,2,0);
+        argmin = lua_opt<MatrixInt32*>(L,2,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmin) {
           aux = new int[obj->getNumDim()];
@@ -1066,7 +1068,7 @@ namespace Basics {
         // case over whole matrix
         int arg_min, raw_pos;
         lua_push(L, AprilMath::MatrixExt::Reductions::
-                 matMin(obj, arg_min.get(), raw_pos));
+                 matMin(obj, arg_min, raw_pos));
         lua_push(L, arg_min+1);
       }
       return 2;
@@ -1084,10 +1086,10 @@ namespace Basics {
         // case over a dimension
         int dim;
         LUABIND_GET_PARAMETER(1, int, dim);
-        AprilUtils::SharedPtr<Matrix<T>> dest;
-        AprilUtils::SharedPtr<Matrix<int32_t>> argmin;
+        AprilUtils::SharedPtr<Matrix<T> > dest;
+        AprilUtils::SharedPtr<Matrix<int32_t> > argmax;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmin = lua_opt<Matrix<int32_t>*>(L,2,0);
+        argmax = lua_opt<MatrixInt32*>(L,2,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmax) {
           aux = new int[obj->getNumDim()];
@@ -1107,7 +1109,7 @@ namespace Basics {
         // case over whole matrix
         int arg_max, raw_pos;
         lua_push(L, AprilMath::MatrixExt::Reductions::
-                 matMax(obj, arg_max.get(), raw_pos));
+                 matMax(obj, arg_max, raw_pos));
         lua_push(L, arg_max+1);
       }
       return 2;
@@ -1145,7 +1147,7 @@ namespace Basics {
       argn = lua_gettop(L); // number of arguments
       LUABIND_CHECK_ARGN(==, 1);
       T scalar = lua_to<T>(L, 1);
-      lua_push(L, AprilMath::MatrixExt::Misc::
+      lua_push(L, AprilMath::MatrixExt::Operations::
                matScalarAdd(obj, scalar));
       return 1;
     }
@@ -1373,9 +1375,9 @@ namespace Basics {
       else {
         LUABIND_ERROR("Expected matrix or sparse matrix as 2nd argument");
       }
+      return 1;
     }
-#undef FUNCTION_NAME
-
+    
     BEGIN_METHOD(gemm)
     {
       LUABIND_CHECK_ARGN(==, 1);
@@ -1512,7 +1514,7 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       T value = lua_to<T>(L, 1);
-      lua_push(L, AprilMath::MatrixExt::BLAS::
+      lua_push(L, AprilMath::MatrixExt::Operations::
                matScal(obj, value));
       return 1;
     }
@@ -1522,7 +1524,7 @@ namespace Basics {
       MatrixBool *mask = lua_to<MatrixBool*>(L, 1);
       T value          = lua_to<T>(L, 2);
       Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, 0);
-      lua_push(L, AprilMath::MatrixExt::Misc::
+      lua_push(L, AprilMath::MatrixExt::Operations::
                matMaskedFill(obj, mask, value, dest));
       return 1;
     }
@@ -1530,9 +1532,9 @@ namespace Basics {
     BEGIN_METHOD(masked_copy)
     {
       MatrixBool *mask = lua_to<MatrixBool*>(L, 1);
-      Matrix<T> *value = lua_to<T>(L, 2);
+      Matrix<T> *value = lua_to<Matrix<T>*>(L, 2);
       Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, 0);
-      lua_push(L, AprilMath::MatrixExt::Misc::
+      lua_push(L, AprilMath::MatrixExt::Operations::
                matMaskedCopy(obj, mask, value, dest));
       return 1;
     }
@@ -1567,6 +1569,7 @@ namespace Basics {
     {
       lua_push(L, AprilMath::MatrixExt::LAPACK::
                matInv(obj));
+      return 1;
     }
 
     BEGIN_METHOD(logdet)
@@ -1663,14 +1666,14 @@ namespace Basics {
 
     BEGIN_METHOD(data)
     {
-      lua_push(obj->getRawDataAccess());
+      lua_push(L, obj->getRawDataAccess());
       return 1;
     }
     
     BEGIN_METHOD(order)
     {
       MatrixInt32 *dest = lua_opt<MatrixInt32*>(L, 1, 0);
-      dest = matOrder(obj, dest);
+      dest = AprilMath::MatrixExt::Misc::matOrder(obj, dest);
       lua_push(L, dest);
       return 1;
     }
@@ -1678,7 +1681,7 @@ namespace Basics {
     BEGIN_METHOD(order_rank)
     {
       MatrixInt32 *dest = lua_opt<MatrixInt32*>(L, 1, 0);
-      dest = matOrderRank(obj, dest);
+      dest = AprilMath::MatrixExt::Misc::matOrderRank(obj, dest);
       lua_push(L, dest);
       return 1;
     }
@@ -1689,4 +1692,4 @@ namespace Basics {
 #undef BEGIN_CLASS_METHOD
 }
 
-#endif MATRIX_BINDING_H
+#endif // MATRIX_BINDING_H
