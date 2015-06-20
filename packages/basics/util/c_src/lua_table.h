@@ -140,6 +140,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(name, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(name);
+      }
     private:
       LuaTable *table;
       const char * const name;
@@ -175,6 +179,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(n, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(n);
+      }
     private:
       LuaTable *table;
       const int n;
@@ -205,6 +213,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(name, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(name);
+      }
     private:
       const LuaTable *table;
       const char * const name;
@@ -234,6 +246,10 @@ namespace AprilUtils {
       template<typename T>
       T opt(const T def_value) const {
         return table->opt<T>(n, def_value);
+      }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(n);
       }
     private:
       const LuaTable *table;

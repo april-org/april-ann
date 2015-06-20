@@ -43,7 +43,9 @@
      provide_bind{ file = "binding/bind_matrix_int32.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_char.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_bool.lua.cc", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_referenced_vector.lua.cc", dest_dir = "include" }
+     provide_bind{ file = "binding/bind_referenced_vector.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_options.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_ext.lua.cc", dest_dir = "include" },
    },
    target{
      name = "build",
@@ -94,7 +96,15 @@
      build_bind{
         file = "binding/bind_referenced_vector.lua.cc",
         dest_dir = "build",
-     }
+     },
+     build_bind{
+       file = "binding/bind_matrix_options.lua.cc",
+       dest_dir = "build",
+     },
+     build_bind{
+       file = "binding/bind_matrix_ext.lua.cc",
+       dest_dir = "build",
+     },
    },
    target{
      name = "document",

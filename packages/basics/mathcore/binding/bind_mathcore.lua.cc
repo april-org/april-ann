@@ -61,7 +61,7 @@ GPUMirroredMemoryBlock<T> *readBlockLuaMethod(lua_State *L) {
   }
   else {
     stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
+    if (!stream) luaL_error(L, "Needs a stream as first argument");
   }
   AprilUtils::LuaTable options(L,2);
   return GPUMirroredMemoryBlock<T>::read(stream.get(), options); 

@@ -139,6 +139,8 @@ namespace AprilMath {
   template<> bool Limits<ComplexF>::hasInfinity();
   template<> ComplexF Limits<ComplexF>::infinity();
   template<> ComplexF Limits<ComplexF>::quiet_NaN();
+  template<> ComplexF Limits<ComplexF>::zero();
+  template<> ComplexF Limits<ComplexF>::one();
 
   ///////////////// NAN CHECK /////////////////
 
@@ -731,9 +733,9 @@ namespace AprilMath {
     /// is_finite map operation.
     template<typename T>
     struct m_is_finite {
-      /// Returns \f$ (a-b) == 0.0 \f$
-      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
-        return (a-b) == Limits<T>::zero();
+      /// Returns \f$ (a-a) == 0.0 \f$
+      APRIL_CUDA_EXPORT bool operator()(const T &a) const {
+        return (a-a) == Limits<T>::zero();
       }
     };
 
@@ -812,7 +814,7 @@ namespace AprilMath {
   T m_add(const T &a, const T &b) { return Functors::m_add<T>()(a,b); }
   /// @see Functors::m_is_finite
   template<typename T> APRIL_CUDA_EXPORT
-  T m_is_finite(const T &a, const T &b) { return Functors::m_is_finite<T>()(a,b); }
+  bool m_is_finite(const T &a) { return Functors::m_is_finite<T>()(a); }
   /// @see Functors::m_div
   template<typename T> APRIL_CUDA_EXPORT
   T m_div(const T &a, const T &b) { return Functors::m_div<T>()(a,b); }

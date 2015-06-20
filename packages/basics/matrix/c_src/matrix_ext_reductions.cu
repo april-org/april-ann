@@ -503,7 +503,7 @@ namespace AprilMath {
       template <typename T>
       bool matIsFinite(const Matrix<T> *obj) {
         return MatrixScalarReduce1(obj,
-                                   AprilMath::make_r_map1<T,int>
+                                   AprilMath::make_r_map1<T,bool>
                                    (AprilMath::Functors::m_is_finite<T>(),
                                     AprilMath::Functors::r_and<bool>()),
                                    AprilMath::Functors::r_and<bool>(),

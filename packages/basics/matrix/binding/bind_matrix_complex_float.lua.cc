@@ -1,33 +1,29 @@
-/*
- * This file is part of APRIL-ANN toolkit (A
- * Pattern Recognizer In Lua with Artificial Neural Networks).
- *
- * Copyright 2013, Francisco Zamora-Martinez
- *
- * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 3 as
- * published by the Free Software Foundation
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- */
 //BIND_HEADER_C
-#include "bind_matrix.h"
-#include "utilMatrixComplexF.h"
+extern "C" {
+#include <ctype.h>
+}
+#include "bind_april_io.h"
+#include "bind_mathcore.h"
 #include "bind_mtrand.h"
-#include <cmath> // para isfinite
+#include "bind_matrix_bool.h"
+#include "bind_matrix_char.h"
+#include "bind_matrix_complex_float.h"
+#include "bind_matrix_double.h"
+#include "bind_matrix_int32.h"
+#include "bind_sparse_matrix.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
-#include "bind_complex.h"
-
+#include "lua_string.h"
 #include "matrix_ext.h"
+#include "mystring.h"
+#include "smart_ptr.h"
+#include "sparse_matrixFloat.h"
+#include "utilMatrixChar.h"
+#include "utilMatrixComplexF.h"
+#include "utilMatrixDouble.h"
+#include "utilMatrixFloat.h"
+#include "utilMatrixInt32.h"
+
 using namespace AprilMath::MatrixExt::BLAS;
 using namespace AprilMath::MatrixExt::Boolean;
 using namespace AprilMath::MatrixExt::Initializers;
@@ -36,130 +32,89 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixComplexF);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixComplex);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixComplex);
 
-namespace Basics {
-#define FUNCTION_NAME "read_vector"
-  static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-    int *v=0;
-    lua_getfield(L, 1, key);
-    if (!lua_isnil(L, -1)) {
-      LUABIND_CHECK_PARAMETER(-1, table);
-      int table_len;
-      LUABIND_TABLE_GETN(-1, table_len);
-      if (table_len != num_dim)
-        LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-                        key, num_dim, table_len);
-      v = new int[num_dim];
-      for(int i=0; i < num_dim; i++) {
-        lua_rawgeti(L, -1, i+1);
-        v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-        lua_pop(L,1);
-      }
-    }
-    lua_pop(L, 1);
-    return v;
-  }
-#undef FUNCTION_NAME
-
-  int sliding_window_matrix_complex_iterator_function(lua_State *L) {
-    SlidingWindowComplexF *obj = lua_toSlidingWindowComplexF(L,1);
-    if (obj->isEnd()) {
-      lua_pushnil(L);
-      return 1;
-    }
-    // lua_pushSlidingWindow(L, obj);
-    MatrixComplexF *mat = obj->getMatrix();
-    lua_pushMatrixComplexF(L, mat);
-    obj->next();
-    return 1;
-  }
-  
-  static ComplexF april_optcomplex(lua_State *L, int i, ComplexF opt) {
-    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
-    return lua_toComplexF(L,i);
-  }
-  
-}
 //BIND_END
 
 //BIND_HEADER_H
-#include "matrixComplexF.h"
+#include "bind_april_io.h"
+#include "bind_mtrand.h"
+#include "gpu_mirrored_memory_block.h"
+#include "matrixFloat.h"
+#include "luabindmacros.h"
+#include "luabindutil.h"
 #include "utilLua.h"
-#include <cmath> // para isfinite
+
 using namespace Basics;
-typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
+
+typedef MatrixComplex::sliding_window SlidingWindowMatrixComplex;
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixComplex;);
+
+#include "matrix_binding.h"
+
 //BIND_END
 
-//BIND_LUACLASSNAME MatrixComplexF matrixComplex
-//BIND_CPP_CLASS MatrixComplexF
+//BIND_LUACLASSNAME MatrixComplex matrixComplex
+//BIND_CPP_CLASS MatrixComplex
 //BIND_LUACLASSNAME Serializable aprilio.serializable
-//BIND_SUBCLASS_OF MatrixComplexF Serializable
+//BIND_SUBCLASS_OF MatrixComplex Serializable
 
-//BIND_LUACLASSNAME SlidingWindowComplexF matrixComplex.__sliding_window__
-//BIND_CPP_CLASS SlidingWindowComplexF
+//BIND_LUACLASSNAME SlidingWindowMatrixComplex matrixComplex.__sliding_window__
+//BIND_CPP_CLASS SlidingWindowMatrixComplex
 
-//BIND_CONSTRUCTOR SlidingWindowComplexF
+//BIND_CONSTRUCTOR SlidingWindowMatrixComplex
 {
-  LUABIND_ERROR("Use matrixComplex.sliding_window");
+  LUABIND_ERROR("Use matrix.sliding_window");
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF get_matrix
+//BIND_METHOD SlidingWindowMatrixComplex get_matrix
 {
-  MatrixComplexF *dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixComplexF, dest, 0);
-  LUABIND_RETURN(MatrixComplexF, obj->getMatrix(dest));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::get_matrix(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF next
+//BIND_METHOD SlidingWindowMatrixComplex next
 {
-  LUABIND_RETURN(SlidingWindowComplexF, obj->next());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::next(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF set_at_window
+//BIND_METHOD SlidingWindowMatrixComplex set_at_window
 {
-  int windex;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, int, windex);
-  if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
-  obj->setAtWindow(windex-1);
-  LUABIND_RETURN(SlidingWindowComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::set_at_window(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF num_windows
+//BIND_METHOD SlidingWindowMatrixComplex num_windows
 {
-  LUABIND_RETURN(int, obj->numWindows());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::num_windows(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF coords
+//BIND_METHOD SlidingWindowMatrixComplex coords
 {
-  LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::coords(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF is_end
+//BIND_METHOD SlidingWindowMatrixComplex is_end
 {
-  LUABIND_RETURN(bool, obj->isEnd());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::is_end(L, obj));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindowComplexF iterate
+//BIND_METHOD SlidingWindowMatrixComplex iterate
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sliding_window_matrix_complex_iterator_function);
-  LUABIND_RETURN(SlidingWindowComplexF,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::iterate(L, obj));
 }
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixComplexF
+//BIND_CONSTRUCTOR MatrixFloat
 //DOC_BEGIN
 // matrixComplex(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de
@@ -173,781 +128,569 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF size
+///////////////////////////////////////////////////////////
+
+//BIND_METHOD MatrixComplex size
 {
-  LUABIND_RETURN(int, obj->size());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::size(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF rewrap
+//BIND_METHOD MatrixComplex rewrap
 {
-  LUABIND_CHECK_ARGN(>=, 1);
-  int ndims;
-  ndims = lua_gettop(L); // number of dimensions
-  int *dims = new int[ndims];
-  for (int i=1; i <= ndims; i++) {
-    LUABIND_GET_PARAMETER(i, int, dims[i-1]);
-    if (dims[i-1] <= 0)
-      LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
-  }
-  MatrixComplexF *new_obj = obj->rewrap(dims, ndims);
-  delete[] dims;
-  LUABIND_RETURN(MatrixComplexF,new_obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::rewrap(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF squeeze
+//BIND_METHOD MatrixComplex squeeze
 {
-  LUABIND_RETURN(MatrixComplexF,obj->squeeze());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::squeeze(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF get_reference_string
+//BIND_METHOD MatrixComplex get_reference_string
 {
-  char buff[128];
-  sprintf(buff,"%p data= %p",
-	  (void*)obj,
-	  (void*)obj->getRawDataAccess());
-  LUABIND_RETURN(string, buff);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::get_reference_string(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF copy_from_table
-//DOC_BEGIN
-// void copy_from_table(table matrix_values)
-/// Permite dar valores a una matriz. Require una tabla con un numero
-/// de argumentos igual al numero de elementos de la matriz.
-///@param matrix_values Tabla con los elementos de la matriz.
-//DOC_END
+//BIND_METHOD MatrixComplex copy_from_table
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  int veclen;
-  LUABIND_TABLE_GETN(1, veclen);
-  if (veclen != obj->size())
-    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size());
-  int i=1;
-  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
-    lua_rawgeti(L,1,i);
-    *it = lua_toComplexF(L, -1);
-  }
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::copy_from_table(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF get
-//DOC_BEGIN
-// ComplexF get(coordinates)
-/// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
-///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
-//DOC_END
+//BIND_METHOD MatrixComplex get
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->getNumDim())
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
-  ComplexF ret;
-  if (obj->getNumDim() == 1) {
-    int v1;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    ret = (*obj)(v1-1);
-  }
-  else if (obj->getNumDim() == 2) {
-    int v1, v2;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getDimSize(1));
-    }
-    ret = (*obj)(v1-1, v2-1);
-  }
-  else {
-    int *coords = new int[obj->getNumDim()];
-    for (int i=0; i<obj->getNumDim(); ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getDimSize(i));
-      }
-      coords[i]--;
-    }
-    ret = (*obj)(coords, obj->getNumDim());
-    delete[] coords;
-  }
-  LUABIND_RETURN(ComplexF, ret);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::get(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF set
-//DOC_BEGIN
-// ComplexF set(coordinates,realvalue,imgvalue)
-/// Permite cambiar el valor de un elemento en la matriz. Requiere
-/// tantos indices como dimensiones tenga la matriz y adicionalmente
-/// el valor a cambiar
-///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
-//DOC_END
+//BIND_METHOD MatrixComplex set
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->getNumDim()+1)
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+2);
-  ComplexF f;
-  if (obj->getNumDim() == 1) {
-    int v1;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
-    (*obj)(v1-1) = f;
-  }
-  else if (obj->getNumDim() == 2) {
-    int v1, v2;
-    LUABIND_GET_PARAMETER(1,int,v1);
-    LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getDimSize(0));
-    }
-    if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getDimSize(1));
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
-    (*obj)(v1-1, v2-1) = f;
-  }
-  else {
-    int *coords = new int[obj->getNumDim()];
-    for (int i=0; i<obj->getNumDim(); ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getDimSize(i));
-      }
-      coords[i]--;
-    }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
-    (*obj)(coords, obj->getNumDim()) = f;
-    delete[] coords;
-  }
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::set(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF offset
+//BIND_METHOD MatrixComplex offset
 {
-  LUABIND_RETURN(int, obj->getOffset());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::offset(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF raw_get
+//BIND_METHOD MatrixComplex raw_get
 {
-  int raw_pos;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  const ComplexF &aux = (*obj)[raw_pos];
-  LUABIND_RETURN(ComplexF, aux);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::raw_get(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF raw_set
+//BIND_METHOD MatrixComplex raw_set
 {
-  int raw_pos;
-  ComplexF value;
-  LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_GET_PARAMETER(2, ComplexF, value);
-  (*obj)[raw_pos] = value;
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::raw_set(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF fill
-//DOC_BEGIN
-// void fill(realvalue, imgvalue)
-/// Permite poner todos los valores de la matriz a un mismo valor.
-//DOC_END
+//BIND_METHOD MatrixComplex get_use_cuda
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  ComplexF value;
-  LUABIND_GET_PARAMETER(1,ComplexF,value);
-  LUABIND_RETURN(MatrixComplexF,
-                 matFill(obj, value));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::get_use_cuda(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF zeros
-//DOC_BEGIN
-// void zeros(ComplexF value)
-/// Permite poner todos los valores de la matriz a un mismo valor.
-//DOC_END
+//BIND_METHOD MatrixComplex set_use_cuda
 {
-  LUABIND_RETURN(MatrixComplexF,
-                 matZeros(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::set_use_cuda(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF ones
-//DOC_BEGIN
-// void ones(ComplexF value)
-/// Permite poner todos los valores de la matriz a un mismo valor.
-//DOC_END
+//BIND_METHOD MatrixComplex dim
 {
-  LUABIND_RETURN(MatrixComplexF,
-                 matOnes(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::dim(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF get_use_cuda
+//BIND_METHOD MatrixComplex num_dim
 {
-  LUABIND_RETURN(bool, obj->getCudaFlag());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::num_dim(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF set_use_cuda
+//BIND_METHOD MatrixComplex stride
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, bool);
-  bool v;
-  LUABIND_GET_PARAMETER(1,bool, v);
-  obj->setUseCuda(v);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::stride(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF dim
+//BIND_METHOD MatrixComplex slice
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *d=obj->getDimPtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, d[pos-1]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::slice(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF num_dim
+//BIND_METHOD MatrixComplex select
 {
-  LUABIND_RETURN(int, obj->getNumDim());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::select(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF stride
+//BIND_METHOD MatrixComplex clone
 {
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 1);
-  int pos;
-  const int *s=obj->getStridePtr();
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
-  if (pos < 1) {
-    LUABIND_VECTOR_TO_NEW_TABLE(int, s, obj->getNumDim());
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-  else LUABIND_RETURN(int, s[pos-1]);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::clone(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF slice
+//BIND_METHOD MatrixComplex transpose
 {
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, table);
-  LUABIND_CHECK_PARAMETER(2, table);
-  int *coords, *sizes, coords_len, sizes_len;
-  bool clone;
-  LUABIND_TABLE_GETN(1, coords_len);
-  LUABIND_TABLE_GETN(2, sizes_len);
-  if (coords_len != sizes_len || coords_len != obj->getNumDim())
-    LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
-		    "found %d and %d\n",
-		    obj->getNumDim(), coords_len, sizes_len);
-  coords = new int[coords_len];
-  sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
-  LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  for (int i=0; i<sizes_len; ++i)
-    if (coords[i] < 0 || sizes[i] < 1 ||
-	sizes[i]+coords[i] > obj->getDimSize(i))
-      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
-  MatrixComplexF *obj2 = new MatrixComplexF(obj, coords, sizes, clone);
-  LUABIND_RETURN(MatrixComplexF, obj2);
-  delete[] coords;
-  delete[] sizes;
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::transpose(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF select
+//BIND_METHOD MatrixComplex isfinite
 {
-  LUABIND_CHECK_ARGN(>=,2);
-  LUABIND_CHECK_ARGN(<=,3);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(2, int);
-  int dim, index;
-  MatrixComplexF *dest;
-  LUABIND_GET_PARAMETER(1, int, dim);
-  LUABIND_GET_PARAMETER(2, int, index);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixComplexF, dest, 0);
-  MatrixComplexF *obj2 = obj->select(dim-1, index-1, dest);
-  LUABIND_RETURN(MatrixComplexF, obj2);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::isfinite(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF clone
-//DOC_BEGIN
-// matrix *clone()
-/// Devuelve un <em>clon</em> de la matriz.
-//DOC_END
+//BIND_METHOD MatrixComplex toTable
 {
-  MatrixComplexF *obj2 = obj->clone();
-  LUABIND_RETURN(MatrixComplexF,obj2);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::toTable(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF transpose
+//BIND_METHOD MatrixComplex contiguous
 {
-  int argn;
-  argn = lua_gettop(L);
-  if (argn == 0) {
-    LUABIND_RETURN(MatrixComplexF, obj->transpose());
-  }
-  else {
-    int d1,d2;
-    LUABIND_GET_PARAMETER(1, int, d1);
-    LUABIND_GET_PARAMETER(2, int, d2);
-    LUABIND_RETURN(MatrixComplexF, obj->transpose(d1-1, d2-1));
-  }
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::contiguous(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF isfinite
-//DOC_BEGIN
-// bool isfinite
-/// Devuelve false si algun valor es nan o infinito.
-//DOC_END
+//BIND_METHOD MatrixComplex map
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  bool resul=true;
-  for (MatrixComplexF::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
-    //if (!isfinite(obj->data[i])) resul = 0;
-    if (((*it) - (*it)) != ComplexF::zero_zero()) resul = false;
-  LUABIND_RETURN(boolean,resul);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::map(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF diag
+//BIND_METHOD MatrixComplex diagonalize
 {
-  LUABIND_CHECK_ARGN(==,1);
-  ComplexF v;
-  LUABIND_GET_PARAMETER(1, ComplexF, v);
-  LUABIND_RETURN(MatrixComplexF,
-                 matDiag(obj,v));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::diagonalize(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF toTable
-// Permite salvar una matriz en una tabla lua
-// TODO: Tener en cuenta las dimensiones de la matriz
-  {
-    LUABIND_CHECK_ARGN(==, 0);
-    lua_createtable (L, obj->size()<<1, 0);
-    int index = 1;
-    for (MatrixComplexF::const_iterator it(obj->begin());
-	 it != obj->end();
-	 ++it) {
-      lua_pushComplexF(L, *it);
-      lua_rawseti(L, -2, index++);
-    }
-    LUABIND_RETURN_FROM_STACK(-1);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF map
+//BIND_METHOD MatrixComplex get_shared_count
 {
-  int argn;
-  int N;
-  argn = lua_gettop(L); // number of arguments
-  N = argn-1;
-  MatrixComplexF **v = 0;
-  MatrixComplexF::const_iterator *list_it = 0;
-  if (N > 0) {
-    v = new MatrixComplexF*[N];
-    list_it = new MatrixComplexF::const_iterator[N];
-  }
-  for (int i=0; i<N; ++i) {
-    LUABIND_CHECK_PARAMETER(i+1, MatrixComplexF);
-    LUABIND_GET_PARAMETER(i+1, MatrixComplexF, v[i]);
-    if (!v[i]->sameDim(obj))
-      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
-    list_it[i] = v[i]->begin();
-  }
-  LUABIND_CHECK_PARAMETER(argn, function);
-  for (MatrixComplexF::iterator it(obj->begin()); it!=obj->end(); ++it) {
-    // copy the Lua function, lua_call will pop this copy
-    lua_pushvalue(L, argn);
-    // push the self matrix value
-    lua_pushComplexF(L, *it);
-    // push the value of the rest of given matrices
-    for (int j=0; j<N; ++j) {
-      lua_pushComplexF(L, *list_it[j]);
-      ++list_it[j];
-    }
-    // CALL
-    lua_call(L, N+1, 1);
-    // pop the result, a number
-    if (!lua_isnil(L, -1)) {
-      if (!lua_isComplexF(L, -1))
-	LUABIND_ERROR("Incorrect returned value type, expected NIL or COMPLEX\n");
-      *it = lua_toComplexF(L, -1);
-    }
-    lua_pop(L, 1);
-  }
-  delete[] v;
-  delete[] list_it;
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::get_shared_count(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF equals
+//BIND_METHOD MatrixComplex reset_shared_count
 {
-  MatrixComplexF *other;
-  float epsilon;
-  LUABIND_GET_PARAMETER(1, MatrixComplexF, other);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
-  LUABIND_RETURN(boolean, 
-                 matEquals(obj, other, epsilon));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::reset_shared_count(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF add
-  {
-    int argn;
-    argn = lua_gettop(L); // number of arguments
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat;
-    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix add wrong dimensions");
-    LUABIND_RETURN(MatrixComplexF,
-                   matAddition(obj,mat));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF scalar_add
+//BIND_METHOD MatrixComplex add_to_shared_count
 {
-    int argn;
-    LUABIND_CHECK_ARGN(==, 1);
-    ComplexF scalar;
-    LUABIND_GET_PARAMETER(1, ComplexF, scalar);
-    LUABIND_RETURN(MatrixComplexF,
-                   
-                   matScalarAdd(obj, scalar));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::add_to_shared_count(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF sub
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat;
-    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    if (!obj->sameDim(mat)) {
-      LUABIND_ERROR("matrix sub wrong dimensions");
-    }
-    LUABIND_RETURN(MatrixComplexF,
-                   matSubstraction(obj,mat));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF mul
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat;
-    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    LUABIND_RETURN(MatrixComplexF,
-                   
-                   matMultiply(obj,mat));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF cmul
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat;
-    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    LUABIND_RETURN(MatrixComplexF, 
-                   matCmul(obj,mat));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF sum
+//BIND_METHOD MatrixComplex sync
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn == 1) {
-    int dim;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    LUABIND_RETURN(MatrixComplexF, matSum(obj,dim-1));
-  }
-  else if (argn == 0) LUABIND_RETURN(ComplexF, matSum(obj));
-  else LUABIND_ERROR("Incorrect number of arguments");
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sync(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF copy
+//BIND_METHOD MatrixComplex padding_all
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixComplexF *mat;
-  LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-  LUABIND_RETURN(MatrixComplexF,
-                 matCopy(obj,mat));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::padding_all(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF axpy
+//BIND_METHOD MatrixComplex padding
 {
-  LUABIND_CHECK_ARGN(==, 2);
-  ComplexF alpha;
-  MatrixComplexF *mat;
-  LUABIND_GET_PARAMETER(1, ComplexF, alpha);
-  LUABIND_GET_PARAMETER(2, MatrixComplexF, mat);
-  LUABIND_RETURN(MatrixComplexF, 
-                 matAxpy(obj, alpha, mat));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::padding(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF gemm
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta",
-		       (const char *)0);
-    bool trans_A, trans_B;
-    ComplexF alpha;
-    ComplexF beta;
-    MatrixComplexF *matA,*matB;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixComplexF, matA);
-    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixComplexF, matB);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha,
-					 ComplexF::one_zero());
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta,
-					 ComplexF::one_zero());
-    LUABIND_RETURN(MatrixComplexF, 
-                   matGemm(obj, trans_A ? CblasTrans : CblasNoTrans,
-                           trans_B ? CblasTrans : CblasNoTrans,
-                           alpha, matA, matB,
-                           beta));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF gemv
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta",
-		       (const char *)0);
-    bool trans_A;
-    ComplexF alpha;
-    ComplexF beta;
-    MatrixComplexF *matA,*matX;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixComplexF, matA);
-    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixComplexF, matX);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta, ComplexF::one_zero());
-    LUABIND_RETURN(MatrixComplexF, 
-                   matGemv(obj, trans_A ? CblasTrans : CblasNoTrans,
-                           alpha, matA, matX,
-                           beta));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF ger
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "alpha", "X", "Y",
-		       (const char *)0);
-    ComplexF alpha;
-    MatrixComplexF *matX,*matY;
-    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixComplexF, matX);
-    LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixComplexF, matY);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
-    LUABIND_RETURN(MatrixComplexF, 
-                   matGer(obj, alpha, matX, matY));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF dot
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, MatrixComplexF);
-    MatrixComplexF *matX;
-    LUABIND_GET_PARAMETER(1, MatrixComplexF, matX);
-    LUABIND_RETURN(ComplexF, 
-                   matDot(obj, matX));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF scal
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    ComplexF value;
-    LUABIND_GET_PARAMETER(1, ComplexF, value);
-    LUABIND_RETURN(MatrixComplexF,
-                   matScal(obj,value));
-  }
-//BIND_END
- 
-//BIND_METHOD MatrixComplexF norm2
-  {
-    LUABIND_RETURN(float, 
-                   matNorm2(obj));
-  }
-//BIND_END
-
-//BIND_METHOD MatrixComplexF uniform
+//BIND_METHOD MatrixComplex uniform
 {
-  int lower, upper;
-  MTRand *random;
-  LUABIND_GET_PARAMETER(1, int, lower);
-  LUABIND_GET_PARAMETER(2, int, upper);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  if (lower < 0)
-    LUABIND_ERROR("Allowed only for positive integers");
-  if (lower > upper)
-    LUABIND_ERROR("First argument must be <= second argument");
-  if (random == 0) random = new MTRand();
-  IncRef(random);
-  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it) {
-    *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
-                   0.0f);
-  }
-  DecRef(random);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::uniform(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF linear
+//BIND_METHOD MatrixComplex uniformf
 {
-  int lower, step;
-  MTRand *random;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
-  int k=lower;
-  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
-    *it = ComplexF(static_cast<float>(k), 0.0f);
-  }
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::uniformf(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF sliding_window
+//BIND_METHOD MatrixComplex linspace
 {
-  int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
-  int argn = lua_gettop(L); // number of arguments
-  const int num_dim = obj->getNumDim();
-  if (argn > 1)
-    LUABIND_ERROR("incorrect number of arguments");
-  if (argn == 1) {
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1,
-		       "offset",
-		       "size",
-		       "step",
-		       "numSteps",
-		       "orderStep",
-		       (const char*)0);
-    
-    offset = read_vector(L, "offset", num_dim, 0);
-    sub_matrix_size = read_vector(L, "size", num_dim, 0);
-    step = read_vector(L, "step", num_dim, 0);
-    num_steps = read_vector(L, "numSteps", num_dim, 0);
-    order_step = read_vector(L, "orderStep", num_dim, -1);
-  }
-  SlidingWindowComplexF *window = new SlidingWindowComplexF(obj,
-							    sub_matrix_size,
-							    offset,
-							    step,
-							    num_steps,
-							    order_step);
-  LUABIND_RETURN(SlidingWindowComplexF, window);
-  delete[] sub_matrix_size;
-  delete[] offset;
-  delete[] step;
-  delete[] num_steps;
-  delete[] order_step;
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::linspace(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF is_contiguous
+//BIND_METHOD MatrixComplex logspace
 {
-  LUABIND_RETURN(bool, obj->getIsContiguous());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::logspace(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF to_float
+//BIND_METHOD MatrixComplex linear
 {
-  LUABIND_RETURN(MatrixFloat, convertFromMatrixComplexFToMatrixFloat(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::linear(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF conj
+//BIND_METHOD MatrixComplex sliding_window
 {
-  applyConjugateInPlace(obj);
-  LUABIND_RETURN(MatrixComplexF, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sliding_window(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF real
+//BIND_METHOD MatrixComplex is_contiguous
 {
-  LUABIND_RETURN(MatrixFloat, realPartFromMatrixComplexFToMatrixFloat(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::is_contiguous(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF img
+//BIND_METHOD MatrixComplex prune_subnormal_and_check_normal
 {
-  LUABIND_RETURN(MatrixFloat, imgPartFromMatrixComplexFToMatrixFloat(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::prune_subnormal_and_check_normal(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF abs
+//BIND_METHOD MatrixComplex adjust_range
 {
-  LUABIND_RETURN(MatrixFloat, absFromMatrixComplexFToMatrixFloat(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::adjust_range(L,obj));
 }
 //BIND_END
 
-//BIND_METHOD MatrixComplexF angle
+//BIND_METHOD MatrixComplex diag
 {
-  LUABIND_RETURN(MatrixFloat, angleFromMatrixComplexFToMatrixFloat(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::diag(L,obj));
 }
 //BIND_END
 
-//// MATRIX SERIALIZATION ////
-
-//BIND_CLASS_METHOD MatrixComplexF deserialize
+//BIND_METHOD MatrixComplex fill
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::
-                               deserialize(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::fill(L,obj));
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixComplexF read
+//BIND_METHOD MatrixComplex zeros
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::
-                               read(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::zeros(L,obj));
 }
 //BIND_END
 
-//////////////////////////////////////////////////////////////////////
+//BIND_METHOD MatrixComplex ones
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::ones(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex min
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::min(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex max
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::max(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::equals(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex clamp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::clamp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex add
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::add(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex scalar_add
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::scalar_add(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sub
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sub(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex mul
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::mul(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex cmul
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::cmul(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex plogp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::plogp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex log
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::log(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex log1p
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::log1p(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex exp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::exp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sqrt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sqrt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex pow
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::pow(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex tan
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::tan(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex tanh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::tanh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex atan
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::atan(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex atanh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::atanh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sin
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sin(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sinh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sinh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex asin
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::asin(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex asinh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::asinh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex cos
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::cos(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex cosh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::cosh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex acos
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::acos(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex acosh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::acosh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex abs
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::abs(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex complement
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::complement(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sign
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sign(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex sum
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::sum(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex copy
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::copy(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex axpy
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::axpy(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex gemm
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::gemm(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex gemv
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::gemv(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex ger
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::ger(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex dot
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::dot(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex scal
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::scal(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex masked_fill
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::masked_fill(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex masked_copy
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::masked_copy(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex div
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::div(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex norm2
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::norm2(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex lt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::lt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex gt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::gt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex eq
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::eq(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex neq
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::neq(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex toMMap
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::toMMap(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex data
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::data(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex order
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::order(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex order_rank
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::order_rank(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplex convert_to
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<ComplexF>::convert_to(L,obj));
+}
+//BIND_END
 

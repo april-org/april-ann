@@ -1,31 +1,29 @@
-/*
- * This file is part of APRIL-ANN toolkit (A
- * Pattern Recognizer In Lua with Artificial Neural Networks).
- *
- * Copyright 2013, Francisco Zamora-Martinez
- *
- * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 3 as
- * published by the Free Software Foundation
- *
- * This library is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this library; if not, write to the Free Software Foundation,
- * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- */
 //BIND_HEADER_C
+extern "C" {
+#include <ctype.h>
+}
+#include "bind_april_io.h"
 #include "bind_mathcore.h"
-#include "bind_matrix.h"
-#include "utilMatrixDouble.h"
+#include "bind_mtrand.h"
+#include "bind_matrix_bool.h"
+#include "bind_matrix_char.h"
+#include "bind_matrix_complex_float.h"
+#include "bind_matrix_double.h"
+#include "bind_matrix_int32.h"
+#include "bind_sparse_matrix.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
-
+#include "lua_string.h"
 #include "matrix_ext.h"
+#include "mystring.h"
+#include "smart_ptr.h"
+#include "sparse_matrixFloat.h"
+#include "utilMatrixChar.h"
+#include "utilMatrixComplexF.h"
+#include "utilMatrixDouble.h"
+#include "utilMatrixFloat.h"
+#include "utilMatrixInt32.h"
+
 using namespace AprilMath::MatrixExt::BLAS;
 using namespace AprilMath::MatrixExt::Boolean;
 using namespace AprilMath::MatrixExt::Initializers;
@@ -35,49 +33,27 @@ using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixDouble);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixDouble);
 
-namespace Basics {
-#define FUNCTION_NAME "read_vector"
-  static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-    int *v=0;
-    lua_getfield(L, 1, key);
-    if (!lua_isnil(L, -1)) {
-      LUABIND_CHECK_PARAMETER(-1, table);
-      int table_len;
-      LUABIND_TABLE_GETN(-1, table_len);
-      if (table_len != num_dim)
-        LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-                        key, num_dim, table_len);
-      v = new int[num_dim];
-      for(int i=0; i < num_dim; i++) {
-        lua_rawgeti(L, -1, i+1);
-        v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-        lua_pop(L,1);
-      }
-    }
-    lua_pop(L, 1);
-    return v;
-  }
-#undef FUNCTION_NAME
-
-  int sliding_window_matrixDouble_iterator_function(lua_State *L) {
-    SlidingWindowMatrixDouble *obj = lua_toSlidingWindowMatrixDouble(L,1);
-    if (obj->isEnd()) {
-      lua_pushnil(L);
-      return 1;
-    }
-    MatrixDouble *mat = obj->getMatrix();
-    lua_pushMatrixDouble(L, mat);
-    obj->next();
-    return 1;
-  }
-}
 //BIND_END
 
 //BIND_HEADER_H
-#include "matrixDouble.h"
+#include "bind_april_io.h"
+#include "bind_mtrand.h"
+#include "gpu_mirrored_memory_block.h"
+#include "matrixFloat.h"
+#include "luabindmacros.h"
+#include "luabindutil.h"
+#include "utilLua.h"
+
 using namespace Basics;
+
 typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixDouble;);
+
+#include "matrix_binding.h"
+
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixDouble matrixDouble
@@ -90,73 +66,73 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixDouble
 {
-  LUABIND_ERROR("Use matrixDouble.sliding_window");
+  LUABIND_ERROR("Use matrix.sliding_window");
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble get_matrix
 {
-  MatrixDouble *dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixDouble, dest, 0);
-  LUABIND_RETURN(MatrixDouble, obj->getMatrix(dest));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get_matrix(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble next
 {
-  LUABIND_RETURN(SlidingWindowMatrixDouble, obj->next());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::next(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble set_at_window
 {
-  int windex;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, int, windex);
-  if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
-  obj->setAtWindow(windex-1);
-  LUABIND_RETURN(SlidingWindowMatrixDouble, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::set_at_window(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble num_windows
 {
-  LUABIND_RETURN(int, obj->numWindows());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::num_windows(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble coords
 {
-  LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::coords(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble is_end
 {
-  LUABIND_RETURN(bool, obj->isEnd());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::is_end(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindowMatrixDouble iterate
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sliding_window_matrixDouble_iterator_function);
-  LUABIND_RETURN(SlidingWindowMatrixDouble,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::iterate(L, obj));
 }
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixDouble
+//BIND_CONSTRUCTOR MatrixFloat
+//DOC_BEGIN
+// matrixDouble(int dim1, int dim2, ..., table mat=nil)
+/// Constructor con una secuencia de valores que son las dimensiones de
+/// la matriz el ultimo argumento puede ser una tabla, en cuyo caso
+/// contiene los valores adecuadamente serializados, si solamente
+/// aparece la matriz, se trata de un vector cuya longitud viene dada
+/// implicitamente.
+//DOC_END
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::constructor(L));
 }
 //BIND_END
 
+///////////////////////////////////////////////////////////
+
 //BIND_METHOD MatrixDouble size
 {
-  LUABIND_RETURN(int, obj->size());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::size(L,obj));
 }
 //BIND_END
 
@@ -168,50 +144,29 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble squeeze
 {
-  LUABIND_RETURN(MatrixDouble,obj->squeeze());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::squeeze(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble get_reference_string
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
-                               get_reference_string(L,obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get_reference_string(L,obj));
 }
 //BIND_END
 
-
 //BIND_METHOD MatrixDouble copy_from_table
-//DOC_BEGIN
-// void copy_from_table(table matrix_values)
-/// Permite dar valores a una matriz. Require una tabla con un numero
-/// de argumentos igual al numero de elementos de la matriz.
-///@param matrix_values Tabla con los elementos de la matriz.
-//DOC_END
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::
-                               copy_from_table(L,obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::copy_from_table(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble get
-//DOC_BEGIN
-// double get(coordinates)
-/// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
-///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
-//DOC_END
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble set
-//DOC_BEGIN
-// double set(coordinates,value)
-/// Permite cambiar el valor de un elemento en la matriz. Requiere
-/// tantos indices como dimensiones tenga la matriz y adicionalmente
-/// el valor a cambiar
-///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
-//DOC_END
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::set(L,obj));
 }
@@ -219,7 +174,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble offset
 {
-  LUABIND_RETURN(int, obj->getOffset());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::offset(L,obj));
 }
 //BIND_END
 
@@ -237,7 +192,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble get_use_cuda
 {
-  LUABIND_RETURN(bool, obj->getCudaFlag());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get_use_cuda(L,obj));
 }
 //BIND_END
 
@@ -255,7 +210,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble num_dim
 {
-  LUABIND_RETURN(int, obj->getNumDim());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::num_dim(L,obj));
 }
 //BIND_END
 
@@ -278,19 +233,8 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 //BIND_END
 
 //BIND_METHOD MatrixDouble clone
-//DOC_BEGIN
-// matrix *clone()
-/// Devuelve un <em>clon</em> de la matriz.
-//DOC_END
 {
-  LUABIND_RETURN(MatrixDouble, obj->clone());
-}
-//BIND_END
-
-// returns a matrix with size as the given matrix, but without data copy
-//BIND_CLASS_METHOD MatrixDouble as
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::as(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::clone(L,obj));
 }
 //BIND_END
 
@@ -301,55 +245,44 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 //BIND_END
 
 //BIND_METHOD MatrixDouble isfinite
-//DOC_BEGIN
-// bool isfinite
-/// Devuelve false si algun valor es nan o infinito.
-//DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  bool resul=true;
-  for (MatrixDouble::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
-    if ((*it) - (*it) != 0.0f) resul = false;
-  LUABIND_RETURN(boolean,resul);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::isfinite(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble toTable
-// Permite salvar una matriz en una tabla lua
-// TODO: Tener en cuenta las dimensiones de la matriz
-  {
-    LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixDouble, double, *obj);
-    LUABIND_INCREASE_NUM_RETURNS(1);
-  }
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::toTable(L,obj));
+}
 //BIND_END
 
 //BIND_METHOD MatrixDouble contiguous
 {
-  LUABIND_RETURN(MatrixDouble, obj->getIsContiguous() ? obj : obj->clone());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::contiguous(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble map
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::map(L, obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::map(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble diagonalize
 {
-  LUABIND_RETURN(MatrixDouble, obj->diagonalize());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::diagonalize(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble get_shared_count
 {
-  LUABIND_RETURN(uint, obj->getSharedCount());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::get_shared_count(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble reset_shared_count
 {
-  obj->resetSharedCount();
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::reset_shared_count(L,obj));
 }
 //BIND_END
 
@@ -359,9 +292,9 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_METHOD MatrixDouble update
+//BIND_METHOD MatrixDouble sync
 {
-  obj->update();
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sync(L,obj));
 }
 //BIND_END
 
@@ -407,131 +340,351 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_METHOD MatrixDouble fill
-//DOC_BEGIN
-// void fill(double value)
-/// Permite poner todos los valores de la matriz a un mismo valor.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  double value;
-  LUABIND_GET_PARAMETER(1,double,value);
-  LUABIND_RETURN(MatrixDouble, 
-                 matFill(obj, value));
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble zeros
-{
-  LUABIND_RETURN(MatrixDouble, 
-                 matZeros(obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble ones
-{
-  LUABIND_RETURN(MatrixDouble, 
-                 matOnes(obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble diag
-{
-  LUABIND_CHECK_ARGN(==,1);
-  double v;
-  LUABIND_GET_PARAMETER(1, double, v);
-  LUABIND_RETURN(MatrixDouble, 
-                 matDiag(obj,v));
-}
-//BIND_END
-
 //BIND_METHOD MatrixDouble sliding_window
 {
-  int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
-  int argn = lua_gettop(L); // number of arguments
-  const int num_dim = obj->getNumDim();
-  if (argn > 1)
-    LUABIND_ERROR("incorrect number of arguments");
-  if (argn == 1) {
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1,
-		       "offset",
-		       "size",
-		       "step",
-		       "numSteps",
-		       "orderStep",
-		       (const char*)0);
-    
-    offset = read_vector(L, "offset", num_dim, 0);
-    sub_matrix_size = read_vector(L, "size", num_dim, 0);
-    step = read_vector(L, "step", num_dim, 0);
-    num_steps = read_vector(L, "numSteps", num_dim, 0);
-    order_step = read_vector(L, "orderStep", num_dim, -1);
-  }
-  SlidingWindowMatrixDouble *window = new SlidingWindowMatrixDouble(obj,
-								    sub_matrix_size,
-								    offset,
-								    step,
-								    num_steps,
-								    order_step);
-  LUABIND_RETURN(SlidingWindowMatrixDouble, window);
-  delete[] sub_matrix_size;
-  delete[] offset;
-  delete[] step;
-  delete[] num_steps;
-  delete[] order_step;
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sliding_window(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble is_contiguous
 {
-  LUABIND_RETURN(bool, obj->getIsContiguous());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::is_contiguous(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble prune_subnormal_and_check_normal
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::prune_subnormal_and_check_normal(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble adjust_range
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::adjust_range(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble diag
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::diag(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble fill
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::fill(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble zeros
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::zeros(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble ones
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::ones(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble min
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::min(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble max
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::max(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble equals
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::equals(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble clamp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::clamp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble add
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::add(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble scalar_add
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::scalar_add(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sub
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sub(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble mul
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::mul(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble cmul
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::cmul(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble plogp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::plogp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble log
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::log(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble log1p
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::log1p(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble exp
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::exp(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sqrt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sqrt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble pow
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::pow(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble tan
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::tan(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble tanh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::tanh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble atan
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::atan(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble atanh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::atanh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sin
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sin(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sinh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sinh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble asin
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::asin(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble asinh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::asinh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble cos
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::cos(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble cosh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::cosh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble acos
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::acos(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble acosh
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::acosh(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble abs
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::abs(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble complement
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::complement(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sign
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sign(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble sum
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::sum(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble copy
 {
-  int argn;
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixDouble *mat;
-  LUABIND_GET_PARAMETER(1, MatrixDouble, mat);
-  LUABIND_RETURN(MatrixDouble, 
-                 matCopy(obj,mat));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::copy(L,obj));
 }
 //BIND_END
 
-//// MATRIX SERIALIZATION ////
-
-//BIND_CLASS_METHOD MatrixDouble deserialize
+//BIND_METHOD MatrixDouble axpy
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::deserialize(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::axpy(L,obj));
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixDouble read
+//BIND_METHOD MatrixDouble gemm
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::read(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::gemm(L,obj));
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixDouble fromMMap
+//BIND_METHOD MatrixDouble gemv
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::fromMMap(L));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::gemv(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble ger
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::ger(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble dot
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::dot(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble scal
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::scal(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble masked_fill
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::masked_fill(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble masked_copy
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::masked_copy(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble div
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::div(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble norm2
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::norm2(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble lt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::lt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble gt
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::gt(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble eq
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::eq(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble neq
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::neq(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixDouble toMMap
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::toMMap(L, obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::toMMap(L,obj));
 }
 //BIND_END
 
-//////////////////////////////////////////////////////////////////////
-
 //BIND_METHOD MatrixDouble data
 {
-  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock, obj->getRawDataAccess());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::data(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble order
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::order(L,obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble order_rank
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::order_rank(L,obj));
 }
 //BIND_END
 
@@ -541,8 +694,3 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_METHOD MatrixDouble equals
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<double>::equals(L,obj));
-}
-//BIND_END
