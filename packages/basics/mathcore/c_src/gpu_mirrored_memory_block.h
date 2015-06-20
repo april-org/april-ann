@@ -530,7 +530,7 @@ namespace AprilMath {
     }
   
     static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
-    void forceUpdate(bool use_cuda) {
+    void forceSync(bool use_cuda) {
 #ifdef USE_CUDA
       if (isConst()) {
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
@@ -546,7 +546,7 @@ namespace AprilMath {
 #endif
     }
 
-    void forceUpdate(bool use_cuda) const {
+    void forceSync(bool use_cuda) const {
 #ifdef USE_CUDA
       if (isConst()) {
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");

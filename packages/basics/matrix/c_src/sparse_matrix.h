@@ -358,11 +358,11 @@ namespace Basics {
       return sparse_format == CSR_FORMAT;
     }
     // UPDATE GPU OR PPAL IF NEEDED
-    void update() {
+    void sync() {
 #ifdef USE_CUDA
-      values->forceUpdate(use_cuda);
-      indices->forceUpdate(use_cuda);
-      first_index->forceUpdate(use_cuda);
+      values->forceSync(use_cuda);
+      indices->forceSync(use_cuda);
+      first_index->forceSync(use_cuda);
 #endif
     }
     void setUseCuda(bool v) {

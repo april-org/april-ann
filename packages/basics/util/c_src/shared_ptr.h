@@ -96,6 +96,12 @@ namespace AprilUtils {
      * @brief Resets the object to a NULL pointer, what will execute a DecRef.
      */
     ~SharedPtr() { reset(); }
+
+    /// True if the pointer is not empty.
+    operator bool()   { return !empty(); }
+    
+    /// True if the pointer is empty.
+    bool operator !() { return  empty(); }
     
     /**
      * @brief Dereferencing, returns the pointer itself.

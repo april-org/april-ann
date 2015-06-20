@@ -47,19 +47,6 @@ using namespace AprilMath::MatrixExt::Reductions;
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixFloat);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindow);
 
-int sliding_window_iterator_function(lua_State *L) {
-  SlidingWindow *obj = lua_toSlidingWindow(L,1);
-  if (obj->isEnd()) {
-    lua_pushnil(L);
-    return 1;
-  }
-  // lua_pushSlidingWindow(L, obj);
-  MatrixFloat *mat = obj->getMatrix();
-  lua_pushMatrixFloat(L, mat);
-  obj->next();
-  return 1;
-}
-
 template<typename T>
 static bool check_number(lua_State *L, int i, T &dest) {
   if (lua_isnumber(L,i)) {
@@ -100,8 +87,13 @@ namespace Basics {
   class MatrixBindings {
     
     template<typename K>
+    static bool lua_is(lua_State *L, int n) {
+      return AprilUtils::LuaTable::checkType<K>(L,n);
+    }
+    
+    template<typename K>
     static K lua_to(lua_State *L, int n) {
-      if (!AprilUtils::LuaTable::checkType<K>(L,n)) {
+      if (!lua_is<K>(L,n)) {
         ERROR_EXIT1(128, "Incorrect argument type at position %d\n", n);
       }
       return AprilUtils::LuaTable::convertTo<K>(L, n);
@@ -141,10 +133,98 @@ namespace Basics {
       return v;
     }
 #undef FUNCTION_NAME
+
+    static int sliding_window_iterator_function(lua_State *L) {
+      Matrix<T>::sliding_window *obj = lua_to<Matrix<T>::sliding_window*>(L,1);
+      if (obj->isEnd()) {
+        lua_pushnil(L);
+        return 1;
+      }
+      Matrix<T> *mat = obj->getMatrix();
+      lua_push(L, mat);
+      obj->next();
+      return 1;
+    }
     
   public:
 #define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
 #define BEGIN_CLASS_METHOD(name) static int name(lua_State *L)
+#define BEGIN_SW_METHOD(name)    static int name(lua_State *L, Matrix<T>::sliding_window *obj)
+
+    //////////////////////////////////////////////////////////////////////////
+    
+#define FUNCTION_NAME "get_matrix"
+    BEGIN_SW_METHOD(get_matrix)
+    {
+      lua_push(obj->getMatrix(lua_opt<Matrix<T>*>(L, 1, 0)));
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "next"
+    BEGIN_SW_METHOD(next)
+    {
+      lua_push(L, obj->next());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "set_at_window"
+    BEGIN_SW_METHOD(set_at_window)
+    {
+      int windex;
+      LUABIND_CHECK_ARGN(==,1);
+      LUABIND_GET_PARAMETER(1, int, windex);
+      if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
+      obj->setAtWindow(windex-1);
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "num_windows"
+    BEGIN_SW_METHOD(num_windows)
+    {
+      lua_push(L, obj->numWindows());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "num_windows"
+    BEGIN_SW_METHOD(num_windows)
+    {
+      lua_push(L, obj->num_windows());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "coords"
+    BEGIN_SW_METHOD(coords)
+    {
+      LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "is_end"
+    BEGIN_SW_METHOD(is_end)
+    {
+      lua_push(L, obj->isEnd());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "iterate"
+    BEGIN_SW_METHOD(iterate)
+    {
+      LUABIND_CHECK_ARGN(==, 0);
+      lua_pushcfunction(L, MatrixBindings<T>::sliding_window_iterator_function);
+      lua_push(L, obj);
+      return 2;
+    }
+#undef FUNCTION_NAME
+
+    //////////////////////////////////////////////////////////////////////////
     
 #define FUNCTION_NAME "constructor"
     BEGIN_CLASS_METHOD(constructor)
@@ -172,8 +252,7 @@ namespace Basics {
         }
       }
       Matrix<T>* obj;
-      if (AprilUtils::LuaTable::
-          checkType<AprilMath::GPUMirroredMemoryBlock<T>*>(L,argn)) {
+      if (lua_is<AprilMath::GPUMirroredMemoryBlock<T>*>(L,argn)) {
         AprilMath::GPUMirroredMemoryBlock<T> *block;
         block = lua_to<AprilMath::GPUMirroredMemoryBlock<T>*>(L, argn);
         if (dim[0] == -1) dim[0] = block->getSize();
@@ -196,7 +275,7 @@ namespace Basics {
             /*
               if (!check_number(L,-1,*it))
             */
-            if (!AprilUtils::LuaTable::checkType<T>(L, -1)) {
+            if (!lua_is<T>(L, -1)) {
               LUABIND_FERROR1("The given table has an invalid value at position"
                               " %d, check table size and its content", i);
             }
@@ -207,7 +286,7 @@ namespace Basics {
         else {
           obj = new Matrix<T>(ndims, dim.get());
         }
-      } // else { !checkType(L,argn) }
+      } // else { !lua_is(L,argn) }
       lua_push(L, obj);
       return 1;
     }
@@ -302,7 +381,7 @@ namespace Basics {
       for (typename Matrix<T>::iterator it(obj->begin());
            it != obj->end(); ++it, ++i) {
         lua_rawgeti(L,1,i);
-        if (!AprilUtils::LuaTable::checkType<T>(L,-1)) {
+        if (!lua_is<T>(L,-1)) {
           LUABIND_FERROR1("The given table has a no number value at position %d, "
                           "the table could be smaller than matrix size", i);
         }
@@ -670,7 +749,7 @@ namespace Basics {
         list_it = new typename Matrix<T>::const_iterator[N];
       }
       for (int i=0; i<N; ++i) {
-        if (!AprilUtils::LuaTable::checkType<Matrix<T>*>(L, i+1)) {
+        if (!lua_is<Matrix<T>*>(L, i+1)) {
           LUABIND_FERROR1("Expected a matrix at position: ", i+1);
         }
         v[i] = lua_to<Matrix<T>*>(L, i+1);
@@ -694,7 +773,7 @@ namespace Basics {
         lua_call(L, N+1, 1);
         // pop the result, a number
         if (!lua_isnil(L, -1)) {
-          if (!AprilUtils::LuaTable::checkType<T>(L, -1)) {
+          if (!lua_is<T>(L, -1)) {
             LUABIND_ERROR("Incorrect returned value type");
           }
           *it = lua_to<T>(L, -1);
@@ -723,8 +802,8 @@ namespace Basics {
       other = lua_to<Matrix<T>*>(L,1);
       LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 0.05f); // 5% error
 #ifdef USE_CUDA
-      obj->update();
-      other->update();
+      obj->sync();
+      other->sync();
 #endif
       if (AprilMath::MatrixExt::Reductions::matEquals(obj, other, epsilon)) {
         lua_pushboolean(L, true);
@@ -928,6 +1007,259 @@ namespace Basics {
       return 1;
     }
 #undef FUNCTION_NAME
+
+#define FUNCTION_NAME "size"
+    BEGIN_METHOD(size)
+    {
+      lua_push(L, obj->size());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "squeeze"
+    BEGIN_METHOD(squeeze)
+    {
+      lua_push(L, obj->squeeze());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "offset"
+    BEGIN_METHOD(offset)
+    {
+      lua_push(L, obj->getOffset());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "get_use_cuda"
+    BEGIN_METHOD(get_use_cuda)
+    {
+      lua_push(L, obj->getCudaFlag());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "clone"
+    BEGIN_METHOD(clone)
+    {
+      lua_push(L, obj->clone());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "isfinite"
+    BEGIN_METHOD(isfinite)
+    {
+      lua_push(L, AprilMath::MatrixExt::Reductions::matIsFinite(obj));
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "toTable"
+    BEGIN_METHOD(toTable)
+    {
+      AprilUtils::LuaTable t(L);
+      int i=1;
+      for(typename Matrix<T>::const_iterator it = obj->begin();
+          it != obj->end(); ++it, ++i) {
+        t[i] = *it;
+      }
+      t.pushTable(L);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "contiguous"
+    BEGIN_METHOD(contiguous)
+    {
+      lua_push(L, obj->getIsContiguous() ? obj : obj->clone());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "diagonalize"
+    BEGIN_METHOD(diagonalize)
+    {
+      lua_push(L, obj->diagonalize());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "get_shared_count"
+    BEGIN_METHOD(get_shared_count)
+    {
+      lua_push(L, obj->getSharedCount());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "reset_shared_count"
+    BEGIN_METHOD(reset_shared_count)
+    {
+      obj->resetSharedCount();
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+    
+#define FUNCTION_NAME "sync"
+    BEGIN_METHOD(sync)
+    {
+      obj->sync();
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "is_contiguous"
+    BEGIN_METHOD(is_contiguous)
+    {
+      lua_push(L, obj->getIsContiguous());
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "prune_subnormal_and_check_normal"
+    BEGIN_METHOD(prune_subnormal_and_check_normal)
+    {
+      obj->pruneSubnormalAndCheckNormal();
+      lua_push(L, obj);
+      return 1;
+    }
+#undef BEGIN_METHOD
+
+#define FUNCTION_NAME "diag"
+    BEGIN_METHOD(diag)
+    {
+      LUABIND_CHECK_ARGN(==,1);
+      T v = lua_to<T>(L,1);
+      matDiag(obj, v);
+      lua_push(obj);
+      return 1;
+    }
+#undef BEGIN_METHOD
+
+#define FUNCTION_NAME "fill"
+    BEGIN_METHOD(fill)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      T value;
+      if (lua_is<Matrix<T>*>(L,1)) {
+        Matrix<T> *aux = lua_to<Matrix<T>*>(L,1);
+        for (int i=0; i<aux->getNumDim(); ++i) {
+          if (aux->getDimSize(i) != 1) {
+            LUABIND_ERROR("Needs a number or a matrix with only one element\n");
+          }
+        }
+        value = *(aux->begin());
+      }
+      else {
+        value = lua_to<T>(L,1);
+      }
+      lua_push(L, matFill(obj,value));
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "zeros"
+    BEGIN_METHOD(zeros)
+    {
+      lua_push(L, matZeros(obj));
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "ones"
+    BEGIN_METHOD(ones)
+    {
+      lua_push(L, matOnes(obj));
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "min"
+    BEGIN_METHOD(min)
+    {
+#ifdef USE_CUDA
+      obj->sync();
+#endif
+      LUABIND_CHECK_ARGN(>=,0);
+      LUABIND_CHECK_ARGN(<=,3);
+      int argn = lua_gettop(L);
+      if (argn > 0) {
+        // case over a dimension
+        int dim;
+        LUABIND_GET_PARAMETER(1, int, dim);
+        AprilUtils::SharedPtr<Matrix<T>> dest;
+        AprilUtils::SharedPtr<Matrix<int32_t>> argmin;
+        dest = lua_opt<Matrix<T>*>(L,2,0);
+        argmin = lua_opt<Matrix<int32_t>*>(L,2,0);
+        AprilUtils::UniquePtr<int []> aux;
+        if (!argmin) {
+          aux = new int[obj->getNumDim()];
+          for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
+          aux[dim-1] = 1;
+          argmin = new Matrix<int32_t>(obj->getNumDim(), aux.get());
+        }
+        if (dim < 1 || dim > obj->getNumDim()) {
+          LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+                          dim, obj->getNumDim());
+        }
+        lua_push(L, matMin(obj, dim-1, dest.get(), argmin.get()));
+        lua_push(L, argmin.get());
+      }
+      else {
+        // case over whole matrix
+        int arg_min, raw_pos;
+        lua_push(L, matMin(obj, arg_min.get(), raw_pos));
+        lua_push(L, arg_min+1);
+      }
+      return 2;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "max"
+    BEGIN_METHOD(max)
+    {
+#ifdef USE_CUDA
+      obj->sync();
+#endif
+      LUABIND_CHECK_ARGN(>=,0);
+      LUABIND_CHECK_ARGN(<=,3);
+      int argn = lua_gettop(L);
+      if (argn > 0) {
+        // case over a dimension
+        int dim;
+        LUABIND_GET_PARAMETER(1, int, dim);
+        AprilUtils::SharedPtr<Matrix<T>> dest;
+        AprilUtils::SharedPtr<Matrix<int32_t>> argmin;
+        dest = lua_opt<Matrix<T>*>(L,2,0);
+        argmin = lua_opt<Matrix<int32_t>*>(L,2,0);
+        AprilUtils::UniquePtr<int []> aux;
+        if (!argmax) {
+          aux = new int[obj->getNumDim()];
+          for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
+          aux[dim-1] = 1;
+          argmax = new Matrix<int32_t>(obj->getNumDim(), aux.get());
+        }
+        if (dim < 1 || dim > obj->getNumDim()) {
+          LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+                          dim, obj->getNumDim());
+        }
+        lua_push(L, matMax(obj, dim-1, dest.get(), argmax.get()));
+        lua_push(L, argmax.get());
+      }
+      else {
+        // case over whole matrix
+        int arg_max, raw_pos;
+        lua_push(L, matMax(obj, arg_max.get(), raw_pos));
+        lua_push(L, arg_max+1);
+      }
+      return 2;
+    }
+#undef FUNCTION_NAME
+
+    
   };
   
 #undef BEGIN_METHOD
@@ -960,53 +1292,43 @@ namespace Basics {
 
 //BIND_METHOD SlidingWindow get_matrix
 {
-  MatrixFloat *dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixFloat, dest, 0);
-  LUABIND_RETURN(MatrixFloat, obj->getMatrix(dest));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::get_matrix(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow next
 {
-  LUABIND_RETURN(SlidingWindow, obj->next());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::next(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow set_at_window
 {
-  int windex;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, int, windex);
-  if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
-  obj->setAtWindow(windex-1);
-  LUABIND_RETURN(SlidingWindow, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::set_at_window(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow num_windows
 {
-  LUABIND_RETURN(int, obj->numWindows());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::num_windows(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow coords
 {
-  LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::coords(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow is_end
 {
-  LUABIND_RETURN(bool, obj->isEnd());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::is_end(L, obj));
 }
 //BIND_END
 
 //BIND_METHOD SlidingWindow iterate
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sliding_window_iterator_function);
-  LUABIND_RETURN(SlidingWindow,obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::iterate(L, obj));
 }
 //BIND_END
 
@@ -1028,7 +1350,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat size
 {
-  LUABIND_RETURN(int, obj->size());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::size(L,obj));
 }
 //BIND_END
 
@@ -1040,7 +1362,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat squeeze
 {
-  LUABIND_RETURN(MatrixFloat,obj->squeeze());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::squeeze(L,obj));
 }
 //BIND_END
 
@@ -1091,7 +1413,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat offset
 {
-  LUABIND_RETURN(int, obj->getOffset());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::offset(L,obj));
 }
 //BIND_END
 
@@ -1109,7 +1431,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat get_use_cuda
 {
-  LUABIND_RETURN(bool, obj->getCudaFlag());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::get_use_cuda(L,obj));
 }
 //BIND_END
 
@@ -1127,7 +1449,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat num_dim
 {
-  LUABIND_RETURN(int, obj->getNumDim());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::num_dim(L,obj));
 }
 //BIND_END
 
@@ -1155,7 +1477,7 @@ namespace Basics {
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_RETURN(MatrixFloat, obj->clone());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::clone(L,obj));
 }
 //BIND_END
 
@@ -1178,50 +1500,43 @@ namespace Basics {
 /// Devuelve false si algun valor es nan o infinito.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  bool resul=true;
-  for (MatrixFloat::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
-    if ((*it) - (*it) != 0.0f) resul = false;
-  LUABIND_RETURN(boolean,resul);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::isfinite(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat toTable
-// Permite salvar una matriz en una tabla lua
-// TODO: Tener en cuenta las dimensiones de la matriz
-  {
-    LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixFloat, float, *obj);
-    LUABIND_INCREASE_NUM_RETURNS(1);
-  }
+{
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::toTable(L,obj));
+}
 //BIND_END
 
 //BIND_METHOD MatrixFloat contiguous
 {
-  LUABIND_RETURN(MatrixFloat, obj->getIsContiguous() ? obj : obj->clone());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::contiguous(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat map
 {
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::map(L, obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::map(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat diagonalize
 {
-  LUABIND_RETURN(MatrixFloat, obj->diagonalize());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::diagonalize(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat get_shared_count
 {
-  LUABIND_RETURN(uint, obj->getSharedCount());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::get_shared_count(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat reset_shared_count
 {
-  obj->resetSharedCount();
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::reset_shared_count(L,obj));
 }
 //BIND_END
 
@@ -1231,9 +1546,9 @@ namespace Basics {
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat update
+//BIND_METHOD MatrixFloat sync
 {
-  obj->update();
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::sync(L,obj));
 }
 //BIND_END
 
@@ -1287,13 +1602,14 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat is_contiguous
 {
-  LUABIND_RETURN(bool, obj->getIsContiguous());
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::is_contiguous(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat prune_subnormal_and_check_normal
 {
-  obj->pruneSubnormalAndCheckNormal();
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::
+                               prune_subnormal_and_check_normal(L,obj));
 }
 //BIND_END
 
@@ -1312,39 +1628,19 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat diag
 {
-  LUABIND_CHECK_ARGN(==,1);
-  float v;
-  LUABIND_GET_PARAMETER(1, float, v);
-  matDiag(obj, v);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::diag(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat fill
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  float value;
-  if (lua_isMatrixFloat(L, 1)) {
-    MatrixFloat *aux;
-    LUABIND_GET_PARAMETER(1,MatrixFloat,aux);
-    for (int i=0; i<aux->getNumDim(); ++i)
-      if (aux->getDimSize(i) != 1)
-	LUABIND_ERROR("Needs a float or a matrix with only one element\n");
-    value = *(aux->begin());
-  }
-  else {
-    LUABIND_CHECK_PARAMETER(1, float);
-    LUABIND_GET_PARAMETER(1,float,value);
-  }
-  LUABIND_RETURN(MatrixFloat, 
-                 matFill(obj,value));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::fill(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat zeros
 {
-  LUABIND_RETURN(MatrixFloat, 
-                 matZeros(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::zeros(L,obj));
 }
 //BIND_END
 
@@ -1354,88 +1650,19 @@ namespace Basics {
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
-  LUABIND_RETURN(MatrixFloat, 
-                 matOnes(obj));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::ones(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat min
 {
-#ifdef USE_CUDA
-  obj->update();
-#endif
-  LUABIND_CHECK_ARGN(>=,0);
-  LUABIND_CHECK_ARGN(<=,3);
-  int argn = lua_gettop(L);
-  if (argn > 0) {
-    int dim;
-    MatrixFloat *dest;
-    MatrixInt32 *argmin;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
-    LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmin, 0);
-    AprilUtils::UniquePtr<int []> aux;
-    if (argmin == 0) {
-      aux = new int[obj->getNumDim()];
-      for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
-      aux[dim-1] = 1;
-      argmin = new MatrixInt32(obj->getNumDim(), aux.get());
-    }
-    IncRef(argmin);
-    if (dim < 1 || dim > obj->getNumDim())
-      LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
-                      dim, obj->getNumDim());
-    LUABIND_RETURN(MatrixFloat, 
-                   matMin(obj, dim-1, dest, argmin));
-    LUABIND_RETURN(MatrixInt32, argmin);
-    DecRef(argmin);
-  }
-  else {
-    int arg_min, raw_pos;
-    LUABIND_RETURN(float, 
-                   matMin(obj, arg_min, raw_pos));
-    LUABIND_RETURN(int, arg_min+1);
-  }
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::min(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat max
 {
-#ifdef USE_CUDA
-  obj->update();
-#endif
-  LUABIND_CHECK_ARGN(>=,0);
-  LUABIND_CHECK_ARGN(<=,3);
-  int argn = lua_gettop(L);
-  if (argn > 0) {
-    int dim;
-    MatrixFloat *dest;
-    MatrixInt32 *argmax;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
-    LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmax, 0);
-    AprilUtils::UniquePtr<int []> aux;
-    if (argmax == 0) {
-      aux = new int[obj->getNumDim()];
-      for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
-      aux[dim-1] = 1;
-      argmax = new MatrixInt32(obj->getNumDim(), aux.get());
-    }
-    IncRef(argmax);
-    if (dim < 1 || dim > obj->getNumDim())
-      LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
-                      dim, obj->getNumDim());
-    LUABIND_RETURN(MatrixFloat, 
-                   matMax(obj, dim-1, dest, argmax));
-    LUABIND_RETURN(MatrixInt32, argmax);
-    DecRef(argmax);
-  }
-  else {
-    int arg_max, raw_pos;
-    LUABIND_RETURN(float, 
-                   matMax(obj, arg_max, raw_pos));
-    LUABIND_RETURN(int, arg_max+1);
-  }
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::max(L,obj));
 }
 //BIND_END
 
@@ -1467,7 +1694,7 @@ namespace Basics {
     LUABIND_ERROR("matrix add wrong dimensions");
   }
 #ifdef USE_CUDA
-  mat->update();
+  mat->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matAddition(obj, mat));
@@ -1494,7 +1721,7 @@ namespace Basics {
   if (!obj->sameDim(mat))
     LUABIND_ERROR("matrix sub wrong dimensions");
 #ifdef USE_CUDA
-  mat->update();
+  mat->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matSubstraction(obj, mat));
@@ -1507,7 +1734,7 @@ namespace Basics {
   MatrixFloat *mat,*resul;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
 #ifdef USE_CUDA
-  mat->update();
+  mat->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matMultiply(obj, mat));
@@ -1520,7 +1747,7 @@ namespace Basics {
   MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
 #ifdef USE_CUDA
-  mat->update();
+  mat->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matCmul(obj, mat));
@@ -1680,7 +1907,7 @@ namespace Basics {
 //BIND_METHOD MatrixFloat sum
 {
 #ifdef USE_CUDA
-  obj->update();
+  obj->sync();
 #endif
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 2);
@@ -1710,7 +1937,7 @@ namespace Basics {
   MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
 #ifdef USE_CUDA
-  mat->update();
+  mat->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matCopy(obj,mat));
@@ -1727,7 +1954,7 @@ namespace Basics {
     MatrixFloat *mat;
     LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
 #ifdef USE_CUDA
-    mat->update();
+    mat->sync();
 #endif
     LUABIND_RETURN(MatrixFloat, 
                    matAxpy(obj, alpha, mat));
@@ -1761,8 +1988,8 @@ namespace Basics {
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
 #ifdef USE_CUDA
-  matA->update();
-  matB->update();
+  matA->sync();
+  matB->sync();
 #endif
   LUABIND_RETURN(MatrixFloat,
                  
@@ -1823,8 +2050,8 @@ namespace Basics {
     MatrixFloat *matA;
     LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
 #ifdef USE_CUDA
-    matA->update();
-    matX->update();
+    matA->sync();
+    matX->sync();
 #endif
     LUABIND_RETURN(MatrixFloat,
                    
@@ -1859,8 +2086,8 @@ namespace Basics {
   LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixFloat, matY);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
 #ifdef USE_CUDA
-  matX->update();
-  matY->update();
+  matX->sync();
+  matY->sync();
 #endif
   LUABIND_RETURN(MatrixFloat, 
                  matGer(obj, alpha, matX, matY));
@@ -1875,8 +2102,8 @@ namespace Basics {
     MatrixFloat *matX;
     LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
 #ifdef USE_CUDA
-    obj->update();
-    matX->update();
+    obj->sync();
+    matX->sync();
 #endif
     LUABIND_RETURN(float, 
                    matDot(obj, matX));
@@ -1886,8 +2113,8 @@ namespace Basics {
     SparseMatrixFloat *matX;
     LUABIND_GET_PARAMETER(1, SparseMatrixFloat, matX);
 #ifdef USE_CUDA
-    obj->update();
-    matX->update();
+    obj->sync();
+    matX->sync();
 #endif
     LUABIND_RETURN(float, 
                    matDot(obj, matX));
@@ -1950,7 +2177,7 @@ namespace Basics {
 //BIND_METHOD MatrixFloat norm2
 {
 #ifdef USE_CUDA
-  obj->update();
+  obj->sync();
 #endif
   LUABIND_RETURN(float, 
                  matNorm2(obj));

@@ -74,6 +74,10 @@ namespace AprilMath {
     static T max() { return T(); }
     /// Returns a NaN value.
     static T quiet_NaN() { return T(); }
+    /// Zero value.
+    static T zero() { return T(0.0f); }
+    /// One value.
+    static T one() { return T(1.0f); }
   };
   
   template<> char Limits<char>::lowest();
@@ -724,6 +728,15 @@ namespace AprilMath {
       }
     };
 
+    /// is_finite map operation.
+    template<typename T>
+    struct m_is_finite {
+      /// Returns \f$ (a-b) == 0.0 \f$
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return (a-b) == Limits<T>::zero();
+      }
+    };
+
     /// Division map operation.
     template<typename T>
     struct m_div {
@@ -797,6 +810,9 @@ namespace AprilMath {
   /// @see Functors::m_add
   template<typename T> APRIL_CUDA_EXPORT
   T m_add(const T &a, const T &b) { return Functors::m_add<T>()(a,b); }
+  /// @see Functors::m_is_finite
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_is_finite(const T &a, const T &b) { return Functors::m_is_finite<T>()(a,b); }
   /// @see Functors::m_div
   template<typename T> APRIL_CUDA_EXPORT
   T m_div(const T &a, const T &b) { return Functors::m_div<T>()(a,b); }

@@ -500,6 +500,16 @@ namespace AprilMath {
         return true;
       }
 
+      template <typename T>
+      bool matIsFinite(const Matrix<T> *obj) {
+        return MatrixScalarReduce1(obj,
+                                   AprilMath::make_r_map1<T,int>
+                                   (AprilMath::Functors::m_is_finite<T>(),
+                                    AprilMath::Functors::r_and<bool>()),
+                                   AprilMath::Functors::r_and<bool>(),
+                                   true);
+      }
+      
       template Matrix<float> *matMin(const Matrix<float> *,
                                      int,
                                      Matrix<float> *,
@@ -523,6 +533,8 @@ namespace AprilMath {
                                      bool);
       template bool matEquals(const Matrix<float> *, const Matrix<float> *,
                               float);
+      template bool matIsFinite(const Matrix<float> *);
+
       
       template Matrix<double> *matMin(const Matrix<double> *,
                                       int,
@@ -547,6 +559,8 @@ namespace AprilMath {
                                       bool);
       template bool matEquals(const Matrix<double> *, const Matrix<double> *,
                               float);
+      template bool matIsFinite(const Matrix<double> *);
+
       
       template Matrix<float> *matMin(const SparseMatrix<float> *, int ,
                                      Matrix<float> *,
@@ -563,8 +577,9 @@ namespace AprilMath {
                                      bool);
       template bool matEquals(const SparseMatrix<float> *,
                               const SparseMatrix<float> *,
-                              float);      
-
+                              float);
+      
+      
       template ComplexF matSum(const Matrix<ComplexF> *);
       template Matrix<ComplexF> *matSum(Matrix<ComplexF> *,
                                         int,
@@ -572,6 +587,8 @@ namespace AprilMath {
                                         bool);
       template bool matEquals(const Matrix<ComplexF> *, const Matrix<ComplexF> *,
                               float);
+      template bool matIsFinite(const Matrix<ComplexF> *);
+      
 
       template bool matEquals(const Matrix<int32_t> *, const Matrix<int32_t> *,
                               float);
