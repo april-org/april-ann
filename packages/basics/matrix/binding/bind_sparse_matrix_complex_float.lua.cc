@@ -111,18 +111,18 @@ using namespace Basics;
 
 //BIND_END
 
-//BIND_LUACLASSNAME SparseMatrixComplexFIterator matrix.sparseComplexF.iterator
+//BIND_LUACLASSNAME SparseMatrixComplexFIterator matrixComplexF.sparse.iterator
 //BIND_CPP_CLASS SparseMatrixComplexFIterator
 
 //BIND_CONSTRUCTOR SparseMatrixComplexFIterator
 {
-  LUABIND_ERROR("Use iterate() method in matrix.sparseComplexF object");
+  LUABIND_ERROR("Use iterate() method in matrixComplexF.sparse object");
 }
 //BIND_END
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SparseMatrixComplexF matrix.sparseComplexF
+//BIND_LUACLASSNAME SparseMatrixComplexF matrixComplexF.sparse
 //BIND_CPP_CLASS SparseMatrixComplexF
 //BIND_LUACLASSNAME Serializable aprilio.serializable
 //BIND_SUBCLASS_OF SparseMatrixComplexF Serializable
@@ -616,13 +616,13 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixComplexF num_dim
+//BIND_METHOD SparseMatrixComplexF num_dim
 {
   LUABIND_RETURN(int, 2);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixComplexF select
+//BIND_METHOD SparseMatrixComplexF select
 {
   LUABIND_ERROR("Not implemented method in sparse matrix instances");
 }
@@ -650,7 +650,7 @@ using namespace Basics;
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME DOKBuilderSparseMatrixComplexF matrix.sparseComplexF.builders.dok
+//BIND_LUACLASSNAME DOKBuilderSparseMatrixComplexF matrixComplexF.sparse.builders.dok
 //BIND_CPP_CLASS DOKBuilderSparseMatrixComplexF
 
 //BIND_CONSTRUCTOR DOKBuilderSparseMatrixComplexF

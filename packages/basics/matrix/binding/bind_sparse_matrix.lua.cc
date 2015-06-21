@@ -815,13 +815,13 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat num_dim
+//BIND_METHOD SparseMatrixFloat num_dim
 {
   LUABIND_RETURN(int, 2);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat select
+//BIND_METHOD SparseMatrixFloat select
 {
   LUABIND_ERROR("Not implemented method in sparse matrix instances");
 }
