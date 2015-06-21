@@ -26,6 +26,7 @@ extern "C" {
 }
 #include <typeinfo>
 
+#include "complex_number.h"
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"

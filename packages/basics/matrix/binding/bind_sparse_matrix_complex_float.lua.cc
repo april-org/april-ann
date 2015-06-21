@@ -64,6 +64,7 @@ namespace Basics {
 //BIND_HEADER_H
 #include <cmath> // para isfinite
 
+#include "complex_number.h"
 #include "bind_april_io.h"
 #include "referenced.h"
 #include "sparse_matrixComplexF.h"

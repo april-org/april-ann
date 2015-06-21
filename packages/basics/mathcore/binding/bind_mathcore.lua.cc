@@ -37,6 +37,7 @@ using namespace AprilMath;
 
 typedef bool boolean;
 
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(CharGPUMirroredMemoryBlock);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(FloatGPUMirroredMemoryBlock);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(DoubleGPUMirroredMemoryBlock);
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(Int32GPUMirroredMemoryBlock);
@@ -69,24 +70,7 @@ GPUMirroredMemoryBlock<T> *readBlockLuaMethod(lua_State *L) {
 
 namespace MathCoreBinding {
   template<typename T> T luaToFunc(lua_State *L, int n) {
-    UNUSED_VARIABLE(L);
-    UNUSED_VARIABLE(n);
-    ERROR_EXIT(128, "Not implemented\n");
-  }
-  template<> float luaToFunc(lua_State *L, int n) {
-    return static_cast<float>(lua_tonumber(L, n));
-  }
-  template<> double luaToFunc(lua_State *L, int n) {
-    return lua_tonumber(L, n);
-  }
-  template<> int32_t luaToFunc(lua_State *L, int n) {
-    return static_cast<int32_t>(lua_tonumber(L, n));
-  }
-  template<> ComplexF luaToFunc(lua_State *L, int n) {
-    return lua_toComplexF(L, n);
-  }
-  template<> bool luaToFunc(lua_State *L, int n) {
-    return static_cast<bool>(lua_toboolean(L, n));
+    return AprilUtils::LuaTable::convertTo<T>(L,n);
   }
 }
 
@@ -365,6 +349,57 @@ namespace AprilMath {
 //BIND_END
 
 //BIND_METHOD BoolGPUMirroredMemoryBlock get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"data= %p", (void*)obj);
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME CharGPUMirroredMemoryBlock mathcore.block.char
+//BIND_CPP_CLASS CharGPUMirroredMemoryBlock
+//BIND_SUBCLASS_OF CharGPUMirroredMemoryBlock Serializable
+
+//BIND_CONSTRUCTOR CharGPUMirroredMemoryBlock
+{
+  LUABIND_CHECK_ARGN(==,1);
+  GPUMirroredMemoryBlockConstructor(L,obj);
+  LUABIND_RETURN(CharGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD CharGPUMirroredMemoryBlock read
+{
+  MAKE_READ_BLOCK_LUA_METHOD(CharGPUMirroredMemoryBlock, char);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD CharGPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD CharGPUMirroredMemoryBlock raw_set
+{
+  LUABIND_CHECK_ARGN(==,2);
+  GPUMirroredMemoryBlockSet(L,obj);
+  LUABIND_RETURN(CharGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD CharGPUMirroredMemoryBlock raw_get
+{
+  char c = GPUMirroredMemoryBlockGet(L,obj);
+  lua_pushlstring(L, &c, 1);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD CharGPUMirroredMemoryBlock get_reference_string
 {
   char buff[128];
   sprintf(buff,"data= %p", (void*)obj);
