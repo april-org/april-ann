@@ -128,6 +128,14 @@ namespace AprilMath {
       template SparseMatrix<float> *matFill(SparseMatrix<float> *, const float );
       template SparseMatrix<float> *matZeros(Basics::SparseMatrix<float> *);
       template SparseMatrix<float> *matOnes(SparseMatrix<float> *);
+
+      template SparseMatrix<double> *matFill(SparseMatrix<double> *, const double );
+      template SparseMatrix<double> *matZeros(Basics::SparseMatrix<double> *);
+      template SparseMatrix<double> *matOnes(SparseMatrix<double> *);
+
+      template SparseMatrix<ComplexF> *matFill(SparseMatrix<ComplexF> *, const ComplexF );
+      template SparseMatrix<ComplexF> *matZeros(Basics::SparseMatrix<ComplexF> *);
+      template SparseMatrix<ComplexF> *matOnes(SparseMatrix<ComplexF> *);
     
     } // namespace Initializers
         

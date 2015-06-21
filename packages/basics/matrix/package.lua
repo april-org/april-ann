@@ -36,6 +36,7 @@
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
+     copy{ file= "binding/*.h", dest_dir = "include" },
      exec{ command = [[lua binding/generate_matrix_binding.lua]] },
      provide_bind{ file = "binding/bind_matrix.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_complex_float.lua.cc", dest_dir = "include" },

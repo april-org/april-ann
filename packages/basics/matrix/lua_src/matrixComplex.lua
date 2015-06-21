@@ -475,16 +475,6 @@ april_set_doc(matrixComplex.."linear",
 		outputs = { "The caller matrixComplex instance" },
 })
 
-april_set_doc(matrixComplex.."uniform",
-	      {
-		class = "method",
-		summary = "Initializes with random positive integers from range [a,b]",
-		params  = { "Lower range value",
-			    "Upper range value",
-			    "A random object instance [optional]" },
-		outputs = { "The caller matrixComplex instance" },
-})
-
 april_set_doc(matrixComplex.."is_contiguous",
 	      {
 		class = "method",

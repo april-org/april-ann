@@ -186,7 +186,7 @@ namespace ANN {
   }
 
   void MulANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
-    if (mul_vector == 0)
+    if (!mul_vector)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
     MatrixFloat *w = weights_dict.opt<MatrixFloat*>(weights_name, 0);

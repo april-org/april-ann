@@ -110,7 +110,7 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixInt32);
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixFloat
+//BIND_CONSTRUCTOR MatrixInt32
 //DOC_BEGIN
 // matrixInt32(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de

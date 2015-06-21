@@ -26,11 +26,19 @@ extern "C" {
 #include "luabindmacros.h"
 #include "matrix_ext.h"
 #include "smart_ptr.h"
+#include "utilMatrixChar.h"
+#include "utilMatrixComplexF.h"
 #include "utilMatrixFloat.h"
+#include "utilMatrixInt32.h"
 //BIND_END
 
 //BIND_HEADER_H
 #include "bind_matrix.h"
+#include "bind_matrix_bool.h"
+#include "bind_matrix_char.h"
+#include "bind_matrix_complex_float.h"
+#include "bind_matrix_double.h"
+#include "bind_matrix_int32.h"
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
@@ -38,6 +46,8 @@ extern "C" {
 //BIND_LUACLASSNAME MatrixInt32 matrixInt32
 //BIND_LUACLASSNAME MatrixComplexF matrixComplex
 //BIND_LUACLASSNAME MatrixChar matrixChar
+
+//////////////////////////////////////////////////////////////////////////////
 
 //BIND_FUNCTION matrix.ext.convolution
 {
@@ -72,7 +82,7 @@ extern "C" {
   lua_pop(L, 1);
   
   LUABIND_RETURN(MatrixFloat,
-                 
+                 AprilMath::MatrixExt::Misc::
                  matConvolution(obj, D, step.get(), kernel, result));
   //&unrolled_kernel, &unrolled_self);
   /*LUABIND_RETURN(MatrixFloat, unrolled_kernel);
@@ -89,10 +99,12 @@ extern "C" {
   LUABIND_GET_OPTIONAL_PARAMETER(3, int, wadvance, wsize);
   LUABIND_GET_OPTIONAL_PARAMETER(4, MatrixFloat, dest, 0);
   LUABIND_RETURN(MatrixFloat,
-		 
+                 AprilMath::MatrixExt::Misc::
 		 matRealFFTwithHamming(obj, wsize, wadvance, dest));
 }
 //BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
 
 //BIND_CLASS_METHOD MatrixFloat fromPNM
 //DOC_BEGIN
@@ -185,6 +197,8 @@ extern "C" {
 }
 //BIND_END
 
+//////////////////////////////////////////////////////////////////////////////
+
 //BIND_METHOD MatrixBool count_ones
 {
   int count=0;
@@ -237,5 +251,45 @@ extern "C" {
     else *it = true;
   }
   LUABIND_RETURN(MatrixBool, obj);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_METHOD MatrixComplexF to_float
+{
+  LUABIND_RETURN(MatrixFloat, convertFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF conj
+{
+  applyConjugateInPlace(obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF real
+{
+  LUABIND_RETURN(MatrixFloat, realPartFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF img
+{
+  LUABIND_RETURN(MatrixFloat, imgPartFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+
+//BIND_METHOD MatrixComplexF abs
+{
+  LUABIND_RETURN(MatrixFloat, absFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF angle
+{
+  LUABIND_RETURN(MatrixFloat, angleFromMatrixComplexFToMatrixFloat(obj));
 }
 //BIND_END

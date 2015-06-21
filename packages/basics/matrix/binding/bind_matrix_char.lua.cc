@@ -110,7 +110,7 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixChar);
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixFloat
+//BIND_CONSTRUCTOR MatrixChar
 //DOC_BEGIN
 // matrixChar(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de
@@ -336,12 +336,6 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixChar);
 }
 //BIND_END
 
-//BIND_METHOD MatrixChar adjust_range
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::adjust_range(L,obj));
-}
-//BIND_END
-
 //BIND_METHOD MatrixChar diag
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::diag(L,obj));
@@ -372,48 +366,6 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixChar);
 }
 //BIND_END
 
-//BIND_METHOD MatrixChar clamp
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::clamp(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar masked_fill
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::masked_fill(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar masked_copy
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::masked_copy(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar lt
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::lt(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar gt
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::gt(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar eq
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::eq(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar neq
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::neq(L,obj));
-}
-//BIND_END
-
 //BIND_METHOD MatrixChar toMMap
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::toMMap(L,obj));
@@ -423,18 +375,6 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixChar);
 //BIND_METHOD MatrixChar data
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::data(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar order
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::order(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar order_rank
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<char>::order_rank(L,obj));
 }
 //BIND_END
 

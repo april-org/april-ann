@@ -535,200 +535,14 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixComplexF min
-  {
-    LUABIND_CHECK_ARGN(>=,0);
-    LUABIND_CHECK_ARGN(<=,3);
-    int argn = lua_gettop(L);
-    if (argn > 0) {
-      int dim;
-      MatrixComplexF *dest;
-      MatrixInt32 *argmin;
-      LUABIND_GET_PARAMETER(1, int, dim);
-      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixComplexF, dest, 0);
-      LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmin, 0);
-      int *aux = 0;
-      if (argmin == 0) {
-	aux = new int[obj->getNumDim()];
-	for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
-	aux[dim-1] = 1;
-	argmin = new MatrixInt32(obj->getNumDim(), aux);
-      }
-      IncRef(argmin);
-      if (dim < 1 || dim > obj->getNumDim())
-	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
-			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixComplexF, 
-                     matMin(obj, dim-1, dest, argmin));
-      LUABIND_RETURN(MatrixInt32, argmin);
-      DecRef(argmin);
-      delete[] aux;
-    }
-    else {
-      int c0, c1;
-      LUABIND_RETURN(ComplexF, 
-                     matMin(obj, c0, c1));
-      LUABIND_RETURN(int, c0+1);
-      LUABIND_RETURN(int, c1+1);
-    }
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF max
-  {
-    LUABIND_CHECK_ARGN(>=,0);
-    LUABIND_CHECK_ARGN(<=,3);
-    int argn = lua_gettop(L);
-    if (argn > 0) {
-      int dim;
-      MatrixComplexF *dest;
-      MatrixInt32 *argmax;
-      LUABIND_GET_PARAMETER(1, int, dim);
-      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixComplexF, dest, 0);
-      LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmax, 0);
-      int *aux = 0;
-      if (argmax == 0) {
-	aux = new int[obj->getNumDim()];
-	for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
-	aux[dim-1] = 1;
-	argmax = new MatrixInt32(obj->getNumDim(), aux);
-      }
-      IncRef(argmax);
-      if (dim < 1 || dim > obj->getNumDim())
-	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
-			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixComplexF, 
-                     matMax(obj, dim-1, dest, argmax));
-      LUABIND_RETURN(MatrixInt32, argmax);
-      DecRef(argmax);
-      delete[] aux;
-    }
-    else {
-      int c0, c1;
-      LUABIND_RETURN(ComplexF, 
-                     matMax(obj, c0, c1));
-      LUABIND_RETURN(int, c0+1);
-      LUABIND_RETURN(int, c1+1);
-    }
-  }
-//BIND_END
-
 //BIND_METHOD SparseMatrixComplexF equals
 {
   SparseMatrixComplexF *other;
-  ComplexF epsilon;
+  float epsilon;
   LUABIND_GET_PARAMETER(1, SparseMatrixComplexF, other);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, ComplexF, epsilon, 1e-04f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
   LUABIND_RETURN(boolean, 
                  matEquals(obj, other, epsilon));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF sqrt
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matSqrt(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF pow
-{
-  ComplexF value;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, ComplexF, value);
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matPow(obj,value));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF tan
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matTan(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF tanh
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matTanh(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF atan
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matAtan(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF atanh
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matAtanh(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF sin
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matSin(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF sinh
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matSinh(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF asin
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matAsin(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF asinh
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matAsinh(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF abs
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matAbs(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF sign
-{
-  LUABIND_RETURN(SparseMatrixComplexF, 
-                 matSign(obj));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixComplexF sum
-{
-  LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 2);
-  int argn = lua_gettop(L); // number of arguments
-  if (argn >= 1 && !lua_isnil(L,1)) {
-    int dim;
-    MatrixComplexF *dest;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixComplexF, dest, 0);
-    if (dim < 1 || dim > obj->getNumDim())
-      LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
-		      dim, obj->getNumDim());
-    LUABIND_RETURN(MatrixComplexF,
-                   
-                   matSum(obj, dim-1, dest));
-  }
-  else LUABIND_RETURN(ComplexF, matSum(obj));
 }
 //BIND_END
 
@@ -752,23 +566,7 @@ using namespace Basics;
                    matScal(obj, value));
   }
 //BIND_END
-
-//BIND_METHOD SparseMatrixComplexF div
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    ComplexF value;
-    LUABIND_GET_PARAMETER(1, ComplexF, value);
-    LUABIND_RETURN(SparseMatrixComplexF,
-                   matDiv(obj, value));
-  }
-//BIND_END
  
-//BIND_METHOD SparseMatrixComplexF norm2
-  {
-    LUABIND_RETURN(ComplexF, matNorm2(obj));
-  }
-//BIND_END
-
 //BIND_METHOD SparseMatrixComplexF get_shared_count
 {
   LUABIND_RETURN(uint, obj->getSharedCount());

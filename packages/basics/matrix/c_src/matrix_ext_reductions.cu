@@ -578,6 +578,29 @@ namespace AprilMath {
       template bool matEquals(const SparseMatrix<float> *,
                               const SparseMatrix<float> *,
                               float);
+
+
+      template bool matEquals(const SparseMatrix<ComplexF> *,
+                              const SparseMatrix<ComplexF> *,
+                              float);
+
+
+      template Matrix<double> *matMin(const SparseMatrix<double> *, int ,
+                                      Matrix<double> *,
+                                      Matrix<int32_t> *);
+      template Matrix<double> *matMax(const SparseMatrix<double> *,
+                                      int, Matrix<double> *,
+                                      Matrix<int32_t> *);
+      template double matMin(const SparseMatrix<double> *, int &, int &);
+      template double matMax(const SparseMatrix<double> *, int &, int &);
+      template void matMinAndMax(const SparseMatrix<double> *, double &, double &);
+      template double matSum(const SparseMatrix<double> *);
+      template Matrix<double> *matSum(const SparseMatrix<double> *, int,
+                                      Matrix<double> *,
+                                      bool);
+      template bool matEquals(const SparseMatrix<double> *,
+                              const SparseMatrix<double> *,
+                              float);
       
       
       template ComplexF matSum(const Matrix<ComplexF> *);
@@ -590,9 +613,41 @@ namespace AprilMath {
       template bool matIsFinite(const Matrix<ComplexF> *);
       
 
+      template Matrix<int32_t> *matMin(const SparseMatrix<int32_t> *, int ,
+                                       Matrix<int32_t> *,
+                                       Matrix<int32_t> *);
+      template Matrix<int32_t> *matMax(const SparseMatrix<int32_t> *,
+                                       int, Matrix<int32_t> *,
+                                       Matrix<int32_t> *);
+      template int32_t matMin(const SparseMatrix<int32_t> *, int &, int &);
+      template int32_t matMax(const SparseMatrix<int32_t> *, int &, int &);
+      
+      
+      template Matrix<int32_t> *matMin(const Matrix<int32_t> *,
+                                       int,
+                                       Matrix<int32_t> *,
+                                       Matrix<int32_t> *);
+      template Matrix<int32_t> *matMax(const Matrix<int32_t> *,
+                                       int,
+                                       Matrix<int32_t> *,
+                                       Matrix<int32_t> *);
+      template int32_t matMin(const Matrix<int32_t> *, int &, int &);
+      template int32_t matMax(const Matrix<int32_t> *, int &, int &);
+      template void matMinAndMax(const Matrix<int32_t> *, int32_t &, int32_t &);
+      template Matrix<int32_t> *matMaxSelDim(const Matrix<int32_t> *,
+                                             const int,
+                                             Int32GPUMirroredMemoryBlock *,
+                                             const int,
+                                             Basics::Matrix<int32_t> *);
+      template int32_t matSum(const Matrix<int32_t> *);
+      template Matrix<int32_t> *matSum(Matrix<int32_t> *,
+                                       int,
+                                       Matrix<int32_t> *,
+                                       bool);
       template bool matEquals(const Matrix<int32_t> *, const Matrix<int32_t> *,
                               float);
 
+      
       template bool matEquals(const Matrix<char> *, const Matrix<char> *,
                               float);
 

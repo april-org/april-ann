@@ -24,6 +24,7 @@ extern "C" {
 #include <ctype.h>
 #include <lua.h>
 }
+#include <typeinfo>
 
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
@@ -164,7 +165,7 @@ namespace Basics {
     
     BEGIN_CLASS_METHOD(constructor)
     {
-      if (lua_isstring(L,1)) {
+      if (typeid(T) == typeid(char) && lua_type(L,1) == LUA_TSTRING) { // for matrixChar case
         int len = luaL_len(L,1);
         const char *data = lua_tostring(L,1);
         AprilUtils::UniquePtr<int []> dim = new int[1];
@@ -232,6 +233,9 @@ namespace Basics {
             } // for each matrix position
           } // if lua_istable(L,argn)
           else {
+            if (ndims == 1 && dim[0] == -1) {
+              LUABIND_ERROR("Incorrect matrix dimensions");
+            }
             obj = new Matrix<T>(ndims, dim.get());
           }
         } // else { !lua_is(L,argn) }
@@ -776,7 +780,7 @@ namespace Basics {
       }
       if (!random) random = new Basics::MTRand();
       for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
-        *it = static_cast<T>(random->randInt(upper - lower)) + lower;
+        *it = T(random->randInt(upper - lower)) + lower;
       }
       lua_push(L, obj);
       return 1;
@@ -795,7 +799,7 @@ namespace Basics {
       }
       if (!random) random = new Basics::MTRand();
       for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
-        *it = static_cast<T>(random->rand(upper - lower) + lower);
+        *it = T(random->rand(upper - lower) + lower);
       }
       lua_push(L, obj);
       return 1;
@@ -848,7 +852,7 @@ namespace Basics {
       LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
       int k=lower;
       for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
-        *it = static_cast<T>(k);
+        *it = T(k);
       }
       lua_push(L, obj);
       return 1;

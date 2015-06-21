@@ -110,7 +110,7 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool);
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixFloat
+//BIND_CONSTRUCTOR MatrixBool
 //DOC_BEGIN
 // matrixBool(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de
@@ -309,12 +309,6 @@ DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindowMatrixBool);
 //BIND_METHOD MatrixBool is_contiguous
 {
   LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<bool>::is_contiguous(L,obj));
-}
-//BIND_END
-
-//BIND_METHOD MatrixBool adjust_range
-{
-  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<bool>::adjust_range(L,obj));
 }
 //BIND_END
 

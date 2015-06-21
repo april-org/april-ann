@@ -18,7 +18,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_C
 #include "matrix.h"
+//BIND_END
+
 //BIND_STRING_CONSTANT matrix.options.tab Basics::MatrixIO::TAB_OPTION
 //BIND_STRING_CONSTANT matrix.options.ascii Basics::MatrixIO::ASCII_OPTION
 //BIND_STRING_CONSTANT matrix.options.delim Basics::MatrixIO::DELIM_OPTION

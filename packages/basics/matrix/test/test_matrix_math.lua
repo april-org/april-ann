@@ -277,14 +277,14 @@ ascii
       local m   = load_csv()
       local def = 0.0/0.0
       check.eq(m:eq(def),
-               matrixBool(matrix(3,5,{0,0,0,1,0,0,0,0,0,1,0,1,1,1,0})), "NAN eq")
+               matrixBool(3,5,{0,0,0,1,0,0,0,0,0,1,0,1,1,1,0}), "NAN eq")
       check.eq(m:neq(def),
-               matrixBool(matrix(3,5,{1,1,1,0,1,1,1,1,1,0,1,0,0,0,1})), "NAN neq")
+               matrixBool(3,5,{1,1,1,0,1,1,1,1,1,0,1,0,0,0,1}), "NAN neq")
       
       check.eq(m:eq(4),
-               matrixBool(matrix(3,5,{0,0,0,0,1,0,0,0,0,0,1,0,0,0,0})), "4 eq")
+               matrixBool(3,5,{0,0,0,0,1,0,0,0,0,0,1,0,0,0,0}), "4 eq")
       check.eq(m:neq(4),
-               matrixBool(matrix(3,5,{1,1,1,1,0,1,1,1,1,1,0,1,1,1,1})), "4 neq")
+               matrixBool(3,5,{1,1,1,1,0,1,1,1,1,1,0,1,1,1,1}), "4 neq")
 
       check.eq(m:eq(m), matrixBool(3,5):ones(), "eq m")
       check.eq(m:neq(m), matrixBool(3,5):zeros(), "neq m")

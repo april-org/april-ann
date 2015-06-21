@@ -489,6 +489,9 @@ namespace AprilMath {
                                               Matrix<double> *);        
       template Matrix<double> *matDiv(Matrix<double> *, const double &,
                                       Matrix<double> *);
+      template Matrix<double> *matDiv(Matrix<double> *,
+                                      const Matrix<double> *,
+                                      Matrix<double> *);
       template Matrix<double> *matMaskedFill(Matrix<double> *,
                                              const Matrix<bool> *,
                                              const double &,
@@ -499,6 +502,18 @@ namespace AprilMath {
                                              Matrix<double> *);
 
 
+      template Matrix<int32_t> *matClamp(Matrix<int32_t> *, const int32_t,
+                                         const int32_t, Matrix<int32_t> *);
+      template Matrix<int32_t> *matMaskedFill(Matrix<int32_t> *,
+                                              const Matrix<bool> *,
+                                              const int32_t &,
+                                              Matrix<int32_t> *);
+      template Matrix<int32_t> *matMaskedCopy(Matrix<int32_t> *,
+                                              const Matrix<bool> *,
+                                              const Matrix<int32_t> *,
+                                              Matrix<int32_t> *);
+      
+      
       template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF,
                                          Matrix<ComplexF> *);
       template Matrix<ComplexF> *matCmul(Matrix<ComplexF> *,
@@ -507,6 +522,9 @@ namespace AprilMath {
       template Matrix<ComplexF> *matScalarAdd(Matrix<ComplexF> *, const ComplexF &,
                                               Matrix<ComplexF> *);
       template Matrix<ComplexF> *matDiv(Matrix<ComplexF> *, const ComplexF &,
+                                        Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matDiv(Matrix<ComplexF> *,
+                                        const Matrix<ComplexF> *,
                                         Matrix<ComplexF> *);
       template Matrix<ComplexF> *matMaskedFill(Matrix<ComplexF> *,
                                                const Matrix<bool> *,
@@ -547,6 +565,44 @@ namespace AprilMath {
                                             SparseMatrix<float> *);
       template SparseMatrix<float> *matDiv(SparseMatrix<float> *, const float &,
                                            SparseMatrix<float> *);
+
+
+      
+      template SparseMatrix<ComplexF> *matScal(SparseMatrix<ComplexF> *,
+                                               const ComplexF,
+                                               SparseMatrix<ComplexF> *);
+
+      
+
+      template SparseMatrix<double> *matSqrt(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matPow(SparseMatrix<double> *,
+                                            const double &,
+                                            SparseMatrix<double> *);
+      template SparseMatrix<double> *matTan(SparseMatrix<double> *,
+                                            SparseMatrix<double> *);
+      template SparseMatrix<double> *matAtan(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matTanh(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matAtanh(SparseMatrix<double> *,
+                                              SparseMatrix<double> *);
+      template SparseMatrix<double> *matSin(SparseMatrix<double> *,
+                                            SparseMatrix<double> *);
+      template SparseMatrix<double> *matAsin(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matSinh(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matAsinh(SparseMatrix<double> *,
+                                              SparseMatrix<double> *);
+      template SparseMatrix<double> *matAbs(SparseMatrix<double> *,
+                                            SparseMatrix<double> *);
+      template SparseMatrix<double> *matSign(SparseMatrix<double> *,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matScal(SparseMatrix<double> *, const double,
+                                             SparseMatrix<double> *);
+      template SparseMatrix<double> *matDiv(SparseMatrix<double> *, const double &,
+                                            SparseMatrix<double> *);
       
     } // namespace Operations
     

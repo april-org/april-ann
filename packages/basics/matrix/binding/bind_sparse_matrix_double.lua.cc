@@ -614,9 +614,9 @@ using namespace Basics;
 //BIND_METHOD SparseMatrixDouble equals
 {
   SparseMatrixDouble *other;
-  double epsilon;
+  float epsilon;
   LUABIND_GET_PARAMETER(1, SparseMatrixDouble, other);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, double, epsilon, 1e-04f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
   LUABIND_RETURN(boolean, 
                  matEquals(obj, other, epsilon));
 }
