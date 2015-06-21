@@ -45,29 +45,7 @@ using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
 IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(MatrixFloat);
-
-#define FUNCTION_NAME "read_vector"
-static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-  int *v = 0;
-  lua_getfield(L, 1, key);
-  if (!lua_isnil(L, -1)) {
-    LUABIND_CHECK_PARAMETER(-1, table);
-    int table_len;
-    LUABIND_TABLE_GETN(-1, table_len);
-    if (table_len != num_dim)
-      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-		      key, num_dim, table_len);
-    v = new int[num_dim];
-    for(int i=0; i < num_dim; i++) {
-      lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-      lua_pop(L,1);
-    }
-  }
-  lua_pop(L, 1);
-  return v;
-}
-#undef FUNCTION_NAME
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindow);
 
 int sliding_window_iterator_function(lua_State *L) {
   SlidingWindow *obj = lua_toSlidingWindow(L,1);
@@ -102,6 +80,7 @@ static bool check_number(lua_State *L, int i, T &dest) {
 
 //BIND_HEADER_H
 #include "bind_april_io.h"
+#include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"
 #include "matrixFloat.h"
 #include "luabindmacros.h"
@@ -112,11 +91,57 @@ using namespace Basics;
 
 typedef MatrixFloat::sliding_window SlidingWindow;
 
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(SlidingWindow);
+
 namespace Basics {
 
   /// Implements binding functions reusable in different Matrix flavors.
   template<typename T>
   class MatrixBindings {
+    
+    template<typename K>
+    static K lua_to(lua_State *L, int n) {
+      if (!AprilUtils::LuaTable::checkType<K>(L,n)) {
+        ERROR_EXIT1(128, "Incorrect argument type at position %d\n", n);
+      }
+      return AprilUtils::LuaTable::convertTo<K>(L, n);
+    }
+    
+    template<typename K>
+    static K lua_opt(lua_State *L, int n, K default_value) {
+      if (lua_isnil(L, n) || lua_type(L, n) == LUA_TNONE) return default_value;
+      else return lua_to<K>(L,n);
+    }
+
+    template<typename K>
+    static void lua_push(lua_State *L, K obj) {
+      AprilUtils::LuaTable::pushInto(L, obj);
+    }
+
+#define FUNCTION_NAME "read_vector"
+    template<typename K>
+    static K *read_vector(lua_State *L, const char *key, int num_dim, K add) {
+      K *v = 0;
+      lua_getfield(L, 1, key);
+      if (!lua_isnil(L, -1)) {
+        LUABIND_CHECK_PARAMETER(-1, table);
+        int table_len;
+        LUABIND_TABLE_GETN(-1, table_len);
+        if (table_len != num_dim)
+          LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+                          key, num_dim, table_len);
+        v = new K[num_dim];
+        for(int i=0; i < num_dim; i++) {
+          lua_rawgeti(L, -1, i+1);
+          v[i] = lua_to<K>(L,-1) + add;
+          lua_pop(L,1);
+        }
+      }
+      lua_pop(L, 1);
+      return v;
+    }
+#undef FUNCTION_NAME
+    
   public:
 #define BEGIN_METHOD(name)       static int name(lua_State *L, Matrix<T> *obj)
 #define BEGIN_CLASS_METHOD(name) static int name(lua_State *L)
@@ -150,8 +175,7 @@ namespace Basics {
       if (AprilUtils::LuaTable::
           checkType<AprilMath::GPUMirroredMemoryBlock<T>*>(L,argn)) {
         AprilMath::GPUMirroredMemoryBlock<T> *block;
-        block = AprilUtils::LuaTable::
-          convertTo<AprilMath::GPUMirroredMemoryBlock<T>*>(L, argn);
+        block = lua_to<AprilMath::GPUMirroredMemoryBlock<T>*>(L, argn);
         if (dim[0] == -1) dim[0] = block->getSize();
         obj = new Matrix<T>(ndims, dim.get(), block);
       }
@@ -176,7 +200,7 @@ namespace Basics {
               LUABIND_FERROR1("The given table has an invalid value at position"
                               " %d, check table size and its content", i);
             }
-            *it = AprilUtils::LuaTable::convertTo<T>(L, -1);
+            *it = lua_to<T>(L, -1);
             lua_remove(L,-1);
           } // for each matrix position
         } // if lua_istable(L,argn)
@@ -184,7 +208,7 @@ namespace Basics {
           obj = new Matrix<T>(ndims, dim.get());
         }
       } // else { !checkType(L,argn) }
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -198,27 +222,27 @@ namespace Basics {
       if (!strcmp(type,"float")) {
         Matrix<float> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,float>(obj);
-        AprilUtils::LuaTable::pushInto(L, obj2);
+        lua_push(L, obj2);
       }
       else if (!strcmp(type,"bool")) {
         Matrix<bool> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,bool>(obj);
-        AprilUtils::LuaTable::pushInto(L, obj2);
+        lua_push(L, obj2);
       }
       else if (!strcmp(type,"int32")) {
         Matrix<int32_t> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,int32_t>(obj);
-        AprilUtils::LuaTable::pushInto(L, obj2);
+        lua_push(L, obj2);
       }
       else if (!strcmp(type,"double")) {
         Matrix<double> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,double>(obj);
-        AprilUtils::LuaTable::pushInto(L, obj2);
+        lua_push(L, obj2);
       }
       else if (!strcmp(type,"char")) {
         Matrix<char> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,char>(obj);
-        AprilUtils::LuaTable::pushInto(L, obj2);
+        lua_push(L, obj2);
       }
       else {
         LUABIND_FERROR1("Not implemented casting for type %s", type);
@@ -248,7 +272,7 @@ namespace Basics {
       }
       Matrix<T> *new_obj = obj->rewrap(dims.get(), ndims,
                                        clone_if_not_contiguous);
-      AprilUtils::LuaTable::pushInto(L, new_obj);
+      lua_push(L, new_obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -282,10 +306,10 @@ namespace Basics {
           LUABIND_FERROR1("The given table has a no number value at position %d, "
                           "the table could be smaller than matrix size", i);
         }
-        *it = AprilUtils::LuaTable::convertTo<T>(L,-1);
+        *it = lua_to<T>(L,-1);
         lua_remove(L,-1);
       }
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -332,7 +356,7 @@ namespace Basics {
         }
         ret = (*obj)(coords.get(), obj->getNumDim());
       }
-      AprilUtils::LuaTable::pushInto(L, ret);
+      lua_push(L, ret);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -351,7 +375,7 @@ namespace Basics {
           LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
                           v1, obj->getDimSize(0));
         }
-        f = AprilUtils::LuaTable::convertTo<T>(L, obj->getNumDim()+1);
+        f = lua_to<T>(L, obj->getNumDim()+1);
         (*obj)(v1-1) = f;
       }
       else if (obj->getNumDim() == 2) {
@@ -366,7 +390,7 @@ namespace Basics {
           LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
                           v2, obj->getDimSize(1));
         }
-        f = AprilUtils::LuaTable::convertTo<T>(L, obj->getNumDim()+1);
+        f = lua_to<T>(L, obj->getNumDim()+1);
         (*obj)(v1-1, v2-1) = f;
       }
       else {
@@ -379,10 +403,10 @@ namespace Basics {
           }
           coords[i]--;
         }
-        f = AprilUtils::LuaTable::convertTo<T>(L, obj->getNumDim()+1);
+        f = lua_to<T>(L, obj->getNumDim()+1);
         (*obj)(coords.get(), obj->getNumDim()) = f;
       }
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -392,7 +416,7 @@ namespace Basics {
     {
       int raw_pos;
       LUABIND_GET_PARAMETER(1, int, raw_pos);
-      AprilUtils::LuaTable::pushInto(L, (*obj)[raw_pos]);
+      lua_push(L, (*obj)[raw_pos]);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -402,9 +426,9 @@ namespace Basics {
     {
       int raw_pos;
       LUABIND_GET_PARAMETER(1, int, raw_pos);
-      T value = AprilUtils::LuaTable::convertTo<T>(L, 2);      
+      T value = lua_to<T>(L, 2);      
       (*obj)[raw_pos] = value;
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -417,7 +441,7 @@ namespace Basics {
       bool v;
       LUABIND_GET_PARAMETER(1,bool, v);
       obj->setUseCuda(v);
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -488,7 +512,7 @@ namespace Basics {
         }
       }
       Matrix<T> *obj2 = new Matrix<T>(obj, coords.get(), sizes.get(), clone);
-      AprilUtils::LuaTable::pushInto(L, obj2);
+      lua_push(L, obj2);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -501,13 +525,11 @@ namespace Basics {
       LUABIND_CHECK_PARAMETER(1, int);
       LUABIND_CHECK_PARAMETER(2, int);
       int dim, index;
-      Matrix<T> *dest = 0;
       LUABIND_GET_PARAMETER(1, int, dim);
       LUABIND_GET_PARAMETER(2, int, index);
-      int n = lua_gettop(L);
-      if (n == 3) dest = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, 3);
+      Matrix<T> *dest = lua_opt<Matrix<T>*>(L, 3, 0);
       Matrix<T> *obj2 = obj->select(dim-1, index-1, dest);
-      AprilUtils::LuaTable::pushInto(L, obj2);
+      lua_push(L, obj2);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -517,8 +539,8 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       Matrix<T> *m;
-      m = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, 1);
-      AprilUtils::LuaTable::pushInto(L, m->cloneOnlyDims());
+      m = lua_to<Matrix<T>*>(L, 1);
+      lua_push(L, m->cloneOnlyDims());
       return 1;
     }
 #undef FUNCTION_NAME
@@ -529,13 +551,13 @@ namespace Basics {
       int argn;
       argn = lua_gettop(L);
       if (argn == 0) {
-        AprilUtils::LuaTable::pushInto(L, obj->transpose());
+        lua_push(L, obj->transpose());
       }
       else {
         int d1,d2;
         LUABIND_GET_PARAMETER(1, int, d1);
         LUABIND_GET_PARAMETER(2, int, d2);
-        AprilUtils::LuaTable::pushInto(L, obj->transpose(d1-1, d2-1));
+        lua_push(L, obj->transpose(d1-1, d2-1));
       }
       return 1;
     }
@@ -551,8 +573,7 @@ namespace Basics {
       AprilUtils::UniquePtr<int []> stride;
       AprilMath::GPUMirroredMemoryBlock<T> *data;
       lua_getfield(L, 1, "data");
-      data = AprilUtils::LuaTable::
-        convertTo<AprilMath::GPUMirroredMemoryBlock<T>*>(L, -1);
+      data = lua_to<AprilMath::GPUMirroredMemoryBlock<T>*>(L, -1);
       lua_pop(L, 1);
       lua_getfield(L, 1, "offset");
       offset = lua_toint(L, -1);
@@ -579,7 +600,7 @@ namespace Basics {
       lua_pop(L, 1);
       Matrix<T> *obj;
       obj = new Matrix<T>(len, sizes.get(), data, offset, stride.get());
-      AprilUtils::LuaTable::pushInto<Matrix<T>*>(L, obj);
+      lua_push<Matrix<T>*>(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -597,7 +618,7 @@ namespace Basics {
         LUABIND_ERROR("Error happens reading from file stream");
       }
       else {
-        AprilUtils::LuaTable::pushInto<Matrix<T>*>(L, obj);
+        lua_push<Matrix<T>*>(L, obj);
       }
       return 1;
     }
@@ -617,7 +638,7 @@ namespace Basics {
       AprilUtils::SharedPtr<AprilUtils::MMappedDataReader> mmapped_data;
       mmapped_data = new AprilUtils::MMappedDataReader(filename,write,shared);
       Matrix<T> *obj = Matrix<T>::fromMMappedDataReader(mmapped_data.get());
-      AprilUtils::LuaTable::pushInto<Matrix<T>*>(L, obj);
+      lua_push<Matrix<T>*>(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -652,7 +673,7 @@ namespace Basics {
         if (!AprilUtils::LuaTable::checkType<Matrix<T>*>(L, i+1)) {
           LUABIND_FERROR1("Expected a matrix at position: ", i+1);
         }
-        v[i] = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L, i+1);
+        v[i] = lua_to<Matrix<T>*>(L, i+1);
         if (!v[i]->sameDim(obj)) {
           LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
         }
@@ -663,10 +684,10 @@ namespace Basics {
         // copy the Lua function, lua_call will pop this copy
         lua_pushvalue(L, argn);
         // push the self matrix value
-        AprilUtils::LuaTable::pushInto(L, *it);
+        lua_push(L, *it);
         // push the value of the rest of given matrices
         for (int j=0; j<N; ++j) {
-          AprilUtils::LuaTable::pushInto(L, *list_it[j]);
+          lua_push(L, *list_it[j]);
           ++list_it[j];
         }
         // CALL
@@ -676,11 +697,11 @@ namespace Basics {
           if (!AprilUtils::LuaTable::checkType<T>(L, -1)) {
             LUABIND_ERROR("Incorrect returned value type");
           }
-          *it = AprilUtils::LuaTable::convertTo<T>(L, -1);
+          *it = lua_to<T>(L, -1);
         }
         lua_pop(L, 1);
       }
-      AprilUtils::LuaTable::pushInto(L, obj);
+      lua_push(L, obj);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -689,7 +710,7 @@ namespace Basics {
     BEGIN_METHOD(to_index)
     {
       MatrixInt32 *m = AprilMath::MatrixExt::Misc::matNonZeroIndices(obj);
-      AprilUtils::LuaTable::pushInto(L, m);
+      lua_push(L, m);
       return 1;
     }
 #undef FUNCTION_NAME
@@ -699,7 +720,7 @@ namespace Basics {
     {
       Matrix<T> *other;
       float epsilon;
-      other = AprilUtils::LuaTable::convertTo<Matrix<T>*>(L,1);
+      other = lua_to<Matrix<T>*>(L,1);
       LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 0.05f); // 5% error
 #ifdef USE_CUDA
       obj->update();
@@ -715,6 +736,198 @@ namespace Basics {
     }
 #undef FUNCTION_NAME
 
+#define FUNCTION_NAME "add_to_shared_count"
+    BEGIN_METHOD(add_to_shared_count)
+    {
+      unsigned int count;
+      LUABIND_GET_PARAMETER(1,uint,count);
+      obj->addToSharedCount(count);
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "padding_all"
+    BEGIN_METHOD(padding_all)
+    {
+      int padding;
+      LUABIND_GET_PARAMETER(1, int, padding);
+      T default_value = lua_opt(L, 2, T(0.0f));
+      Matrix<T> *result = obj->padding(padding, default_value);
+      lua_push(L, result);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "padding"
+    BEGIN_METHOD(padding)
+    {
+      AprilUtils::UniquePtr<int []> begin_padding, end_padding;
+      LUABIND_CHECK_ARGN(>=,obj->getNumDim()*2);
+      LUABIND_CHECK_ARGN(<=,obj->getNumDim()*2 + 1);
+      begin_padding = new int[obj->getNumDim()];
+      end_padding = new int[obj->getNumDim()];
+      int j=1;
+      for (int i=0; i<obj->getNumDim(); ++i, j+=2) {
+        LUABIND_GET_PARAMETER(j, int, begin_padding[i]);
+        LUABIND_GET_PARAMETER(j+1, int, end_padding[i]);
+      }
+      T default_value = lua_opt(L, j, T(0.0f));
+      Matrix<T> *result = obj->padding(begin_padding.get(),
+                                       end_padding.get(),
+                                       default_value);
+      lua_push(L, result);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "uniform"
+    BEGIN_METHOD(uniform)
+    {
+      int lower, upper;
+      AprilUtils::SharedPtr<Basics::MTRand> random;
+      LUABIND_GET_PARAMETER(1, int, lower);
+      LUABIND_GET_PARAMETER(2, int, upper);
+      LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+      if (lower > upper) {
+        LUABIND_ERROR("First argument must be <= second argument");
+      }
+      if (random == 0) random = new Basics::MTRand();
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
+        *it = static_cast<T>(random->randInt(upper - lower)) + lower;
+      }
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "uniformf"
+    BEGIN_METHOD(uniformf)
+    {
+      T lower = T(0.0f), upper = T(1.0f);
+      AprilUtils::SharedPtr<Basics::MTRand> random;
+
+      LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, float, upper, 1.0f);
+      LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+      if (lower > upper) {
+        LUABIND_ERROR("First argument must be <= second argument");
+      }
+      if (random == 0) random = new Basics::MTRand();
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it) {
+        *it = static_cast<T>(random->rand(upper - lower) + lower);
+      }
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "linspace"
+    BEGIN_METHOD(linspace)
+    {
+      int size_1 = obj->size()-1;
+      T inf = lua_opt(L, 1, T(1.0f));
+      T sup = lua_opt(L, 2, static_cast<T>(size_1+1));
+      int i = 0;
+      T diff = sup-inf;
+      if (diff == size_1) {
+        i = static_cast<int>(inf);
+        for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+          april_assert(i <= static_cast<int>(sup));
+          *it = static_cast<T>(i);
+        }
+      }
+      else {
+        for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+          *it = (diff*i)/size_1 + inf;
+        }
+      }
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+    
+#define FUNCTION_NAME "logspace"
+    BEGIN_METHOD(logspace)
+    {
+      int size = obj->size()-1;
+      T inf  = lua_opt(L, 1, T(1.0f));
+      T sup  = lua_opt(L, 2, T(size+1));
+      T base = lua_opt(L, 3, T(10.0f));
+      int i=0;
+      inf = AprilMath::m_log(inf)/AprilMath::m_log(base);
+      sup = AprilMath::m_log(sup)/AprilMath::m_log(base);
+      T diff = sup-inf;
+      for (typename Matrix<T>::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
+        *it = AprilMath::m_pow(base, (diff*i)/size + inf);
+      }
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "linear"
+    BEGIN_METHOD(linear)
+    {
+      int lower, step;
+      LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
+      int k=lower;
+      for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
+        *it = static_cast<T>(k);
+      }
+      lua_push(L, obj);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "sliding_window"
+    BEGIN_METHOD(sliding_window)
+    {
+      AprilUtils::UniquePtr<int []> sub_matrix_size, offset,
+        step, num_steps, order_step;
+      int argn = lua_gettop(L); // number of arguments
+      const int num_dim = obj->getNumDim();
+      if (argn > 1) {
+        LUABIND_ERROR("incorrect number of arguments");
+      }
+      if (argn == 1) {
+        LUABIND_CHECK_PARAMETER(1, table);
+        check_table_fields(L, 1,
+                           "offset",
+                           "size",
+                           "step",
+                           "numSteps",
+                           "orderStep",
+                           (const char*)0);
+        offset = read_vector<int>(L, "offset", num_dim, 0);
+        sub_matrix_size = read_vector<int>(L, "size", num_dim, 0);
+        step = read_vector<int>(L, "step", num_dim, 0);
+        num_steps = read_vector<int>(L, "numSteps", num_dim, 0);
+        order_step = read_vector<int>(L, "orderStep", num_dim, -1);
+      }
+      typename Matrix<T>::sliding_window *window =
+        new typename Matrix<T>::sliding_window(obj,
+                                               sub_matrix_size.get(),
+                                               offset.get(),
+                                               step.get(),
+                                               num_steps.get(),
+                                               order_step.get());
+      lua_push(L, window);
+      return 1;
+    }
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "adjust_range"
+    BEGIN_METHOD(adjust_range)
+    {
+      T rmin = lua_to<T>(L,1);
+      T rmax = lua_to<T>(L,2);
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matAdjustRange(obj, rmin, rmax));
+      return 1;
+    }
+#undef FUNCTION_NAME
   };
   
 #undef BEGIN_METHOD
@@ -977,7 +1190,6 @@ namespace Basics {
 // Permite salvar una matriz en una tabla lua
 // TODO: Tener en cuenta las dimensiones de la matriz
   {
-    LUABIND_CHECK_ARGN(==, 0);
     LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixFloat, float, *obj);
     LUABIND_INCREASE_NUM_RETURNS(1);
   }
@@ -985,8 +1197,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat contiguous
 {
-  if (obj->getIsContiguous()) LUABIND_RETURN(MatrixFloat, obj);
-  else LUABIND_RETURN(MatrixFloat, obj->clone());
+  LUABIND_RETURN(MatrixFloat, obj->getIsContiguous() ? obj : obj->clone());
 }
 //BIND_END
 
@@ -998,11 +1209,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat diagonalize
 {
-#ifdef USE_CUDA
-  obj->update();
-#endif
-  MatrixFloat *resul = obj->diagonalize();
-  LUABIND_RETURN(MatrixFloat, resul);
+  LUABIND_RETURN(MatrixFloat, obj->diagonalize());
 }
 //BIND_END
 
@@ -1020,9 +1227,7 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat add_to_shared_count
 {
-  unsigned int count;
-  LUABIND_GET_PARAMETER(1,uint,count);
-  obj->addToSharedCount(count);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::add_to_shared_count(L,obj));
 }
 //BIND_END
 
@@ -1034,159 +1239,49 @@ namespace Basics {
 
 //BIND_METHOD MatrixFloat padding_all
 {
-  int padding;
-  LUABIND_GET_PARAMETER(1, int, padding);
-  float default_value;
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, default_value, 0.0f);
-  MatrixFloat *result = obj->padding(padding, default_value);
-  LUABIND_RETURN(MatrixFloat, result);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::padding_all(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat padding
 {
-  AprilUtils::UniquePtr<int []> begin_padding, end_padding;
-  LUABIND_CHECK_ARGN(>=,obj->getNumDim()*2);
-  LUABIND_CHECK_ARGN(<=,obj->getNumDim()*2 + 1);
-  begin_padding = new int[obj->getNumDim()];
-  end_padding = new int[obj->getNumDim()];
-  int j=1;
-  for (int i=0; i<obj->getNumDim(); ++i, j+=2) {
-    LUABIND_GET_PARAMETER(j, int, begin_padding[i]);
-    LUABIND_GET_PARAMETER(j+1, int, end_padding[i]);
-  }
-  float default_value;
-  LUABIND_GET_OPTIONAL_PARAMETER(j, float, default_value, 0.0f);
-  MatrixFloat *result = obj->padding(begin_padding.get(),
-                                     end_padding.get(),
-                                     default_value);
-  LUABIND_RETURN(MatrixFloat, result);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::padding(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat uniform
 {
-  int lower, upper;
-  MTRand *random;
-  LUABIND_GET_PARAMETER(1, int, lower);
-  LUABIND_GET_PARAMETER(2, int, upper);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  
-  if (lower > upper)
-    LUABIND_ERROR("First argument must be <= second argument");
-  if (random == 0) random = new MTRand();
-  IncRef(random);
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-    *it = static_cast<float>(random->randInt(upper - lower)) + lower;
-  }
-  DecRef(random);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::uniform(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat uniformf
 {
-  float lower, upper;
-  MTRand *random;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, upper, 1.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  if (lower > upper)
-    LUABIND_ERROR("First argument must be <= second argument");
-  if (random == 0) random = new MTRand();
-  IncRef(random);
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
-    *it = random->rand(upper - lower) + lower;
-  DecRef(random);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::uniformf(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat linspace
 {
-  int size_1 = obj->size()-1;
-  float inf,sup;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, float, inf, 1.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, static_cast<float>(size_1+1));
-  int i = 0;
-  float diff = sup-inf;
-  if (diff == size_1) {
-    i = static_cast<int>(inf);
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
-      april_assert(i <= static_cast<int>(sup));
-      *it = static_cast<float>(i);
-    }
-  }
-  else {
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i) {
-      *it = (diff*i)/size_1 + inf;
-    }
-  }
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::linspace(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat logspace
 {
-  int size = obj->size()-1;
-  float inf,sup,base;
-  LUABIND_GET_OPTIONAL_PARAMETER(3, float, base, 10.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(1, float, inf, 1.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, size+1);
-  int i=0;
-  inf = logf(inf)/logf(base);
-  sup = logf(sup)/logf(base);
-  float diff = sup-inf;
-  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i)
-    *it = powf(base, (diff*i)/size + inf);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::logspace(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat linear
 {
-  int lower, step;
-  MTRand *random;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
-  int k=lower;
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
-    *it = static_cast<float>(k);
-  }
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::linear(L,obj));
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat sliding_window
 {
-  AprilUtils::UniquePtr<int []> sub_matrix_size, offset, step, num_steps, order_step;
-  int argn = lua_gettop(L); // number of arguments
-  const int num_dim = obj->getNumDim();
-  if (argn > 1)
-    LUABIND_ERROR("incorrect number of arguments");
-  if (argn == 1) {
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1,
-                       "offset",
-                       "size",
-                       "step",
-                       "numSteps",
-                       "orderStep",
-                       (const char*)0);
-    
-    offset = read_vector(L, "offset", num_dim, 0);
-    sub_matrix_size = read_vector(L, "size", num_dim, 0);
-    step = read_vector(L, "step", num_dim, 0);
-    num_steps = read_vector(L, "numSteps", num_dim, 0);
-    order_step = read_vector(L, "orderStep", num_dim, -1);
-  }
-  SlidingWindow *window = new SlidingWindow(obj,
-                                            sub_matrix_size.get(),
-                                            offset.get(),
-                                            step.get(),
-                                            num_steps.get(),
-                                            order_step.get());
-  LUABIND_RETURN(SlidingWindow, window);
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::sliding_window(L,obj));
 }
 //BIND_END
 
@@ -1211,14 +1306,7 @@ namespace Basics {
 /// max].
 //DOC_END
 {
-  float rmin,rmax;
-  LUABIND_CHECK_ARGN(==, 2);
-  LUABIND_CHECK_PARAMETER(1, float);
-  LUABIND_CHECK_PARAMETER(2, float);
-  LUABIND_GET_PARAMETER(1,float,rmin);
-  LUABIND_GET_PARAMETER(2,float,rmax);
-  LUABIND_RETURN(MatrixFloat,
-                 matAdjustRange(obj, rmin, rmax));
+  LUABIND_INCREASE_NUM_RETURNS(MatrixBindings<float>::adjust_range(L,obj));
 }
 //BIND_END
 

@@ -312,7 +312,8 @@ function matrix.ext.repmat(x, ...)
   assert(#arg >= #dim, "Underflow given number of dimensions")
   for i=1,#arg do dim[i] = dim[i] or 1 result_dim[i] = dim[i] * arg[i] end
   local x = x:rewrap(table.unpack(dim))
-  local result = matrix(table.unpack(result_dim))
+  local ctor = class.of(x)
+  local result = ctor(table.unpack(result_dim))
   local result_sw = result:sliding_window{ size=dim, step=dim }
   local mat
   while not result_sw:is_end() do
