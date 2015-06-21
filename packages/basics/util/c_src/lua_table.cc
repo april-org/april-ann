@@ -151,7 +151,13 @@ namespace AprilUtils {
   
   template<>
   bool LuaTable::convertTo<bool>(lua_State *L, int idx) {
-    return lua_toboolean(L, idx);
+    if (lua_isboolean(L, idx)) return lua_toboolean(L, idx);
+    else if (lua_isnil(L, idx)) return false;
+    else if (lua_isnumber(L, idx)) {
+      double n = lua_tonumber(L, idx);
+      return n != 0.0;
+    }
+    else return false;
   }
 
   template<>
@@ -256,9 +262,7 @@ namespace AprilUtils {
   
   template<>
   bool LuaTable::checkType<bool>(lua_State *L, int idx) {
-    UNUSED_VARIABLE(L);
-    UNUSED_VARIABLE(idx);
-    return true;
+    return lua_isboolean(L,idx) || lua_isnumber(L,idx);
   }
   
   template<>

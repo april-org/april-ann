@@ -23,6 +23,8 @@
 #define CMATH_OVERLOADS_H
 #include <cfloat>
 #include <cmath>
+#include <cstdlib>
+
 #include "complex_number.h"
 #include "cuda_headers.h"
 #include "error_print.h"
@@ -227,6 +229,15 @@ namespace AprilMath {
     };
     template<> struct m_abs<ComplexF> {
       APRIL_CUDA_EXPORT float operator()(const ComplexF &v) const { return v.abs(); }
+    };
+    template<> struct m_abs<char> {
+      APRIL_CUDA_EXPORT char operator()(const char &v) const { return v; }
+    };
+    template<> struct m_abs<int32_t> {
+      APRIL_CUDA_EXPORT int32_t operator()(const int32_t &v) const { return ::abs(v); }
+    };
+    template<> struct m_abs<bool> {
+      APRIL_CUDA_EXPORT bool operator()(const bool &v) const { return v; }
     };
   }
   
