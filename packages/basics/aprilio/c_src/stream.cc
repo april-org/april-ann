@@ -42,17 +42,17 @@ namespace AprilIO {
   StreamBuffer::~StreamBuffer() {
   }
 
-  void StreamBuffer::trimInBuffer(const char *delim) {
+  void StreamBuffer::trimInBuffer(const char *delim, size_t max) {
     if (delim != 0) {
-      size_t pos, buf_len;
+      size_t pos, buf_len, total=0;
       // size_t delim_len = strlen(delim);
       do {
         const char *buf = getInBuffer(buf_len, SIZE_MAX, 0, false);
         // pos = AprilUtils::strnspn(buf, buf_len, delim, delim_len);
         pos = 0;
-        while(pos < buf_len && strchr(delim, buf[pos]) != 0) ++pos;
+        while(pos < buf_len && strchr(delim, buf[pos]) != 0 && total < max) ++pos,++total;
         moveInBuffer(pos);
-      } while(pos == buf_len && buf_len > 0);
+      } while(pos == buf_len && buf_len > 0 && total < max);
     }
   }
   
@@ -69,7 +69,6 @@ namespace AprilIO {
                            const char *delim, bool keep_delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
-    if (!keep_delim) trimInBuffer(delim);
     while( this->good() &&
            !dest->hasError() &&
            dest_len < max_size &&
@@ -83,6 +82,7 @@ namespace AprilIO {
       // delim true condition
       if (has_delim || len != in_buffer_available_size) break;
     }
+    if (!keep_delim) trimInBuffer(delim, 1);
     return dest_len;
   }
   
@@ -90,7 +90,6 @@ namespace AprilIO {
                            bool keep_delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
-    trimInBuffer(delim);
     while( dest_len < max_size &&
            this->good() &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim,
@@ -103,6 +102,7 @@ namespace AprilIO {
       // delim true condition
       if (has_delim || buf_len != in_buffer_available_size) break;
     }
+    if (!keep_delim) trimInBuffer(delim, 1);
     return dest_len;
   }
 

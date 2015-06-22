@@ -36,6 +36,10 @@ namespace AprilMath {
 #endif
 
   template<>
+  const char *GPUMirroredMemoryBlock<char>::luaCtorName() const {
+    return "mathcore.block.char.read";
+  }
+  template<>
   const char *GPUMirroredMemoryBlock<float>::luaCtorName() const {
     return "mathcore.block.float.read";
   }

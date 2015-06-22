@@ -530,7 +530,7 @@ namespace AprilMath {
     }
   
     static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
-    void forceUpdate(bool use_cuda) {
+    void forceSync(bool use_cuda) {
 #ifdef USE_CUDA
       if (isConst()) {
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
@@ -546,7 +546,7 @@ namespace AprilMath {
 #endif
     }
 
-    void forceUpdate(bool use_cuda) const {
+    void forceSync(bool use_cuda) const {
 #ifdef USE_CUDA
       if (isConst()) {
         ERROR_EXIT(128, "Impossible to write in a const memory block\n");
@@ -877,6 +877,8 @@ namespace AprilMath {
   };
 
   template<>
+  const char *GPUMirroredMemoryBlock<char>::luaCtorName() const;
+  template<>
   const char *GPUMirroredMemoryBlock<float>::luaCtorName() const;
   template<>
   const char *GPUMirroredMemoryBlock<double>::luaCtorName() const;
@@ -888,6 +890,7 @@ namespace AprilMath {
   const char *GPUMirroredMemoryBlock<bool>::luaCtorName() const;
   
   // typedef for referring to float memory blocks
+  typedef GPUMirroredMemoryBlock<char>     CharGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
   typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
@@ -896,6 +899,7 @@ namespace AprilMath {
 
 } // namespace AprilMath
 
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::CharGPUMirroredMemoryBlock);
 DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::FloatGPUMirroredMemoryBlock);
 DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::DoubleGPUMirroredMemoryBlock);
 DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilMath::Int32GPUMirroredMemoryBlock);

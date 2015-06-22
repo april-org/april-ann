@@ -161,7 +161,7 @@ namespace AprilMath {
 #ifdef USE_CUDA
         // Forces execution of memory copy from GPU to PPAL or viceversa (if
         // needed), avoiding race conditions on the following.
-        input->getRawDataAccess()->forceUpdate(cuda_flag);
+        input->getRawDataAccess()->forceSync(cuda_flag);
 #endif
 #ifndef NO_OMP
         // This if controls the execution using OMP only when the number of threads
@@ -267,8 +267,8 @@ namespace AprilMath {
 #ifdef USE_CUDA
         // Forces execution of memory copy from GPU to PPAL or viceversa (if
         // needed), avoiding race conditions on the following.
-        input1->getRawDataAccess()->forceUpdate(cuda_flag);
-        input2->getRawDataAccess()->forceUpdate(cuda_flag);
+        input1->getRawDataAccess()->forceSync(cuda_flag);
+        input2->getRawDataAccess()->forceSync(cuda_flag);
 #endif
 #ifndef NO_OMP
         // This if controls the execution using OMP only when the number of threads
@@ -396,9 +396,9 @@ namespace AprilMath {
 #ifdef USE_CUDA
         // Forces execution of memory copy from GPU to PPAL or viceversa (if
         // needed), avoiding race conditions on the following.
-        input1->getRawDataAccess()->forceUpdate(cuda_flag);
-        input2->getRawDataAccess()->forceUpdate(cuda_flag);
-        input3->getRawDataAccess()->forceUpdate(cuda_flag);
+        input1->getRawDataAccess()->forceSync(cuda_flag);
+        input2->getRawDataAccess()->forceSync(cuda_flag);
+        input3->getRawDataAccess()->forceSync(cuda_flag);
 #endif
 #ifndef NO_OMP
         // This if controls the execution using OMP only when the number of threads

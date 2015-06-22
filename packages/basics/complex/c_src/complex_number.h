@@ -412,8 +412,8 @@ namespace AprilUtils {
   convertTo<AprilMath::ComplexF>(lua_State *L, int idx);
   
   template<> void LuaTable::
-  pushInto<const AprilMath::ComplexF &>(lua_State *L,
-                                        const AprilMath::ComplexF &value);
+  pushInto<AprilMath::ComplexF>(lua_State *L,
+                                AprilMath::ComplexF value);
 
   template<> bool LuaTable::
   checkType<AprilMath::ComplexF>(lua_State *L, int idx);

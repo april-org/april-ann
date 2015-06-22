@@ -277,7 +277,7 @@ namespace Basics {
         ++non_zero_size;
     }
     allocate_memory(non_zero_size);
-    float *values_ptr    = values->getPPALForWrite();
+    T *values_ptr    = values->getPPALForWrite();
     int *indices_ptr     = indices->getPPALForWrite();
     int *first_index_ptr = first_index->getPPALForWrite();
     int current=0;

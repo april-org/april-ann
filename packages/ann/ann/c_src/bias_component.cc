@@ -49,8 +49,8 @@ namespace ANN {
     if (input->getNumDim() < 2)
       ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input->getNumDim(), name.c_str());
-    if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
-				      name.c_str());
+    if (!bias_vector) ERROR_EXIT1(129, "Not built component %s\n",
+                                  name.c_str());
     unsigned int bunch_size = input->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output = input->clone();

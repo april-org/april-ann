@@ -248,7 +248,7 @@ namespace AprilIO {
     ////////////////////////////
 
   private:
-    void trimInBuffer(const char *delim);
+    void trimInBuffer(const char *delim, size_t max=SIZE_MAX);
     
     /**
      * @brief Returns a pointer to the current input buffer with at most

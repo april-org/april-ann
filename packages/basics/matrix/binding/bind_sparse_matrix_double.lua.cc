@@ -24,10 +24,11 @@
 #include "bind_april_io.h"
 #include "bind_matrix.h"
 #include "bind_matrix_int32.h"
+#include "bind_matrix_double.h"
 #include "bind_mathcore.h"
 #include "cmath_overloads.h"
-#include "luabindmacros.h" // for lua_pushfloat and lua_pushint
-#include "luabindutil.h"   // for lua_pushfloat and lua_pushint
+#include "luabindmacros.h" // for lua_pushdouble and lua_pushint
+#include "luabindutil.h"   // for lua_pushdouble and lua_pushint
 
 #include "matrix_ext.h"
 using namespace AprilMath::MatrixExt::BLAS;
@@ -38,18 +39,18 @@ using namespace AprilMath::MatrixExt::LAPACK;
 using namespace AprilMath::MatrixExt::Operations;
 using namespace AprilMath::MatrixExt::Reductions;
 
-IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SparseMatrixFloat);
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(SparseMatrixDouble);
 
 namespace Basics {
-  int sparseMatrixFloatIteratorFunction(lua_State *L) {
-    SparseMatrixFloatIterator *obj = lua_toSparseMatrixFloatIterator(L,1);
+  int sparseMatrixDoubleIteratorFunction(lua_State *L) {
+    SparseMatrixDoubleIterator *obj = lua_toSparseMatrixDoubleIterator(L,1);
     if (obj->it == obj->m->end()) {
       lua_pushnil(L);
       return 1;
     }
     int c0=0,c1=0;
     obj->it.getCoords(c0,c1);
-    lua_pushfloat(L,*(obj->it));
+    lua_pushdouble(L,*(obj->it));
     lua_pushint(L,c0+1);
     lua_pushint(L,c1+1);
     ++(obj->it);
@@ -63,20 +64,20 @@ namespace Basics {
 
 #include "bind_april_io.h"
 #include "referenced.h"
-#include "sparse_matrixFloat.h"
+#include "sparse_matrixDouble.h"
 #include "utilLua.h"
 
 namespace Basics {
 
-  class SparseMatrixFloatIterator : public Referenced {
+  class SparseMatrixDoubleIterator : public Referenced {
   public:
-    SparseMatrixFloat *m;
-    SparseMatrixFloat::iterator it;
+    SparseMatrixDouble *m;
+    SparseMatrixDouble::iterator it;
     //
-    SparseMatrixFloatIterator(SparseMatrixFloat *m) : m(m), it(m->begin()) {
+    SparseMatrixDoubleIterator(SparseMatrixDouble *m) : m(m), it(m->begin()) {
       IncRef(m);
     }
-    virtual ~SparseMatrixFloatIterator() { DecRef(m); }
+    virtual ~SparseMatrixDoubleIterator() { DecRef(m); }
   };
 
 #define MAKE_READ_SPARSE_MATRIX_LUA_METHOD(MatrixType, Type) do {       \
@@ -108,42 +109,42 @@ using namespace Basics;
 
 //BIND_END
 
-//BIND_LUACLASSNAME SparseMatrixFloatIterator matrix.sparse.iterator
-//BIND_CPP_CLASS SparseMatrixFloatIterator
+//BIND_LUACLASSNAME SparseMatrixDoubleIterator matrixDouble.sparse.iterator
+//BIND_CPP_CLASS SparseMatrixDoubleIterator
 
-//BIND_CONSTRUCTOR SparseMatrixFloatIterator
+//BIND_CONSTRUCTOR SparseMatrixDoubleIterator
 {
-  LUABIND_ERROR("Use iterate() method in matrix.sparse object");
+  LUABIND_ERROR("Use iterate() method in matrixDouble.sparse object");
 }
 //BIND_END
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SparseMatrixFloat matrix.sparse
-//BIND_CPP_CLASS SparseMatrixFloat
+//BIND_LUACLASSNAME SparseMatrixDouble matrixDouble.sparse
+//BIND_CPP_CLASS SparseMatrixDouble
 //BIND_LUACLASSNAME Serializable aprilio.serializable
-//BIND_SUBCLASS_OF SparseMatrixFloat Serializable
+//BIND_SUBCLASS_OF SparseMatrixDouble Serializable
 
-//BIND_CONSTRUCTOR SparseMatrixFloat
+//BIND_CONSTRUCTOR SparseMatrixDouble
 {
-  if (lua_isMatrixFloat(L,1)) {
-    float near_zero;
-    MatrixFloat *m;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
-    obj = SparseMatrixFloat::fromDenseMatrix(m, CSR_FORMAT, near_zero);
+  if (lua_isMatrixDouble(L,1)) {
+    double near_zero;
+    MatrixDouble *m;
+    LUABIND_GET_PARAMETER(1, MatrixDouble, m);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, double, near_zero, NEAR_ZERO);
+    obj = SparseMatrixDouble::fromDenseMatrix(m, CSR_FORMAT, near_zero);
   }
   else {
     int rows,cols;
-    FloatGPUMirroredMemoryBlock *values;
+    DoubleGPUMirroredMemoryBlock *values;
     Int32GPUMirroredMemoryBlock *indices;
     Int32GPUMirroredMemoryBlock *first_index;
     bool sort;
     LUABIND_GET_PARAMETER(1, int, rows);
-    if (lua_isFloatGPUMirroredMemoryBlock(L,2)) {
+    if (lua_isDoubleGPUMirroredMemoryBlock(L,2)) {
       cols = rows;
       rows = 1;
-      LUABIND_GET_PARAMETER(2, FloatGPUMirroredMemoryBlock, values);
+      LUABIND_GET_PARAMETER(2, DoubleGPUMirroredMemoryBlock, values);
       LUABIND_GET_PARAMETER(3, Int32GPUMirroredMemoryBlock, indices);
       LUABIND_GET_OPTIONAL_PARAMETER(4, Int32GPUMirroredMemoryBlock,
 				     first_index, 0);
@@ -151,41 +152,41 @@ using namespace Basics;
     }
     else {
       LUABIND_GET_PARAMETER(2, int, cols);
-      LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
+      LUABIND_GET_PARAMETER(3, DoubleGPUMirroredMemoryBlock, values);
       LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
       LUABIND_GET_OPTIONAL_PARAMETER(5, Int32GPUMirroredMemoryBlock,
 				     first_index, 0);
       LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     }
-    obj = new SparseMatrixFloat(rows, cols,
+    obj = new SparseMatrixDouble(rows, cols,
 				values, indices, first_index,
 				CSR_FORMAT,
 				sort);
   }
-  LUABIND_RETURN(SparseMatrixFloat,obj);
+  LUABIND_RETURN(SparseMatrixDouble,obj);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat csc
+//BIND_CLASS_METHOD SparseMatrixDouble csc
 {
-  SparseMatrixFloat *obj;
-  if (lua_isMatrixFloat(L,1)) {
-    MatrixFloat *m;
-    float near_zero;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
-    obj = SparseMatrixFloat::fromDenseMatrix(m, CSC_FORMAT, near_zero);
+  SparseMatrixDouble *obj;
+  if (lua_isMatrixDouble(L,1)) {
+    MatrixDouble *m;
+    double near_zero;
+    LUABIND_GET_PARAMETER(1, MatrixDouble, m);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, double, near_zero, NEAR_ZERO);
+    obj = SparseMatrixDouble::fromDenseMatrix(m, CSC_FORMAT, near_zero);
   }
   else {
     int rows,cols;
-    FloatGPUMirroredMemoryBlock *values;
+    DoubleGPUMirroredMemoryBlock *values;
     Int32GPUMirroredMemoryBlock *indices;
     Int32GPUMirroredMemoryBlock *first_index;
     bool sort;
     LUABIND_GET_PARAMETER(1, int, rows);
-    if (lua_isFloatGPUMirroredMemoryBlock(L,2)) {
+    if (lua_isDoubleGPUMirroredMemoryBlock(L,2)) {
       cols = 1;
-      LUABIND_GET_PARAMETER(2, FloatGPUMirroredMemoryBlock, values);
+      LUABIND_GET_PARAMETER(2, DoubleGPUMirroredMemoryBlock, values);
       LUABIND_GET_PARAMETER(3, Int32GPUMirroredMemoryBlock, indices);
       LUABIND_GET_OPTIONAL_PARAMETER(4, Int32GPUMirroredMemoryBlock,
 				     first_index, 0);
@@ -193,34 +194,34 @@ using namespace Basics;
     }
     else {
       LUABIND_GET_PARAMETER(2, int, cols);
-      LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
+      LUABIND_GET_PARAMETER(3, DoubleGPUMirroredMemoryBlock, values);
       LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
       LUABIND_GET_OPTIONAL_PARAMETER(5, Int32GPUMirroredMemoryBlock,
 				     first_index, 0);
       LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     }
-    obj = new SparseMatrixFloat(rows, cols,
+    obj = new SparseMatrixDouble(rows, cols,
 				values, indices, first_index,
 				CSC_FORMAT,
 				sort);
   }
-  LUABIND_RETURN(SparseMatrixFloat,obj);
+  LUABIND_RETURN(SparseMatrixDouble,obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat size
+//BIND_METHOD SparseMatrixDouble size
 {
   LUABIND_RETURN(int, obj->size());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat non_zero_size
+//BIND_METHOD SparseMatrixDouble non_zero_size
 {
   LUABIND_RETURN(int, obj->nonZeroSize());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat get_reference_string
+//BIND_METHOD SparseMatrixDouble get_reference_string
 {
   char buff[128];
   sprintf(buff,"%p data= %p %p %p",
@@ -232,7 +233,7 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat fromMMap
+//BIND_CLASS_METHOD SparseMatrixDouble fromMMap
 {
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 3);
@@ -245,13 +246,13 @@ using namespace Basics;
   AprilUtils::MMappedDataReader *mmapped_data;
   mmapped_data = new AprilUtils::MMappedDataReader(filename,write,shared);
   IncRef(mmapped_data);
-  SparseMatrixFloat *obj = SparseMatrixFloat::fromMMappedDataReader(mmapped_data);
+  SparseMatrixDouble *obj = SparseMatrixDouble::fromMMappedDataReader(mmapped_data);
   DecRef(mmapped_data);
-  LUABIND_RETURN(SparseMatrixFloat,obj);
+  LUABIND_RETURN(SparseMatrixDouble,obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat toMMap
+//BIND_METHOD SparseMatrixDouble toMMap
 {
   LUABIND_CHECK_ARGN(==, 1);
   const char *filename;
@@ -264,122 +265,122 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat get
+//BIND_METHOD SparseMatrixDouble get
 {
   int row,col;
   LUABIND_GET_PARAMETER(1, int, row);
   LUABIND_GET_PARAMETER(2, int, col);
-  float v = (*obj)(row-1,col-1);
-  LUABIND_RETURN(float, v);
+  double v = (*obj)(row-1,col-1);
+  LUABIND_RETURN(double, v);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat raw_get
+//BIND_METHOD SparseMatrixDouble raw_get
 {
   int idx;
   LUABIND_GET_PARAMETER(1, int, idx);
   if (idx < 1 || idx > obj->nonZeroSize())
     LUABIND_FERROR2("Index out-of-bounds [%d,%d]", 1, obj->nonZeroSize());
-  SparseMatrixFloat::const_iterator it(obj->iteratorAtRawIndex(idx-1));
-  LUABIND_RETURN(float, *it);
+  SparseMatrixDouble::const_iterator it(obj->iteratorAtRawIndex(idx-1));
+  LUABIND_RETURN(double, *it);
   int c0=0,c1=0;
   it.getCoords(c0,c1);
-  LUABIND_RETURN(float, *it);
+  LUABIND_RETURN(double, *it);
   LUABIND_RETURN(int, c0+1);
   LUABIND_RETURN(int, c1+1);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat raw_set
+//BIND_METHOD SparseMatrixDouble raw_set
 {
-  float value;
+  double value;
   int idx;
   LUABIND_GET_PARAMETER(1, int, idx);
-  LUABIND_GET_PARAMETER(2, float, value);
+  LUABIND_GET_PARAMETER(2, double, value);
   if (idx < 1 || idx > obj->nonZeroSize())
     LUABIND_FERROR2("Index out-of-bounds [%d,%d]", 1, obj->nonZeroSize());
   (*obj)[idx] = value;
-  LUABIND_RETURN(SparseMatrixFloat, obj);
+  LUABIND_RETURN(SparseMatrixDouble, obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat iterate
+//BIND_METHOD SparseMatrixDouble iterate
 {
   LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sparseMatrixFloatIteratorFunction);
-  LUABIND_RETURN(SparseMatrixFloatIterator,new SparseMatrixFloatIterator(obj));
+  LUABIND_RETURN(cfunction,sparseMatrixDoubleIteratorFunction);
+  LUABIND_RETURN(SparseMatrixDoubleIterator,new SparseMatrixDoubleIterator(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat fill
+//BIND_METHOD SparseMatrixDouble fill
 {
   LUABIND_CHECK_ARGN(==, 1);
-  float value;
-  if (lua_isSparseMatrixFloat(L, 1)) {
-    SparseMatrixFloat *aux;
-    LUABIND_GET_PARAMETER(1,SparseMatrixFloat,aux);
+  double value;
+  if (lua_isSparseMatrixDouble(L, 1)) {
+    SparseMatrixDouble *aux;
+    LUABIND_GET_PARAMETER(1,SparseMatrixDouble,aux);
     for (int i=0; i<aux->getNumDim(); ++i)
       if (aux->getDimSize(i) != 1)
-	LUABIND_ERROR("Needs a float or a matrix with only one element\n");
+	LUABIND_ERROR("Needs a double or a matrix with only one element\n");
     value = *(aux->begin());
   }
   else {
-    LUABIND_CHECK_PARAMETER(1, float);
-    LUABIND_GET_PARAMETER(1,float,value);
+    LUABIND_CHECK_PARAMETER(1, double);
+    LUABIND_GET_PARAMETER(1,double,value);
   }
-  LUABIND_RETURN(SparseMatrixFloat,
+  LUABIND_RETURN(SparseMatrixDouble,
                  
                  matFill(obj,value));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat zeros
+//BIND_METHOD SparseMatrixDouble zeros
 //DOC_BEGIN
-// void zeros(float value)
+// void zeros(double value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matZeros(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat ones
+//BIND_METHOD SparseMatrixDouble ones
 //DOC_BEGIN
-// void onex(float value)
+// void onex(double value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matOnes(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat get_use_cuda
+//BIND_METHOD SparseMatrixDouble get_use_cuda
 {
   LUABIND_RETURN(bool, obj->getCudaFlag());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat to_dense
+//BIND_METHOD SparseMatrixDouble to_dense
 {
-  LUABIND_RETURN(MatrixFloat, obj->toDense());
+  LUABIND_RETURN(MatrixDouble, obj->toDense());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat set_use_cuda
+//BIND_METHOD SparseMatrixDouble set_use_cuda
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, bool);
   bool v;
   LUABIND_GET_PARAMETER(1,bool, v);
   obj->setUseCuda(v);
-  LUABIND_RETURN(SparseMatrixFloat, obj);
+  LUABIND_RETURN(SparseMatrixDouble, obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat get_sparse_format
+//BIND_METHOD SparseMatrixDouble get_sparse_format
 {
   if (obj->getSparseFormat() == CSR_FORMAT)
     LUABIND_RETURN(string, "csr");
@@ -387,7 +388,7 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat dim
+//BIND_METHOD SparseMatrixDouble dim
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
@@ -402,7 +403,7 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat slice
+//BIND_METHOD SparseMatrixDouble slice
 {
   LUABIND_CHECK_ARGN(>=,2);
   LUABIND_CHECK_ARGN(<=,3);
@@ -425,20 +426,20 @@ using namespace Basics;
     if (coords[i] < 0 || sizes[i] < 1 ||
 	sizes[i]+coords[i] > obj->getDimSize(i))
       LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
-  SparseMatrixFloat *obj2 = new SparseMatrixFloat(obj, coords, sizes, clone);
-  LUABIND_RETURN(SparseMatrixFloat, obj2);
+  SparseMatrixDouble *obj2 = new SparseMatrixDouble(obj, coords, sizes, clone);
+  LUABIND_RETURN(SparseMatrixDouble, obj2);
   delete[] coords;
   delete[] sizes;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat clone
+//BIND_METHOD SparseMatrixDouble clone
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
   int argn;
   argn = lua_gettop(L); // number of arguments
-  SparseMatrixFloat *obj2;
+  SparseMatrixDouble *obj2;
   if (argn == 0) obj2 = obj->clone();
   else {
     const char *sparse;
@@ -449,100 +450,100 @@ using namespace Basics;
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
     obj2 = obj->clone(format);
   }
-  LUABIND_RETURN(SparseMatrixFloat,obj2);
+  LUABIND_RETURN(SparseMatrixDouble,obj2);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat transpose
+//BIND_METHOD SparseMatrixDouble transpose
 {
-  LUABIND_RETURN(SparseMatrixFloat, obj->transpose());
+  LUABIND_RETURN(SparseMatrixDouble, obj->transpose());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat isfinite
+//BIND_METHOD SparseMatrixDouble isfinite
 {
   LUABIND_CHECK_ARGN(==, 0);
   bool resul=true;
-  for (SparseMatrixFloat::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
+  for (SparseMatrixDouble::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
     //if (!isfinite(obj->data[i])) resul = 0;
     if ((*it) - (*it) != 0.0f) resul = false;
   LUABIND_RETURN(boolean,resul);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat diag
+//BIND_CLASS_METHOD SparseMatrixDouble diag
 {
-  SparseMatrixFloat *obj;
+  SparseMatrixDouble *obj;
   int argn = lua_gettop(L); // number of arguments
-  if (lua_isMatrixFloat(L,1)) {
-    MatrixFloat *m;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, m);
+  if (lua_isMatrixDouble(L,1)) {
+    MatrixDouble *m;
+    LUABIND_GET_PARAMETER(1, MatrixDouble, m);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
     SPARSE_FORMAT format = CSR_FORMAT;
     if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
-    obj = SparseMatrixFloat::diag(m,format);
+    obj = SparseMatrixDouble::diag(m,format);
   }
-  else if (lua_isFloatGPUMirroredMemoryBlock(L,1)) {
-    FloatGPUMirroredMemoryBlock *block;
-    LUABIND_GET_PARAMETER(1, FloatGPUMirroredMemoryBlock, block);
+  else if (lua_isDoubleGPUMirroredMemoryBlock(L,1)) {
+    DoubleGPUMirroredMemoryBlock *block;
+    LUABIND_GET_PARAMETER(1, DoubleGPUMirroredMemoryBlock, block);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
     SPARSE_FORMAT format = CSR_FORMAT;
     if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
-    obj = SparseMatrixFloat::diag(block,format);
+    obj = SparseMatrixDouble::diag(block,format);
   }
   else if (lua_istable(L,1)) {
     int N;
     LUABIND_TABLE_GETN(1, N);
-    FloatGPUMirroredMemoryBlock *block = new FloatGPUMirroredMemoryBlock(N);
+    DoubleGPUMirroredMemoryBlock *block = new DoubleGPUMirroredMemoryBlock(N);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
     SPARSE_FORMAT format = CSR_FORMAT;
     if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
-    float *mem = block->getPPALForWrite();
+    double *mem = block->getPPALForWrite();
     lua_pushnil(L);
     int i=0;
     while(lua_next(L, 1) != 0) {
-      mem[i++] = lua_tofloat(L, -1); 
+      mem[i++] = lua_todouble(L, -1); 
       lua_pop(L, 1);
     }
-    obj = SparseMatrixFloat::diag(block,format);
+    obj = SparseMatrixDouble::diag(block,format);
   }
   else {
     int N;
-    float v;
+    double v;
     LUABIND_GET_PARAMETER(1, int, N);
-    LUABIND_GET_PARAMETER(2, float, v);
+    LUABIND_GET_PARAMETER(2, double, v);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(3, string, sparse, "csr");
     SPARSE_FORMAT format = CSR_FORMAT;
     if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);  
-    obj = SparseMatrixFloat::diag(N,v,format);
+    obj = SparseMatrixDouble::diag(N,v,format);
   }
-  LUABIND_RETURN(SparseMatrixFloat, obj);
+  LUABIND_RETURN(SparseMatrixDouble, obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat min
+//BIND_METHOD SparseMatrixDouble min
   {
     LUABIND_CHECK_ARGN(>=,0);
     LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
     if (argn > 0) {
       int dim;
-      MatrixFloat *dest;
+      MatrixDouble *dest;
       MatrixInt32 *argmin;
       LUABIND_GET_PARAMETER(1, int, dim);
-      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixDouble, dest, 0);
       LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmin, 0);
       int *aux = 0;
       if (argmin == 0) {
@@ -555,7 +556,7 @@ using namespace Basics;
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, 
+      LUABIND_RETURN(MatrixDouble, 
                      matMin(obj, dim-1, dest, argmin));
       LUABIND_RETURN(MatrixInt32, argmin);
       DecRef(argmin);
@@ -563,7 +564,7 @@ using namespace Basics;
     }
     else {
       int c0, c1;
-      LUABIND_RETURN(float, 
+      LUABIND_RETURN(double, 
                      matMin(obj, c0, c1));
       LUABIND_RETURN(int, c0+1);
       LUABIND_RETURN(int, c1+1);
@@ -571,17 +572,17 @@ using namespace Basics;
   }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat max
+//BIND_METHOD SparseMatrixDouble max
   {
     LUABIND_CHECK_ARGN(>=,0);
     LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
     if (argn > 0) {
       int dim;
-      MatrixFloat *dest;
+      MatrixDouble *dest;
       MatrixInt32 *argmax;
       LUABIND_GET_PARAMETER(1, int, dim);
-      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixDouble, dest, 0);
       LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmax, 0);
       int *aux = 0;
       if (argmax == 0) {
@@ -594,7 +595,7 @@ using namespace Basics;
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, 
+      LUABIND_RETURN(MatrixDouble, 
                      matMax(obj, dim-1, dest, argmax));
       LUABIND_RETURN(MatrixInt32, argmax);
       DecRef(argmax);
@@ -602,7 +603,7 @@ using namespace Basics;
     }
     else {
       int c0, c1;
-      LUABIND_RETURN(float, 
+      LUABIND_RETURN(double, 
                      matMax(obj, c0, c1));
       LUABIND_RETURN(int, c0+1);
       LUABIND_RETURN(int, c1+1);
@@ -610,176 +611,176 @@ using namespace Basics;
   }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat equals
+//BIND_METHOD SparseMatrixDouble equals
 {
-  SparseMatrixFloat *other;
+  SparseMatrixDouble *other;
   float epsilon;
-  LUABIND_GET_PARAMETER(1, SparseMatrixFloat, other);
+  LUABIND_GET_PARAMETER(1, SparseMatrixDouble, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
   LUABIND_RETURN(boolean, 
                  matEquals(obj, other, epsilon));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat sqrt
+//BIND_METHOD SparseMatrixDouble sqrt
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matSqrt(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat pow
+//BIND_METHOD SparseMatrixDouble pow
 {
-  float value;
+  double value;
   LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, float, value);
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_GET_PARAMETER(1, double, value);
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matPow(obj,value));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat tan
+//BIND_METHOD SparseMatrixDouble tan
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matTan(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat tanh
+//BIND_METHOD SparseMatrixDouble tanh
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matTanh(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat atan
+//BIND_METHOD SparseMatrixDouble atan
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matAtan(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat atanh
+//BIND_METHOD SparseMatrixDouble atanh
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matAtanh(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat sin
+//BIND_METHOD SparseMatrixDouble sin
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matSin(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat sinh
+//BIND_METHOD SparseMatrixDouble sinh
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matSinh(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat asin
+//BIND_METHOD SparseMatrixDouble asin
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matAsin(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat asinh
+//BIND_METHOD SparseMatrixDouble asinh
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matAsinh(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat abs
+//BIND_METHOD SparseMatrixDouble abs
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matAbs(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat sign
+//BIND_METHOD SparseMatrixDouble sign
 {
-  LUABIND_RETURN(SparseMatrixFloat, 
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matSign(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat sum
+//BIND_METHOD SparseMatrixDouble sum
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 2);
   int argn = lua_gettop(L); // number of arguments
   if (argn >= 1 && !lua_isnil(L,1)) {
     int dim;
-    MatrixFloat *dest;
+    MatrixDouble *dest;
     LUABIND_GET_PARAMETER(1, int, dim);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixDouble, dest, 0);
     if (dim < 1 || dim > obj->getNumDim())
       LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 		      dim, obj->getNumDim());
-    LUABIND_RETURN(MatrixFloat,
+    LUABIND_RETURN(MatrixDouble,
                    
                    matSum(obj, dim-1, dest));
   }
-  else LUABIND_RETURN(float, matSum(obj));
+  else LUABIND_RETURN(double, matSum(obj));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat copy
+//BIND_METHOD SparseMatrixDouble copy
 {
   int argn;
   LUABIND_CHECK_ARGN(==, 1);
-  SparseMatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-  LUABIND_RETURN(SparseMatrixFloat, 
+  SparseMatrixDouble *mat;
+  LUABIND_GET_PARAMETER(1, SparseMatrixDouble, mat);
+  LUABIND_RETURN(SparseMatrixDouble, 
                  matCopy(obj, mat));
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat scal
+//BIND_METHOD SparseMatrixDouble scal
   {
     LUABIND_CHECK_ARGN(==, 1);
-    float value;
-    LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(SparseMatrixFloat,
+    double value;
+    LUABIND_GET_PARAMETER(1, double, value);
+    LUABIND_RETURN(SparseMatrixDouble,
                    matScal(obj, value));
   }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat div
+//BIND_METHOD SparseMatrixDouble div
   {
     LUABIND_CHECK_ARGN(==, 1);
-    float value;
-    LUABIND_GET_PARAMETER(1, float, value);
-    LUABIND_RETURN(SparseMatrixFloat,
+    double value;
+    LUABIND_GET_PARAMETER(1, double, value);
+    LUABIND_RETURN(SparseMatrixDouble,
                    matDiv(obj, value));
   }
 //BIND_END
  
-//BIND_METHOD SparseMatrixFloat norm2
+//BIND_METHOD SparseMatrixDouble norm2
   {
-    LUABIND_RETURN(float, matNorm2(obj));
+    LUABIND_RETURN(double, matNorm2(obj));
   }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat get_shared_count
+//BIND_METHOD SparseMatrixDouble get_shared_count
 {
   LUABIND_RETURN(uint, obj->getSharedCount());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat reset_shared_count
+//BIND_METHOD SparseMatrixDouble reset_shared_count
 {
   obj->resetSharedCount();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
+  LUABIND_RETURN(SparseMatrixDouble, obj);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat add_to_shared_count
+//BIND_METHOD SparseMatrixDouble add_to_shared_count
 {
   unsigned int count;
   LUABIND_GET_PARAMETER(1,uint,count);
@@ -787,19 +788,19 @@ using namespace Basics;
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat prune_subnormal_and_check_normal
+//BIND_METHOD SparseMatrixDouble prune_subnormal_and_check_normal
 {
   obj->pruneSubnormalAndCheckNormal();
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat as_vector
+//BIND_METHOD SparseMatrixDouble as_vector
 {
-  LUABIND_RETURN(SparseMatrixFloat, obj->asVector());
+  LUABIND_RETURN(SparseMatrixDouble, obj->asVector());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat is_diagonal
+//BIND_METHOD SparseMatrixDouble is_diagonal
 {
   LUABIND_RETURN(bool, obj->isDiagonal());
 }
@@ -808,20 +809,20 @@ using namespace Basics;
 
 //// MATRIX SERIALIZATION ////
 
-//BIND_CLASS_METHOD SparseMatrixFloat read
+//BIND_CLASS_METHOD SparseMatrixDouble read
 {
-  MAKE_READ_SPARSE_MATRIX_LUA_METHOD(SparseMatrixFloat, float);
+  MAKE_READ_SPARSE_MATRIX_LUA_METHOD(SparseMatrixDouble, double);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat num_dim
+//BIND_METHOD SparseMatrixDouble num_dim
 {
   LUABIND_RETURN(int, 2);
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat select
+//BIND_METHOD SparseMatrixDouble select
 {
   LUABIND_ERROR("Not implemented method in sparse matrix instances");
 }
@@ -829,19 +830,19 @@ using namespace Basics;
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_METHOD SparseMatrixFloat values
+//BIND_METHOD SparseMatrixDouble values
 {
-  LUABIND_RETURN(FloatGPUMirroredMemoryBlock, obj->getRawValuesAccess());
+  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock, obj->getRawValuesAccess());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat indices
+//BIND_METHOD SparseMatrixDouble indices
 {
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawIndicesAccess());
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat first_index
+//BIND_METHOD SparseMatrixDouble first_index
 {
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj->getRawFirstIndexAccess());
 }
@@ -849,29 +850,29 @@ using namespace Basics;
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME DOKBuilderSparseMatrixFloat matrix.sparse.builders.dok
-//BIND_CPP_CLASS DOKBuilderSparseMatrixFloat
+//BIND_LUACLASSNAME DOKBuilderSparseMatrixDouble matrixDouble.sparse.builders.dok
+//BIND_CPP_CLASS DOKBuilderSparseMatrixDouble
 
-//BIND_CONSTRUCTOR DOKBuilderSparseMatrixFloat
+//BIND_CONSTRUCTOR DOKBuilderSparseMatrixDouble
 {
-  LUABIND_RETURN(DOKBuilderSparseMatrixFloat, new DOKBuilderSparseMatrixFloat());
+  LUABIND_RETURN(DOKBuilderSparseMatrixDouble, new DOKBuilderSparseMatrixDouble());
 }
 //BIND_END
 
-//BIND_METHOD DOKBuilderSparseMatrixFloat set
+//BIND_METHOD DOKBuilderSparseMatrixDouble set
 {
   unsigned int row, col;
-  float value;
+  double value;
   LUABIND_GET_PARAMETER(1, uint, row);
   LUABIND_GET_PARAMETER(2, uint, col);
-  LUABIND_GET_PARAMETER(3, float, value);
+  LUABIND_GET_PARAMETER(3, double, value);
   if (row == 0 || col == 0) LUABIND_ERROR("Indices should be > 0");
   obj->insert(row-1, col-1, value);
-  LUABIND_RETURN(DOKBuilderSparseMatrixFloat, obj);
+  LUABIND_RETURN(DOKBuilderSparseMatrixDouble, obj);
 }
 //BIND_END
 
-//BIND_METHOD DOKBuilderSparseMatrixFloat build
+//BIND_METHOD DOKBuilderSparseMatrixDouble build
 {
   unsigned int d0, d1;
   SPARSE_FORMAT format = CSR_FORMAT;
@@ -887,7 +888,7 @@ using namespace Basics;
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
     }
   }
-  LUABIND_RETURN(SparseMatrixFloat, obj->build(d0, d1, format));
+  LUABIND_RETURN(SparseMatrixDouble, obj->build(d0, d1, format));
 }
 //BIND_END
 

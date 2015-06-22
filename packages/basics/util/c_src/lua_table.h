@@ -140,6 +140,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(name, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(name);
+      }
     private:
       LuaTable *table;
       const char * const name;
@@ -175,6 +179,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(n, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(n);
+      }
     private:
       LuaTable *table;
       const int n;
@@ -205,6 +213,10 @@ namespace AprilUtils {
       T opt(const T def_value) const {
         return table->opt<T>(name, def_value);
       }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(name);
+      }
     private:
       const LuaTable *table;
       const char * const name;
@@ -234,6 +246,10 @@ namespace AprilUtils {
       template<typename T>
       T opt(const T def_value) const {
         return table->opt<T>(n, def_value);
+      }
+      template<typename T>
+      bool is() const {
+        return table->checkNilOrType<T>(n);
       }
     private:
       const LuaTable *table;
@@ -583,6 +599,7 @@ namespace AprilUtils {
   };
   
   // Basic data types specializations.
+  template<> char LuaTable::convertTo<char>(lua_State *L, int idx);
   template<> uint32_t LuaTable::convertTo<uint32_t>(lua_State *L, int idx);
   template<> int32_t LuaTable::convertTo<int32_t>(lua_State *L, int idx);
   template<> float LuaTable::convertTo<float>(lua_State *L, int idx);
@@ -591,7 +608,8 @@ namespace AprilUtils {
   template<> const char *LuaTable::convertTo<const char *>(lua_State *L, int idx);
   template<> string LuaTable::convertTo<string>(lua_State *L, int idx);
   template<> LuaTable LuaTable::convertTo<LuaTable>(lua_State *L, int idx);
-  
+
+  template<> void LuaTable::pushInto<char>(lua_State *L, char value);
   template<> void LuaTable::pushInto<uint32_t>(lua_State *L, uint32_t value);
   template<> void LuaTable::pushInto<int32_t>(lua_State *L, int32_t value);
   template<> void LuaTable::pushInto<float>(lua_State *L, float value);
@@ -604,6 +622,7 @@ namespace AprilUtils {
                                                    const char *value);
   template<> void LuaTable::pushInto<LuaTable>(lua_State *L, LuaTable value);
 
+  template<> bool LuaTable::checkType<char>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<uint32_t>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<int32_t>(lua_State *L, int idx);
   template<> bool LuaTable::checkType<float>(lua_State *L, int idx);

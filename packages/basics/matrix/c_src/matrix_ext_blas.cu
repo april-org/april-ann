@@ -632,6 +632,16 @@ namespace AprilMath {
       template SparseMatrix<float> *matCopy(SparseMatrix<float> *,
                                             const SparseMatrix<float> *);
       template float matNorm2(SparseMatrix<float> *);
+
+      template float matNorm2(SparseMatrix<double> *);
+
+      
+      template SparseMatrix<double> *matCopy(SparseMatrix<double> *,
+                                             const SparseMatrix<double> *);
+      
+      
+      template SparseMatrix<ComplexF> *matCopy(SparseMatrix<ComplexF> *,
+                                               const SparseMatrix<ComplexF> *);
       
       
 

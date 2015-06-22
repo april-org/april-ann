@@ -616,7 +616,7 @@ namespace Basics {
     Matrix<T>* clone() const;
     /// Shallow copy
     Matrix<T>* shallowCopy();
-  
+
     /// Number values check
     void pruneSubnormalAndCheckNormal();
   
@@ -687,16 +687,16 @@ namespace Basics {
   
     /**** LAPACK OPERATIONS ****/
     
-    // UPDATE GPU OR PPAL IF NEEDED
-    void update() {
+    // SYNC GPU OR PPAL IF NEEDED
+    void sync() {
 #ifdef USE_CUDA
-      data->forceUpdate(use_cuda);
+      data->forceSync(use_cuda);
 #endif
     }
 
-    void update() const {
+    void sync() const {
 #ifdef USE_CUDA
-      data->forceUpdate(use_cuda);
+      data->forceSync(use_cuda);
 #endif
     }
   

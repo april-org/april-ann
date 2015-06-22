@@ -23,6 +23,8 @@
 #define CMATH_OVERLOADS_H
 #include <cfloat>
 #include <cmath>
+#include <cstdlib>
+
 #include "complex_number.h"
 #include "cuda_headers.h"
 #include "error_print.h"
@@ -74,6 +76,10 @@ namespace AprilMath {
     static T max() { return T(); }
     /// Returns a NaN value.
     static T quiet_NaN() { return T(); }
+    /// Zero value.
+    static T zero() { return T(0.0f); }
+    /// One value.
+    static T one() { return T(1.0f); }
   };
   
   template<> char Limits<char>::lowest();
@@ -135,6 +141,8 @@ namespace AprilMath {
   template<> bool Limits<ComplexF>::hasInfinity();
   template<> ComplexF Limits<ComplexF>::infinity();
   template<> ComplexF Limits<ComplexF>::quiet_NaN();
+  template<> ComplexF Limits<ComplexF>::zero();
+  template<> ComplexF Limits<ComplexF>::one();
 
   ///////////////// NAN CHECK /////////////////
 
@@ -221,6 +229,15 @@ namespace AprilMath {
     };
     template<> struct m_abs<ComplexF> {
       APRIL_CUDA_EXPORT float operator()(const ComplexF &v) const { return v.abs(); }
+    };
+    template<> struct m_abs<char> {
+      APRIL_CUDA_EXPORT char operator()(const char &v) const { return v; }
+    };
+    template<> struct m_abs<int32_t> {
+      APRIL_CUDA_EXPORT int32_t operator()(const int32_t &v) const { return ::abs(v); }
+    };
+    template<> struct m_abs<bool> {
+      APRIL_CUDA_EXPORT bool operator()(const bool &v) const { return v; }
     };
   }
   
@@ -724,6 +741,15 @@ namespace AprilMath {
       }
     };
 
+    /// is_finite map operation.
+    template<typename T>
+    struct m_is_finite {
+      /// Returns \f$ (a-a) == 0.0 \f$
+      APRIL_CUDA_EXPORT bool operator()(const T &a) const {
+        return (a-a) == Limits<T>::zero();
+      }
+    };
+
     /// Division map operation.
     template<typename T>
     struct m_div {
@@ -797,6 +823,9 @@ namespace AprilMath {
   /// @see Functors::m_add
   template<typename T> APRIL_CUDA_EXPORT
   T m_add(const T &a, const T &b) { return Functors::m_add<T>()(a,b); }
+  /// @see Functors::m_is_finite
+  template<typename T> APRIL_CUDA_EXPORT
+  bool m_is_finite(const T &a) { return Functors::m_is_finite<T>()(a); }
   /// @see Functors::m_div
   template<typename T> APRIL_CUDA_EXPORT
   T m_div(const T &a, const T &b) { return Functors::m_div<T>()(a,b); }

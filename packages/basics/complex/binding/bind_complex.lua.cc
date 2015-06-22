@@ -65,8 +65,8 @@ namespace AprilUtils {
   }
   
   template<> void LuaTable::
-  pushInto<const AprilMath::ComplexF &>(lua_State *L,
-                                        const AprilMath::ComplexF &value) {
+  pushInto<AprilMath::ComplexF>(lua_State *L,
+                                AprilMath::ComplexF value) {
     lua_pushComplexF(L, value);
   }
 
