@@ -170,7 +170,6 @@ namespace AprilMath {
       
       template Matrix<bool> *matLT(const Matrix<double> *, const double &,
                                    Matrix<bool> *);
-
       template Matrix<bool> *matLT(const Matrix<double> *,
                                    const Matrix<double> *,
                                    Matrix<bool> *);
@@ -186,8 +185,26 @@ namespace AprilMath {
       template Matrix<bool> *matNEQ(const Matrix<double> *,
                                     const Matrix<double> *,
                                     Matrix<bool> *);
+
       
-      
+      template Matrix<bool> *matLT(const Matrix<int32_t> *, const int32_t &,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matLT(const Matrix<int32_t> *,
+                                   const Matrix<int32_t> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matGT(const Matrix<int32_t> *, const int32_t &, Matrix<bool> *);
+      template Matrix<bool> *matGT(const Matrix<int32_t> *,
+                                   const Matrix<int32_t> *, Matrix<bool> *);
+      template Matrix<bool> *matEQ(const Matrix<int32_t> *, const int32_t &, Matrix<bool> *);
+      template Matrix<bool> *matEQ(const Matrix<int32_t> *,
+                                   const Matrix<int32_t> *,
+                                   Matrix<bool> *);
+      template Matrix<bool> *matNEQ(const Matrix<int32_t> *, const int32_t &,
+                                    Matrix<bool> *);
+      template Matrix<bool> *matNEQ(const Matrix<int32_t> *,
+                                    const Matrix<int32_t> *,
+                                    Matrix<bool> *);
+
     } // namespace Boolean
         
   } // namespace MatrixExt

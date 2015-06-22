@@ -140,7 +140,7 @@ namespace ANN {
         weights = w;
       }
       else {
-        if (weights == 0) {
+        if (!weights) {
           weights = Connections::build(1, weights_size);
         }
         weights_dict.put<MatrixFloat*>(getWeightsName(), weights.get());

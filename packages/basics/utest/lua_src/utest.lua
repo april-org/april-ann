@@ -188,9 +188,7 @@ utest.test = function(name, test_func)
 end
 --
 utest.select_tests = function(arg)
-  if #arg > 0 then selected_tests = table.invert(arg)
-  else selected_tests = {}
-  end
+  if #arg > 0 then selected_tests = table.invert(arg) end
 end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })

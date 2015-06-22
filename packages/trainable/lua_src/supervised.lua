@@ -958,7 +958,6 @@ trainable_supervised_trainer_methods.grad_check_step =
         local loss_b = loss:compute_loss(self.ann_component:forward(input,true),
                                          target)
         w:raw_set(w:offset() + i-1, orig_w)
-        w:update()
         local g = (loss_b - loss_a) / (2*epsilon)
         local ann_g = ann_grads:raw_get(i-1)*ratio
         if verbose then

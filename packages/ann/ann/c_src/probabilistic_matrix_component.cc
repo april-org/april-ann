@@ -269,7 +269,7 @@ namespace ANN {
   }
 
   void ProbabilisticMatrixANNComponent::copyWeights(AprilUtils::LuaTable &weights_dict) {
-    if (weights_mat == 0) {
+    if (!weights_mat) {
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
     }

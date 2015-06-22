@@ -454,7 +454,7 @@ namespace AprilMath {
 #ifdef USE_CUDA
           // Forces execution of memory copy from GPU to PPAL or viceversa (if
           // needed), avoiding race conditions on the following.
-          input->getRawDataAccess()->forceUpdate(cuda_flag);
+          input->getRawDataAccess()->forceSync(cuda_flag);
 #endif
 #pragma omp parallel for reduction(+:result) firstprivate(span_it)
           for (int i=0; i<N; ++i) {

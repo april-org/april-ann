@@ -83,6 +83,12 @@ namespace AprilUtils {
      * @brief Destructor.
      */
     ~WeakPtr() { }
+
+    /// True if the pointer is not empty.
+    operator bool()   { return !empty(); }
+    
+    /// True if the pointer is empty.
+    bool operator !() { return  empty(); }
     
     /**
      * @brief Dereferencing, returns the pointer itself.

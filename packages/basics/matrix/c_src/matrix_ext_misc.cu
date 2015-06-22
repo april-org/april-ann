@@ -296,10 +296,10 @@ namespace AprilMath {
       Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,
                                                  Basics::Matrix<int32_t> *dest) {
         AprilUtils::SharedPtr<Matrix<T> > sq_input = input->constSqueeze();
-        if (input->getNumDim() != 1) {
+        if (sq_input->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 matrix\n");
         }
-        int non_zeros = input->size() - matCount(input, T(0.0));
+        int non_zeros = sq_input->size() - matCount(sq_input.get(), T(0.0));
         if (non_zeros == 0) return 0;
         if (dest != 0) {
           if (dest->size() != non_zeros) {
@@ -311,8 +311,8 @@ namespace AprilMath {
         }
         int k=0;
         Basics::Matrix<int32_t>::iterator dest_it = dest->begin();
-        for (typename Basics::Matrix<T>::const_iterator it = input->begin();
-             it != input->end(); ++it) {
+        for (typename Basics::Matrix<T>::const_iterator it = sq_input->begin();
+             it != sq_input->end(); ++it) {
           ++k; // first index is 1, to be compatible with Lua
           if (*it != T(0.0)) {
             april_assert(dest_it != dest->end());
