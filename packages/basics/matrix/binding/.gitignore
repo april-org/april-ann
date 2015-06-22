@@ -1,0 +1,6 @@
+bind_matrix.lua.cc
+bind_matrix_bool.lua.cc
+bind_matrix_char.lua.cc
+bind_matrix_complex_float.lua.cc
+bind_matrix_double.lua.cc
+bind_matrix_int32.lua.cc
