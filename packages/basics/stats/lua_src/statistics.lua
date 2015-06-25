@@ -1131,6 +1131,31 @@ stats.boot.percentile =
                             table.unpack(percentile))
   end
 
+stats.boot.pvalue =
+  april_doc{
+    class = "function",
+    summary = "Computes one-sided p-value for a given pivot in a bootstrap sample",
+    description = {
+      "This function returns the one-sided p-value of a given pivot, that is, the",
+      "probability of the sample to be greater or equal than the pivot.",
+    },
+    params = {
+      "The result of stats.boot function.",
+      "The pivot [optional], by default it is 0.0",
+      "The statistic index for which you want compute the percentile [optional], by default it is 1",
+    },
+    outputs = {
+      "The one-sided p-value",
+    },
+  } ..
+  function(data, pivot, index)
+    assert(data, "Needs a data argument as first argument")
+    local ge_pivot = data:select(2, index or 1):lt(pivot or 0.0):count_zeros()
+    return (1+ge_pivot) / (data:dim(1)+1)
+  end
+
+----------------------------------------------------------------------------
+
 stats.percentile =
   april_doc{
     class = "function",
