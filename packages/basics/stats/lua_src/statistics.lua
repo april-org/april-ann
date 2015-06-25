@@ -1064,7 +1064,6 @@ local function boot(self,params,...)
   local ok,msg = xpcall(parallel_foreach, debug.traceback,
                         ncores, repetitions, resample)
   result = result:clone()
-  os.remove(tmpname)
   if not ok then error(msg) end
   if params.verbose then fprintf(io.stderr, " done\n") end
   return result
