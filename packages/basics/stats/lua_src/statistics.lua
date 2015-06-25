@@ -1024,7 +1024,7 @@ local function boot(self,params,...)
   local rnd         = params.random or random(seed)
   local tsize       = type(size)
   local k           = params.k
-  local result      = matrix(repetitions, k):zeros()
+  local result      = matrix.MMapped(repetitions, k):zeros()
   assert(resample > 0.0 and resample <= 1.0, "Incorrect resample value")
   assert(tsize == "number" or tsize == "table",
          "Needs a 'size' field with a number or a table of numbers")
@@ -1038,9 +1038,6 @@ local function boot(self,params,...)
   -- resample function executed in parallel using parallel_foreach
   local last_i = 0
   local rnd_matrix = function(sz,rsmpls) return matrixInt32(rsmpls):uniform(1,sz,rnd) end
-  local tmpname = os.tmpname()
-  result:toMMap(tmpname)
-  result = matrix.fromMMap(tmpname)
   local resample = function(i, id)
     collectgarbage("collect")
     -- this loop allows to synchronize the random number generator, allowing to

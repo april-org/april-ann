@@ -395,7 +395,7 @@ namespace AprilMath {
 #endif
 #ifndef NO_POOL
       PoolListType &l = (*pool_lists)[size];
-      if (l.empty()) {
+      if (l.empty() || use_mmap_allocation) {
         if (!use_mmap_allocation) {
           char_mem = AprilUtils::aligned_malloc<char>(size);
 #ifdef POOL_DEBUG
@@ -466,7 +466,9 @@ namespace AprilMath {
             AprilUtils::aligned_free(char_mem);
 #endif
           }
-          else munmap(mem_ppal, size);
+          else {
+            munmap(mem_ppal, size);
+          }
         }
       }
       if (mem_gpu != 0) {
@@ -530,6 +532,8 @@ namespace AprilMath {
     }
   
     static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
+    static bool getUseMMapAllocation() { return use_mmap_allocation; }
+    
     void forceSync(bool use_cuda) {
 #ifdef USE_CUDA
       if (isConst()) {

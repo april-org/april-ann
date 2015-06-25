@@ -164,6 +164,15 @@ namespace Basics {
     
 #define FUNCTION_NAME "matrix binding"
     
+    BEGIN_CLASS_METHOD(MMapped)
+    {
+      bool aux = AprilMath::GPUMirroredMemoryBlockBase::getUseMMapAllocation();
+      AprilMath::GPUMirroredMemoryBlockBase::setUseMMapAllocation(true);
+      int n = MatrixBindings<T>::constructor(L);
+      AprilMath::GPUMirroredMemoryBlockBase::setUseMMapAllocation(aux);
+      return n;
+    }
+
     BEGIN_CLASS_METHOD(constructor)
     {
       if (typeid(T) == typeid(char) && lua_type(L,1) == LUA_TSTRING) { // for matrixChar case

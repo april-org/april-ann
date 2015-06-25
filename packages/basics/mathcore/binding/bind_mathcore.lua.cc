@@ -135,6 +135,12 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_FUNCTION mathcore.get_mmap_allocation
+{
+  LUABIND_RETURN(bool, GPUMirroredMemoryBlockBase::getUseMMapAllocation());
+}
+//BIND_END
+
 //BIND_FUNCTION mathcore.set_max_pool_size
 {
   int max_pool_size;
@@ -153,6 +159,12 @@ namespace AprilMath {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, bool, v);
   GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = v;
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.get_use_cuda_default
+{
+  LUABIND_RETURN(bool, GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT);
 }
 //BIND_END
 
