@@ -63,6 +63,7 @@ local matrix_methods = {
     "linear", "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "min", "max", "equals", "clamp",
+    "copy",
     "masked_fill", "masked_copy",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
@@ -94,6 +95,7 @@ local matrix_methods = {
     "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "equals",
+    "copy",
     "toMMap",
     "data", "convert_to",
   },
@@ -107,6 +109,7 @@ local matrix_methods = {
     "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "equals",
+    "copy",
     "toMMap",
     "data", "convert_to",
     "to_index",
@@ -178,7 +181,7 @@ local function generate_binding(data,
 
       f:write("///////////////////////////////////////////////////////////\n\n")
       for _,name in ipairs(methods[T] or {}) do
-        assert(not generated[name])
+        assert(not generated[name], string.format("Duplicated entry %s.%s", MATRIX_Lua, name))
         f:write((method_binding:format(MATRIX_T, name, T, name)))
         generated[name] = true
       end
