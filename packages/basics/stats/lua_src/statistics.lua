@@ -1038,6 +1038,9 @@ local function boot(self,params,...)
   -- resample function executed in parallel using parallel_foreach
   local last_i = 0
   local rnd_matrix = function(sz,rsmpls) return matrixInt32(rsmpls):uniform(1,sz,rnd) end
+  local tmpname = os.tmpname()
+  result:toMMap(tmpname)
+  result = matrix.fromMMap(tmpname)
   local resample = function(i, id)
     collectgarbage("collect")
     -- this loop allows to synchronize the random number generator, allowing to
@@ -1061,9 +1064,6 @@ local function boot(self,params,...)
       io.stderr:flush()
     end
   end
-  local tmpname = os.tmpname()
-  result:toMMap(tmpname)
-  result = matrix.fromMMap(tmpname)
   local ok,msg = xpcall(parallel_foreach, debug.traceback,
                         ncores, repetitions, resample)
   result = result:clone()
