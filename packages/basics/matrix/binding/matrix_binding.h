@@ -818,7 +818,7 @@ namespace Basics {
     BEGIN_METHOD(linspace)
     {
       int size_1 = obj->size()-1;
-      T inf = lua_opt(L, 1, AprilMath::Limits<T>::one()));
+      T inf = lua_opt(L, 1, AprilMath::Limits<T>::one());
       T sup = lua_opt(L, 2, static_cast<T>(size_1+1));
       int i = 0;
       T diff = sup-inf;
