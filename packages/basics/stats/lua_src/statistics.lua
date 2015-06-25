@@ -985,6 +985,7 @@ april_set_doc(stats.boot,
                     "and computes statistics (k>=1 statistics) over",
                     "the sample.",
 		  },
+                  k = "Expected number of returned values in statistic function [optional], by default it is 1",
 		  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
                   seed = "A random seed [optional]",
@@ -992,7 +993,7 @@ april_set_doc(stats.boot,
                   ["..."] = "Second and beyond parameters are extra arguments for statistic function.",
 		},
 		outputs = {
-		  "A table with the k statistics for every repetition."
+		  "A matrix with Rxk, being R repetitions."
 		},
 })
 
@@ -1004,6 +1005,7 @@ local function boot(self,params,...)
       resample    = { mandatory = false, type_match = "number", default = 1 },
       R           = { type_match = "number",   mandatory = true },
       statistic   = { type_match = "function", mandatory = true },
+      k           = { type_match = "number", mandatory = false, default = 1 },
       verbose     = { mandatory = false },
       ncores      = { mandatory = false, type_match = "number", default = 1 },
       seed        = { mandatory = false, type_match = "number" },
@@ -1021,6 +1023,8 @@ local function boot(self,params,...)
   local seed        = params.seed
   local rnd         = params.random or random(seed)
   local tsize       = type(size)
+  local k           = params.k
+  local result      = matrix(repetitions, k):zeros()
   assert(resample > 0.0 and resample <= 1.0, "Incorrect resample value")
   assert(tsize == "number" or tsize == "table",
          "Needs a 'size' field with a number or a table of numbers")
@@ -1048,13 +1052,23 @@ local function boot(self,params,...)
     local sample = iterator.zip(iterator(size),
                                 iterator(resamples)):map(rnd_matrix):table()
     local r = table.pack( statistic(multiple_unpack(sample, extra)) )
+    april_assert(#r == k,
+                 "Unexpected number of returned values in statistic, expected %d, found %d",
+                 k, #r)
+    result[i]:copy_from_table(r)
     if (not id or id == 0) and params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
       io.stderr:flush()
     end
-    return r
   end
-  local result = parallel_foreach(ncores, repetitions, resample)
+  local tmpname = os.tmpname()
+  result:toMMap(tmpname)
+  result = matrix.fromMMap(tmpname)
+  local ok,msg = xpcall(parallel_foreach, debug.traceback,
+                        ncores, repetitions, resample)
+  result = result:clone()
+  os.remove(tmpname)
+  if not ok then error(msg) end
   if params.verbose then fprintf(io.stderr, " done\n") end
   return result
 end
@@ -1116,30 +1130,9 @@ stats.boot.percentile =
   } ..
   -- returns the percentile
   function(data, percentile, index)
-    local percentile,index  = percentile or 0.95, index or 1
-    if type(percentile) ~= "table" then percentile = { percentile } end
-    local aux = iterator(ipairs(data)):select(2):field(index):table()
-    table.sort(aux)
-    local result_tbl = {}
-    for _,v in ipairs(percentile) do
-      assert(v >= 0.0 and v <= 1.0,
-             "Incorrect percentile value, it must be in range [0,1]")
-      local N = #data
-      assert(index > 0 and index <= #data[1])
-      local pos = (N+1)*v
-      local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
-      local result
-      if pos_floor == 0 then
-        result = aux[1]
-      elseif pos_floor >= N then
-        result = aux[#aux]
-      else
-        local dec = pos - pos_floor
-        result = aux[pos_floor] + dec * (aux[pos_ceil] - aux[pos_floor])
-      end
-      result_tbl[#result_tbl + 1] = result
-    end
-    return table.unpack(result_tbl)
+    if type(percentile) ~= "table" then percentile= { percentile } end
+    return stats.percentile(data:select(2, index or 1),
+                            table.unpack(percentile))
   end
 
 stats.percentile =

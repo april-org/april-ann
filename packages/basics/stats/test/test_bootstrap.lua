@@ -7,14 +7,14 @@ local errors = matrix(iterator(range(1,1000)):map(function()return rnd:randNorm(
 T("BootstrapTest",
   function()
     local boot_result = stats.boot{
-      size=errors:size(), R=1000, seed=1234, verbose=true,
+      size=errors:size(), R=1000, seed=1234, verbose=true, k=2,
       statistic = function(sample)
         local s = errors:index(1, sample)
         local var,mean = stats.var(s)
         return mean,var
       end
     }
-    table.sort(boot_result, function(a,b) return a[1]<b[1] end)
+    local boot_result = boot_result:index(1, boot_result:select(2,1):order())
     iterator(io.lines(base_dir.."test_bootstrap-output.log")):
       map(string.tokenize):
       enumerate():
@@ -25,13 +25,14 @@ T("BootstrapTest",
     --
     local boot_result = stats.boot{
       size=errors:size(), R=1000, random=random(1234), ncores=2, verbose=true,
+      k=2,
       statistic = function(sample)
         local s = errors:index(1, sample)
         local var,mean = stats.var(s)
         return mean,var
       end
     }
-    table.sort(boot_result, function(a,b) return a[1]<b[1] end)
+    local boot_result = boot_result:index(1, boot_result:select(2,1):order())
     iterator(io.lines(base_dir.."test_bootstrap-output.log")):
       map(string.tokenize):
       enumerate():
