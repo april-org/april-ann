@@ -1317,6 +1317,12 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(cinv)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::matDiv(obj, T(1.0)));
+      return 1;
+    }
+
     BEGIN_METHOD(sign)
     {
       lua_push(L, AprilMath::MatrixExt::Operations::matSign(obj));
