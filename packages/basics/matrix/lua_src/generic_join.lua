@@ -1,7 +1,7 @@
 -- GENERIC JOIN FUNCTION
 matrix.__generic__ = matrix.__generic__ or {}
 
-matrix.__generic__.__make_generic_join__ = function(constructor)
+matrix.__generic__.__make_generic_join__ = function()
   return function(dim, ...)
     local arg  = table.pack(...)
     if type(arg[1]) == "table" then
@@ -9,6 +9,7 @@ matrix.__generic__.__make_generic_join__ = function(constructor)
       arg = arg[1]
     end
     assert(#arg > 0, "At least one matrix is needed")
+    local ctor = class.of(arg[1])
     local size = arg[1]:dim()
     -- ERROR CHECK
     assert(dim >= 1 and dim <= #size,
@@ -28,8 +29,8 @@ matrix.__generic__.__make_generic_join__ = function(constructor)
       end
     end
     -- JOIN
-    local outm = constructor(table.unpack(size))
-    local first = matrix(#size):ones():toTable()
+    local outm = ctor(table.unpack(size))
+    local first = iterator.duplicate(1):take(#size):table()
     for i=1,#arg do
       local m = arg[i]
       local d = m:dim()

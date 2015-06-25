@@ -408,6 +408,11 @@ namespace AprilMath {
       Basics::Matrix<T> *matScal(Basics::Matrix<T> *obj, const T value,
                                  Basics::Matrix<T> *dest = 0);
 
+      template <>
+      Basics::Matrix<int32_t> *matScal(Basics::Matrix<int32_t> *obj,
+                                       const int32_t value,
+                                       Basics::Matrix<int32_t> *dest);
+
       /**
        * @brief Computes \f$ v \cdot x \f$ for every element of the given matrix.
        *
@@ -461,6 +466,16 @@ namespace AprilMath {
                                 Basics::Matrix<T> *dest=0);
 
       /**
+       * @brief Computes \f$ \frac{x}{v} \f$ for every element x in the matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template <typename T>
+      Basics::Matrix<T> *matIDiv(Basics::Matrix<T> *obj, const T &value,
+                                 Basics::Matrix<T> *dest=0);
+
+      /**
        * @brief Computes a component-wise division of two matrices.
        *
        * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
@@ -498,7 +513,7 @@ namespace AprilMath {
                                        const Basics::Matrix<bool> *mask,
                                        const Basics::Matrix<T> *obj2,
                                        Basics::Matrix<T> *dest=0);
-
+      
     } // namespace Operations
     
   } // namespace MatrixExt

@@ -1566,6 +1566,22 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(idiv)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      if (lua_is<Matrix<T>*>(L, 1)) {
+        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matDiv(obj, other));
+      }
+      else {
+        T value = lua_to<T>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matIDiv(obj, value));
+      }
+      return 1;
+    }
+
     BEGIN_METHOD(norm2)
     {
 #ifdef USE_CUDA

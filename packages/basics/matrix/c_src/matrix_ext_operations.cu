@@ -349,6 +349,13 @@ namespace AprilMath {
       }
 
       template <typename T>
+      Matrix<T> *matIDiv(Matrix<T> *obj, const T &value,
+                         Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<T,T>(obj, m_curried_idiv<T>(value), dest);
+      }
+
+      template <typename T>
       Basics::Matrix<T> *matDiv(Basics::Matrix<T> *obj,
                                 const Basics::Matrix<T> *other,
                                 Basics::Matrix<T> *dest) {
@@ -405,6 +412,18 @@ namespace AprilMath {
         return MatrixScalarMap3<T,bool,T,T>(obj1, mask, obj2,
                                             maskedCopyOp<T>(), dest);
       }
+      
+      //////////////// integer versions ///////////////////
+      template <>
+      Matrix<int32_t> *matScal(Matrix<int32_t> *obj, const int32_t value,
+                         Matrix<int32_t> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<int32_t,int32_t>(obj,
+                                                 AprilMath::
+                                                 m_curried_mul<int32_t>(value),
+                                                 dest);
+      }
+      ////////////////////////////////////////////////////
       
       template Matrix<float> *matPlogp(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matLog(Matrix<float> *, Matrix<float> *);
@@ -502,8 +521,21 @@ namespace AprilMath {
                                              Matrix<double> *);
 
 
+
+      template Matrix<int32_t> *matScal(Matrix<int32_t> *, const int32_t,
+                                        Matrix<int32_t> *);
+      template Matrix<int32_t> *matCmul(Matrix<int32_t> *,
+                                        const Matrix<int32_t> *,
+                                        Matrix<int32_t> *);
       template Matrix<int32_t> *matClamp(Matrix<int32_t> *, const int32_t,
                                          const int32_t, Matrix<int32_t> *);
+      template Matrix<int32_t> *matScalarAdd(Matrix<int32_t> *, const int32_t &,
+                                             Matrix<int32_t> *);
+      template Matrix<int32_t> *matIDiv(Matrix<int32_t> *, const int32_t &,
+                                        Matrix<int32_t> *);
+      template Matrix<int32_t> *matDiv(Matrix<int32_t> *,
+                                       const Matrix<int32_t> *,
+                                       Matrix<int32_t> *);
       template Matrix<int32_t> *matMaskedFill(Matrix<int32_t> *,
                                               const Matrix<bool> *,
                                               const int32_t &,

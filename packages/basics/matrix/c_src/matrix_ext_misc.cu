@@ -429,6 +429,10 @@ namespace AprilMath {
                                              Matrix<int32_t> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<int32_t> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template Matrix<int32_t> *matAddition(const Matrix<int32_t> *,
+                                            const Matrix<int32_t> *,
+                                            Matrix<int32_t> *);
+
 
       
       template Matrix<bool> *matConvertTo(const Matrix<float> *,

@@ -506,6 +506,41 @@ namespace AprilMath {
         return AprilMath::m_sqrt(result);
       }
 
+      ///// INTEGER VERSIONS /////
+      
+      template<typename T>
+      struct GenericAxpyFunctor {
+        T alpha;
+        GenericAxpyFunctor(const T &alpha) : alpha(alpha) {}
+        APRIL_CUDA_EXPORT T operator()(const T &x, const T &y) {
+          return alpha*x + y;
+        }
+      };
+      
+      // AXPY integer operation this = this + alpha * other
+      template <>
+      Matrix<int32_t> *matAxpy(Matrix<int32_t> *obj, const int32_t alpha,
+                               const Matrix<int32_t> *other) {
+        if (obj->size() != other->size()) {
+          ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
+                      obj->size(), other->size());
+        }
+        if (alpha != 1) {
+          return MatrixScalarMap2<int32_t,
+                                  int32_t>(other, obj,
+                                           GenericAxpyFunctor<int32_t>(alpha),
+                                           obj);
+        }
+        else {
+          return MatrixScalarMap2<int32_t,
+                                  int32_t>(other, obj,
+                                           AprilMath::Functors::m_add<int32_t>(),
+                                           obj);
+        }
+      }
+
+      ///////////////////////////
+
       template Matrix<float> *matCopy(Matrix<float> *, const Matrix<float> *);
       template Matrix<float> *matAxpy(Matrix<float> *, const float,
                                       const Matrix<float> *);

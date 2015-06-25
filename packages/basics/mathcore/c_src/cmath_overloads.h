@@ -1401,6 +1401,15 @@ namespace AprilMath {
       return value/a;
     }
   };
+
+  template<typename T>
+  struct m_curried_idiv {
+    const T value;
+    m_curried_idiv(const T &value) : value(value) { }
+    APRIL_CUDA_EXPORT T operator()(const T &a) const {
+      return a/value;
+    }
+  };
   
   template<typename T>
   struct m_curried_relative_equals {
