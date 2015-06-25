@@ -65,7 +65,7 @@ local matrix_methods = {
     "zeros", "ones", "min", "max", "equals", "clamp", "add", "scalar_add",
     "cmul", "scal",
     "copy", "axpy",
-    "masked_fill", "masked_copy", "idiv",
+    "masked_fill", "masked_copy", "idiv", "mod",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
   },

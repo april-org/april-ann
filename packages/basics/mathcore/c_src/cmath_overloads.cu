@@ -137,7 +137,7 @@ namespace AprilMath {
     return ComplexF::zero_zero();
   }
   template<> ComplexF Limits<ComplexF>::one() {
-    return ComplexF::one_one();
+    return ComplexF::one_zero();
   }
   
 } // namespace AprilMath

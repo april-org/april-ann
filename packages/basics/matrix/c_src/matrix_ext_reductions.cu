@@ -408,7 +408,7 @@ namespace AprilMath {
       T matSum(const SparseMatrix<T> *obj) {
         return SparseMatrixScalarReduce1<T>(obj,
                                             AprilMath::Functors::r_add<T,T>(),
-                                            T(0.0f));
+                                            AprilMath::Limits<T>::zero());
       }
     
       template <typename T>
@@ -419,7 +419,8 @@ namespace AprilMath {
         return MatrixScalarReduce1OverDimension(obj, dim,
                                                 AprilMath::Functors::r_add<T,T>(),
                                                 AprilMath::Functors::r_add<T,T>(),
-                                                T(0.0f), dest, !accumulated);
+                                                AprilMath::Limits<T>::zero(),
+                                                dest, !accumulated);
       }
 
       // TODO: Implement using a wrapper for GPU/CPU computation.

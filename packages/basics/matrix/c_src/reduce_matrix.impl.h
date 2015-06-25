@@ -432,7 +432,8 @@ namespace AprilMath {
                                input->getRawDataAccess(),
                                input_stride, input_offset,
                                cuda_flag,
-                               T(0.0f), AprilMath::Functors::r_add<T,T>(),
+                               AprilMath::Limits<T>::zero(),
+                               AprilMath::Functors::r_add<T,T>(),
                                dest, dest_raw_pos,
                                set_dest_to_zero);
       }
@@ -447,7 +448,7 @@ namespace AprilMath {
         // is more than 1 and the iterator size is big enough
         if (OMPUtils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
           T result;
-          if (set_dest_to_zero) result = T(0.0f);
+          if (set_dest_to_zero) result = AprilMath::Limits<T>::zero();
           else dest->getValue(dest_raw_pos, result);
           GPUMirroredMemoryBlock<T> aux(1);
           T partial;
@@ -464,7 +465,8 @@ namespace AprilMath {
                                    stride,
                                    span_it.getOffset(),
                                    cuda_flag,
-                                   T(0.0f), AprilMath::Functors::r_add<T,T>(),
+                                   AprilMath::Limits<T>::zero(),
+                                   AprilMath::Functors::r_add<T,T>(),
                                    &aux, 0, true);
             aux.getValue(0, partial);
             result += partial;
@@ -480,7 +482,8 @@ namespace AprilMath {
                                    stride,
                                    span_it.getOffset(),
                                    cuda_flag,
-                                   T(0.0f), AprilMath::Functors::r_add<T,T>(),
+                                   AprilMath::Limits<T>::zero(),
+                                   AprilMath::Functors::r_add<T,T>(),
                                    dest, dest_raw_pos,
                                    set_dest_to_zero);
             set_dest_to_zero = false; // use only in the first iteration

@@ -496,6 +496,29 @@ namespace AprilMath {
       Basics::SparseMatrix<T> *matDiv(Basics::SparseMatrix<T> *obj, const T &value,
                                       Basics::SparseMatrix<T> *dest=0);
       
+
+      /**
+       * @brief Computes a component-wise mod operation of two matrices.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template <typename T>
+      Basics::Matrix<T> *matMod(Basics::Matrix<T> *obj,
+                                const Basics::Matrix<T> *other,
+                                Basics::Matrix<T> *dest=0);
+      
+
+      /**
+       * @brief Computes \f$ x % v \f$ for every element x in the matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */      
+      template <typename T>
+      Basics::Matrix<T> *matMod(Basics::Matrix<T> *obj, const T &value,
+                                Basics::Matrix<T> *dest=0);
+      
       /**
        * @brief Computes matrix fill using a given mask matrix.
        */

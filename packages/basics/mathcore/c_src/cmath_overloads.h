@@ -60,26 +60,26 @@ namespace AprilMath {
   class Limits {
   public:
     /// Indicates if infinity() method can be used.
-    static bool hasInfinity() { return false; }
+    APRIL_CUDA_EXPORT static bool hasInfinity() { return false; }
     /// Returns the positive infinity representation, if hasInfinity() == true.
-    static T infinity() { return T(); }
+    APRIL_CUDA_EXPORT static T infinity() { return T(); }
     /**
      * @brief Machine the difference between 1 and the least value greater
      * than 1 that is representable for typename T.
      */
-    static T epsilon() { return T(); }
+    APRIL_CUDA_EXPORT static T epsilon() { return T(); }
     /// Returns the lowest finite value of a typename T.
-    static T lowest() { return T(); }
+    APRIL_CUDA_EXPORT static T lowest() { return T(); }
     /// Returns the minimum finite value of a typename T.
-    static T min() { return T(); }
+    APRIL_CUDA_EXPORT static T min() { return T(); }
     /// Returns the maximum finite value of a typename T.
-    static T max() { return T(); }
+    APRIL_CUDA_EXPORT static T max() { return T(); }
     /// Returns a NaN value.
-    static T quiet_NaN() { return T(); }
+    APRIL_CUDA_EXPORT static T quiet_NaN() { return T(); }
     /// Zero value.
-    static T zero() { return T(0.0f); }
+    APRIL_CUDA_EXPORT static T zero() { return T(0.0f); }
     /// One value.
-    static T one() { return T(1.0f); }
+    APRIL_CUDA_EXPORT static T one() { return T(1.0f); }
   };
   
   template<> char Limits<char>::lowest();
@@ -759,6 +759,15 @@ namespace AprilMath {
       }
     };
 
+    /// Modulus map operation.
+    template<typename T>
+    struct m_mod {
+      /// Returns \f$ a/b \f$
+      APRIL_CUDA_EXPORT T operator()(const T &a, const T &b) const {
+        return a%b;
+      }
+    };
+
     /// Maximum map operation.
     template<typename T>
     struct m_max {
@@ -829,6 +838,9 @@ namespace AprilMath {
   /// @see Functors::m_div
   template<typename T> APRIL_CUDA_EXPORT
   T m_div(const T &a, const T &b) { return Functors::m_div<T>()(a,b); }
+  /// @see Functors::m_mod
+  template<typename T> APRIL_CUDA_EXPORT
+  T m_mod(const T &a, const T &b) { return Functors::m_mod<T>()(a,b); }
   /// @see Functors::m_min
   template<typename T> APRIL_CUDA_EXPORT
   T m_min(const T &a, const T &b) { return Functors::m_min<T>()(a,b); }
@@ -1408,6 +1420,15 @@ namespace AprilMath {
     m_curried_idiv(const T &value) : value(value) { }
     APRIL_CUDA_EXPORT T operator()(const T &a) const {
       return a/value;
+    }
+  };
+
+  template<typename T>
+  struct m_curried_mod {
+    const T value;
+    m_curried_mod(const T &value) : value(value) { }
+    APRIL_CUDA_EXPORT T operator()(const T &a) const {
+      return a%value;
     }
   };
   

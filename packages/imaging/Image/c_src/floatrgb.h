@@ -71,6 +71,7 @@ namespace AprilUtils{
 }
 
 namespace AprilMath {
+  
   namespace MatrixExt {
     namespace BLAS {
       
