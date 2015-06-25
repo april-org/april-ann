@@ -64,6 +64,11 @@ namespace AprilMath {
                                        const int32_t alpha,
                                        const Basics::Matrix<int32_t> *other);
 
+      template <>
+      Basics::Matrix<int32_t> *matAxpy(Basics::Matrix<int32_t> *obj, int32_t alpha,
+                                       const Basics::SparseMatrix<int32_t> *other);
+
+
       /// GEMM BLAS operation \f$ C = \alpha \text{op}(A) \times \text{op}(B) + \beta C \f$
       template <typename T>
       Basics::Matrix<T> *matGemm(Basics::Matrix<T> *C,

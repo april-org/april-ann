@@ -508,6 +508,16 @@ namespace AprilMath {
 
       ///// INTEGER VERSIONS /////
       
+      template <>
+      Matrix<int32_t> *matAxpy(Matrix<int32_t> *obj, int32_t alpha,
+                               const SparseMatrix<int32_t> *other) {
+        UNUSED_VARIABLE(obj);
+        UNUSED_VARIABLE(alpha);
+        UNUSED_VARIABLE(other);
+        ERROR_EXIT(128, "Not implemented for sparse int32 matrices\n");
+        return 0;
+      }
+
       template<typename T>
       struct GenericAxpyFunctor {
         T alpha;
