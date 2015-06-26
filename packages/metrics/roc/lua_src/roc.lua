@@ -31,6 +31,8 @@ do
         local p2_data = r2_data:select(2,1):contiguous()
         assert(t_data == r2_data:select(2,2), "Different response in both curves")
         result = stats.boot{
+          seed = params.seed,
+          random = params.random,
           size = r1.data:dim(1),
           R = params.R or 1000,
           k = 1,
