@@ -17,8 +17,8 @@ local roc,roc_methods = class("metrics.roc")
 metrics.roc = roc -- global environment
 
 do
-  -- one-sided test, checks if any of two curves has an AUC greater than the
-  -- other
+  -- two-sided test, checks if both curves have a different AUC
+  -- http://cran.r-project.org/web/packages/pROC/pROC.pdf
   metrics.roc.test =
     function(r1, r2, params)
       assert(r1.data:dim(1) == r2.data:dim(1), "Incompatible ROC curves")
@@ -48,8 +48,7 @@ do
       end
       local s = stats.std(result)
       local D = math.abs( (r1:compute_area() - r2:compute_area())/s )
-      local p = 1 - stats.pnorm(D):exp()
-      return p[1]
+      return 2*(stats.pnorm(-D):exp()[1])
     end
 end
 
