@@ -1281,6 +1281,34 @@ stats.dist.bernoulli = function(p)
 end
 
 -------------------------------------------------------------------------------
+do
+  local std_norm = stats.dist.normal()
+  local check = function(x)
+    local tt = type(x)
+    if tt == "number" then
+      x = matrix{x}
+    elseif tt == "table" then
+      x = matrix(x)
+    end
+    x = x:contiguous():rewrap(x:size(), 1)
+    return x,tt
+  end
+  --
+  stats.dnorm = function(x, mean, sd)
+    local x,tt = check(x)
+    if mean then x:axpy(-1.0, mean) end
+    if sd then x:scal(1/sd) end
+    return std_norm:logpdf(x)
+  end
+  --
+  stats.pnorm = function(x, mean, sd)
+    local x,tt = check(x)
+    if mean then x:axpy(-1.0, mean) end
+    if sd then x:scal(1/sd) end
+    return std_norm:logcdf(x)
+  end
+end
+
 -------------------------------------------------------------------------------
 
 april_set_doc(stats.comb,{

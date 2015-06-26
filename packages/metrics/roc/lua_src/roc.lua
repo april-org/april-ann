@@ -8,13 +8,50 @@ local function check_matrix(m)
             (#dim == 2 and
                (dim[1] == 1 or dim[2] == 1)),
           "Needs a row or column vector" )
-  return #dim == 1 and m:rewrap(m:size(),1) or m
+  return #dim == 1 and m:contiguous():rewrap(m:size(),1) or m
 end
 
 --
 
 local roc,roc_methods = class("metrics.roc")
 metrics.roc = roc -- global environment
+
+do
+  -- one-sided test, checks if any of two curves has an AUC greater than the
+  -- other
+  metrics.roc.test =
+    function(r1, r2, params)
+      assert(r1.data:dim(1) == r2.data:dim(1), "Incompatible ROC curves")
+      local result
+      do
+        local r1_data = r1.data
+        local r2_data = r2.data
+        local t_data  = r1_data:select(2,2):contiguous()
+        local p1_data = r1_data:select(2,1):contiguous()
+        local p2_data = r2_data:select(2,1):contiguous()
+        assert(t_data == r2_data:select(2,2), "Different response in both curves")
+        result = stats.boot{
+          size = r1.data:dim(1),
+          R = params.R or 1000,
+          k = 1,
+          ncores = params.ncores,
+          verbose = false,
+          statistic = function(idx)
+            local p1_data = p1_data:index(1, idx)
+            local p2_data = p2_data:index(1, idx)
+            local t_data  = t_data:index(1,idx)
+            local r1 = metrics.roc(p1_data, t_data)
+            local r2 = metrics.roc(p2_data, t_data)
+            return r1:compute_area() - r2:compute_area()
+          end,
+        }
+      end
+      local s = stats.std(result)
+      local D = math.abs( (r1:compute_area() - r2:compute_area())/s )
+      local p = 1 - stats.pnorm(D):exp()
+      return p[1]
+    end
+end
 
 april_set_doc(roc,
               {
