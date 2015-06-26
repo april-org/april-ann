@@ -164,6 +164,15 @@ namespace Basics {
     
 #define FUNCTION_NAME "matrix binding"
     
+    BEGIN_CLASS_METHOD(MMapped)
+    {
+      bool aux = AprilMath::GPUMirroredMemoryBlockBase::getUseMMapAllocation();
+      AprilMath::GPUMirroredMemoryBlockBase::setUseMMapAllocation(true);
+      int n = MatrixBindings<T>::constructor(L);
+      AprilMath::GPUMirroredMemoryBlockBase::setUseMMapAllocation(aux);
+      return n;
+    }
+
     BEGIN_CLASS_METHOD(constructor)
     {
       if (typeid(T) == typeid(char) && lua_type(L,1) == LUA_TSTRING) { // for matrixChar case
@@ -743,7 +752,7 @@ namespace Basics {
     {
       int padding;
       LUABIND_GET_PARAMETER(1, int, padding);
-      T default_value = lua_opt(L, 2, T(0.0f));
+      T default_value = lua_opt(L, 2, AprilMath::Limits<T>::zero());
       Matrix<T> *result = obj->padding(padding, default_value);
       lua_push(L, result);
       return 1;
@@ -761,7 +770,7 @@ namespace Basics {
         LUABIND_GET_PARAMETER(j, int, begin_padding[i]);
         LUABIND_GET_PARAMETER(j+1, int, end_padding[i]);
       }
-      T default_value = lua_opt(L, j, T(0.0f));
+      T default_value = lua_opt(L, j, AprilMath::Limits<T>::zero());
       Matrix<T> *result = obj->padding(begin_padding.get(),
                                        end_padding.get(),
                                        default_value);
@@ -789,7 +798,7 @@ namespace Basics {
 
     BEGIN_METHOD(uniformf)
     {
-      T lower = T(0.0f), upper = T(1.0f);
+      T lower = AprilMath::Limits<T>::zero(), upper = AprilMath::Limits<T>::one();
       AprilUtils::SharedPtr<Basics::MTRand> random;
 
       LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
@@ -809,7 +818,7 @@ namespace Basics {
     BEGIN_METHOD(linspace)
     {
       int size_1 = obj->size()-1;
-      T inf = lua_opt(L, 1, T(1.0f));
+      T inf = lua_opt(L, 1, AprilMath::Limits<T>::one());
       T sup = lua_opt(L, 2, static_cast<T>(size_1+1));
       int i = 0;
       T diff = sup-inf;
@@ -1317,6 +1326,13 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(cinv)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matDiv(obj, AprilMath::Limits<T>::one()));
+      return 1;
+    }
+
     BEGIN_METHOD(sign)
     {
       lua_push(L, AprilMath::MatrixExt::Operations::matSign(obj));
@@ -1556,6 +1572,38 @@ namespace Basics {
         T value = lua_to<T>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Operations::
                  matDiv(obj, value));
+      }
+      return 1;
+    }
+
+    BEGIN_METHOD(idiv)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      if (lua_is<Matrix<T>*>(L, 1)) {
+        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matDiv(obj, other));
+      }
+      else {
+        T value = lua_to<T>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matIDiv(obj, value));
+      }
+      return 1;
+    }
+
+    BEGIN_METHOD(mod)
+    {
+      LUABIND_CHECK_ARGN(==, 1);
+      if (lua_is<Matrix<T>*>(L, 1)) {
+        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matMod(obj, other));
+      }
+      else {
+        T value = lua_to<T>(L, 1);
+        lua_push(L, AprilMath::MatrixExt::Operations::
+                 matMod(obj, value));
       }
       return 1;
     }

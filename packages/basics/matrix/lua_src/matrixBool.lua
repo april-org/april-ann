@@ -3,6 +3,8 @@ class.extend(matrixBool, "t", matrixBool.."transpose")
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixBool, "ascii")
 
+matrix.__generic__.__make_index_methods__(matrixBool)
+
 class.extend(matrixBool, "flatten",
              function(self)
                return self:rewrap(self:size())

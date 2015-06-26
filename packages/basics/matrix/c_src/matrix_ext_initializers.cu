@@ -58,22 +58,22 @@ namespace AprilMath {
 
       template<typename T>
       Matrix<T> *matZeros(Matrix<T> *obj) {
-        return matFill(obj, T());
+        return matFill(obj, AprilMath::Limits<T>::zero());
       }
 
       template<typename T>
       SparseMatrix<T> *matZeros(SparseMatrix<T> *obj) {
-        return matFill(obj, T());
+        return matFill(obj, AprilMath::Limits<T>::zero());
       }
     
       template<typename T>
       Matrix<T> *matOnes(Matrix<T> *obj) {
-        return matFill(obj, T(1.0f));
+        return matFill(obj, AprilMath::Limits<T>::one());
       }
 
       template<typename T>
       SparseMatrix<T> *matOnes(SparseMatrix<T> *obj) {
-        return matFill(obj, T(1.0f));
+        return matFill(obj, AprilMath::Limits<T>::one());
       }
     
       template <typename T>

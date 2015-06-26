@@ -136,7 +136,8 @@ namespace Basics {
         unsigned int i=0;
         for (typename DictType::const_iterator it = data.begin();
              it != data.end(); ++it) {
-          if (it->second != T(0.0f) && it->second != T(-0.0f)) {
+          if (it->second !=  AprilMath::Limits<T>::zero() &&
+              it->second != -AprilMath::Limits<T>::zero()) {
             coordinates[i++] = it->first;
           }
         }

@@ -285,10 +285,10 @@ namespace AprilMath {
         // compute convolution by using CBLAS GEMM
         AprilMath::MatrixExt::BLAS::matGemm(contiguous_result_pattern.get(),
                                             CblasNoTrans, CblasTrans,
-                                            T(1.0f),
+                                            AprilMath::Limits<T>::one(),
                                             unrolled_kernel.get(),
                                             contiguous_source_pattern.get(),
-                                            T(0.0f));
+                                            AprilMath::Limits<T>::zero());
         AprilMath::MatrixExt::BLAS::matCopy(result_pattern.get(),
                                             contiguous_result_pattern.get());
         for (int j=1; j<bunch_size; ++j) {
@@ -299,10 +299,10 @@ namespace AprilMath {
           // compute convolution by using CBLAS GEMM
           AprilMath::MatrixExt::BLAS::matGemm(contiguous_result_pattern.get(),
                                               CblasNoTrans, CblasTrans,
-                                              T(1.0f),
+                                              AprilMath::Limits<T>::one(),
                                               unrolled_kernel.get(),
                                               contiguous_source_pattern.get(),
-                                              T(0.0f));
+                                              AprilMath::Limits<T>::zero());
           AprilMath::MatrixExt::BLAS::matCopy(result_pattern.get(),
                                               contiguous_result_pattern.get());
         }

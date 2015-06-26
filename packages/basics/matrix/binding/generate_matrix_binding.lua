@@ -30,7 +30,7 @@ local matrix_methods = {
     "sub", "mul", "cmul", "plogp", "log", "log1p", "exp", "sqrt", "pow", "tan",
     "tanh", "atan", "atanh", "sin", "sinh", "asin", "asinh", "cos", "cosh",
     "acos", "acosh", "abs", "complement", "sign", "sum", "copy", "axpy",
-    "gemm", "sparse_mm", "gemv", "ger", "dot", "scal",
+    "gemm", "sparse_mm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2", "inv", "logdet", "det",
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
@@ -48,7 +48,7 @@ local matrix_methods = {
     "sub", "mul", "cmul", "plogp", "log", "log1p", "exp", "sqrt", "pow", "tan",
     "tanh", "atan", "atanh", "sin", "sinh", "asin", "asinh", "cos", "cosh",
     "acos", "acosh", "abs", "complement", "sign", "sum", "copy", "axpy",
-    "gemm", "gemv", "ger", "dot", "scal",
+    "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
@@ -62,8 +62,10 @@ local matrix_methods = {
     "padding_all", "padding", "uniform", "linspace",
     "linear", "sliding_window", "is_contiguous",
     "diag", "fill",
-    "zeros", "ones", "min", "max", "equals", "clamp",
-    "masked_fill", "masked_copy",
+    "zeros", "ones", "min", "max", "equals", "clamp", "add", "scalar_add",
+    "cmul", "scal",
+    "copy", "axpy",
+    "masked_fill", "masked_copy", "idiv", "mod",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
   },
@@ -79,7 +81,7 @@ local matrix_methods = {
     "zeros", "ones", "equals", "add", "scalar_add",
     "sub", "mul", "cmul",
     "sum", "copy", "axpy",
-    "gemm", "gemv", "ger", "dot", "scal",
+    "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "toMMap",
     "data",
@@ -94,6 +96,7 @@ local matrix_methods = {
     "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "equals",
+    "copy",
     "toMMap",
     "data", "convert_to",
   },
@@ -107,6 +110,7 @@ local matrix_methods = {
     "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "equals",
+    "copy",
     "toMMap",
     "data", "convert_to",
     "to_index",
@@ -178,7 +182,7 @@ local function generate_binding(data,
 
       f:write("///////////////////////////////////////////////////////////\n\n")
       for _,name in ipairs(methods[T] or {}) do
-        assert(not generated[name])
+        assert(not generated[name], string.format("Duplicated entry %s.%s", MATRIX_Lua, name))
         f:write((method_binding:format(MATRIX_T, name, T, name)))
         generated[name] = true
       end

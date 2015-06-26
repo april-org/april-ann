@@ -111,7 +111,8 @@ namespace AprilMath {
                              const Matrix<T> *b,
                              Matrix<T> *c) {
         if (c == 0) c = a->clone();
-        return AprilMath::MatrixExt::BLAS::matAxpy(c, T(1.0f), b);
+        return AprilMath::MatrixExt::BLAS::
+          matAxpy(c, AprilMath::Limits<T>::one(), b);
       }
 
       template <typename T>
@@ -119,7 +120,8 @@ namespace AprilMath {
                                  const Matrix<T> *b,
                                  Matrix<T> *c) {
         if (c == 0) c = a->clone();
-        return AprilMath::MatrixExt::BLAS::matAxpy(c, T(-1.0f), b);
+        return AprilMath::MatrixExt::BLAS::
+          matAxpy(c, -AprilMath::Limits<T>::one(), b);
       }
     
       template <typename T>
@@ -142,7 +144,7 @@ namespace AprilMath {
             }
             AprilMath::MatrixExt::BLAS::
               matGer(AprilMath::MatrixExt::Initializers::matZeros(c),
-                     T(1.0f), a, b);
+                     AprilMath::Limits<T>::one(), a, b);
           }
           else if (!a->isVector()) {
             // Matrix-Vector product
@@ -159,7 +161,10 @@ namespace AprilMath {
             }
             AprilMath::MatrixExt::BLAS::
               matGemv(AprilMath::MatrixExt::Initializers::matZeros(c),
-                      CblasNoTrans, T(1.0f), a, b, T());
+                      CblasNoTrans,
+                      AprilMath::Limits<T>::one(),
+                      a, b,
+                      AprilMath::Limits<T>::zero());
           }
           else {
             // DOT product
@@ -196,7 +201,9 @@ namespace AprilMath {
           AprilMath::MatrixExt::BLAS::
             matGemm(AprilMath::MatrixExt::Initializers::matZeros(c),
                     CblasNoTrans, CblasNoTrans,
-                    T(1.0f), a, b, T());
+                    AprilMath::Limits<T>::one(),
+                    a, b,
+                    AprilMath::Limits<T>::zero());
         }
         else {
           ERROR_EXIT(128, "Incompatible matrix sizes\n");
@@ -299,7 +306,8 @@ namespace AprilMath {
         if (sq_input->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 matrix\n");
         }
-        int non_zeros = sq_input->size() - matCount(sq_input.get(), T(0.0));
+        int non_zeros = sq_input->size() - matCount(sq_input.get(),
+                                                    AprilMath::Limits<T>::zero());
         if (non_zeros == 0) return 0;
         if (dest != 0) {
           if (dest->size() != non_zeros) {
@@ -314,7 +322,7 @@ namespace AprilMath {
         for (typename Basics::Matrix<T>::const_iterator it = sq_input->begin();
              it != sq_input->end(); ++it) {
           ++k; // first index is 1, to be compatible with Lua
-          if (*it != T(0.0)) {
+          if (*it != AprilMath::Limits<T>::zero()) {
             april_assert(dest_it != dest->end());
             *dest_it = k;
             ++dest_it;
@@ -429,6 +437,10 @@ namespace AprilMath {
                                              Matrix<int32_t> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<int32_t> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template Matrix<int32_t> *matAddition(const Matrix<int32_t> *,
+                                            const Matrix<int32_t> *,
+                                            Matrix<int32_t> *);
+
 
       
       template Matrix<bool> *matConvertTo(const Matrix<float> *,

@@ -305,10 +305,12 @@ namespace Stats {
   }
 
   void StandardNormalDistribution::privateLogcdf(const MatrixFloat *x,
-                                                MatrixFloat *result) {
-    UNUSED_VARIABLE(x);
-    UNUSED_VARIABLE(result);
-    ERROR_EXIT(128, "Not implemented");
+                                                 MatrixFloat *result) {
+    static float inv_sqrt2 = 1.0f/sqrtf(2.0f);
+    MatrixFloat::const_iterator x_it = x->begin();
+    for (MatrixFloat::iterator it=result->begin(); it!=result->end(); ++it) {
+      *it = AprilMath::m_log( 0.5f * (1.0f + ::erff( *x_it * inv_sqrt2 )) );
+    }
   }
 
   void StandardNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
