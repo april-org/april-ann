@@ -1131,13 +1131,14 @@ stats.boot.percentile =
                             table.unpack(percentile))
   end
 
-stats.boot.pvalue =
+stats.boot.rprob =
   april_doc{
     class = "function",
-    summary = "Computes one-sided p-value for a given pivot in a bootstrap sample",
+    summary = "Computes one-sided probability for a given pivot in a bootstrap sample",
     description = {
-      "This function returns the one-sided p-value of a given pivot, that is, the",
-      "probability of the sample to be greater or equal than the pivot.",
+      "This function returns the one-sided probability of given pivot, that is, the",
+      "probability of the sample to be greater than the pivot. The probability",
+      "is computed to avoid bias problems as: (C(>pivot)+1)/(N+1)",
     },
     params = {
       "The result of stats.boot function.",
@@ -1145,12 +1146,12 @@ stats.boot.pvalue =
       "The statistic index for which you want compute the percentile [optional], by default it is 1",
     },
     outputs = {
-      "The one-sided p-value",
+      "The one-sided right probability",
     },
   } ..
   function(data, pivot, index)
     assert(data, "Needs a data argument as first argument")
-    local ge_pivot = data:select(2, index or 1):lt(pivot or 0.0):count_zeros()
+    local ge_pivot = data:select(2, index or 1):gt(pivot or 0.0):count_ones()
     return (1+ge_pivot) / (data:dim(1)+1)
   end
 

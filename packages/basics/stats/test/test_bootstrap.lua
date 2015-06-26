@@ -48,7 +48,7 @@ T("BootstrapTest",
     check.number_eq(p0, -0.117945)
     check.number_eq(pn,  0.092709)
     -- p-value tests
-    check.number_eq(stats.boot.pvalue(boot_result, b), 0.025, 0.05)
-    check.number_eq(1.0 - stats.boot.pvalue(boot_result, a), 0.025, 0.05)
-    check.number_eq(stats.boot.pvalue(boot_result, m, 1), 0.500)
+    check.number_eq(stats.boot.rprob(boot_result, b), 0.025, 0.05)
+    check.number_eq(1.0 - stats.boot.rprob(boot_result, a), 0.025, 0.05)
+    check.number_eq(stats.boot.rprob(boot_result, m, 1), 0.500)
 end)
