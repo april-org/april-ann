@@ -306,15 +306,11 @@ namespace Stats {
 
   void StandardNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                  MatrixFloat *result) {
-    static float inv_sqrt2 = sqrtf(2);
-    matCopy(result, x);
-    matScal(result, inv_sqrt2);
+    static float inv_sqrt2 = 1.0f/sqrtf(2.0f);
+    MatrixFloat::const_iterator x_it = x->begin();
     for (MatrixFloat::iterator it=result->begin(); it!=result->end(); ++it) {
-      *it = ::erff(*it);
+      *it = AprilMath::m_log( 0.5f * (1.0f + ::erff( *x_it * inv_sqrt2 )) );
     }
-    matScalarAdd(result, 1.0f);
-    matScal(result, 0.5f);
-    matLog(result);
   }
 
   void StandardNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,

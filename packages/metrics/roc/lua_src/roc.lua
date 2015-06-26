@@ -24,6 +24,7 @@ do
       assert(r1.data:dim(1) == r2.data:dim(1), "Incompatible ROC curves")
       local result
       do
+        local params = params or {}
         local r1_data = r1.data
         local r2_data = r2.data
         local t_data  = r1_data:select(2,2):contiguous()
@@ -37,7 +38,7 @@ do
           R = params.R or 1000,
           k = 1,
           ncores = params.ncores,
-          verbose = false,
+          verbose = params.verbose,
           statistic = function(idx)
             local p1_data = p1_data:index(1, idx)
             local p2_data = p2_data:index(1, idx)
@@ -50,7 +51,7 @@ do
       end
       local s = stats.std(result)
       local D = math.abs( (r1:compute_area() - r2:compute_area())/s )
-      return 2*(stats.pnorm(-D):exp()[1])
+      return 2*(stats.pnorm(-D):exp()[1]),D
     end
 end
 
