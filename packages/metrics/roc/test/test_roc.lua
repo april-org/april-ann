@@ -20,4 +20,13 @@ T("ROCTest", function()
     check.number_eq( metrics.roc( matrix{0.2,0.3,0.4,0.5},
                                   matrix{0,0,0,1} ):compute_area(),
                      1.0 )
+    
+    local roc1 = metrics.roc( matrix{0.2,0.3,0.4,0.5,0.2,0.9},
+                              matrix{0,0,0,1,1,1} )
+    local roc2 = metrics.roc( matrix{0.2,0.4,0.3,0.2,0.5,0.4},
+                              matrix{0,0,0,1,1,1} )
+    print(roc1:compute_area())
+    print(roc2:compute_area())
+    print(metrics.roc.test(roc1,roc2,{method="bootstrap",seed=1234}):pvalue())
+    print(metrics.roc.test(roc1,roc2,{method="delong"}):pvalue())
 end)

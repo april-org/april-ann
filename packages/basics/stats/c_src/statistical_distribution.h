@@ -196,6 +196,7 @@ namespace Stats {
       grads->decRef();
       return grads;
     }
+
     /**
      * @return The size of data points.
      */

@@ -1,3 +1,80 @@
+do
+  local function bisect(dist, x, y, log_p, EPSILON)
+    local m = (x + y):scal(0.5)
+    local aux = dist:logcdf(m)[1]
+    if math.abs(aux - log_p) < EPSILON then
+      return m
+    elseif aux > log_p then
+      return bisect(dist, x, m, log_p, EPSILON)
+    else
+      return bisect(dist, m, y, log_p, EPSILON)
+    end
+  end
+  local function quantile(dist, p, EPSILON)
+    local log_p = math.log(p)
+    local a = matrix(1,1,{-10.0})
+    local b = matrix(1,1,{10.0})
+    while true do
+      local cdfa = dist:logcdf(a)[1]
+      local cdfb = dist:logcdf(b)[1]
+      if cdfa < log_p and cdfb > log_p then break end
+      if cdfa > log_p then a:scal(10) end
+      if cdfb < log_p then b:scal(10) end
+    end
+    return bisect(dist, a, b, log_p, EPSILON):get(1,1)
+  end
+  local reg = debug.getregistry()
+  local tbl,methods = class("stats.hypothesis_test")
+  april_set_doc(tbl, {
+                  class = "class",
+                  summary = "Result of hypotheses test",
+  })
+  reg.april_stats = {}
+  reg.april_stats.hypothesis_test = tbl
+  tbl.constructor =
+    april_doc{
+      class = "method",
+      summary = "Constructor given a pivot and the H0 stats.dist instance",
+    } ..
+    function(self, pivot, dist)
+      self.P = matrix(1,1,{pivot})
+      self.dist  = dist
+    end
+  methods.pvalue =
+    april_doc{
+      class = "method",
+      summary = "Returns the p-value of the pivot for the H0 distribution",
+    } ..
+    function(self)
+      local P = matrix.op.abs(self.P)
+      local dist = self.dist
+      local a = math.exp( dist:logcdf(-P)[1] )
+      local b = 1.0 - math.exp( dist:logcdf(P)[1] )
+      return a + b
+    end
+  methods.pivot =
+    april_doc{
+      class = "method",
+      summary = "Returns the test pivot",
+    } ..
+  function(self) return self.P:get(1,1) end
+      
+  methods.ci =
+    april_doc {
+      class = "method",
+      summary = "Returns the confidence interval of the H0 distribution",
+    } ..
+    function(self, confidence)
+      local dist = self.dist
+      local alpha = 1.0 - (confidence or 0.95)
+      local alpha2 = alpha * 0.5
+      local a = quantile(dist, alpha2, alpha2*1e-03)
+      local b = quantile(dist, 1.0 - alpha2, alpha2*1e-03)
+      return a,b
+    end
+end
+
+
 stats = stats or {} -- global environment
 stats.running = stats.running or {}
 

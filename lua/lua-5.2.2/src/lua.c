@@ -456,11 +456,11 @@ static void lua_rl_init(lua_State *L)
   lua_rl_L = L;
 
   /* This allows for $if lua ... $endif in ~/.inputrc. */
-  rl_readline_name = "lua";
+  rl_readline_name = (char*)"lua";
   /* Break words at every non-identifier character except '.' and ':'. */
   rl_completer_word_break_characters = 
     (char*)"\t\r\n !\"#$%&'()*+,-/;<=>?@[\\]^`{|}~";
-  rl_completer_quote_characters = "\"'";
+  rl_completer_quote_characters = (char*)"\"'";
 #if RL_READLINE_VERSION < 0x0600
   rl_completion_append_character = '\0';
 #endif
