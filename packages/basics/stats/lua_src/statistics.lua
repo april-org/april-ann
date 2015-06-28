@@ -97,12 +97,20 @@ methods.ci =
     class = "method",
     summary = "Returns the confidence interval of the true distribution",
   } ..
-  function(self, confidence)
+  function(self, confidence, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
     local true_dist = self.true_dist
     local alpha = 1.0 - (confidence or 0.95)
-    local alpha2 = alpha * 0.5
-    local a = stats.dist.quantile(true_dist, alpha2)
-    local b = stats.dist.quantile(true_dist, 1.0 - alpha2)
+    if alternative == "two-sided" then alpha = alpha * 0.5 end
+    local a = -math.huge
+    local b =  math.huge
+    if alternative == "two-sided" or alternative == "right" then
+      a = stats.dist.quantile(true_dist, alpha2)
+    end
+    if alternative == "two-sided" or alternative == "left" then
+      b = stats.dist.quantile(true_dist, 1.0 - alpha2)
+    end
     return a,b
   end
 
@@ -1302,12 +1310,22 @@ stats.boot.ci =
     },
   } ..
   -- returns the extremes of the interval
-  function(data, confidence, index)
+  function(data, confidence, index, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
            "Incorrect confidence value, it must be in range (0,1)")
-    local Pa = (1.0 - confidence)*0.5
-    local Pb = 1.0 - Pa
+    local Pa = 0.0
+    local Pb = 1.0
+    if alternative == "two-sided" then
+      Pa = (1.0 - confidence)*0.5
+      Pb = 1.0 - Pa
+    elseif alternative == "left" then
+      Pb = confidence
+    else
+      Pa = 1.0 - confidence
+    end
     return stats.boot.percentile(data, { Pa, Pb }, index)
   end
 
