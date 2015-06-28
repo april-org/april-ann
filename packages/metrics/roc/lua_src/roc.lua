@@ -124,7 +124,7 @@ do
     }
   end
   
-  local hyp_test = class.find("stats.hypothesis_test")
+  local hyp_test = stats.hypothesis_test
   
   -- two-sided test, checks if both curves have a different AUC
   -- http://cran.r-project.org/web/packages/pROC/pROC.pdf
