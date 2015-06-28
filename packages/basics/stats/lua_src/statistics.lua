@@ -1,3 +1,5 @@
+local negate = { right="left", left="right", ["two-sided"] = "two-sided" }
+
 stats = stats or {} -- global environment
 stats.running = stats.running or {}
 
@@ -68,11 +70,19 @@ methods.pvalue =
     class = "method",
     summary = "Returns the p-value of the pivot for the H0 distribution",
   } ..
-  function(self)
+  function(self, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
     local P = matrix.op.abs(self.P)
     local h0_dist = self.h0_dist
-    local a = math.exp( h0_dist:logcdf(-P)[1] )
-    local b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
+    local a = 0.0
+    local b = 0.0
+    if alternative == "two-sided" or alternative == "left" then
+      a = math.exp( h0_dist:logcdf(-P)[1] )
+    end
+    if alternative == "two-sided" or alternative == "right" then
+      b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
+    end
     return a + b
   end
 methods.pivot =
@@ -1148,7 +1158,8 @@ local perm =
 setmetatable(stats.perm, { __call = perm })
 
 stats.perm.pvalue =
-  function(perm_result, observed, idx)
+  function(perm_result, observed, idx, alternative)
+    assert(not alternative or alternative == "two-sided")
     local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
     local pvalue = ge_observed / perm_result:dim(1)
     return (pvalue<0.5) and pvalue or (1.0 - pvalue)
@@ -1331,10 +1342,20 @@ stats.boot.percentile =
 -- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
 -- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
 stats.boot.pvalue =
-  function(data, pivot, index)
+  function(data, pivot, index, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
     local data = data:select(2, index or 1)
-    local pvalue = (data:gt(2*pivot):count_ones() + 1) / (data:size()+1)
-    return (pvalue<0.5) and pvalue or (1.0 - pvalue)
+    if pivot < 0 then pivot,data,alternative = -pivot,-data,negate[alternative] end
+    local a,b  = 0.0,0.0
+    if alternative == "two-sided" or alternative == "left" then
+      a = data:lt(0.0):count_ones()
+    end
+    if alternative == "two-sided" or alternative == "right" then
+      b = data:gt(2*pivot):count_ones()
+    end
+    local pvalue = (a + b + 1) / (data:size() + 1)
+    return pvalue
   end
 
 stats.boot.rprob =
