@@ -149,16 +149,18 @@ do
           result = stratified_bootstrap(params, t_data, p1_data, p2_data)
         end
         -- normal distribution test
-        local var = stats.std(result)
-        local D = (r1:compute_area() - r2:compute_area())/var
+        local sd = stats.std(result)
+        local mean = r1:compute_area() - r2:compute_area()
+        local D = var
         return hyp_test(D, stats.dist.normal())
       elseif method == "delong" then
         local S = compute_delong_covariance(params, r1, r2,
                                             t_data, p1_data, p2_data)
         local contrast = matrix(2,2,{1,-1,-1,1})
         local var = S:cmul(contrast):sum()
-        local z = (r1:compute_area() - r2:compute_area())/math.sqrt(var)
-        return hyp_test(z, stats.dist.normal())
+        local mean = r1:compute_area() - r2:compute_area()
+        local z = mean/math.sqrt(var)
+        return hyp_test(z, stats.dist.normal(), stats.dist.normal(mean,var))
       else
         error("Unknown method " .. method)
       end

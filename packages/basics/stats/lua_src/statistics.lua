@@ -55,9 +55,12 @@ tbl.constructor =
     class = "method",
     summary = "Constructor given a pivot and the H0 stats.dist instance",
   } ..
-  function(self, pivot, dist)
+  function(self, pivot, h0_dist, true_dist)
+    assert(pivot and h0_dist and true_dist,
+           "Needs a pivot, H0 distribution and true distribution")
     self.P = matrix(1,1,{pivot})
-    self.dist  = dist
+    self.h0_dist   = h0_dist
+    self.true_dist = true_dist
   end
 methods.pvalue =
   april_doc{
@@ -66,9 +69,9 @@ methods.pvalue =
   } ..
   function(self)
     local P = matrix.op.abs(self.P)
-    local dist = self.dist
-    local a = math.exp( dist:logcdf(-P)[1] )
-    local b = 1.0 - math.exp( dist:logcdf(P)[1] )
+    local h0_dist = self.h0_dist
+    local a = math.exp( h0_dist:logcdf(-P)[1] )
+    local b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
     return a + b
   end
 methods.pivot =
@@ -81,14 +84,14 @@ function(self) return self.P:get(1,1) end
 methods.ci =
   april_doc {
     class = "method",
-    summary = "Returns the confidence interval of the H0 distribution",
+    summary = "Returns the confidence interval of the true distribution",
   } ..
   function(self, confidence)
-    local dist = self.dist
+    local true_dist = self.true_dist
     local alpha = 1.0 - (confidence or 0.95)
     local alpha2 = alpha * 0.5
-    local a = stats.dist.quantile(dist, alpha2)
-    local b = stats.dist.quantile(dist, 1.0 - alpha2)
+    local a = stats.dist.quantile(true_dist, alpha2)
+    local b = stats.dist.quantile(true_dist, 1.0 - alpha2)
     return a,b
   end
 
