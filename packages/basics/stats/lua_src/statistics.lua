@@ -1074,11 +1074,13 @@ local perm =
         ncores      = { mandatory = false, type_match = "number", default = 1 },
         seed        = { mandatory = false, type_match = "number" },
         random      = { mandatory = false, isa_match  = random },
+        paired      = { mandatory = false, type_match = "boolean" },
       },
       params)
     assert(not params.seed or not params.random,
            "Fields 'seed' and 'random' are forbidden together")
     local extra       = table.pack(...)
+    local paired      = params.paired
     local samples     = params.samples
     local repetitions = params.R
     local statistic   = params.statistic
@@ -1093,7 +1095,23 @@ local perm =
     local get_row,N
     -- resample function executed in parallel using parallel_foreach
     local last_i = 0
-    local rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(joined:size())) end
+    local rnd_matrix
+    assert(not paired, "Paired option is not fully implemented")
+    if paired then
+      for i=2,#sizes do assert(sizes[i-1] == sizes[i], "Found different sizes in paired test") end
+      local M = sizes[1]
+      local sub_indices = matrix.ext.repmat(matrixInt32(M):linspace(), #sizes)
+      local indices = {}
+      for i=1,#sizes do for j=1,M do indices[#indices+1] = i-1 end end
+      rnd_matrix = function()
+        local shuf = rnd:shuffle(indices)
+        local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
+        return m
+      end
+    else
+      local indices = iterator.range(joined_size):table()
+      rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(indices)) end
+    end
     local permute = function(i, id)
       collectgarbage("collect")
       -- this loop allows to synchronize the random number generator, allowing to
