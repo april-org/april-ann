@@ -62,6 +62,7 @@ tbl.constructor =
     self.h0_dist   = h0_dist
     self.true_dist = true_dist
   end
+
 methods.pvalue =
   april_doc{
     class = "method",
@@ -1326,6 +1327,16 @@ stats.boot.percentile =
                             table.unpack(percentile))
   end
 
+-- An Empirical Investigation of Statistical Significance in NLP.
+-- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
+-- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
+stats.boot.pvalue =
+  function(data, pivot, index)
+    local data = data:select(2, index or 1)
+    local pvalue = (data:gt(2*pivot):count_ones() + 1) / (data:size()+1)
+    return (pvalue<0.5) and pvalue or (1.0 - pvalue)
+  end
+
 stats.boot.rprob =
   april_doc{
     class = "function",
@@ -1493,14 +1504,14 @@ do
     local x,tt = check(x)
     if mean then x:axpy(-1.0, mean) end
     if sd then x:scal(1/sd) end
-    return std_norm:logpdf(x)
+    return std_norm:logpdf(x):exp()
   end
   --
   stats.pnorm = function(x, mean, sd)
     local x,tt = check(x)
     if mean then x:axpy(-1.0, mean) end
     if sd then x:scal(1/sd) end
-    return std_norm:logcdf(x)
+    return std_norm:logcdf(x):exp()
   end
   --
   stats.qnorm = function(x, mean, sd)
