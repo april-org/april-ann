@@ -95,6 +95,15 @@ methods.ci =
     return a,b
   end
 
+class.extend_metamethod(tbl, "__tostring", function(self)
+                          local a,b = self:ci(0.95)
+                          local tbl = {
+                            "pivot= ", tostring(self:pivot()),
+                            "\np-value= ", tostring(self:pvalue()),
+                            "\nCI(95%)= [", tostring(a), ", ", tostring(b), "]" }
+                          return table.concat(tbl)
+end)
+
 -----------------------------------------------------------------------------
 
 local mop = matrix.op
