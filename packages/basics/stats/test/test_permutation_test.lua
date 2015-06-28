@@ -19,5 +19,5 @@ T("PermutationTest",
     local perm_result = perm_result:index(1, perm_result:select(2,1):order())
     local mean_diff = stats.amean(errors1) - stats.amean(errors2)
     check.number_eq(mean_diff, -0.041067314147949)
-    check.number_eq(stats.perm.pvalue(perm_result, mean_diff), 0.368)
+    check.number_eq(stats.perm.pvalue(perm_result, mean_diff), 0.368*0.5)
 end)

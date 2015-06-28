@@ -41,5 +41,5 @@ T("ROCTest", function()
       end,
     }
     local AUC_diff = roc1:compute_area() - roc2:compute_area()
-    check.number_eq(stats.perm.pvalue(perm_result, AUC_diff), 0.86)
+    check.number_eq(stats.perm.pvalue(perm_result, AUC_diff), 0.86*0.5)
 end)
