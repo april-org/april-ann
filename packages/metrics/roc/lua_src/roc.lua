@@ -151,8 +151,8 @@ do
         -- normal distribution test
         local sd = stats.std(result)
         local mean = r1:compute_area() - r2:compute_area()
-        local D = var
-        return hyp_test(D, stats.dist.normal())
+        local D = mean/sd
+        return hyp_test(D, stats.dist.normal(), stats.dist.normal(mean,sd*sd))
       elseif method == "delong" then
         local S = compute_delong_covariance(params, r1, r2,
                                             t_data, p1_data, p2_data)
