@@ -9,32 +9,38 @@ april_set_doc(stats.running,{
 stats.dist = stats.dist or {}
 
 do
-  local function bisect(dist, x, y, log_p, EPSILON)
-    local m = (x + y):scal(0.5)
-    local aux = dist:logcdf(m)[1]
-    if math.abs(aux - log_p) < EPSILON then
-      return m
-    elseif aux > log_p then
-      return bisect(dist, x, m, log_p, EPSILON)
-    else
-      return bisect(dist, m, y, log_p, EPSILON)
-    end
+  local function bisect(dist, x, y, log_p, EPSILON, MAX)
+    local i,m = 0,nil
+    repeat
+      m = 0.5 * (x + y)
+      local aux = dist:logcdf(matrix(1,1,{m}))[1]
+      if (y-x < EPSILON) or math.abs(aux - log_p) < EPSILON then
+        return m
+      elseif aux > log_p then
+        y = m
+      else
+        x = m
+      end
+      i=i+1
+    until i == MAX
+    fprintf(io.stderr, "Warning!!! bisect maximum number of iterations\n")
+    return m
   end
 
-  stats.dist.quantile = function(dist, p, EPSILON)
+  stats.dist.quantile = function(dist, p, EPSILON, MAX)
     assert(dist:size() == 1, "Only implemented for univariate distributions")
     assert(0 < p and p < 1.0, "The probabilbity should be in range (0,1)")
     local log_p = math.log(p)
-    local a = matrix(1,1,{-1.0})
-    local b = matrix(1,1,{1.0})
+    local a = -1.0
+    local b =  1.0
     while true do
-      local cdfa = dist:logcdf(a)[1]
-      local cdfb = dist:logcdf(b)[1]
+      local cdfa = dist:logcdf(matrix(1,1,{a}))[1]
+      local cdfb = dist:logcdf(matrix(1,1,{b}))[1]
       if cdfa < log_p and cdfb > log_p then break end
-      if cdfa > log_p then a:scal(10) end
-      if cdfb < log_p then b:scal(10) end
+      if cdfa > log_p then a = a*10 end
+      if cdfb < log_p then b = b*10 end
     end
-    return bisect(dist, a, b, log_p, EPSILON or (p*1e-03)):get(1,1)
+    return bisect(dist, a, b, log_p, EPSILON or 1e-08, MAX or 10000)
   end
 end
 
@@ -81,8 +87,8 @@ methods.ci =
     local dist = self.dist
     local alpha = 1.0 - (confidence or 0.95)
     local alpha2 = alpha * 0.5
-    local a = stats.dist.quantile(dist, alpha2, alpha2*1e-03)
-    local b = stats.dist.quantile(dist, 1.0 - alpha2, alpha2*1e-03)
+    local a = stats.dist.quantile(dist, alpha2)
+    local b = stats.dist.quantile(dist, 1.0 - alpha2)
     return a,b
   end
 
