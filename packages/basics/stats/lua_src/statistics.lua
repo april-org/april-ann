@@ -1132,7 +1132,7 @@ stats.perm.pvalue =
   function(perm_result, observed, idx)
     local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
     local pvalue = ge_observed / perm_result:dim(1)
-    return 2 * ( (pvalue<0.5) and pvalue or (1.0 - pvalue) )
+    return (pvalue<0.5) and pvalue or (1.0 - pvalue)
   end
 
 -----------------------------------------------------------------------------
