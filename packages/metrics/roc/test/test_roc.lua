@@ -20,15 +20,26 @@ T("ROCTest", function()
     check.number_eq( metrics.roc( matrix{0.2,0.3,0.4,0.5},
                                   matrix{0,0,0,1} ):compute_area(),
                      1.0 )
-    
-    local roc1 = metrics.roc( matrix{0.2,0.3,0.4,0.5,0.2,0.9},
-                              matrix{0,0,0,1,1,1} )
-    local roc2 = metrics.roc( matrix{0.2,0.4,0.3,0.2,0.5,0.4},
-                              matrix{0,0,0,1,1,1} )
+    --
+    local t  = matrix{0,0,0,1,1,1}
+    local d1 = matrix{0.2,0.3,0.4,0.5,0.2,0.9}
+    local d2 = matrix{0.2,0.4,0.3,0.2,0.5,0.4}
+    local roc1 = metrics.roc( d1, t )
+    local roc2 = metrics.roc( d2, t )
     check.number_eq( roc1:compute_area(), 0.7222222354677)
     check.number_eq( roc2:compute_area(), 0.66666667660077)
-    local h1 = metrics.roc.test(roc1,roc2,{method="bootstrap",seed=1234})
+    local h1 = metrics.roc.test(roc1,roc2,{method="bootstrap",seed=1234,verbose=true})
     local h2 = metrics.roc.test(roc1,roc2,{method="delong"})
     check.number_eq(h1:pvalue(), 0.89040226847281)
     check.number_eq(h2:pvalue(), 0.91152822827165)
+    --
+    local perm_result = stats.perm{
+      samples = { d1, d2 },
+      R = 1000, seed = 11234, verbose = true, k=1,
+      statistic = function(d1,d2)
+        return metrics.roc(d1,t):compute_area() - metrics.roc(d2,t):compute_area()
+      end,
+    }
+    local AUC_diff = roc1:compute_area() - roc2:compute_area()
+    check.number_eq(stats.perm.pvalue(perm_result, AUC_diff), 0.86)
 end)

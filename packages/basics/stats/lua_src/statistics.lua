@@ -1060,6 +1060,85 @@ confus_matrix_methods.clearPredClass =
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
+stats.perm = {}
+
+local perm =
+  function(self,params,...)
+    local params = get_table_fields(
+      {
+        samples    = { mandatory = true, type_match="table" },
+        R           = { type_match = "number",   mandatory = true },
+        statistic   = { type_match = "function", mandatory = true },
+        k           = { type_match = "number", mandatory = false, default = 1 },
+        verbose     = { mandatory = false },
+        ncores      = { mandatory = false, type_match = "number", default = 1 },
+        seed        = { mandatory = false, type_match = "number" },
+        random      = { mandatory = false, isa_match  = random },
+      },
+      params)
+    assert(not params.seed or not params.random,
+           "Fields 'seed' and 'random' are forbidden together")
+    local extra       = table.pack(...)
+    local samples     = params.samples
+    local repetitions = params.R
+    local statistic   = params.statistic
+    local ncores      = params.ncores
+    local seed        = params.seed
+    local rnd         = params.random or random(seed)
+    local k           = params.k
+    local result      = matrix.MMapped(repetitions, k):zeros()
+    local joined      = matrix.join(1, samples)
+    local joined_size = joined:size()
+    local sizes       = iterator(samples):call("size"):table()
+    local get_row,N
+    -- resample function executed in parallel using parallel_foreach
+    local last_i = 0
+    local rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(joined:size())) end
+    local permute = function(i, id)
+      collectgarbage("collect")
+      -- this loop allows to synchronize the random number generator, allowing to
+      -- produce the same exact result independently of ncores value
+      for j=last_i+1,i-1 do rnd_matrix() end
+      last_i = i
+      --
+      local new_samples_idx = rnd_matrix()
+      local new_samples_joined = joined:index(1,new_samples_idx)
+      local new_samples = {}
+      local acc = 1
+      for i=1,#sizes do
+        new_samples[i] = new_samples_joined[{ {acc, acc+sizes[i]-1} }]
+        acc = acc + sizes[i]
+      end
+      local r = table.pack( statistic(multiple_unpack(new_samples, extra)) )
+      april_assert(#r == k,
+                   "Unexpected number of returned values in statistic, expected %d, found %d",
+                   k, #r)
+      result[i]:copy_from_table(r)
+      if (not id or id == 0) and params.verbose and i % 20 == 0 then
+        fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
+        io.stderr:flush()
+      end
+    end
+    local ok,msg = xpcall(parallel_foreach, debug.traceback,
+                          ncores, repetitions, permute)
+    result = result:clone()
+    if not ok then error(msg) end
+    if params.verbose then fprintf(io.stderr, " done\n") end
+    return result
+  end
+setmetatable(stats.perm, { __call = perm })
+
+stats.perm.pvalue =
+  function(perm_result, observed, idx)
+    local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
+    local pvalue = ge_observed / perm_result:dim(1)
+    return 2 * ( (pvalue<0.5) and pvalue or (1.0 - pvalue) )
+  end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
 stats.boot = {}
 april_set_doc(stats.boot,
 	      {
