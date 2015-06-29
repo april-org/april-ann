@@ -1,4 +1,4 @@
-local negate = { right="left", left="right", ["two-sided"] = "two-sided" }
+local alternatives = { right=true, left=true, ["two-sided"] = true }
 
 stats = stats or {} -- global environment
 stats.running = stats.running or {}
@@ -72,16 +72,19 @@ methods.pvalue =
   } ..
   function(self, alternative)
     local alternative = alternative or "two-sided"
-    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
-    local P = matrix.op.abs(self.P)
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
+    local P = self.P
     local h0_dist = self.h0_dist
-    local a = 0.0
-    local b = 0.0
-    if alternative == "two-sided" or alternative == "left" then
+    local a,b = 0.0,0.0
+    local two_sided = (alternative=="two-sided")
+    if two_sided or alternative == "left" then
       a = math.exp( h0_dist:logcdf(-P)[1] )
+      if two_sided and a > 0.5 then a = 1.0 - a end
     end
-    if alternative == "two-sided" or alternative == "right" then
+    if two_sided or alternative == "right" then
       b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
+      if two_sided and b > 0.5 then b = 1.0 - b end
     end
     return a + b
   end
@@ -99,17 +102,19 @@ methods.ci =
   } ..
   function(self, confidence, alternative)
     local alternative = alternative or "two-sided"
-    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
     local true_dist = self.true_dist
     local alpha = 1.0 - (confidence or 0.95)
-    if alternative == "two-sided" then alpha = alpha * 0.5 end
+    local two_sided = (alternative=="two-sided")
+    if two_sided then alpha = alpha * 0.5 end
     local a = -math.huge
     local b =  math.huge
-    if alternative == "two-sided" or alternative == "right" then
-      a = stats.dist.quantile(true_dist, alpha2)
+    if two_sided or alternative == "right" then
+      a = stats.dist.quantile(true_dist, alpha)
     end
-    if alternative == "two-sided" or alternative == "left" then
-      b = stats.dist.quantile(true_dist, 1.0 - alpha2)
+    if two_sided or alternative == "left" then
+      b = stats.dist.quantile(true_dist, 1.0 - alpha)
     end
     return a,b
   end
@@ -1312,7 +1317,8 @@ stats.boot.ci =
   -- returns the extremes of the interval
   function(data, confidence, index, alternative)
     local alternative = alternative or "two-sided"
-    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
            "Incorrect confidence value, it must be in range (0,1)")
@@ -1361,16 +1367,26 @@ stats.boot.percentile =
 -- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
 stats.boot.pvalue =
   function(data, pivot, index, alternative)
+    local p50 = stats.boot.percentile(data, 0.50)
     local alternative = alternative or "two-sided"
-    april_assert(negate[alternative], "Unknown alternative value %s", alternative)
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
     local data = data:select(2, index or 1)
-    if pivot < 0 then pivot,data,alternative = -pivot,-data,negate[alternative] end
     local a,b  = 0.0,0.0
-    if alternative == "two-sided" or alternative == "left" then
-      a = data:lt(0.0):count_ones()
+    local two_sided = (alternative=="two-sided")
+    if two_sided or alternative == "left" then
+      if two_sided and pivot > 0.0 then
+        a = data:lt(-pivot + p50):count_ones()
+      else
+        a = data:lt(pivot + p50):count_ones()
+      end
     end
-    if alternative == "two-sided" or alternative == "right" then
-      b = data:gt(2*pivot):count_ones()
+    if two_sided or alternative == "right" then
+      if two_sided and pivot < 0.0 then
+        b = data:gt(-pivot + p50):count_ones()
+      else
+        b = data:gt(pivot + p50):count_ones()
+      end
     end
     local pvalue = (a + b + 1) / (data:size() + 1)
     return pvalue
