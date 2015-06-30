@@ -1366,8 +1366,9 @@ stats.boot.percentile =
 -- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
 -- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
 stats.boot.pvalue =
-  function(data, pivot, index, alternative)
-    local p50 = stats.boot.percentile(data, 0.50)
+  function(data, pivot, index, alternative, h0)
+    local h0  = h0 or 0.0
+    local p50 = stats.boot.percentile(data, 0.50, index)
     local alternative = alternative or "two-sided"
     april_assert(alternatives[alternative],
                  "Unknown alternative value %s", alternative)
@@ -1376,16 +1377,16 @@ stats.boot.pvalue =
     local two_sided = (alternative=="two-sided")
     if two_sided or alternative == "left" then
       if two_sided and pivot > 0.0 then
-        a = data:lt(-pivot + p50):count_ones()
+        a = data:lt(-pivot + p50 + h0):count_ones()
       else
-        a = data:lt(pivot + p50):count_ones()
+        a = data:lt(pivot + p50 + h0):count_ones()
       end
     end
     if two_sided or alternative == "right" then
       if two_sided and pivot < 0.0 then
-        b = data:gt(-pivot + p50):count_ones()
+        b = data:gt(-pivot + p50 + h0):count_ones()
       else
-        b = data:gt(pivot + p50):count_ones()
+        b = data:gt(pivot + p50 + h0):count_ones()
       end
     end
     local pvalue = (a + b + 1) / (data:size() + 1)
