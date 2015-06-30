@@ -1366,10 +1366,16 @@ stats.boot.percentile =
 -- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
 -- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
 stats.boot.pvalue =
-  function(data, pivot, index, alternative, h0)
-    local h0  = h0 or 0.0
+  function(data, pivot, index, params)
+    local params = get_table_fields(
+      {
+        h0 = { mandatory = false, default = 0.0, type_match = "number" },
+        alternative = { mandatory = false, default = "two-sided", type_match = "string" },
+      },
+      params or {})
+    local h0  = params.h0
     local p50 = stats.boot.percentile(data, 0.50, index)
-    local alternative = alternative or "two-sided"
+    local alternative = params.alternative
     april_assert(alternatives[alternative],
                  "Unknown alternative value %s", alternative)
     local data = data:select(2, index or 1)
@@ -1391,30 +1397,6 @@ stats.boot.pvalue =
     end
     local pvalue = (a + b + 1) / (data:size() + 1)
     return pvalue
-  end
-
-stats.boot.rprob =
-  april_doc{
-    class = "function",
-    summary = "Computes one-sided probability for a given pivot in a bootstrap sample",
-    description = {
-      "This function returns the one-sided probability of given pivot, that is, the",
-      "probability of the sample to be greater than the pivot. The probability",
-      "is computed to avoid bias problems as: (C(>pivot)+1)/(N+1)",
-    },
-    params = {
-      "The result of stats.boot function.",
-      "The pivot [optional], by default it is 0.0",
-      "The statistic index for which you want compute the percentile [optional], by default it is 1",
-    },
-    outputs = {
-      "The one-sided right probability",
-    },
-  } ..
-  function(data, pivot, index)
-    assert(data, "Needs a data argument as first argument")
-    local ge_pivot = data:select(2, index or 1):gt(pivot or 0.0):count_ones()
-    return (1+ge_pivot) / (data:dim(1)+1)
   end
 
 ----------------------------------------------------------------------------
