@@ -99,6 +99,7 @@ local matrix_methods = {
     "copy",
     "toMMap",
     "data", "convert_to",
+    "stringfy",
   },
   bool = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",

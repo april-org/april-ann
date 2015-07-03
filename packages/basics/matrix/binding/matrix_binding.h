@@ -1738,6 +1738,18 @@ namespace Basics {
       lua_push(L, dest);
       return 1;
     }
+    
+    BEGIN_METHOD(stringfy)
+    {
+      OutputLuaStringStream stream(L);
+      for (typename Matrix<T>::const_iterator it = obj->begin();
+           it != obj->end(); ++it) {
+        const T *str = &(*it);
+        stream.put(str, sizeof(*it));
+      }
+      stream.push(L);
+      return 1;
+    }
   };
 
 #undef FUNCTION_NAME
