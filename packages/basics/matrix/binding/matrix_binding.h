@@ -247,6 +247,19 @@ namespace Basics {
               LUABIND_ERROR("Incorrect matrix dimensions");
             }
             obj = new Matrix<T>(ndims, dim.get());
+            if (typeid(T) == typeid(char) && lua_type(L,argn) == LUA_TSTRING) { // for matrixChar case
+              int len = luaL_len(L,argn);
+              if (len != obj->size()) {
+                LUABIND_ERROR("Not matching sizes");
+              }
+              const char *data = lua_tostring(L,argn);
+              for (typename Matrix<T>::iterator it(obj->begin());
+                   it != obj->end(); ++it, ++data) {
+                april_assert(data != '\0');
+                *it = static_cast<T>(*data);
+              }
+              lua_push(L, obj);
+            }
           }
         } // else { !lua_is(L,argn) }
         lua_push(L, obj);
