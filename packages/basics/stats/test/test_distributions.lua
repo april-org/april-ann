@@ -64,6 +64,17 @@ T("NormalDistTest", function()
 end)
 
 -----------------------------------------------------------------------------
+
+T("QuantileTest", function()
+    local d = stats.dist.normal()
+    check.number_eq(stats.dist.quantile(d, 0.975), 1.9599)
+    check.number_eq(stats.dist.quantile(d, 0.95), 1.6448)
+    check.number_eq(stats.dist.quantile(d, 0.05), -1.6448)
+    check.number_eq(stats.dist.quantile(d, 0.20), -0.8416212)
+    check.number_eq(stats.dist.quantile(d, 0.50), 0.0)
+end)
+
+-----------------------------------------------------------------------------
 -- DIAGONAL NORMAL DISTRIBUTION
 
 T("DiagNormalDistTest", function()

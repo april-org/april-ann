@@ -245,9 +245,16 @@ namespace Stats {
 
   void DiagonalNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                  MatrixFloat *result) {
-    UNUSED_VARIABLE(x);
-    UNUSED_VARIABLE(result);
-    ERROR_EXIT(128, "Not implemented");
+    if (getSize() != 1) {
+      ERROR_EXIT(128, "Only implemented for univariate distributions\n");
+    }
+    float mu  = *(mean->begin());
+    float sd  = ::sqrtf(*(cov->begin()));
+    static float inv_sd_sqrt2 = 1.0f/(sd*sqrtf(2.0f));
+    MatrixFloat::const_iterator x_it = x->begin();
+    for (MatrixFloat::iterator it=result->begin(); it!=result->end(); ++it) {
+      *it = AprilMath::m_log( 0.5f * (1.0f + ::erff( (*x_it - mu) * inv_sd_sqrt2 )) );
+    }
   }
 
   void DiagonalNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,

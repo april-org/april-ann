@@ -1,6 +1,6 @@
  package{ name = "metrics.roc",
    version = "1.0",
-   depends = { "util", },
+   depends = { "util", "stats", },
    keywords = { "roc" },
    description = "alignment",
    -- targets como en ant
