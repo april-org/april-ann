@@ -6,6 +6,7 @@ local packages_list = {
   "stats",
   "dataset",
   "matrix",
+  "data_frame",
   "random",
   "cmdOpt",
   "mathcore",
