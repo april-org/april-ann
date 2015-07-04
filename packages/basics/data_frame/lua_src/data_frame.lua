@@ -217,3 +217,5 @@ local df4 = data_frame.from_csv(aprilio.stream.input_lua_string[[id,cost
 print(df4)
 
 df4:to_csv("blah.csv")
+
+return data_frame
