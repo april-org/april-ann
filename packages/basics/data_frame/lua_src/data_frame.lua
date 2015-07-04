@@ -1,5 +1,31 @@
-local NA = "NA"
+local NA = nan -- NaN values are used as "Not Available"
 
+-- utilities
+
+-- returns a matrix from the given column data
+local to_matrix
+do
+  local matrix_ctor = {
+    float   = matrix,
+    double  = matrixDouble,
+    complex = matrixComplex,
+    int32   = matrixInt32,
+    char    = matrixChar,
+    bool    = matrixBool,
+  }
+  function to_matrix(data, dtype)
+    local ctor = april_assert(matrix_ctor[dtype],
+                              "Unable to build matrix type %s", dtype)
+    if type(data) == "table" then
+      return ctor(#data,1,data)
+    else
+      data = class.of(data)==ctor and data or data:convert_to(dtype)
+      return data:rewrap(data:size(),1)
+    end
+  end
+end
+
+-- concats a matrix or a table data using sep as delimiter
 local function concat(array, sep)
   if type(array) ~= "table" then
     array = array:toTable()
@@ -7,6 +33,7 @@ local function concat(array, sep)
   return table.concat(array, sep)
 end
 
+-- parses a CSV line using sep as delimiter and adding NA when required
 local function parse_csv_line(line, sep)
   local parsed = {}
   local init = 1
@@ -19,6 +46,7 @@ local function parse_csv_line(line, sep)
     else
       v = line:sub(init, i-1)
       v = tonumber(v) or v
+      if type(v) == "string" and v:upper() == "NA" then v = NA end
     end
     assert(v, "Unexpected read error")
     table.insert(parsed, v)
@@ -28,11 +56,13 @@ local function parse_csv_line(line, sep)
   return parsed
 end
 
+-- converts an array or a matrix into a string
 local function stringfy(array)
   if class.of(array) then array = array:toTable() end
   return util.to_lua_string(array, "ascii")
 end
 
+-- checks if an array is a table or a matrix
 local function check_array(array, field)
   if type(array) ~= "table" then
     local c = class.of(array)
@@ -43,6 +73,7 @@ local function check_array(array, field)
   return array
 end
 
+-- returns the inverted map of an array or a matrix
 local function invert(array)
   local t = {}
   for i,v in ipairs(array) do
@@ -52,15 +83,19 @@ local function invert(array)
   return t
 end
 
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
 -- Inspired in pandas (Python) dataframe
 -- http://pandas-docs.github.io/pandas-docs-travis/
 local data_frame,methods = class("data_frame")
-_G.data_frame = data_frame
+_G.data_frame = data_frame -- global definition
 
 data_frame.constructor =
   function(self, params)
     local params = get_table_fields({
-        data = { },
+        data = { }, -- data can be a matrix or a Lua table
         rows = { },
         columns = { },
                                     }, params or {})
@@ -139,7 +174,18 @@ local function dataframe_tostring(self)
     return table.concat(tbl)
   end
 end
+
+local function dataframe_index(self,key)
+  local v = self.data[key]
+  if v then
+    april_assert(not data_frame.meta_instance.index_table[key],
+                 "Ambiguous key %s, it can be a column or a method", key)
+    return v
+  end
+end
+
 class.extend_metamethod(data_frame, "__tostring", dataframe_tostring)
+class.declare_functional_index(data_frame, dataframe_index)
 
 data_frame.from_csv =
   function(path, params)
@@ -200,6 +246,54 @@ methods.to_csv =
     if path ~= f then f:close() end
   end
 
+methods.drop =
+  function(self, dim, ...)
+    assert(dim, "Needs a dimension number, 1 or 2")
+    local labels = table.pack(...)
+    if dim == 1 then
+      error("Not implemented for rows")
+    elseif dim == 2 then
+      local num_cols = #self.columns
+      for _,col_name in ipairs(labels) do
+        local col_id = april_assert(self.col2id[col_name],
+                                    "Unknown column name %s", col_name)
+        self.data[col_name]   = nil
+        self.columns[col_id]  = nil
+        self.col2id[col_name] = nil
+      end
+      local j=1
+      for i=1,num_cols do
+        local v = self.columns[i]
+        self.columns[i] = nil
+        self.columns[j] = v
+        if v then
+          self.col2id[self.columns[j]] = j
+          j=j+1
+        end
+      end
+    else
+      error("Incorrect dimension number, it should be 1 or 2")
+    end
+  end
+
+methods.as_matrix =
+  function(self, dtype, ...)
+    local dtype = dtype or "float"
+    local cols_slice
+    if not ... then
+      cols_slice = self.columns
+    else
+      cols_slice = table.pack(...)
+    end
+    local tbl = {}
+    for _,col_name in ipairs(cols_slice) do
+      april_assert(self.col2id[col_name],
+                   "Unknown column name %s", col_name)
+      table.insert(tbl, to_matrix(self.data[col_name], dtype))
+    end
+    return matrix.join(2, tbl)
+  end
+
 local df1 = data_frame()
 local df2 = data_frame{ data = { one = {1,2,3,4},
                                  two = {5,6,7,8} },
@@ -216,6 +310,13 @@ local df4 = data_frame.from_csv(aprilio.stream.input_lua_string[[id,cost
 ]])
 print(df4)
 
+df4:drop(2, "id")
+
 df4:to_csv("blah.csv")
+
+print(df3[3])
+
+print(df2:as_matrix())
+print(df3:as_matrix("complex", 2))
 
 return data_frame

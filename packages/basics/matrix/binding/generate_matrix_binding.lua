@@ -84,7 +84,7 @@ local matrix_methods = {
     "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "toMMap",
-    "data",
+    "data", "convert_to",
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
