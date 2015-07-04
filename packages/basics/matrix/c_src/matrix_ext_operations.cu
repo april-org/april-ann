@@ -458,6 +458,7 @@ namespace AprilMath {
       template Matrix<float> *matLog(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matLog1p(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matExp(Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matExpm1(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matSqrt(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matPow(Matrix<float> *, const float &, Matrix<float> *);
       template Matrix<float> *matTan(Matrix<float> *, Matrix<float> *);
@@ -506,6 +507,7 @@ namespace AprilMath {
       template Matrix<double> *matLog(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matLog1p(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matExp(Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matExpm1(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matSqrt(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matPow(Matrix<double> *, const double &, Matrix<double> *);
       template Matrix<double> *matTan(Matrix<double> *, Matrix<double> *);
