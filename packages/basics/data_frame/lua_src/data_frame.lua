@@ -119,7 +119,12 @@ data_frame.constructor =
           april_assert(self.col2id[col_name],
                        "Not valid column name %s", col_name)
         end
-        assert(n == #col_data, "Length of values different does not match length of rows")
+        assert(n == #col_data, "Length of values does not match length of rows")
+        if class.of(col_data) then
+          local sq = assert(col_data.squeeze, "Needs matrix or table as columns")
+          col_data = col_data:squeeze()
+          assert(col_data:num_dim() == 1, "Needs a rank one matrix")
+        end
         self.data[col_name] = col_data
       end
       if #self.columns == 0 then
@@ -292,6 +297,24 @@ methods.as_matrix =
       table.insert(tbl, to_matrix(self.data[col_name], dtype))
     end
     return matrix.join(2, tbl)
+  end
+
+methods.insert =
+  function(self, col_data, col_name)
+    local col_name = col_name or (#self.columns+1)
+    april_assert(not self.col2id[col_name],
+                 "Column name collision: %s", col_name)
+    table.insert(self.columns, col_name)
+    self.col2id[col_name] = #self.columns
+    if class.of(col_data) then
+      local sq = assert(col_data.squeeze, "Needs matrix or table as columns")
+      col_data = col_data:squeeze()
+      assert(col_data:num_dim() == 1, "Needs a rank one matrix")
+    end
+    if #self.rows == 0 then self.rows = matrixInt32(#col_data):linspace() end
+    assert(#col_data == #self.rows,
+           "Length of values does not match length of rows")
+    self.data[col_name] = col_data
   end
 
 return data_frame

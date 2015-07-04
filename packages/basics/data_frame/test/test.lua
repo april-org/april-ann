@@ -22,3 +22,7 @@ print(df3[3])
 
 print(df2:as_matrix())
 print(df3:as_matrix("complex", 2))
+
+local m = matrix(20,1):linspace()
+local df5 = data_frame()
+df5:insert(m)
