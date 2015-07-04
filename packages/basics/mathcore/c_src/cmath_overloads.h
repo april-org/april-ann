@@ -323,6 +323,21 @@ namespace AprilMath {
 
   // exp overload
   SCALAR_STD_CMATH_MAP_TEMPLATE(m_exp, exp);
+
+  /**
+   * @struct Functors::m_expm1
+   *
+   * @brief Overloaded expm1 operation, currently defined for float and double.
+   */
+  /**
+   * @fn m_expm1
+   *
+   * @brief Function for instantiation and call of Functors::m_expm1::operator()
+   * @see Functors::m_expm1
+   */
+
+  // expm1 overload
+  SCALAR_STD_CMATH_MAP_TEMPLATE(m_expm1, expm1);
   
   /**
    * @struct Functors::m_pow

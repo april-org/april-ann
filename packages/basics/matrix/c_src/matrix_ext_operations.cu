@@ -73,6 +73,13 @@ namespace AprilMath {
         if (dest == 0) dest = obj;
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_exp<T>(), dest);
       }
+
+      template <typename T>
+      Matrix<T> *matExpm1(Matrix<T> *obj,
+                          Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_expm1<T>(), dest);
+      }
     
       template <typename T>
       Matrix<T> *matSqrt(Matrix<T> *obj,

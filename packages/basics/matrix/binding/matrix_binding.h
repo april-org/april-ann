@@ -1229,6 +1229,12 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(expm1)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::matExpm1(obj));
+      return 1;
+    }
+
     BEGIN_METHOD(sqrt)
     {
       lua_push(L, AprilMath::MatrixExt::Operations::matSqrt(obj));
