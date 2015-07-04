@@ -1,3 +1,5 @@
+local alternatives = { right=true, left=true, ["two-sided"] = true }
+
 stats = stats or {} -- global environment
 stats.running = stats.running or {}
 
@@ -62,16 +64,28 @@ tbl.constructor =
     self.h0_dist   = h0_dist
     self.true_dist = true_dist
   end
+
 methods.pvalue =
   april_doc{
     class = "method",
     summary = "Returns the p-value of the pivot for the H0 distribution",
   } ..
-  function(self)
-    local P = matrix.op.abs(self.P)
+  function(self, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
+    local P = self.P
     local h0_dist = self.h0_dist
-    local a = math.exp( h0_dist:logcdf(-P)[1] )
-    local b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
+    local a,b = 0.0,0.0
+    local two_sided = (alternative=="two-sided")
+    if two_sided or alternative == "left" then
+      a = math.exp( h0_dist:logcdf(-P)[1] )
+      if two_sided and a > 0.5 then a = 1.0 - a end
+    end
+    if two_sided or alternative == "right" then
+      b = 1.0 - math.exp( h0_dist:logcdf(P)[1] )
+      if two_sided and b > 0.5 then b = 1.0 - b end
+    end
     return a + b
   end
 methods.pivot =
@@ -86,12 +100,22 @@ methods.ci =
     class = "method",
     summary = "Returns the confidence interval of the true distribution",
   } ..
-  function(self, confidence)
+  function(self, confidence, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
     local true_dist = self.true_dist
     local alpha = 1.0 - (confidence or 0.95)
-    local alpha2 = alpha * 0.5
-    local a = stats.dist.quantile(true_dist, alpha2)
-    local b = stats.dist.quantile(true_dist, 1.0 - alpha2)
+    local two_sided = (alternative=="two-sided")
+    if two_sided then alpha = alpha * 0.5 end
+    local a = -math.huge
+    local b =  math.huge
+    if two_sided or alternative == "right" then
+      a = stats.dist.quantile(true_dist, alpha)
+    end
+    if two_sided or alternative == "left" then
+      b = stats.dist.quantile(true_dist, 1.0 - alpha)
+    end
     return a,b
   end
 
@@ -1074,11 +1098,13 @@ local perm =
         ncores      = { mandatory = false, type_match = "number", default = 1 },
         seed        = { mandatory = false, type_match = "number" },
         random      = { mandatory = false, isa_match  = random },
+        paired      = { mandatory = false, type_match = "boolean" },
       },
       params)
     assert(not params.seed or not params.random,
            "Fields 'seed' and 'random' are forbidden together")
     local extra       = table.pack(...)
+    local paired      = params.paired
     local samples     = params.samples
     local repetitions = params.R
     local statistic   = params.statistic
@@ -1093,7 +1119,23 @@ local perm =
     local get_row,N
     -- resample function executed in parallel using parallel_foreach
     local last_i = 0
-    local rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(joined:size())) end
+    local rnd_matrix
+    assert(not paired, "Paired option is not fully implemented")
+    if paired then
+      for i=2,#sizes do assert(sizes[i-1] == sizes[i], "Found different sizes in paired test") end
+      local M = sizes[1]
+      local sub_indices = matrix.ext.repmat(matrixInt32(M):linspace(), #sizes)
+      local indices = {}
+      for i=1,#sizes do for j=1,M do indices[#indices+1] = i-1 end end
+      rnd_matrix = function()
+        local shuf = rnd:shuffle(indices)
+        local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
+        return m
+      end
+    else
+      local indices = iterator.range(joined_size):table()
+      rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(indices)) end
+    end
     local permute = function(i, id)
       collectgarbage("collect")
       -- this loop allows to synchronize the random number generator, allowing to
@@ -1129,7 +1171,8 @@ local perm =
 setmetatable(stats.perm, { __call = perm })
 
 stats.perm.pvalue =
-  function(perm_result, observed, idx)
+  function(perm_result, observed, idx, alternative)
+    assert(not alternative or alternative == "two-sided")
     local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
     local pvalue = ge_observed / perm_result:dim(1)
     return (pvalue<0.5) and pvalue or (1.0 - pvalue)
@@ -1272,12 +1315,23 @@ stats.boot.ci =
     },
   } ..
   -- returns the extremes of the interval
-  function(data, confidence, index)
+  function(data, confidence, index, alternative)
+    local alternative = alternative or "two-sided"
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
     local confidence,index  = confidence or 0.95, index or 1
     assert(confidence > 0 and confidence < 1,
            "Incorrect confidence value, it must be in range (0,1)")
-    local Pa = (1.0 - confidence)*0.5
-    local Pb = 1.0 - Pa
+    local Pa = 0.0
+    local Pb = 1.0
+    if alternative == "two-sided" then
+      Pa = (1.0 - confidence)*0.5
+      Pb = 1.0 - Pa
+    elseif alternative == "left" then
+      Pb = confidence
+    else
+      Pa = 1.0 - confidence
+    end
     return stats.boot.percentile(data, { Pa, Pb }, index)
   end
 
@@ -1308,28 +1362,41 @@ stats.boot.percentile =
                             table.unpack(percentile))
   end
 
-stats.boot.rprob =
-  april_doc{
-    class = "function",
-    summary = "Computes one-sided probability for a given pivot in a bootstrap sample",
-    description = {
-      "This function returns the one-sided probability of given pivot, that is, the",
-      "probability of the sample to be greater than the pivot. The probability",
-      "is computed to avoid bias problems as: (C(>pivot)+1)/(N+1)",
-    },
-    params = {
-      "The result of stats.boot function.",
-      "The pivot [optional], by default it is 0.0",
-      "The statistic index for which you want compute the percentile [optional], by default it is 1",
-    },
-    outputs = {
-      "The one-sided right probability",
-    },
-  } ..
-  function(data, pivot, index)
-    assert(data, "Needs a data argument as first argument")
-    local ge_pivot = data:select(2, index or 1):gt(pivot or 0.0):count_ones()
-    return (1+ge_pivot) / (data:dim(1)+1)
+-- An Empirical Investigation of Statistical Significance in NLP.
+-- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
+-- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
+stats.boot.pvalue =
+  function(data, pivot, index, params)
+    local params = get_table_fields(
+      {
+        h0 = { mandatory = false, default = 0.0, type_match = "number" },
+        alternative = { mandatory = false, default = "two-sided", type_match = "string" },
+      },
+      params or {})
+    local h0  = params.h0
+    local p50 = stats.boot.percentile(data, 0.50, index)
+    local alternative = params.alternative
+    april_assert(alternatives[alternative],
+                 "Unknown alternative value %s", alternative)
+    local data = data:select(2, index or 1)
+    local a,b  = 0.0,0.0
+    local two_sided = (alternative=="two-sided")
+    if two_sided or alternative == "left" then
+      if two_sided and pivot > 0.0 then
+        a = data:lt(-pivot + p50 + h0):count_ones()
+      else
+        a = data:lt(pivot + p50 + h0):count_ones()
+      end
+    end
+    if two_sided or alternative == "right" then
+      if two_sided and pivot < 0.0 then
+        b = data:gt(-pivot + p50 + h0):count_ones()
+      else
+        b = data:gt(pivot + p50 + h0):count_ones()
+      end
+    end
+    local pvalue = (a + b + 1) / (data:size() + 1)
+    return pvalue
   end
 
 ----------------------------------------------------------------------------
@@ -1475,14 +1542,14 @@ do
     local x,tt = check(x)
     if mean then x:axpy(-1.0, mean) end
     if sd then x:scal(1/sd) end
-    return std_norm:logpdf(x)
+    return std_norm:logpdf(x):exp()
   end
   --
   stats.pnorm = function(x, mean, sd)
     local x,tt = check(x)
     if mean then x:axpy(-1.0, mean) end
     if sd then x:scal(1/sd) end
-    return std_norm:logcdf(x)
+    return std_norm:logcdf(x):exp()
   end
   --
   stats.qnorm = function(x, mean, sd)

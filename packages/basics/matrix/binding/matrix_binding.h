@@ -247,6 +247,19 @@ namespace Basics {
               LUABIND_ERROR("Incorrect matrix dimensions");
             }
             obj = new Matrix<T>(ndims, dim.get());
+            if (typeid(T) == typeid(char) && lua_type(L,argn) == LUA_TSTRING) { // for matrixChar case
+              int len = luaL_len(L,argn);
+              if (len != obj->size()) {
+                LUABIND_ERROR("Not matching sizes");
+              }
+              const char *data = lua_tostring(L,argn);
+              for (typename Matrix<T>::iterator it(obj->begin());
+                   it != obj->end(); ++it, ++data) {
+                april_assert(data != '\0');
+                *it = static_cast<T>(*data);
+              }
+              lua_push(L, obj);
+            }
           }
         } // else { !lua_is(L,argn) }
         lua_push(L, obj);
@@ -1742,6 +1755,18 @@ namespace Basics {
       MatrixInt32 *dest = lua_opt<MatrixInt32*>(L, 1, 0);
       dest = AprilMath::MatrixExt::Misc::matOrderRank(obj, dest);
       lua_push(L, dest);
+      return 1;
+    }
+    
+    BEGIN_METHOD(stringfy)
+    {
+      OutputLuaStringStream stream(L);
+      for (typename Matrix<T>::const_iterator it = obj->begin();
+           it != obj->end(); ++it) {
+        const T *str = &(*it);
+        stream.put(str, sizeof(*it));
+      }
+      stream.push(L);
       return 1;
     }
   };

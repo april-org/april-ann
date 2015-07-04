@@ -44,7 +44,11 @@ do
     --
     return V10,V01
   end
-  
+
+  -- Comparing the areas under two or more correlated receiver
+  -- operating characteristic curves: a nonparametric approach.
+  -- DeLong ER1, DeLong DM, Clarke-Pearson DL.
+  -- http://www.ncbi.nlm.nih.gov/pubmed/3203132
   local function compute_delong_covariance(params, r1, r2,
                                            t_data, p1_data, p2_data)
     local AUC2 = r1:compute_area()
