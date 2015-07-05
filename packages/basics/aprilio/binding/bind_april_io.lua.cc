@@ -131,6 +131,7 @@ namespace AprilIO {
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string, size);
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
@@ -140,6 +141,7 @@ namespace AprilIO {
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     extractLineFromStream(obj, lua_string);
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
@@ -149,6 +151,7 @@ namespace AprilIO {
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string);
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
 }
@@ -347,9 +350,11 @@ namespace AprilIO {
       dest = aux_lua_string;
     }
     size_t len = obj->get(dest.get(), size, delim, keep_delim);
-    if (aux_lua_string == 0) LUABIND_RETURN(StreamInterface, dest.get());
-    else LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
-    LUABIND_RETURN(uint, len);
+    if (!obj->eof() || len!=0) {
+      if (aux_lua_string == 0) LUABIND_RETURN(StreamInterface, dest.get());
+      else LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
+      LUABIND_RETURN(uint, len);
+    }
   }
 }
 //BIND_END
