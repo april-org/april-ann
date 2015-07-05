@@ -1,3 +1,6 @@
+class.forget("data_frame")
+dofile(arg[0]:dirname() .. "../lua_src/data_frame.lua")
+
 local df1 = data_frame()
 local df2 = data_frame{ data = { one = {1,2,3,4},
                                  two = {5,6,7,8} },
@@ -12,6 +15,8 @@ local df4 = data_frame.from_csv(aprilio.stream.input_lua_string[[id,cost
 2,1
 3,10
 ]])
+print(df4)
+df4["cost"] = {2,3,4}
 print(df4)
 
 df4:drop(2, "id")
