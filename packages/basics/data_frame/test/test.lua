@@ -19,6 +19,7 @@ print(df4)
 df4:drop(2, "id")
 
 df4:to_csv("blah.csv")
+os.remove("blah.csv")
 
 print(df3[3])
 
