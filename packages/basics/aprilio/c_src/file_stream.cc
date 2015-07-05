@@ -73,6 +73,7 @@ namespace AprilIO {
   
   FileStream::FileStream(const char *path, const char *mode) :
     BufferedStream(),
+    errnum(0),
     is_eof(false) {
     AprilUtils::constString mode_cstr(mode);
     if (mode_cstr.empty() || mode_cstr == "r") {
@@ -100,14 +101,14 @@ namespace AprilIO {
     fd = checkReturnValue(open(path, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH));
   }
 
-  FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
+  FileStream::FileStream(FILE *f) : BufferedStream(), errnum(0), is_eof(false) {
     fflush(f);
     fd = checkReturnValue(dup(::fileno(f)));
     flags = fcntl(fd, F_GETFL);
     seekStream(SEEK_SET, ftell(f));
   }
   
-  FileStream::FileStream(int f) : BufferedStream(), is_eof(false) {
+  FileStream::FileStream(int f) : BufferedStream(), errnum(0), is_eof(false) {
     fd = checkReturnValue(dup(f));
     flags = fcntl(fd, F_GETFL);
   }
