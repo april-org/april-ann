@@ -51,7 +51,7 @@ namespace ZIP {
     virtual bool privateEof() const;    
     virtual size_t privateWrite(const char *buf, size_t size);
     virtual size_t privateRead(char *buf, size_t max_size);
-    virtual off_t privateSeek(int whence, int offset);
+    virtual off_t privateSeek(int whence, long offset);
     
   private:
     
