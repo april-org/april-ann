@@ -47,7 +47,7 @@ namespace AprilIO {
     virtual ~BufferedStream();
     // virtual bool isOpened() const = 0;
     virtual void close();
-    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
+    virtual off_t seek(int whence = SEEK_CUR, long offset = 0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     // virtual bool hasError() const = 0;
@@ -67,7 +67,7 @@ namespace AprilIO {
     /// Closes the real stream.
     virtual void closeStream() = 0;
     /// Executes seek operation to the real stream.
-    virtual off_t seekStream(int whence, int offset) = 0;
+    virtual off_t seekStream(int whence, long offset) = 0;
     /// Returns true if the real stream is at EOF.
     virtual bool eofStream() const = 0;
   
@@ -107,7 +107,7 @@ namespace AprilIO {
     virtual size_t put(const char *source);
     virtual int printf(const char *format, ...);
     virtual bool eof() const;
-    virtual off_t seek(int whence=SEEK_CUR, int offset=0);
+    virtual off_t seek(int whence=SEEK_CUR, long offset=0);
 
     // virtual bool isOpened() const = 0;
     // virtual void close() = 0;
@@ -125,7 +125,7 @@ namespace AprilIO {
     /// Reads data from the real stream.
     virtual size_t privateRead(char *buf, size_t max_size) = 0;
     /// Moves the real stream pointer.
-    virtual off_t privateSeek(int whence, int offset) = 0;
+    virtual off_t privateSeek(int whence, long offset) = 0;
     
   private:
     

@@ -51,7 +51,7 @@ namespace AprilIO {
     }
   }
 
-  off_t BufferedStream::seek(int whence, int offset) {
+  off_t BufferedStream::seek(int whence, long offset) {
     if (whence == SEEK_CUR) {
       off_t real_pos    = seekStream(SEEK_CUR, 0);
       off_t current_pos = real_pos - getInBufferAvailableSize();
@@ -248,7 +248,7 @@ namespace AprilIO {
     return (in_buffer_pos == in_buffer_len) && privateEof();
   }
 
-  off_t BufferedInputStream::seek(int whence, int offset) {
+  off_t BufferedInputStream::seek(int whence, long offset) {
     if (whence == SEEK_CUR) {
       off_t real_pos    = privateSeek(SEEK_CUR, 0);
       off_t current_pos = real_pos - (in_buffer_len - in_buffer_pos);
