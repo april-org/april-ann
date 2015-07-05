@@ -171,9 +171,12 @@ data_frame.constructor =
       local mt = getmetatable(self)
       local proxy = self
       self = {}
-      self.__newindex = dataframe_newindex
-      self.__index    = dataframe_index
-      self.__tostring = dataframe_tostring
+      self.__newindex  = dataframe_newindex
+      self.__index     = dataframe_index
+      self.__tostring  = dataframe_tostring
+      self.index_table = mt.index_table
+      self.cls         = mt.cls
+      self.id          = mt.id
       setmetatable(proxy, self)
       setmetatable(self, mt)
     end
