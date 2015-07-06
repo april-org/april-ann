@@ -3,13 +3,15 @@ dofile(arg[0]:dirname().."../lua_src/data_frame.lua")
 
 local df1 = data_frame()
 local df2 = data_frame{ data = { one = {1,2,3,4},
-                                 two = {5,6,7,8} },
-                        columns = { "two", "one" },
+                                 two = {5,6,7,8},
+                                 three = { "A", "B", "B", "A" }, },
+                        columns = { "two", "one", "three" },
                         index = { "a", "b", "c", "d" } }
 local df3 = data_frame{ data = matrix(4,20):linear() }
 print(df1)
 print(df2)
 print(df3)
+pprint(df2:as_matrix("three", { dtype="categorical" }))
 
 -- print(df2:iloc(2))
 -- print(df2:loc("b"))
@@ -32,8 +34,8 @@ os.remove("blah.csv")
 
 print(df3[{3}])
 
-print(df2:as_matrix())
-print(df3:as_matrix("complex", 2))
+print(df2:as_matrix("one", "two"))
+print(df3:as_matrix(2, { dtype="complex", }))
 
 local m = matrix(20,1):linspace()
 local df5 = data_frame()

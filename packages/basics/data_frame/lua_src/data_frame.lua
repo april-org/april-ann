@@ -5,6 +5,29 @@ local NA       = nan -- NaN values are used as "Not Available"
 
 -- utilities
 
+local function is_NA(v) return tostring(v) == tostring(NA) end
+
+local function build_order(tbl, NA_symbol)
+  local symbols = {}
+  for i,v in ipairs(tbl) do symbols[is_NA(v) and NA_symbol or v] = true end
+  local order = iterator(pairs(symbols)):select(1):table()
+  table.sort(order)
+  return order
+end
+
+-- returns a categorized table, table of categories and inverted dictionary
+local categorical =
+  function(tbl, NA_symbol, order)
+    assert(tbl and NA_symbol, "Needs a table and NA symbol")
+    local categories = order or build_order(tbl, NA_symbol)
+    local cat2id = table.invert(categories)
+    local result = {}
+    for i,v in ipairs(tbl) do
+      result[i] = is_NA(v) and cat2id[NA_symbol] or cat2id[v]
+    end
+    return result,categories,cat2id
+  end
+
 -- returns the next number available in a given array
 local function next_number(columns)
   local n = 0
@@ -60,7 +83,7 @@ local function parse_csv_line(line, sep)
       v = tonumber(v) or v
       if type(v) == "string" then
         local v_upper = v:upper()
-        if v_upper == "NA" or v_upper == "NAN" then v = NA end
+        if v_upper == "<NA>" or v_upper == "NA" or v_upper == "NAN" then v = NA end
       end
     end
     assert(v, "Unexpected read error")
@@ -192,7 +215,6 @@ data_frame.constructor =
     rawset(self, "col2id", invert(rawget(self, "columns")))
     rawset(self, "index2id", invert(rawget(self, "index")))
     rawset(self, "data", {})
-    rawset(self, "categorical", {})
     local data = params.data
     if type(data) == "table" then
       if #rawget(self, "index") == 0 then
@@ -338,22 +360,59 @@ methods.drop =
   end
 
 methods.as_matrix =
-  function(self, dtype, ...)
+  function(self, ...)
     local self = getmetatable(self)
-    local dtype = dtype or "float"
+    local args = table.pack(...)
+    local params = {}
+    if #args > 0 and type(args[#args]) == "table" then params = table.remove(args) end
+    params = get_table_fields({
+        dtype = { type_match = "string", default = "float" },
+        categorical_dtype = { type_match = "string", default = "float" },
+        categories = { type_match = "table", default = nil },
+        NA = { type_match = "string", default = "<NA>" },
+                              }, params)
+    local categories = params.categories or {}
+    local inv_categories = {}
+    local dtype = params.dtype
+    local categorical_dtype = params.categorical_dtype
+    local data = rawget(self, "data")
     local cols_slice
-    if not ... then
+    if #args == 0 then
       cols_slice = rawget(self, "columns")
     else
-      cols_slice = table.pack(...)
+      cols_slice = args
+      if dtype == "categorical" then
+        if #args > 1 then
+          assert(#categories == 0 or type(categories[1]) == "table" and
+                 #categories == #args, "Needs a table with category arrays in categories field")
+        else
+          assert(#categories == 0 or type(categories[1]) == "string",
+                 "Needs an array in categories field")
+          if #categories > 0 then categories = { categories } end
+        end
+      end
     end
     local tbl = {}
-    for _,col_name in ipairs(cols_slice) do
+    for i,col_name in ipairs(cols_slice) do
+      local dtype = dtype
       april_assert(rawget(self, "col2id")[col_name],
                    "Unknown column name %s", col_name)
-      table.insert(tbl, to_matrix(rawget(self, "data")[col_name], dtype))
+      local col_data = data[col_name]
+      if dtype == "categorical" then
+        dtype = categorical_dtype
+        col_data,categories[i],inv_categories[i] = categorical(col_data, "<NA>", categories[i])
+      end
+      table.insert(tbl, to_matrix(col_data, dtype))
     end
-    return matrix.join(2, tbl)
+    if dtype == "categorical" then
+      if #args == 1 then
+        categories = categories[1]
+        inv_categories = inv_categories[1]
+      end
+      return matrix.join(2, tbl),categories,inv_categories
+    else
+      return matrix.join(2, tbl)
+    end
   end
 
 -- methods.loc =
@@ -459,32 +518,6 @@ methods.get_columns =
   function(self)
     local self = getmetatable(self)
     return rawget(self, "columns")
-  end
-
-local function is_NA(v) return tostring(v) == tostring(NA) end
-
-local function build_order(tbl, NA_symbol)
-  local symbols = {}
-  for i,v in ipairs(tbl) do symbols[is_NA(v) and NA_symbol or v] = true end
-  local order = iterator(pairs(symbols)):select(1):table()
-  table.sort(order)
-  return order
-end
-
-data_frame.categorical =
-  function(tbl, NA_symbol, order)
-    assert(tbl and NA_symbol, "Needs a table and NA symbol")
-    local categories = order or build_order(tbl, NA_symbol)
-    local cat2id = table.invert(categories)
-    if not cat2id[NA_symbol] then
-      table.insert(categories, NA_symbol)
-      cat2id[NA_symbol] = #categories
-    end
-    local result = {}
-    for i,v in ipairs(tbl) do
-      result[i] = is_NA(v) and cat2id[NA_symbol] or cat2id[v]
-    end
-    return result,categories,cat2id
   end
 
 return data_frame
