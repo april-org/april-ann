@@ -112,7 +112,7 @@ local function dataframe_tostring(proxy)
     return table.concat{
       "Empty data_frame\n",
       "Columns: ", stringfy(rawget(self, "columns"), "ascii"), "\n",
-      "Rows: ", stringfy(rawget(self, "rows"), "ascii"), "\n",
+      "Index: ", stringfy(rawget(self, "index"), "ascii"), "\n",
     }
   else
     local tbl = { "data_frame\n" }
@@ -121,7 +121,7 @@ local function dataframe_tostring(proxy)
       table.insert(tbl, col_name)
     end
     table.insert(tbl, "\n")
-    for i,row_name in ipairs(rawget(self, "rows")) do
+    for i,row_name in ipairs(rawget(self, "index")) do
       table.insert(tbl, row_name)
       for j,col_name in ipairs(rawget(self, "columns")) do
         table.insert(tbl, "\t")
@@ -135,10 +135,8 @@ end
 
 local function dataframe_index(proxy, key)
   local self = getmetatable(proxy)
-  local v = methods.get(proxy, key)
-  if v then
-    april_assert(not data_frame.meta_instance.index_table[key],
-                 "Ambiguous key %s, it can be a column, a method or a property", key)
+  if type(key) == "table" then
+    local v = methods.column(proxy, key[1])
     return v
   else
     return methods[key]
@@ -147,17 +145,17 @@ end
 
 local function dataframe_newindex(proxy, key, value)
   local self = getmetatable(proxy)
-  local data = rawget(self, "data")
-  if data then
-    local col_data = value
-    local key = tonumber(key) or key
-    april_assert(not data_frame.meta_instance.index_table[key],
-                 "Ambiguous key %s, it can be a column, a method or a property", key)
-    local v = data[key]
-    if v then
-      methods.set(proxy, key, col_data)
-    else
-      methods.insert(proxy, col_data, { column_name=key })
+  if type(key) == "table" then
+    local data = rawget(self, "data")
+    if data then
+      local col_data = value
+      local key = tonumber(key[1]) or key[1]
+      local v = data[key]
+      if v then
+        methods.set(proxy, key, col_data)
+      else
+        methods.insert(proxy, col_data, { column_name=key })
+      end
     end
   else
     rawset(self, key, value)
@@ -182,22 +180,22 @@ data_frame.constructor =
     end
     local params = get_table_fields({
         data = { }, -- data can be a matrix or a Lua table
-        rows = { },
+        index = { },
         columns = { },
                                     }, params or {})
     local tdata = type(data)
     rawset(self, "columns", check_array( params.columns or {}, "columns" ))
-    rawset(self, "rows", check_array( params.rows or {}, "rows" ))
+    rawset(self, "index", check_array( params.index or {}, "index" ))
     rawset(self, "col2id", invert(rawget(self, "columns")))
-    rawset(self, "rows2id", invert(rawget(self, "rows")))
+    rawset(self, "index2id", invert(rawget(self, "index")))
     rawset(self, "data", {})
-    local data   = params.data
+    local data = params.data
     if type(data) == "table" then
-      if #rawget(self, "rows") == 0 then
+      if #rawget(self, "index") == 0 then
         local n = #select(2,next(data))
-        rawset(self, "rows", matrixInt32(n):linspace())
+        rawset(self, "index", matrixInt32(n):linspace())
       end
-      local n = #rawget(self, "rows")
+      local n = #rawget(self, "index")
       local cols = {}
       for col_name,col_data in pairs(data) do
         col_name = tonumber(col_name) or col_name
@@ -206,7 +204,7 @@ data_frame.constructor =
           april_assert(rawget(self, "col2id")[col_name],
                        "Not valid column name %s", col_name)
         end
-        assert(n == #col_data, "Length of values does not match length of rows")
+        assert(n == #col_data, "Length of values does not match number of rows")
         if class.of(col_data) then
           local sq = assert(col_data.squeeze, "Needs matrix or table as columns")
           col_data = col_data:squeeze()
@@ -230,11 +228,11 @@ data_frame.constructor =
         assert(data:dim(2) == #rawget(self, "columns"),
                "Incorrect number of columns in data")
       end
-      if #rawget(self, "rows") == 0 then
-        rawset(self, "rows", matrixInt32(data:dim(1)):linspace())
-        rawset(self, "row2id", invert(rawget(self, "rows")))
+      if #rawget(self, "index") == 0 then
+        rawset(self, "index", matrixInt32(data:dim(1)):linspace())
+        rawset(self, "index2id", invert(rawget(self, "index")))
       else
-        assert(data:dim(1) == #rawget(self, "rows"),
+        assert(data:dim(1) == #rawget(self, "index"),
                "Incorrect number of rows in data")
       end
       for j,col_name in ipairs(rawget(self, "columns")) do
@@ -272,8 +270,8 @@ data_frame.from_csv =
         data[col_name][n] = tbl[j]
       end
     end
-    rawset(self, "rows", matrixInt32(n):linspace())
-    rawset(self, "row2id", invert(rawget(self, "rows")))
+    rawset(self, "index", matrixInt32(n):linspace())
+    rawset(self, "index2id", invert(rawget(self, "index")))
     if path ~= f then f:close() end
     return proxy
   end
@@ -293,7 +291,7 @@ methods.to_csv =
     end
     local data = rawget(self, "data")
     local tbl = {}
-    for i,row_name in ipairs(rawget(self, "rows")) do
+    for i,row_name in ipairs(rawget(self, "index")) do
       for j,col_name in ipairs(rawget(self, "columns")) do
         tbl[j] = data[col_name][i]
       end
@@ -310,7 +308,7 @@ methods.drop =
     assert(dim, "Needs a dimension number, 1 or 2")
     local labels = table.pack(...)
     if dim == 1 then
-      error("Not implemented for rows")
+      error("Not implemented for index")
     elseif dim == 2 then
       local num_cols = #rawget(self, "columns")
       for _,col_name in ipairs(labels) do
@@ -354,7 +352,30 @@ methods.as_matrix =
     return matrix.join(2, tbl)
   end
 
-methods.get =
+-- methods.loc =
+--   function(proxy, row_key)
+--     local self = getmetatable(proxy)
+--     local row_key = tonumber(row_key) or row_key
+--     local i       = assert(rawget(self, "index2id")[row_key], "Unknown label")
+--     return methods.iloc(proxy, i)
+--   end
+
+-- methods.iloc =
+--   function(proxy, i)
+--     local self    = getmetatable(proxy)
+--     local data    = rawget(self, "data")
+--     local result  = {}
+--     for _,col_name in ipairs(rawget(self, "columns")) do
+--       result[col_name] = { data[col_name][i] }
+--     end
+--     return data_frame{
+--       data    = result,
+--       index   = { (assert(rawget(self, "index")[i], "Index out-of-bounds")) },
+--       columns = rawget(self, "columns"),
+--     }
+--   end
+
+methods.column =
   function(self, key)
     local self = getmetatable(self)
     local data = rawget(self, "data")
@@ -384,11 +405,11 @@ methods.insert =
       col_data = col_data:squeeze()
       assert(col_data:num_dim() == 1, "Needs a rank one matrix")
     end
-    if #rawget(self, "rows") == 0 then
-      rawset(self, "rows", matrixInt32(#col_data):linspace())
+    if #rawget(self, "index") == 0 then
+      rawset(self, "index", matrixInt32(#col_data):linspace())
     end
-    assert(#col_data == #rawget(self, "rows"),
-           "Length of values does not match length of rows")
+    assert(#col_data == #rawget(self, "index"),
+           "Length of values does not match number of rows")
     rawget(self, "data")[col_name] = col_data
   end
 
@@ -405,8 +426,8 @@ methods.set =
       col_data = col_data:squeeze()
       assert(col_data:num_dim() == 1, "Needs a rank one matrix")
     end
-    assert(#col_data == #rawget(self, "rows"),
-           "Length of values does not match length of rows")
+    assert(#col_data == #rawget(self, "index"),
+           "Length of values does not match number of rows")
     rawget(self, "data")[col_name] = col_data
   end
 
@@ -424,10 +445,10 @@ methods.reorder =
     rawset(self, "col2id", invert(columns))
   end
 
-methods.get_rows =
+methods.get_index =
   function(self)
     local self = getmetatable(self)
-    return rawget(self, "rows")
+    return rawget(self, "index")
   end
 
 methods.get_columns =
