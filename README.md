@@ -242,6 +242,12 @@ Publications
 
 List of research papers which uses this tool:
 
+
+- Joan Pastor-Pellicer, Salvador España-Boquera, Francisco Zamora-Martínez,
+  M. Zeshan Afzal, M.J. Castro-Bleda.
+  [Insights on the Use of Convolutional Neural Networks for Document Image Binarization](http://link.springer.com/chapter/10.1007/978-3-319-19222-2_10),
+  *IWANN*, *Advances in Computational Intelligence*, pages 115-126, 2015.
+
 - Joan Pastor-Pellicer, Salvador España-Boquera, Francisco Zamora-Martínez,
   María José Castro-Bleda.
   [Handwriting Normalization by Zone Estimation using HMM/ANNs](http://people.sabanciuniv.edu/berrin/cs581/Papers/icfhr2014/data/4334a633.pdf),
