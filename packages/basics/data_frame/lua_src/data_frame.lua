@@ -1,4 +1,7 @@
-local NA = nan -- NaN values are used as "Not Available"
+local ipairs   = ipairs
+local pairs    = pairs
+local tostring = tostring
+local NA       = nan -- NaN values are used as "Not Available"
 
 -- utilities
 
@@ -189,6 +192,7 @@ data_frame.constructor =
     rawset(self, "col2id", invert(rawget(self, "columns")))
     rawset(self, "index2id", invert(rawget(self, "index")))
     rawset(self, "data", {})
+    rawset(self, "categorical", {})
     local data = params.data
     if type(data) == "table" then
       if #rawget(self, "index") == 0 then
@@ -455,6 +459,32 @@ methods.get_columns =
   function(self)
     local self = getmetatable(self)
     return rawget(self, "columns")
+  end
+
+local function is_NA(v) return tostring(v) == tostring(NA) end
+
+local function build_order(tbl, NA_symbol)
+  local symbols = {}
+  for i,v in ipairs(tbl) do symbols[is_NA(v) and NA_symbol or v] = true end
+  local order = iterator(pairs(symbols)):select(1):table()
+  table.sort(order)
+  return order
+end
+
+data_frame.categorical =
+  function(tbl, NA_symbol, order)
+    assert(tbl and NA_symbol, "Needs a table and NA symbol")
+    local categories = order or build_order(tbl, NA_symbol)
+    local cat2id = table.invert(categories)
+    if not cat2id[NA_symbol] then
+      table.insert(categories, NA_symbol)
+      cat2id[NA_symbol] = #categories
+    end
+    local result = {}
+    for i,v in ipairs(tbl) do
+      result[i] = is_NA(v) and cat2id[NA_symbol] or cat2id[v]
+    end
+    return result,categories,cat2id
   end
 
 return data_frame
