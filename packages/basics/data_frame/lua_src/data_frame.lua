@@ -158,7 +158,7 @@ end
 
 -- Inspired in pandas (Python) dataframe
 -- http://pandas-docs.github.io/pandas-docs-travis/
-local data_frame,methods = class("data_frame")
+local data_frame,methods = class("data_frame", aprilio.lua_serializable)
 _G.data_frame = data_frame -- global definition
 
 local function dataframe_tostring(proxy)
@@ -550,6 +550,21 @@ methods.levels =
     local key = tonumber(key) or key
     local data = rawget(self, "data")
     return build_order(data, NA_symbol or defNA)
+  end
+
+methods.ctor_name =
+  function(self)
+    return "data_frame"
+  end
+
+methods.ctor_params =
+  function(self)
+    local self = getmetatable(self)
+    return {
+      data = rawget(self, "data"),
+      index = rawget(self, "index"),
+      columns = rawget(self, "columns"),
+    }    
   end
 
 return data_frame
