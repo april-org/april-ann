@@ -2,8 +2,25 @@ local ipairs   = ipairs
 local pairs    = pairs
 local tostring = tostring
 local NA       = nan -- NaN values are used as "Not Available"
+local defNA    = "<NA>"
 
 -- utilities
+
+local function sparse_join(tbl, categories)
+  local nrows   = tbl[1]:dim(1)
+  local ncols   = iterator(tbl):map(bind(tbl[1].dim, nil, 2)):sum()
+  local values  = {}
+  local indices,acc = {},0
+  for i=1,#tbl do
+    values[i]  = matrix(nrows, 1, tbl[i]:values())
+    indices[i] = matrixInt32(nrows, 1, tbl[i]:indices() ):scalar_add(acc)
+    acc = acc + tbl[i]:dim(2)
+  end
+  values  = matrix.join(2, values):data()
+  indices = matrix.join(2, indices):data()
+  local first_index = matrixInt32( tbl[1]:first_index() ):scal(#tbl):data()
+  return matrix.sparse.csr(nrows, ncols, values, indices, first_index)
+end
 
 local function is_NA(v) return tostring(v) == tostring(NA) end
 
@@ -48,14 +65,26 @@ do
     char    = matrixChar,
     bool    = matrixBool,
   }
-  function to_matrix(data, dtype)
-    local ctor = april_assert(matrix_ctor[dtype],
-                              "Unable to build matrix type %s", dtype)
-    if type(data) == "table" then
-      return ctor(#data,1,data)
+  function to_matrix(data, dtype, ncols)
+    if dtype == "sparse" then
+      -- assuming the underlying data is categorical
+      local values      = matrix(#data):fill(1.0):data()
+      local indices     = matrixInt32(data):scalar_add(-1.0):data()
+      local first_index = matrixInt32(indices:size()+1):linear():data()
+      return matrix.sparse.csr(indices:size(), -- num rows
+                               ncols,          -- num cols
+                               values,
+                               indices,
+                               first_index)
     else
-      data = class.of(data)==ctor and data or data:convert_to(dtype)
-      return data:rewrap(data:size(),1)
+      local ctor = april_assert(matrix_ctor[dtype],
+                                "Unable to build matrix type %s", dtype)
+      if type(data) == "table" then
+        return ctor(#data,1,data)
+      else
+        data = class.of(data)==ctor and data or data:convert_to(dtype)
+        return data:rewrap(data:size(),1)
+      end
     end
   end
 end
@@ -83,7 +112,7 @@ local function parse_csv_line(line, sep)
       v = tonumber(v) or v
       if type(v) == "string" then
         local v_upper = v:upper()
-        if v_upper == "<NA>" or v_upper == "NA" or v_upper == "NAN" then v = NA end
+        if v_upper == defNA or v_upper == "NA" or v_upper == "NAN" then v = NA end
       end
     end
     assert(v, "Unexpected read error")
@@ -369,12 +398,13 @@ methods.as_matrix =
         dtype = { type_match = "string", default = "float" },
         categorical_dtype = { type_match = "string", default = "float" },
         categories = { type_match = "table", default = nil },
-        NA = { type_match = "string", default = "<NA>" },
+        NA = { type_match = "string", default = defNA },
                               }, params)
     local categories = params.categories or {}
     local inv_categories = {}
     local dtype = params.dtype
     local categorical_dtype = params.categorical_dtype
+    assert(dtype ~= "sparse", "Sparse is only allowed in categorical_dtype field")
     local data = rawget(self, "data")
     local cols_slice
     if #args == 0 then
@@ -382,14 +412,8 @@ methods.as_matrix =
     else
       cols_slice = args
       if dtype == "categorical" then
-        if #args > 1 then
-          assert(#categories == 0 or type(categories[1]) == "table" and
+        assert(#categories == 0 or type(categories[1]) == "table" and
                  #categories == #args, "Needs a table with category arrays in categories field")
-        else
-          assert(#categories == 0 or type(categories[1]) == "string",
-                 "Needs an array in categories field")
-          if #categories > 0 then categories = { categories } end
-        end
       end
     end
     local tbl = {}
@@ -400,16 +424,16 @@ methods.as_matrix =
       local col_data = data[col_name]
       if dtype == "categorical" then
         dtype = categorical_dtype
-        col_data,categories[i],inv_categories[i] = categorical(col_data, "<NA>", categories[i])
+        col_data,categories[i],inv_categories[i] = categorical(col_data, defNA, categories[i])
       end
-      table.insert(tbl, to_matrix(col_data, dtype))
+      table.insert(tbl, to_matrix(col_data, dtype, categories[i] and #categories[i]))
     end
     if dtype == "categorical" then
-      if #args == 1 then
-        categories = categories[1]
-        inv_categories = inv_categories[1]
+      if categorical_dtype == "sparse" then
+        return sparse_join(tbl, categories),categories,inv_categories
+      else
+        return matrix.join(2, tbl),categories,inv_categories
       end
-      return matrix.join(2, tbl),categories,inv_categories
     else
       return matrix.join(2, tbl)
     end
@@ -518,6 +542,14 @@ methods.get_columns =
   function(self)
     local self = getmetatable(self)
     return rawget(self, "columns")
+  end
+
+methods.levels =
+  function(self, key, NA_symbol)
+    local self = getmetatable(self)
+    local key = tonumber(key) or key
+    local data = rawget(self, "data")
+    return build_order(data, NA_symbol or defNA)
   end
 
 return data_frame

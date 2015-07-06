@@ -12,6 +12,10 @@ print(df1)
 print(df2)
 print(df3)
 pprint(df2:as_matrix("three", { dtype="categorical" }))
+pprint(df2:as_matrix("three", { dtype="categorical",
+                                categorical_dtype="sparse" }))
+pprint(df2:as_matrix("three", "three", { dtype="categorical",
+                                         categorical_dtype="sparse" }))
 
 -- print(df2:iloc(2))
 -- print(df2:loc("b"))
