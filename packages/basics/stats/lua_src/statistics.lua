@@ -964,7 +964,7 @@ confus_matrix_methods.getPrecision =
       den = den + v
     end     
     if den == 0 then
-      return 0, tp, den
+      return 1, tp, den
     end
     return tp/den, tp, den
   end
@@ -991,7 +991,7 @@ confus_matrix_methods.getRecall =
     end 
 
     if den == 0 then
-      return 0, tp, den
+      return 1, tp, den
     end
     return tp/den, tp, den
   end
