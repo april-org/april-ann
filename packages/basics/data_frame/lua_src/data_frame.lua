@@ -316,8 +316,9 @@ data_frame.from_csv =
     for row_line in f:lines() do
       n = n + 1
       local tbl = parse_csv_line(row_line, params.sep)
-      if not #rawget(self, "columns") then
+      if #rawget(self, "columns") == 0 then
         rawset(self, "columns", matrixInt32(#tbl):linspace())
+        rawset(self, "col2id", invert(rawget(self, "columns")))
         for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
       end
       assert(#tbl == #rawget(self, "columns"), "Not matching number of columns")
@@ -406,6 +407,7 @@ methods.as_matrix =
     local categorical_dtype = params.categorical_dtype
     assert(dtype ~= "sparse", "Sparse is only allowed in categorical_dtype field")
     local data = rawget(self, "data")
+    local col2id = rawget(self, "col2id")
     local cols_slice
     if #args == 0 then
       cols_slice = rawget(self, "columns")
@@ -419,8 +421,7 @@ methods.as_matrix =
     local tbl = {}
     for i,col_name in ipairs(cols_slice) do
       local dtype = dtype
-      april_assert(rawget(self, "col2id")[col_name],
-                   "Unknown column name %s", col_name)
+      april_assert(col2id[col_name], "Unknown column name %s", col_name)
       local col_data = data[col_name]
       if dtype == "categorical" then
         dtype = categorical_dtype
