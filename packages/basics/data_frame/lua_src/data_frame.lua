@@ -603,13 +603,13 @@ methods.reorder =
 methods.get_index =
   function(self)
     local self = getmetatable(self)
-    return rawget(self, "index")
+    return util.clone(rawget(self, "index"))
   end
 
 methods.get_columns =
   function(self)
     local self = getmetatable(self)
-    return rawget(self, "columns")
+    return util.clone(rawget(self, "columns"))
   end
 
 methods.levels =
