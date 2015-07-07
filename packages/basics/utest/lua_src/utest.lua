@@ -164,6 +164,12 @@ end
 utest.check.FALSE = function(a, ...)
   return check(function() return not a end, ...)
 end
+utest.check.NIL = function(a, ...)
+  return check(function() return a==nil end, ...)
+end
+utest.check.NAN = function(a, ...)
+  return check(function() return tonumber(a) and tostring(a)=="nan" end, ...)
+end
 --
 utest.test = function(name, test_func)
   assert( test_name == NONAMED )
