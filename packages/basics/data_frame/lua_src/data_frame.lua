@@ -5,7 +5,7 @@ local tostring    = tostring
 local tonumber    = tonumber
 local type        = type
 local NA          = nan -- NaN values are used as "Not Available"
-local defNA       = "<NA>"
+local defNA       = "NA"
 local tostring_NA = tostring(NA)
 
 -- utilities
@@ -133,7 +133,7 @@ local function parse_csv_line(line, sep, quotechar, decimal, NA_str)
           if quoted then init,i = init+1,i-1 end
           v = line:sub(init, i-1)
           v_dec = line_dec:sub(init, i-1)
-          v = tonumber(v) or tonumber(v_dec) or v
+          v = tonumber(v_dec) or v
           if type(v) == "string" and v == NA_str then v = NA end
         end
         assert(v, "Unexpected read error")
@@ -329,19 +329,20 @@ data_frame.from_csv =
         sep = { default=',' },
         quotechar = { default='"' },
         decimal = { default='.' },
-        NA = { default="NA" },
+        NA = { default=defNA },
                                     }, params or {})
     local sep = params.sep
     local quotechar = params.quotechar
     local decimal = params.decimal
-    local NA_str = params.NA_str
+    local NA_str = params.NA
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
     local f = type(path)~="string" and path or io.open(path)
     if params.header then
       rawset(self, "columns",
-             iterator(parse_csv_line(f:read("*l"), sep, quotechar, decimal)):table())
+             iterator(parse_csv_line(f:read("*l"), sep, quotechar,
+                                     decimal, NA_str)):table())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
     end
@@ -360,7 +361,8 @@ data_frame.from_csv =
     for row_line in f:lines() do
       n = n + 1
       local last
-      for j,value in parse_csv_line(row_line, sep, quotechar, decimal, NA_str) do
+      for j,value in parse_csv_line(row_line, sep, quotechar,
+                                    decimal, NA_str) do
         data[columns[j] or j][n], last = value, j
       end
       assert(last == #columns, "Not matching number of columns")
@@ -390,7 +392,7 @@ methods.to_csv =
         header = { default=true },
         sep = { default=',' },
         quotechar = { default='"' },
-        NA = { default="NA" },
+        NA = { default=defNA },
         decimal = { default="." },
                                     }, params or {})
     local sep = params.sep
