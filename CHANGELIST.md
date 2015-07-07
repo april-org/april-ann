@@ -6,10 +6,11 @@ Master branch release
 
 ### Unstable changes
 
+- Added `data_frame` object, similar to Python Pandas DataFrame.
 - Serialization and deserilization have been updated with more robust and
   reusable API, implemented in `util.serialize()` and `util.deserialize()`
   functions.
-- Added `matrix.broadcast` utility (similar to broadcast in numpy).
+- Added `matrix.ext.broadcast` utility (similar to broadcast in numpy).
 - Added `ProbablisitcMatrixANNComponent`, which allow to implement probabilistic
   mixtures of posteriors and/or likelihoods.
 
