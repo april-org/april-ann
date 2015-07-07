@@ -18,18 +18,22 @@ stats.hist = function(m, params)
       normalize = { type_match="boolean", default=false },
                                   }, params or {})
   local breaks = params.breaks
-  local result = matrix(breaks, 2)
+  local result = matrix(breaks+1, 4)
   local min    = m:min()
   local max    = m:max()
   local diff   = max - min
   assert(diff > 0, "Unable to compute histogram for given matrix")
   local x      = result:select(2,1):linspace(min, max)
-  local y      = result:select(2,2):zeros()
+  local result = result[{ {1,breaks}, ':' }]
+  local x      = result:select(2,1)
+  local x2     = result:select(2,2):copy(x):scalar_add(0.5*(x[2]-x[1]))
+  local y      = result:select(2,3):zeros()
+  local z      = result:select(2,4)
   m:map(function(v)
-      local b = math.floor((v - min)/diff * (breaks-1)) + 1
+      local b = math.min( math.floor((v - min)/diff * breaks) + 1, breaks )
       y[b] = y[b] + 1
   end)
-  if params.normalize then y:scal(1/m:size()) end
+  z:copy(y):scal(1/m:size())
   return result
 end
 
