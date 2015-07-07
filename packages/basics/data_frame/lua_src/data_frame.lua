@@ -1,8 +1,12 @@
-local ipairs   = ipairs
-local pairs    = pairs
-local tostring = tostring
-local NA       = nan -- NaN values are used as "Not Available"
-local defNA    = "<NA>"
+local assert      = assert
+local ipairs      = ipairs
+local pairs       = pairs
+local tostring    = tostring
+local tonumber    = tonumber
+local type        = type
+local NA          = nan -- NaN values are used as "Not Available"
+local defNA       = "<NA>"
+local tostring_NA = tostring(NA)
 
 -- utilities
 
@@ -22,7 +26,7 @@ local function sparse_join(tbl, categories)
   return matrix.sparse.csr(nrows, ncols, values, indices, first_index)
 end
 
-local function is_NA(v) return tostring(v) == tostring(NA) end
+local function is_NA(v) return tostring(v) == tostring_NA end
 
 local function build_order(tbl, NA_symbol)
   local symbols = {}
@@ -97,30 +101,49 @@ local function concat(array, sep)
   return table.concat(array, sep)
 end
 
--- parses a CSV line using sep as delimiter and adding NA when required
-local function parse_csv_line(line, sep)
-  local parsed = {}
-  local init = 1
-  while init <= #line do
-    local v
-    local i,j = line:find(sep, init, true)
-    i,j = i or #line+1,j or #line
-    if i == init then
-      v = NA
-    else
-      v = line:sub(init, i-1)
-      v = tonumber(v) or v
-      if type(v) == "string" then
-        local v_upper = v:upper()
-        if v_upper == defNA or v_upper == "NA" or v_upper == "NAN" then v = NA end
-      end
-    end
-    assert(v, "Unexpected read error")
-    table.insert(parsed, v)
-    init = j+1
+local function next_token_find(line, init, match, sep, quotechar)
+  local quoted
+  local i,j = line:find(match, init)
+  if j and line:sub(j,j) ~= sep then
+    i,j = line:find(quotechar, j+1)
+    i,j = line:find(sep, j+1)
+    i,j = i or #line, j or #line + 1
+    quoted = true
   end
-  if line:sub(#line,#line) == sep then table.insert(parsed, NA) end
-  return parsed
+  return i,j,quoted
+end
+
+-- parses a CSV line using sep as delimiter and adding NA when required
+local function parse_csv_line(line, sep, quotechar, decimal, NA_str)
+  return coroutine.wrap(function()
+      local line = line:match("^(.+[^%s])[%s]*$")
+      local line_dec = decimal == "." and line or line:gsub("%"..decimal, ".")
+      local n=0
+      local match  = "[%s%s]"%{sep, quotechar or ''}
+      local init = 1
+      while init <= #line do
+        n=n+1
+        local v,v_dec
+        local i,j,quoted = next_token_find(line, init, match, sep, quotechar)
+        i,j = i or #line+1,j or #line
+        if i == init then
+          v = NA
+        else
+          local init,i = init,i
+          if quoted then init,i = init+1,i-1 end
+          v = line:sub(init, i-1)
+          v_dec = line_dec:sub(init, i-1)
+          v = tonumber(v) or tonumber(v_dec) or v
+          if type(v) == "string" and v == NA_str then v = NA end
+        end
+        assert(v, "Unexpected read error")
+        coroutine.yield(n,v)
+        init = j+1
+      end
+      if line:sub(#line) == sep then
+        coroutine.yield(n+1,NA)
+      end
+  end)
 end
 
 -- converts an array or a matrix into a string
@@ -304,27 +327,43 @@ data_frame.from_csv =
     local params = get_table_fields({
         header = { default=true },
         sep = { default=',' },
+        quotechar = { default='"' },
+        decimal = { default='.' },
+        NA = { default="NA" },
                                     }, params or {})
-    assert(#params.sep == 1, "Only one character sep is allowed")
+    local sep = params.sep
+    local quotechar = params.quotechar
+    local decimal = params.decimal
+    local NA_str = params.NA_str
+    assert(#sep == 1, "Only one character sep is allowed")
+    assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
+    assert(#decimal == 1, "Only one character decimal is allowed")
     local f = type(path)~="string" and path or io.open(path)
     if params.header then
-      rawset(self, "columns", parse_csv_line(f:read("*l"), params.sep))
+      rawset(self, "columns",
+             iterator(parse_csv_line(f:read("*l"), sep, quotechar, decimal)):table())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
     end
     local n = 0
+    if #rawget(self, "columns") == 0 then
+      n = n + 1
+      local first_line = iterator(parse_csv_line(f:read("*l"), sep, quotechar,
+                                                 decimal, NA_str)):table()
+      rawset(self, "columns", matrixInt32(#first_line):linspace())
+      rawset(self, "col2id", invert(rawget(self, "columns")))
+      for j,col_name in ipairs(rawget(self, "columns")) do
+        data[col_name] = { first_line[j] }
+      end
+    end
+    local columns = rawget(self, "columns")
     for row_line in f:lines() do
       n = n + 1
-      local tbl = parse_csv_line(row_line, params.sep)
-      if #rawget(self, "columns") == 0 then
-        rawset(self, "columns", matrixInt32(#tbl):linspace())
-        rawset(self, "col2id", invert(rawget(self, "columns")))
-        for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
+      local last
+      for j,value in parse_csv_line(row_line, sep, quotechar, decimal, NA_str) do
+        data[columns[j] or j][n], last = value, j
       end
-      assert(#tbl == #rawget(self, "columns"), "Not matching number of columns")
-      for j,col_name in ipairs(rawget(self, "columns")) do
-        data[col_name][n] = tbl[j]
-      end
+      assert(last == #columns, "Not matching number of columns")
     end
     rawset(self, "index", matrixInt32(n):linspace())
     rawset(self, "index2id", invert(rawget(self, "index")))
@@ -332,24 +371,50 @@ data_frame.from_csv =
     return proxy
   end
 
+local function quote(x, sep, quotechar, decimal)
+  if tonumber(x) then
+    x = tostring(x)
+    if decimal ~= "." then x = x:gsub("%.", decimal) end
+  end
+  if x:find(sep) then
+    return "%s%s%s"%{quotechar,x,quotechar}
+  else
+    return x
+  end
+end
+
 methods.to_csv =
   function(self, path, params)
     local self = getmetatable(self)
     local params = get_table_fields({
         header = { default=true },
         sep = { default=',' },
+        quotechar = { default='"' },
+        NA = { default="NA" },
+        decimal = { default="." },
                                     }, params or {})
     local sep = params.sep
+    local quotechar = params.quotechar
+    local NA_str = params.NA
+    local decimal = params.decimal
+    assert(#sep == 1, "Only one character sep is allowed")
+    assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     local f = type(path)~="string" and path or io.open(path, "w")
     if params.header then
-      f:write(concat(rawget(self, "columns"), sep))
+      local columns = {}
+      for i,col_name in ipairs(rawget(self, "columns")) do
+        columns[i] = quote(col_name, sep, quotechar, decimal)
+      end
+      f:write(concat(columns, sep))
       f:write("\n")
     end
     local data = rawget(self, "data")
     local tbl = {}
     for i,row_name in ipairs(rawget(self, "index")) do
       for j,col_name in ipairs(rawget(self, "columns")) do
-        tbl[j] = data[col_name][i]
+        local v = data[col_name][i]
+        if tonumber(v) and is_NA(v) then v = NA_str end
+        tbl[j] = quote(v, sep, quotechar, decimal)
       end
       f:write(table.concat(tbl, sep))
       f:write("\n")
