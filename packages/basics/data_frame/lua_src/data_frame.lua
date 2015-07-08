@@ -6,7 +6,7 @@ local tonumber    = tonumber
 local type        = type
 local NA          = nan -- NaN values are used as "Not Available"
 local defNA       = "NA"
-local tostring_NA = tostring(NA)
+local tostring_nan = tostring(NA)
 
 -- utilities
 
@@ -26,13 +26,15 @@ local function sparse_join(tbl, categories)
   return matrix.sparse.csr(nrows, ncols, values, indices, first_index)
 end
 
-local function is_NA(v) return tostring(v) == tostring_NA end
+local function is_nan(v) return tonumber(v) and tostring(v) == tostring_nan end
 
-local function build_order(tbl, NA_symbol)
+local function build_sorted_order(tbl, NA_symbol)
   local symbols = {}
-  for i,v in ipairs(tbl) do symbols[is_NA(v) and NA_symbol or v] = true end
+  for i,v in ipairs(tbl) do symbols[is_nan(v) and NA_symbol or v] = true end
   local order = iterator(pairs(symbols)):select(1):table()
-  table.sort(order)
+  table.sort(order, function(a,b)
+               if type(a)~=type(b) then return tostring(a) < tostring(b) else return a<b end
+  end)
   return order
 end
 
@@ -40,11 +42,12 @@ end
 local categorical =
   function(tbl, NA_symbol, order)
     assert(tbl and NA_symbol, "Needs a table and NA symbol")
-    local categories = order or build_order(tbl, NA_symbol)
+    local categories = order or build_sorted_order(tbl, NA_symbol)
     local cat2id = table.invert(categories)
     local result = {}
     for i,v in ipairs(tbl) do
-      result[i] = is_NA(v) and cat2id[NA_symbol] or cat2id[v]
+      result[i] = april_assert(is_nan(v) and cat2id[NA_symbol] or cat2id[v],
+                               "Unknown level value %s", v)
     end
     return result,categories,cat2id
   end
@@ -71,6 +74,7 @@ do
   }
   function to_matrix(data, dtype, ncols)
     if dtype == "sparse" then
+      assert(ncols > 2, "For binary data sparse is not allowed")
       -- assuming the underlying data is categorical
       local values      = matrix(#data):fill(1.0):data()
       local indices     = matrixInt32(data):scalar_add(-1.0):data()
@@ -423,7 +427,7 @@ methods.to_csv =
     for i,row_name in ipairs(rawget(self, "index")) do
       for j,col_name in ipairs(rawget(self, "columns")) do
         local v = data[col_name][i]
-        if tonumber(v) and is_NA(v) then v = NA_str end
+        if tonumber(v) and is_nan(v) then v = NA_str end
         tbl[j] = quote(v, sep, quotechar, decimal)
       end
       f:write(table.concat(tbl, sep))
@@ -480,6 +484,7 @@ methods.as_matrix =
     local inv_categories = {}
     local dtype = params.dtype
     local categorical_dtype = params.categorical_dtype
+    local NA = params.NA
     assert(dtype ~= "sparse", "Sparse is only allowed in categorical_dtype field")
     local data = rawget(self, "data")
     local col2id = rawget(self, "col2id")
@@ -488,10 +493,10 @@ methods.as_matrix =
       cols_slice = rawget(self, "columns")
     else
       cols_slice = args
-      if dtype == "categorical" then
-        assert(#categories == 0 or type(categories[1]) == "table" and
-                 #categories == #args, "Needs a table with category arrays in categories field")
-      end
+      --if dtype == "categorical" then
+      --assert(#categories == 0 or type(categories[1]) == "table" and
+      --#categories == #args, "Needs a table with category arrays in categories field")
+      --end
     end
     local tbl = {}
     for i,col_name in ipairs(cols_slice) do
@@ -500,9 +505,12 @@ methods.as_matrix =
       local col_data = data[col_name]
       if dtype == "categorical" then
         dtype = categorical_dtype
-        col_data,categories[i],inv_categories[i] = categorical(col_data, defNA, categories[i])
+        col_data,categories[i],inv_categories[i] = categorical(col_data, NA, categories[i])
       end
-      table.insert(tbl, to_matrix(col_data, dtype, categories[i] and #categories[i]))
+      local ncols = categories[i] and #categories[i]
+      local m = to_matrix(col_data, dtype, ncols)
+      if ncols and ncols <= 2 then m:scalar_add(-1.0) end
+      table.insert(tbl, m)
     end
     if dtype == "categorical" then
       if categorical_dtype == "sparse" then
@@ -561,7 +569,10 @@ methods.insert =
            "Parameter location is out-of-bounds")
     april_assert(not rawget(self, "col2id")[col_name],
                  "Column name collision: %s", col_name)
-    table.insert(rawget(self, "columns"), location, col_name)
+    local columns = rawget(self, "columns")
+    if type(columns) ~= "table" then columns = columns:toTable() end
+    table.insert(columns, location, col_name)
+    rawset(self, "columns", columns)
     rawget(self, "col2id")[col_name] = invert(rawget(self, "columns"))
     if class.of(col_data) then
       local sq = assert(col_data.squeeze, "Needs matrix or table as columns")
@@ -620,13 +631,13 @@ methods.get_columns =
     return util.clone(rawget(self, "columns"))
   end
 
-method.ncols =
+methods.ncols =
   function(self)
     local self = getmetatable(self)
     return #rawget(self, "columns")
   end
 
-method.nrows =
+methods.nrows =
   function(self)
     local self = getmetatable(self)
     return #rawget(self, "index")
@@ -637,7 +648,7 @@ methods.levels =
     local self = getmetatable(self)
     local key = tonumber(key) or key
     local data = rawget(self, "data")
-    return build_order(data, NA_symbol or defNA)
+    return build_sorted_order(data[key], NA_symbol or defNA)
   end
 
 methods.ctor_name =

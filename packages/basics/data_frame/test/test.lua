@@ -11,7 +11,7 @@ T("DataFrameTest", function()
     --
     local df2 = data_frame{ data = { one = {1,2,3,4},
                                      two = {5,6,7,8},
-                                     three = { "A", "B", "B", "A" }, },
+                                     three = { "A", "B", "B", "C" }, },
                             columns = { "two", "one", "three" },
                             index = { "a", "b", "c", "d" } }
     check.eq(#df2:get_index(), 4)
@@ -19,17 +19,17 @@ T("DataFrameTest", function()
     check.eq(df2[{"three"}][1], "A")
     check.eq(df2[{"three"}][2], "B")
     check.eq(df2[{"three"}][3], "B")
-    check.eq(df2[{"three"}][4], "A")
+    check.eq(df2[{"three"}][4], "C")
     local m_index   = df2:as_matrix("three", { dtype="categorical" })
     local m_sparse  = df2:as_matrix("three", { dtype="categorical",
                                                categorical_dtype="sparse" })
     local m_sparse2 = df2:as_matrix("three", "three",
                                     { dtype="categorical",
                                       categorical_dtype="sparse" })
-    check.eq(m_index, matrix(4,1,{1,2,2,1}))
-    check.eq(m_sparse, matrix.sparse(matrix(4,2,{1,0,0,1,0,1,1,0})))
+    check.eq(m_index, matrix(4,1,{1,2,2,3}))
+    check.eq(m_sparse, matrix.sparse(matrix(4,3,{1,0,0,0,1,0,0,1,0,0,0,1})))
     check.eq(m_sparse2,
-             matrix.sparse(matrix(4,4,{1,0,1,0,0,1,0,1,0,1,0,1,1,0,1,0})))
+             matrix.sparse(matrix(4,6,{1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,1})))
     local m = df2:as_matrix("one", "two")
     check.eq(m, matrix(4,2,{1,5,2,6,3,7,4,8}))
     --
@@ -51,4 +51,12 @@ T("DataFrameTest", function()
     local m = matrix(20,1):linspace()
     local df5 = data_frame()
     df5:insert(m)
+    --
+    local df6 = data_frame{ data = { one = { "A", "B", "B", "A" }, } }
+    local m_index = df6:as_matrix({ dtype="categorical" })
+    check.eq(m_index, matrix(4,1,{0,1,1,0}))
+    check.errored(function()
+        local m_index = df6:as_matrix({ dtype="categorical",
+                                        categorical_dtype = "sparse" })
+    end)
 end)
