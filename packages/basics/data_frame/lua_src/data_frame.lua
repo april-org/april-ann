@@ -208,12 +208,16 @@ local function dataframe_tostring(proxy)
       table.insert(tbl, "\n")
     end
     return table.concat(tbl)
-   end
+  end
 end
 
 local function dataframe_index(proxy, key)
   local self = getmetatable(proxy)
-  if type(key) == "table" then
+  local tt = type(key)
+  if tt == "number" then
+    key, tt = { rawget(self,"columns")[key] }, "table"
+  end
+  if tt == "table" then
     local v = methods.column(proxy, key[1])
     return v
   else
@@ -223,7 +227,11 @@ end
 
 local function dataframe_newindex(proxy, key, value)
   local self = getmetatable(proxy)
-  if type(key) == "table" then
+  local tt   = type(key)
+  if tt == "number" then
+    key, tt = { rawget(self,"columns")[key] }, "table"
+  end
+  if tt == "table" then
     local data = rawget(self, "data")
     if data then
       local col_data = value
@@ -610,6 +618,18 @@ methods.get_columns =
   function(self)
     local self = getmetatable(self)
     return util.clone(rawget(self, "columns"))
+  end
+
+method.ncols =
+  function(self)
+    local self = getmetatable(self)
+    return #rawget(self, "columns")
+  end
+
+method.nrows =
+  function(self)
+    local self = getmetatable(self)
+    return #rawget(self, "index")
   end
 
 methods.levels =
