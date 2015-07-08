@@ -1156,6 +1156,27 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(floor)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matFloor(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(ceil)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matCeil(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(round)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matRound(obj));
+      return 1;
+    }
+
     BEGIN_METHOD(add)
     {
       int argn;
