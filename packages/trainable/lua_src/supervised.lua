@@ -1003,15 +1003,24 @@ trainable_supervised_trainer_methods.calculate =
       }, 
     params = {
       "A table with one input pattern, a matrix or a token (with one or more patterns, usually a matrix)",
+      "A given bunch size [optional] if not given it will be setup to the number of patterns in the given input",
     },
     outputs = {
       "A token with the computed output, usually a matrix",
     },
   } ..
-  function(self,input)
-    if type(input) == "table" then input = matrix(input) end
-    self.ann_component:reset()
-    return self.ann_component:forward(input)
+  function(self,input,bunch_size)
+    if type(input) == "table" then input = matrix(1, input) end
+    local bunch_size = bunch_size or input:dim(1)
+    local N = input:dim(1)
+    local result = matrix(N, self.ann_component:get_output_size())
+    local model = self.ann_component
+    for i=1,math.ceil(N/bunch_size) do
+      model:reset()
+      local s = {(i-1)*bunch_size+1, math.min(i*bunch_size,N)}
+      result[{s,':'}] = model:forward(input[{s,':'}])
+    end
+    return result
   end
 
 ------------------------------------------------------------------------
