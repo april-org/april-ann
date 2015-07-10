@@ -172,7 +172,7 @@ namespace AprilMath {
   void wrapperCblasAxpyi(int NNZ, T alpha,
                          const T *x_mem, const int *x_ind,
                          T *y_mem, unsigned int y_inc) {
-    if (alpha != 1.0f) {
+    if (alpha != AprilMath::Limits<T>::one()) {
       for (int i=0; i<NNZ; ++i) {
         int y_pos = x_ind[i] * y_inc;
         y_mem[y_pos] += alpha * x_mem[i];

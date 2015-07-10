@@ -1,9 +1,28 @@
+class.extend_metamethod(matrixChar, "__len", function(self) return self:size() end)
+class.extend_metamethod(matrixChar, "__ipairs",
+                        function(self)
+                          return function(self,i)
+                            i = i+1
+                            if i <= #self then return i,self[i] end
+                          end, self, 0
+end)
+
 class.extend(matrixChar, "t", matrixChar.."transpose")
 
 -- serialization
 matrix.__generic__.__make_all_serialization_methods__(matrixChar, "ascii")
 
 matrix.__generic__.__make_index_methods__(matrixChar)
+
+-- define right side operator []
+matrix.__generic__.__make_generic_index__(matrixChar)
+
+-- define left side operator []
+matrixChar.meta_instance.__newindex =
+  matrix.__generic__.__make_generic_newindex__(matrixChar)
+
+matrixChar.meta_instance.__call =
+  matrix.__generic__.__make_generic_call__()
 
 matrixChar.meta_instance.__tostring = function(self)
   local dims   = self:dim()

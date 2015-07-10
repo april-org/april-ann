@@ -95,6 +95,17 @@ namespace AprilMath {
                                 Basics::Matrix<T> *dest=0);
 
       /**
+       * @brief Computes \f$ \exp (x) - 1 \f$ for every element of the given
+       * matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template <typename T>
+      Basics::Matrix<T> *matExpm1(Basics::Matrix<T> *obj,
+                                  Basics::Matrix<T> *dest=0);
+
+      /**
        * @brief Computes \f$ \sqrt x \f$ for every element of the given matrix.
        *
        * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
@@ -397,7 +408,40 @@ namespace AprilMath {
       Basics::Matrix<T> *matClamp(Basics::Matrix<T> *obj,
                                   const T lower, const T upper,
                                   Basics::Matrix<T> *dest=0);
+
+      /**
+       * @brief Computes \f$ floor(x) \f$ for every element of the
+       * given matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template<typename T>
+      Basics::Matrix<T> *matFloor(Basics::Matrix<T> *obj,
+                                  Basics::Matrix<T> *dest=0);
+
+      /**
+       * @brief Computes \f$ ceil(x) \f$ for every element of the
+       * given matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template<typename T>
+      Basics::Matrix<T> *matCeil(Basics::Matrix<T> *obj,
+                                  Basics::Matrix<T> *dest=0);
       
+      /**
+       * @brief Computes \f$ round(x) \f$ for every element of the
+       * given matrix.
+       *
+       * @note This operation is done <b>in-place</b> when @c dest=0 , otherwise
+       * the operation takes @c obj as input and stores the result in @c dest .
+       */
+      template<typename T>
+      Basics::Matrix<T> *matRound(Basics::Matrix<T> *obj,
+                                  Basics::Matrix<T> *dest=0);
+
       /**
        * @brief Computes \f$ v \cdot x \f$ for every element of the given matrix.
        *

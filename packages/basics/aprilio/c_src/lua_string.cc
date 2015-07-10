@@ -70,7 +70,7 @@ namespace AprilIO {
     }
   }
 
-  off_t OutputLuaStringStream::seek(int whence, int offset) {
+  off_t OutputLuaStringStream::seek(int whence, long offset) {
     if (whence == SEEK_CUR && offset == 0) return total_size;
     ERROR_EXIT(128, "NOT IMPLEMENTED BEHAVIOR\n");
     return 0;
@@ -187,7 +187,7 @@ namespace AprilIO {
     }
   }
   
-  off_t InputLuaStringStream::seek(int whence, int offset) {
+  off_t InputLuaStringStream::seek(int whence, long offset) {
     off_t aux_pos = data_pos;
     switch(whence) {
     case SEEK_SET:

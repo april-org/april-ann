@@ -247,6 +247,19 @@ namespace Basics {
               LUABIND_ERROR("Incorrect matrix dimensions");
             }
             obj = new Matrix<T>(ndims, dim.get());
+            if (typeid(T) == typeid(char) && lua_type(L,argn) == LUA_TSTRING) { // for matrixChar case
+              int len = luaL_len(L,argn);
+              if (len != obj->size()) {
+                LUABIND_ERROR("Not matching sizes");
+              }
+              const char *data = lua_tostring(L,argn);
+              for (typename Matrix<T>::iterator it(obj->begin());
+                   it != obj->end(); ++it, ++data) {
+                april_assert(data != '\0');
+                *it = static_cast<T>(*data);
+              }
+              lua_push(L, obj);
+            }
           }
         } // else { !lua_is(L,argn) }
         lua_push(L, obj);
@@ -282,6 +295,11 @@ namespace Basics {
       else if (!strcmp(type,"char")) {
         Matrix<char> *obj2 = AprilMath::MatrixExt::Misc::
           matConvertTo<T,char>(obj);
+        lua_push(L, obj2);
+      }
+      else if (!strcmp(type,"complex")) {
+        Matrix<AprilMath::ComplexF> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,AprilMath::ComplexF>(obj);
         lua_push(L, obj2);
       }
       else {
@@ -1138,6 +1156,27 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(floor)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matFloor(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(ceil)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matCeil(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(round)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matRound(obj));
+      return 1;
+    }
+
     BEGIN_METHOD(add)
     {
       int argn;
@@ -1226,6 +1265,12 @@ namespace Basics {
     BEGIN_METHOD(exp)
     {
       lua_push(L, AprilMath::MatrixExt::Operations::matExp(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(expm1)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::matExpm1(obj));
       return 1;
     }
 
@@ -1736,6 +1781,18 @@ namespace Basics {
       MatrixInt32 *dest = lua_opt<MatrixInt32*>(L, 1, 0);
       dest = AprilMath::MatrixExt::Misc::matOrderRank(obj, dest);
       lua_push(L, dest);
+      return 1;
+    }
+    
+    BEGIN_METHOD(stringfy)
+    {
+      OutputLuaStringStream stream(L);
+      for (typename Matrix<T>::const_iterator it = obj->begin();
+           it != obj->end(); ++it) {
+        const T *str = &(*it);
+        stream.put(str, sizeof(*it));
+      }
+      stream.push(L);
       return 1;
     }
   };
