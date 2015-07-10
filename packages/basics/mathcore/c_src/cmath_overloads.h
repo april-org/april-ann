@@ -202,6 +202,93 @@ namespace AprilMath {
       APRIL_CUDA_EXPORT double operator()(const double &v) const { return CFUNC(v); } \
     };                                                                  \
   }
+
+  /**
+   * @struct Functors::m_floor
+   *
+   * @brief Overloaded floor operation, currently defined for float, double and
+   * ComplexF types.
+   */
+  /**
+   * @fn m_floor
+   *
+   * @brief Function for instantiation and call of Functors::m_floor::operator()
+   * @see Functors::m_floor
+   */
+
+  // abs overload
+  SCALAR_MAP_TEMPLATE(m_floor, T, T);
+  namespace Functors {
+    template<> struct m_floor<float> {
+      APRIL_CUDA_EXPORT float operator()(const float &v) const { return floorf(v); }
+    };
+    template<> struct m_floor<double> {
+      APRIL_CUDA_EXPORT double operator()(const double &v) const { return floor(v); }
+    };
+    template<> struct m_floor<ComplexF> {
+      APRIL_CUDA_EXPORT ComplexF operator()(const ComplexF &v) const {
+        return ComplexF(floorf(v.real()), floorf(v.img()));
+      }
+    };
+  }
+
+  /**
+   * @struct Functors::m_ceil
+   *
+   * @brief Overloaded ceil operation, currently defined for float, double and
+   * ComplexF types.
+   */
+  /**
+   * @fn m_ceil
+   *
+   * @brief Function for instantiation and call of Functors::m_ceil::operator()
+   * @see Functors::m_ceil
+   */
+
+  // abs overload
+  SCALAR_MAP_TEMPLATE(m_ceil, T, T);
+  namespace Functors {
+    template<> struct m_ceil<float> {
+      APRIL_CUDA_EXPORT float operator()(const float &v) const { return ceilf(v); }
+    };
+    template<> struct m_ceil<double> {
+      APRIL_CUDA_EXPORT double operator()(const double &v) const { return ceil(v); }
+    };
+    template<> struct m_ceil<ComplexF> {
+      APRIL_CUDA_EXPORT ComplexF operator()(const ComplexF &v) const {
+        return ComplexF(ceilf(v.real()), ceilf(v.img()));
+      }
+    };
+  }
+
+  /**
+   * @struct Functors::m_round
+   *
+   * @brief Overloaded round operation, currently defined for float, double and
+   * ComplexF types.
+   */
+  /**
+   * @fn m_round
+   *
+   * @brief Function for instantiation and call of Functors::m_round::operator()
+   * @see Functors::m_round
+   */
+
+  // abs overload
+  SCALAR_MAP_TEMPLATE(m_round, T, T);
+  namespace Functors {
+    template<> struct m_round<float> {
+      APRIL_CUDA_EXPORT float operator()(const float &v) const { return roundf(v); }
+    };
+    template<> struct m_round<double> {
+      APRIL_CUDA_EXPORT double operator()(const double &v) const { return round(v); }
+    };
+    template<> struct m_round<ComplexF> {
+      APRIL_CUDA_EXPORT ComplexF operator()(const ComplexF &v) const {
+        return ComplexF(roundf(v.real()), roundf(v.img()));
+      }
+    };
+  }
   
   /**
    * @struct Functors::m_abs

@@ -105,6 +105,26 @@ namespace AprilMath {
       this->data[IMG_IDX]  = other.data[IMG_IDX];
       return *this;
     }
+    /// Casting returns only real part.
+    __host__ __device__ operator int() const {
+      return static_cast<int>(data[REAL_IDX]);
+    }
+    /// Casting returns only real part.
+    __host__ __device__ operator float() const {
+      return static_cast<float>(data[REAL_IDX]);
+    }
+    /// Casting returns only real part.
+    __host__ __device__ operator double() const {
+      return static_cast<double>(data[REAL_IDX]);
+    }
+    /// Casting returns only real part.
+    __host__ __device__ operator bool() const {
+      return static_cast<bool>(data[REAL_IDX]);
+    }
+    /// Casting returns only real part.
+    __host__ __device__ operator char() const {
+      return static_cast<char>(data[REAL_IDX]);
+    }
     /// Two complex numbers are equal if their difference module is < 0.0001
     __host__ __device__ bool operator==(const Complex<T> &other) const {
       Complex<T> r(other - *this);

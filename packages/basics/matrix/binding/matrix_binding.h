@@ -297,6 +297,11 @@ namespace Basics {
           matConvertTo<T,char>(obj);
         lua_push(L, obj2);
       }
+      else if (!strcmp(type,"complex")) {
+        Matrix<AprilMath::ComplexF> *obj2 = AprilMath::MatrixExt::Misc::
+          matConvertTo<T,AprilMath::ComplexF>(obj);
+        lua_push(L, obj2);
+      }
       else {
         LUABIND_FERROR1("Not implemented casting for type %s", type);
       }
@@ -1148,6 +1153,27 @@ namespace Basics {
       T lower = lua_to<T>(L,1), upper = lua_to<T>(L,2);
       lua_push(L, AprilMath::MatrixExt::Operations::
                matClamp(obj, lower, upper));
+      return 1;
+    }
+
+    BEGIN_METHOD(floor)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matFloor(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(ceil)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matCeil(obj));
+      return 1;
+    }
+
+    BEGIN_METHOD(round)
+    {
+      lua_push(L, AprilMath::MatrixExt::Operations::
+               matRound(obj));
       return 1;
     }
 

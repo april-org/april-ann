@@ -34,6 +34,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "div", "norm2", "inv", "logdet", "det",
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
+    "ceil", "floor", "round",
   },
   double = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -52,6 +53,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "div", "norm2",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to",
+    "ceil", "floor", "round",
   },
   int32_t = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -84,7 +86,8 @@ local matrix_methods = {
     "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "toMMap",
-    "data",
+    "data", "convert_to",
+    "ceil", "floor", "round",
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",

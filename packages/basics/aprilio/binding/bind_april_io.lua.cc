@@ -109,10 +109,14 @@ namespace AprilIO {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
                              CStringStream *&c_string) {
+    if (obj->eof()) return 0;
     if (c_string == 0) AssignRef(c_string, new CStringStream());
     c_string->clear();
     obj->get(c_string, " ,;\t\n\r");
-    if (c_string->empty()) return 0;
+    if (c_string->empty()) {
+      lua_pushnil(L);
+      return 1;
+    }
     double number;
     if (!c_string->getConstString().extract_double(&number)) {
       ERROR_EXIT(256, "Impossible to extract a number from current file pos\n");
@@ -123,28 +127,31 @@ namespace AprilIO {
   
   int readAndPushStringToLua(lua_State *L, StreamInterface *obj, int size,
                              OutputLuaStringStream *&lua_string) {
+    if (obj->eof()) return 0;
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string, size);
-    if (lua_string->empty()) return 0;
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
   int readAndPushLineToLua(lua_State *L, StreamInterface *obj,
                            OutputLuaStringStream *&lua_string) {
+    if (obj->eof()) return 0;
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     extractLineFromStream(obj, lua_string);
-    if (lua_string->empty()) return 0;
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
   int readAndPushAllToLua(lua_State *L, StreamInterface *obj,
                           OutputLuaStringStream *&lua_string) {
+    if (obj->eof()) return 0;
     if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string);
-    if (lua_string->empty()) return 0;
+    if (obj->eof() && lua_string->empty()) return 0;
     return lua_string->push(L);
   }
 }
@@ -316,36 +323,38 @@ namespace AprilIO {
 
 //BIND_METHOD StreamInterface get
 {
-  AprilUtils::SharedPtr<StreamInterface> dest;
-  OutputLuaStringStream *aux_lua_string = 0;
-  size_t size = SIZE_MAX;
-  const char *delim = 0;
-  bool keep_delim = false;
-  if (lua_istable(L,1)) {
-    // complete API
-    check_table_fields(L, 1, "dest", "size", "delim", "keep_delim",
-                       (const char*)0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, dest, StreamInterface, dest, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, SIZE_MAX);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, delim, string, delim, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, keep_delim, boolean, keep_delim, false);
-  }
-  else {
-    // simplified API
-    if (lua_isuint(L,1)) LUABIND_GET_PARAMETER(1, uint, size);
-    else if (lua_isstring(L,1)) LUABIND_GET_PARAMETER(1, string, delim);
-    else LUABIND_ERROR("Needs delimitiers string or number as 1st argument");
-    LUABIND_GET_OPTIONAL_PARAMETER(2, boolean, keep_delim, false);
-  }
-  if (dest.empty()) {
-    aux_lua_string = new OutputLuaStringStream(L);
-    dest = aux_lua_string;
-  }
-  size_t len = obj->get(dest.get(), size, delim, keep_delim);
-  if (len != 0 || !obj->eof()) {
-    if (aux_lua_string == 0) LUABIND_RETURN(StreamInterface, dest.get());
-    else LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
-    LUABIND_RETURN(uint, len);
+  if (!obj->eof()) {
+    AprilUtils::SharedPtr<StreamInterface> dest;
+    OutputLuaStringStream *aux_lua_string = 0;
+    size_t size = SIZE_MAX;
+    const char *delim = 0;
+    bool keep_delim = false;
+    if (lua_istable(L,1)) {
+      // complete API
+      check_table_fields(L, 1, "dest", "size", "delim", "keep_delim",
+                         (const char*)0);
+      LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, dest, StreamInterface, dest, 0);
+      LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, SIZE_MAX);
+      LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, delim, string, delim, 0);
+      LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, keep_delim, boolean, keep_delim, false);
+    }
+    else {
+      // simplified API
+      if (lua_isuint(L,1)) LUABIND_GET_PARAMETER(1, uint, size);
+      else if (lua_isstring(L,1)) LUABIND_GET_PARAMETER(1, string, delim);
+      else LUABIND_ERROR("Needs delimitiers string or number as 1st argument");
+      LUABIND_GET_OPTIONAL_PARAMETER(2, boolean, keep_delim, false);
+    }
+    if (dest.empty()) {
+      aux_lua_string = new OutputLuaStringStream(L);
+      dest = aux_lua_string;
+    }
+    size_t len = obj->get(dest.get(), size, delim, keep_delim);
+    if (!obj->eof() || len!=0) {
+      if (aux_lua_string == 0) LUABIND_RETURN(StreamInterface, dest.get());
+      else LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
+      LUABIND_RETURN(uint, len);
+    }
   }
 }
 //BIND_END

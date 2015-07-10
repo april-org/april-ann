@@ -469,7 +469,7 @@ using namespace Basics;
   bool resul=true;
   for (SparseMatrixComplexF::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
     //if (!isfinite(obj->data[i])) resul = 0;
-    if ((*it) - (*it) != 0.0f) resul = false;
+    if ((*it) - (*it) != AprilMath::Limits<ComplexF>::zero()) resul = false;
   LUABIND_RETURN(boolean,resul);
 }
 //BIND_END

@@ -1,3 +1,12 @@
+class.extend_metamethod(matrixInt32, "__len", function(self) return self:size() end)
+class.extend_metamethod(matrixInt32, "__ipairs",
+                        function(self)
+                          return function(self,i)
+                            i = i+1
+                            if i <= #self then return i,self[i] end
+                          end, self, 0
+end)
+
 class.extend(matrixInt32, "t", matrixInt32.."transpose")
 
 class.extend(matrixInt32, "flatten",
