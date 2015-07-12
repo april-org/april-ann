@@ -765,8 +765,8 @@ do
                         get_key(result_proxy, left_key))
       elseif how == "right" then
         process_columns(other, rawget(other, "index2id"), result_index)
-        process_columns(self,  invert(get_key(self_proxy, left_key)),
-                        get_key(result_proxy, right_key))
+        process_columns(self,  invert(get_key(self_proxy, right_key)),
+                        get_key(result_proxy, left_key))
       else
         error("Not implemented")
       end
