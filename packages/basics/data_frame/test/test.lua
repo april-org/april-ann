@@ -32,6 +32,41 @@ T("DataFrameTest", function()
              matrix.sparse(matrix(4,6,{1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,1})))
     local m = df2:as_matrix("one", "two")
     check.eq(m, matrix(4,2,{1,5,2,6,3,7,4,8}))
+    local df22 = data_frame{ data = { three = { "A", "C", "D" },
+                                      four = { 3, 4, 5 } },
+                             columns = { "three", "four" },
+                             index = { "a", "e", "f" } }
+    print(df2:merge(df22, "left"))
+    print(df2:merge(df22, "right"))
+    print(df2:merge(df22, "inner"))
+    print(df2:merge(df22, "outer"))
+    --[[ FIXME: implement test check
+data_frame
+	two	one	three	four
+a	5	1	A	3
+b	6	2	B	nan
+c	7	3	B	nan
+d	8	4	C	nan
+
+data_frame
+	two	one	three	four
+a	5	1	A	3
+e	nan	nan	C	4
+f	nan	nan	D	5
+
+data_frame
+	two	one	three	four
+a	5	1	A	3
+
+data_frame
+	two	one	three	four
+a	5	1	A	3
+b	6	2	B	nan
+c	7	3	B	nan
+d	8	4	C	nan
+e	nan	nan	C	4
+f	nan	nan	D	5
+    ]]
     --
     local df3 = data_frame{ data = matrix(4,20):linear() }
     local _   = df3[{3}]

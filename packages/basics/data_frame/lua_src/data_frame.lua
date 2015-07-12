@@ -248,16 +248,17 @@ local function dataframe_newindex(proxy, key, value)
       end
     end
   else
-    rawset(self, key, value)
+    error("Unable to index with string, use a number or a table with the column name")
   end
 end
 
 data_frame.constructor =
   function(self, params)
     -- configure as proxy table
+    local proxy
     do
       local mt = getmetatable(self)
-      local proxy = self
+      proxy = self
       self = {}
       self.__newindex  = dataframe_newindex
       self.__index     = dataframe_index
@@ -275,10 +276,15 @@ data_frame.constructor =
                                     }, params or {})
     local tdata = type(data)
     rawset(self, "columns", check_array( params.columns or {}, "columns" ))
-    rawset(self, "index", check_array( params.index or {}, "index" ))
     rawset(self, "col2id", invert(rawget(self, "columns")))
-    rawset(self, "index2id", invert(rawget(self, "index")))
     rawset(self, "data", {})
+    local t_params_index = type(params.index)
+    if t_params_index == "string" or t_params_index == "number" then
+      rawset(self, "index", {})
+    else
+      rawset(self, "index", check_array( params.index or {}, "index" ))
+    end
+    rawset(self, "index2id", invert(rawget(self, "index")))
     local data = params.data
     if type(data) == "table" then
       if #rawget(self, "index") == 0 then
@@ -328,6 +334,9 @@ data_frame.constructor =
       for j,col_name in ipairs(rawget(self, "columns")) do
         rawget(self, "data")[col_name] = data:select(2,j)
       end
+    end
+    if t_params_index == "string" or t_params_index == "number" then
+      proxy:set_index(params.index)
     end
   end
 
@@ -619,6 +628,113 @@ methods.reorder =
     rawset(self, "col2id", invert(columns))
   end
 
+methods.set_index =
+  function(self, col_name_or_data)
+    local self = getmetatable(self)
+    local tt = type(col_name_or_data)
+    if tt == "string" or tt == "number" then
+      rawset(self, "index",
+             april_assert(rawget(self, "data")[col_name],
+                          "Unable to locate column %s", col_name))
+    else
+      rawset(self, "index", check_array( col_name_or_data or {}, "1" ))
+    end
+    rawset(self, "index2id", invert(rawget(self, "index")))
+  end
+
+methods.merge =
+  function(self, other, how)
+    local how = how or "left"
+    if how == "right" then self,other = other,self end
+    local result       = data_frame()
+    local result_proxy = result
+    local result       = getmetatable(result)
+    local self   = getmetatable(self)
+    local other  = getmetatable(other)
+    local self_index      = rawget(self,  "index")
+    local other_index     = rawget(other, "index")
+    local other_index2id  = rawget(other, "index2id")
+    local result_index
+    assert(type(other_index) == type(self_index),
+           "Incompatible indices in given data_frames")
+    -- prepare the result_index depending in the given join type (how)
+    if how == "right" or how == "left" then
+      result_proxy:set_index(self_index)
+    elseif how == "outer" then
+      local idx = {}
+      for i=1,#self_index do idx[self_index[i]] = true end
+      for i=1,#other_index do idx[other_index[i]] = true end
+      idx = iterator(pairs(idx)):select(1):table()
+      table.sort(idx)
+      if type(self_index) ~= "table" then
+        idx = class.of(self_index)(idx)
+      end
+      result_proxy:set_index(idx)
+    elseif how == "inner" then
+      local idx = {}
+      for i=1,#self_index do
+        local j = self_index[i]
+        if other_index2id[j] then table.insert(idx, j) end
+      end
+      if type(self_index) ~= "table" then
+        idx = class.of(self_index)(idx)
+      end
+      result_proxy:set_index(idx)
+    else
+      error("Incorrect how type " .. tostring(how))
+    end
+    local result_index    = rawget(result, "index")
+    local function process_columns(df)
+      local index     = rawget(df, "index")
+      local index2id  = rawget(df, "index2id")
+      local col_names = rawget(df, "columns")
+      local data      = rawget(df,  "data")
+      for j=1,#col_names do
+        local result_col2id = rawget(result, "col2id")
+        local col_name = col_names[j]
+        local col_data = data[col_name]
+        if type(col_name) == "number" or not result_col2id[col_name] then
+          local new_col_data
+          if type(data) == "table" then
+            new_col_data = {}
+          else
+            new_col_data = class.of(col_data)(#col_data)
+          end
+          for i=1,#result_index do
+            local k = index2id[result_index[i]]
+            new_col_data[i] = k and col_data[k] or NA
+          end -- for every index in self
+          if type(col_name) == "number" then
+            col_name = next_number(rawget(result, "columns"))
+          end
+          result_proxy[{col_name}] = new_col_data
+        else -- if it is a new column
+          local new_col_data = result_proxy[{col_name}]
+          for i=1,#result_index do
+            local k = index2id[result_index[i]]
+            if k then
+              local v = new_col_data[i]
+              if not v or is_nan(v) then
+                new_col_data[i] = col_data[k]
+              else -- { v and not is_nan(v) }
+                assert(v == col_data[k], "Not compatible data frames")
+              end
+            end -- if exists current index key in df
+          end -- for every index in result
+        end -- existing column
+      end -- for every column in df
+    end -- function process_columns
+    -- process all columns in both data frames
+    if how == "right" then
+      process_columns(other)
+      process_columns(self)
+    else
+      process_columns(self)
+      process_columns(other)
+    end
+    return result_proxy
+  end
+
 methods.get_index =
   function(self)
     local self = getmetatable(self)
@@ -666,9 +782,12 @@ methods.ctor_params =
     }    
   end
 
+methods.clone = function(self) return data_frame(util.clone(self:ctor_params())) end
+  
 methods.map =
   function(self, col_name, func)
     local self   = getmetatable(self)
+    col_name     = tonumber(col_name) or col_name
     local data   = april_assert(rawget(self, "data")[col_name],
                                 "Unable to locate column %s", col_name)
     return iterator.range(#data):
@@ -685,6 +804,7 @@ methods.parse_datetime =
       "Needs a parser function as last argument" )
     local list   = iterator(ipairs(args)):
       map(function(i,col_name)
+          col_name = tonumber(col_name) or col_name
           return i,april_assert(data[col_name], "Unable to locate column %s", col_name)
       end):table()
     local result = iterator(multiple_ipairs(table.unpack(list))):
