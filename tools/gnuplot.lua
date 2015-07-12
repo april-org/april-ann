@@ -133,11 +133,25 @@ function gnuplot_methods:plot(line, ...)
   for i,m in ipairs(data) do
     local aux_tmpname = tmpnames[m]
     if not aux_tmpname then
-      assert(m.toTabFilename,
-	     "The matrix object needs the method toTabFilename")
-      aux_tmpname = os.tmpname()
-      tmpnames[m] = aux_tmpname
-      m:toTabFilename(aux_tmpname)
+      if class.is_a(m, data_frame) then
+        aux_tmpname = os.tmpname()
+        tmpnames[m] = aux_tmpname
+        m:to_csv(aux_tmpname, { header=false, sep=' ', NA="NA" })
+      elseif type(m):find("^matrix") then
+        assert(m.toTabFilename,
+               "The matrix object needs the method toTabFilename")
+        aux_tmpname = os.tmpname()
+        tmpnames[m] = aux_tmpname
+        m:toTabFilename(aux_tmpname)
+      else
+        if type(m) == "number" then
+          aux_tmpname = tostring(m)
+        elseif type(m) == "string" then
+          aux_tmpname = "%q"%{ m }
+        else
+          error("Unable to the given data type at position: " .. i)
+        end
+      end
     end
     dict["#"..i] = aux_tmpname
   end
