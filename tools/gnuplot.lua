@@ -46,6 +46,15 @@ function gnuplot_methods:set(...)
   return self
 end
 
+-- Unsets a parameter
+function gnuplot_methods:unset(...)
+  write(self,"unset ")
+  write(self,table.concat(table.pack(...), " "))
+  write(self,"\n")
+  self:flush()
+  return self
+end
+
 -- Forces to write in the pipe
 function gnuplot_methods:flush()
   self.in_pipe:flush()
@@ -101,15 +110,19 @@ function gnuplot_methods:plot(params, range)
     if i ~= #params then table.insert(plot_str_tbl, ",") end
   end
   table.insert(plot_str_tbl, "\n")
-  print(table.concat(plot_str_tbl, " "))
+  -- print(table.concat(plot_str_tbl, " "))
   write(self,table.concat(plot_str_tbl, " "))
   self:flush()
   return self
 end
 
 -- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:rawplot(data, line)
-  if type(data) ~= "table" then data = { data } end
+function gnuplot_methods:rawplot(line, ...)
+  assert(type(line) == "string",
+         "New rawplot needs first the line string and varargs as arguments")
+  assert(not line:find("^[%s]*plot[%s]*"),
+         "New rawplot doesn't need 'plot' word in the given line string")
+  local data = table.pack(...)
   -- remove previous temporal files
   for _,tmpname in pairs(self.tmpnames) do
     self:writeln(string.format("!rm -f %s", tmpname))
@@ -129,8 +142,8 @@ function gnuplot_methods:rawplot(data, line)
     dict["#"..i] = aux_tmpname
   end
   local line = line:gsub("(#%d*)",dict)
-  print(line)
-  self:writeln(line)
+  -- print(line)
+  self:writeln("plot " .. line)
   self:flush()
   return self
 end
@@ -176,6 +189,16 @@ end
 -- gnuplot() is equivalent to gnuplot.new()
 setmetatable(gnuplot, { __call = gnuplot.new })
 
+do
+  local singleton
+  for k,v in pairs(gnuplot_methods) do
+    assert(not gnuplot[k])
+    gnuplot[k] = function(...)
+      singleton = singleton or gnuplot.new()
+      return singleton[k](singleton, ...)
+    end
+  end
+end
 -------------------
 -- HELP FUNCTION --
 -------------------
@@ -192,18 +215,22 @@ none of them will share anything, so every object has
 its own gnuplot window.
 
 
+LOADING: load the module as usual
+
+> gp = require "gnuplot"
+
+
 CONSTRUCTOR: builds a gnuplot object instance
 
 > gp = gnuplot()     -- the __call metamethod is defined
 > gp = gnuplot.new() -- both are equivalent
-
 
 HELP: shows this help message
 
 > gnuplot.help()
 
 
-METHOD __call:
+METHOD __call: idem as below
 METHOD WRITE LINE: writes a sentence line to gnuplot
   arguments:
     format: is a string with a printf format string
@@ -219,6 +246,13 @@ METHOD SET: executes the set command of gnuplot
 
 > gp:set("format x '%20f'")
 > gp:set("xrange [-10,10]")
+
+
+METHOD UNSET: executes the unset command of gnuplot
+  arguments:
+    ... : a variable argument list, all of them strings
+
+> gp:unset("logscale y")
 
 
 METHOD PLOT: plots multiple data
@@ -242,6 +276,17 @@ METHOD PLOT: plots multiple data
              { func='f(x)' }, }, "[-10:10][20:40]")
 
 
+METHOD RAWPLOT: allows to do more generic plots, it uses placeholders #n to
+use matrix objects as input.
+  arguments:
+    line string: a string with the gnuplot line (without the word 'plot')
+    ...: vararg with matrix objects to be plotted
+
+> gp:rawplot("'#1' u 3:4 w l lw 3", matrix_object) -- #1 is the placeholder
+> gp:rawplot("3*x**2")
+> gp:rawplot("'tmp.log' u 1:2 w l, '#1' u 1:2 w l, '' u 1:3 w l", m)
+
+
 METHOD FLUSH: flushes all the pending data (normally it
               is not necessary)
 
@@ -251,6 +296,15 @@ METHOD FLUSH: flushes all the pending data (normally it
 METHOD CLOSE: closes the connection with gnuplot
 
 > gp:close()
+
+
+SINGLETON: it is possible to use gnuplot without calling the constructor, all
+methods are available as static functions.
+
+> gp.close()
+> gp.rawplot(...)
+> gp.set(...)
+> ...
 
 ]]
 end

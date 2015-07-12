@@ -99,8 +99,7 @@ static void lstop (lua_State *L, lua_Debug *ar) {
 
 
 static void laction (int i) {
-  signal(i, SIG_DFL); /* if another SIGINT happens before lstop,
-                              terminate process (default action) */
+  signal(i, SIG_IGN); /* if another SIGINT happens before lstop, ignore it */
   lua_sethook(globalL, lstop, LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
 }
 
@@ -177,7 +176,7 @@ static int docall (lua_State *L, int narg, int nres) {
   globalL = L;  /* to be available to 'laction' */
   signal(SIGINT, laction);
   status = lua_pcall(L, narg, nres, base);
-  signal(SIGINT, SIG_DFL);
+  signal(SIGINT, SIG_IGN);
   lua_remove(L, base);  /* remove traceback function */
   return status;
 }
@@ -744,6 +743,7 @@ int main (int argc, char **argv) {
     l_message(argv[0], "cannot create state: not enough memory");
     return EXIT_FAILURE;
   }
+  signal(SIGINT, SIG_IGN); // ignore SIGINT by default
   /* call 'pmain' in protected mode */
   lua_pushcfunction(L, &pmain);
   lua_pushinteger(L, argc);  /* 1st argument */
