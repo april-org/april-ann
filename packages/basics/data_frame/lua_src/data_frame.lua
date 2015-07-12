@@ -351,6 +351,7 @@ data_frame.from_csv =
         quotechar = { default='"' },
         decimal = { default='.' },
         NA = { default=defNA },
+        index = { },
                                     }, params or {})
     local sep = params.sep
     local quotechar = params.quotechar
@@ -391,6 +392,7 @@ data_frame.from_csv =
     rawset(self, "index", matrixInt32(n):linspace())
     rawset(self, "index2id", invert(rawget(self, "index")))
     if path ~= f then f:close() end
+    if params.index then proxy:set_index(params.index) end
     return proxy
   end
 
@@ -631,109 +633,141 @@ methods.reorder =
 methods.set_index =
   function(self, col_name_or_data)
     local self = getmetatable(self)
+    local col_name_or_data = tonumber(col_name_or_data) or col_name_or_data
     local tt = type(col_name_or_data)
     if tt == "string" or tt == "number" then
       rawset(self, "index",
-             april_assert(rawget(self, "data")[col_name],
-                          "Unable to locate column %s", col_name))
+             check_array(april_assert(rawget(self, "data")[col_name_or_data],
+                                      "Unable to locate column %s", col_name_or_data),
+                         "1"))
     else
       rawset(self, "index", check_array( col_name_or_data or {}, "1" ))
     end
     rawset(self, "index2id", invert(rawget(self, "index")))
   end
 
-methods.merge =
-  function(self, other, how)
-    local how = how or "left"
-    if how == "right" then self,other = other,self end
-    local result       = data_frame()
-    local result_proxy = result
-    local result       = getmetatable(result)
-    local self   = getmetatable(self)
-    local other  = getmetatable(other)
-    local self_index      = rawget(self,  "index")
-    local other_index     = rawget(other, "index")
-    local other_index2id  = rawget(other, "index2id")
-    local result_index
-    assert(type(other_index) == type(self_index),
-           "Incompatible indices in given data_frames")
-    -- prepare the result_index depending in the given join type (how)
-    if how == "right" or how == "left" then
-      result_proxy:set_index(self_index)
-    elseif how == "outer" then
-      local idx = {}
-      for i=1,#self_index do idx[self_index[i]] = true end
-      for i=1,#other_index do idx[other_index[i]] = true end
-      idx = iterator(pairs(idx)):select(1):table()
-      table.sort(idx)
-      if type(self_index) ~= "table" then
-        idx = class.of(self_index)(idx)
-      end
-      result_proxy:set_index(idx)
-    elseif how == "inner" then
-      local idx = {}
-      for i=1,#self_index do
-        local j = self_index[i]
-        if other_index2id[j] then table.insert(idx, j) end
-      end
-      if type(self_index) ~= "table" then
-        idx = class.of(self_index)(idx)
-      end
-      result_proxy:set_index(idx)
+do
+  local function get_key(df, key)
+    if not key then
+      return rawget(df, "index2id")
     else
-      error("Incorrect how type " .. tostring(how))
+      return (april_assert(df[{ key }], "Unable to locate column name %s", key))
     end
-    local result_index    = rawget(result, "index")
-    local function process_columns(df)
-      local index     = rawget(df, "index")
-      local index2id  = rawget(df, "index2id")
-      local col_names = rawget(df, "columns")
-      local data      = rawget(df,  "data")
-      for j=1,#col_names do
-        local result_col2id = rawget(result, "col2id")
-        local col_name = col_names[j]
-        local col_data = data[col_name]
-        if type(col_name) == "number" or not result_col2id[col_name] then
-          local new_col_data
-          if type(data) == "table" then
-            new_col_data = {}
-          else
-            new_col_data = class.of(col_data)(#col_data)
-          end
-          for i=1,#result_index do
-            local k = index2id[result_index[i]]
-            new_col_data[i] = k and col_data[k] or NA
-          end -- for every index in self
-          if type(col_name) == "number" then
-            col_name = next_number(rawget(result, "columns"))
-          end
-          result_proxy[{col_name}] = new_col_data
-        else -- if it is a new column
-          local new_col_data = result_proxy[{col_name}]
-          for i=1,#result_index do
-            local k = index2id[result_index[i]]
-            if k then
-              local v = new_col_data[i]
-              if not v or is_nan(v) then
-                new_col_data[i] = col_data[k]
-              else -- { v and not is_nan(v) }
-                assert(v == col_data[k], "Not compatible data frames")
-              end
-            end -- if exists current index key in df
-          end -- for every index in result
-        end -- existing column
-      end -- for every column in df
-    end -- function process_columns
-    -- process all columns in both data frames
-    if how == "right" then
-      process_columns(other)
-      process_columns(self)
-    else
-      process_columns(self)
-      process_columns(other)
-    end
-    return result_proxy
   end
+  
+  methods.merge =
+    function(self, other, params)
+      local params = get_table_fields({
+          how = { default="left" },
+          key = { },
+                                      }, params or {})
+      local how = params.how
+      local key = params.key
+      if how == "right" then self,other = other,self end
+      local result          = data_frame()
+      local result_proxy    = result
+      local result          = getmetatable(result)
+      local self_proxy      = self
+      local other_proxy     = other
+      local self            = getmetatable(self)
+      local other           = getmetatable(other)
+      local self_index      = rawget(self,  "index")
+      local other_index     = rawget(other, "index")
+      local other_index2id  = rawget(other, "index2id")
+      local result_index
+      --
+      if key then
+        april_assert(self_proxy[{ key }], "Unable to locate column %s", key)
+        april_assert(other_proxy[{ key }], "Unable to locate column %s", key)
+      end
+      -- prepare the result_index depending in the given join type (how)
+      if how == "right" or how == "left" then
+        result_proxy:set_index(self_index)
+      elseif how == "outer" then
+        error("Not implemented")
+        assert(type(other_index) == type(self_index),
+               "Incompatible indices in given data_frames")
+        local idx = {}
+        for i=1,#self_index do idx[self_index[i]] = true end
+        for i=1,#other_index do idx[other_index[i]] = true end
+        idx = iterator(pairs(idx)):select(1):table()
+        table.sort(idx)
+        if type(self_index) ~= "table" then
+          idx = class.of(self_index)(idx)
+        end
+        result_proxy:set_index(idx)
+      elseif how == "inner" then
+        error("Not implemented")
+        local self_key  = get_key(self_proxy, key)
+        local other_key = get_key(other_proxy, key)
+        assert(type(other_index) == type(self_index),
+               "Incompatible indices in given data_frames")
+        local idx = {}
+        for i=1,#self_index do
+          local j = self_index[i]
+          if other_index2id[j] then table.insert(idx, j) end
+        end
+        if type(self_index) ~= "table" then
+          idx = class.of(self_index)(idx)
+        end
+        result_proxy:set_index(idx)
+      else
+        error("Incorrect how type " .. tostring(how))
+      end
+      local result_index = rawget(result, "index")
+      local function process_columns(df, index2id, id2index)
+        local col_names = rawget(df, "columns")
+        local data      = rawget(df,  "data")
+        for j=1,#col_names do
+          local result_col2id = rawget(result, "col2id")
+          local col_name = col_names[j]
+          local col_data = data[col_name]
+          if type(col_name) == "number" or not result_col2id[col_name] then
+            local new_col_data
+            if type(data) == "table" then
+              new_col_data = {}
+            else
+              new_col_data = class.of(col_data)(#col_data)
+            end
+            for i=1,#result_index do
+              local k = index2id[id2index[i]]
+              new_col_data[i] = k and col_data[k] or NA
+            end -- for every index in self
+            if type(col_name) == "number" then
+              col_name = next_number(rawget(result, "columns"))
+            end
+            result_proxy[{col_name}] = new_col_data
+          else -- if it is a new column
+            local new_col_data = result_proxy[{col_name}]
+            for i=1,#result_index do
+              local k = index2id[id2index[i]]
+              if k then
+                local v = new_col_data[i]
+                if not v or is_nan(v) then
+                  new_col_data[i] = col_data[k]
+                else -- { v and not is_nan(v) }
+                  assert(v == col_data[k], "Not compatible data frames")
+                end
+              end -- if exists current index key in df
+            end -- for every index in result
+          end -- existing column
+        end -- for every column in df
+      end -- function process_columns
+      -- process all columns in both data frames
+      if how == "left" then
+        process_columns(self,  rawget(self, "index2id"), result_index)
+        process_columns(other, invert(get_key(other_proxy, key)),
+                        get_key(result_proxy, key))
+      elseif how == "right" then
+        process_columns(other, rawget(other, "index2id"), result_index)
+        process_columns(self,  invert(get_key(self_proxy, key)),
+                        get_key(result_proxy, key))
+      else
+        error("Not implemented")
+      end
+      return result_proxy
+    end
+end
 
 methods.get_index =
   function(self)
