@@ -830,13 +830,23 @@ methods.ctor_params =
 methods.clone = function(self) return data_frame(util.clone(self:ctor_params())) end
   
 methods.map =
-  function(self, col_name, func)
-    local self   = getmetatable(self)
-    col_name     = tonumber(col_name) or col_name
-    local data   = april_assert(rawget(self, "data")[col_name],
-                                "Unable to locate column %s", col_name)
-    return iterator.range(#data):
-    map(function(i) return i,func(data[i]) end):table()
+  function(self, ...)
+    local col_names = { ... }
+    local func = table.remove(col_names)
+    assert(type(func) == "function", "Needs a function as last argument")
+    local self = getmetatable(self)
+    local data = {}
+    for i=1,#col_names do
+      local col_name = col_names[i]     
+      data[i] = april_assert(rawget(self, "data")[col_name],
+                             "Unable to locate column %s", col_name)
+    end
+    local result,input = {},{}
+    for i=1,#rawget(self, "index") do
+      for j=1,#data do input[j] = data[j][i] end
+      result[i] = func(table.unpack(input))
+    end
+    return result
   end
 
 methods.parse_datetime =
