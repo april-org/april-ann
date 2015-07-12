@@ -9,12 +9,18 @@ local gnuplot_methods = {}
 
 -- Writes using format and a list of arguments
 local function writef(self,format, ...)
+  if self.verbosity_level > 0 then
+    io.write(format:format(...))
+  end
   self.in_pipe:write(string.format(format,...))
   return self
 end
 
 -- Writes the given strings (separated by blanks)
 local function write(self,...)
+  if self.verbosity_level > 0 then
+    io.write(table.concat(table.pack(...), " "))
+  end
   self.in_pipe:write(table.concat(table.pack(...), " "))
   return self
 end
@@ -172,6 +178,10 @@ function gnuplot_methods:close()
   self.in_pipe  = nil
 end
 
+function gnuplot_methods:verbosity(v)
+  self.verbosity_level = v
+end
+
 ---------------
 -- METATABLE --
 ---------------
@@ -195,7 +205,7 @@ function gnuplot.new()
   f:close()
   assert(command, "Impossible to find gnuplot binary executable")
   local in_pipe= io.popen(command, "w")
-  local obj = { in_pipe = in_pipe, tmpnames = {} }
+  local obj = { in_pipe = in_pipe, tmpnames = {}, verbosity_level=0 }
   setmetatable(obj, object_metatable)
   return obj
 end
