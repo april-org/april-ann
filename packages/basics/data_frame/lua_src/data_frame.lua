@@ -660,9 +660,12 @@ do
       local params = get_table_fields({
           how = { default="left" },
           key = { },
+          left_on = { },
+          right_on = { },
                                       }, params or {})
-      local how = params.how
-      local key = params.key
+      local how       = params.how
+      local left_key  = params.left_on  or params.key
+      local right_key = params.right_on or params.key
       if how == "right" then self,other = other,self end
       local result          = data_frame()
       local result_proxy    = result
@@ -676,9 +679,11 @@ do
       local other_index2id  = rawget(other, "index2id")
       local result_index
       --
-      if key then
-        april_assert(self_proxy[{ key }], "Unable to locate column %s", key)
-        april_assert(other_proxy[{ key }], "Unable to locate column %s", key)
+      if left_key then
+        april_assert(self_proxy[{ left_key }], "Unable to locate column %s", left_key)
+      end
+      if right_key then
+        april_assert(other_proxy[{ right_key }], "Unable to locate column %s", right_key)
       end
       -- prepare the result_index depending in the given join type (how)
       if how == "right" or how == "left" then
@@ -756,12 +761,12 @@ do
       -- process all columns in both data frames
       if how == "left" then
         process_columns(self,  rawget(self, "index2id"), result_index)
-        process_columns(other, invert(get_key(other_proxy, key)),
-                        get_key(result_proxy, key))
+        process_columns(other, invert(get_key(other_proxy, right_key)),
+                        get_key(result_proxy, left_key))
       elseif how == "right" then
         process_columns(other, rawget(other, "index2id"), result_index)
-        process_columns(self,  invert(get_key(self_proxy, key)),
-                        get_key(result_proxy, key))
+        process_columns(self,  invert(get_key(self_proxy, left_key)),
+                        get_key(result_proxy, right_key))
       else
         error("Not implemented")
       end
