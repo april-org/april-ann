@@ -666,4 +666,32 @@ methods.ctor_params =
     }    
   end
 
+methods.map =
+  function(self, col_name, func)
+    local self   = getmetatable(self)
+    local data   = april_assert(rawget(self, "data")[col_name],
+                                "Unable to locate column %s", col_name)
+    return iterator.range(#data):
+    map(function(i) return i,func(data[i]) end):table()
+  end
+
+methods.parse_datetime =
+  function(self, ...)
+    local self   = getmetatable(self)
+    local data   = rawget(self, "data")
+    local args   = table.pack( ... )
+    -- returns a table with year,month,day,hour,min,sec,isdst, as in os.time
+    local parser = assert( (type(args[#args]) == "function") and table.remove(args) or nil,
+      "Needs a parser function as last argument" )
+    local list   = iterator(ipairs(args)):
+      map(function(i,col_name)
+          return i,april_assert(data[col_name], "Unable to locate column %s", col_name)
+      end):table()
+    local result = iterator(multiple_ipairs(table.unpack(list))):
+      -- FIXME: check table returned by parser function
+    map(function(i,...) return i,os.time(parser(table.concat({...}, " "))) end):
+      table()
+    return result
+  end
+
 return data_frame
