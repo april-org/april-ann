@@ -12,9 +12,21 @@ stats.dist = stats.dist or {}
 
 -------------------------------------------------------------------------------
 
+stats.levels = function(m)
+  local symbols = {}
+  local inv_symbols = {}
+  m:map(function(x)
+      if not inv_symbols[x] then
+        symbols[#symbols+1],inv_symbols[x] = x,true
+      end
+  end)
+  table.sort(symbols)
+  return symbols
+end
+
 stats.hist = function(m, params)
   local params = get_table_fields({
-      breaks = { type_match="number", default=13 },
+      breaks = { default=13 },
       normalize = { type_match="boolean", default=false },
                                   }, params or {})
   local breaks = params.breaks
@@ -31,6 +43,28 @@ stats.hist = function(m, params)
   local z      = result:select(2,4)
   m:map(function(v)
       local b = math.min( math.floor((v - min)/diff * breaks) + 1, breaks )
+      y[b] = y[b] + 1
+  end)
+  z:copy(y):scal(1/m:size())
+  return result
+end
+
+stats.ihist = function(m, params)
+  local params = get_table_fields({
+      symbols = { type_match="table", default={} },
+      normalize = { type_match="boolean", default=false },
+                                  }, params or {})
+  local symbols = params.symbols
+  if #symbols == 0 then symbols = stats.levels(m) end
+  local inv_symbols = table.invert(symbols)
+  assert(#symbols > 0, "Unable to compute histogram for given matrix")
+  local result = matrix(#symbols, 4)
+  local x      = result:select(2,1):linspace()
+  local x2     = result:select(2,2):copy(x)
+  local y      = result:select(2,3):zeros()
+  local z      = result:select(2,4)
+  m:map(function(v)
+      local b = inv_symbols[v]
       y[b] = y[b] + 1
   end)
   z:copy(y):scal(1/m:size())
