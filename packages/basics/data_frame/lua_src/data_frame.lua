@@ -457,23 +457,29 @@ methods.drop =
       error("Not implemented for index")
     elseif dim == 2 then
       local num_cols = #rawget(self, "columns")
+      local new_columns = {}
+      if type(rawget(self, "columns")) ~= "table" then
+        new_columns = matrixInt32(num_cols - #labels)
+      end
+      local deleted = {}
       for _,col_name in ipairs(labels) do
+        local col_name = tonumber(col_name) or col_name
         local col_id = april_assert(rawget(self, "col2id")[col_name],
                                     "Unknown column name %s", col_name)
+        deleted[col_id] = true
         rawget(self, "data")[col_name]   = nil
-        rawget(self, "columns")[col_id]  = nil
         rawget(self, "col2id")[col_name] = nil
       end
       local j=1
       for i=1,num_cols do
-        local v = rawget(self, "columns")[i]
-        rawget(self, "columns")[i] = nil
-        rawget(self, "columns")[j] = v
-        if v then
-          rawget(self, "col2id")[rawget(self, "columns")[j]] = j
+        if not deleted[i] then
+          local v = rawget(self, "columns")[i]
+          new_columns[j] = v
+          rawget(self, "col2id")[v]  = j
           j=j+1
         end
       end
+      rawset(self, "columns", new_columns)
     else
       error("Incorrect dimension number, it should be 1 or 2")
     end
@@ -584,7 +590,7 @@ methods.insert =
     if type(columns) ~= "table" then columns = columns:toTable() end
     table.insert(columns, location, col_name)
     rawset(self, "columns", columns)
-    rawget(self, "col2id")[col_name] = invert(rawget(self, "columns"))
+    rawset(self, "col2id", invert(rawget(self, "columns")))
     if class.of(col_data) then
       local sq = assert(col_data.squeeze, "Needs matrix or table as columns")
       col_data = col_data:squeeze()
