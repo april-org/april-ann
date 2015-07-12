@@ -649,7 +649,7 @@ methods.set_index =
 do
   local function get_key(df, key)
     if not key then
-      return rawget(df, "index2id")
+      return df:get_index()
     else
       return (april_assert(df[{ key }], "Unable to locate column name %s", key))
     end
