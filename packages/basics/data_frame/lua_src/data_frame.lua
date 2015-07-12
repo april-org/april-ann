@@ -665,13 +665,13 @@ do
     function(self, other, params)
       local params = get_table_fields({
           how = { default="left" },
-          key = { },
+          on = { },
           left_on = { },
           right_on = { },
                                       }, params or {})
       local how       = params.how
-      local left_key  = params.left_on  or params.key
-      local right_key = params.right_on or params.key
+      local left_key  = params.left_on  or params.on
+      local right_key = params.right_on or params.on
       if how == "right" then self,other = other,self end
       local result          = data_frame()
       local result_proxy    = result
