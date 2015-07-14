@@ -131,7 +131,30 @@ local block_to_dtype ={
   [mathcore.block.char]    = "char",
 }
 
-vector.constructor = function(self, params)
+vector.constructor =
+  april_doc{
+    class="method",
+    summary="Constructor of dynamic vector using underlying mathcore.block data",
+    params={
+      "A mathcore.block instance",
+    },
+    outputs={
+      "A dynamic vector instance",
+    },
+  } ..
+  april_doc{
+    class="method",
+    summary="Constructor of dynamic vector using underlying mathcore.block data",
+    params={
+      dtype="Data type: float, double, complex, int32, bool [optional], by default it is float",
+      reserve="Size reserved in the underlying memory block [optional]",
+      size="Initial size of the vector [optional], by default it is 0",
+    },
+    outputs={
+      "A dynamic vector instance",
+    },
+  } ..
+  function(self, params)
   params = params or {}
   if type(params) ~= "table" then
     local block = params
@@ -151,7 +174,7 @@ vector.constructor = function(self, params)
     self.dtype  = dtype
     self.ctor   = assert(mathcore.block[dtype], "Incorrect block type")
     self.len    = size
-    self.block  = self.ctor(reserve)
+    self.block  = self.ctor(math.max(reserve, size))
   end
 end
 
@@ -173,11 +196,20 @@ vector_methods.push_back = function(self, value)
 end
 
 -- not guaranteed to return the underlying block, it can be a copy
-vector_methods.to_block = function(self)
-  local block = self.block
-  if self.len < #block then block = self.ctor(self.len):copy(block) end
-  return block
-end
+vector_methods.to_block =
+  april_doc{
+    class="method",
+    summary="Returns a mathcore.block with the data",
+    description="Be careful, this function doesn't guarantee to return a new allocated block",
+    outputs={
+      "A mathcore.block instance",
+    },
+  } ..
+  function(self)
+    local block = self.block
+    if self.len < #block then block = self.ctor(self.len):copy(block) end
+    return block
+  end
 
 class.declare_functional_index(vector,
                                function(self, key)
