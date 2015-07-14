@@ -268,6 +268,19 @@ local function dataframe_newindex(proxy, key, value)
 end
 
 data_frame.constructor =
+  april_doc{
+    class = "method",
+    summary = "Constructor for data_frame objects",
+    description = "Builds an empty data_frame or a data_frame taken from given data",
+    params = {
+      data = { "A table indexed by column names with all the expected columns data [optional]" },
+      index = { "An index table (or matrix) which allow to identify every row [optional]" },
+      columns = { "Order of the columns given in data [optional]" },
+    },
+    outputs = {
+      "An instance of data_frame class",
+    },
+  } ..
   function(self, params)
     -- configure as proxy table
     local proxy
@@ -356,6 +369,27 @@ data_frame.constructor =
   end
 
 data_frame.from_csv =
+  april_doc{
+    class = "function",
+    summary = "Builds a data_frame from a CSV file",
+    description = "This loader allow empty fields",
+    params = {
+      "First parameter is the path to CSV filename, second parameter is a table",
+      header = { "A boolean indicating if the CSV has a header row [optional],",
+                 "by default it is true" },
+      sep = { "Sep charecter for every field [optional], by default it is: ,"},
+      quotechar = { "Character used to as delimiter for strings [optional],",
+                    "by default it is: \"" },
+      decimal = { "Decimal point character [optional], by default it is: .", },
+      NA = { "Not avaliable token [optional], by default it is NA" },
+      index = { "Table or matrix with an index to identify every column, it",
+                "can be a string indicating which column in CSV file is the",
+                "index [optional]" },
+    },
+    outputs = {
+      "An instance of data_frame class"
+    },
+  } ..
   function(path, params)
     local proxy = data_frame()
     local self = getmetatable(proxy)
@@ -424,6 +458,19 @@ local function quote(x, sep, quotechar, decimal)
 end
 
 methods.to_csv =
+  april_doc{
+    class = "method",
+    summary = "Writes the caller data_frame into a CSV filename",
+    params = {
+      "The first one is a filename, the second one is a table",
+      header = { "Boolean indicating if the header should be written [optional], by default it is true" },
+      sep = { "Character used as sep [optional], by default it is: ," },
+      quotechar = { "Character used to as delimiter for strings [optional],",
+                    "by default it is: \"" },
+      decimal = { "Decimal point character [optional], by default it is: .", },
+      NA = { "Not avaliable token [optional], by default it is NA" },
+    },
+  } ..
   function(self, path, params)
     local self = getmetatable(self)
     local params = get_table_fields({
@@ -464,6 +511,17 @@ methods.to_csv =
   end
 
 methods.drop =
+  april_doc{
+    class = "method",
+    summary = "Removes one column or row from the data_frame (it is done in-place)",
+    params = {
+      "A dimension number (1 for rows, 2 for columns)",
+      "First column or row name to drop",
+      "Second column or row name to drop",
+      "...",
+      "Last column or row name to drop",
+    }
+  } ..
   function(self, dim, ...)
     local self = getmetatable(self)
     assert(dim, "Needs a dimension number, 1 or 2")
@@ -501,6 +559,19 @@ methods.drop =
   end
 
 methods.as_matrix =
+  april_doc{
+    class = "method",
+    summary = "Converts the whole data_frame (or a given list of its columns) into a matrix",
+    params = {
+      "First column [optional]",
+      "...",
+      "Last column [optional]",
+      "Last argument can be a table of parameters with fields: dtype, categorical_dtype, categories, NA",
+    },
+    outputs = {
+      "A matrix instance",
+    }
+  } ..
   function(self, ...)
     local self = getmetatable(self)
     local args = table.pack(...)
@@ -579,6 +650,12 @@ methods.as_matrix =
 --   end
 
 methods.column =
+  april_doc{
+    class = "method",
+    summary = "Returns a column data",
+    params = { "The column name" },
+    outputs = { "The column data" },
+  } ..
   function(self, key)
     local self = getmetatable(self)
     local data = rawget(self, "data")
@@ -588,6 +665,14 @@ methods.column =
   end
 
 methods.insert =
+  april_doc{
+    class = "method",
+    summary = "Inserts a new column",
+    params = {
+      "The column data",
+      "A table with column_name and location [optional]",
+    },
+  } ..
   function(self, col_data, params)
     local self = getmetatable(self)
     local params = get_table_fields({
@@ -620,6 +705,14 @@ methods.insert =
   end
 
 methods.set =
+  april_doc{
+    class = "method",
+    summary = "Changes the data in a given column name",
+    params = {
+      "The column name",
+      "The new column data",
+    },
+  } ..
   function(self, col_name, col_data)
     local self = getmetatable(self)
     assert(col_name, "Needs column name as first argumnet")
@@ -638,6 +731,10 @@ methods.set =
   end
 
 methods.reorder =
+  april_doc{
+    class="method",
+    summary="Changes the order of the columns",
+  } ..
   function(self, columns)
     local self = getmetatable(self)
     local columns = check_array(columns)
@@ -652,6 +749,10 @@ methods.reorder =
   end
 
 methods.set_index =
+  april_doc{
+    class="method",
+    summary="Changes the index",
+  } ..
   function(self, col_name_or_data)
     local self = getmetatable(self)
     local col_name_or_data = tonumber(col_name_or_data) or col_name_or_data
@@ -677,6 +778,10 @@ do
   end
   
   methods.merge =
+    april_doc{
+      class="method",
+      summary="Implements join operation between this and other data_frame",
+    } ..
     function(self, other, params)
       local params = get_table_fields({
           how = { default="left" },
@@ -845,6 +950,10 @@ methods.ctor_params =
 methods.clone = function(self) return data_frame(util.clone(self:ctor_params())) end
 
 methods.map =
+  april_doc{
+    class="method",
+    summary="Maps a list of columns data into a new result table",
+  } ..
   function(self, ...)
     local col_names = { ... }
     local func = table.remove(col_names)
@@ -865,6 +974,10 @@ methods.map =
   end
 
 methods.iterate =
+  april_doc{
+    class="method",
+    summary="Iterates over all rows (as ipairs)",
+  } ..
   function(proxy, ...)
     local self    = getmetatable(proxy)
     local data    = rawget(self, "data")
@@ -887,6 +1000,13 @@ methods.iterate =
   end
 
 methods.parse_datetime =
+  april_doc{
+    class="method",
+    summary="Transforms the given columns into timestamp",
+    outputs={
+      "A Lua table",
+    },
+  } ..
   function(self, ...)
     local self   = getmetatable(self)
     local data   = rawget(self, "data")
@@ -907,11 +1027,25 @@ methods.parse_datetime =
   end
 
 methods.groupby =
+  april_doc{
+    class="method",
+    summary="Groups all data using the given columns values",
+    outputs={
+      "A groupped data object",
+    },
+  } ..
   function(self, ...)
     return groupped(self, ...)
   end
 
-methods.take =
+methods.index =
+  april_doc{
+    class="method",
+    summary="Indexes the data frame by rows using the given indices table or matrix",
+    outputs={
+      "A new allocated data_frame",
+    },
+  } ..
   function(proxy, indices)
     local self   = getmetatable(proxy)
     local data   = rawget(self, "data")
@@ -964,7 +1098,7 @@ groupped_methods.get_group = function(self, ...)
   for i,value in ipairs(key) do
     g = april_assert(g[value], "Unknown column value %s", value)
   end
-  return self.df:take(g[1])
+  return self.df:index(g[1])
 end
 
 ------------------------------------------------------------------
