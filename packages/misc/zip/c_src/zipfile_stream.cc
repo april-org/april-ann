@@ -89,7 +89,7 @@ namespace ZIP {
     return static_cast<size_t>(nbytes);
   }
   
-  off_t ZIPFileStream::privateSeek(int whence, int offset) {
+  off_t ZIPFileStream::privateSeek(int whence, long offset) {
     if (whence == SEEK_CUR && offset == 0) {
       return pos;
     }

@@ -87,7 +87,7 @@ namespace TAR {
     return nbytes;
   }
   
-  off_t TARFileStream::privateSeek(int whence, int offset) {
+  off_t TARFileStream::privateSeek(int whence, long offset) {
     off_t final;
     if (whence == SEEK_CUR && offset == 0) {
       return this->pos;

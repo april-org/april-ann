@@ -77,6 +77,20 @@ end
 
 ------------------------------------------------------------------------------
 
+pprint = function(...)
+  local args = table.pack(...)
+  for i,v in ipairs(args) do
+    if type(v) == "table" then
+      args[i] = util.to_lua_string(v, "ascii")
+    else
+      args[i] = tostring(v)
+    end
+  end
+  print(table.unpack(args))
+end
+
+------------------------------------------------------------------------------
+
 local LUA_BIND_CPP_PROPERTIES = {}
 setmetatable(LUA_BIND_CPP_PROPERTIES, { mode='k' }) -- table with weak keys
 
@@ -753,9 +767,6 @@ end
 function table.invert(t)
   local n = {}
   for i,j in pairs(t) do n[j] = i end
-  if n[0] ~= nil then -- FIXME: estoy hay que quitarlo
-    error ("ATENCION: table.invert(t) => devuelve un codigo 0")
-  end
   return n
 end
 

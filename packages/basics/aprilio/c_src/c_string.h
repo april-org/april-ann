@@ -56,7 +56,7 @@ namespace AprilIO {
 
     virtual bool isOpened() const;
     virtual void close();
-    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
+    virtual off_t seek(int whence = SEEK_CUR, long offset = 0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;

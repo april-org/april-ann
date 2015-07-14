@@ -310,7 +310,7 @@ deserialize =
     class = "function",
     summary = "Deserializes an object from a filename or a string",
     params = {
-      "A string with a filename or a serialized object",
+      "A string with a filename, a serialized string or an opened file",
       { "... a variadic list of arguments to be passed to",
         "the object during deserialization", },
     },
@@ -318,29 +318,26 @@ deserialize =
       "A deserialized object",
     },
   } ..
-  function(destination, ...)
+  function(dest, ...)
     local result
-    if type(destination) == "string" then
-      local loader
-      if destination:find(FIND_MASK) or destination:find("^return ") then
+    if type(dest) == "string" then
+      if dest:find(FIND_MASK) or dest:find("^return ") then
         -- it is a previously serialized string
-        loader = assert( loadstring(destination) )
+        local loader = assert( loadstring(dest) )
+        return loader(...)
       else
-        if destination:find("%.gz$") then
-          loader = assert( loadstring(io.open(destination):read("*a")) )
-        else
-          loader = assert( loadfile(destination) )
-        end
+        local f = april_assert(io.open(dest), "Unable to locate %s\n",
+                               dest)
+        return deserialize(f, ...)
       end
-      result = table.pack( loader(...) )
-    elseif iscallable(from) then
-      local f = load(from())
-      result = table.pack( f(...) )
+    elseif iscallable(dest) then
+      local f = load(dest())
+      return f(...)
     else
-      assert(destination.read, "Needs a string or an open file")
-      result = deserialize(destination:read("*a"))
+      assert(dest.read, "Needs a string or an opened file")
+      local loader = assert( load(function() return dest:read(4096) end) )
+      return loader(...)
     end
-    return table.unpack( result )
   end
 
 ------------------------------------------------------------------------------

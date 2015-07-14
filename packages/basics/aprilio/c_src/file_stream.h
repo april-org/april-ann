@@ -52,7 +52,7 @@ namespace AprilIO {
     virtual ssize_t fillBuffer(char *dest, size_t max_size);
     virtual ssize_t flushBuffer(const char *source, size_t max_size);
     virtual void closeStream();
-    virtual off_t seekStream(int whence, int offset);
+    virtual off_t seekStream(int whence, long offset);
     virtual bool eofStream() const;
 
   public:

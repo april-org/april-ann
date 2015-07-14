@@ -1,3 +1,12 @@
+class.extend_metamethod(matrixComplex, "__len", function(self) return self:size() end)
+class.extend_metamethod(matrixComplex, "__ipairs",
+                        function(self)
+                          return function(self,i)
+                            i = i+1
+                            if i <= #self then return i,self[i] end
+                          end, self, 0
+end)
+
 class.extend(matrixComplex, "t", matrixComplex.."transpose")
 
 class.extend(matrixComplex, "flatten",

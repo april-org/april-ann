@@ -295,6 +295,33 @@ namespace AprilMath {
         if (dest == 0) dest = obj;
         return MatrixScalarMap1<T,T>(obj, m_curried_clamp<T>(lower,upper), dest);
       }
+
+      /// Performs a floor operation, in-place operation if @c dest=0, otherwise,
+      /// the result will be computed at the given @c dest Matrix.
+      template<typename T>
+      Matrix<T> *matFloor(Matrix<T> *obj,
+                          Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_floor<T>(), dest);
+      }
+
+      /// Performs a ceil operation, in-place operation if @c dest=0, otherwise,
+      /// the result will be computed at the given @c dest Matrix.
+      template<typename T>
+      Matrix<T> *matCeil(Matrix<T> *obj,
+                          Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_ceil<T>(), dest);
+      }
+
+      /// Performs a round operation, in-place operation if @c dest=0, otherwise,
+      /// the result will be computed at the given @c dest Matrix.
+      template<typename T>
+      Matrix<T> *matRound(Matrix<T> *obj,
+                          Matrix<T> *dest) {
+        if (dest == 0) dest = obj;
+        return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_round<T>(), dest);
+      }
     
       template <typename T>
       Matrix<T> *matScal(Matrix<T> *obj, const T value,
@@ -478,6 +505,9 @@ namespace AprilMath {
       template Matrix<float> *matSign(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matClamp(Matrix<float> *, const float,
                                        const float, Matrix<float> *);
+      template Matrix<float> *matFloor(Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matCeil(Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matRound(Matrix<float> *, Matrix<float> *);
       template Matrix<float> *matScal(Matrix<float> *, const float,
                                       Matrix<float> *);
       template Matrix<float> *matCmul(Matrix<float> *,
@@ -527,6 +557,9 @@ namespace AprilMath {
       template Matrix<double> *matSign(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matClamp(Matrix<double> *, const double,
                                         const double, Matrix<double> *);
+      template Matrix<double> *matFloor(Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matCeil(Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matRound(Matrix<double> *, Matrix<double> *);
       template Matrix<double> *matScal(Matrix<double> *, const double,
                                        Matrix<double> *);
       template Matrix<double> *matCmul(Matrix<double> *,
@@ -582,7 +615,10 @@ namespace AprilMath {
                                               const Matrix<int32_t> *,
                                               Matrix<int32_t> *);
       
-      
+
+      template Matrix<ComplexF> *matFloor(Matrix<ComplexF> *, Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matCeil(Matrix<ComplexF> *, Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matRound(Matrix<ComplexF> *, Matrix<ComplexF> *);      
       template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF,
                                          Matrix<ComplexF> *);
       template Matrix<ComplexF> *matCmul(Matrix<ComplexF> *,

@@ -1,3 +1,12 @@
+class.extend_metamethod(matrixBool, "__len", function(self) return self:size() end)
+class.extend_metamethod(matrixBool, "__ipairs",
+                        function(self)
+                          return function(self,i)
+                            i = i+1
+                            if i <= #self then return i,self[i] end
+                          end, self, 0
+end)
+
 class.extend(matrixBool, "t", matrixBool.."transpose")
 
 -- serialization

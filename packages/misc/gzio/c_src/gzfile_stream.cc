@@ -96,7 +96,7 @@ namespace GZIO {
     return size;
   }
   
-  off_t GZFileStream::privateSeek(int whence, int offset) {
+  off_t GZFileStream::privateSeek(int whence, long offset) {
     return gzseek(f, offset, whence);
   }
   

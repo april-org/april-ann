@@ -144,7 +144,7 @@ namespace AprilIO {
     virtual void close() = 0;
     
     /// Moves the stream cursor to the given offset from given whence position.
-    virtual off_t seek(int whence = SEEK_CUR, int offset = 0) = 0;
+    virtual off_t seek(int whence = SEEK_CUR, long offset = 0) = 0;
     
     /// Forces to write pending data at stream object.
     virtual void flush() = 0;
@@ -195,7 +195,7 @@ namespace AprilIO {
     
     // virtual bool isOpened() const = 0;
     // virtual void close() = 0;
-    // virtual off_t seek(int whence, int offset) = 0;
+    // virtual off_t seek(int whence, long offset) = 0;
     // virtual void flush() = 0;
     // virtual int setvbuf(int mode, size_t size) = 0;
     // virtual bool hasError() const = 0;

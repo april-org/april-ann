@@ -98,10 +98,10 @@ namespace AprilUtils {
     ~SharedPtr() { reset(); }
 
     /// True if the pointer is not empty.
-    operator bool()   { return !empty(); }
+    operator bool() const { return !empty(); }
     
     /// True if the pointer is empty.
-    bool operator !() { return  empty(); }
+    bool operator !() const { return  empty(); }
     
     /**
      * @brief Dereferencing, returns the pointer itself.

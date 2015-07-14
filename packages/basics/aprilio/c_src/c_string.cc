@@ -95,7 +95,7 @@ namespace AprilIO {
     // FIXME: closed = true; ???
   }
   
-  off_t CStringStream::seek(int whence, int offset) {
+  off_t CStringStream::seek(int whence, long offset) {
     if (whence == SEEK_CUR && offset == 0) return size();
     off_t aux_pos = 0;
     switch(whence) {

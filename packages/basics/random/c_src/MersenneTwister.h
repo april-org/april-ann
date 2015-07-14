@@ -65,6 +65,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdint.h>
+#include "lua_table.h"
 #include "serializable.h"
 
 namespace Basics {
@@ -147,6 +148,8 @@ namespace Basics {
   };
 
 } // namespace Basics
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(Basics::MTRand);
 
 #endif  // MERSENNETWISTER_H
 

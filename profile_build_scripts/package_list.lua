@@ -17,6 +17,7 @@ return {
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+  "data_frame",
 
   -- INPUT/OUTPUT
   "aprilio",
