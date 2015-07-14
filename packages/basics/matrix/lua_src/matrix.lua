@@ -1,3 +1,24 @@
+do
+  local _,vector_methods = class.find("mathcore.vector")
+  local matrix_ctor = {
+    float   = matrix,
+    double  = matrixDouble,
+    complex = matrixComplex,
+    char    = matrixChar,
+    bool    = matrixBool,
+    int32   = matrixInt32,
+  }
+  -- not guaranteed to reuse the underlying block, it can be a copy
+  vector_methods.to_matrix = function(self, ...)
+    local block = self:to_block()
+    local args = table.pack(...)
+    table.insert(args, block)
+    local m = matrix_ctor[self.dtype](table.unpack(args))
+    assert(#m == #block, "Incompatible matrix sizes")
+    return m
+  end
+end
+
 class.extend_metamethod(matrix, "__len", function(self) return self:size() end)
 class.extend_metamethod(matrix, "__ipairs",
                         function(self)

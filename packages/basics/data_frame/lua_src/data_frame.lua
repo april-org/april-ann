@@ -1,3 +1,10 @@
+-- Inspired in pandas (Python) dataframe
+-- http://pandas-docs.github.io/pandas-docs-travis/
+local data_frame,methods        = class("data_frame", aprilio.lua_serializable)
+local groupped,groupped_methods = class("data_frame.groupped")
+_G.data_frame = data_frame -- global definition
+------------------------------------------------------------------
+
 local assert      = assert
 local ipairs      = ipairs
 local pairs       = pairs
@@ -9,6 +16,19 @@ local defNA       = "NA"
 local tostring_nan = tostring(NA)
 
 -- utilities
+
+local function take(data, indices)
+  local result
+  if type(data) == "table" then
+    result = {}
+  else
+    local ctor = class.of(data)
+    result = ctor(#indices):index(1, indices)
+  end
+  -- FIXME: implement in C++ if possible
+  for i=1,#indices do result[i] = data[indices[i]] end
+  return result
+end
 
 local function sparse_join(tbl, categories)
   local nrows   = tbl[1]:dim(1)
@@ -182,11 +202,6 @@ end
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
-
--- Inspired in pandas (Python) dataframe
--- http://pandas-docs.github.io/pandas-docs-travis/
-local data_frame,methods = class("data_frame", aprilio.lua_serializable)
-_G.data_frame = data_frame -- global definition
 
 local function dataframe_tostring(proxy)
   local self = getmetatable(proxy)  
@@ -828,7 +843,7 @@ methods.ctor_params =
   end
 
 methods.clone = function(self) return data_frame(util.clone(self:ctor_params())) end
-  
+
 methods.map =
   function(self, ...)
     local col_names = { ... }
@@ -847,6 +862,28 @@ methods.map =
       result[i] = func(table.unpack(input))
     end
     return result
+  end
+
+methods.iterate =
+  function(proxy, ...)
+    local self    = getmetatable(proxy)
+    local data    = rawget(self, "data")
+    local columns = table.pack(...)
+    if #columns == 0 then columns = rawget(self, "columns") end
+    local col2id  = rawget(self, "col2id")
+    for _,name in ipairs(columns) do
+      april_assert(col2id[name], "Unknown column name %s", tostring(name))
+    end
+    return function(self, i)
+      if i < #rawget(self,"index") then
+        i = i + 1
+        local row = {}
+        for _,col_name in ipairs(columns) do
+          row[col_name] = data[col_name][i]
+        end
+        return i,row
+      end
+    end,self,0
   end
 
 methods.parse_datetime =
@@ -868,5 +905,68 @@ methods.parse_datetime =
       table()
     return result
   end
+
+methods.groupby =
+  function(self, ...)
+    return groupped(self, ...)
+  end
+
+methods.take =
+  function(proxy, indices)
+    local self   = getmetatable(proxy)
+    local data   = rawget(self, "data")
+    local idx    = take(rawget(self, "index"), indices)
+    local result = data_frame{ index=idx }
+    for _,col_name in ipairs(rawget(self, "columns")) do
+      result[{col_name}] = take(data[col_name], indices)
+    end
+    return result
+  end
+
+------------------------------------------------------------------
+
+function groupped.constructor(self, df, ...)
+  local args   = table.pack(...)
+  self.depth   = args.n
+  self.groups  = {}
+  self.columns = args
+  self.df      = df
+  for i,row in df:iterate(...) do
+    local destination = self.groups
+    for _,col_name in ipairs(args) do
+      local v = row[col_name]
+      if not is_nan(v) then
+        d = destination[v] or {}
+        destination[v],destination = d,d
+      else
+        break
+      end
+    end
+    local v = destination[1] or mathcore.vector{ dtype="int32" }
+    destination[1] = v
+    v:push_back(i)
+  end
+  local function vectors_to_matrix(d)
+    if type(d) == "table" then
+      for i,v in pairs(d) do d[i] = vectors_to_matrix(v) end
+      return d
+    else
+      return d:to_matrix()
+    end
+  end
+  self.groups = vectors_to_matrix(self.groups)
+end
+
+class.declare_functional_index(groupped, function(self, key)
+                                 if type(key) == "table" then
+                                   local g = self.groups
+                                   for i,value in ipairs(key) do
+                                     g = april_assert(g[value], "Unknown column name %s", value)
+                                   end
+                                   return self.df:take(g[1])
+                                 end
+end)
+
+------------------------------------------------------------------
 
 return data_frame

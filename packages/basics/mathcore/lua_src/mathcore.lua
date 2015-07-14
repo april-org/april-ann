@@ -1,8 +1,10 @@
+local MAX = 4
+local DEFAULT_SIZE = 8
+
 -- global NaN and inf definition
 nan = mathcore.limits.double.quiet_NaN()
 inf = mathcore.limits.double.infinity()
 
-local MAX = 4
 local function make_block_tostring(name, str)
   return function(b)
     local result = {}
@@ -49,6 +51,10 @@ end
 
 local function call_function(obj, ...)
   return obj:raw_get(...)
+end
+
+local function len_function(obj)
+  return obj:size()
 end
 
 mathcore.block.float.meta_instance.__tostring =
@@ -104,3 +110,98 @@ mathcore.block.double.meta_instance.__call = call_function
 mathcore.block.int32.meta_instance.__call = call_function
 mathcore.block.complex.meta_instance.__call = call_function
 mathcore.block.bool.meta_instance.__call = call_function
+
+mathcore.block.float.meta_instance.__len = len_function
+mathcore.block.double.meta_instance.__len = len_function
+mathcore.block.int32.meta_instance.__len = len_function
+mathcore.block.complex.meta_instance.__len = len_function
+mathcore.block.bool.meta_instance.__len = len_function
+
+------------------------------------------------------------------------------
+
+local vector,vector_methods = class("mathcore.vector")
+mathcore.vector = vector -- global definition
+
+local block_to_dtype ={
+  [mathcore.block.float]   = "float",
+  [mathcore.block.double]  = "double",
+  [mathcore.block.complex] = "complex",
+  [mathcore.block.int32]   = "int32",
+  [mathcore.block.bool]    = "bool",
+  [mathcore.block.char]    = "char",
+}
+
+vector.constructor = function(self, params)
+  params = params or {}
+  if type(params) ~= "table" then
+    local block = params
+    self.dtype  = block_to_dtype[class.of(block)]
+    self.ctor   = class.of(block)
+    self.len    = #block
+    self.block  = block
+  else
+    local params = get_table_fields({
+        dtype   = { type_match="string", default="float" },
+        reserve = { type_match="number", default=DEFAULT_SIZE },
+        size    = { type_match="number", default=0 },
+                                    }, params)
+    local dtype   = params.dtype
+    local reserve = params.reserve
+    local size    = params.size
+    self.dtype  = dtype
+    self.ctor   = assert(mathcore.block[dtype], "Incorrect block type")
+    self.len    = size
+    self.block  = self.ctor(reserve)
+  end
+end
+
+vector_methods.resize = function(self, size)
+  self.block = self.ctor(size):copy(self.block)
+  collectgarbage("collect")
+  return self
+end
+
+vector_methods.reserve = function(self, size)
+  if #self.block < size then self:resize(size) end
+  return self
+end
+
+vector_methods.push_back = function(self, value)
+  if self.len == #self.block then self:resize(#self.block * 2) end
+  self.block[self.len] = value
+  self.len = self.len + 1
+end
+
+-- not guaranteed to return the underlying block, it can be a copy
+vector_methods.to_block = function(self)
+  local block = self.block
+  if self.len < #block then block = self.ctor(self.len):copy(block) end
+  return block
+end
+
+class.declare_functional_index(vector,
+                               function(self, key)
+                                 if type(key) == "number" then
+                                   return self.block[key-1]
+                                 end
+end)
+
+class.extend_metamethod(vector, "__newindex",
+                        function(self, key, value)
+                          if type(key) == "number" then
+                            self.block[key-1] = value
+                          else
+                            rawset(self, key, value)
+                          end
+end)
+
+class.extend_metamethod(vector, "__len", function(self) return self.len end)
+class.extend_metamethod(vector, "__ipairs",
+                        function(self)
+                          return function(self,i)
+                            if i < #self then
+                              i=i+1
+                              return i,self[i]
+                            end
+                          end,self,0
+end)
