@@ -957,15 +957,15 @@ function groupped.constructor(self, df, ...)
   self.groups = vectors_to_matrix(self.groups)
 end
 
-class.declare_functional_index(groupped, function(self, key)
-                                 if type(key) == "table" then
-                                   local g = self.groups
-                                   for i,value in ipairs(key) do
-                                     g = april_assert(g[value], "Unknown column name %s", value)
-                                   end
-                                   return self.df:take(g[1])
-                                 end
-end)
+groupped_methods.get_group = function(self, ...)
+  local key = { ... }
+  assert(#key == self.depth, "Incompatible number of column values")
+  local g = self.groups
+  for i,value in ipairs(key) do
+    g = april_assert(g[value], "Unknown column value %s", value)
+  end
+  return self.df:take(g[1])
+end
 
 ------------------------------------------------------------------
 
