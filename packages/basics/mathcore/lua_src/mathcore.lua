@@ -237,3 +237,6 @@ class.extend_metamethod(vector, "__ipairs",
                             end
                           end,self,0
 end)
+
+class.extend_metamethod(vector, "__tostring",
+                        function(self) return tostring(self:to_block()) end)
