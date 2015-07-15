@@ -122,12 +122,9 @@ end
 --   return self
 -- end
 
--- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:plot(line, ...)
+local function plot(self, command, line, ...)
   assert(type(line) == "string",
-         "New plot needs first the line string and varargs as arguments")
-  assert(not line:find("^[%s]*plot[%s]*"),
-         "New plot doesn't need 'plot' word in the given line string")
+         "New plot needs line string as first argument and varargs in the rest")
   local data = table.pack(...)
   -- remove previous temporal files
   for _,tmpname in pairs(self.tmpnames) do
@@ -150,12 +147,11 @@ function gnuplot_methods:plot(line, ...)
         tmpnames[m] = aux_tmpname
         m:toTabFilename(aux_tmpname)
       else
-        if type(m) == "number" then
+        local tt = type(m)
+        if tt == "number" or tt == "string" then
           aux_tmpname = tostring(m)
-        elseif type(m) == "string" then
-          aux_tmpname = "%q"%{ m }
         else
-          error("Unable to the given data type at position: " .. i)
+          error("Unexpected data type at position: " .. i)
         end
       end
     end
@@ -163,9 +159,27 @@ function gnuplot_methods:plot(line, ...)
   end
   local line = line:gsub("(#%d*)",dict)
   -- print(line)
-  self:writeln("plot " .. line)
+  self:writeln(command .. line)
   self:flush()
   return self
+end
+
+function gnuplot_methods:p(...)
+  return plot(self, "", ...)
+end
+
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:plot(line, ...)
+  assert(not line:find("^[%s]*plot[%s]*"),
+         "plot doesn't need 'plot' word in the given line string")
+  return plot(self, "plot ", line, ...)
+end
+
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:splot(line, ...)
+  assert(not line:find("^[%s]*plot[%s]*"),
+         "splot doesn't need 'plot' word in the given line string")
+  return plot(self, "splot ", line, ...)
 end
 
 -- Closes the gnuplot pipe (interface)
@@ -189,7 +203,7 @@ end
 ------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
 object_metatable.__index = gnuplot_methods
-object_metatable.__call  = gnuplot_methods.writeln
+object_metatable.__call  = gnuplot_methods.p
 function object_metatable:__gc()
   self:close()
 end
@@ -288,6 +302,16 @@ use matrix objects as input.
 > gp:plot("'#1' u 3:4 w l lw 3", matrix_object) -- #1 is the placeholder
 > gp:plot("3*x**2")
 > gp:plot("'tmp.log' u 1:2 w l, '#1' u 1:2 w l, '' u 1:3 w l", m)
+
+
+METHOD SPLOT: same as plot but using splot instead of plot command in gnuplot
+
+
+METHOD P: similar to plot and splot, but not giving the 'plot' command
+
+> gp:p("plot '#1' u 3:4 w l lw 3", matrix_object) -- #1 is the placeholder
+> gp:p("plot 3*x**2")
+> gp:p("plot 'tmp.log' u 1:2 w l, '#1' u 1:2 w l, '' u 1:3 w l", m)
 
 
 METHOD FLUSH: flushes all the pending data (normally it
