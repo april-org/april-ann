@@ -158,13 +158,14 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
   else {
     DEBUG_OBJ("lua_push$$ClassName$$", obj);
     int lua_ref = obj->getLuaRef();
+#if 1
     // FIXME: This code tries to retrive the pointer, in case the weak table has
     // a nil reference, we assume it has been freed by Lua GC, however, it is
     // unexpected this behavior :(, it is likely to be a Lua bug.
     if (lua_ref != LUA_NOREF) {
       DEBUG_OBJ_FMT1("lua_push$$ClassName$$: retrieving Lua reference %d",
                      obj, lua_ref);
-      pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
       // pila = refs
       lua_rawgeti(L, -1, lua_ref);
       // pila = refs ptr
@@ -174,8 +175,10 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
         lua_pop(L, 1);
         obj->setLuaRef(LUA_NOREF);
         lua_ref = LUA_NOREF;
+        // DecRef(obj);
       }
     }
+#endif
     if (lua_ref == LUA_NOREF) {
       DEBUG("lua_push$$ClassName$$: allocating Lua reference");
       // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to remove
@@ -189,7 +192,7 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
                                          lua_newuserdata(L,sizeof($$ClassName$$*)) ); // instance
       *ptr = obj;
       // pila =  ptr
-      pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
       // pila =  ptr refs
       lua_pushvalue(L, -2);
       // pila =  ptr refs ptr
@@ -218,7 +221,21 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
       // pila = ptr
     }
     else {
-      DEBUG_OBJ("lua_push$$ClassName$$: Lua reference retrieve correctly", obj);
+#if 0
+      DEBUG_OBJ_FMT1("lua_push$$ClassName$$: retrieving Lua reference %d",
+                     obj, lua_ref);
+      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
+      // pila = refs
+      lua_rawgeti(L, -1, lua_ref);
+      // pila = refs ptr
+      lua_remove(L, -2);
+      // pila = ptr
+      if (lua_isnil(L, -1)) {
+        lua_pushstring(L, "Unexpected behavior");
+        lua_error(L);
+      }
+#endif
+      DEBUG_OBJ("lua_push$$ClassName$$: Lua reference retrieved correctly", obj);
       // pila = ptr
       lua_getmetatable(L, -1);
       // pila = ptr metatable
@@ -291,7 +308,7 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
     /*
       int lua_ref = obj->getLuaRef();
       if (lua_ref != LUA_NOREF) {
-      pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
       luaL_unref(L, -1, lua_ref);
       lua_pop(L, 1);
       }

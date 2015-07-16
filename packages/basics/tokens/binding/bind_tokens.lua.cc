@@ -61,13 +61,11 @@ namespace AprilUtils {
 namespace Basics {
   int token_bunch_vector_iterator_function(lua_State *L) {
     // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
-    // el estado invariante (en este caso el dataset) y _var es var_1 de
+    // el estado invariante (en este caso el token vector) y _var es var_1 de
     // iteracion anterior (en este caso el indice)
     TokenBunchVector *obj = lua_toTokenBunchVector(L, 1);
     unsigned int index = static_cast<unsigned int>(lua_tonumber(L, 2)) + 1; // le sumamos uno
-    if (index > obj->size()) {
-      lua_pushnil(L); return 1;
-    }
+    if (index > obj->size()) return 0;
     lua_pushnumber(L, index);
     AprilUtils::SharedPtr<Token> token( (*obj)[index-1] );
     lua_pushAuxToken(L, token);
