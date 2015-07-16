@@ -1080,7 +1080,7 @@ namespace Basics {
         AprilUtils::SharedPtr<Matrix<T> > dest;
         AprilUtils::SharedPtr<Matrix<int32_t> > argmin;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmin = lua_opt<MatrixInt32*>(L,2,0);
+        argmin = lua_opt<MatrixInt32*>(L,3,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmin) {
           aux = new int[obj->getNumDim()];
@@ -1121,7 +1121,7 @@ namespace Basics {
         AprilUtils::SharedPtr<Matrix<T> > dest;
         AprilUtils::SharedPtr<Matrix<int32_t> > argmax;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmax = lua_opt<MatrixInt32*>(L,2,0);
+        argmax = lua_opt<MatrixInt32*>(L,3,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmax) {
           aux = new int[obj->getNumDim()];
