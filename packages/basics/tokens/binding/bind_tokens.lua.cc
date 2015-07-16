@@ -96,10 +96,13 @@ AprilUtils::SharedPtr<Token> lua_toAuxToken(lua_State *L, int n) {
 }
 
 void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
+  DEBUG("lua_pushAuxToken (begin)");
   if (value.empty()) {
+    DEBUG("lua_pushAuxToken: pushing a nil value");
     lua_pushTokenNull(L, TokenNull::getInstance());
   }
   else {
+    DEBUG_OBJ("lua_pushAuxToken", value.get());
     switch(value->getTokenCode()) {
     case Basics::table_of_token_codes::token_matrix:
       lua_pushMatrixFloat(L, ((TokenMatrixFloat*)value.get())->getMatrix());
@@ -117,6 +120,7 @@ void lua_pushAuxToken(lua_State *L, AprilUtils::SharedPtr<Token> &value) {
       lua_pushToken(L, value.get());
     }
   }
+  DEBUG("lua_pushAuxToken (end)");
 }
 
 //BIND_END

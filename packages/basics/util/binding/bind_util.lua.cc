@@ -23,6 +23,15 @@
 #include <ctime>
 #include <cstdlib>
 
+#ifdef USE_MKL
+extern "C" {
+#include <mkl.h>
+#include <mkl_cblas.h>
+#include <mkl_vml.h>
+#include <mkl_service.h>
+}
+#endif
+
 #include "mfset.h"
 #include "mmapped_data.h"
 #include "linear_least_squares.h"
@@ -165,6 +174,9 @@ FILE **newfile (lua_State *L) {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, int, n);
   omp_set_num_threads(n);
+#ifdef USE_MKL
+  mkl_set_num_threads(n);
+#endif
 #endif
 }
 //BIND_END

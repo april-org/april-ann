@@ -44,6 +44,7 @@ extern void setParentsAtRegistry(lua_State *L,
 extern int isDerived(lua_State *L,
                      const char *child,
                      const char *parent);
+extern void stackDump(lua_State *L);
 
 /*LUA
   -- Esta funcion creara un nombre de tablas
@@ -146,23 +147,23 @@ int lua_is$$ClassName$$(lua_State *L, int index){
 }
 
 void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
+  DEBUG("lua_push$$ClassName$$ (begin)");
   if (obj == 0) {
-#ifdef __DEBUG__
     DEBUG("lua_push$$ClassName$$: pushing a nil value");
-#endif
     lua_pushnil(L);
   }
   else {
+    DEBUG_OBJ("lua_push$$ClassName$$", obj);
     int lua_ref = obj->getLuaRef();
     if (lua_ref == LUA_NOREF) {
-      // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to removes
+      DEBUG("lua_push$$ClassName$$: allocating Lua reference");
+      // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to remove
       // our instance
       IncRef(obj);
 
       //
       $$ClassName$$ **ptr;
 	
-      DEBUG("lua_push$$ClassName$$ (begin)");
       ptr = static_cast<$$ClassName$$**>( 
                                          lua_newuserdata(L,sizeof($$ClassName$$*)) ); // instance
       *ptr = obj;
@@ -186,7 +187,6 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
       // pila =  ptr, luabind_clases  ClassName
       lua_rawget(L,-2);
       // pila =  ptr, luabind_clases luabind_clases[ClassName]
-      DEBUG_OBJ("lua_push$$ClassName$$",obj);
       lua_pushstring(L,"meta_instance");
       // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
       lua_rawget(L,-2); // class_table
@@ -197,6 +197,8 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
       // pila = ptr
     }
     else {
+      lua_gc(L, LUA_GCSTOP, 0); // avoid GC to remove our reference
+      DEBUG("lua_push$$ClassName$$: retrieving Lua reference");
       pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
       // pila = refs
       lua_rawgeti(L, -1, lua_ref);
@@ -211,6 +213,7 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
       // pila = ptr metatable current_string
       const char *current = lua_tostring(L, -1);
       if (isDerived(L, "$$(LUANAME[ClassName] or ClassName)$$", current)) {
+        DEBUG("lua_push$$ClassName$$: derived instance");
         // pila = ptr metatable current_string
         lua_pop(L, 2);
         // buscamos la metatabla que corresponde al objeto
@@ -222,7 +225,6 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
         // pila =  ptr, luabind_clases  ClassName
         lua_rawget(L,-2);
         // pila =  ptr, luabind_clases luabind_clases[ClassName]
-        DEBUG_OBJ("lua_push$$ClassName$$",obj);
         lua_pushstring(L,"meta_instance");
         // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
         lua_rawget(L,-2); // class_table
@@ -233,12 +235,14 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
         // pila = ptr
       }
       else {
+        DEBUG("lua_push$$ClassName$$: non-derived instance");
         // pila = ptr metatable current_string
         lua_pop(L, 2);
         // pila = ptr
       }
     }
-  }        
+    lua_gc(L, LUA_GCRESTART, 0); // it is safe to restart GC here
+  } // retrieve a previous Lua ref
   DEBUG("lua_push$$ClassName$$ (end)");
 }
 
@@ -293,6 +297,10 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 
 
 void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
+        pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
+        makeWeakTable(L);
+        lua_pop(L, 1);
+
 	int meta_instance;   // instance's metatable
 	int meta_class;      // class's metatable
 	int class_table;	 // tabla de la clase
@@ -648,9 +656,6 @@ int lua_cast_$$parentclass$$_to_$$childclass$$(lua_State *L) {
 int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   UNUSED_VARIABLE(L);
   DEBUG("lua_register_subclasses_$$FILENAME2$$ (begin)");
-  pushOrCreateTable(L, LUA_REGISTRYINDEX, "luabind_refs");
-  makeWeakTable(L);
-  lua_pop(L, 1);
   //LUA for childclass, parentclass in pairs(PARENT_CLASS) do
   
   setParentsAtRegistry(L,

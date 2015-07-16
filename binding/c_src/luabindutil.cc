@@ -1,12 +1,44 @@
 #include "luabindutil.h"
-#include <cstring>
 #include <cstdarg>
+#include <cstdio>
+#include <cstring>
 
 #define PARENTS_REGISTRY_FIELD_NAME "luabind_parents"
 #define CAST_REGISTRY_FIELD_NAME "luabind_cast"
 
+void stackDump(lua_State *L) {
+  int i;
+  int top = lua_gettop(L);
+  for (i = 1; i <= top; i++) {  /* repeat for each level */
+    int t = lua_type(L, i);
+    switch (t) {
+    
+    case LUA_TSTRING:  /* strings */
+      fprintf(stderr,"`%s'", lua_tostring(L, i));
+      break;
+    
+    case LUA_TBOOLEAN:  /* booleans */
+      fprintf(stderr,lua_toboolean(L, i) ? "true" : "false");
+      break;
+    
+    case LUA_TNUMBER:  /* numbers */
+      fprintf(stderr,"%g", lua_tonumber(L, i));
+      break;
+    
+    default:  /* other values */
+      fprintf(stderr,"%s", lua_typename(L, t));
+      break;
+    
+    }
+    fprintf(stderr,"  ");  /* put a separator */
+  }
+  fprintf(stderr,"\n");  /* end the listing */
+}
+
 void makeWeakTable(lua_State *L) {
-  lua_newtable(L);
+  if (!lua_getmetatable(L, -1)) {
+    lua_newtable(L);
+  }
   lua_pushstring(L, "__mode");
   lua_pushstring(L, "v");
   lua_rawset(L, -3);
