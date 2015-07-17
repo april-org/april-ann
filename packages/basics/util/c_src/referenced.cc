@@ -47,7 +47,6 @@ Referenced::Referenced() {
 #endif
 #endif
   refs = 0;
-  lua_ref = LUA_NOREF;
 }
 Referenced::~Referenced() {
 #ifdef __DEBUG__
@@ -59,11 +58,6 @@ Referenced::~Referenced() {
 #ifdef _debugrefsno0_
   if (refs != 0) {
     fprintf(stderr,"Warning: destroying %p with reference %d!=0\n",this,refs);
-  }
-#endif
-#ifdef __DEBUG__
-  if (lua_ref != LUA_NOREF) {
-    fprintf(stderr,"Warning: destroying %p with a reference in registry\n",this);
   }
 #endif
 }
@@ -89,12 +83,4 @@ bool Referenced::decRef() {
 
 int Referenced::getRef() const {
   return refs;
-}
-
-void Referenced::setLuaRef(int lua_ref) {
-  this->lua_ref = lua_ref;
-}
-
-int Referenced::getLuaRef() const {
-  return lua_ref;
 }

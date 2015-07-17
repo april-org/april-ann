@@ -1,3 +1,39 @@
+do
+  local _,vector_methods = class.find("mathcore.vector")
+  local matrix_ctor = {
+    float   = matrix,
+    double  = matrixDouble,
+    complex = matrixComplex,
+    char    = matrixChar,
+    bool    = matrixBool,
+    int32   = matrixInt32,
+  }
+  -- not guaranteed to reuse the underlying block, it can be a copy
+  vector_methods.to_matrix =
+    april_doc{
+      class="method",
+      summary="Converts the vector into a matrix",
+      description="Be careful, the underlying memory block is not guaranteed to be newly allocated",
+      params={
+        "First dimension size [optional]",
+        "Second dimension size [optional]",
+        "...",
+        "Last dimension size [optional]",
+      },
+      outputs={
+        "A matrix instance",
+      },
+    } ..
+    function(self, ...)
+      local block = self:to_block()
+      local args = table.pack(...)
+      table.insert(args, block)
+      local m = matrix_ctor[self.dtype](table.unpack(args))
+      assert(#m == #block, "Incompatible matrix sizes")
+      return m
+    end
+end
+
 class.extend_metamethod(matrix, "__len", function(self) return self:size() end)
 class.extend_metamethod(matrix, "__ipairs",
                         function(self)
@@ -74,7 +110,7 @@ matrix.ext.iterate =
           if pos <= d[dim] and pos >= 1 then
             slice = self:select(dim,pos,slice)
             return pos,slice
-          end end,
+               end end,
         {self,slice,dim,d[dim]}, step>0 and 0 or d[dim]+1)
   end
 
@@ -325,7 +361,7 @@ function matrix.saveRAW(matrix,filename)
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
   local t = matrix:toTable()
   for i=1,table.getn(t) do
-     f:write(t[i] .. "\n")
+    f:write(t[i] .. "\n")
   end
   f:close()
 end
@@ -674,7 +710,7 @@ april_set_doc(matrix.."sum",
 		class="method",
 		summary="Computes the sum of all the elements.",
 		outputs={"A number"},
-	      })
+})
 
 april_set_doc(matrix.."sum",
 	      {
@@ -685,7 +721,7 @@ april_set_doc(matrix.."sum",
 		  "A matrix where to store the result [optional]",
 		},
 		outputs={"A matrix with the result"},
-	      })
+})
 
 april_set_doc(matrix.."set", {
 		class = "method",
@@ -1312,7 +1348,7 @@ april_set_doc(matrix.."copy",
 		summary = "Copy the values from another matrix using BLAS",
 		params  = { "A source matrix" },
 		outputs = { "The caller matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."linear",
 	      {
@@ -1321,7 +1357,7 @@ april_set_doc(matrix.."linear",
 		params  = { "First integer value [optional], by default 0",
 			    "Step value [optional], by default 1", },
 		outputs = { "The caller matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."uniform",
 	      {
@@ -1331,7 +1367,7 @@ april_set_doc(matrix.."uniform",
 			    "Upper range value",
 			    "A random object instance [optional]" },
 		outputs = { "The caller matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."uniformf",
 	      {
@@ -1341,14 +1377,14 @@ april_set_doc(matrix.."uniformf",
 			    "Upper range value",
 			    "A random object instance [optional]" },
 		outputs = { "The caller matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."is_contiguous",
 	      {
 		class = "method",
 		summary = "Returns true if the matrix data is contiguous at memory",
 		outputs = { "A boolean" },
-	      })
+})
 
 april_set_doc(matrix.."scalar_add",
 	      {
@@ -1356,7 +1392,7 @@ april_set_doc(matrix.."scalar_add",
 		summary = "Adds a scalar IN-PLACE",
 		params  = { "A number" },
 		outputs = { "The caller matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."inv",
 	      {
@@ -1368,7 +1404,7 @@ april_set_doc(matrix.."inv",
 		  "the returned matrix won't be correct.",
 		},
 		outputs = { "The matrix inverse" },
-	      })
+})
 
 april_set_doc(matrix.."svd",
 	      {
@@ -1384,7 +1420,7 @@ april_set_doc(matrix.."svd",
 		  "The sparse row vector S with the eigenvalues",
 		  "The matrix V', the transposed of V",
 		},
-	      })
+})
 
 april_set_doc(matrix.."diagonalize",
 	      {
@@ -1393,7 +1429,7 @@ april_set_doc(matrix.."diagonalize",
 		outputs = {
 		  "A matrix which is the diagonalized version of the caller matrix",
 		},
-	      })
+})
 
 april_set_doc(matrix.."contiguous",
 	      {
@@ -1405,7 +1441,7 @@ april_set_doc(matrix.."contiguous",
 		  "Otherwise, returns a copy of the caller.",
 		},
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.."map",
 	      {
@@ -1431,7 +1467,7 @@ april_set_doc(matrix.."map",
 		  "A Lua function which applies the map computation.",
 		},
 		outputs = { "The caller matrix" },
-	      })
+})
 
 april_set_doc(matrix.."lt",
 	      {
@@ -1441,7 +1477,7 @@ april_set_doc(matrix.."lt",
 		  "A matrix or a number",
 		},
 		outputs = { "A matrixBool instance" },
-	      })
+})
 
 april_set_doc(matrix.."gt",
 	      {
@@ -1451,7 +1487,7 @@ april_set_doc(matrix.."gt",
 		  "A matrix or a number",
 		},
 		outputs = { "A matrixBool instance" },
-	      })
+})
 
 -------------------------------------------------------------------------
 
@@ -1467,13 +1503,13 @@ april_set_doc(matrix.."sliding_window",
 		  orderStep = "Lua table [optional]",
 		},
 		outputs = { "An instance of matrix.__sliding_window__" },
-	      })
+})
 
 april_set_doc(matrix.__sliding_window__,
 	      {
 		class       = "class",
 		summary     = "Sliding window for matrix objects",
-	      })
+})
 
 april_set_doc(matrix.__sliding_window__.."get_matrix",
 	      {
@@ -1482,28 +1518,28 @@ april_set_doc(matrix.__sliding_window__.."get_matrix",
 		params      = { {"A matrix [optional], to be used instead",
 				 "of alloc a new one"} },
 		outputs     = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrix.__sliding_window__.."next",
 	      {
 		class       = "method",
 		summary     = "Moves the window to the next position",
 		outputs     = { "The caller sliding_window object" },
-	      })
+})
 
 april_set_doc(matrix.__sliding_window__.."is_end",
 	      {
 		class       = "method",
 		summary     = "Returns true when it finishes",
 		outputs     = { "A boolean" },
-	      })
+})
 
 april_set_doc(matrix.__sliding_window__.."iterate",
 	      {
 		class       = "method",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",
 		outputs     = { "An iterator function" },
-	      })
+})
 
 -----------------------------
 -- DEPRECATED CONSTRUCTORS --

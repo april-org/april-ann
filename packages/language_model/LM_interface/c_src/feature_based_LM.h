@@ -201,14 +201,6 @@ namespace LanguageModels {
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
     }
 
-    virtual void setLuaRef(int lua_ref) {
-      HistoryBasedLMInterface<Key,Score>::setLuaRef(lua_ref);
-    }
-    
-    virtual int getLuaRef() const {
-      return HistoryBasedLMInterface<Key,Score>::getLuaRef();
-    }
-
     Basics::Token* applyQueryFilter(Basics::Token* token) {
       return query_filter->calculate(token);
     }
@@ -311,13 +303,6 @@ namespace LanguageModels {
       return (HistoryBasedLM<Key,Score>::getRef() <= 0);
     }
     
-    virtual void setLuaRef(int lua_ref) {
-      HistoryBasedLM<Key,Score>::setLuaRef(lua_ref);
-    }
-    
-    virtual int getLuaRef() const {
-      return HistoryBasedLM<Key,Score>::getLuaRef();
-    }
   };
 
   typedef FeatureBasedLMInterface<uint32_t, AprilUtils::log_float>

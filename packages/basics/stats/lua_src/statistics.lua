@@ -12,9 +12,21 @@ stats.dist = stats.dist or {}
 
 -------------------------------------------------------------------------------
 
+stats.levels = function(m)
+  local symbols = {}
+  local inv_symbols = {}
+  m:map(function(x)
+      if not inv_symbols[x] then
+        symbols[#symbols+1],inv_symbols[x] = x,true
+      end
+  end)
+  table.sort(symbols)
+  return symbols
+end
+
 stats.hist = function(m, params)
   local params = get_table_fields({
-      breaks = { type_match="number", default=13 },
+      breaks = { default=13 },
       normalize = { type_match="boolean", default=false },
                                   }, params or {})
   local breaks = params.breaks
@@ -31,6 +43,28 @@ stats.hist = function(m, params)
   local z      = result:select(2,4)
   m:map(function(v)
       local b = math.min( math.floor((v - min)/diff * breaks) + 1, breaks )
+      y[b] = y[b] + 1
+  end)
+  z:copy(y):scal(1/m:size())
+  return result
+end
+
+stats.ihist = function(m, params)
+  local params = get_table_fields({
+      symbols = { type_match="table", default={} },
+      normalize = { type_match="boolean", default=false },
+                                  }, params or {})
+  local symbols = params.symbols
+  if #symbols == 0 then symbols = stats.levels(m) end
+  local inv_symbols = table.invert(symbols)
+  assert(#symbols > 0, "Unable to compute histogram for given matrix")
+  local result = matrix(#symbols, 4)
+  local x      = result:select(2,1):linspace()
+  local x2     = result:select(2,2):copy(x)
+  local y      = result:select(2,3):zeros()
+  local z      = result:select(2,4)
+  m:map(function(v)
+      local b = inv_symbols[v]
       y[b] = y[b] + 1
   end)
   z:copy(y):scal(1/m:size())
@@ -993,11 +1027,45 @@ confus_matrix_methods.getPrecision =
       den = den + v
     end     
     if den == 0 then
-      return 0, tp, den
+      return 1, tp, den
     end
     return tp/den, tp, den
   end
 
+confus_matrix_methods.getMultiPrecision =
+  april_doc{
+    class = "method", summary = "Return the precision of joined classes",
+    params = {"The indexes of the joined classes"},
+    outputs = { "The selected classes Precision." },
+  } ..
+  function(self, cls)
+
+    local tp = 0
+    local den = 0
+
+    -- Moving by columns
+    for i=1, self.num_classes do
+      local iscorrect = false
+      local values = 0
+      for t, tipo in pairs(cls) do
+        v = self.confusion[i][tipo]
+        values = values + v
+        if i == tipo then
+          iscorrect = true
+
+        end
+      end
+
+      if iscorrect then
+        tp = tp + values
+      end
+      den = den + values
+    end     
+    if den == 0 then
+      return 1, tp, den
+    end
+    return tp/den, tp, den
+  end
 confus_matrix_methods.getRecall =
   april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
@@ -1005,7 +1073,7 @@ confus_matrix_methods.getRecall =
     outputs = { "The selected class Recall." },
   } ..
   function(self, tipo)
-    
+
     local tp = 0
     local den = 0
 
@@ -1020,11 +1088,44 @@ confus_matrix_methods.getRecall =
     end 
 
     if den == 0 then
-      return 0, tp, den
+      return 1, tp, den
     end
     return tp/den, tp, den
   end
 
+confus_matrix_methods.getMultiRecall =
+  april_doc{
+    class = "method", summary = "Return the accuracy (hits/total)",
+    params = {"Index of the joined class for the Recall"},
+    outputs = { "The selected class Recall." },
+  } ..
+  function(self, cls)
+
+    local tp = 0
+    local den = 0
+    print ("joining")
+    -- Moving by columns
+    for j=1, self.num_classes do
+      local iscorrect = false
+      local values = 0
+      for t, tipo in ipairs(cls) do
+        local v = self.confusion[tipo][j]
+        values = values + v
+
+        if tipo == j then
+          iscorrect = true
+        end
+      end
+      if iscorrect then
+        tp = tp + values
+      end
+      den = den + values
+    end
+    if den == 0 then
+      return 1, tp, den
+    end
+    return tp/den, tp, den
+  end
 confus_matrix_methods.getFMeasure =
   april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
@@ -1064,7 +1165,7 @@ confus_matrix_methods.clearGTClass =
       end
       self.confusion[tipo][i] = 0
     end
-    
+
     self.samples = self.samples - n_samples
     self.hits    = self.hits - hits
     self.misses  = self.misses - misses
@@ -1086,7 +1187,7 @@ confus_matrix_methods.clearClass =
       self.misses = self.misses - samples
     end
     self.confusion[gt][pred] = 0
-    
+
     self.samples = self.samples - samples
   end
 
@@ -1097,16 +1198,16 @@ confus_matrix_methods.clearPredClass =
     params = {"The index of the class to be clear"},
   } ..
   function(self, tipo)
-    
+
     local n_samples = 0
     -- Moving by Rows
     for i=1, self.num_classes do
       n_samples = n_samples + self.confusion[i][tipo]
       self.confusion[i][tipo] = 0
     end
-    
+
     self.samples = self.samples - n_samples
-    
+
   end
 
 -----------------------------------------------------------------------------
@@ -1156,11 +1257,11 @@ local perm =
       local sub_indices = matrix.ext.repmat(matrixInt32(M):linspace(), #sizes)
       local indices = {}
       for i=1,#sizes do for j=1,M do indices[#indices+1] = i-1 end end
-      rnd_matrix = function()
-        local shuf = rnd:shuffle(indices)
-        local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
-        return m
-      end
+        rnd_matrix = function()
+          local shuf = rnd:shuffle(indices)
+          local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
+          return m
+        end
     else
       local indices = iterator.range(joined_size):table()
       rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(indices)) end
@@ -1213,37 +1314,37 @@ stats.perm.pvalue =
 
 stats.boot = {}
 april_set_doc(stats.boot,
-	      {
-		class = "function",
-		summary = "Produces a bootstrap resampling table",
-		description= {
-		  "This function is useful to compute confidence intervals",
-		  "by using bootstrapping technique. The function receives",
-		  "the population size and a function which returns statistics",
+              {
+                class = "function",
+                summary = "Produces a bootstrap resampling table",
+                description= {
+                  "This function is useful to compute confidence intervals",
+                  "by using bootstrapping technique. The function receives",
+                  "the population size and a function which returns statistics",
                   "of a sample.",
-		  "A table with the computation of the post-process function",
-		  "for every repetition will be returned.",
-		},
-		params = {
-		  size = "Population size, it can be a table with several sizes",
+                  "A table with the computation of the post-process function",
+                  "for every repetition will be returned.",
+                },
+                params = {
+                  size = "Population size, it can be a table with several sizes",
                   resample = "Resample value [optional] by default it is 1",
-		  R = "Number of repetitions, recommended minimum of 1000",
-		  statistic = {
-		    "A function witch receives as many matrixInt32 (with",
+                  R = "Number of repetitions, recommended minimum of 1000",
+                  statistic = {
+                    "A function witch receives as many matrixInt32 (with",
                     "sample indices) as given number of population sizes",
                     "and computes statistics (k>=1 statistics) over",
                     "the sample.",
-		  },
+                  },
                   k = "Expected number of returned values in statistic function [optional], by default it is 1",
-		  verbose = "True or false",
+                  verbose = "True or false",
                   ncores = "Number of cores [optional], by default it is 1",
                   seed = "A random seed [optional]",
                   random = "A random numbers generator [optional]",
                   ["..."] = "Second and beyond parameters are extra arguments for statistic function.",
-		},
-		outputs = {
-		  "A matrix with Rxk, being R repetitions."
-		},
+                },
+                outputs = {
+                  "A matrix with Rxk, being R repetitions."
+                },
 })
 
 -- self is needed because of __call metamethod, but it will be ignored

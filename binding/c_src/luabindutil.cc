@@ -1,12 +1,44 @@
 #include "luabindutil.h"
-#include <cstring>
 #include <cstdarg>
+#include <cstdio>
+#include <cstring>
 
 #define PARENTS_REGISTRY_FIELD_NAME "luabind_parents"
 #define CAST_REGISTRY_FIELD_NAME "luabind_cast"
 
+void stackDump(lua_State *L) {
+  int i;
+  int top = lua_gettop(L);
+  for (i = 1; i <= top; i++) {  /* repeat for each level */
+    int t = lua_type(L, i);
+    switch (t) {
+    
+    case LUA_TSTRING:  /* strings */
+      fprintf(stderr,"`%s'", lua_tostring(L, i));
+      break;
+    
+    case LUA_TBOOLEAN:  /* booleans */
+      fprintf(stderr,lua_toboolean(L, i) ? "true" : "false");
+      break;
+    
+    case LUA_TNUMBER:  /* numbers */
+      fprintf(stderr,"%g", lua_tonumber(L, i));
+      break;
+    
+    default:  /* other values */
+      fprintf(stderr,"%s", lua_typename(L, t));
+      break;
+    
+    }
+    fprintf(stderr,"  ");  /* put a separator */
+  }
+  fprintf(stderr,"\n");  /* end the listing */
+}
+
 void makeWeakTable(lua_State *L) {
-  lua_newtable(L);
+  if (!lua_getmetatable(L, -1)) {
+    lua_newtable(L);
+  }
   lua_pushstring(L, "__mode");
   lua_pushstring(L, "v");
   lua_rawset(L, -3);
@@ -36,6 +68,27 @@ void pushOrCreateTable(lua_State *L, int n, const char *field) {
     }
   }
   // stack: [n].field
+}
+
+void setClassMetatable(lua_State *L, const char *class_name) {
+  // pila = ... ptr
+  // asociamos la referencia al objeto
+  // le asociamos al userdata la metatabla que le corresponde
+  lua_pushstring(L,"luabind_classes");
+  // pila = ... ptr "luabind_clases"
+  lua_rawget(L,LUA_REGISTRYINDEX);
+  // pila = ... ptr luabind_clases
+  lua_pushstring(L,class_name);
+  // pila = ... ptr luabind_clases  ClassName
+  lua_rawget(L,-2);
+  // pila = ... ptr luabind_clases luabind_clases[ClassName]
+  lua_pushstring(L,"meta_instance");
+  // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
+  lua_rawget(L,-2); // class_table
+  // pila = ... ptr table:luabind_clases luabind_clases[ClassName] metainstance
+  lua_setmetatable(L,-4); // obj_index
+  // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
+  lua_pop(L,2);
 }
 
 int isDerived(lua_State *L,

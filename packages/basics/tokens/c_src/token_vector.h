@@ -160,7 +160,7 @@ namespace Basics {
   TokenCode TokenVector<AprilUtils::SharedPtr<Token> >::getTokenCode() const;
 
   template <>
-  Token *TokenVector<Token*>::fromString(AprilUtils::constString &cs);
+  Token *TokenVector<AprilUtils::SharedPtr<Token> >::fromString(AprilUtils::constString &cs);
 
 } // namespace Basics
 

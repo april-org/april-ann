@@ -767,9 +767,6 @@ end
 function table.invert(t)
   local n = {}
   for i,j in pairs(t) do n[j] = i end
-  if n[0] ~= nil then -- FIXME: estoy hay que quitarlo
-    error ("ATENCION: table.invert(t) => devuelve un codigo 0")
-  end
   return n
 end
 

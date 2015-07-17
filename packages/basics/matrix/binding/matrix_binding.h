@@ -1080,7 +1080,7 @@ namespace Basics {
         AprilUtils::SharedPtr<Matrix<T> > dest;
         AprilUtils::SharedPtr<Matrix<int32_t> > argmin;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmin = lua_opt<MatrixInt32*>(L,2,0);
+        argmin = lua_opt<MatrixInt32*>(L,3,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmin) {
           aux = new int[obj->getNumDim()];
@@ -1121,7 +1121,7 @@ namespace Basics {
         AprilUtils::SharedPtr<Matrix<T> > dest;
         AprilUtils::SharedPtr<Matrix<int32_t> > argmax;
         dest = lua_opt<Matrix<T>*>(L,2,0);
-        argmax = lua_opt<MatrixInt32*>(L,2,0);
+        argmax = lua_opt<MatrixInt32*>(L,3,0);
         AprilUtils::UniquePtr<int []> aux;
         if (!argmax) {
           aux = new int[obj->getNumDim()];
@@ -1794,6 +1794,32 @@ namespace Basics {
       }
       stream.push(L);
       return 1;
+    }
+    
+    BEGIN_METHOD(same_dim)
+    {
+      if (lua_is<Matrix<T>*>(L,1)) {
+        Matrix<T> *other = lua_to<Matrix<T>*>(L,1);
+        lua_pushboolean(L, obj->sameDim(other));
+        return 1;
+      }
+      else {
+        if (!lua_istable(L,1)) {
+          LUABIND_ERROR("Expecting a matrix or a table as argument");
+        }
+        bool result=true;
+        int len = luaL_len(L,1);
+        if (len != obj->getNumDim()) LUABIND_ERROR("Incorrect number of dimensions");
+        const int *dims = obj->getDimPtr();
+        for (int i=1; i<=len && result; ++i) {
+          lua_rawgeti(L, 1, i);
+          int j = lua_toint(L, -1);
+          lua_pop(L, 1);
+          if (j != dims[i-1]) result=false;
+        }
+        lua_pushboolean(L, result);
+        return 1;
+      }
     }
   };
 

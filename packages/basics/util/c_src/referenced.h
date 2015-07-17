@@ -41,15 +41,12 @@
 class Referenced {
  private:
   int refs;    ///< Number of living references of this object.
-  int lua_ref; ///< Reference in Lua registry, it is initialized at binding.
  public:
   Referenced();
   virtual ~Referenced();
   virtual void incRef();
   virtual bool decRef();
   virtual int  getRef() const;
-  virtual void setLuaRef(int lua_ref);
-  virtual int getLuaRef() const;
 };
 
 /**

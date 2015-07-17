@@ -9,12 +9,18 @@ local gnuplot_methods = {}
 
 -- Writes using format and a list of arguments
 local function writef(self,format, ...)
+  if self.verbosity_level > 0 then
+    io.write(format:format(...))
+  end
   self.in_pipe:write(string.format(format,...))
   return self
 end
 
 -- Writes the given strings (separated by blanks)
 local function write(self,...)
+  if self.verbosity_level > 0 then
+    io.write(table.concat(table.pack(...), " "))
+  end
   self.in_pipe:write(table.concat(table.pack(...), " "))
   return self
 end
@@ -46,70 +52,80 @@ function gnuplot_methods:set(...)
   return self
 end
 
+-- Unsets a parameter
+function gnuplot_methods:unset(...)
+  write(self,"unset ")
+  write(self,table.concat(table.pack(...), " "))
+  write(self,"\n")
+  self:flush()
+  return self
+end
+
 -- Forces to write in the pipe
 function gnuplot_methods:flush()
   self.in_pipe:flush()
   return self
 end
 
--- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:plot(params, range)
-  -- remove previous temporal files
-  for _,tmpname in pairs(self.tmpnames) do
-    self:writeln(string.format("!rm -f %s", tmpname))
-  end
-  self.tmpnames = {}
-  local plot_str_tbl = {}
-  if range then
-    table.insert(plot_str_tbl, string.format("plot%s", range))
-  else
-    table.insert(plot_str_tbl, "plot")
-  end
-  local tmpnames = self.tmpnames
-  if not params[1] then params = { params } end
-  for i,current in ipairs(params) do
-    local data    = current.data
-    local func    = current.func
-    assert(data or func, "Field data or func is mandatory")
-    local using   = read("u", current.using or current.u)
-    local title   = read("title",current.title or current.t,"%q")
-    local notitle = read("notitle",current.notitle,"")
-    local with    = read("w",current.with or current.w)
-    local other   = current.other or ""
-    assert(type(other) == "string")
-    if type(data) == "matrix" or type(data) == "matrixDouble" then
-      local aux_tmpname = tmpnames[data]
-      if not aux_tmpname then
-	assert(data.toTabFilename,
-	       "The matrix object needs the method toTabFilename")
-	aux_tmpname = os.tmpname()
-	tmpnames[data] = aux_tmpname
-	data:toTabFilename(aux_tmpname)
-      end
-      data = aux_tmpname
-    end
-    if data then
-      if #data > 0 and string.sub(data,1,1) ~= "<" then
-	local f = assert(io.open(data), "Unable to open filename " .. data)
-	f:close()
-      end
-      data = string.format("%q", data)
-    end
-    table.insert(plot_str_tbl,
-		 string.format("%s %s %s %s %s",
-			       data or func, using, with, title, other))
-    if i ~= #params then table.insert(plot_str_tbl, ",") end
-  end
-  table.insert(plot_str_tbl, "\n")
-  print(table.concat(plot_str_tbl, " "))
-  write(self,table.concat(plot_str_tbl, " "))
-  self:flush()
-  return self
-end
+-- -- Plots (or multiplots) a given table with gnuplot parameters
+-- function gnuplot_methods:plot(params, range)
+--   -- remove previous temporal files
+--   for _,tmpname in pairs(self.tmpnames) do
+--     self:writeln(string.format("!rm -f %s", tmpname))
+--   end
+--   self.tmpnames = {}
+--   local plot_str_tbl = {}
+--   if range then
+--     table.insert(plot_str_tbl, string.format("plot%s", range))
+--   else
+--     table.insert(plot_str_tbl, "plot")
+--   end
+--   local tmpnames = self.tmpnames
+--   if not params[1] then params = { params } end
+--   for i,current in ipairs(params) do
+--     local data    = current.data
+--     local func    = current.func
+--     assert(data or func, "Field data or func is mandatory")
+--     local using   = read("u", current.using or current.u)
+--     local title   = read("title",current.title or current.t,"%q")
+--     local notitle = read("notitle",current.notitle,"")
+--     local with    = read("w",current.with or current.w)
+--     local other   = current.other or ""
+--     assert(type(other) == "string")
+--     if type(data) == "matrix" or type(data) == "matrixDouble" then
+--       local aux_tmpname = tmpnames[data]
+--       if not aux_tmpname then
+-- 	assert(data.toTabFilename,
+-- 	       "The matrix object needs the method toTabFilename")
+-- 	aux_tmpname = os.tmpname()
+-- 	tmpnames[data] = aux_tmpname
+-- 	data:toTabFilename(aux_tmpname)
+--       end
+--       data = aux_tmpname
+--     end
+--     if data then
+--       if #data > 0 and string.sub(data,1,1) ~= "<" then
+-- 	local f = assert(io.open(data), "Unable to open filename " .. data)
+-- 	f:close()
+--       end
+--       data = string.format("%q", data)
+--     end
+--     table.insert(plot_str_tbl,
+-- 		 string.format("%s %s %s %s %s",
+-- 			       data or func, using, with, title, other))
+--     if i ~= #params then table.insert(plot_str_tbl, ",") end
+--   end
+--   table.insert(plot_str_tbl, "\n")
+--   -- print(table.concat(plot_str_tbl, " "))
+--   write(self,table.concat(plot_str_tbl, " "))
+--   self:flush()
+--   return self
+-- end
 
--- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:rawplot(data, line)
-  if type(data) ~= "table" then data = { data } end
+local function plot(self, command, line, ...)
+  assert(type(line) == "string",
+         "New plot needs line string as first argument and varargs in the rest")
+  local data = table.pack(...)
   -- remove previous temporal files
   for _,tmpname in pairs(self.tmpnames) do
     self:writeln(string.format("!rm -f %s", tmpname))
@@ -120,19 +136,50 @@ function gnuplot_methods:rawplot(data, line)
   for i,m in ipairs(data) do
     local aux_tmpname = tmpnames[m]
     if not aux_tmpname then
-      assert(m.toTabFilename,
-	     "The matrix object needs the method toTabFilename")
-      aux_tmpname = os.tmpname()
-      tmpnames[m] = aux_tmpname
-      m:toTabFilename(aux_tmpname)
+      if class.is_a(m, data_frame) then
+        aux_tmpname = os.tmpname()
+        tmpnames[m] = aux_tmpname
+        m:to_csv(aux_tmpname, { header=false, sep=' ', NA="NA" })
+      elseif type(m):find("^matrix") then
+        assert(m.toTabFilename,
+               "The matrix object needs the method toTabFilename")
+        aux_tmpname = os.tmpname()
+        tmpnames[m] = aux_tmpname
+        m:toTabFilename(aux_tmpname)
+      else
+        local tt = type(m)
+        if tt == "number" or tt == "string" then
+          aux_tmpname = tostring(m)
+        else
+          error("Unexpected data type at position: " .. i)
+        end
+      end
     end
     dict["#"..i] = aux_tmpname
   end
   local line = line:gsub("(#%d*)",dict)
-  print(line)
-  self:writeln(line)
+  -- print(line)
+  self:writeln(command .. line)
   self:flush()
   return self
+end
+
+function gnuplot_methods:p(...)
+  return plot(self, "", ...)
+end
+
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:plot(line, ...)
+  assert(not line:find("^[%s]*plot[%s]*"),
+         "plot doesn't need 'plot' word in the given line string")
+  return plot(self, "plot ", line, ...)
+end
+
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:splot(line, ...)
+  assert(not line:find("^[%s]*plot[%s]*"),
+         "splot doesn't need 'plot' word in the given line string")
+  return plot(self, "splot ", line, ...)
 end
 
 -- Closes the gnuplot pipe (interface)
@@ -145,6 +192,10 @@ function gnuplot_methods:close()
   self.in_pipe  = nil
 end
 
+function gnuplot_methods:verbosity(v)
+  self.verbosity_level = v
+end
+
 ---------------
 -- METATABLE --
 ---------------
@@ -152,7 +203,7 @@ end
 ------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
 object_metatable.__index = gnuplot_methods
-object_metatable.__call  = gnuplot_methods.writeln
+object_metatable.__call  = gnuplot_methods.p
 function object_metatable:__gc()
   self:close()
 end
@@ -168,7 +219,7 @@ function gnuplot.new()
   f:close()
   assert(command, "Impossible to find gnuplot binary executable")
   local in_pipe= io.popen(command, "w")
-  local obj = { in_pipe = in_pipe, tmpnames = {} }
+  local obj = { in_pipe = in_pipe, tmpnames = {}, verbosity_level=0 }
   setmetatable(obj, object_metatable)
   return obj
 end
@@ -176,6 +227,16 @@ end
 -- gnuplot() is equivalent to gnuplot.new()
 setmetatable(gnuplot, { __call = gnuplot.new })
 
+do
+  local singleton
+  for k,v in pairs(gnuplot_methods) do
+    assert(not gnuplot[k])
+    gnuplot[k] = function(...)
+      singleton = singleton or gnuplot.new()
+      return singleton[k](singleton, ...)
+    end
+  end
+end
 -------------------
 -- HELP FUNCTION --
 -------------------
@@ -192,18 +253,22 @@ none of them will share anything, so every object has
 its own gnuplot window.
 
 
+LOADING: load the module as usual
+
+> gp = require "gnuplot"
+
+
 CONSTRUCTOR: builds a gnuplot object instance
 
 > gp = gnuplot()     -- the __call metamethod is defined
 > gp = gnuplot.new() -- both are equivalent
-
 
 HELP: shows this help message
 
 > gnuplot.help()
 
 
-METHOD __call:
+METHOD __call: idem as below
 METHOD WRITE LINE: writes a sentence line to gnuplot
   arguments:
     format: is a string with a printf format string
@@ -221,25 +286,32 @@ METHOD SET: executes the set command of gnuplot
 > gp:set("xrange [-10,10]")
 
 
-METHOD PLOT: plots multiple data
+METHOD UNSET: executes the unset command of gnuplot
   arguments:
-    params: a table with as many tables as data you want to plot together.
-            Each table contains the following fields:
-               - data: mandatory if not given func field. It is a string with
-                       a filename path, or a matrix with data.
-               - func: mandatory if not given data field. It is a string with
-                       a gnuplot expression.
-               - using or u: a string with the using property of plot [optional]
-               - with or w: a string with the with property of plot [optional]
-               - title or t: a string with the title property of plot [optional]
-               - notitle: any value different than false and nil [optional]
-               - other: a string with any list of plot properties [optional]
-    range: an optional string with the range property of gnuplot
+    ... : a variable argument list, all of them strings
 
-> gp:writeln('f(x) = 4*x')
-> gp:plot({  { data='filename1', u='1:2', w='l', t='A' },
-             { data='', u='4:5', w='p', t='P' },
-             { func='f(x)' }, }, "[-10:10][20:40]")
+> gp:unset("logscale y")
+
+
+METHOD PLOT: allows to do generic plots, it uses placeholders #n to
+use matrix objects as input.
+  arguments:
+    line string: a string with the gnuplot line (without the word 'plot')
+    ...: vararg with matrix objects to be plotted
+
+> gp:plot("'#1' u 3:4 w l lw 3", matrix_object) -- #1 is the placeholder
+> gp:plot("3*x**2")
+> gp:plot("'tmp.log' u 1:2 w l, '#1' u 1:2 w l, '' u 1:3 w l", m)
+
+
+METHOD SPLOT: same as plot but using splot instead of plot command in gnuplot
+
+
+METHOD P: similar to plot and splot, but not giving the 'plot' command
+
+> gp:p("plot '#1' u 3:4 w l lw 3", matrix_object) -- #1 is the placeholder
+> gp:p("plot 3*x**2")
+> gp:p("plot 'tmp.log' u 1:2 w l, '#1' u 1:2 w l, '' u 1:3 w l", m)
 
 
 METHOD FLUSH: flushes all the pending data (normally it
@@ -251,6 +323,15 @@ METHOD FLUSH: flushes all the pending data (normally it
 METHOD CLOSE: closes the connection with gnuplot
 
 > gp:close()
+
+
+SINGLETON: it is possible to use gnuplot without calling the constructor, all
+methods are available as static functions.
+
+> gp.close()
+> gp.rawplot(...)
+> gp.set(...)
+> ...
 
 ]]
 end

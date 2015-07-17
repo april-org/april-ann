@@ -416,7 +416,7 @@ ascii
                            1,2,3,4}))
   end)
   
-  T("IndexMethods", function()
+  T("IndexMetaMethods", function()
       local m1 = matrix(30,20,10):linspace()
       check.eq(m1:select(1,20), m1[20])
       m1[10] = m1[25]
@@ -424,6 +424,56 @@ ascii
       m1[{10,20,10}] = 10
       check.eq(m1[{10,20,10}], matrix(1,1,1,{10}))
       check.eq(m1(10,20,10), matrix(1,1,1,{10}))
+  end)
+  
+  T("IndexMethods", function()
+      local m   = matrix(4,2, {1,2, 3,4, 5,6, 7,8})
+      local idx = matrixInt32{1,3}
+      local m2  = m:index(1,idx)
+      check.eq(m2, matrix(2,2,{1,2, 5,6}))
+      check.eq(m:rewrap(8):index(1,idx), matrix{1,3})
+      check.eq(m:rewrap(8,1):index(1,idx), matrix(2,1,{1,3}))
+      check.eq(m:rewrap(1,8,1,1):index(2,idx), matrix(1,2,1,1,{1,3}))
+      --
+      local x = matrix.fromString[[5 5
+ascii
+ 0.8020  0.7246  0.1204  0.3419  0.4385
+ 0.0369  0.4158  0.0985  0.3024  0.8186
+ 0.2746  0.9362  0.2546  0.8586  0.6674
+ 0.7473  0.9028  0.1046  0.9085  0.6622
+ 0.1412  0.6784  0.1624  0.8113  0.3949
+]]
+      local z = matrix(5,2)
+      z:select(2,1):fill(-1)
+      z:select(2,2):fill(-2)
+      x:indexed_copy(2,matrixInt32{5,1},z)
+      local y = matrix.fromString[[5 5
+ascii
+-2.0000  0.7246  0.1204  0.3419 -1.0000
+-2.0000  0.4158  0.0985  0.3024 -1.0000
+-2.0000  0.9362  0.2546  0.8586 -1.0000
+-2.0000  0.9028  0.1046  0.9085 -1.0000
+-2.0000  0.6784  0.1624  0.8113 -1.0000
+]]
+      check.eq(x, y)
+      --
+      x:indexed_fill(2,matrixInt32{5,1},-3)
+      local y = matrix.fromString[[5 5
+ascii
+-3.0000  0.7246  0.1204  0.3419 -3.0000
+-3.0000  0.4158  0.0985  0.3024 -3.0000
+-3.0000  0.9362  0.2546  0.8586 -3.0000
+-3.0000  0.9028  0.1046  0.9085 -3.0000
+-3.0000  0.6784  0.1624  0.8113 -3.0000
+]]
+      check.eq(x, y)
+      --
+      local x = x:flatten()
+      x:indexed_copy(1,matrixInt32{5,1},z[1])
+      local y = x:clone()
+      y[5] = z[1][1]
+      y[1] = z[1][2]
+      check.eq(x, y)
   end)
 
   T("SqueezeAndRewrap", function()

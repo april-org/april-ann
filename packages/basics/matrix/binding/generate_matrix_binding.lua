@@ -19,7 +19,7 @@ local script_timestamp = get_timestamp(basename(arg[0]))
 local matrix_methods = {
   float = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "isfinite", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
@@ -38,7 +38,7 @@ local matrix_methods = {
   },
   double = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "isfinite", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
@@ -57,7 +57,7 @@ local matrix_methods = {
   },
   int32_t = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
@@ -73,7 +73,7 @@ local matrix_methods = {
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "isfinite", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
@@ -91,7 +91,7 @@ local matrix_methods = {
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",
@@ -106,7 +106,7 @@ local matrix_methods = {
   },
   bool = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
-    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda",
+    "get", "set", "offset", "raw_get", "raw_set", "get_use_cuda", "same_dim",
     "set_use_cuda", "dim", "num_dim", "stride", "slice", "select", "clone",
     "transpose", "toTable", "contiguous", "map", "diagonalize",
     "get_shared_count", "reset_shared_count", "add_to_shared_count", "sync",

@@ -25,13 +25,14 @@ using namespace AprilMath;
 //BIND_END
 
 //BIND_HEADER_C
+#include "bind_april_io.h"
 #include "bind_complex.h"
 #include "bind_mathcore.h"
 #include "cmath_overloads.h"
+#include "error_print.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
-#include "error_print.h"
-#include "bind_april_io.h"
+#include "maxmin.h"
 
 using namespace AprilMath;
 
@@ -221,6 +222,15 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_METHOD FloatGPUMirroredMemoryBlock copy
+{
+  FloatGPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, FloatGPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(FloatGPUMirroredMemoryBlock, obj);
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME DoubleGPUMirroredMemoryBlock mathcore.block.double
@@ -267,6 +277,15 @@ namespace AprilMath {
   char buff[128];
   sprintf(buff,"data= %p", (void*)obj);
   LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+//BIND_METHOD DoubleGPUMirroredMemoryBlock copy
+{
+  DoubleGPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, DoubleGPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock, obj);
 }
 //BIND_END
 
@@ -319,6 +338,15 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_METHOD Int32GPUMirroredMemoryBlock copy
+{
+  Int32GPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, Int32GPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock, obj);
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME BoolGPUMirroredMemoryBlock mathcore.block.bool
@@ -365,6 +393,15 @@ namespace AprilMath {
   char buff[128];
   sprintf(buff,"data= %p", (void*)obj);
   LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+//BIND_METHOD BoolGPUMirroredMemoryBlock copy
+{
+  BoolGPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, BoolGPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(BoolGPUMirroredMemoryBlock, obj);
 }
 //BIND_END
 
@@ -419,6 +456,15 @@ namespace AprilMath {
 }
 //BIND_END
 
+//BIND_METHOD CharGPUMirroredMemoryBlock copy
+{
+  CharGPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, CharGPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(CharGPUMirroredMemoryBlock, obj);
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME ComplexFGPUMirroredMemoryBlock mathcore.block.complex
@@ -465,6 +511,15 @@ namespace AprilMath {
   char buff[128];
   sprintf(buff,"data= %p", (void*)obj);
   LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+//BIND_METHOD ComplexFGPUMirroredMemoryBlock copy
+{
+  ComplexFGPUMirroredMemoryBlock *other;
+  LUABIND_GET_PARAMETER(1, ComplexFGPUMirroredMemoryBlock, other);
+  obj->copyFromBlock(0, other, 0, AprilUtils::min(obj->getSize(),other->getSize()));
+  LUABIND_RETURN(ComplexFGPUMirroredMemoryBlock, obj);
 }
 //BIND_END
 

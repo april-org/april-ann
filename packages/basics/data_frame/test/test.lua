@@ -14,6 +14,8 @@ T("DataFrameTest", function()
                                      three = { "A", "B", "B", "C" }, },
                             columns = { "two", "one", "three" },
                             index = { "a", "b", "c", "d" } }
+    print(df2:groupby("three"):get_group("B"))
+    
     check.eq(#df2:get_index(), 4)
     check.eq(#df2:get_columns(), 3)
     check.eq(df2[{"three"}][1], "A")
@@ -32,6 +34,14 @@ T("DataFrameTest", function()
              matrix.sparse(matrix(4,6,{1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,1})))
     local m = df2:as_matrix("one", "two")
     check.eq(m, matrix(4,2,{1,5,2,6,3,7,4,8}))
+    local df22 = data_frame{ data = { three = { "A", "C", "D" },
+                                      four = { 3, 4, 5 } },
+                             columns = { "three", "four" },
+                             index = { "a", "e", "f" } }
+    print(df2:merge(df22, { how="left"  }))
+    print(df2:merge(df22, { how="right" }))
+    -- print(df2:merge(df22, { how="inner" }))
+    -- print(df2:merge(df22, { how="outer" }))
     --
     local df3 = data_frame{ data = matrix(4,20):linear() }
     local _   = df3[{3}]

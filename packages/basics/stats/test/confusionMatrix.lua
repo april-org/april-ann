@@ -9,12 +9,12 @@ local myGT   = { 2, 1, 2, 1, 1, 2,  3,  1}
 myConf:addData(myPred, myGT)
 print("Raw Confusion Matrix")
 myConf:printConfusion()
-
-
+printf("#\n----------------------#\n")
 myConf:reset()
 print("Empty Matrix")
 myConf:printConfusion()
 
+printf("#\n----------------------#\n")
 local t = {}
 for i, v in ipairs(myPred) do
   table.insert(t, {v,myGT[i]})
@@ -24,17 +24,25 @@ myConf:addData(stats.confusion_matrix.oneTableIterator(t))
 print("Raw Confusion Matrix")
 myConf:printConfusion()
 
+printf("#\n----------------------#\n")
 print("Results")
 
 print("Error ", myConf:getError())
 print("Accuracy ", myConf:getAccuracy())
-
 print("AverageError", myConf:getAvgError())
+printf("#\n----------------------#\n")
 
 print("Weighted Error 0.5 0.1 0.1 0.3", myConf:getWeightedError({0.5, 0.1, 0.1, 0.3}))
 for i = 1, N do
   print(i, "PR:", myConf:getPrecision(i), "RC:", myConf:getRecall(i),"FM:", myConf:getFMeasure(i))
 end
+
+printf("#\n----------------------#\n")
+print ("Joining classes: 1, 2")
+print("New recall (1 and 2)", myConf:getMultiRecall{1,2})
+print("New precision (1 an 2) ", myConf:getMultiPrecision{1,2})
+
+printf("#\n----------------------#\n")
 
 print("Testing Datasets Methods")
 
@@ -47,12 +55,14 @@ print("Raw Confusion Matrix")
 myConf:printConfusion()
 
 myConf:reset()
+printf("#\n----------------------#\n")
 local dsOne = dataset.join({dsPred, dsGT})
 myConf:addData(stats.confusion_matrix.oneDatasetIterator(dsOne))
 
 print("Raw Confusion Matrix")
 myConf:printConfusion()
 
+printf("#\n----------------------#\n")
 print("Testing Map")
 
 local tags = {"a","b","c","d"}
@@ -67,17 +77,18 @@ print("Raw Confusion Matrix")
 myConfMap:printConfusion(myConfMap)
 local cloneConf = myConfMap:clone()
 
+printf("#\n----------------------#\n")
 print("Confusion Matrix String")
 
 print(myConfMap:tostring())
+printf("#\n----------------------#\n")
 print("Deleting class c")
 myConfMap:clearGTClass(3)
 myConfMap:printConfusion(tags)
-
+printf("#\n----------------------#\n")
 print("Cloned object")
 cloneConf:printConfusion(tags)
-
-
+printf("#\n----------------------#\n")
 print("Deleting class c (Pred)")
 cloneConf:clearPredClass(3)
 cloneConf:printConfusion(tags)

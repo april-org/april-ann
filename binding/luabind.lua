@@ -1,3 +1,4 @@
+local release_version=false
 -- Variable GLOBAL para conrolar que se generen numeros de linea
 -- utiles para GCC
 
@@ -122,8 +123,10 @@ function load_data(filename)
    local function store_buffer() 
       if last_table and last_key then
 	 if lines_information == nil then
-	   table.insert(buffer,'/*___LUA_END___ ('..last_className..'::'..last_key..') '..
-			filename..":"..(num_line-1)..' *****/')
+           if release_version then
+             table.insert(buffer,'/*___LUA_END___ ('..last_className..'::'..last_key..') '..
+                            filename..":"..(num_line-1)..' *****/')
+           end
 	 end
 	 last_table[last_key] = table.concat(buffer,'\n')
 	 last_table = nil
@@ -135,9 +138,11 @@ function load_data(filename)
    -- inicializar el buffer de codigo fuente
    local function store_header()
       if lines_information == nil then
-	table.insert(buffer,'\n/*__LUA_BEGIN__ ('..last_className..'::'..last_key..') '..
-		     filename..":"..(num_line+1)..' *****/\n#line '..
-		       (num_line+1)..' "'..filename..'"')
+        if release_version then
+          table.insert(buffer,'\n/*__LUA_BEGIN__ ('..last_className..'::'..last_key..') '..
+                         filename..":"..(num_line+1)..' *****/\n#line '..
+                         (num_line+1)..' "'..filename..'"')
+        end
       end
    end
 

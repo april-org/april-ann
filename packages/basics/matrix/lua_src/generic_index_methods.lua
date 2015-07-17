@@ -35,11 +35,22 @@ local index_function =
     d[dim] = idx:size()
     local ctor   = class.of(self)
     local result = ctor(table.unpack(d))
-    d[dim] = 1
-    local self_sw = self:sliding_window{ size=d, step=d }
-    local dest_sw   = result:sliding_window{ size=d, step=d }
-    local result_submat,self_submat
-    idx:map(function(p)
+    if self:size() == dim_bound then
+      local self   = self:squeeze()
+      local result = result:squeeze()
+      for i=1,#idx do
+        local p = idx[i]
+        april_assert(p >= 1 and p <= dim_bound,
+                     "Index number %d out-of-bounds", i)
+        result[i] = self[p]
+      end
+    else
+      d[dim] = 1
+      local self_sw = self:sliding_window{ size=d, step=d }
+      local dest_sw   = result:sliding_window{ size=d, step=d }
+      local result_submat,self_submat
+      for i=1,#idx do
+        local p = idx[i]
         april_assert(p >= 1 and p <= dim_bound,
                      "Index number %d out-of-bounds", p)
         assert(not dest_sw:is_end())
@@ -48,7 +59,8 @@ local index_function =
         self_submat = self_sw:get_matrix(self_submat)
         result_submat:copy(self_submat)
         dest_sw:next()
-    end)
+      end
+    end
     return result
   end
 
@@ -83,16 +95,27 @@ local index_fill_function =
     local d = self:dim()
     assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
     local dim_bound = d[dim]
-    d[dim] = 1
-    local sw = self:sliding_window{ size=d, step=d }
-    local mat
-    idx:map(function(p)
+    if dim_bound == self:size() then
+      local self = self:squeeze()
+      for i=1,#idx do
+        local p = idx[i]
+        april_assert(p >= 1 and p <= dim_bound,
+                     "Index number %d out-of-bounds", i)
+        self[p] = val
+      end
+    else
+      d[dim] = 1
+      local sw = self:sliding_window{ size=d, step=d }
+      local mat
+      for i=1,#idx do
+        local p = idx[i]
         april_assert(p >= 1 and p <= dim_bound,
                      "Index number %d out-of-bounds", i)
         sw:set_at_window(p)
         mat = sw:get_matrix(mat)
         mat:fill(val)
-    end)
+      end
+    end
     return self
   end
 
@@ -129,11 +152,25 @@ local index_copy_function =
     local d = self:dim()
     assert(dim >= 1 and dim <= #d,"Dimension argument out-of-bounds")
     local dim_bound = d[dim]
-    d[dim] = 1
-    local other_sw = other:sliding_window{ size=d, step=d }
-    local self_sw = self:sliding_window{ size=d, step=d }
-    local other_submat,self_submat
-    idx:map(function(p)
+    local d2 = self:dim()
+    d2[dim] = #idx
+    assert(other:same_dim(d2), "Incompatible matrix sizes")
+    if dim_bound == self:size() then
+      local self  = self:squeeze()
+      local other = other:squeeze()
+      for i=1,#idx do
+        local p = idx[i]
+        april_assert(p >= 1 and p <= dim_bound,
+                     "Index number %d out-of-bounds", i)
+        self[p] = other[i]
+      end
+    else
+      d[dim] = 1
+      local other_sw = other:sliding_window{ size=d, step=d }
+      local self_sw = self:sliding_window{ size=d, step=d }
+      local other_submat,self_submat
+      for i=1,#idx do
+        local p = idx[i]
         april_assert(p >= 1 and p <= dim_bound,
                      "Index number %d out-of-bounds", i)
         assert(not other_sw:is_end())
@@ -142,12 +179,13 @@ local index_copy_function =
         self_submat = self_sw:get_matrix(self_submat)
         self_submat:copy(other_submat)
         other_sw:next()
-    end)
+      end
+    end
     return self
   end  
 
-function matrix.__generic__.__make_index_methods__(ctor)
-  class.extend(ctor, "index",        index_function)
-  class.extend(ctor, "indexed_fill", index_fill_function)
-  class.extend(ctor, "indexed_copy", index_copy_function)
+function matrix.__generic__.__make_index_methods__(cls)
+  class.extend(cls, "index",        index_function)
+  class.extend(cls, "indexed_fill", index_fill_function)
+  class.extend(cls, "indexed_copy", index_copy_function)
 end
