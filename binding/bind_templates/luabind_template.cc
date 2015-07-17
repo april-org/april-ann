@@ -47,6 +47,7 @@ extern int isDerived(lua_State *L,
                      const char *child,
                      const char *parent);
 extern void stackDump(lua_State *L);
+extern void setClassMetatable(lua_State *L, const char *class_name);
 
 /*LUA
   -- Esta funcion creara un nombre de tablas
@@ -186,23 +187,7 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
       // pila = ... refs ptr
       lua_remove(L, -2);
       // pila = ... ptr
-      // asociamos la referencia al objeto
-      // le asociamos al userdata la metatabla que le corresponde
-      lua_pushstring(L,"luabind_classes");
-      // pila = ... ptr "luabind_clases"
-      lua_rawget(L,LUA_REGISTRYINDEX);
-      // pila = ... ptr luabind_clases
-      lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
-      // pila = ... ptr luabind_clases  ClassName
-      lua_rawget(L,-2);
-      // pila = ... ptr luabind_clases luabind_clases[ClassName]
-      lua_pushstring(L,"meta_instance");
-      // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
-      lua_rawget(L,-2); // class_table
-      // pila = ... ptr table:luabind_clases luabind_clases[ClassName] metainstance
-      lua_setmetatable(L,-4); // obj_index
-      // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
-      lua_pop(L,2);
+      setClassMetatable(L, "$$(LUANAME[ClassName] or ClassName)$$");
       // pila = ... ptr
     }
     else {
@@ -221,22 +206,8 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
         DEBUG("lua_push$$ClassName$$: derived instance");
         // pila = ... ptr metatable current_string
         lua_pop(L, 2);
-        // buscamos la metatabla que corresponde al objeto
-        lua_pushstring(L,"luabind_classes");
-        // pila = ... ptr "luabind_clases"
-        lua_rawget(L,LUA_REGISTRYINDEX);
-        // pila = ... ptr luabind_clases
-        lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
-        // pila = ... ptr luabind_clases  ClassName
-        lua_rawget(L,-2);
-        // pila = ... ptr luabind_clases luabind_clases[ClassName]
-        lua_pushstring(L,"meta_instance");
-        // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
-        lua_rawget(L,-2); // class_table
-        // pila = ... ptr table:luabind_clases luabind_clases[ClassName] obj_metainstance
-        lua_setmetatable(L, -4); // obj index
-        // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
-        lua_pop(L,2);
+        // pila = ... ptr
+        setClassMetatable(L, "$$(LUANAME[ClassName] or ClassName)$$");
         // pila = ... ptr
       }
       else {

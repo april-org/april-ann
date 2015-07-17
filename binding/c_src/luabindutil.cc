@@ -70,6 +70,27 @@ void pushOrCreateTable(lua_State *L, int n, const char *field) {
   // stack: [n].field
 }
 
+void setClassMetatable(lua_State *L, const char *class_name) {
+  // pila = ... ptr
+  // asociamos la referencia al objeto
+  // le asociamos al userdata la metatabla que le corresponde
+  lua_pushstring(L,"luabind_classes");
+  // pila = ... ptr "luabind_clases"
+  lua_rawget(L,LUA_REGISTRYINDEX);
+  // pila = ... ptr luabind_clases
+  lua_pushstring(L,class_name);
+  // pila = ... ptr luabind_clases  ClassName
+  lua_rawget(L,-2);
+  // pila = ... ptr luabind_clases luabind_clases[ClassName]
+  lua_pushstring(L,"meta_instance");
+  // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
+  lua_rawget(L,-2); // class_table
+  // pila = ... ptr table:luabind_clases luabind_clases[ClassName] metainstance
+  lua_setmetatable(L,-4); // obj_index
+  // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
+  lua_pop(L,2);
+}
+
 int isDerived(lua_State *L,
               const char *child,
               const char *parent) {
