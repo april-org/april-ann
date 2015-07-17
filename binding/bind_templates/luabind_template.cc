@@ -154,126 +154,100 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
   if (obj == 0) {
     DEBUG("lua_push$$ClassName$$: pushing a nil value");
     lua_pushnil(L);
+    // pila = ... nil
   }
   else {
     DEBUG_OBJ("lua_push$$ClassName$$", obj);
-    int lua_ref = obj->getLuaRef();
-#if 1
     // FIXME: This code tries to retrive the pointer, in case the weak table has
     // a nil reference, we assume it has been freed by Lua GC, however, it is
     // unexpected this behavior :(, it is likely to be a Lua bug.
-    if (lua_ref != LUA_NOREF) {
-      DEBUG_OBJ_FMT1("lua_push$$ClassName$$: retrieving Lua reference %d",
-                     obj, lua_ref);
-      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
-      // pila = refs
-      lua_rawgeti(L, -1, lua_ref);
-      // pila = refs ptr
-      lua_remove(L, -2);
-      // pila = ptr
-      if (lua_isnil(L, -1)) {
-        lua_pop(L, 1);
-        obj->setLuaRef(LUA_NOREF);
-        lua_ref = LUA_NOREF;
-        // DecRef(obj);
-      }
-    }
-#endif
-    if (lua_ref == LUA_NOREF) {
+    DEBUG_OBJ_FMT1("lua_push$$ClassName$$: retrieving Lua reference %d",
+                   obj, lua_ref);
+    lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
+    // pila = ... refs
+    lua_rawgetp(L, -1, obj);
+    // pila = ... refs ptr
+    if (lua_isnil(L,-1)) {
       DEBUG("lua_push$$ClassName$$: allocating Lua reference");
       // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to remove
       // our instance
       IncRef(obj);
-
       //
+      lua_pop(L, 1);
       $$ClassName$$ **ptr;
 	
       ptr = static_cast<$$ClassName$$**>( 
                                          lua_newuserdata(L,sizeof($$ClassName$$*)) ); // instance
       *ptr = obj;
-      // pila =  ptr
-      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
-      // pila =  ptr refs
-      lua_pushvalue(L, -2);
-      // pila =  ptr refs ptr
-      lua_ref = luaL_ref(L, -2);
-      // pila =  ptr refs
-      lua_pop(L, 1);
-      // pila =  ptr
+      // pila = ... refs ptr
+      lua_pushvalue(L, -1);
+      // pila = ... refs ptr ptr
+      lua_rawsetp(L, -3, obj);
+      // pila = ... refs ptr
+      lua_remove(L, -2);
+      // pila = ... ptr
       // asociamos la referencia al objeto
-      obj->setLuaRef(lua_ref);
       // le asociamos al userdata la metatabla que le corresponde
       lua_pushstring(L,"luabind_classes");
-      // pila =  ptr, "luabind_clases"
+      // pila = ... ptr "luabind_clases"
       lua_rawget(L,LUA_REGISTRYINDEX);
-      // pila =  ptr, luabind_clases
+      // pila = ... ptr luabind_clases
       lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
-      // pila =  ptr, luabind_clases  ClassName
+      // pila = ... ptr luabind_clases  ClassName
       lua_rawget(L,-2);
-      // pila =  ptr, luabind_clases luabind_clases[ClassName]
+      // pila = ... ptr luabind_clases luabind_clases[ClassName]
       lua_pushstring(L,"meta_instance");
-      // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
+      // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
       lua_rawget(L,-2); // class_table
-      // pila =  ptr, table:luabind_clases luabind_clases[ClassName] metainstance
+      // pila = ... ptr table:luabind_clases luabind_clases[ClassName] metainstance
       lua_setmetatable(L,-4); // obj_index
-      // pila =  ptr, table:luabind_clases luabind_clases[ClassName]
+      // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
       lua_pop(L,2);
-      // pila = ptr
+      // pila = ... ptr
     }
     else {
-#if 0
-      DEBUG_OBJ_FMT1("lua_push$$ClassName$$: retrieving Lua reference %d",
-                     obj, lua_ref);
-      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
-      // pila = refs
-      lua_rawgeti(L, -1, lua_ref);
-      // pila = refs ptr
+      DEBUG_OBJ("lua_push$$ClassName$$: Lua reference successfully retrieved", obj);
+      // pila = ... refs ptr
       lua_remove(L, -2);
-      // pila = ptr
-      if (lua_isnil(L, -1)) {
-        lua_pushstring(L, "Unexpected behavior");
-        lua_error(L);
-      }
-#endif
-      DEBUG_OBJ("lua_push$$ClassName$$: Lua reference retrieved correctly", obj);
-      // pila = ptr
+      // pila = ... ptr
       lua_getmetatable(L, -1);
-      // pila = ptr metatable
+      // pila = ... ptr metatable
       lua_pushstring(L, "id");
-      // pila = ptr metatable "id"
+      // pila = ... ptr metatable "id"
       lua_rawget(L, -2);
-      // pila = ptr metatable current_string
+      // pila = ... ptr metatable current_string
       const char *current = lua_tostring(L, -1);
       if (isDerived(L, "$$(LUANAME[ClassName] or ClassName)$$", current)) {
         DEBUG("lua_push$$ClassName$$: derived instance");
-        // pila = ptr metatable current_string
+        // pila = ... ptr metatable current_string
         lua_pop(L, 2);
         // buscamos la metatabla que corresponde al objeto
         lua_pushstring(L,"luabind_classes");
-        // pila =  ptr, "luabind_clases"
+        // pila = ... ptr "luabind_clases"
         lua_rawget(L,LUA_REGISTRYINDEX);
-        // pila =  ptr, luabind_clases
+        // pila = ... ptr luabind_clases
         lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
-        // pila =  ptr, luabind_clases  ClassName
+        // pila = ... ptr luabind_clases  ClassName
         lua_rawget(L,-2);
-        // pila =  ptr, luabind_clases luabind_clases[ClassName]
+        // pila = ... ptr luabind_clases luabind_clases[ClassName]
         lua_pushstring(L,"meta_instance");
-        // pila =  ptr, luabind_clases luabind_clases[ClassName] "metainstance"
+        // pila = ... ptr luabind_clases luabind_clases[ClassName] "metainstance"
         lua_rawget(L,-2); // class_table
-        // pila =  ptr, table:luabind_clases luabind_clases[ClassName] obj_metainstance
+        // pila = ... ptr table:luabind_clases luabind_clases[ClassName] obj_metainstance
         lua_setmetatable(L, -4); // obj index
-        // pila =  ptr, table:luabind_clases luabind_clases[ClassName]
+        // pila = ... ptr table:luabind_clases luabind_clases[ClassName]
         lua_pop(L,2);
-        // pila = ptr
+        // pila = ... ptr
       }
       else {
         DEBUG("lua_push$$ClassName$$: non-derived instance");
-        // pila = ptr metatable current_string
+        // pila = ... ptr metatable current_string
         lua_pop(L, 2);
-        // pila = ptr
+        // pila = ... ptr
       }
-    }
-  } // retrieve a previous Lua ref
+    } // retrieve a previous Lua referenced object
+  } // obj != 0
+  // pila = ... ptr
   lua_gc(L, LUA_GCRESTART, 0); // it is safe to restart GC here
   DEBUG("lua_push$$ClassName$$ (end)");
 }
@@ -305,15 +279,6 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
     DEBUG_OBJ("lua_delete_$$ClassName$$ (begin)",obj);
     $$class.destructor$$
     DEBUG_OBJ("lua_delete_$$ClassName$$ (end)",obj);
-    /*
-      int lua_ref = obj->getLuaRef();
-      if (lua_ref != LUA_NOREF) {
-      lua_getfield(L, LUA_REGISTRYINDEX, "luabind_refs");
-      luaL_unref(L, -1, lua_ref);
-      lua_pop(L, 1);
-      }
-    */
-    obj->setLuaRef(LUA_NOREF);
     // Hacemos un DecRef para borrar la referencia a este objeto
     DecRef(obj);
   }

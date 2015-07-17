@@ -47,11 +47,10 @@ Referenced::Referenced() {
 #endif
 #endif
   refs = 0;
-  lua_ref = LUA_NOREF;
 }
 Referenced::~Referenced() {
 #ifdef __DEBUG__
-  fprintf(stderr," DEBUG Destroying %p with reference %d (Lua %d)\n",this,refs,lua_ref);
+  fprintf(stderr," DEBUG Destroying %p with reference %d\n",this,refs);
 #ifdef __PRINT_STACK__
   print_CPP_stacktrace();
 #endif
@@ -61,16 +60,11 @@ Referenced::~Referenced() {
     fprintf(stderr,"Warning: destroying %p with reference %d!=0\n",this,refs);
   }
 #endif
-#ifdef __DEBUG__
-  if (lua_ref != LUA_NOREF) {
-    fprintf(stderr,"Warning: destroying %p with a reference in registry\n",this);
-  }
-#endif
 }
 void Referenced::incRef() { 
   refs++; 
 #ifdef __DEBUG__
-  fprintf(stderr," DEBUG IncRef %p to reference %d (Lua %d)\n",this,refs,lua_ref);
+  fprintf(stderr," DEBUG IncRef %p to reference %d\n",this,refs);
 #ifdef __PRINT_STACK__
   print_CPP_stacktrace();
 #endif
@@ -79,7 +73,7 @@ void Referenced::incRef() {
 bool Referenced::decRef() { 
   refs--;
 #ifdef __DEBUG__
-  fprintf(stderr," DEBUG DecRef %p to reference %d (Lua %d)\n",this,refs,lua_ref);
+  fprintf(stderr," DEBUG DecRef %p to reference %d\n",this,refs);
 #ifdef __PRINT_STACK__
   print_CPP_stacktrace();
 #endif
@@ -89,23 +83,4 @@ bool Referenced::decRef() {
 
 int Referenced::getRef() const {
   return refs;
-}
-
-void Referenced::setLuaRef(int lua_ref) {
-#ifdef __DEBUG__
-#ifdef _debugrefsno0_
-  if (this->lua_ref != LUA_NOREF && lua_ref != LUA_NOREF) {
-    fprintf(stderr," Warning: Overwriting %p previous Lua ref %d\n",this,this->lua_ref);
-  }
-#endif
-  fprintf(stderr," DEBUG SetLuaRef %p to reference %d\n",this,lua_ref);
-#ifdef __PRINT_STACK__
-  print_CPP_stacktrace();
-#endif
-#endif
-  this->lua_ref = lua_ref;
-}
-
-int Referenced::getLuaRef() const {
-  return lua_ref;
 }
