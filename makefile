@@ -195,14 +195,14 @@ install:
 uninstall:
 	@make uninstall-$(UNAME)
 
-install-Darwin:
-	mkdir -p $(LUALIB)
+install-Darwin: uninstall-Darwin
+	@mkdir -p $(LUALIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
-install-Linux:
-	mkdir -p $(LUALIB)/aprilann
-	mkdir -p $(INCLUDE)/april-ann
+install-Linux: uninstall-Linux
+	@mkdir -p $(LUALIB)/aprilann
+	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
 	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
 	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
@@ -212,17 +212,17 @@ install-Linux:
 	install bin/april-ann $(BIN)
 
 uninstall-Darwin:
-	rm -f $(LIB)/libapril-ann.so
-	rm -f $(LUALIB)/aprilann.so
-	rm -f $(BIN)/april-ann
+	@rm -f $(LIB)/libapril-ann.so
+	@rm -f $(LUALIB)/aprilann.so
+	@rm -f $(BIN)/april-ann
 
 uninstall-Linux:
-	rm -f $(INCLUDE)/april-ann/*
-	rmdir $(INCLUDE)/april-ann
-	rm -f $(LIB)/libapril-ann.so
-	rm -f $(LIB)/pkgconfig/april-ann.pc
-	rm -f $(LUALIB)/aprilann.so
-	rm -f $(BIN)/april-ann
+	@rm -f $(INCLUDE)/april-ann/*
+	@rmdir $(INCLUDE)/april-ann
+	@rm -f $(LIB)/libapril-ann.so
+	@rm -f $(LIB)/pkgconfig/april-ann.pc
+	@rm -f $(LUALIB)/aprilann.so
+	@rm -f $(BIN)/april-ann
 
 ##############################################################################
 

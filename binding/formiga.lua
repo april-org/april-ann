@@ -1541,7 +1541,7 @@ function formiga.__link_main_program__ (t)
   -- crear programa ppal
   --formiga.exec_package("luapkg_main","build")
   local module_name = formiga.module_name
-  local f = io.open(formiga.os.compose_dir(formiga.global_properties.build_dir, "luapkgMain.cc"),"w")
+  local f = io.open(formiga.os.compose_dir(formiga.global_properties.build_dir, "luapkg.cc"),"w")
   --
   f:write('#define lua_c\n')
   f:write('extern "C" {\n')
@@ -1588,16 +1588,28 @@ function formiga.__link_main_program__ (t)
   -- f:write("  return 0;\n")
   f:write('}\n')
   f:write('}\n')
-  -- 
-  f:write('\n')
+  f:close()
+  --
+  local f = io.open(formiga.os.compose_dir(formiga.global_properties.build_dir, "luapkgMain.cc"),"w")
+  f:write('#define lua_c\n')
+  f:write('extern "C" {\n')
+  f:write("#include <unistd.h>\n")
+  f:write("#include <stdio.h>\n")
+  f:write("#include <string.h>\n")
+  f:write('#include <lua.h>\n')
+  f:write('#include <lauxlib.h>\n')
+  f:write('#include <lualib.h>\n')
+  --f:write('#include <locale.h>\n')
+  f:write('}\n')
+  f:write('extern "C" {\n')
+  f:write('extern int luaopen_' .. module_name .. '(lua_State *L);\n')
+  f:write('}\n')
   f:write('#define lua_userinit(L)   do { \\\n')
   f:write('    luaL_requiref(L, "' .. module_name .. '", luaopen_' .. module_name .. ', 0);\\\n')
   f:write('    lua_pop(L, 1);\\\n')
   f:write('  } while(0)\n')
   f:write('\n')
-  --
   f:write('#include <lua.c>\n')
-  f:close()
   --
   
   -- Collect all package libraries and generate compiler options.
@@ -1626,6 +1638,8 @@ function formiga.__link_main_program__ (t)
 				 formiga.os.compose_dir(formiga.global_properties.build_dir,
                                                         "bin",
 							formiga.program_name),
+                                 formiga.os.compose_dir(formiga.global_properties.build_dir,
+							"luapkg.cc"),
 				 formiga.os.compose_dir(formiga.global_properties.build_dir,
 							"luapkgMain.cc"),
 				 --formiga.compiler.include_dir,
@@ -1651,50 +1665,18 @@ function formiga.__link_main_program__ (t)
   formiga.os.execute(command)
 
   if not formiga.compiler.global_flags.no_shared then
-     -- We generate a shared library which could be loaded in any Lua interperter
-     local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
-							"lib")
-     os_mkdir(shared_lib_dest_dir)
-     local command = table.concat({ formiga.compiler.CPPcompiler,
-				    formiga.compiler.wall,
-				    formiga.compiler.destination,
-				    string.format("%s/%s.so",
-						  shared_lib_dest_dir,
-						  module_name,
-						  ".so"),
-				    formiga.os.compose_dir(formiga.global_properties.build_dir,
-							   "luapkgMain.cc"),
-				    --formiga.compiler.include_dir,
-				    formiga.get_all_objects(),
-				    formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
-				    package_library_paths_str,
-				    package_link_libraries_str,
-				    table.concat(formiga.compiler.extra_libs,
-						 " "),
-				    table.concat(formiga.compiler.shared_extra_libs,
-						 " "),
-				    table.concat(formiga.compiler.extra_flags,
-						 " "),
-				    table.concat(formiga.version_flags,
-						 " "),
-				    pkgconfig_libs_list,
-				    ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
-				    formiga.lua_dot_c_path},
-				  " ")
-     --
-     printverbose(2,'['..command..']')
-     io.stdout:flush() -- para que las cosas salgan en un orden apropiado
-     io.stderr:flush() -- para que las cosas salgan en un orden apropiado
-     formiga.os.execute(command)
-
-     -- Shared for compiling new modules out of APRIL repository
+    local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
+                                                       "lib")
+    os_mkdir(shared_lib_dest_dir)
+    
+    -- Shared library for compilation of new modules out of APRIL repository
      local command = table.concat({ formiga.compiler.CPPcompiler,
                                     formiga.compiler.wall,
 				    formiga.compiler.destination,
-				    string.format("%s/lib%s.so",
-						  shared_lib_dest_dir,
-						  formiga.program_name,
-						  ".so"),
+                                    formiga.os.compose_dir(shared_lib_dest_dir,
+                                                           "lib"..formiga.program_name..".so"),
+                                    formiga.os.compose_dir(formiga.global_properties.build_dir,
+                                                           "luapkg.cc"),
 				    --formiga.compiler.include_dir,
 				    formiga.get_all_objects(),
 				    formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
@@ -1718,6 +1700,38 @@ function formiga.__link_main_program__ (t)
      io.stderr:flush() -- para que las cosas salgan en un orden apropiado
      formiga.os.execute(command)
      
+     -- We generate a shared library which could be loaded in any Lua interperter
+     local command = table.concat({ formiga.compiler.CPPcompiler,
+				    formiga.compiler.wall,
+				    formiga.compiler.destination,
+                                    formiga.os.compose_dir(shared_lib_dest_dir,
+                                                           module_name.."so"),
+                                    formiga.os.compose_dir(formiga.global_properties.build_dir,
+                                                           "luapkgMain.cc"),
+				    --formiga.compiler.include_dir,
+				    -- formiga.get_all_objects(),
+                                    -- formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
+                                    "-Llib/",
+                                    "-l"..formiga.program_name,
+				    package_library_paths_str,
+				    package_link_libraries_str,
+				    table.concat(formiga.compiler.extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.shared_extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.extra_flags,
+						 " "),
+				    table.concat(formiga.version_flags,
+						 " "),
+				    pkgconfig_libs_list,
+				    ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
+				    formiga.lua_dot_c_path},
+				  " ")
+     --
+     printverbose(2,'['..command..']')
+     io.stdout:flush() -- para que las cosas salgan en un orden apropiado
+     io.stderr:flush() -- para que las cosas salgan en un orden apropiado
+     formiga.os.execute(command)
   end
 end
 

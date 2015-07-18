@@ -26,7 +26,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include "open_addressing_hash_timestamp.h"
-#include "trie.h"
 
 namespace AprilUtils {
 

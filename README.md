@@ -207,7 +207,9 @@ Hello World!
   which you need (i.e. `require("aprilann.matrix")`), or loading the full
   library (`require("aprilann")`). **Be careful**, the APRIL-ANN modules doesn't
   follow Lua guidelines and have lateral effects because of the declaration of
-  tables, functions, and other values at the GLOBALs Lua table:
+  tables, functions, and other values at the GLOBALs Lua table. Before using
+  APRIL-ANN as a Lua module you need to install it into your system (currently
+  only available for Linux systems) by executing `$ make install`.
 
 ```
 $ lua
