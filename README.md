@@ -397,6 +397,7 @@ interpreter:
 
 ```
 $ lua
+Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 > require "aprilann"
 APRIL-ANN v0.4.0  Copyright (C) 2012-2015 DSIC-UPV, CEU-UCH
 Compiled at Sat Jul 18 13:45:52 2015, timestamp 1437219952
