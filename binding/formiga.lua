@@ -1705,7 +1705,7 @@ function formiga.__link_main_program__ (t)
 				    formiga.compiler.wall,
 				    formiga.compiler.destination,
                                     formiga.os.compose_dir(shared_lib_dest_dir,
-                                                           module_name.."so"),
+                                                           module_name..".so"),
                                     formiga.os.compose_dir(formiga.global_properties.build_dir,
                                                            "luapkgMain.cc"),
 				    --formiga.compiler.include_dir,
