@@ -394,8 +394,15 @@ After, you need to link your software using the following commands:
 $ g++ -fPIC -shared -o YOUR_MODULE_NAME.so *.o $(pkg-config --cflags --libs april-ann)
 ```
 
-Once you have done this, you can load your module into APRIL-ANN using Lua
-interpreter:
+Don't forget to require APRIL-ANN in your C++ code using the following
+instruction:
+
+```C
+luaL_requiref(L, "aprilann", luaopen_aprilann, 1);
+```
+
+Once you have done this, you can load your module into APRIL-ANN
+using Lua interpreter:
 
 ```
 $ lua
@@ -407,4 +414,30 @@ This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
 > your_module = require "YOUR_MODULE_NAME"
+```
+
+The following is a C++ file given as module example:
+
+```C++
+// includes all APRIL-ANN dependencies and declares luaopen_aprilann header
+#include "april-ann.h"
+// exported function example
+int get(lua_State *L) {
+  AprilUtils::SharedPtr<Basics::MatrixFloat> m = new Basics::MatrixFloat(2, 10, 20);
+  AprilMath::MatrixExt::Initializers::matFill(m.get(), 20.0f);
+  AprilUtils::LuaTable::pushInto(L, m.get());
+  return 1;
+}
+// declaration of module opening function
+extern "C" {
+  int luaopen_example(lua_State *L) {
+    static const luaL_Reg funcs[] = {
+      {"get", get},
+      {NULL, NULL}
+    };
+    luaL_requiref(L, "aprilann", luaopen_aprilann, 1);
+    luaL_newlib(L, funcs);
+    return 1;
+  }
+}
 ```
