@@ -403,5 +403,5 @@ Compiled at Sat Jul 18 13:45:52 2015, timestamp 1437219952
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
-> your_module = require "YOUR_MODULE"
+> your_module = require "YOUR_MODULE_NAME"
 ```
