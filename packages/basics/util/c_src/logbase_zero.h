@@ -1,3 +1,4 @@
+#ifdef ABSOLUTE_ZERO_LOGBASE
 /*
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
@@ -457,3 +458,4 @@ namespace AprilUtils {
 
 #endif // LOGBASE_ZERO_H
 
+#endif
