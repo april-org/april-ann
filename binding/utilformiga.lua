@@ -20,6 +20,7 @@ end
 
 function stack:pop()
   v = self.data[self.n]
+  self.data[self.n] = nil
   self.n = self.n-1
   return v
 end

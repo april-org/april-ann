@@ -14,6 +14,8 @@ DARWIN_SUFIX = macports
 PREFIX = /opt/local
 endif
 
+INCLUDE := $(PREFIX)/include
+LIB := $(PREFIX)/lib
 LUALIB := $(PREFIX)/lib/lua/5.2
 BIN := $(PREFIX)/bin
 
@@ -188,10 +190,10 @@ clean:
 	./clean.sh
 
 install:
-	make install-$(UNAME)
+	@make install-$(UNAME)
 
 uninstall:
-	make uninstall-$(UNAME)
+	@make uninstall-$(UNAME)
 
 install-Darwin:
 	mkdir -p $(LUALIB)
@@ -199,15 +201,26 @@ install-Darwin:
 	install bin/april-ann $(BIN)
 
 install-Linux:
-	mkdir -p $(LUALIB)
+	mkdir -p $(LUALIB)/aprilann
+	mkdir -p $(INCLUDE)/april-ann
+	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
+	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
+	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
+	@rm april-ann.pc
+	install lib/libapril-ann.so $(LIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
 uninstall-Darwin:
+	rm -f $(LIB)/libapril-ann.so
 	rm -f $(LUALIB)/aprilann.so
 	rm -f $(BIN)/april-ann
 
 uninstall-Linux:
+	rm -f $(INCLUDE)/april-ann/*
+	rmdir $(INCLUDE)/april-ann
+	rm -f $(LIB)/libapril-ann.so
+	rm -f $(LIB)/pkgconfig/april-ann.pc
 	rm -f $(LUALIB)/aprilann.so
 	rm -f $(BIN)/april-ann
 

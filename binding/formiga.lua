@@ -1686,6 +1686,37 @@ function formiga.__link_main_program__ (t)
      io.stdout:flush() -- para que las cosas salgan en un orden apropiado
      io.stderr:flush() -- para que las cosas salgan en un orden apropiado
      formiga.os.execute(command)
+
+     -- Shared for compiling new modules out of APRIL repository
+     local command = table.concat({ formiga.compiler.CPPcompiler,
+                                    formiga.compiler.wall,
+				    formiga.compiler.destination,
+				    string.format("%s/lib%s.so",
+						  shared_lib_dest_dir,
+						  formiga.program_name,
+						  ".so"),
+				    --formiga.compiler.include_dir,
+				    formiga.get_all_objects(),
+				    formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
+				    package_library_paths_str,
+				    package_link_libraries_str,
+				    table.concat(formiga.compiler.extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.shared_extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.extra_flags,
+						 " "),
+				    table.concat(formiga.version_flags,
+						 " "),
+				    pkgconfig_libs_list,
+				    ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
+				    formiga.lua_dot_c_path},
+				  " ")
+     --
+     printverbose(2,'['..command..']')
+     io.stdout:flush() -- para que las cosas salgan en un orden apropiado
+     io.stderr:flush() -- para que las cosas salgan en un orden apropiado
+     formiga.os.execute(command)
      
   end
 end

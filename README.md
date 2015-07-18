@@ -372,3 +372,36 @@ Or via HomeBrew:
 
 - Install [Homebrew](http://brew.sh/)
 - Execute `$ ./DEPENDENCIES-INSTALLER.sh`
+
+Building new modules out of APRIL-ANN repository
+------------------------------------------------
+
+Currently this option is only available for Linux systems, despite it can be
+done manually in MacOS X if you know how to. So, for Linux systems, you need
+to install APRIL-ANN using the following commands (after you have downloaded
+or cloned the main repository):
+
+```
+$ make
+$ sudo make install
+```
+
+After, you need to link your software using the following commands:
+
+```
+$ g++ -fPIC -shared -o YOUR_MODULE_NAME.so *.o $(pkg-config --cflags --libs april-ann)
+```
+
+Once you have done this, you can load your module into APRIL-ANN using Lua
+interpreter:
+
+```
+$ lua
+> require "aprilann"
+APRIL-ANN v0.4.0  Copyright (C) 2012-2015 DSIC-UPV, CEU-UCH
+Compiled at Sat Jul 18 13:45:52 2015, timestamp 1437219952
+This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see LICENSE.txt for details.
+> your_module = require "YOUR_MODULE"
+```
