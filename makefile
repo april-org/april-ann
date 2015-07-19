@@ -187,24 +187,30 @@ debug-pi:
 
 #############################################################################
 
+INCLUDE_NO_WS := $(shell echo "$(INCLUDE)" | sed 's/ //g')
+LIB_NO_WS := $(shell echo "$(LIB)" | sed 's/ //g')
+LUALIB_NO_WS := $(shell echo "$(LUALIB)" | sed 's/ //g')
+LUAMOD_NO_WS := $(shell echo "$(LUAMOD)" | sed 's/ //g')
+BIN_NO_WS := $(shell echo "$(BIN)" | sed 's/ //g')
+
 check-env-vars:
-ifneq ($(shell echo "$(INCLUDE)" | sed 's/ //g'),"$(INCLUDE)")
+ifneq ("$(INCLUDE_NO_WS)","$(INCLUDE)")
 	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
 	@exit 3
 endif
-ifneq ($(shell echo "$(LIB)" | sed 's/ //g'),"$(LIB)")
+ifneq ("$(LIB_NO_WS)","$(LIB)")
 	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
 	@exit 4
 endif
-ifneq ($(shell echo "$(LUALIB)" | sed 's/ //g'),"$(LUALIB)")
+ifneq ("$(LUALIB_NO_WS)","$(LUALIB)")
 	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
 	@exit 5
 endif
-ifneq ($(shell echo "$(LUAMOD)" | sed 's/ //g'),"$(LUAMOD)")
+ifneq ("$(LUAMOD_NO_WS)","$(LUAMOD)")
 	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
 	@exit 6
 endif
-ifneq ($(shell echo "$(BIN)" | sed 's/ //g'),"$(BIN)")
+ifneq ("$(BIN_NO_WS)","$(BIN)")
 	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
 	@exit 7
 endif
@@ -212,18 +218,7 @@ endif
 clean:
 	./clean.sh
 
-install:
-	@make install-$(UNAME)
-
-uninstall:
-	@make uninstall-$(UNAME)
-
-install-Darwin: check-env-vars uninstall-Darwin
-	@mkdir -p $(LUALIB)
-	install lib/aprilann.so $(LUALIB)
-	install bin/april-ann $(BIN)
-
-install-Linux: check-env-vars uninstall-Linux
+install: check-env-vars uninstall
 	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
@@ -234,12 +229,7 @@ install-Linux: check-env-vars uninstall-Linux
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
-uninstall-Darwin: check-env-vars
-	@rm -f $(LIB)/libapril-ann.so
-	@rm -f $(LUALIB)/aprilann.so
-	@rm -f $(BIN)/april-ann
-
-uninstall-Linux: check-env-vars
+uninstall: check-env-vars
 	@rm -Rf $(LUAMOD)/april_tools
 	@rm -Rf $(INCLUDE)/april-ann
 	@rm -f $(LIB)/libapril-ann.so
