@@ -224,7 +224,6 @@ install-Darwin: check-env-vars uninstall-Darwin
 	install bin/april-ann $(BIN)
 
 install-Linux: check-env-vars uninstall-Linux
-	@rm -f $(INCLUDE)/april-ann/*
 	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
