@@ -17,6 +17,7 @@ endif
 INCLUDE := $(PREFIX)/include
 LIB := $(PREFIX)/lib
 LUALIB := $(PREFIX)/lib/lua/5.2
+LUAMOD := $(PREFIX)/share/lua/5.2
 BIN := $(PREFIX)/bin
 
 ALL: auto-release
@@ -201,7 +202,9 @@ install-Darwin: uninstall-Darwin
 	install bin/april-ann $(BIN)
 
 install-Linux: uninstall-Linux
-	@mkdir -p $(LUALIB)/aprilann
+	@rm -f $(INCLUDE)/april-ann/*
+	@rm -f $(LUAMOD)/april_tools/*
+	cp -R tools $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
 	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc

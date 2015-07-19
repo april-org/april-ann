@@ -120,8 +120,11 @@ The makefile has the following variables which can be forced by the user:
   `$(PREFIX)/lib`
 - **INCLUDE** indicates header sources install directory, by default it is
   `$(PREFIX)/include/april-ann`
-- **LUALIB** indicates where Lua modules are installed, by default it is
+- **LUALIB** indicates where Lua library modules are installed, by default it is
   `$(PREFIX)/lib/lua/5.2`
+- **LUAMOD** indicates where Lua code modules are installed, by default it is
+  `$(PREFIX)/share/lua/5.2` and there will be created `april_tools` folder with
+  a copy of the content of repository's `tools` folder.
 - **BIN** indicates where you want to install binary files, by default it is
   `$(PREFIX)/bin`
 
