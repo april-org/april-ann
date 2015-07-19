@@ -116,6 +116,10 @@ The makefile has the following variables which can be forced by the user:
 - **PREFIX** indicates the prefix for libraries and binaries. In Linux it is
   `/usr`, in Darwin it depends on MacPorts (`/opt/local`) or Homebrew
   (`/usr/local`).
+- **LIB** indicates shared library install directory, by default it is
+  `$(PREFIX)/lib`
+- **INCLUDE** indicates header sources install directory, by default it is
+  `$(PREFIX)/include/april-ann`
 - **LUALIB** indicates where Lua modules are installed, by default it is
   `$(PREFIX)/lib/lua/5.2`
 - **BIN** indicates where you want to install binary files, by default it is
@@ -162,9 +166,12 @@ stuff related with MKL.  Exists one build file for each possible target:
 `build_mkl_debug.lua`, ... and so on.
 
 The binary will be generated at `bin/april-ann`, which incorporates the Lua 5.2
-interpreter and works without any dependency in Lua.  Besides, a shared library
-will be generated at `lib/aprilann.so`, so it is possible to use `require` from
-Lua to load APRIL-ANN in a standard Lua 5.2 interpreter.
+interpreter and works without any dependency in Lua. Besides, a shared library
+and a Lua module will be generated at `lib/libapril-ann.so` and
+`lib/aprilann.so`, so it is possible to use `require` from Lua to load APRIL-ANN
+in a standard Lua 5.2 interpreter. In order to require `aprilann` module it is
+required the installation of both libraries in their corresponding place in your
+system. Normally this can be done executing `$ sudo make install`.
 
 **NOTE** that loading `april-ann` as a Lua 5.2 module, you need to have the
 `.so` library in the `package.cpath` or LUA_CPATH. It is possible to install it
@@ -209,7 +216,7 @@ Hello World!
   follow Lua guidelines and have lateral effects because of the declaration of
   tables, functions, and other values at the GLOBALs Lua table. Before using
   APRIL-ANN as a Lua module you need to install it into your system (currently
-  only available for Linux systems) by executing `$ make install`.
+  only available for Linux systems) by executing `$ sudo make install`.
 
 ```
 $ lua
@@ -378,17 +385,18 @@ Or via HomeBrew:
 Building new modules out of APRIL-ANN repository
 ------------------------------------------------
 
-Currently this option is only available for Linux systems, despite it can be
-done manually in MacOS X if you know how to. So, for Linux systems, you need
-to install APRIL-ANN using the following commands (after you have downloaded
-or cloned the main repository):
+Currently this option has been tested for Linux systems, despite it can be done
+in MacOS X. So, for Linux systems, you need to install APRIL-ANN using the
+following commands (after you have downloaded or cloned the main repository):
 
 ```
+$ ./DEPENDENCIES-INSTALLER.sh
 $ make
 $ sudo make install
 ```
 
-After, you need to link your software using the following commands:
+After that, you need to link your software using `pkg-config` to configure your
+compiler:
 
 ```
 $ g++ -fPIC -shared -o YOUR_MODULE_NAME.so *.o $(pkg-config --cflags --libs april-ann)
@@ -401,8 +409,8 @@ instruction:
 luaL_requiref(L, "aprilann", luaopen_aprilann, 1);
 ```
 
-Once you have done this, you can load your module into APRIL-ANN
-using Lua interpreter:
+Once you have done this steps, you can load your module into APRIL-ANN using Lua
+interpreter:
 
 ```
 $ lua
@@ -416,16 +424,23 @@ under certain conditions; see LICENSE.txt for details.
 > your_module = require "YOUR_MODULE_NAME"
 ```
 
-The following is a C++ file given as module example:
+The next C++ code is an example of file which can be loaded as external module
+for APRIL-ANN:
 
 ```C++
 // includes all APRIL-ANN dependencies and declares luaopen_aprilann header
 #include "april-ann.h"
+using AprilMath::MatrixExt::Initializers::matFill;
+using AprilUtils::LuaTable;
+using AprilUtils::SharedPtr;
+using Basics::MatrixFloat;
 // exported function example
 int get(lua_State *L) {
-  AprilUtils::SharedPtr<Basics::MatrixFloat> m = new Basics::MatrixFloat(2, 10, 20);
-  AprilMath::MatrixExt::Initializers::matFill(m.get(), 20.0f);
-  AprilUtils::LuaTable::pushInto(L, m.get());
+  SharedPtr<MatrixFloat> m = new MatrixFloat(2, 10, 20);
+  matFill(m.get(), 20.0f);
+  // using LuaTable you can push APRIL-ANN objects in Lua stack (be careful,
+  // not all objects can be pushed)
+  LuaTable::pushInto(L, m.get());
   return 1;
 }
 // declaration of module opening function
