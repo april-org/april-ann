@@ -1695,6 +1695,7 @@ function formiga.__link_main_program__ (t)
                                    ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
                                      formiga.lua_dot_c_path},
       " ")
+    command = command:gsub("-bundle","-dynamiclib") -- for MacOS X FIXME: do it in a better way
     --
     printverbose(2,'['..command..']')
     io.stdout:flush() -- para que las cosas salgan en un orden apropiado
