@@ -29,7 +29,7 @@ int luaopen_aprilann(lua_State *L);
 ]]
     local thefiles = formiga.os.glob(formiga.os.compose_dir(arg[2],"include",formiga.program_name,"*"))
     for _,file in ipairs(thefiles) do
-      if not file:find("april-ann.h") then
+      if not file:find("april-ann.h", nil, true) then
         local basename = string.sub(file, select(2,file:find(dir, nil, true))+2)
         f:write( ('#include "%s"\n'):format(basename) )
       end
