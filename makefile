@@ -77,7 +77,7 @@ endif
 check_darwin_release:
 ifeq ("$(DARWIN_SUFIX)", "")
 	@echo "Impossible to detect macports or homebrew!"
-	@exit 1
+	@exit 2
 endif
 
 #############################################################################
@@ -187,6 +187,28 @@ debug-pi:
 
 #############################################################################
 
+check-env-vars:
+ifneq ($(shell echo "$(INCLUDE)" | sed 's/ //g'),"$(INCLUDE)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 3
+endif
+ifneq ($(shell echo "$(LIB)" | sed 's/ //g'),"$(LIB)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 4
+endif
+ifneq ($(shell echo "$(LUALIB)" | sed 's/ //g'),"$(LUALIB)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 5
+endif
+ifneq ($(shell echo "$(LUAMOD)" | sed 's/ //g'),"$(LUAMOD)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 6
+endif
+ifneq ($(shell echo "$(BIN)" | sed 's/ //g'),"$(BIN)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 7
+endif
+
 clean:
 	./clean.sh
 
@@ -196,15 +218,14 @@ install:
 uninstall:
 	@make uninstall-$(UNAME)
 
-install-Darwin: uninstall-Darwin
+install-Darwin: check-env-vars uninstall-Darwin
 	@mkdir -p $(LUALIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
-install-Linux: uninstall-Linux
+install-Linux: check-env-vars uninstall-Linux
 	@rm -f $(INCLUDE)/april-ann/*
-	@rm -f $(LUAMOD)/april_tools/*
-	cp -R tools $(LUAMOD)/april_tools
+	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
 	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
@@ -214,14 +235,14 @@ install-Linux: uninstall-Linux
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
-uninstall-Darwin:
+uninstall-Darwin: check-env-vars
 	@rm -f $(LIB)/libapril-ann.so
 	@rm -f $(LUALIB)/aprilann.so
 	@rm -f $(BIN)/april-ann
 
-uninstall-Linux:
-	@rm -f $(INCLUDE)/april-ann/*
-	@rmdir $(INCLUDE)/april-ann
+uninstall-Linux: check-env-vars
+	@rm -Rf $(LUAMOD)/april_tools
+	@rm -Rf $(INCLUDE)/april-ann
 	@rm -f $(LIB)/libapril-ann.so
 	@rm -f $(LIB)/pkgconfig/april-ann.pc
 	@rm -f $(LUALIB)/aprilann.so
@@ -229,4 +250,4 @@ uninstall-Linux:
 
 ##############################################################################
 
-.PHONY: all 
+.PHONY: all
