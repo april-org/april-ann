@@ -13,7 +13,7 @@ Follow [wiki](https://github.com/pakozm/april-ann/wiki) for user documentation.
 Tutorials
 ---------
 
-Tutorials are available at [april-ann-tutorials](https://github.com/pakozm/april-ann-tutorials) 
+Tutorials are available at [april-ann-tutorials](https://github.com/april-org/april-ann-tutorials) 
 repository.
 
 Contributions
