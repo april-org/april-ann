@@ -221,6 +221,7 @@ clean:
 
 install: check-env-vars uninstall
 	@mkdir -p $(LUAMOD)
+	@mkdir -p $(LUALIB)
 	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
