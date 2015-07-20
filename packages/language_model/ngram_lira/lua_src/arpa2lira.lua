@@ -21,7 +21,7 @@ local function arpa2lira(self, tbl)
       bccue           = { mandatory = false, type_match = "string", default = "<s>" },
       eccue           = { mandatory = false, type_match = "string", default = "</s>" }
     }, tbl, true)
-  local theTrie = util.trie()
+  local theTrie = util.trie_hash()
   local log10   = math.log(10)
   local logZero = -1e12 -- representación de log(-infinito)
   local logOne  = 0
