@@ -389,7 +389,7 @@ Building new modules out of APRIL-ANN repository
 ------------------------------------------------
 
 Find the code base necessary for compilation of new modules at
-[APRIL-ANN module example](https://github.com/pakozm/april-ann-module-example).
+[APRIL-ANN module example](https://github.com/april-org/april-ann-module-example).
 
 Currently this option has been tested for Linux systems, despite it can be done
 in MacOS X. So, for Linux systems, you need to install APRIL-ANN using the
