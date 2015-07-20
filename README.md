@@ -457,6 +457,7 @@ extern "C" {
       {NULL, NULL}
     };
     luaL_requiref(L, "aprilann", luaopen_aprilann, 1);
+    lua_pop(L, 1);
     luaL_newlib(L, funcs);
     return 1;
   }
