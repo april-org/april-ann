@@ -421,13 +421,12 @@ interpreter:
 ```
 $ lua
 Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
-> require "aprilann"
+> your_module = require "YOUR_MODULE_NAME"
 APRIL-ANN v0.4.0  Copyright (C) 2012-2015 DSIC-UPV, CEU-UCH
 Compiled at Sat Jul 18 13:45:52 2015, timestamp 1437219952
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
-> your_module = require "YOUR_MODULE_NAME"
 ```
 
 The next C++ code is an example of file which can be loaded as external module
@@ -463,3 +462,7 @@ extern "C" {
   }
 }
 ```
+
+The module can be loaded using a Lua 5.2 interpreter (for instance, the one
+deployed with APRIL-ANN, but not the `april-ann` executable command), as
+indicated above.
