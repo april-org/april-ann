@@ -228,16 +228,18 @@ install: check-env-vars uninstall
 	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
 	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
 	@rm april-ann.pc
+	install lib/libapril-ann.a $(LIB)
 	install lib/libapril-ann.so $(LIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
 uninstall: check-env-vars
-	@rm -Rf $(LUAMOD)/april_tools
 	@rm -Rf $(INCLUDE)/april-ann
+	@rm -Rf $(LUAMOD)/april_tools
+	@rm -f $(LUALIB)/aprilann.so
+	@rm -f $(LIB)/libapril-ann.a
 	@rm -f $(LIB)/libapril-ann.so
 	@rm -f $(LIB)/pkgconfig/april-ann.pc
-	@rm -f $(LUALIB)/aprilann.so
 	@rm -f $(BIN)/april-ann
 
 ##############################################################################
