@@ -28,6 +28,7 @@ extern "C" {
 namespace Base {
   void registerGlobalLuaState(lua_State *L);
   lua_State *getGlobalLuaState();
+  lua_State *getAndCheckGlobalLuaState();
 }
 
 #endif // BASE_H
