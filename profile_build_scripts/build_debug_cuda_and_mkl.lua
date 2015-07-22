@@ -18,7 +18,6 @@ luapkg{
     optimization = "no",
     platform = "unix64+cuda",
     ignore_cuda = false,
-    no_shared = true,
     extra_flags={
       -- For Intel MKL :)
       "-DUSE_MKL",

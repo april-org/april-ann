@@ -17,7 +17,6 @@ luapkg{
     use_readline="yes",
     optimization = "no",
     platform = "unix",
-    no_shared = true,
     extra_flags={
       "-pg",
       "-DNO_POOL",

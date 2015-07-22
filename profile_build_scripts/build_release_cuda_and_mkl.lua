@@ -18,7 +18,6 @@ luapkg{
     optimization = "yes",
     platform = "unix64+cuda",
     ignore_cuda = false,
-    no_shared = true,
     extra_flags={
       -- For Intel MKL :)
       "-DUSE_MKL",
@@ -101,6 +100,7 @@ luapkg{
       },
       link_main_program{},
       create_static_library{},
+      create_shared_library{},
       copy_header_files{},
       dot_graph{
 	file_name = "dep_graph.dot"
