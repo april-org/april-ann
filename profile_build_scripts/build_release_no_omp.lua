@@ -1,4 +1,4 @@
-dofile("binding/formiga.lua")
+dofile("luapkg/formiga.lua")
 local postprocess = dofile("profile_build_scripts/postprocess.lua")
 formiga.build_dir = "build_release_no_omp"
 

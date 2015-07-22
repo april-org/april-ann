@@ -1,4 +1,4 @@
-if [ -z `ls binding` ]; then
+if [ -z `ls luapkg` ]; then
     echo "Cloning luapkg submodule"
     git submodule init
     git submodule update
@@ -7,7 +7,7 @@ if [ -z $APRILANN_CONFIGURED ]; then
     export APRILANN_CONFIGURED=1
 #export LANG=""
     export PATH="`pwd`"/lua/bin:`pwd`/bin:$PATH
-#export LUA_PATH="`pwd`""/binding/?.lua;?"
+#export LUA_PATH="`pwd`""/luapkg/?.lua;?"
 fi
 if [ -z $LUA_HISTSIZE ]; then
     export LUA_HISTSIZE=500

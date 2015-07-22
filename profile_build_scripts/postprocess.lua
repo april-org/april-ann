@@ -25,9 +25,9 @@ extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-int luaopen_aprilann(lua_State *L);
+int luaopen_%s(lua_State *L);
 }
-]]):format(formiga.module_name:upper(),formiga.module_name:upper()))
+]]):format(formiga.module_name:upper(),formiga.module_name:upper(),formiga.module_name))
     local thefiles = formiga.os.glob(formiga.os.compose_dir(arg[2],"include",formiga.program_name,"*"))
     for _,file in ipairs(thefiles) do
       if not file:find(formiga.program_name..".h", nil, true) then
