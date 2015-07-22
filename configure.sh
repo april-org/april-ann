@@ -1,4 +1,4 @@
-if [[ -z $(ls binding) ]]; then
+if [ -z `ls binding` ]; then
     echo "Cloning luapkg submodule"
     git submodule init
     git submodule update
