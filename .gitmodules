@@ -1,3 +1,3 @@
 [submodule "luapkg"]
-	path = luapkg
+	path = binding
 	url = https://github.com/april-org/luapkg.git

@@ -1,3 +1,8 @@
+if [[ -z $(ls binding) ]]; then
+    echo "Cloning luapkg submodule"
+    git submodule init
+    git submodule update
+fi
 if [ -z $APRILANN_CONFIGURED ]; then
     export APRILANN_CONFIGURED=1
 #export LANG=""
