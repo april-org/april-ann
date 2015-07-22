@@ -40,7 +40,7 @@ luapkg{
     shared_extra_libs={
      "-flat_namespace",
      "-bundle",
-      assert(io.popen("pkg-config --libs 'lua >= 5.2'"):read("*l"))
+      assert(io.popen("pkg-config --cflags --libs 'lua >= 5.2'"):read("*l"))
     },
   },
   
@@ -77,11 +77,7 @@ luapkg{
     target{
       name = "build",
       depends = "provide",
-      object{ 
-	file = formiga.os.compose_dir("binding","c_src","*.cc"),
-	include_dirs = "include",
-	dest_dir = formiga.global_properties.build_dir,
-      },
+      compile_luapkg_utils{},
       link_main_program{},
       create_static_library{},
       copy_header_files{},
