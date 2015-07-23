@@ -1,4 +1,4 @@
-dofile("binding/formiga.lua")
+dofile("luapkg/formiga.lua")
 local postprocess = dofile("profile_build_scripts/postprocess.lua")
 formiga.build_dir = "build_release_no_omp"
 
@@ -38,6 +38,7 @@ luapkg{
     shared_extra_libs={
       "-shared",
       "-llua5.2",
+      "-I/usr/include/lua5.2",
     },
   },
   
@@ -74,13 +75,10 @@ luapkg{
     target{
       name = "build",
       depends = "provide",
-      object{ 
-	file = formiga.os.compose_dir("binding","c_src","*.cc"),
-	include_dirs = "include",
-	dest_dir = formiga.global_properties.build_dir,
-      },
+      compile_luapkg_utils{},
       link_main_program{},
       create_static_library{},
+      create_shared_library{},
       copy_header_files{},
       dot_graph{
 	file_name = "dep_graph.dot"
