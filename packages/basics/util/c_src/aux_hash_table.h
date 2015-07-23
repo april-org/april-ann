@@ -36,9 +36,9 @@ namespace AprilUtils {
   //----------------------------------------------------------------------
   template<typename T> struct default_hash_function
   {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const T& key) const {
-      unsigned int resul = 1;
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const T& key) const {
+      uint32_t resul = 1;
       unsigned int length = sizeof(T);
       const unsigned char *r = reinterpret_cast<const unsigned char *>(&key);
       for (unsigned int i=0; i<length; i++) {
@@ -59,8 +59,8 @@ namespace AprilUtils {
   // Hash function for ints (operator == is OK)
   //
   template<> struct default_hash_function<int> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const int &i) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const int &i) const {
       return cte_hash*i;
     }
   };
@@ -69,8 +69,8 @@ namespace AprilUtils {
   // Hash function for unsigned ints (operator == is OK)
   //
   template<> struct default_hash_function<unsigned int> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const unsigned int &i) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const unsigned int &i) const {
       return cte_hash*i;
     }
   };
@@ -81,8 +81,8 @@ namespace AprilUtils {
   typedef AprilUtils::pair<int,int> int_pair;
 
   template<> struct default_hash_function<int_pair> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const int_pair &i) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const int_pair &i) const {
       return ((cte_hash*i.first) + i.second) * cte_hash;
     }
   };
@@ -94,8 +94,8 @@ namespace AprilUtils {
   typedef AprilUtils::pair<unsigned int,unsigned int> uint_pair;
 
   template<> struct default_hash_function<uint_pair> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const uint_pair &i) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const uint_pair &i) const {
       return ((cte_hash*i.first) + i.second) * cte_hash;
     }
   };
@@ -106,8 +106,8 @@ namespace AprilUtils {
   typedef AprilUtils::pair<int16_t,int16_t> int16_pair;
 
   template<> struct default_hash_function<int16_pair> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const int16_pair &i) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const int16_pair &i) const {
       return ((cte_hash*i.first) + i.second) * cte_hash;
     }
   };
@@ -116,9 +116,9 @@ namespace AprilUtils {
   // Hash function for constString (operator == is OK)
   //
   template <> struct default_hash_function<constString> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const constString &cs) const {
-      unsigned int resul = 1;    
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const constString &cs) const {
+      uint32_t resul = 1;    
       const char *r = (const char*)cs; // we are using operator const char *()
       for (int l=cs.len(); l>0; l--,r++)
         resul = (resul+(unsigned int)(*r))*cte_hash;
@@ -131,9 +131,9 @@ namespace AprilUtils {
   //
   // For hash tables
   template <> struct default_hash_function<string> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const string &s1) const {
-      unsigned int resul = 1;
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const string &s1) const {
+      uint32_t resul = 1;
       for (const char *r = s1.begin(); r != s1.end(); r++)
         resul = (resul+(unsigned int)(*r))*cte_hash;
       return resul;
@@ -144,8 +144,8 @@ namespace AprilUtils {
   // Hash function for generic pointers (operator == is OK)
   //
   template <typename T> struct default_hash_function<T *> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(T* p) const {
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(T* p) const {
       // arquitectura 32 bits
       if (sizeof(void*) == 4) {
         union {
@@ -183,9 +183,9 @@ namespace AprilUtils {
   };
 
   template <> struct default_hash_function<char *> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const char* s1) const {
-      unsigned int resul = 1;
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const char* s1) const {
+      uint32_t resul = 1;
       for (const char *r = s1; *r != '\0'; r++)
         resul = (resul+(unsigned int)(*r))*cte_hash;
       return resul;
@@ -202,9 +202,9 @@ namespace AprilUtils {
   };
 
   template <> struct default_hash_function<const char *> {
-    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-    long int operator()(const char* s1) const {
-      unsigned int resul = 1;
+    static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+    uint64_t operator()(const char* s1) const {
+      uint32_t resul = 1;
       for (const char *r = s1; *r != '\0'; r++)
         resul = (resul+(unsigned int)(*r))*cte_hash;
       return resul;
@@ -216,9 +216,9 @@ namespace AprilUtils {
   // elementos que son tipos básicos y acceso a ellos via operator[]
   template<typename T>
     struct hash_restricted_vector {
-      static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
-      long int operator()(const T& key) const {
-        unsigned int resul   = 1;
+      static const uint32_t cte_hash  = 2654435769U; // hash Fibonacci
+      uint64_t operator()(const T& key) const {
+        uint32_t resul   = 1;
         unsigned int objsize = key.size();
         for (unsigned int i=0; i<objsize; i++)
           resul = (resul+(unsigned int)(key[i]))*cte_hash;

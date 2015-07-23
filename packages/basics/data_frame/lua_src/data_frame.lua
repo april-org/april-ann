@@ -140,7 +140,7 @@ end
 -- parses a CSV line using sep as delimiter and adding NA when required
 local function parse_csv_line(line, sep, quotechar, decimal, NA_str)
   return coroutine.wrap(function()
-      local line = line:match("^(.+[^%s])[%s]*$")
+      local line = line:match("^(.*[^%s])[%s]*$")
       local line_dec = decimal == "." and line or line:gsub("%"..decimal, ".")
       local n=0
       local match  = "[%s%s]"%{sep, quotechar or ''}

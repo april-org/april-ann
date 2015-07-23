@@ -1,3 +1,4 @@
+#if !defined(ASSERT_LOGBASE_ZERO) && !defined(ABSOLUTE_ZERO_LOGBASE)
 /*
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
@@ -401,3 +402,4 @@ namespace AprilUtils {
 
 #endif // LOGBASE_STANDARD_H
 
+#endif

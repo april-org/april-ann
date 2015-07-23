@@ -2,19 +2,23 @@ PREFIX = /usr
 UNAME := `uname`
 LINUX_SUFIX := $(shell ( ldconfig -p 2>/dev/null | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so 2> /dev/null > /dev/null && echo "mkl" ) || ( ldconfig -p 2>/dev/null | grep libatlas > /dev/null && echo "atlas" ) || echo "")
 
+ifeq ($(UNAME),"Darwin")
 # homebrew
 ifneq ("$(wildcard /usr/local/include/lua.h)","")
 DARWIN_SUFIX = homebrew
 PREFIX = /usr/local
 endif
-
 # macports
 ifneq ("$(wildcard /opt/local/include/lua.h)","")
 DARWIN_SUFIX = macports
 PREFIX = /opt/local
 endif
+endif
 
+INCLUDE := $(PREFIX)/include
+LIB := $(PREFIX)/lib
 LUALIB := $(PREFIX)/lib/lua/5.2
+LUAMOD := $(PREFIX)/share/lua/5.2
 BIN := $(PREFIX)/bin
 
 ALL: auto-release
@@ -74,7 +78,7 @@ endif
 check_darwin_release:
 ifeq ("$(DARWIN_SUFIX)", "")
 	@echo "Impossible to detect macports or homebrew!"
-	@exit 1
+	@exit 2
 endif
 
 #############################################################################
@@ -184,33 +188,60 @@ debug-pi:
 
 #############################################################################
 
+INCLUDE_NO_WS := $(shell echo "$(INCLUDE)" | sed 's/ //g')
+LIB_NO_WS := $(shell echo "$(LIB)" | sed 's/ //g')
+LUALIB_NO_WS := $(shell echo "$(LUALIB)" | sed 's/ //g')
+LUAMOD_NO_WS := $(shell echo "$(LUAMOD)" | sed 's/ //g')
+BIN_NO_WS := $(shell echo "$(BIN)" | sed 's/ //g')
+
+check-env-vars:
+ifneq ("$(INCLUDE_NO_WS)","$(INCLUDE)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 3
+endif
+ifneq ("$(LIB_NO_WS)","$(LIB)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 4
+endif
+ifneq ("$(LUALIB_NO_WS)","$(LUALIB)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 5
+endif
+ifneq ("$(LUAMOD_NO_WS)","$(LUAMOD)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 6
+endif
+ifneq ("$(BIN_NO_WS)","$(BIN)")
+	@echo "Unable to work with whitespaces in PREFIX, INCLUDE, LIB, LUALIB, LUAMOD, BIN env vars"
+	@exit 7
+endif
+
 clean:
 	./clean.sh
 
-install:
-	make install-$(UNAME)
-
-uninstall:
-	make uninstall-$(UNAME)
-
-install-Darwin:
-	mkdir -p $(LUALIB)
+install: check-env-vars uninstall
+	@mkdir -p $(LUAMOD)
+	@mkdir -p $(LUALIB)
+	rsync -r tools/ $(LUAMOD)/april_tools
+	@mkdir -p $(INCLUDE)/april-ann
+	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
+	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
+	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
+	@rm april-ann.pc
+	install lib/libapril-ann.a $(LIB)
+	install lib/libapril-ann.so $(LIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
 
-install-Linux:
-	mkdir -p $(LUALIB)
-	install lib/aprilann.so $(LUALIB)
-	install bin/april-ann $(BIN)
-
-uninstall-Darwin:
-	rm -f $(LUALIB)/aprilann.so
-	rm -f $(BIN)/april-ann
-
-uninstall-Linux:
-	rm -f $(LUALIB)/aprilann.so
-	rm -f $(BIN)/april-ann
+uninstall: check-env-vars
+	@rm -Rf $(INCLUDE)/april-ann
+	@rm -Rf $(LUAMOD)/april_tools
+	@rm -f $(LUALIB)/aprilann.so
+	@rm -f $(LIB)/libapril-ann.a
+	@rm -f $(LIB)/libapril-ann.so
+	@rm -f $(LIB)/pkgconfig/april-ann.pc
+	@rm -f $(BIN)/april-ann
 
 ##############################################################################
 
-.PHONY: all 
+.PHONY: all

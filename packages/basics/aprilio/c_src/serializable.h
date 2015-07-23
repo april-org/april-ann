@@ -40,7 +40,7 @@ namespace AprilIO {
   /// Uses Lua util.serialize function to write the given object.
   template<typename T>
   void serialize(T object, StreamInterface *dest) {
-    lua_State *L = Base::getGlobalLuaState();
+    lua_State *L = Base::getAndCheckGlobalLuaState();
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "serialize");
     AprilUtils::LuaTable::pushInto(L, object);
@@ -52,7 +52,7 @@ namespace AprilIO {
   /// Uses Lua util.serialize function to write the given object into a string;
   template<typename T>
   AprilUtils::string serialize(T object) {
-    lua_State *L = Base::getGlobalLuaState();
+    lua_State *L = Base::getAndCheckGlobalLuaState();
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "serialize");
     AprilUtils::LuaTable::pushInto(L, object);
@@ -65,7 +65,7 @@ namespace AprilIO {
   /// Uses Lua util.deserialize function to retrieve an object.
   template<typename T>
   T deserialize(StreamInterface *dest) {
-    lua_State *L = Base::getGlobalLuaState();
+    lua_State *L = Base::getAndCheckGlobalLuaState();
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "deserialize");
     AprilUtils::LuaTable::pushInto(L, dest);

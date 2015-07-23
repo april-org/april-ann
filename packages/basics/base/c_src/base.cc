@@ -32,7 +32,12 @@ namespace Base {
     }
     globalL = L;
   }
+  
   lua_State *getGlobalLuaState() {
+    return globalL;
+  }
+
+  lua_State *getAndCheckGlobalLuaState() {
     if (globalL == 0) {
       fprintf(stderr, "FATAL ERROR: Global Lua State not initialized!!!\n");
       exit(128);
