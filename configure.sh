@@ -1,6 +1,9 @@
-echo "Cloning submodules"
-git submodule init
-git submodule update
+folder=`ls luapkg`
+if [ -z "$folder" ]; then
+    echo "Cloning submodules"
+    git submodule init
+    git submodule update
+fi
 git submodule foreach git pull
 if [ -z $APRILANN_CONFIGURED ]; then
     export APRILANN_CONFIGURED=1
