@@ -225,6 +225,7 @@ install: check-env-vars uninstall
 	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
+	install -m 444 include/april-ann.h $(INCLUDE)/april-ann.h
 	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
 	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
 	@rm april-ann.pc
@@ -236,6 +237,7 @@ install: check-env-vars uninstall
 uninstall: check-env-vars
 	@rm -Rf $(INCLUDE)/april-ann
 	@rm -Rf $(LUAMOD)/april_tools
+	@rm -f $(INCLUDE)/april-ann.h
 	@rm -f $(LUALIB)/aprilann.so
 	@rm -f $(LIB)/libapril-ann.a
 	@rm -f $(LIB)/libapril-ann.so
