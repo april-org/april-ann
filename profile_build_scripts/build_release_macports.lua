@@ -4,18 +4,24 @@ formiga.build_dir = "build_release_macports"
 
 local packages = dofile "profile_build_scripts/package_list.lua"
 -- table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
+local metadata = dofile "profile_build_scripts/METADATA.lua"
 
 luapkg{
   program_name = "april-ann",
+  description = metadata.description,
+  version = metadata.version,
+  url = metadata.url,
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "profile_build_scripts/VERSION.lua",
-  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
+  version_flags = metadata.version_flags,
+  disclaimer_strings = metadata.disclaimer_strings,
+  prefix = metadata.prefix,
   global_flags = {
     debug="no",
     use_lstrip = "yes",
     use_readline="yes",
     optimization = "yes",
+    add_git_metadata = "yes",
     platform = "unix",
     extra_flags={
       "-mtune=native",
