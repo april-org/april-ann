@@ -32,7 +32,7 @@ int luaopen_%s(lua_State *L);
     for _,file in ipairs(thefiles) do
       if not file:find(formiga.program_name..".h", nil, true) then
         local basename = string.sub(file, select(2,file:find(dir, nil, true))+2)
-        f:write( ('#include "%s"\n'):format(basename) )
+        f:write( ('#include "april-ann/%s"\n'):format(basename) )
       end
     end
     f:write(("#endif // %s_H\n"):format(formiga.module_name:upper()))
