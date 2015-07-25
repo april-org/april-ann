@@ -1,5 +1,5 @@
 dofile("luapkg/formiga.lua")
-local postprocess = dofile("profile_build_scripts/postprocess.lua")
+local postprocess = dofile("luapkg/postprocess.lua")
 formiga.build_dir = "build_release_homebrew"
 
 local packages = dofile "profile_build_scripts/package_list.lua"
