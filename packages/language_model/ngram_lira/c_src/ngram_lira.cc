@@ -92,7 +92,7 @@ namespace LanguageModels {
     for (unsigned int i=0;i<vocabulary_size;++i) {
       // we read without allowing comments because the '#' symbol may
       // be part of the lexicon
-      extractULineFromStream(fd, buffer.get());
+      extractLineFromStream(fd, buffer.get());
       if (expected_vocabulary_size) {
         // buffer[strlen(buffer)-1] = '\0'; // quitamos el \n
         if (strcmp(buffer->c_str(),expected_vocabulary[i])!=0) {
