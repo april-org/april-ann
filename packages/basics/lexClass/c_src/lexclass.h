@@ -22,15 +22,17 @@
 #define LEXCLASS_H
 
 #include <stdint.h>
-#include "vector.h"
-#include "referenced.h"
-#include "hash_table.h"
 #include "aux_hash_table.h"
+#include "hash_table.h"
+#include "lua_table.h"
+#include "referenced.h"
+#include "vector.h"
 
 namespace AprilUtils {
 
   // OJO! esta tabla empieza en 1. el 0 esta reservado
-  struct LexClass : public Referenced {
+  class LexClass : public Referenced {
+  public:
     
     struct data_t {
       uint32_t   word, outsym;
@@ -151,7 +153,9 @@ namespace AprilUtils {
     }
     
   };
-  
+
 }
+
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(AprilUtils::LexClass);
 
 #endif
