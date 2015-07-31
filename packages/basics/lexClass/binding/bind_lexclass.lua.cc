@@ -1,4 +1,7 @@
 //BIND_HEADER_C
+#include "lua_table.h"
+using namespace AprilUtils;
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(LexClass);
 //BIND_END
 
 //BIND_HEADER_H

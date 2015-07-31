@@ -1,23 +1,28 @@
-dofile("binding/formiga.lua")
-local postprocess = dofile("profile_build_scripts/postprocess.lua")
+dofile("luapkg/formiga.lua")
+local postprocess = dofile("luapkg/postprocess.lua")
 formiga.build_dir = "build_NOBLAS_debug"
 
 local packages = dofile "profile_build_scripts/package_list.lua"
 -- table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
+local metadata = dofile "profile_build_scripts/METADATA.lua"
 
 luapkg{
   program_name = "april-ann.debug",
+  description = metadata.description,
+  version = metadata.version,
+  url = metadata.url,
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "profile_build_scripts/VERSION.lua",
-  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
+  version_flags = metadata.version_flags,
+  disclaimer_strings = metadata.disclaimer_strings,
+  prefix = metadata.prefix,
   global_flags = {
     debug="yes",
     use_lstrip = "no",
     use_readline="yes",
     optimization = "no",
+    add_git_metadata = "yes",
     platform = "unix",
-    no_shared = true,
     extra_flags={
       "-pg",
       "-DNO_POOL",
@@ -34,6 +39,7 @@ luapkg{
     shared_extra_libs={
       "-shared",
       "-llua5.2",
+      "-I/usr/include/lua5.2",
     },
   },
   
@@ -70,11 +76,7 @@ luapkg{
     target{
       name = "build",
       depends = "provide",
-      object{ 
-	file = formiga.os.compose_dir("binding","c_src","*.cc"),
-	include_dirs = "include",
-	dest_dir = formiga.global_properties.build_dir,
-      },
+      compile_luapkg_utils{},
       link_main_program{},
       create_static_library{},
       copy_header_files{},

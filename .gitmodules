@@ -1,0 +1,3 @@
+[submodule "luapkg"]
+	path = luapkg
+	url = https://github.com/april-org/luapkg.git

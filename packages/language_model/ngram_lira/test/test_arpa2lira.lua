@@ -20,5 +20,10 @@ ngram.lira.arpa2lira{
   vocabulary      = lexClass.load(io.open("vocab"))
 }
 
-
+-- se limita a generar un fichero .lira
+ngram.lira.arpa2lira{
+  input_filename  = arg[1] or "mini.arpa",
+  output_filename = arg[2] or "mini.lira",
+  vocabulary      = lexClass.load(io.open("voc"))
+}
 

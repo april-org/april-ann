@@ -1,4 +1,4 @@
-PREFIX = /usr
+export PREFIX = /usr
 UNAME := `uname`
 LINUX_SUFIX := $(shell ( ldconfig -p 2>/dev/null | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so 2> /dev/null > /dev/null && echo "mkl" ) || ( ldconfig -p 2>/dev/null | grep libatlas > /dev/null && echo "atlas" ) || echo "")
 
@@ -225,9 +225,8 @@ install: check-env-vars uninstall
 	rsync -r tools/ $(LUAMOD)/april_tools
 	@mkdir -p $(INCLUDE)/april-ann
 	install -m 444 include/april-ann/* $(INCLUDE)/april-ann
-	@sed "s#__PREFIX__#$(PREFIX)#g" .april-ann.pc > april-ann.pc
-	install april-ann.pc $(LIB)/pkgconfig/april-ann.pc
-	@rm april-ann.pc
+	install -m 444 include/april-ann.h $(INCLUDE)/april-ann.h
+	install .april-ann.pc $(LIB)/pkgconfig/april-ann.pc
 	install lib/libapril-ann.a $(LIB)
 	install lib/libapril-ann.so $(LIB)
 	install lib/aprilann.so $(LUALIB)
@@ -236,6 +235,7 @@ install: check-env-vars uninstall
 uninstall: check-env-vars
 	@rm -Rf $(INCLUDE)/april-ann
 	@rm -Rf $(LUAMOD)/april_tools
+	@rm -f $(INCLUDE)/april-ann.h
 	@rm -f $(LUALIB)/aprilann.so
 	@rm -f $(LIB)/libapril-ann.a
 	@rm -f $(LIB)/libapril-ann.so

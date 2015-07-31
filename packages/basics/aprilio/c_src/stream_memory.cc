@@ -24,6 +24,7 @@ namespace AprilIO {
   
   size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest,
                                bool keep_delim) {
+    dest->clear();
     return source->get(dest, "\n\r", keep_delim);
   }
 
