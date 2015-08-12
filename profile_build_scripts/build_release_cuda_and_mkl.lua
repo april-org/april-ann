@@ -34,14 +34,14 @@ luapkg{
       "-DNDEBUG",
       "-DNO_OMP",
       "-DNO_POOL",
-      --"-fPIC",
+      -- "-fPIC",
       -- For CUDA
       "-DUSE_CUDA",
        --"-I/usr/local/cuda/include",
        --"-L/usr/local/cuda/lib",
     },
     extra_libs={
-       --"-fPIC",
+      -- "-fPIC",
       "-rdynamic",
       -- For Intel MKL :)
       "-L/opt/MKL/lib",
@@ -103,7 +103,7 @@ luapkg{
       compile_luapkg_utils{},
       link_main_program{},
       create_static_library{},
-      create_shared_library{},
+      -- create_shared_library{},
       copy_header_files{},
       dot_graph{
 	file_name = "dep_graph.dot"
