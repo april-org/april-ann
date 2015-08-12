@@ -29,6 +29,7 @@
 #include "april_assert.h"
 #include "c_string.h"
 #include "cblas_headers.h"
+#include "cmath_overloads.h"
 #include "clamp.h"
 #include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
