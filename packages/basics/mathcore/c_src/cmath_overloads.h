@@ -141,8 +141,10 @@ namespace AprilMath {
   template<> bool Limits<ComplexF>::hasInfinity();
   template<> ComplexF Limits<ComplexF>::infinity();
   template<> ComplexF Limits<ComplexF>::quiet_NaN();
+#ifndef USE_CUDA
   template<> ComplexF Limits<ComplexF>::zero();
   template<> ComplexF Limits<ComplexF>::one();
+#endif
 
   ///////////////// NAN CHECK /////////////////
 

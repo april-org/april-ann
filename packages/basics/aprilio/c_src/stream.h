@@ -51,6 +51,11 @@ extern "C" {
     ERROR_EXIT(128, "Read only " #name "\n");                   \
     return 0;                                                   \
   }                                                             \
+  virtual size_t put(const char *source) {                      \
+    UNUSED_VARIABLE(source);                                    \
+    ERROR_EXIT(128, "Read only " #name "\n");                   \
+    return 0;                                                   \
+  }                                                             \
   virtual int printf(const char *format, ...) {                 \
     UNUSED_VARIABLE(format);                                    \
     ERROR_EXIT(128, "Read only " #name "\n");                   \

@@ -34,14 +34,14 @@ luapkg{
       "-pg",
       "-DNO_OMP",
       "-DNO_POOL",
-      --"-fPIC",
+      -- "-fPIC",
       -- For CUDA
       "-DUSE_CUDA",
       -- "-I/usr/local/cuda/include",
       -- "-L/usr/local/cuda/lib",
     },
     extra_libs={
-       --"-fPIC",
+      -- "-fPIC",
       "-pg",
       "-rdynamic",
       -- For Intel MKL :)

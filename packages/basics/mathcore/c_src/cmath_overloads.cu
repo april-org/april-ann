@@ -133,11 +133,13 @@ namespace AprilMath {
   template<> ComplexF Limits<ComplexF>::quiet_NaN() {
     return ComplexF(Limits<float>::quiet_NaN(), Limits<float>::quiet_NaN());
   }
+#ifndef USE_CUDA
   template<> ComplexF Limits<ComplexF>::zero() {
     return ComplexF::zero_zero();
   }
   template<> ComplexF Limits<ComplexF>::one() {
     return ComplexF::one_zero();
   }
+#endif
   
 } // namespace AprilMath
