@@ -32,15 +32,17 @@ function lua_filter:constructor(t)
 				    dataset = { mandatory=true },
 				    filter  = { mandatory=true,
 						type_match="function" },
+                                    pattern_size = { type_match="number" },
 				  }, t)
   self.ds=params.dataset
   self.filter=params.filter
+  self.pattern_size=params.pattern_size or self.ds:patternSize()
   if class.is_a(ds,dataset) then self.ds = dataset.token_wrapper(self.ds) end
 end
 
 function lua_filter_methods:numPatterns() return self.ds:numPatterns() end
 
-function lua_filter_methods:patternSize() return self.ds:patternSize() end
+function lua_filter_methods:patternSize() return self.pattern_size end
 
 function lua_filter_methods:getPattern(idx)
   return self.filter( self.ds:getPattern(idx) )
