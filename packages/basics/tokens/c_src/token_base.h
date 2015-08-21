@@ -163,9 +163,12 @@ namespace AprilUtils {
   template<> AprilUtils::SharedPtr<Basics::Token> LuaTable::
   convertTo< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx);
   
+  template<> void LuaTable::pushInto< Basics::Token* >(lua_State *L,
+                                                       Basics::Token *value);
+
   template<> void LuaTable::
-  pushInto< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L,
-                                                   AprilUtils::SharedPtr<Basics::Token> value);
+  pushInto< Basics::Token >(lua_State *L,
+                            AprilUtils::SharedPtr<Basics::Token> value);
 
   template<> bool LuaTable::
   checkType< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L, int idx);

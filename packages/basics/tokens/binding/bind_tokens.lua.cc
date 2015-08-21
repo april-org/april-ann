@@ -47,8 +47,15 @@ namespace AprilUtils {
   }
   
   template<> void LuaTable::
-  pushInto< AprilUtils::SharedPtr<Basics::Token> >(lua_State *L,
-                                                   AprilUtils::SharedPtr<Basics::Token> ptr) {
+  pushInto< Basics::Token * >(lua_State *L, Basics::Token * ptr) {
+    AprilUtils::SharedPtr<Basics::Token> shared_ptr(ptr);
+    lua_pushAuxToken(L, shared_ptr);
+    shared_ptr.weakRelease();
+  }
+
+  template<> void LuaTable::
+  pushInto< Basics::Token >(lua_State *L,
+                            AprilUtils::SharedPtr<Basics::Token> ptr) {
     lua_pushAuxToken(L, ptr);
   }
 
