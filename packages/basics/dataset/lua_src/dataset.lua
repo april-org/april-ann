@@ -43,13 +43,9 @@ function lua_filter_methods:numPatterns() return self.ds:numPatterns() end
 function lua_filter_methods:patternSize() return self.ds:patternSize() end
 
 function lua_filter_methods:getPattern(idx)
-  local output = self.filter( self.ds:getPattern(idx) )
-  assert( class.is_a(output,token.base), "The output of the filter must be a token")
-  return output
+  return self.filter( self.ds:getPattern(idx) )
 end
 
 function lua_filter_methods:getPatternBunch(idxs)
-  local output = self.filter( self.ds:getPatternBunch(idx) )
-  assert( class.is_a(output,token.base), "The output of the filter must be a token")
-  return output
+  return self.filter( self.ds:getPatternBunch(idx) )
 end
