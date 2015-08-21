@@ -49,5 +49,5 @@ function lua_filter_methods:getPattern(idx)
 end
 
 function lua_filter_methods:getPatternBunch(idxs)
-  return self.filter( self.ds:getPatternBunch(idx) )
+  return self.filter( self.ds:getPatternBunch(idxs) )
 end
