@@ -51,6 +51,7 @@ extern "C" {
   namespace AprilUtils {                                                \
     template<> type *LuaTable::convertTo<type *>(lua_State *L, int idx); \
     template<> void LuaTable::pushInto<type *>(lua_State *L, type *value); \
+    template<> void LuaTable::pushInto<type>(lua_State *L, SharedPtr<type> value); \
     template<> bool LuaTable::checkType<type *>(lua_State *L, int idx); \
   }
 
@@ -74,6 +75,9 @@ extern "C" {
     }                                                                   \
     template<> void LuaTable::pushInto<type *>(lua_State *L, type *value) { \
       lua_push##type(L, value);                                         \
+    }                                                                   \
+    template<> void LuaTable::pushInto<type>(lua_State *L, SharedPtr<type> value) { \
+      lua_push##type(L, value.get());                                   \
     }                                                                   \
     template<> bool LuaTable::checkType<type *>(lua_State *L, int idx) { \
       return lua_is##type(L, idx);                                      \
@@ -574,7 +578,15 @@ namespace AprilUtils {
       UNUSED_VARIABLE(value);
       ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(value).name());
     }
-    
+
+    /// Pushes a SharedPtr instance into the Lua stack.
+    template<typename T>
+    static void pushInto(lua_State *L, SharedPtr<T> value) {
+      UNUSED_VARIABLE(L);
+      UNUSED_VARIABLE(value);
+      ERROR_EXIT1(128, "NOT IMPLEMENTED FOR TYPE %s\n", typeid(value).name());
+    }
+
     /// Checks the expected type of the value at the given Lua stack index.
     template<typename T>
     static bool checkType(lua_State *L, int idx) {

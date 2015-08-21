@@ -89,24 +89,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   }
 }
 
-namespace AprilUtils {
-
-  template<> ANN::ANNComponent *LuaTable::
-  convertTo<ANN::ANNComponent *>(lua_State *L, int idx) {
-    return lua_toANNComponent(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value) {
-    lua_pushAuxANNComponent(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<ANN::ANNComponent *>(lua_State *L, int idx) {
-    return lua_isANNComponent(L, idx);
-  }
-  
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(ANNComponent);
 
 //BIND_END
 

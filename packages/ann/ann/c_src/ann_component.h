@@ -54,18 +54,7 @@ namespace ANN {
   class ANNComponent;
 }
 
-namespace AprilUtils {
-
-  template<> ANN::ANNComponent *LuaTable::
-  convertTo<ANN::ANNComponent *>(lua_State *L, int idx);
-  
-  template<> void LuaTable::
-  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value);
-
-  template<> bool LuaTable::
-  checkType<ANN::ANNComponent *>(lua_State *L, int idx);
-}
-
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(ANN::ANNComponent);
 
 /**
  * @brief All ANN components and other stuff is implemented here.

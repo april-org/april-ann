@@ -70,7 +70,7 @@ namespace ANN {
   int ConstANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L);
     t["name"] = name;
-    t["component"] = component.get();
+    t["component"] = component;
     t.pushTable(L);
     return 1;
   }
