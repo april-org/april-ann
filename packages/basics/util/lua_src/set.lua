@@ -35,7 +35,7 @@ function set_methods:ctor_name()
 end
 
 function set_methods:ctor_params()
-  return self.data
+  return iterator(pairs(self.data)):select(1):table()
 end
 
 function set_methods:discard(v)
