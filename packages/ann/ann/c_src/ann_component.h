@@ -583,7 +583,9 @@ namespace ANN {
       UNUSED_VARIABLE(weight_grads);
     }
 
-    // virtual const char *luaCtorName() const;
+    virtual const char *luaCtorName() const {
+      return "ann.components.base";
+    }
     
     // default implementation
     virtual int exportParamsToLua(lua_State *L) {
