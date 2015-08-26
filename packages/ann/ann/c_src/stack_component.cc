@@ -28,8 +28,9 @@ using namespace AprilMath;
 
 namespace ANN {
 
-  StackANNComponent::StackANNComponent(const char *name) :
-    ANNComponent(name, 0, 0, 0) {
+  StackANNComponent::StackANNComponent(const char *name, unsigned int input,
+                                       unsigned int output) :
+    ANNComponent(name, 0, input, output) {
   }
   
   StackANNComponent::~StackANNComponent() {
@@ -40,7 +41,10 @@ namespace ANN {
   void StackANNComponent::pushComponent(ANNComponent *component) {
     IncRef(component);
     components.push_back(component);
-    output_size = 0;
+    output_size = 0u;
+    if (components.size() == 1u && components[0]->getInputSize() > 0u) {
+      input_size = components[0]->getInputSize();
+    }
   }
 
   ANNComponent *StackANNComponent::topComponent() {
@@ -50,9 +54,12 @@ namespace ANN {
   void StackANNComponent::popComponent() {
     DecRef(components.back());
     components.pop_back();
-    if (components.size() > 0)
+    if (components.size() > 0u) {
       output_size = components.back()->getOutputSize();
-    else output_size = 0;
+    }
+    else {
+      input_size = output_size = 0;
+    }
   }
 
   Token *StackANNComponent::getInput() {
@@ -169,6 +176,8 @@ namespace ANN {
   int StackANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L);
     t["name"] = name.c_str();
+    t["input"] = getInputSize();
+    t["output"] = getOutputSize();
     AprilUtils::LuaTable c(L);
     t["components"] = c;
     for (unsigned int i=0; i<components.size(); ++i) {

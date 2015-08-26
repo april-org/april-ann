@@ -38,7 +38,8 @@ namespace ANN {
     AprilUtils::vector<ANNComponent*> components;
 
   public:
-    StackANNComponent(const char *name=0);
+    StackANNComponent(const char *name=0, unsigned int input=0,
+                      unsigned int output=0);
     virtual ~StackANNComponent();
 
     /// Method to push a new component at the top of the stack

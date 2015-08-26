@@ -804,13 +804,17 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
+  unsigned int input=0, output=0;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "components", (const char *)0);
+    check_table_fields(L, 1, "name", "components", "input", "output",
+                       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output, 0);
   }
-  obj = new StackANNComponent(name);
+  obj = new StackANNComponent(name, input, output);
   if (argn >= 1) {
     lua_getfield(L, 1, "components");
     if (!lua_isnil(L, -1)) {
