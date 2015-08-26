@@ -414,6 +414,13 @@ data_frame.from_csv =
       rawset(self, "columns",
              iterator(parse_csv_line(f:read("*l"), sep, quotechar,
                                      decimal, NA_str)):table())
+      for i,col_name in ipairs(rawget(self, "columns")) do
+        if is_nan(col_name) then
+          col_name = next_number(rawget(self, "columns"))
+          rawget(self, "columns")[i] = col_name
+        end
+        data[col_name] = {}
+      end
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
     end

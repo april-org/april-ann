@@ -233,14 +233,13 @@ stats.standardize =
     elseif not mu then
       mu = stats.amean(x,1)
     end
-    local x
     if #mu == 1 then
-      x = x - mu
+      x = x - mu:get(table.unpack(mu:dim()))
     else
       x = matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu)
     end
     if #sigma == 1 then
-      x = x / sigma
+      x = x / sigma:get(table.unpack(sigma:dim()))
     else
       x = matrix.ext.broadcast(x.cmul, x, 1/sigma)
     end
