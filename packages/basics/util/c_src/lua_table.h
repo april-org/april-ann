@@ -458,15 +458,17 @@ namespace AprilUtils {
       return opt<T>(name.c_str(), def_value);
     }
 
-    /// Puts a new value into the table, using the given key name.
-    template<typename T>
-    LuaTable &put(const char *name, T value) {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-      pushInto(L, value);
-      lua_setfield(L, -2, name);
-      lua_pop(L, 1);
-      return *this;
-    }
+    /* FIXME: commented to avoid template ambiguity
+   /// Puts a new value into the table, using the given key name.
+   template<typename T>
+   LuaTable &put(const char *name, T value) {
+   if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+   pushInto(L, value);
+   lua_setfield(L, -2, name);
+   lua_pop(L, 1);
+   return *this;
+   }
+    */
     
     /// Puts a new value into the table, using the given key number.
     template<typename T>
@@ -501,14 +503,16 @@ namespace AprilUtils {
       return *this;
     }
 
-    /// Checks if the field at the given key name is nil.    
-    bool checkNil(const char *name) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-      lua_getfield(L, -1, name);
-      bool ret =  lua_isnil(L, -1);
-      lua_pop(L, 2);
-      return ret;
-    }
+    /* FIXME: commented to avoid template ambiguity
+   /// Checks if the field at the given key name is nil.    
+   bool checkNil(const char *name) const {
+   if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+   lua_getfield(L, -1, name);
+   bool ret =  lua_isnil(L, -1);
+   lua_pop(L, 2);
+   return ret;
+   }
+    */
 
     /// Checks if the field at the given key number is nil.
     bool checkNil(int n) const {
@@ -541,16 +545,18 @@ namespace AprilUtils {
       return ret;
     }
 
-    /// Checks if the field at the given key name is of the given type (a nil
-    /// value will be taken as true).
-    template<typename T>
-    bool checkNilOrType(const char *name) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-      lua_getfield(L, -1, name);
-      bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
-      lua_pop(L, 2);
-      return ret;
-    }
+    /* FIXME: commented to avoid template ambiguity
+   /// Checks if the field at the given key name is of the given type (a nil
+   /// value will be taken as true).
+   template<typename T>
+   bool checkNilOrType(const char *name) const {
+   if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+   lua_getfield(L, -1, name);
+   bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
+   lua_pop(L, 2);
+   return ret;
+   }
+    */
 
     /// Checks if the field at the given key number is of the given type (a nil
     /// value will be taken as true).
@@ -588,18 +594,6 @@ namespace AprilUtils {
       return ret;
     }
 
-    /// Returns the value stored at the given key name field.    
-    template<typename T>
-    T get(const char *name) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-      lua_getfield(L, -1, name);
-      if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
-      if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
-      T v = convertTo<T>(L, -1);
-      lua_pop(L,2);
-      return v;
-    }
-
     /// Returns the value stored at the given key number field.
     template<typename T>
     T get(int n) const {
@@ -625,6 +619,20 @@ namespace AprilUtils {
       lua_pop(L,2);
       return v;
     }
+
+    /* FIXME: commented to avoid template ambiguity
+   /// Returns the value stored at the given key name field.    
+   template<typename T>
+   T get(const char *name) const {
+   if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+   lua_getfield(L, -1, name);
+   if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
+   if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+   T v = convertTo<T>(L, -1);
+   lua_pop(L,2);
+   return v;
+   }
+    */
     
     /// Returns the value stored at the given key name field.
     template<typename T>
@@ -639,26 +647,28 @@ namespace AprilUtils {
       return v;
     }
 
-    /// Returns the value stored at the given key name field. In case the field
-    /// is empty, it returns the given def_value argument.    
-    template<typename T>
-    T opt(const char *name, const T def_value) const {
-      if (!checkAndPushRef()) {
-        lua_pop(L, 1);
-        return def_value;
-      }
-      else {
-        lua_getfield(L, -1, name);
-        T v(def_value);
-        if (!lua_isnil(L,-1)) {
-          if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
-          v = convertTo<T>(L, -1);
-        }
-        lua_pop(L,2);
-        return v;
-      }
-      // return T();
-    }
+    /*
+   /// Returns the value stored at the given key name field. In case the field
+   /// is empty, it returns the given def_value argument.    
+   template<typename T>
+   T opt(const char *name, const T def_value) const {
+   if (!checkAndPushRef()) {
+   lua_pop(L, 1);
+   return def_value;
+   }
+   else {
+   lua_getfield(L, -1, name);
+   T v(def_value);
+   if (!lua_isnil(L,-1)) {
+   if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
+   v = convertTo<T>(L, -1);
+   }
+   lua_pop(L,2);
+   return v;
+   }
+   // return T();
+   }
+    */
 
     /// Returns the value stored at the given key number field. In case the field
     /// is empty, it returns the given def_value argument.    
