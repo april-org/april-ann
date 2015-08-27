@@ -54,18 +54,7 @@ namespace ANN {
   class ANNComponent;
 }
 
-namespace AprilUtils {
-
-  template<> ANN::ANNComponent *LuaTable::
-  convertTo<ANN::ANNComponent *>(lua_State *L, int idx);
-  
-  template<> void LuaTable::
-  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value);
-
-  template<> bool LuaTable::
-  checkType<ANN::ANNComponent *>(lua_State *L, int idx);
-}
-
+DECLARE_LUA_TABLE_BIND_SPECIALIZATION(ANN::ANNComponent);
 
 /**
  * @brief All ANN components and other stuff is implemented here.
@@ -366,7 +355,8 @@ namespace ANN {
      * parameters are set to an NULL reference. It is needed to call built
      * method with a proper weight parameters Basics::MatrixFloat.
      */
-    virtual ANNComponent *clone() {
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies) {
+      UNUSED_VARIABLE(copies);
       return new ANNComponent(name.c_str(), weights_name.c_str(),
 			      input_size, output_size);
     }
@@ -594,7 +584,9 @@ namespace ANN {
       UNUSED_VARIABLE(weight_grads);
     }
 
-    // virtual const char *luaCtorName() const;
+    virtual const char *luaCtorName() const {
+      return "ann.components.base";
+    }
     
     // default implementation
     virtual int exportParamsToLua(lua_State *L) {

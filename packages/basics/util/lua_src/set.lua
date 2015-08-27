@@ -26,8 +26,12 @@ function set_methods:clear()
   return self
 end
 
+function set_methods:keys()
+  return iterator(pairs(self.data)):select(1):table()
+end
+
 function set_methods:clone()
-  return set( iterator(pairs(self.data)):select(1):table() )
+  return set(self:ctor_params())
 end
 
 function set_methods:ctor_name()
@@ -35,7 +39,7 @@ function set_methods:ctor_name()
 end
 
 function set_methods:ctor_params()
-  return self.data
+  return self:keys()
 end
 
 function set_methods:discard(v)

@@ -266,7 +266,8 @@ namespace ANN {
     argmax_raw_pos = 0;
   }
   
-  ANNComponent *MaxPoolingANNComponent::clone() {
+  ANNComponent *MaxPoolingANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     MaxPoolingANNComponent *component = new
       MaxPoolingANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
 			     name.c_str());

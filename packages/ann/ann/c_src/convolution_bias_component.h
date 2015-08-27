@@ -69,7 +69,7 @@ namespace ANN {
 				      AprilUtils::vector<unsigned int> &output_size) {
       output_size = input_size;
     }
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       AprilUtils::LuaTable &weights_dict,

@@ -41,7 +41,7 @@ namespace ANN {
   public:
     ExpActfANNComponent(const char *name);
     virtual ~ExpActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     // virtual int exportParamsToLua(lua_State *L);

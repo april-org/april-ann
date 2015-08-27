@@ -43,7 +43,7 @@ namespace ANN {
   public:
     HardtanhActfANNComponent(const char *name, float inf=-1.0f, float sup=1.0f);
     virtual ~HardtanhActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     virtual int exportParamsToLua(lua_State *L);

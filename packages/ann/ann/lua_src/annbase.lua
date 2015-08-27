@@ -504,7 +504,7 @@ ann.mlp.all_all.generate = april_doc {
     end
     local first_count  = tonumber(first_count or 1)
     local names_prefix = names_prefix or ""
-    local thenet = ann.components.stack{ name=names_prefix.."stack" }
+    local thenet
     local name   = "layer"
     local count  = first_count
     local prev_size
@@ -564,6 +564,7 @@ ann.mlp.all_all.generate = april_doc {
       end
       -- push the corresponding components
       if kind ~= "inputs" then
+        assert(thenet, "'inputs' string is required")
         if n0 then -- hyperplane + activation function
           local size = n0
           thenet:push( ann.components.hyperplane{
@@ -586,7 +587,9 @@ ann.mlp.all_all.generate = april_doc {
           thenet:push( ctor( options ) )
         end
         count = count + 1
-      end -- if kind ~= "inputs"
+      else -- if kind ~= "inputs"
+        thenet = ann.components.stack{ name=names_prefix.."stack", input=n0 }
+      end 
       prev_size = n0 or prev_size
       return tk0
     end

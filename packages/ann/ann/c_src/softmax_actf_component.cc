@@ -46,7 +46,8 @@ namespace ANN {
     Kernels::applySoftmaxDerivative(output_errors, input_errors, output_units);
   }
 
-  ANNComponent *SoftmaxActfANNComponent::clone() {
+  ANNComponent *SoftmaxActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SoftmaxActfANNComponent *obj = new SoftmaxActfANNComponent(name.c_str());
     return obj;
   }

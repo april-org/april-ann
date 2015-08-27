@@ -136,7 +136,8 @@ namespace ANN {
     }
   }
     
-  ANNComponent *MulANNComponent::clone() {
+  ANNComponent *MulANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     MulANNComponent *component = new MulANNComponent(input_size,
                                                      scalar,
                                                      name.c_str(),

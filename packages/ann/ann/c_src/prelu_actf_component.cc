@@ -113,7 +113,8 @@ namespace ANN {
     weights->resetSharedCount();
   }
   
-  ANNComponent *PReLUActfANNComponent::clone() {
+  ANNComponent *PReLUActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     PReLUActfANNComponent *obj = new PReLUActfANNComponent(scalar, size,
                                                            name.c_str(),
                                                            weights_name.c_str());

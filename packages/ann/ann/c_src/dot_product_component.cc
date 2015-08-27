@@ -243,7 +243,8 @@ namespace ANN {
     }
   }
   
-  ANNComponent *DotProductANNComponent::clone() {
+  ANNComponent *DotProductANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     DotProductANNComponent *component = new
       DotProductANNComponent(getName().c_str(), getWeightsName().c_str(),
 			     getInputSize(), getOutputSize(),

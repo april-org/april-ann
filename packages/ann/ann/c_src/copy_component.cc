@@ -180,7 +180,8 @@ namespace ANN {
     error_output = 0;
   }
 
-  ANNComponent *CopyANNComponent::clone() {
+  ANNComponent *CopyANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     CopyANNComponent *copy_component = new CopyANNComponent(times,
 							    name.c_str(),
 							    input_size,

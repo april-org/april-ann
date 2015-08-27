@@ -116,7 +116,7 @@ namespace ANN {
     
     // The following methods are not implemented, derived classes had to
     //
-    // virtual ANNComponent *clone() = 0;
+    // virtual ANNComponent *clone(AprilUtils::LuaTable &copies) = 0;
     /*
       virtual void build(unsigned int input_size,
       unsigned int output_size,

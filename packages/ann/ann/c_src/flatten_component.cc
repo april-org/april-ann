@@ -68,7 +68,8 @@ namespace ANN {
     UNUSED_VARIABLE(it);
   }
 
-  ANNComponent *FlattenANNComponent::clone() {
+  ANNComponent *FlattenANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     FlattenANNComponent *flatten_component;
     flatten_component = new FlattenANNComponent(name.c_str());
     return flatten_component;

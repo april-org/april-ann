@@ -101,9 +101,13 @@ namespace ANN {
     error_output = 0;
   }
 
-  ANNComponent *SaltAndPepperANNComponent::clone() {
+  ANNComponent *SaltAndPepperANNComponent::clone(AprilUtils::LuaTable &copies) {
+    MTRand *rng_clone = copies[getRandom()].opt<MTRand*>(0);
+    if (rng_clone == 0) {
+      copies[getRandom()] = rng_clone = new MTRand(*getRandom());
+    }
     SaltAndPepperANNComponent *copy_component = new
-      SaltAndPepperANNComponent(new MTRand(*getRandom()),
+      SaltAndPepperANNComponent(rng_clone,
 				zero, one, prob,
 				name.c_str(),
 				input_size);

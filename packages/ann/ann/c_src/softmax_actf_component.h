@@ -43,7 +43,7 @@ namespace ANN {
   public:
     SoftmaxActfANNComponent(const char *name);
     virtual ~SoftmaxActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     // virtual int exportParamsToLua(lua_State *L);

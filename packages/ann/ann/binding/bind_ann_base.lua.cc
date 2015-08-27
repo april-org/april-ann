@@ -89,24 +89,7 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value) {
   }
 }
 
-namespace AprilUtils {
-
-  template<> ANN::ANNComponent *LuaTable::
-  convertTo<ANN::ANNComponent *>(lua_State *L, int idx) {
-    return lua_toANNComponent(L, idx);
-  }
-  
-  template<> void LuaTable::
-  pushInto<ANN::ANNComponent *>(lua_State *L, ANN::ANNComponent *value) {
-    lua_pushAuxANNComponent(L, value);
-  }
-
-  template<> bool LuaTable::
-  checkType<ANN::ANNComponent *>(lua_State *L, int idx) {
-    return lua_isANNComponent(L, idx);
-  }
-  
-}
+IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(ANNComponent);
 
 //BIND_END
 
@@ -494,7 +477,13 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ANNComponent clone
 {
-  LUABIND_RETURN(AuxANNComponent, obj->clone());
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
+  LUABIND_RETURN(AuxANNComponent, obj->clone(copies));
 }
 //BIND_END
 
@@ -621,8 +610,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD DotProductANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(DotProductANNComponent,
-		 dynamic_cast<DotProductANNComponent*>(obj->clone()));
+		 dynamic_cast<DotProductANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -678,8 +673,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ProbabilisticMatrixANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ProbabilisticMatrixANNComponent,
-		 dynamic_cast<ProbabilisticMatrixANNComponent*>(obj->clone()));
+		 dynamic_cast<ProbabilisticMatrixANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -714,8 +715,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD BiasANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(BiasANNComponent,
-		 dynamic_cast<BiasANNComponent*>(obj->clone()));
+		 dynamic_cast<BiasANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -752,8 +759,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD MulANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(MulANNComponent,
-		 dynamic_cast<MulANNComponent*>(obj->clone()));
+		 dynamic_cast<MulANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -804,8 +817,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD HyperplaneANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(HyperplaneANNComponent,
-		 dynamic_cast<HyperplaneANNComponent*>(obj->clone()));
+		 dynamic_cast<HyperplaneANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -821,13 +840,17 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
+  unsigned int input=0, output=0;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "components", (const char *)0);
+    check_table_fields(L, 1, "name", "components", "input", "output",
+                       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output, 0);
   }
-  obj = new StackANNComponent(name);
+  obj = new StackANNComponent(name, input, output);
   if (argn >= 1) {
     lua_getfield(L, 1, "components");
     if (!lua_isnil(L, -1)) {
@@ -903,8 +926,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD StackANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(StackANNComponent,
-		 dynamic_cast<StackANNComponent*>(obj->clone()));
+		 dynamic_cast<StackANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -966,8 +995,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD JoinANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(JoinANNComponent,
-		 dynamic_cast<JoinANNComponent*>(obj->clone()));
+		 dynamic_cast<JoinANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1008,8 +1043,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD CopyANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(CopyANNComponent,
-		 dynamic_cast<CopyANNComponent*>(obj->clone()));
+		 dynamic_cast<CopyANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1038,8 +1079,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD SelectANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(SelectANNComponent,
-		 dynamic_cast<SelectANNComponent*>(obj->clone()));
+		 dynamic_cast<SelectANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1074,8 +1121,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD RewrapANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(RewrapANNComponent,
-		 dynamic_cast<RewrapANNComponent*>(obj->clone()));
+		 dynamic_cast<RewrapANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1116,8 +1169,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD TransposeANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(TransposeANNComponent,
-		 dynamic_cast<TransposeANNComponent*>(obj->clone()));
+		 dynamic_cast<TransposeANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1163,8 +1222,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD SliceANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(SliceANNComponent,
-		 dynamic_cast<SliceANNComponent*>(obj->clone()));
+		 dynamic_cast<SliceANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1193,8 +1258,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD FlattenANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(FlattenANNComponent,
-		 dynamic_cast<FlattenANNComponent*>(obj->clone()));
+		 dynamic_cast<FlattenANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1272,8 +1343,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ConvolutionANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ConvolutionANNComponent,
-		 dynamic_cast<ConvolutionANNComponent*>(obj->clone()));
+		 dynamic_cast<ConvolutionANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1307,8 +1384,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ConvolutionBiasANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ConvolutionBiasANNComponent,
-		 dynamic_cast<ConvolutionBiasANNComponent*>(obj->clone()));
+		 dynamic_cast<ConvolutionBiasANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1363,8 +1446,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD MaxPoolingANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(MaxPoolingANNComponent,
-		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone()));
+		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1431,8 +1520,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD GaussianNoiseANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(GaussianNoiseANNComponent,
-		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
+		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1471,8 +1566,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD SaltAndPepperANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(SaltAndPepperANNComponent,
-		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
+		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1512,8 +1613,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD SaltAndPepperANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(DropoutANNComponent,
-		 dynamic_cast<DropoutANNComponent*>(obj->clone()));
+		 dynamic_cast<DropoutANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1535,8 +1642,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ActivationFunctionANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ActivationFunctionANNComponent,
-		 dynamic_cast<ActivationFunctionANNComponent*>(obj->clone()));
+		 dynamic_cast<ActivationFunctionANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1951,8 +2064,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD PCAWhiteningANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(PCAWhiteningANNComponent,
-		 dynamic_cast<PCAWhiteningANNComponent*>(obj->clone()));
+		 dynamic_cast<PCAWhiteningANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -1987,8 +2106,14 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ZCAWhiteningANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ZCAWhiteningANNComponent,
-		 dynamic_cast<ZCAWhiteningANNComponent*>(obj->clone()));
+		 dynamic_cast<ZCAWhiteningANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
@@ -2017,7 +2142,13 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 
 //BIND_METHOD ConstANNComponent clone
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
   LUABIND_RETURN(ConstANNComponent,
-		 dynamic_cast<ConstANNComponent*>(obj->clone()));
+		 dynamic_cast<ConstANNComponent*>(obj->clone(copies)));
 }
 //BIND_END

@@ -51,7 +51,8 @@ namespace ANN {
     matCopy(output_errors, input_errors);
   }
 
-  ANNComponent *LogLogisticActfANNComponent::clone() {
+  ANNComponent *LogLogisticActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     LogLogisticActfANNComponent *obj = new LogLogisticActfANNComponent(name.c_str());
     return obj;
   }
