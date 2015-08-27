@@ -355,7 +355,8 @@ namespace ANN {
      * parameters are set to an NULL reference. It is needed to call built
      * method with a proper weight parameters Basics::MatrixFloat.
      */
-    virtual ANNComponent *clone() {
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies) {
+      UNUSED_VARIABLE(copies);
       return new ANNComponent(name.c_str(), weights_name.c_str(),
 			      input_size, output_size);
     }

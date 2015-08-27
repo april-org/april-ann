@@ -42,7 +42,7 @@ namespace ANN {
   public:
     LogisticActfANNComponent(const char *name);
     virtual ~LogisticActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     // virtual int exportParamsToLua(lua_State *L);
@@ -72,7 +72,7 @@ namespace ANN {
                                    float beta, float target_avg_act);
     virtual ~SparseLogisticActfANNComponent();
     
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     
     virtual const char *luaCtorName() const;
     virtual int exportParamsToLua(lua_State *L);

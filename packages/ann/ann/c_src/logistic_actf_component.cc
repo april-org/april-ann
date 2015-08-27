@@ -51,7 +51,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *LogisticActfANNComponent::clone() {
+  ANNComponent *LogisticActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     LogisticActfANNComponent *obj = new LogisticActfANNComponent(name.c_str());
     return obj;
   }
@@ -72,7 +73,7 @@ namespace ANN {
   SparseLogisticActfANNComponent::~SparseLogisticActfANNComponent() {
   }
 
-  ANNComponent *SparseLogisticActfANNComponent::clone() {
+  ANNComponent *SparseLogisticActfANNComponent::clone(AprilUtils::LuaTable &copies) {
     SparseLogisticActfANNComponent *obj = new
       SparseLogisticActfANNComponent(name.c_str(), beta, target_avg_act);
     return obj;

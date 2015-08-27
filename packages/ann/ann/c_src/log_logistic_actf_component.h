@@ -43,7 +43,7 @@ namespace ANN {
   public:
     LogLogisticActfANNComponent(const char *name);
     virtual ~LogLogisticActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     // virtual int exportParamsToLua(lua_State *L);

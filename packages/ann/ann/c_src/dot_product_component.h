@@ -68,7 +68,7 @@ namespace ANN {
 			   bool transpose_weights   = false,
                            Basics::MatrixFloat *matrix = 0);
     virtual ~DotProductANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       AprilUtils::LuaTable &weights_dict,

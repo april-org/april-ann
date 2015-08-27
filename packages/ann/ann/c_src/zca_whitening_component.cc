@@ -74,7 +74,8 @@ namespace ANN {
     return PCAWhiteningANNComponent::doBackprop(rotated_error);
   }
   
-  ANNComponent *ZCAWhiteningANNComponent::clone() {
+  ANNComponent *ZCAWhiteningANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     ZCAWhiteningANNComponent *component = new ZCAWhiteningANNComponent(U, S,
 								       epsilon,
 								       takeN,

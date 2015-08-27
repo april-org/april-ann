@@ -47,7 +47,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *LogActfANNComponent::clone() {
+  ANNComponent *LogActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     LogActfANNComponent *obj = new LogActfANNComponent(name.c_str());
     return obj;
   }

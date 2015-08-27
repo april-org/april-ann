@@ -99,7 +99,8 @@ namespace ANN {
     dot_product_encoder.reset(it);
   }
   
-  ANNComponent *PCAWhiteningANNComponent::clone() {
+  ANNComponent *PCAWhiteningANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     PCAWhiteningANNComponent *component = new PCAWhiteningANNComponent(U, S,
 								       epsilon,
 								       takeN,

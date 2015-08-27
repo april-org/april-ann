@@ -121,7 +121,8 @@ namespace ANN {
     }
   }
 
-  ANNComponent *BiasANNComponent::clone() {
+  ANNComponent *BiasANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     BiasANNComponent *component = new BiasANNComponent(input_size,
 						       name.c_str(),
 						       weights_name.c_str());

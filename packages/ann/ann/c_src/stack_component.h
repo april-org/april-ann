@@ -104,7 +104,7 @@ namespace ANN {
     
     virtual void reset(unsigned int it=0);
     
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     
     virtual void setUseCuda(bool v);
     

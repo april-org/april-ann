@@ -57,7 +57,7 @@ namespace ANN {
       output_size.push_back(sz);
     }
     
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,

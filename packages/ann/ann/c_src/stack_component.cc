@@ -103,10 +103,10 @@ namespace ANN {
     }
   }
 
-  ANNComponent *StackANNComponent::clone() {
+  ANNComponent *StackANNComponent::clone(AprilUtils::LuaTable &copies) {
     StackANNComponent *obj = new StackANNComponent(name.c_str());
     for (unsigned int c=0; c<components.size(); ++c)
-      obj->pushComponent(components[c]->clone());
+      obj->pushComponent(components[c]->clone(copies));
     obj->input_size  = input_size;
     obj->output_size = output_size;
     return obj;

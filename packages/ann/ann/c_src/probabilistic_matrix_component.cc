@@ -215,7 +215,8 @@ namespace ANN {
     needs_weights_normalization = true;
   }
   
-  ANNComponent *ProbabilisticMatrixANNComponent::clone() {
+  ANNComponent *ProbabilisticMatrixANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     ProbabilisticMatrixANNComponent *component = new
       ProbabilisticMatrixANNComponent(side, getName().c_str(),
                                       getWeightsName().c_str(),

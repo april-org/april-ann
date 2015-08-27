@@ -48,7 +48,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *HardtanhActfANNComponent::clone() {
+  ANNComponent *HardtanhActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     HardtanhActfANNComponent *obj = new HardtanhActfANNComponent(name.c_str());
     return obj;
   }

@@ -48,7 +48,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *TanhActfANNComponent::clone() {
+  ANNComponent *TanhActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     TanhActfANNComponent *obj = new TanhActfANNComponent(name.c_str());
     return obj;
   }

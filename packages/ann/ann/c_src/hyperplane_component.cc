@@ -96,11 +96,11 @@ namespace ANN {
     bias->computeAllGradients(weight_grads_dict);
   }
     
-  ANNComponent *HyperplaneANNComponent::clone() {
+  ANNComponent *HyperplaneANNComponent::clone(AprilUtils::LuaTable &copies) {
     HyperplaneANNComponent *obj;
     obj = new HyperplaneANNComponent(name.c_str());
-    obj->dot_product = dynamic_cast<DotProductANNComponent*>(dot_product->clone());
-    obj->bias        = dynamic_cast<BiasANNComponent*>(bias->clone());
+    obj->dot_product = dynamic_cast<DotProductANNComponent*>(dot_product->clone(copies));
+    obj->bias        = dynamic_cast<BiasANNComponent*>(bias->clone(copies));
     obj->input_size  = input_size;
     obj->output_size = output_size;
     IncRef(obj->dot_product);

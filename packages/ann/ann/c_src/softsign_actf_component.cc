@@ -48,7 +48,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *SoftsignActfANNComponent::clone() {
+  ANNComponent *SoftsignActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SoftsignActfANNComponent *obj = new SoftsignActfANNComponent(name.c_str());
     return obj;
   }

@@ -79,7 +79,8 @@ namespace ANN {
     UNUSED_VARIABLE(it);
   }
 
-  ANNComponent *SelectANNComponent::clone() {
+  ANNComponent *SelectANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SelectANNComponent *select_component = new SelectANNComponent(dimension,
 								  index,
 								  name.c_str());

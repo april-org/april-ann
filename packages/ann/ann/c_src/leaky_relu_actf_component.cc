@@ -49,7 +49,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *LeakyReLUActfANNComponent::clone() {
+  ANNComponent *LeakyReLUActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     LeakyReLUActfANNComponent *obj = new LeakyReLUActfANNComponent(leak,
                                                                    name.c_str());
     return obj;

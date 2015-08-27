@@ -69,7 +69,8 @@ namespace ANN {
     UNUSED_VARIABLE(it);
   }
 
-  ANNComponent *RewrapANNComponent::clone() {
+  ANNComponent *RewrapANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     RewrapANNComponent *rewrap_component = new RewrapANNComponent(rewrap_dims+1,
 								  n-1,
 								  name.c_str());
