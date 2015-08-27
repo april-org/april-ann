@@ -74,6 +74,7 @@ namespace ANN {
   }
 
   ANNComponent *SparseLogisticActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SparseLogisticActfANNComponent *obj = new
       SparseLogisticActfANNComponent(name.c_str(), beta, target_avg_act);
     return obj;
