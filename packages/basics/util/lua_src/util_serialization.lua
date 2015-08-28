@@ -1,6 +1,31 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
+-----------------------------------------------------------------------
+__ipairs_iterator__ = select(1,ipairs({}))
+__pairs_iterator__  = select(1,pairs({}))
+local builtin = {
+  [pairs]  = "pairs",
+  [ipairs] = "ipairs",
+  [next]   = "next",
+  [table.pack]   = "table.pack",
+  [table.unpack] = "table.unpack",
+  [table.insert] = "table.insert",
+  [table.remove] = "table.remove",
+  [table.concat] = "table.concat",
+  [coroutine.wrap]  = "coroutine.wrap",
+  [coroutine.yield] = "coroutine.yield",
+  [__ipairs_iterator__] = "__ipairs_iterator__",
+  [__pairs_iterator__]  = "__pairs_iterator__",
+}
+-----------------------------------------------------------------------
+
+-- adding serialization to iterator class
+class.extend(iterator, "ctor_name", function(self) return "iterator" end)
+class.extend(iterator, "ctor_params", function(self) return self:get() end)
+
+-----------------------------------------------------------------------
+
 -- utilities for function serialization
 local function char(c) return ("\\%03d"):format(c:byte()) end
 local function szstr(s) return ('"%s"'):format(s:gsub("[^ !#-~]", char)) end
@@ -14,7 +39,7 @@ end
 
 function util.function_to_lua_string(func,format)
   --
-  local func_dump = string.format("load(%s)", szstr(string.dump(func)))
+  local func_dump = string.format("assert(load(%q))", string.dump(func))
   local upvalues = {}
   local i = 1
   while true do
@@ -206,23 +231,28 @@ do
           end
         end
       elseif tt == "function" then
-        -- serializes the function with all of its upvalues
-        -- NOTE that upvalues which are plain objects (strings or integers)
-        -- are not shared between functions, but tables and userdata objects
-        -- will be shared when serializing together several functions.
-        local upvalues = {}
-        local i = 1
-        while true do
-          local name,value = debug.getupvalue(data,i)
-          if not name then break end
-          -- avoid global environment upvalue
-          if name ~= "_ENV" then upvalues[i] = value end
-          i = i + 1
+        if not builtin[data] then
+          -- serializes the function with all of its upvalues
+          -- NOTE that upvalues which are plain objects (strings or integers)
+          -- are not shared between functions, but tables and userdata objects
+          -- will be shared when serializing together several functions.
+          local upvalues = {}
+          local i = 1
+          while true do
+            local name,value = debug.getupvalue(data,i)
+            if not name then break end
+            -- avoid global environment upvalue
+            if name ~= "_ENV" then upvalues[i] = value end
+            i = i + 1
+          end
+          local upv_str = transform(map, varname, upvalues, destination)
+          local func_dump = "assert(load(%q))"%{ string.dump(data) }
+          destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
+                              {varname,id,func_dump,upv_str})
+        else
+          local func_dump = "%s"%{ builtin[data] }
+          destination:write("%s[%d]=%s\n"%{varname,id,func_dump})
         end
-        local upv_str = transform(map, varname, upvalues, destination)
-        local func_dump = "load(%s)"%{ szstr(string.dump(data)) }
-        destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
-                            {varname,id,func_dump,upv_str})
       elseif class.of(data) then
         local serialize = getmetatable(data).serialize
         if serialize then
@@ -331,7 +361,7 @@ deserialize =
         return deserialize(f, ...)
       end
     elseif iscallable(dest) then
-      local f = load(dest())
+      local f = assert( load(dest()) )
       return f(...)
     else
       assert(dest.read, "Needs a string or an opened file")
