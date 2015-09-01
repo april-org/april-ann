@@ -427,7 +427,7 @@ namespace ANN {
   int ConvolutionANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L), kernel(L), step(L);
     t["name"] = name;
-    t["weights_name"] = weights_name;
+    t["weights"] = weights_name;
     t["n"] = hidden_size;
     t["kernel"] = kernel;
     t["step"] = step;
