@@ -1,6 +1,8 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
+local os_date = os.date
+
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
 __pairs_iterator__  = select(1,pairs({}))
@@ -308,7 +310,7 @@ do
       },
     } ..
     function(data, destination, format)
-      local version = { util.version() } table.insert(version, os.date())
+      local version = { util.version() } table.insert(version, os_date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
       local version_info = "\n%s\n-- %s\n"%{ comment,
                                              util.to_lua_string(version, format) }
