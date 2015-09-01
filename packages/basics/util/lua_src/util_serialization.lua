@@ -1,6 +1,9 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
+local io_open = io.open
+local os_date = os.date
+
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
 __pairs_iterator__  = select(1,pairs({}))
@@ -308,7 +311,7 @@ do
       },
     } ..
     function(data, destination, format)
-      local version = { util.version() } table.insert(version, os.date())
+      local version = { util.version() } table.insert(version, os_date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
       local version_info = "\n%s\n-- %s\n"%{ comment,
                                              util.to_lua_string(version, format) }
@@ -317,7 +320,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io.open(destination, "w")
+        destination = io_open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -326,7 +329,7 @@ do
       destination:write("local %s={}\n"%{varname})
       local str = transform(map, "_", data, destination, format)
       destination:write("return %s%s"%{str,version_info})
-      if type(destination) == "table" then
+      if type(destination) == "table" and destination.concat then
         return destination:concat()
       elseif do_close then
         destination:close()
@@ -356,7 +359,7 @@ deserialize =
         local loader = assert( loadstring(dest) )
         return loader(...)
       else
-        local f = april_assert(io.open(dest), "Unable to locate %s\n",
+        local f = april_assert(io_open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end
