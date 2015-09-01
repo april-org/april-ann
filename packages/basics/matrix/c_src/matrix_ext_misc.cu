@@ -374,7 +374,6 @@ namespace AprilMath {
       template Matrix<double> *matAddition(const Matrix<double> *,
                                           const Matrix<double> *,
                                           Matrix<double> *);
-
       template Matrix<double> *matSubstraction(const Matrix<double> *,
                                               const Matrix<double> *,
                                               Matrix<double> *);
@@ -448,7 +447,9 @@ namespace AprilMath {
       template Matrix<int32_t> *matAddition(const Matrix<int32_t> *,
                                             const Matrix<int32_t> *,
                                             Matrix<int32_t> *);
-
+      template Matrix<int32_t> *matSubstraction(const Matrix<int32_t> *,
+                                                const Matrix<int32_t> *,
+                                                Matrix<int32_t> *);
 
       
       template Matrix<bool> *matConvertTo(const Matrix<float> *,

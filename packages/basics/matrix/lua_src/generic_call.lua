@@ -23,16 +23,19 @@ matrix.__generic__.__make_generic_call__ = function()
 	a = t
 	b = a
       elseif tt == "string" then
-	a = t:match("^(%d+)%:.*$") or 1
-	b = t:match("^.*%:(%d+)$") or dims[i]
+	a = t:match("^([+-]?%d+)%:.*$") or 1
+	b = t:match("^.*%:([+-]?%d+)$") or dims[i]
       else
 	error("The argument %d is not a table neither a string" % {i})
       end
       a,b = tonumber(a),tonumber(b)
+      if a < 0 then a = dims[i] + a end
+      if b < 0 then b = dims[i] + b end
       april_assert(1 <= a and a <= dims[i],
 		   "Range %d out of bounds for dim %d", a, i)
       april_assert(1 <= b and b <= dims[i],
 		   "Range %d out of bounds for dim %d", b, i)
+      april_assert(a <= b, "Range should be increasing")
       table.insert(pos,  a)
       table.insert(size, b - a + 1)
     end
