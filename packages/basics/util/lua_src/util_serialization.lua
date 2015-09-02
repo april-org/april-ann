@@ -278,6 +278,11 @@ do
                  "Userdata needs a function called ctor_params to be serializable")
           assert(data.ctor_name,
                  "Userdata needs a function called ctor_name to be serializable")
+          local ctor_requires = data.ctor_requires and data:ctor_requires() or {}
+          for i=1,#ctor_requires,2 do
+            destination:write('local %s = require"%s"\n'%{ ctor_requires[i+1],
+                                                           ctor_requires[i] })
+          end
           local params = table.pack( data:ctor_params() )
           local ctor_name = data:ctor_name()
           local params_str = ""
