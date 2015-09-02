@@ -5,6 +5,7 @@ local io_open = io.open
 local os_date = os.date
 
 local DEFAULT_BLOCK_SIZE = 2^25
+local ENV_TAG = function() return "dummy function" end -- dummy function
 
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
@@ -22,6 +23,7 @@ local builtin = {
   [coroutine.yield] = "coroutine.yield",
   [__ipairs_iterator__] = "__ipairs_iterator__",
   [__pairs_iterator__]  = "__pairs_iterator__",
+  [ENV_TAG] = "_ENV",
 }
 -----------------------------------------------------------------------
 
@@ -36,8 +38,12 @@ local function char(c) return ("\\%03d"):format(c:byte()) end
 local function szstr(s) return ('"%s"'):format(s:gsub("[^ !#-~]", char)) end
 
 function util.function_setupvalues(func, upvalues)
-  for i,value in ipairs(upvalues) do
-    debug.setupvalue(func, i, value)
+  for i,value in pairs(upvalues) do
+    if value == ENV_TAG then
+      debug.setupvalue(func, i, _ENV)
+    else
+      debug.setupvalue(func, i, value)
+    end
   end
   return func
 end
@@ -51,9 +57,7 @@ function util.function_to_lua_string(func,format)
     local name,value = debug.getupvalue(func,i)
     if not name then break end
     -- avoid global environment upvalue
-    if name ~= "_ENV" then
-      upvalues[i] = value
-    end
+    upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
     i = i + 1
   end
   --
@@ -246,8 +250,8 @@ do
           while true do
             local name,value = debug.getupvalue(data,i)
             if not name then break end
-            -- avoid global environment upvalue
-            if name ~= "_ENV" then upvalues[i] = value end
+            -- global environment upvalue is special
+            upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
             i = i + 1
           end
           local upv_str = transform(map, varname, upvalues, destination)
