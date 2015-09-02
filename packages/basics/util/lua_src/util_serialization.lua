@@ -4,7 +4,7 @@ local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 local io_open = io.open
 local os_date = os.date
 
-local DEFAULT_BLOCK_SIZE = 2^25
+local DEFAULT_BLOCK_SIZE = 2^20
 local ENV_TAG = function() return "dummy function" end -- dummy function
 
 -----------------------------------------------------------------------
