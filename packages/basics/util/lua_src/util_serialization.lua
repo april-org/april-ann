@@ -1,29 +1,63 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
+local io_open = io.open
+local os_date = os.date
+
+local DEFAULT_BLOCK_SIZE = 2^20
+local ENV_TAG = function() return "dummy function" end -- dummy function
+
+-----------------------------------------------------------------------
+__ipairs_iterator__ = select(1,ipairs({}))
+__pairs_iterator__  = select(1,pairs({}))
+local builtin = {
+  [pairs]  = "pairs",
+  [ipairs] = "ipairs",
+  [next]   = "next",
+  [table.pack]   = "table.pack",
+  [table.unpack] = "table.unpack",
+  [table.insert] = "table.insert",
+  [table.remove] = "table.remove",
+  [table.concat] = "table.concat",
+  [coroutine.wrap]  = "coroutine.wrap",
+  [coroutine.yield] = "coroutine.yield",
+  [__ipairs_iterator__] = "__ipairs_iterator__",
+  [__pairs_iterator__]  = "__pairs_iterator__",
+  [ENV_TAG] = "_ENV",
+}
+-----------------------------------------------------------------------
+
+-- adding serialization to iterator class
+class.extend(iterator, "ctor_name", function(self) return "iterator" end)
+class.extend(iterator, "ctor_params", function(self) return self:get() end)
+
+-----------------------------------------------------------------------
+
 -- utilities for function serialization
 local function char(c) return ("\\%03d"):format(c:byte()) end
 local function szstr(s) return ('"%s"'):format(s:gsub("[^ !#-~]", char)) end
 
 function util.function_setupvalues(func, upvalues)
-  for i,value in ipairs(upvalues) do
-    debug.setupvalue(func, i, value)
+  for i,value in pairs(upvalues) do
+    if value == ENV_TAG then
+      debug.setupvalue(func, i, _ENV)
+    else
+      debug.setupvalue(func, i, value)
+    end
   end
   return func
 end
 
 function util.function_to_lua_string(func,format)
   --
-  local func_dump = string.format("load(%s)", szstr(string.dump(func)))
+  local func_dump = string.format("assert(load(%q))", string.dump(func))
   local upvalues = {}
   local i = 1
   while true do
     local name,value = debug.getupvalue(func,i)
     if not name then break end
     -- avoid global environment upvalue
-    if name ~= "_ENV" then
-      upvalues[i] = value
-    end
+    upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
     i = i + 1
   end
   --
@@ -206,23 +240,28 @@ do
           end
         end
       elseif tt == "function" then
-        -- serializes the function with all of its upvalues
-        -- NOTE that upvalues which are plain objects (strings or integers)
-        -- are not shared between functions, but tables and userdata objects
-        -- will be shared when serializing together several functions.
-        local upvalues = {}
-        local i = 1
-        while true do
-          local name,value = debug.getupvalue(data,i)
-          if not name then break end
-          -- avoid global environment upvalue
-          if name ~= "_ENV" then upvalues[i] = value end
-          i = i + 1
+        if not builtin[data] then
+          -- serializes the function with all of its upvalues
+          -- NOTE that upvalues which are plain objects (strings or integers)
+          -- are not shared between functions, but tables and userdata objects
+          -- will be shared when serializing together several functions.
+          local upvalues = {}
+          local i = 1
+          while true do
+            local name,value = debug.getupvalue(data,i)
+            if not name then break end
+            -- global environment upvalue is special
+            upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
+            i = i + 1
+          end
+          local upv_str = transform(map, varname, upvalues, destination)
+          local func_dump = "assert(load(%q))"%{ string.dump(data) }
+          destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
+                              {varname,id,func_dump,upv_str})
+        else
+          local func_dump = "%s"%{ builtin[data] }
+          destination:write("%s[%d]=%s\n"%{varname,id,func_dump})
         end
-        local upv_str = transform(map, varname, upvalues, destination)
-        local func_dump = "load(%s)"%{ szstr(string.dump(data)) }
-        destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
-                            {varname,id,func_dump,upv_str})
       elseif class.of(data) then
         local serialize = getmetatable(data).serialize
         if serialize then
@@ -239,6 +278,11 @@ do
                  "Userdata needs a function called ctor_params to be serializable")
           assert(data.ctor_name,
                  "Userdata needs a function called ctor_name to be serializable")
+          local ctor_requires = data.ctor_requires and data:ctor_requires() or {}
+          for i=1,#ctor_requires,2 do
+            destination:write('local %s = require"%s"\n'%{ ctor_requires[i+1],
+                                                           ctor_requires[i] })
+          end
           local params = table.pack( data:ctor_params() )
           local ctor_name = data:ctor_name()
           local params_str = ""
@@ -254,6 +298,10 @@ do
           end
           destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})
         end
+      elseif class.is_class(data) then
+        -- general case
+        local value = 'class.find("%s")'%{data.meta_instance.id}
+        destination:write("%s[%d]=%s\n"%{varname,id,value})
       else
         -- general case
         local value = value2str(data)
@@ -278,7 +326,7 @@ do
       },
     } ..
     function(data, destination, format)
-      local version = { util.version() } table.insert(version, os.date())
+      local version = { util.version() } table.insert(version, os_date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
       local version_info = "\n%s\n-- %s\n"%{ comment,
                                              util.to_lua_string(version, format) }
@@ -287,7 +335,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io.open(destination, "w")
+        destination = io_open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -296,7 +344,7 @@ do
       destination:write("local %s={}\n"%{varname})
       local str = transform(map, "_", data, destination, format)
       destination:write("return %s%s"%{str,version_info})
-      if type(destination) == "table" then
+      if type(destination) == "table" and destination.concat then
         return destination:concat()
       elseif do_close then
         destination:close()
@@ -326,16 +374,16 @@ deserialize =
         local loader = assert( loadstring(dest) )
         return loader(...)
       else
-        local f = april_assert(io.open(dest), "Unable to locate %s\n",
+        local f = april_assert(io_open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end
     elseif iscallable(dest) then
-      local f = load(dest())
+      local f = assert( load(dest()) )
       return f(...)
     else
       assert(dest.read, "Needs a string or an opened file")
-      local loader = assert( load(function() return dest:read(4096) end) )
+      local loader = assert( load(function() return dest:read(DEFAULT_BLOCK_SIZE) end) )
       return loader(...)
     end
   end

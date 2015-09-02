@@ -205,7 +205,7 @@ local function center(x,mu)
     return x - mu, mu
   else
     mu = mu or x:sum(1):scal(1/N)
-    if #mu == 1 then
+    if mu:size() == 1 then
       return x - mu, mu
     else
       return matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu), mu
@@ -233,12 +233,12 @@ stats.standardize =
     elseif not mu then
       mu = stats.amean(x,1)
     end
-    if #mu == 1 then
+    if mu:size() == 1 then
       x = x - mu:get(table.unpack(mu:dim()))
     else
       x = matrix.ext.broadcast(bind(x.axpy, nil, -1.0), x, mu)
     end
-    if #sigma == 1 then
+    if sigma:size() == 1 then
       x = x / sigma:get(table.unpack(sigma:dim()))
     else
       x = matrix.ext.broadcast(x.cmul, x, 1/sigma)

@@ -228,7 +228,7 @@ function iterator:constructor(f, s, v)
   elseif not iscallable(f) and type(f) == "table" then
     if #f == 0 then f,s,v = iterator(pairs(f)):select(2):get()
     else f,s,v = iterator(ipairs(f)):select(2):get()
-    end    
+    end
   end
   assert(iscallable(f), "Needs a Lua iterator tripplete, a table, a function or a callable table")
   self.f,self.s,self.v = f,s,v
