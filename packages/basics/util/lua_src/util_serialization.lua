@@ -3,6 +3,8 @@ local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
 local os_date = os.date
 
+local DEFAULT_BLOCK_SIZE = 2^25
+
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
 __pairs_iterator__  = select(1,pairs({}))
@@ -367,7 +369,7 @@ deserialize =
       return f(...)
     else
       assert(dest.read, "Needs a string or an opened file")
-      local loader = assert( load(function() return dest:read(4096) end) )
+      local loader = assert( load(function() return dest:read(DEFAULT_BLOCK_SIZE) end) )
       return loader(...)
     end
   end
