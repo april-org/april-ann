@@ -298,6 +298,10 @@ do
           end
           destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})
         end
+      elseif class.is_class(data) then
+        -- general case
+        local value = 'class.find("%s")'%{data.meta_instance.id}
+        destination:write("%s[%d]=%s\n"%{varname,id,value})
       else
         -- general case
         local value = value2str(data)
