@@ -1,6 +1,7 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
+local io_open = io.open
 local os_date = os.date
 
 local DEFAULT_BLOCK_SIZE = 2^25
@@ -321,7 +322,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io.open(destination, "w")
+        destination = io_open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -330,7 +331,7 @@ do
       destination:write("local %s={}\n"%{varname})
       local str = transform(map, "_", data, destination, format)
       destination:write("return %s%s"%{str,version_info})
-      if type(destination) == "table" then
+      if type(destination) == "table" and destination.concat then
         return destination:concat()
       elseif do_close then
         destination:close()
@@ -360,7 +361,7 @@ deserialize =
         local loader = assert( loadstring(dest) )
         return loader(...)
       else
-        local f = april_assert(io.open(dest), "Unable to locate %s\n",
+        local f = april_assert(io_open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end
