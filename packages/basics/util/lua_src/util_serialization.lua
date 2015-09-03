@@ -300,7 +300,8 @@ do
         end
       elseif class.is_class(data) then
         -- general case
-        local value = 'class.find("%s")'%{data.meta_instance.id}
+        local cls_id = data.meta_instance.id
+        local value = 'assert(class.find("%s"), "Unable locate class %s")'%{cls_id,cls_id}
         destination:write("%s[%d]=%s\n"%{varname,id,value})
       else
         -- general case
