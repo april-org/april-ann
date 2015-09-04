@@ -17,7 +17,7 @@ matrix.__generic__.__make_generic_join__ = function()
       arg, dim, size = new_arg, 1, new_arg[1]:dim()
     elseif dim == #size+1 then
       local new_arg = {}
-      for i=1,#arg do new_arg[i] = arg[i]:rewrap(multiple_unpack(arg[i]:dim()),{1}) end
+      for i=1,#arg do new_arg[i] = arg[i]:rewrap(multiple_unpack(arg[i]:dim(),{1})) end
       arg, dim, size = new_arg, #size+1, new_arg[1]:dim()
     else
       -- ERROR CHECK
