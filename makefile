@@ -1,8 +1,8 @@
 export PREFIX = /usr
-UNAME := `uname`
+UNAME := $(shell uname)
 LINUX_SUFIX := $(shell ( ldconfig -p 2>/dev/null | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so 2> /dev/null > /dev/null && echo "mkl" ) || ( ldconfig -p 2>/dev/null | grep libatlas > /dev/null && echo "atlas" ) || echo "")
 
-ifeq ($(UNAME),"Darwin")
+ifeq ("$(UNAME)","Darwin")
 # homebrew
 ifneq ("$(wildcard /usr/local/include/lua.h)","")
 DARWIN_SUFIX = homebrew
