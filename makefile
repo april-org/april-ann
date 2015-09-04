@@ -1,3 +1,4 @@
+LUAVER = 5.2
 export PREFIX = /usr
 UNAME := $(shell uname)
 LINUX_SUFIX := $(shell ( ldconfig -p 2>/dev/null | grep libmkl_core > /dev/null && echo "mkl" ) || ( ls /opt/MKL/lib/libmkl_core.so 2> /dev/null > /dev/null && echo "mkl" ) || ( ldconfig -p 2>/dev/null | grep libatlas > /dev/null && echo "atlas" ) || echo "")
@@ -17,8 +18,8 @@ endif
 
 INCLUDE := $(PREFIX)/include
 LIB := $(PREFIX)/lib
-LUALIB := $(PREFIX)/lib/lua/5.2
-LUAMOD := $(PREFIX)/share/lua/5.2
+LUALIB := $(PREFIX)/lib/lua/$(LUAVER)
+LUAMOD := $(PREFIX)/share/lua/$(LUAVER)
 BIN := $(PREFIX)/bin
 
 ALL: auto-release
@@ -231,6 +232,7 @@ install: check-env-vars uninstall
 	install lib/libapril-ann.so $(LIB)
 	install lib/aprilann.so $(LUALIB)
 	install bin/april-ann $(BIN)
+	install lua/bin/lua $(BIN)/lua$(LUAVER)-april
 
 uninstall: check-env-vars
 	@rm -Rf $(INCLUDE)/april-ann
@@ -241,6 +243,7 @@ uninstall: check-env-vars
 	@rm -f $(LIB)/libapril-ann.so
 	@rm -f $(LIB)/pkgconfig/april-ann.pc
 	@rm -f $(BIN)/april-ann
+	@rm -f $(BIN)/lua-$(LUAVER)-april
 
 ##############################################################################
 

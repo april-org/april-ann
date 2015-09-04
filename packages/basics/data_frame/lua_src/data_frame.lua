@@ -414,6 +414,13 @@ data_frame.from_csv =
       rawset(self, "columns",
              iterator(parse_csv_line(f:read("*l"), sep, quotechar,
                                      decimal, NA_str)):table())
+      for i,col_name in ipairs(rawget(self, "columns")) do
+        if is_nan(col_name) then
+          col_name = next_number(rawget(self, "columns"))
+          rawget(self, "columns")[i] = col_name
+        end
+        data[col_name] = {}
+      end
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
     end
@@ -581,7 +588,7 @@ methods.as_matrix =
         dtype = { type_match = "string", default = "float" },
         categorical_dtype = { type_match = "string", default = "float" },
         categories = { type_match = "table", default = nil },
-        NA = { type_match = "string", default = defNA },
+        NA = { default = NA },
                               }, params)
     local categories = params.categories or {}
     local inv_categories = {}
@@ -612,6 +619,7 @@ methods.as_matrix =
       end
       local ncols = categories[i] and #categories[i]
       local m = to_matrix(col_data, dtype, ncols)
+      if not is_nan(NA) then m[m:eq(nan)] = NA end
       if ncols and ncols <= 2 then m:scalar_add(-1.0) end
       table.insert(tbl, m)
     end

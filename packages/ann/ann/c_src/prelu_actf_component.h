@@ -53,7 +53,7 @@ namespace ANN {
                           const char *name = 0, const char *weights_name = 0,
                           Basics::MatrixFloat *matrix = 0);
     virtual ~PReLUActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual void computeGradients(const char *weights_name,
                                   AprilUtils::LuaTable &weight_grads);

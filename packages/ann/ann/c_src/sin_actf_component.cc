@@ -47,7 +47,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *SinActfANNComponent::clone() {
+  ANNComponent *SinActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SinActfANNComponent *obj = new SinActfANNComponent(name.c_str());
     return obj;
   }

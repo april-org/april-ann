@@ -51,7 +51,7 @@ namespace ANN {
                           const char *name=0);
     virtual ~TransposeANNComponent();
     
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     virtual int exportParamsToLua(lua_State *L);

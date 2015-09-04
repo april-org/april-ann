@@ -82,6 +82,7 @@ end
 lua_serializable_methods.ctor_params = function()
   error("Serialization not implemented")
 end
+lua_serializable_methods.ctor_requires = function() return {} end
 lua_serializable_methods.save = util.serialize
 lua_serializable.load         = util.deserialize
 

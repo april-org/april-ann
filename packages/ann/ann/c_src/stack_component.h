@@ -38,7 +38,8 @@ namespace ANN {
     AprilUtils::vector<ANNComponent*> components;
 
   public:
-    StackANNComponent(const char *name=0);
+    StackANNComponent(const char *name=0, unsigned int input=0,
+                      unsigned int output=0);
     virtual ~StackANNComponent();
 
     /// Method to push a new component at the top of the stack
@@ -103,7 +104,7 @@ namespace ANN {
     
     virtual void reset(unsigned int it=0);
     
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     
     virtual void setUseCuda(bool v);
     

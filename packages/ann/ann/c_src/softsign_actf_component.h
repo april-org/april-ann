@@ -42,7 +42,7 @@ namespace ANN {
   public:
     SoftsignActfANNComponent(const char *name);
     virtual ~SoftsignActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     // virtual int exportParamsToLua(lua_State *L);

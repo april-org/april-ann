@@ -50,7 +50,7 @@ namespace ANN {
                     const char *name=0, const char *weights_name=0,
                     Basics::MatrixFloat *matrix=0);
     virtual ~MulANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       AprilUtils::LuaTable &weights_dict,

@@ -34,7 +34,7 @@ do
     end
 end
 
-class.extend_metamethod(matrix, "__len", function(self) return self:size() end)
+class.extend_metamethod(matrix, "__len", function(self) return self:dim(1) end)
 class.extend_metamethod(matrix, "__ipairs",
                         function(self)
                           return function(self,i)

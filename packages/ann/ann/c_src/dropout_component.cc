@@ -145,9 +145,13 @@ namespace ANN {
     error_output = 0;
   }
 
-  ANNComponent *DropoutANNComponent::clone() {
+  ANNComponent *DropoutANNComponent::clone(AprilUtils::LuaTable &copies) {
+    MTRand *rng_clone = copies[getRandom()].opt<MTRand*>(0);
+    if (rng_clone == 0) {
+      copies[getRandom()] = rng_clone = new MTRand(*getRandom());
+    }
     DropoutANNComponent *copy_component = new
-      DropoutANNComponent(new MTRand(*getRandom()),
+      DropoutANNComponent(rng_clone,
 			  value, prob, normalize_after_training,
 			  name.c_str(),
 			  size);

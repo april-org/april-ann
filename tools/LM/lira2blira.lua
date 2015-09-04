@@ -6,10 +6,10 @@ binary_filename     = arg[3]
 -- cargar diccionario
 dictionary = lexClass.load(io.open(dictionary_filename))
 -- cargar lira
-lira_model = ngram.load_language_model(lira_filename,
-				       dictionary,
-				       '<s>',
-				       '</s>')
+lira_model = language_models.load(lira_filename,
+                                  dictionary,
+                                  '<s>',
+                                  '</s>')
 
 -- todo: check de que lo que lo que hemos cargado es un lira, aunque
 -- si no lo es el metodo siguiente petara

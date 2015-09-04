@@ -228,7 +228,8 @@ namespace ANN {
     bias_vector->resetSharedCount();
   }
   
-  ANNComponent *ConvolutionBiasANNComponent::clone() {
+  ANNComponent *ConvolutionBiasANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);    
     ConvolutionBiasANNComponent *component = new
       ConvolutionBiasANNComponent(num_dims, hidden_size,
 				  name.c_str(), weights_name.c_str());
@@ -281,9 +282,10 @@ namespace ANN {
   int ConvolutionBiasANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L);
     t["name"] = name;
-    t["weights"] = bias_vector;
+    t["weights"] = weights_name;
     t["n"] = hidden_size;
     t["ndims"] = num_dims;
+    t["matrix"] = bias_vector;
     t.pushTable(L);
     return 1;
   }

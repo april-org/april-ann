@@ -87,7 +87,8 @@ namespace ANN {
     UNUSED_VARIABLE(it);
   }
   
-  ANNComponent *SliceANNComponent::clone() {
+  ANNComponent *SliceANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SliceANNComponent *slice_component = new SliceANNComponent(slice_offset+1,
 							       slice_size+1,
 							       n-1,

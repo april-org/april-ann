@@ -41,7 +41,7 @@ namespace ANN {
   public:
     LeakyReLUActfANNComponent(float leak=0.01f, const char *name=0);
     virtual ~LeakyReLUActfANNComponent();
-    virtual ANNComponent *clone();
+    virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
 
     virtual const char *luaCtorName() const;
     virtual int exportParamsToLua(lua_State *L);

@@ -52,7 +52,8 @@ namespace ANN {
     matCopy(output_errors, input_errors);
   }
   
-  ANNComponent *LogSoftmaxActfANNComponent::clone() {
+  ANNComponent *LogSoftmaxActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     LogSoftmaxActfANNComponent *obj = new LogSoftmaxActfANNComponent(name.c_str());
     return obj;
   }

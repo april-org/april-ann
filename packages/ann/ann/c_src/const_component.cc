@@ -50,8 +50,11 @@ namespace ANN {
     component->reset(it);
   }
   
-  ANNComponent *ConstANNComponent::clone() {
-    return new ConstANNComponent(component->clone(), name.c_str());
+  ANNComponent *ConstANNComponent::clone(AprilUtils::LuaTable &copies) {
+    ANNComponent *cloned = component->clone(copies);
+    AprilUtils::LuaTable components;
+    cloned->build(0, 0, component_weights, components);
+    return new ConstANNComponent(cloned, name.c_str());
   }
   
   void ConstANNComponent::build(unsigned int _input_size,

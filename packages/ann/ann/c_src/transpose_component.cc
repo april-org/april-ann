@@ -94,7 +94,8 @@ namespace ANN {
     UNUSED_VARIABLE(it);
   }
 
-  ANNComponent *TransposeANNComponent::clone() {
+  ANNComponent *TransposeANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     TransposeANNComponent *transpose_component =
       new TransposeANNComponent(which.get(), name.c_str());
     return transpose_component;

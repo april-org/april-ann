@@ -48,7 +48,8 @@ namespace ANN {
     matCmul(output_errors, input_errors);
   }
 
-  ANNComponent *SoftplusActfANNComponent::clone() {
+  ANNComponent *SoftplusActfANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     SoftplusActfANNComponent *obj = new SoftplusActfANNComponent(name.c_str());
     return obj;
   }

@@ -361,7 +361,8 @@ namespace ANN {
     weights_matrix->resetSharedCount();
   }
   
-  ANNComponent *ConvolutionANNComponent::clone() {
+  ANNComponent *ConvolutionANNComponent::clone(AprilUtils::LuaTable &copies) {
+    UNUSED_VARIABLE(copies);
     ConvolutionANNComponent *component = new
       ConvolutionANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
                               hidden_size, name.c_str(), weights_name.c_str());
@@ -426,7 +427,7 @@ namespace ANN {
   int ConvolutionANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L), kernel(L), step(L);
     t["name"] = name;
-    t["weights_name"] = weights_name;
+    t["weights"] = weights_name;
     t["n"] = hidden_size;
     t["kernel"] = kernel;
     t["step"] = step;

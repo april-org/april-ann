@@ -65,7 +65,7 @@ local matrix_methods = {
     "linear", "sliding_window", "is_contiguous",
     "diag", "fill",
     "zeros", "ones", "min", "max", "equals", "clamp", "add", "scalar_add",
-    "cmul", "scal",
+    "sub", "cmul", "scal",
     "copy", "axpy",
     "masked_fill", "masked_copy", "idiv", "mod",
     "lt", "gt", "eq", "neq", "toMMap",

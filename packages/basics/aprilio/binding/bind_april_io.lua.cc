@@ -43,10 +43,14 @@ int callFileStreamConstructor(lua_State *L) {
     return 1;
   }
   else {
+    int num_returns = 1;
     lua_pushnil(L);
-    if (stream->hasError()) lua_pushstring(L, stream->getErrorMsg());
+    if (stream->hasError()) {
+      lua_pushstring(L, stream->getErrorMsg());
+      ++num_returns;
+    }
     delete stream;
-    return 2;
+    return num_returns;
   }
 }
 
