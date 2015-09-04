@@ -33,6 +33,8 @@ namespace ANN {
     if (!component->getIsBuilt()) {
       AprilUtils::LuaTable components_dict;
       component->build(0, 0, component_weights, components_dict);
+      input_size = component->getInputSize();
+      output_size = component->getOutputSize();
     }
     else {
       component->copyWeights(component_weights);
