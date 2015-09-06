@@ -680,7 +680,8 @@ FILE **newfile (lua_State *L) {
     LUABIND_RETURN(string, strerror(errno));
   }
   else {
-    LUABIND_RETURN(boolean,true);
+    double old_sec = old_timer.it_value.tv_sec + old_timer.it_value.tv_usec/1.0e6;
+    LUABIND_RETURN(double, old_sec);
   }
 }
 //BIND_END
@@ -695,12 +696,16 @@ FILE **newfile (lua_State *L) {
   double sleeptime;
   LUABIND_GET_PARAMETER(1, double, sleeptime);
   double seconds = floor(sleeptime);
-  struct timespec req;
+  struct timespec req, rem;
   req.tv_sec  = static_cast<time_t>(seconds);
   req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
-  if (nanosleep(&req, 0) == 1) {
+  if (nanosleep(&req, &rem) == 1) {
     LUABIND_RETURN_NIL();
     LUABIND_RETURN(string, strerror(errno));
+  }
+  else {
+    double rem_seconds = rem.tv_sec + rem.tv_nsec/1.0e6;
+    LUABIND_RETURN(double, rem_seconds);
   }
 }
 //BIND_END
