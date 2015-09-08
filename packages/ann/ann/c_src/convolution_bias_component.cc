@@ -282,9 +282,10 @@ namespace ANN {
   int ConvolutionBiasANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L);
     t["name"] = name;
-    t["weights"] = bias_vector;
+    t["weights"] = weights_name;
     t["n"] = hidden_size;
     t["ndims"] = num_dims;
+    t["matrix"] = bias_vector;
     t.pushTable(L);
     return 1;
   }
