@@ -428,6 +428,7 @@ namespace ANN {
     AprilUtils::LuaTable t(L), kernel(L), step(L);
     t["name"] = name;
     t["weights"] = weights_name;
+    t["matrix"] = weights_matrix;
     t["n"] = hidden_size;
     t["kernel"] = kernel;
     t["step"] = step;
