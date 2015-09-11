@@ -429,6 +429,7 @@ namespace ANN {
     t["name"] = name;
     t["matrix"] = weights_matrix;
     t["weights"] = weights_name;
+    t["matrix"] = weights_matrix;
     t["n"] = hidden_size;
     t["kernel"] = kernel;
     t["step"] = step;
