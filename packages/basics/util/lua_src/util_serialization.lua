@@ -1,8 +1,8 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
-local io_open = io.open
-local os_date = os.date
+local DEFAULT_BLOCK_SIZE = 2^20
+local ENV_TAG = function() return "dummy function" end -- dummy function
 
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
@@ -21,6 +21,7 @@ local builtin = {
   [table.concat] = "table.concat",
   [__ipairs_iterator__] = "__ipairs_iterator__",
   [__pairs_iterator__]  = "__pairs_iterator__",
+  [ENV_TAG] = "_ENV",
 }
 -----------------------------------------------------------------------
 
@@ -35,8 +36,12 @@ local function char(c) return ("\\%03d"):format(c:byte()) end
 local function szstr(s) return ('"%s"'):format(s:gsub("[^ !#-~]", char)) end
 
 function util.function_setupvalues(func, upvalues)
-  for i,value in ipairs(upvalues) do
-    debug.setupvalue(func, i, value)
+  for i,value in pairs(upvalues) do
+    if value == ENV_TAG then
+      debug.setupvalue(func, i, _ENV)
+    else
+      debug.setupvalue(func, i, value)
+    end
   end
   return func
 end
@@ -50,9 +55,7 @@ function util.function_to_lua_string(func,format)
     local name,value = debug.getupvalue(func,i)
     if not name then break end
     -- avoid global environment upvalue
-    if name ~= "_ENV" then
-      upvalues[i] = value
-    end
+    upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
     i = i + 1
   end
   --
@@ -245,8 +248,8 @@ do
           while true do
             local name,value = debug.getupvalue(data,i)
             if not name then break end
-            -- avoid global environment upvalue
-            if name ~= "_ENV" then upvalues[i] = value end
+            -- global environment upvalue is special
+            upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
             i = i + 1
           end
           local upv_str = transform(map, varname, upvalues, destination)
@@ -273,6 +276,11 @@ do
                  "Userdata needs a function called ctor_params to be serializable")
           assert(data.ctor_name,
                  "Userdata needs a function called ctor_name to be serializable")
+          local ctor_requires = data.ctor_requires and data:ctor_requires() or {}
+          for i=1,#ctor_requires,2 do
+            destination:write('local %s = require"%s"\n'%{ ctor_requires[i+1],
+                                                           ctor_requires[i] })
+          end
           local params = table.pack( data:ctor_params() )
           local ctor_name = data:ctor_name()
           local params_str = ""
@@ -288,6 +296,11 @@ do
           end
           destination:write("%s[%d]=%s(%s)\n"%{varname,id,ctor_name,params_str})
         end
+      elseif class.is_class(data) then
+        -- general case
+        local cls_id = data.meta_instance.id
+        local value = 'assert(class.find("%s"), "Unable locate class %s")'%{cls_id,cls_id}
+        destination:write("%s[%d]=%s\n"%{varname,id,value})
       else
         -- general case
         local value = value2str(data)
@@ -312,7 +325,7 @@ do
       },
     } ..
     function(data, destination, format)
-      local version = { util.version() } table.insert(version, os_date())
+      local version = { util.version() } table.insert(version, os.date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
       local version_info = "\n%s\n-- %s\n"%{ comment,
                                              util.to_lua_string(version, format) }
@@ -321,7 +334,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io_open(destination, "w")
+        destination = io.open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -360,7 +373,7 @@ deserialize =
         local loader = assert( loadstring(dest) )
         return loader(...)
       else
-        local f = april_assert(io_open(dest), "Unable to locate %s\n",
+        local f = april_assert(io.open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end
@@ -369,7 +382,7 @@ deserialize =
       return f(...)
     else
       assert(dest.read, "Needs a string or an opened file")
-      local loader = assert( load(function() return dest:read(4096) end) )
+      local loader = assert( load(function() return dest:read(DEFAULT_BLOCK_SIZE) end) )
       return loader(...)
     end
   end

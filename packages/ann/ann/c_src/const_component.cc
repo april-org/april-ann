@@ -31,9 +31,14 @@ namespace ANN {
 		 component->getOutputSize()),
     component(component) {
     if (!component->getIsBuilt()) {
-      ERROR_EXIT(128, "Needs a built component!\n");
+      AprilUtils::LuaTable components_dict;
+      component->build(0, 0, component_weights, components_dict);
+      input_size = component->getInputSize();
+      output_size = component->getOutputSize();
     }
-    component->copyWeights(component_weights);
+    else {
+      component->copyWeights(component_weights);
+    }
   }
   
   ConstANNComponent::~ConstANNComponent() { }
