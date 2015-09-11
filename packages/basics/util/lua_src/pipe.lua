@@ -43,5 +43,3 @@ function pipe_methods:write(...) return self.OUT:write(...) end
 function pipe_methods:read(...) return self.IN:read(...) end
 
 function pipe_methods:flush() self.OUT:flush() end
-
-return pipe
