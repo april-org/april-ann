@@ -203,6 +203,35 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
+//BIND_FUNCTION util.execp
+//DOC_BEGIN
+// execp(file, arg1, arg2, ...)
+//DOC_END
+{
+  int n = lua_gettop(L);
+  AprilUtils::UniquePtr<char *[]> args = new char*[n+1];
+  const char *file = luaL_checkstring(L, 1);
+  for (int i=1; i<=n; ++i) args[i-1] = const_cast<char*>(luaL_checkstring(L, i));
+  args[n] = NULL;
+  int err = execvp(file, args.get());
+  if (err < 0) {
+    LUABIND_FERROR1("Error in execvp system call: %s", strerror(errno));
+  }
+}
+//BIND_END
+
+//BIND_FUNCTION util.getpid
+{
+  LUABIND_RETURN(int, getpid());
+}
+//BIND_END
+
+//BIND_FUNCTION util.getppid
+{
+  LUABIND_RETURN(int, getppid());
+}
+//BIND_END
+
 //BIND_FUNCTION util.split_process
 //DOC_BEGIN
 // split_process(...)
