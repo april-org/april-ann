@@ -308,7 +308,6 @@ namespace AprilMath {
         }
         int non_zeros = sq_input->size() - matCount(sq_input.get(),
                                                     AprilMath::Limits<T>::zero());
-        if (non_zeros == 0) return 0;
         if (dest != 0) {
           if (dest->size() != non_zeros) {
             ERROR_EXIT(256, "Incompatible matrix sizes\n");
@@ -317,6 +316,7 @@ namespace AprilMath {
         else {
           dest = new Basics::Matrix<int32_t>(1, &non_zeros);
         }
+        if (non_zeros == 0) return dest;
         int k=0;
         Basics::Matrix<int32_t>::iterator dest_it = dest->begin();
         for (typename Basics::Matrix<T>::const_iterator it = sq_input->begin();
