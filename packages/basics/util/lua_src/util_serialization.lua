@@ -2,7 +2,8 @@ local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
 local DEFAULT_BLOCK_SIZE = 2^20
-local ENV_TAG = function() return "dummy function" end -- dummy function
+local ENV_TAG = function() return "ENV dummy function" end -- dummy function
+local NIL_TAG = function() return "NIL dummy function" end -- dummy function
 
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
@@ -22,6 +23,7 @@ local builtin = {
   [__ipairs_iterator__] = "__ipairs_iterator__",
   [__pairs_iterator__]  = "__pairs_iterator__",
   [ENV_TAG] = "_ENV",
+  [NIL_TAG] = "nil",
 }
 -----------------------------------------------------------------------
 
@@ -39,6 +41,8 @@ function util.function_setupvalues(func, upvalues)
   for i,value in pairs(upvalues) do
     if value == ENV_TAG then
       debug.setupvalue(func, i, _ENV)
+    elseif value == NIL_TAG then
+      debug.setupvalue(func, i, nil)
     else
       debug.setupvalue(func, i, value)
     end
@@ -54,8 +58,13 @@ function util.function_to_lua_string(func,format)
   while true do
     local name,value = debug.getupvalue(func,i)
     if not name then break end
-    -- avoid global environment upvalue
-    upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
+    -- global environment upvalue and nil are special
+    if name == "_ENV" then
+      value = ENV_TAG
+    elseif value==nil then
+      value = NIL_TAG
+    end
+    upvalues[i] = value
     i = i + 1
   end
   --
@@ -248,8 +257,13 @@ do
           while true do
             local name,value = debug.getupvalue(data,i)
             if not name then break end
-            -- global environment upvalue is special
-            upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
+            -- global environment upvalue and nil are special
+            if name == "_ENV" then
+              value = ENV_TAG
+            elseif value==nil then
+              value = NIL_TAG
+            end
+            upvalues[i] = value
             i = i + 1
           end
           local upv_str = transform(map, varname, upvalues, destination)
