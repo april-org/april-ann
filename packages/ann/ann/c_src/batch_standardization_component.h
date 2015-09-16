@@ -38,7 +38,16 @@ namespace ANN {
   class BatchStandardizationANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(BatchStandardizationANNComponent);
     float alpha, epsilon;
-    AprilUtils::SharedPtr<Basics::MatrixFloat> mean, inv_std;
+    /// Mean value of current batch.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> mean;
+    /// Inverse standard deviation of current batch.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> inv_std;
+    /// Running mean computed during training to be used at inference stage.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> running_mean;
+    /// Running stddev computed during training to be used at inference stage.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> running_inv_std;
+    /// Auxiliary matrix.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> centered;
     
   protected:
     
@@ -49,7 +58,7 @@ namespace ANN {
     virtual void computeGradients(const char *name, AprilUtils::LuaTable &weight_grads_dict);
     
   public:
-    BatchStandardizationANNComponent(float alpha=0.1, float epsilon=1e-05,
+    BatchStandardizationANNComponent(float alpha=0.1f, float epsilon=1e-05f,
                                      unsigned int size=0,
                                      const char *name=0,
                                      Basics::MatrixFloat *mean=0,

@@ -652,6 +652,28 @@ T("DOTPRODUCT + CONST_MUL SCALAR TEST",
     end)
 end)
 
+-- T("DOTPRODUCT + BATCH STANDARDIZATION TEST",
+--   function()
+--     check(function()
+--         for i=1,4 do
+--           for o=1,4 do
+--             for b=128,128 do
+--               check_component(function()
+--                   return ann.components.stack():
+--                     push( ann.components.dot_product{ input=i, output=o } ):
+--                     push( ann.components.batch_standardization{
+--                             mean = matrix(o):linspace(0,0.1),
+--                             inv_std = 1/matrix(o):linspace(0.9,1),
+--                     } )
+--                               end,
+--                 "mse", i, o, b, "BATCH_STANDARDIZATION")
+--             end
+--           end
+--         end
+--         return true
+--     end)
+-- end)
+
 -------------
 -- SOFTMAX --
 -------------

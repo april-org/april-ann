@@ -8,6 +8,44 @@ class.extend(ann.components.base, "get_is_recurrent",
 
 ----------------------------------------------------------------------
 
+ann.components.batchnorm = function(t)
+  local params = get_table_fields(
+    {
+      affine       = { type_match="boolean", default=true },
+      alpha        = { type_match="number" },
+      bias_name    = { type_match="string" },
+      bias_weights = { type_match="string" },
+      epsilon      = { type_match="number" },
+      mul_name     = { type_match="string" },
+      mul_weights  = { type_match="string" },
+      name         = { type_match="string" },
+      size         = { type_match="number" },
+    }, t)
+  local component = ann.components.batch_standardization{
+    name    = params.name,
+    epsilon = params.epsilon,
+    alpha   = params.alpha,
+  }
+  if params.affine then
+    local stack = ann.components.stack()
+    stack:push( component )
+    stack:push( ann.components.mul{
+                  name = params.mul_name,
+                  size = params.size,
+                  weights = params.mul_weights,
+    } )
+    stack:push( ann.components.bias{
+                  name = params.bias_name,
+                  size = params.size,
+                  weights = params.bias_weights,
+    } )
+    component = stack
+  end
+  return component
+end
+
+----------------------------------------------------------------------
+
 ann.components.const_mul = function(t)
   local params = get_table_fields(
     {

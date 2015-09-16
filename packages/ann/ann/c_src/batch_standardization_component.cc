@@ -31,8 +31,41 @@ using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 
-namespace ANN {
+static AprilUtils::SharedPtr<MatrixFloat> computeMean(MatrixFloat *m, int off=0) {
+  float inv_N = 1.0f/static_cast<float>(m->getDimSize(0) + off);
+  AprilUtils::SharedPtr<MatrixFloat> mean;
+  mean = matSum(m, 0);
+  matScal(mean.get(), inv_N);
+  return mean;
+}
+  
+static void applyCenter(MatrixFloat *m, MatrixFloat *c, float a=-1.0f) {
+  AprilUtils::SharedPtr<MatrixFloat> m_row;
+  for (int i=0; i<m->getDimSize(0); ++i) {
+    m_row = m->select(0, i, m_row.get());
+    matAxpy(m_row.get(), a, c);
+  }
+}
 
+static void applyScale(MatrixFloat *m, MatrixFloat *s) {
+  AprilUtils::SharedPtr<MatrixFloat> m_row;
+  for (int i=0; i<m->getDimSize(0); ++i) {
+    m_row = m->select(0, i, m_row.get());
+    matCmul(m_row.get(), s);
+  }
+}
+
+static void applyCenterScale(MatrixFloat *m, MatrixFloat *c, MatrixFloat *s) {
+  AprilUtils::SharedPtr<MatrixFloat> m_row;
+  for (int i=0; i<m->getDimSize(0); ++i) {
+    m_row = m->select(0, i, m_row.get());
+    matAxpy(m_row.get(), -1.0f, c);
+    matCmul(m_row.get(), s);
+  }
+}
+
+namespace ANN {
+  
   BatchStandardizationANNComponent::
   BatchStandardizationANNComponent(float alpha, float epsilon,
                                    unsigned int size,
@@ -41,8 +74,7 @@ namespace ANN {
                                    MatrixFloat *inv_std) :
     VirtualMatrixANNComponent(name, 0, size, size),
     alpha(alpha), epsilon(epsilon),
-    mean(mean),
-    inv_std(inv_std),
+    running_mean(mean), running_inv_std(inv_std)
   {
     setInputContiguousProperty(true);
   }
@@ -51,40 +83,40 @@ namespace ANN {
   }
 
   MatrixFloat *BatchStandardizationANNComponent::
-  privateDoForward(MatrixFloat* input,
-                   bool during_training) {
+  privateDoForward(MatrixFloat* input, bool during_training) {
     if (input->getNumDim() < 2)
       ERROR_EXIT2(128, "A 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input->getNumDim(), name.c_str());
-    if (mean.empty()) ERROR_EXIT1(129, "Not built component %s\n", name.c_str());
-    MatrixFloat *output;
-    // compute running mean and inv_std
-    if (during_training) {
-      output = input->clone();
-      float inv_N = 1.0f/static_cast<float>(input->getDimSize(0));
-      AprilUtils::SharedPtr<MatrixFloat> batch_mean = matScal(matSum(input, 0),inv_N);
-      AprilUtils::SharedPtr<MatrixFloat> output_row;
-      for (int i=0; i<output->getDimSize(0); ++i) {
-        output_row = output->select(0, i, output_row.get());
-        matAxpy(output_row.get(), -1.0f, batch_mean.get());
-      }
-      AprilUtils::SharedPtr<MatrixFloat> batch_inv_std =
-        matPow( matScalarAdd( matSqrt( matScal( matSum( matPow(output,2.0f), // x^2
-                                                        0), // sum(x,0)
-                                                inv_N ) // x/N
-                                       ), // sqrt(x)
-                              epsilon ), // x + eps
-                -1.0f); // x^-1
-      matAxpy( matScal(mean.get(), 1.0f - alpha), momentum, batch_mean.get() );
-      matAxpy( matScal(inv_std.get(), 1.0f - alpha), momentum, batch_inv_std.get() );
+    if (input->getDimSize(0) < 2) {
+      ERROR_EXIT(128, "Batch std. needs more than one sample per bunch\n");
     }
-    // apply transformation
-    matCopy(output, input.get());
-    AprilUtils::SharedPtr<MatrixFloat> output_row;
-    for (int i=0; i<output->getDimSize(0); ++i) {
-      output_row = output->select(0, i, output_row.get());
-      matAxpy(output_row.get(), -1.0f, mean.get()); // x = x - mean
-      matCmul(output_row.get(), inv_std.get()); // x = x / std
+    if (running_mean.empty()) {
+      ERROR_EXIT1(129, "Not built component %s\n", name.c_str());
+    }
+    MatrixFloat *output = input->clone();
+    if (!during_training) {
+      applyCenterScale(output, running_mean.get(), running_inv_std.get());
+    }
+    // compute running mean and inv_std
+    else {
+      mean = computeMean(output);
+      applyCenter(output, mean.get());
+      centered = output->clone(); // copy for backprop method
+      // apply square to output matrix
+      matPow(output,2.0f);
+      // compute inverted standard deviation for current batch
+      inv_std = computeMean(output, -1);
+      matScalarAdd(inv_std.get(), epsilon);
+      matSqrt(inv_std.get());
+      matPow(inv_std.get(), -1.0f);
+      // update running mean and inv_std matrices
+      matScal(running_mean.get(), 1.0f - alpha);
+      matAxpy(running_mean.get(), alpha, mean.get());
+      matScal(running_inv_std.get(), 1.0f - alpha);
+      matAxpy(running_inv_std.get(), alpha, inv_std.get());
+      // copy centered into output matrix and apply scale
+      matCopy(output, centered.get());
+      applyScale(output, inv_std.get());
     }
     return output;
   }
@@ -95,58 +127,50 @@ namespace ANN {
     if (error_input->getNumDim() < 2)
       ERROR_EXIT2(128, "A 2-dimensional matrix is expected, found %d. "
 		  "[%s]", error_input->getNumDim(), name.c_str());
-    if (mul_vector.empty()) ERROR_EXIT1(129, "Not built component %s\n",
-                                        name.c_str());
+    if (mean.empty()) {
+      ERROR_EXIT1(129, "Requires forward execution [%s]\n",name.c_str());
+    }
     // transfer of input to output
     MatrixFloat *error_output = error_input->clone();
-    applyCmul(error_output, mul_vector.get());
+    matCmul(error_output, centered.get());
+    AprilUtils::SharedPtr<MatrixFloat> gmean = computeMean(error_output);
+    AprilUtils::SharedPtr<MatrixFloat> row;
+    for (int i=0; i<error_output->getDimSize(0); ++i) {
+      row = error_output->select(0, i, row.get());
+      matCopy(row.get(), gmean.get());
+    }
+    matCmul(error_output, centered.get());
+    matScal(error_output, -1.0f);
+    applyScale(error_output, inv_std.get());
+    applyScale(error_output, inv_std.get());
+    
+    matAxpy(error_output, 1.0f, error_input);
+    gmean = computeMean(error_input);
+    applyCenterScale(error_output, gmean.get(), inv_std.get());
     //
     return error_output;
   }
 
   void BatchStandardizationANNComponent::privateReset(unsigned int it) {
-    UNUSED_VARIABLE(it);
-    // reset scalar counter
-    mul_vector->resetSharedCount();
+    if (it == 0) {
+      mean.reset();
+      inv_std.reset();
+      centered.reset();
+    }
   }
   
   void BatchStandardizationANNComponent::computeGradients(const char *name,
                                                           AprilUtils::LuaTable &weight_grads_dict) {
-    // count one use of the vector
-    mul_vector->addToSharedCount();
-    MatrixFloat *grads_mat = weight_grads_dict.opt<MatrixFloat*>(name, 0);
-    if (grads_mat == 0) {
-      grads_mat = mul_vector->cloneOnlyDims();
-      matZeros(grads_mat);
-      weight_grads_dict.put(name, grads_mat);
-    }
-    else if (!grads_mat->sameDim(mul_vector.get())) {
-      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
-    }
-#ifdef USE_CUDA
-    grads_mat->setUseCuda(use_cuda);
-#endif
-    MatrixFloat *error_input_mat = getErrorInputMatrix();
-    AprilUtils::SharedPtr<MatrixFloat> aux = error_input_mat->clone();
-    MatrixFloat *input_mat = getInputMatrix();
-    applyCmul(aux.get(), input_mat);
-    if (scalar) {
-      *(grads_mat->begin()) = matSum(aux.get());
-    }
-    else {
-      AprilUtils::SharedPtr<MatrixFloat> grads_mat_row;
-      int dims[2] = { 1, aux->getDimSize(1) };
-      grads_mat_row = grads_mat->rewrap(dims, 2);
-      matSum(aux.get(), 0, grads_mat_row.get());
-    }
+    UNUSED_VARIABLE(name);
+    UNUSED_VARIABLE(weight_grads_dict);
   }
     
   ANNComponent *BatchStandardizationANNComponent::clone(AprilUtils::LuaTable &copies) {
     UNUSED_VARIABLE(copies);
     BatchStandardizationANNComponent *component =
-      new BatchStandardizationANNComponent(input_size,
-                                           name.c_str(),
-                                           weights_name.c_str());
+      new BatchStandardizationANNComponent(alpha, epsilon, input_size,
+                                           name.c_str(), mean->clone(),
+                                           inv_std->clone());
     return component;
   }
   
@@ -168,23 +192,23 @@ namespace ANN {
                   name.c_str());
     
     ////////////////////////////////////////////////////////////////////
-    if (!mean.empty()) {
-      if (mean->size() != static_cast<int>(input_size)) {
-        ERROR_EXIT2(256, "Expected size %d, found %d in build [%s]\n",
-                    mean->size(), input_size, name.c_str());
+    if (!running_mean.empty()) {
+      if (running_mean->size() != static_cast<int>(input_size)) {
+        ERROR_EXIT3(256, "Expected size %d, found %d in build [%s]\n",
+                    running_mean->size(), input_size, name.c_str());
       }
     }
     else {
-      mean = matZeros(new MatrixFloat(1, input_size));
+      running_mean = matZeros(new MatrixFloat(1, input_size));
     }
-    if (!inv_std.empty()) {
-      if (inv_std->size() != static_cast<int>(input_size)) {
-        ERROR_EXIT2(256, "Expected size %d, found %d in build [%s]\n",
-                    inv_std->size(), input_size, name.c_str());
+    if (!running_inv_std.empty()) {
+      if (running_inv_std->size() != static_cast<int>(input_size)) {
+        ERROR_EXIT3(256, "Expected size %d, found %d in build [%s]\n",
+                    running_inv_std->size(), input_size, name.c_str());
       }
     }
     else {
-      inv_std = matOnes(new MatrixFloat(1, input_size));
+      running_inv_std = matOnes(new MatrixFloat(1, input_size));
     }
   }
 
@@ -194,11 +218,12 @@ namespace ANN {
   
   int BatchStandardizationANNComponent::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable t(L);
+    t["alpha"]   = alpha;
+    t["epsilon"] = epsilon;
     t["size"]    = input_size;
     t["name"]    = name;
-    t["weights"] = weights_name;
-    t["mean"]    = mean.get();
-    t["inv_std"] = inv_std.get();
+    t["mean"]    = running_mean;
+    t["inv_std"] = running_inv_std;
     t.pushTable(L);
     return 1;
   }

@@ -96,6 +96,7 @@ IMPLEMENT_LUA_TABLE_BIND_SPECIALIZATION(ANNComponent);
 //BIND_HEADER_H
 #include "activation_function_component.h"
 #include "ann_component.h"
+#include "batch_standardization_component.h"
 #include "bias_component.h"
 #include "bind_function_interface.h"
 #include "connection.h"
@@ -767,6 +768,52 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
   }
   LUABIND_RETURN(MulANNComponent,
 		 dynamic_cast<MulANNComponent*>(obj->clone(copies)));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//        BatchStandardizationANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BatchStandardizationANNComponent ann.components.batch_standardization
+//BIND_CPP_CLASS    BatchStandardizationANNComponent
+//BIND_SUBCLASS_OF  BatchStandardizationANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR BatchStandardizationANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  unsigned int size=0;
+  MatrixFloat *mean=0, *inv_std=0;
+  float alpha=0.1, epsilon=1e-05f;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "size", "alpha", "epsilon",
+                       "mean", "inv_std", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, alpha);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, epsilon, float, epsilon, epsilon);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, mean, MatrixFloat, mean, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inv_std, MatrixFloat, inv_std, 0);
+  }
+  obj = new BatchStandardizationANNComponent(alpha, epsilon, size,
+                                             name, mean, inv_std);
+  LUABIND_RETURN(BatchStandardizationANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD BatchStandardizationANNComponent clone
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  AprilUtils::LuaTable copies;
+  if (argn == 1) {
+    copies = AprilUtils::LuaTable(L,1);
+  }
+  LUABIND_RETURN(BatchStandardizationANNComponent,
+		 dynamic_cast<BatchStandardizationANNComponent*>(obj->clone(copies)));
 }
 //BIND_END
 
