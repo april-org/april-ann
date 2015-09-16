@@ -87,9 +87,6 @@ namespace ANN {
     if (input->getNumDim() < 2)
       ERROR_EXIT2(128, "A 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input->getNumDim(), name.c_str());
-    if (input->getDimSize(0) < 2) {
-      ERROR_EXIT(128, "Batch std. needs more than one sample per bunch\n");
-    }
     if (running_mean.empty()) {
       ERROR_EXIT1(129, "Not built component %s\n", name.c_str());
     }
@@ -99,6 +96,9 @@ namespace ANN {
     }
     // compute running mean and inv_std
     else {
+      if (input->getDimSize(0) < 2) {
+        ERROR_EXIT(128, "Batch std. needs more than one sample per bunch\n");
+      }
       mean = computeMean(output);
       applyCenter(output, mean.get());
       centered = output->clone(); // copy for backprop method
