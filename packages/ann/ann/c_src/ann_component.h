@@ -152,6 +152,12 @@ namespace ANN {
      */
     static void resetIdCounters() { next_name_id=0; next_weights_id=0; }
     
+    /// Increments the ID counter for names
+    static void incNamesIdCounter() { ++next_name_id; }
+
+    /// Increments the ID counter for weights
+    static void incWeightsIdCounter() { ++next_weights_id; }
+    
     /// Returns the built state of the ANNComponent.
     bool getIsBuilt() const { return is_built; }
     

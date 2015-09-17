@@ -1,13 +1,13 @@
 mathcore.set_use_cuda_default(util.is_cuda_available())
 --
-local bunch_size       = tonumber(arg[1]) or 256
+local bunch_size       = tonumber(arg[1]) or 32
 local semilla          = 1234
 local weights_random   = random(semilla)
 local inf              = -0.1
 local sup              =  0.1
 local shuffle_random   = random(5678)
-local learning_rate    = 0.1
-local momentum         = 0.1
+local learning_rate    = 1.0
+local momentum         = 0.01
 local weight_decay     = 0.01
 local max_norm_penalty = 4
 local max_epochs       = 1000
@@ -60,16 +60,16 @@ local val_output   = dataset.matrix(m2,
 })
 
 local thenet = ann.mlp.all_all.
-  generate(table.concat{"%d inputs batchnorm{affine=false,epsilon=0.001} ",
-                        "64 relu batchnorm ",
-                        "64 relu batchnorm ",
+  generate(table.concat{"%d inputs batch_standardization{epsilon=0.001} ",
+                        "256 prelu{scalar=true} batchnorm dropout{prob=0.1,random=#1}",
+                        "256 prelu{scalar=true} batchnorm dropout{prob=0.1,random=#1}",
                         "10 log_softmax"}%{ train_input:patternSize() },
            { random(2392548) })
 
 local trainer = trainable.supervised_trainer(thenet,
                                              ann.loss.multi_class_cross_entropy(10),
                                              bunch_size,
-                                             ann.optimizer.sgd())
+                                             ann.optimizer.adadelta())
 trainer:build()
 
 trainer:set_option("learning_rate",     learning_rate)
@@ -103,13 +103,13 @@ local datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
   shuffle        = shuffle_random,
-  replacement    = 1024,
+  replacement    = 512,
 }
 
 local datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
-  --  bunch_size = 128,
+  bunch_size = 128,
 }
 
 if check_grandients then
@@ -134,7 +134,9 @@ clock:go()
 for epoch = 1,max_epochs do
   collectgarbage("collect")
   totalepocas = totalepocas+1
-  -- print(trainer:component("component2"):to_lua_string"ascii")
+  -- print(trainer:component("component1"):to_lua_string"ascii")
+  -- print(stats.std(datosentrenar.input_dataset:toMatrix(),1):div(1):to_lua_string"ascii")
+  -- print(stats.amean(datosentrenar.input_dataset:toMatrix(),1):to_lua_string"ascii")
   local errortrain  = trainer:train_dataset(datosentrenar)
   local errorval    = trainer:validate_dataset(datosvalidar)
   --

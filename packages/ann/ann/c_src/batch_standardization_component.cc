@@ -31,8 +31,8 @@ using namespace AprilMath::MatrixExt::Reductions;
 using namespace AprilUtils;
 using namespace Basics;
 
-static AprilUtils::SharedPtr<MatrixFloat> computeMean(MatrixFloat *m, int off=0) {
-  float inv_N = 1.0f/static_cast<float>(m->getDimSize(0) + off);
+static AprilUtils::SharedPtr<MatrixFloat> computeMean(MatrixFloat *m) {
+  float inv_N = 1.0f/static_cast<float>(m->getDimSize(0));
   AprilUtils::SharedPtr<MatrixFloat> mean;
   mean = matSum(m, 0);
   matScal(mean.get(), inv_N);
@@ -105,7 +105,7 @@ namespace ANN {
       // apply square to output matrix
       matPow(output,2.0f);
       // compute inverted standard deviation for current batch
-      inv_std = computeMean(output, -1);
+      inv_std = computeMean(output);
       matScalarAdd(inv_std.get(), epsilon);
       matSqrt(inv_std.get());
       matPow(inv_std.get(), -1.0f);
@@ -152,11 +152,10 @@ namespace ANN {
   }
 
   void BatchStandardizationANNComponent::privateReset(unsigned int it) {
-    if (it == 0) {
-      mean.reset();
-      inv_std.reset();
-      centered.reset();
-    }
+    UNUSED_VARIABLE(it);
+    mean.reset();
+    inv_std.reset();
+    centered.reset();
   }
   
   void BatchStandardizationANNComponent::computeGradients(const char *name,

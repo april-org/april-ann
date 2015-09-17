@@ -27,12 +27,14 @@ ann.components.batchnorm = function(t)
     alpha   = params.alpha,
   }
   if params.affine then
+    local mat
     local stack = ann.components.stack()
     stack:push( component )
     stack:push( ann.components.mul{
                   name = params.mul_name,
                   size = params.size,
                   weights = params.mul_weights,
+                  matrix = mat,
     } )
     stack:push( ann.components.bias{
                   name = params.bias_name,
@@ -621,6 +623,12 @@ ann.mlp.all_all.generate = april_doc {
         else -- any other kind of component
           options.name = names_prefix .. "component" .. count
           local ctor = ann.components[kind] or ann.components.actf[kind]
+          if ctor == assert( ann.components.batchnorm ) then
+            options.bias_weights = options.bias_weights or names_prefix.."b"..count
+            options.bias_name = options.bias_name or names_prefix.."b"..count
+            options.mul_weights  = options.mul_weights or names_prefix.."m"..count
+            options.mul_name  = options.mul_name or names_prefix.."m"..count
+          end
           assert(ctor, "Incorrect component class: " .. kind)
           thenet:push( ctor( options ) )
         end

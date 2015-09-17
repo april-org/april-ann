@@ -318,6 +318,18 @@ void lua_pushAuxANNComponent(lua_State *L, ANNComponent *value);
 }
 //BIND_END
 
+//BIND_FUNCTION ann.inc_names_id_counter
+{
+  ANNComponent::incNamesIdCounter();
+}
+//BIND_END
+
+//BIND_FUNCTION ann.inc_weights_id_counter
+{
+  ANNComponent::incWeightsIdCounter();
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent get_name
 {
   LUABIND_RETURN(string, obj->getName().c_str());
