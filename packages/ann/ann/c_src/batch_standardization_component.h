@@ -34,6 +34,11 @@ namespace ANN {
    *
    * The standardization uses vectors which are adapted during training and
    * fixed during evaluation phase.
+   *
+   * @note This component code is based in the paper:
+   * http://arxiv.org/pdf/1502.03167v3.pdf
+   * and the implementation of batchnormalization of Torch:
+   * https://github.com/torch/nn/blob/master/BatchNormalization.lua
    */
   class BatchStandardizationANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(BatchStandardizationANNComponent);
