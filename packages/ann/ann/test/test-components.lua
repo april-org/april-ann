@@ -652,6 +652,79 @@ T("DOTPRODUCT + CONST_MUL SCALAR TEST",
     end)
 end)
 
+---------------------------
+-- BATCH STANDARDIZATION --
+---------------------------
+
+T("BATCH STANDARDIZATION TEST",
+  function()
+    local rnd = random(1234)
+    local N   = 32
+    local SZ  = 100
+    local MU  = 2.0
+    local SIGMA = 0.1
+    local dist = stats.dist.normal(MU, SIGMA*SIGMA)
+    local a   = ann.components.batch_standardization{ size=SZ }:build()
+    for _=1,8000 do
+      local i = dist:sample(rnd,N*SZ):rewrap(N,SZ)
+      a:reset()
+      a:forward(i, true)
+    end
+    local params  = a:ctor_params()
+    local mean    = stats.amean(params.mean)
+    local inv_std = stats.amean(params.inv_std)
+    check.number_eq(mean, MU)
+    check.number_eq(inv_std, 1/SIGMA)
+end)
+
+T("DOTPRODUCT + BATCH STANDARDIZATION TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=16,20 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.batch_standardization{
+                            mean = matrix(o):linspace(0,2.0),
+                            inv_std = 1/matrix(o):linspace(0.1,2),
+                    } )
+                              end,
+                "mse", i, o, b, "DOTPRODUCT_BATCH_STANDARDIZATION")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+-------------------------
+-- BATCH NORMALIZATION --
+-------------------------
+
+T("DOTPRODUCT + BATCH NORMALIZATION TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=12,14 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.batchnorm{
+                            mean = matrix(o):linspace(0,2.0),
+                            inv_std = 1/matrix(o):linspace(0.1,2),
+                    } )
+                              end,
+                "mse", i, o, b, "DOTPRODUCT_BATCH_NORMALIZATION")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
 -------------
 -- SOFTMAX --
 -------------

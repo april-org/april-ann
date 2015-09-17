@@ -203,6 +203,35 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
+//BIND_FUNCTION util.execp
+//DOC_BEGIN
+// execp(file, arg1, arg2, ...)
+//DOC_END
+{
+  int n = lua_gettop(L);
+  AprilUtils::UniquePtr<char *[]> args = new char*[n+1];
+  const char *file = luaL_checkstring(L, 1);
+  for (int i=1; i<=n; ++i) args[i-1] = const_cast<char*>(luaL_checkstring(L, i));
+  args[n] = NULL;
+  int err = execvp(file, args.get());
+  if (err < 0) {
+    LUABIND_FERROR1("Error in execvp system call: %s", strerror(errno));
+  }
+}
+//BIND_END
+
+//BIND_FUNCTION util.getpid
+{
+  LUABIND_RETURN(int, getpid());
+}
+//BIND_END
+
+//BIND_FUNCTION util.getppid
+{
+  LUABIND_RETURN(int, getppid());
+}
+//BIND_END
+
 //BIND_FUNCTION util.split_process
 //DOC_BEGIN
 // split_process(...)
@@ -666,6 +695,24 @@ FILE **newfile (lua_State *L) {
 }
 //BIND_END
 
+//BIND_FUNCTION util.alarm
+{
+  double sec;
+  LUABIND_GET_PARAMETER(1, double, sec);
+  struct itimerval new_timer, old_timer;
+  new_timer.it_interval.tv_usec = 0;
+  new_timer.it_interval.tv_sec = 0;
+  new_timer.it_value.tv_usec = static_cast<long>((sec - floor(sec)) * 1.0e6);
+  new_timer.it_value.tv_sec = static_cast<time_t>(sec);
+  if (setitimer(ITIMER_REAL, &new_timer, &old_timer) != 0) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, strerror(errno));
+  }
+  double old_sec = old_timer.it_value.tv_sec + old_timer.it_value.tv_usec*1.0e-6;
+  LUABIND_RETURN(double, old_sec);
+}
+//BIND_END
+
 // FIXME: nanosleep puede volver antes, en tal caso para avisar a lua
 // se podría devolver el booleano que devuelve (y que estamos
 // ignorando) y el tiempo restante :P
@@ -676,13 +723,16 @@ FILE **newfile (lua_State *L) {
   double sleeptime;
   LUABIND_GET_PARAMETER(1, double, sleeptime);
   double seconds = floor(sleeptime);
-  struct timespec req;
+  struct timespec req, rem;
   req.tv_sec  = static_cast<time_t>(seconds);
-  req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
-  if (nanosleep(&req, 0) == 1) {
+  req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e9);
+  double rem_seconds = 0.0;
+  if (nanosleep(&req, &rem) == 1) {
     LUABIND_RETURN_NIL();
     LUABIND_RETURN(string, strerror(errno));
+    rem_seconds = rem.tv_sec + rem.tv_nsec*1.0e-9;
   }
+  LUABIND_RETURN(double, rem_seconds);
 }
 //BIND_END
 

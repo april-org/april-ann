@@ -8,6 +8,50 @@ class.extend(ann.components.base, "get_is_recurrent",
 
 ----------------------------------------------------------------------
 
+ann.components.batchnorm = function(t)
+  local params = get_table_fields(
+    {
+      affine       = { type_match="boolean", default=true },
+      alpha        = { type_match="number" },
+      bias_name    = { type_match="string" },
+      bias_weights = { type_match="string" },
+      epsilon      = { type_match="number" },
+      mul_name     = { type_match="string" },
+      mul_weights  = { type_match="string" },
+      name         = { type_match="string" },
+      size         = { type_match="number" },
+      mean         = { isa_match=matrix },
+      inv_std      = { isa_match=matrix },
+    }, t)
+  local component = ann.components.batch_standardization{
+    name    = params.name,
+    epsilon = params.epsilon,
+    alpha   = params.alpha,
+    mean    = params.mean,
+    inv_std = params.inv_std,
+  }
+  if params.affine then
+    local mat
+    local stack = ann.components.stack()
+    stack:push( component )
+    stack:push( ann.components.mul{
+                  name = params.mul_name,
+                  size = params.size,
+                  weights = params.mul_weights,
+                  matrix = mat,
+    } )
+    stack:push( ann.components.bias{
+                  name = params.bias_name,
+                  size = params.size,
+                  weights = params.bias_weights,
+    } )
+    component = stack
+  end
+  return component
+end
+
+----------------------------------------------------------------------
+
 ann.components.const_mul = function(t)
   local params = get_table_fields(
     {
@@ -583,6 +627,12 @@ ann.mlp.all_all.generate = april_doc {
         else -- any other kind of component
           options.name = names_prefix .. "component" .. count
           local ctor = ann.components[kind] or ann.components.actf[kind]
+          if ctor == assert( ann.components.batchnorm ) then
+            options.bias_weights = options.bias_weights or names_prefix.."b"..count
+            options.bias_name = options.bias_name or names_prefix.."b"..count
+            options.mul_weights  = options.mul_weights or names_prefix.."m"..count
+            options.mul_name  = options.mul_name or names_prefix.."m"..count
+          end
           assert(ctor, "Incorrect component class: " .. kind)
           thenet:push( ctor( options ) )
         end

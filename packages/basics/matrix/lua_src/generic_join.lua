@@ -11,9 +11,19 @@ matrix.__generic__.__make_generic_join__ = function()
     assert(#arg > 0, "At least one matrix is needed")
     local ctor = class.of(arg[1])
     local size = arg[1]:dim()
-    -- ERROR CHECK
-    assert(dim >= 1 and dim <= #size,
-	   "Incorrect given dimension number, or incorrect first matrix size")
+    if dim == 0 then
+      local new_arg = {}
+      for i=1,#arg do new_arg[i] = arg[i]:rewrap(1,table.unpack(arg[i]:dim())) end
+      arg, dim, size = new_arg, 1, new_arg[1]:dim()
+    elseif dim == #size+1 then
+      local new_arg = {}
+      for i=1,#arg do new_arg[i] = arg[i]:rewrap(multiple_unpack(arg[i]:dim(),{1})) end
+      arg, dim, size = new_arg, #size+1, new_arg[1]:dim()
+    else
+      -- ERROR CHECK
+      assert(dim >= 1 and dim <= #size,
+             "Incorrect given dimension number, or incorrect first matrix size")
+    end
     size[dim] = 0
     for i=1,#arg do
       local m = arg[i]

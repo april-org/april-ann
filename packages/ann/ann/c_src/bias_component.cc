@@ -136,13 +136,17 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     //
-    if (input_size == 0 || output_size == 0)
+    if (input_size == 0 && output_size == 0) {
       ERROR_EXIT1(141, "Impossible to compute input/output "
 		  "sizes for this component [%s]\n",
 		  name.c_str());
-    if (input_size != output_size)
+    }
+    if (input_size == 0) input_size = output_size;
+    else if (output_size == 0) output_size= input_size;
+    else if (input_size != output_size) {
       ERROR_EXIT1(142, "BiasANNComponent input/output sizes must be equal [%s]\n",
 		  name.c_str());
+    }
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////

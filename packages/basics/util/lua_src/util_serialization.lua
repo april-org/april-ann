@@ -1,29 +1,29 @@
 local MAGIC = "-- LS0001"
 local FIND_MASK = "^" .. MAGIC:gsub("%-","%%-")
 
-local io_open = io.open
-local os_date = os.date
-
 local DEFAULT_BLOCK_SIZE = 2^20
-local ENV_TAG = function() return "dummy function" end -- dummy function
+local ENV_TAG = function() return "ENV dummy function" end -- dummy function
+local NIL_TAG = function() return "NIL dummy function" end -- dummy function
 
 -----------------------------------------------------------------------
 __ipairs_iterator__ = select(1,ipairs({}))
 __pairs_iterator__  = select(1,pairs({}))
 local builtin = {
-  [pairs]  = "pairs",
+  [coroutine.wrap]  = "coroutine.wrap",
+  [coroutine.yield] = "coroutine.yield",
   [ipairs] = "ipairs",
   [next]   = "next",
+  [pairs]  = "pairs",
+  [print]  = "print",
   [table.pack]   = "table.pack",
   [table.unpack] = "table.unpack",
   [table.insert] = "table.insert",
   [table.remove] = "table.remove",
   [table.concat] = "table.concat",
-  [coroutine.wrap]  = "coroutine.wrap",
-  [coroutine.yield] = "coroutine.yield",
   [__ipairs_iterator__] = "__ipairs_iterator__",
   [__pairs_iterator__]  = "__pairs_iterator__",
   [ENV_TAG] = "_ENV",
+  [NIL_TAG] = "nil",
 }
 -----------------------------------------------------------------------
 
@@ -41,6 +41,8 @@ function util.function_setupvalues(func, upvalues)
   for i,value in pairs(upvalues) do
     if value == ENV_TAG then
       debug.setupvalue(func, i, _ENV)
+    elseif value == NIL_TAG then
+      debug.setupvalue(func, i, nil)
     else
       debug.setupvalue(func, i, value)
     end
@@ -56,8 +58,13 @@ function util.function_to_lua_string(func,format)
   while true do
     local name,value = debug.getupvalue(func,i)
     if not name then break end
-    -- avoid global environment upvalue
-    upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
+    -- global environment upvalue and nil are special
+    if name == "_ENV" then
+      value = ENV_TAG
+    elseif value==nil then
+      value = NIL_TAG
+    end
+    upvalues[i] = value
     i = i + 1
   end
   --
@@ -250,8 +257,13 @@ do
           while true do
             local name,value = debug.getupvalue(data,i)
             if not name then break end
-            -- global environment upvalue is special
-            upvalues[i] = (name ~= "_ENV") and value or ENV_TAG
+            -- global environment upvalue and nil are special
+            if name == "_ENV" then
+              value = ENV_TAG
+            elseif value==nil then
+              value = NIL_TAG
+            end
+            upvalues[i] = value
             i = i + 1
           end
           local upv_str = transform(map, varname, upvalues, destination)
@@ -300,7 +312,8 @@ do
         end
       elseif class.is_class(data) then
         -- general case
-        local value = 'class.find("%s")'%{data.meta_instance.id}
+        local cls_id = data.meta_instance.id
+        local value = 'assert(class.find("%s"), "Unable locate class %s")'%{cls_id,cls_id}
         destination:write("%s[%d]=%s\n"%{varname,id,value})
       else
         -- general case
@@ -326,7 +339,7 @@ do
       },
     } ..
     function(data, destination, format)
-      local version = { util.version() } table.insert(version, os_date())
+      local version = { util.version() } table.insert(version, os.date())
       local comment = "-- version info { major, minor, commit number, commit hash, date }"
       local version_info = "\n%s\n-- %s\n"%{ comment,
                                              util.to_lua_string(version, format) }
@@ -335,7 +348,7 @@ do
       local destination = destination or lua_string_stream()
       local do_close = false
       if type(destination)=="string" then
-        destination = io_open(destination, "w")
+        destination = io.open(destination, "w")
         do_close = true
       end
       local varname = "_"
@@ -374,7 +387,7 @@ deserialize =
         local loader = assert( loadstring(dest) )
         return loader(...)
       else
-        local f = april_assert(io_open(dest), "Unable to locate %s\n",
+        local f = april_assert(io.open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end

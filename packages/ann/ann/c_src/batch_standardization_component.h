@@ -19,8 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef MULANNCOMPONENT_H
-#define MULANNCOMPONENT_H  
+#ifndef BATCHSTANDARDIZATIONANNCOMPONENT_H
+#define BATCHSTANDARDIZATIONANNCOMPONENT_H  
 
 #include "cblas_headers.h"
 #include "matrix_component.h"
@@ -30,19 +30,29 @@
 namespace ANN {
 
   /**
-   * @brief A component which mul the given bi-dimensional input matrix by an
-   * scalar or cmul by a vector.
+   * @brief A component which performs standardization of its given input.
    *
-   * The component can be configured in two modes: scalar and non-scalar. Mode
-   * is configured at construction, giving a boolean @c scalar=false by default.
-   * In case of @c scalar=true the component performs multiplication of input
-   * matrix by a learnable scalar value. In case of @ scalar=false, the
-   * component computes multiplication of input matrix by a learnable vector.
+   * The standardization uses vectors which are adapted during training and
+   * fixed during evaluation phase.
+   *
+   * @note This component code is based in the paper:
+   * http://arxiv.org/pdf/1502.03167v3.pdf
+   * and the implementation of batchnormalization of Torch:
+   * https://github.com/torch/nn/blob/master/BatchNormalization.lua
    */
-  class MulANNComponent : public VirtualMatrixANNComponent {
-    APRIL_DISALLOW_COPY_AND_ASSIGN(MulANNComponent);
-    bool scalar;
-    AprilUtils::SharedPtr<Basics::MatrixFloat> mul_vector;
+  class BatchStandardizationANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(BatchStandardizationANNComponent);
+    float alpha, epsilon;
+    /// Mean value of current batch.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> mean;
+    /// Inverse standard deviation of current batch.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> inv_std;
+    /// Running mean computed during training to be used at inference stage.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> running_mean;
+    /// Running stddev computed during training to be used at inference stage.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> running_inv_std;
+    /// Auxiliary matrix.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> centered;
     
   protected:
     
@@ -52,19 +62,18 @@ namespace ANN {
     virtual void privateReset(unsigned int it=0);
     virtual void computeGradients(const char *name, AprilUtils::LuaTable &weight_grads_dict);
     
-    void applyCmul(Basics::MatrixFloat *dest, Basics::MatrixFloat *w);
-    
   public:
-    MulANNComponent(unsigned int size=0, bool scalar=false,
-                    const char *name=0, const char *weights_name=0,
-                    Basics::MatrixFloat *matrix=0);
-    virtual ~MulANNComponent();
+    BatchStandardizationANNComponent(float alpha=0.1f, float epsilon=1e-05f,
+                                     unsigned int size=0,
+                                     const char *name=0,
+                                     Basics::MatrixFloat *mean=0,
+                                     Basics::MatrixFloat *inv_std=0);
+    virtual ~BatchStandardizationANNComponent();
     virtual ANNComponent *clone(AprilUtils::LuaTable &copies);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       AprilUtils::LuaTable &weights_dict,
 		       AprilUtils::LuaTable &components_dict);
-    virtual void copyWeights(AprilUtils::LuaTable &weights_dict);
     
     virtual const char *luaCtorName() const;
     virtual int exportParamsToLua(lua_State *L);
@@ -72,4 +81,4 @@ namespace ANN {
   
 }
 
-#endif // MULANNCOMPONENT_H
+#endif // BATCHSTANDARDIZATIONANNCOMPONENT_H

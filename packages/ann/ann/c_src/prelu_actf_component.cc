@@ -125,7 +125,8 @@ namespace ANN {
                                     unsigned int _output_size,
                                     AprilUtils::LuaTable &weights_dict,
                                     AprilUtils::LuaTable &components_dict) {
-    ActivationFunctionANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
+    ActivationFunctionANNComponent::build(_input_size, _output_size,
+                                          weights_dict, components_dict);
     unsigned int _size = getInputSize();
     if (this->size != 0 && _size != 0 && this->size != _size) {
       ERROR_EXIT(128, "Incompatible sizes in build call\n");
