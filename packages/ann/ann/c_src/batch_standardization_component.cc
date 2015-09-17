@@ -168,8 +168,9 @@ namespace ANN {
     UNUSED_VARIABLE(copies);
     BatchStandardizationANNComponent *component =
       new BatchStandardizationANNComponent(alpha, epsilon, input_size,
-                                           name.c_str(), mean->clone(),
-                                           inv_std->clone());
+                                           name.c_str(),
+                                           !running_mean.empty() ? running_mean->clone() : 0,
+                                           !running_inv_std.empty() ? running_inv_std->clone() : 0);
     return component;
   }
   
