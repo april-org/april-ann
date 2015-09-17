@@ -691,7 +691,33 @@ T("DOTPRODUCT + BATCH STANDARDIZATION TEST",
                             inv_std = 1/matrix(o):linspace(0.1,2),
                     } )
                               end,
-                "mse", i, o, b, "BATCH_STANDARDIZATION")
+                "mse", i, o, b, "DOTPRODUCT_BATCH_STANDARDIZATION")
+            end
+          end
+        end
+        return true
+    end)
+end)
+
+-------------------------
+-- BATCH NORMALIZATION --
+-------------------------
+
+T("DOTPRODUCT + BATCH NORMALIZATION TEST",
+  function()
+    check(function()
+        for i=1,4 do
+          for o=1,4 do
+            for b=12,14 do
+              check_component(function()
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.batchnorm{
+                            mean = matrix(o):linspace(0,2.0),
+                            inv_std = 1/matrix(o):linspace(0.1,2),
+                    } )
+                              end,
+                "mse", i, o, b, "DOTPRODUCT_BATCH_NORMALIZATION")
             end
           end
         end

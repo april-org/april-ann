@@ -20,11 +20,15 @@ ann.components.batchnorm = function(t)
       mul_weights  = { type_match="string" },
       name         = { type_match="string" },
       size         = { type_match="number" },
+      mean         = { isa_match=matrix },
+      inv_std      = { isa_match=matrix },
     }, t)
   local component = ann.components.batch_standardization{
     name    = params.name,
     epsilon = params.epsilon,
     alpha   = params.alpha,
+    mean    = params.mean,
+    inv_std = params.inv_std,
   }
   if params.affine then
     local mat
