@@ -245,7 +245,9 @@ namespace Basics {
     /**
      * The sliding is a kind of iterator which traverses the matrix producing
      * sub-matrices following a sliding window similar to dataset.matrix. This
-     * iterator couldn't account for CIRCULAR and OUTSIDE values.
+     * iterator couldn't account for CIRCULAR and OUTSIDE values. This objects
+     * IncRefs the given reference, so be careful to check not 0 references in
+     * the given matrix object.
      */
     class sliding_window : public Referenced {
       /// A reference to the matrix

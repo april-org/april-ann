@@ -33,7 +33,7 @@ local matrix_methods = {
     "gemm", "sparse_mm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2", "inv", "logdet", "det",
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
-    "data", "order", "order_rank", "convert_to",
+    "data", "order", "order_rank", "convert_to", "index",
     "ceil", "floor", "round",
   },
   double = {
@@ -52,7 +52,7 @@ local matrix_methods = {
     "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "lt", "gt", "eq", "neq", "toMMap",
-    "data", "order", "order_rank", "convert_to",
+    "data", "order", "order_rank", "convert_to", "index",
     "ceil", "floor", "round",
   },
   int32_t = {
@@ -69,7 +69,7 @@ local matrix_methods = {
     "copy", "axpy",
     "masked_fill", "masked_copy", "idiv", "mod",
     "lt", "gt", "eq", "neq", "toMMap",
-    "data", "order", "order_rank", "convert_to",
+    "data", "order", "order_rank", "convert_to", "index",
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -86,7 +86,7 @@ local matrix_methods = {
     "gemm", "gemv", "ger", "dot", "scal", "cinv",
     "masked_fill", "masked_copy", "div", "norm2",
     "toMMap",
-    "data", "convert_to",
+    "data", "convert_to", "index",
     "ceil", "floor", "round",
   },
   char = {
@@ -101,7 +101,7 @@ local matrix_methods = {
     "zeros", "ones", "equals",
     "copy",
     "toMMap",
-    "data", "convert_to",
+    "data", "convert_to", "index",
     "stringfy",
   },
   bool = {
@@ -116,7 +116,7 @@ local matrix_methods = {
     "zeros", "ones", "equals",
     "copy",
     "toMMap",
-    "data", "convert_to",
+    "data", "convert_to", "index",
     "to_index",
   },
 }

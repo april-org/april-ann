@@ -1821,6 +1821,24 @@ namespace Basics {
         return 1;
       }
     }
+
+    BEGIN_METHOD(index)
+    {
+      Matrix<T> *result;
+      int dim = lua_to<int>(L,1);
+      if (lua_is<Matrix<bool>*>(L,2)) {
+        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndex(obj, dim-1, idx); // WARNING!!! -1
+      }
+      else {
+        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndex(obj, dim-1, idx); // WARNING!!! -1
+      }
+      lua_push(L, result);
+      return 1;
+    }
   };
 
 #undef FUNCTION_NAME

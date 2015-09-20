@@ -38,8 +38,16 @@
 #include "reduce_matrix.h"
 #include "reduce_sparse_matrix.h"
 
+// Must to be defined here.
+#include "cuda_utils.h"
+#include "matrix_ext_blas.h"
+
 using Basics::Matrix;
 using Basics::SparseMatrix;
+
+#ifdef USE_CUDA
+using AprilMath::CUDA;
+#endif
 
 namespace AprilMath {
   namespace MatrixExt {
@@ -47,6 +55,63 @@ namespace AprilMath {
     namespace Misc {
       //////////////////// OTHER MATH OPERATIONS ////////////////////
 
+#ifdef USE_CUDA
+      template<typename T>
+      __global__ void indexVectorKernel(const T *m_ptr,
+                                        const int m_stride,
+                                        const int32_t *idx_ptr,
+                                        const int idx_stride,
+                                        T *dest_ptr,
+                                        const int dest_stride
+                                        const int N) {
+        for ( int i = blockIdx.x*blockDim.x + threadIdx.x;
+              i < N;
+              i += blockDim.x*gridDim.x ) {
+          // WARNING: idx counts from 1, instead of 0
+          dest_ptr[ i*dest_stride ] = m_ptr[ m_stride * (idx_ptr[i*idx_stride]-1) ];
+        }
+      }
+#endif
+      
+      template <typename T>
+      static void indexVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
+                                     Matrix<T> *dest) {
+        const int N = dest->size();
+        const int m_offset = m->getOffset();
+        const int idx_offset = idx->getOffset();
+        const int dest_offset = dest->getOffset();
+        const int m_stride = m->getStrideSize(0);
+        const int idx_stride = idx->getStrideSize(0);
+        const int dest_stride = dest->getStrideSize(0);
+#ifdef USE_CUDA
+        bool cuda_flag = m->getCudaFlag() || idx->getCudaFlag() || dest->getCudaFlag();
+        if (cuda_flag) {
+          const T *m_ptr = m->getRawDataAccess()->getGPUForRead() + m_offset;
+          const int32_t *idx_ptr = idx->getRawDataAccess()->getGPUForRead() + idx_offset;
+          T *dest_ptr = dest->getRawDataAccess()->getGPUForWrite() + dest_offset;
+          // Number of threads on each block dimension
+          int num_threads, num_blocks;
+          computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
+          indexVectorKernel<<<num_blocks, num_threads, 0, getCurrentStream()>>>
+            (m_ptr, m_stride, idx_ptr, idx_stride, dest_ptr, dest_stride, N);
+        }
+        else {
+#endif
+          const T *m_ptr = m->getRawDataAccess()->getPPALForRead() + m_offset;
+          const int32_t *idx_ptr = idx->getRawDataAccess()->getPPALForRead() + idx_offset;
+          T *dest_ptr = dest->getRawDataAccess()->getPPALForWrite() + dest_offset;
+#ifndef NO_OMP
+#pragma omp parallel for
+#endif
+          for(int i=0; i<N; ++i) {
+            // WARNING: idx counts from 1, instead of 0
+            dest_ptr[ i*dest_stride ] = m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ];
+          }
+#ifdef USE_CUDA
+        }
+#endif
+      }
+      
       /// For the implementation of matOrder() function.
       template <typename T>
       struct MatOrderCompare {
@@ -104,6 +169,73 @@ namespace AprilMath {
           dst_it( *src_it - 1 ) = i++;
         }
         return dest;
+      }
+
+      template <typename T>
+      Matrix<T> *matIndex(Matrix<T> *m, int dim,
+                          const Matrix<int32_t> *idx) {
+        AprilUtils::SharedPtr< Matrix<T> > m_ref = m; // IncRef m
+        AprilUtils::SharedPtr< Matrix<int32_t> > sq_idx = idx->constSqueeze();
+        if (sq_idx->getNumDim() != 1) {
+          ERROR_EXIT(128, "Needs a rank 1 tensor as second argument (index)\n");
+        }
+        if (dim < 0 || dim >= m->getNumDim()) {
+          ERROR_EXIT(128, "Dimension argument out-of-bounds");
+        }
+        const int D = m->getNumDim();
+        // copy m->dims into a new array
+        AprilUtils::UniquePtr<int[]> dims = new int[D];
+        for (int i=0; i<D; ++i) dims[i] = m->getDimSize(i);
+        // take the given dimension size and change it to fit the result matrix
+        int dim_limit = dims[dim]; dims[dim] = idx->size();
+        // allocate memory for the resulting matrix
+        AprilUtils::SharedPtr< Matrix<T> > result;
+        result = new Matrix<T>(m->getNumDim(), dims.get());
+#ifdef USE_CUDA
+        result->setUseCuda(m->getCudaFlag());
+#endif
+        if (m->size() == dim_limit) {
+          // vector version, ad-hoc implementation
+          AprilUtils::SharedPtr< Matrix<T> > sq_m = m->squeeze();
+          AprilUtils::SharedPtr< Matrix<T> > sq_r = result->squeeze();
+          indexVectorWrapper(sq_m.get(), sq_idx.get(), sq_r.get());
+        }
+        else {
+          // matrix version, ad-hoc general implementation, uses sliding_window
+          // iterators
+          dims[dim] = 1;
+          // given size and step
+          typename Matrix<T>::sliding_window m_sw(m, dims.get(), 0, dims.get());
+          typename Matrix<T>::sliding_window r_sw(result.get(), dims.get(), 0, dims.get());
+          AprilUtils::SharedPtr< Matrix<T> > m_slice, r_slice;
+          typename Matrix<int32_t>::const_iterator it = idx->begin();
+          // traverse all given indices copying submatrices
+          for (int i=0; i<idx->size(); ++i, ++it) {
+            april_assert(it != idx->end());
+            april_assert(!r_sw.isEnd());
+            // WARNING: idx counts from 1, instead of 0
+            // m_sw points to the submatrix indicated at idx[i]
+            const int p = *it - 1; m_sw.setAtWindow(p);
+            april_assert(!m_sw.isEnd());
+            // take submatrices
+            m_slice = m_sw.getMatrix(m_slice.get());
+            r_slice = r_sw.getMatrix(r_slice.get());
+            // copy them
+            AprilMath::MatrixExt::BLAS::matCopy(r_slice.get(), m_slice.get());
+            // go to next submatrix at result matrix
+            r_sw.next();
+          }
+        }
+        m_ref.weakRelease(); // DecRef m
+        return result.weakRelease();
+      }
+      
+      template <typename T>
+      Matrix<T> *matIndex(Matrix<T> *m, int dim,
+                          const Matrix<bool> *mask) {
+        AprilUtils::SharedPtr< Matrix<int32_t> > idx;
+        idx = matNonZeroIndices(mask);
+        return matIndex(m, dim, idx.get());
       }
       
       template <typename T>
@@ -338,6 +470,10 @@ namespace AprilMath {
 
       template Matrix<int32_t> *matOrderRank(const Matrix<float> *,
                                              Matrix<int32_t> *);
+
+      template Matrix<float> *matIndex(Matrix<float> *, int, const Matrix<int32_t> *);
+
+      template Matrix<float> *matIndex(Matrix<float> *, int, const Matrix<bool> *);
       
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
@@ -370,6 +506,10 @@ namespace AprilMath {
 
       template Matrix<int32_t> *matOrderRank(const Matrix<double> *,
                                              Matrix<int32_t> *);
+
+      template Matrix<double> *matIndex(Matrix<double> *, int, const Matrix<int32_t> *);
+      
+      template Matrix<double> *matIndex(Matrix<double> *, int, const Matrix<bool> *);
       
       template Matrix<double> *matAddition(const Matrix<double> *,
                                           const Matrix<double> *,
@@ -396,9 +536,13 @@ namespace AprilMath {
                                                   Basics::Matrix<int32_t> *dest);
       
 
+
+      template Matrix<ComplexF> *matIndex(Matrix<ComplexF> *, int, const Matrix<int32_t> *);
+
+      template Matrix<ComplexF> *matIndex(Matrix<ComplexF> *, int, const Matrix<bool> *);
       template Matrix<ComplexF> *matAddition(const Matrix<ComplexF> *,
-                                          const Matrix<ComplexF> *,
-                                          Matrix<ComplexF> *);
+                                             const Matrix<ComplexF> *,
+                                             Matrix<ComplexF> *);
 
       template Matrix<ComplexF> *matSubstraction(const Matrix<ComplexF> *,
                                                  const Matrix<ComplexF> *,
@@ -409,6 +553,10 @@ namespace AprilMath {
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<ComplexF> *input,
                                                   Basics::Matrix<int32_t> *dest);
 
+
+      template Matrix<char> *matIndex(Matrix<char> *, int, const Matrix<int32_t> *);
+
+      template Matrix<char> *matIndex(Matrix<char> *, int, const Matrix<bool> *);
       
       template Matrix<char> *matConvertTo(const Matrix<bool> *,
                                           Matrix<char> *);
@@ -425,6 +573,10 @@ namespace AprilMath {
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<char> *input,
                                                   Basics::Matrix<int32_t> *dest);
 
+
+      template Matrix<int32_t> *matIndex(Matrix<int32_t> *, int, const Matrix<int32_t> *);
+
+      template Matrix<int32_t> *matIndex(Matrix<int32_t> *, int, const Matrix<bool> *);
       
       template Matrix<int32_t> *matOrder(const Matrix<int32_t> *,
                                          Matrix<int32_t> *);
@@ -451,6 +603,10 @@ namespace AprilMath {
                                                 const Matrix<int32_t> *,
                                                 Matrix<int32_t> *);
 
+
+      template Matrix<bool> *matIndex(Matrix<bool> *, int, const Matrix<int32_t> *);
+
+      template Matrix<bool> *matIndex(Matrix<bool> *, int, const Matrix<bool> *);
       
       template Matrix<bool> *matConvertTo(const Matrix<float> *,
                                           Matrix<bool> *);

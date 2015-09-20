@@ -30,8 +30,8 @@ namespace AprilMath {
     /**
      * @brief Miscellaneous operations for Matrix instances.
      *
-     * This operations have been implemented using other matrix operations,
-     * they are wrappers to perform usual computations.
+     * This operations have been implemented using other matrix operations or
+     * ad-hoc implementations. They are wrappers to perform usual computations.
      *
      * @see AprilMath::MatrixExt
      */    
@@ -40,15 +40,25 @@ namespace AprilMath {
 
       //////////////////// OTHER MATH OPERATIONS ////////////////////
 
-      /// To be called from Lua.
+      /// To be called from Lua. Indices start at 1 instead of 0.
       template <typename T>
       Basics::Matrix<int32_t> *matOrder(const Basics::Matrix<T> *m,
                                         Basics::Matrix<int32_t> *dest = 0);
-      
-      /// To be called from Lua.
+
+      /// To be called from Lua. Indices start at 1 instead of 0.
       template <typename T>
       Basics::Matrix<int32_t> *matOrderRank(const Basics::Matrix<T> *m,
                                             Basics::Matrix<int32_t> *dest = 0);
+      
+      /// Changes the order of matrix data over a given dimension.
+      template <typename T>
+      Basics::Matrix<T> *matIndex(Basics::Matrix<T> *m, int dim,
+                                  const Basics::Matrix<int32_t> *idx);
+
+      /// Changes the order of matrix data over a given dimension.
+      template <typename T>
+      Basics::Matrix<T> *matIndex(Basics::Matrix<T> *m, int dim,
+                                  const Basics::Matrix<bool> *mask);
       
       /**
        * @brief Returns the result of \f$ C = A + B \f$
@@ -229,7 +239,8 @@ namespace AprilMath {
                                       Basics::Matrix<O> *dest=0);
       
       /**
-       * @brief Converts into MatrixInt32 with all non-zero indices.
+       * @brief Converts into MatrixInt32 with all non-zero indices. Indices
+       * start a 1 instead of 0.
        */
       template <typename T>
       Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,

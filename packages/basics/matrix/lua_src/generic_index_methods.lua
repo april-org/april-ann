@@ -1,24 +1,8 @@
 matrix = matrix or {}
 matrix.__generic__ = matrix.__generic__ or {}
 
-local index_function =
-  april_doc{
-    class = "method",
-    summary = {
-      "Returns new allocated matrix filtered by the given dim and",
-      "index matrix parameters.",
-    },
-    params = {
-      "A dimension number",
-      { "A table, matrixBool or matrixInt32 indicating which",
-        "indices will be taken." },
-    },
-    outputs = {
-      { "A new allocated matrix instance, or nil if 2nd argument",
-        "has zero selected components", },
-    },
-  } ..
-  function(self,dim,idx)
+
+local function old_index(self,dim,idx)
     assert(type(dim) == "number",
            "Needs a number as first argument")
     if type(idx) == "table" then idx = matrixInt32(idx)
@@ -47,7 +31,7 @@ local index_function =
     else
       d[dim] = 1
       local self_sw = self:sliding_window{ size=d, step=d }
-      local dest_sw   = result:sliding_window{ size=d, step=d }
+      local dest_sw = result:sliding_window{ size=d, step=d }
       local result_submat,self_submat
       for i=1,#idx do
         local p = idx[i]
@@ -185,7 +169,23 @@ local index_copy_function =
   end  
 
 function matrix.__generic__.__make_index_methods__(cls)
-  class.extend(cls, "index",        index_function)
+  april_set_doc(cls .. "index",
+                {
+                  class = "method",
+                  summary = {
+                    "Returns new allocated matrix filtered by the given dim and",
+                    "index matrix parameters.",
+                  },
+                  params = {
+                    "A dimension number",
+                    { "A table, matrixBool or matrixInt32 indicating which",
+                      "indices will be taken." },
+                  },
+                  outputs = {
+                    { "A new allocated matrix instance, or nil if 2nd argument",
+                      "has zero selected components", },
+                  },
+  })
   class.extend(cls, "indexed_fill", index_fill_function)
   class.extend(cls, "indexed_copy", index_copy_function)
 end
