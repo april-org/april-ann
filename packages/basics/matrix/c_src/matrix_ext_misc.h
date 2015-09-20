@@ -50,15 +50,39 @@ namespace AprilMath {
       Basics::Matrix<int32_t> *matOrderRank(const Basics::Matrix<T> *m,
                                             Basics::Matrix<int32_t> *dest = 0);
       
-      /// Changes the order of matrix data over a given dimension.
+      /// Changes the order of matrix data over a given dimension. Returns a new allocated matrix.
       template <typename T>
       Basics::Matrix<T> *matIndex(Basics::Matrix<T> *m, int dim,
                                   const Basics::Matrix<int32_t> *idx);
 
-      /// Changes the order of matrix data over a given dimension.
+      /// Changes the order of matrix data over a given dimension. Returns a new allocated matrix.
       template <typename T>
       Basics::Matrix<T> *matIndex(Basics::Matrix<T> *m, int dim,
                                   const Basics::Matrix<bool> *mask);
+
+      /// Fills the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedFill(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<int32_t> *idx,
+                                        T val);
+
+      /// Fills the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedFill(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<bool> *mask,
+                                        T val);
+
+      /// Copies the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedCopy(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<int32_t> *idx,
+                                        Basics::Matrix<T> *other);
+
+      /// Copies the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedCopy(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<bool> *mask,
+                                        Basics::Matrix<T> *other);
       
       /**
        * @brief Returns the result of \f$ C = A + B \f$

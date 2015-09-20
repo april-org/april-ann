@@ -34,6 +34,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "div", "norm2", "inv", "logdet", "det",
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
     "ceil", "floor", "round",
   },
   double = {
@@ -53,6 +54,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "div", "norm2",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
     "ceil", "floor", "round",
   },
   int32_t = {
@@ -70,6 +72,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "idiv", "mod",
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -87,6 +90,7 @@ local matrix_methods = {
     "masked_fill", "masked_copy", "div", "norm2",
     "toMMap",
     "data", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
     "ceil", "floor", "round",
   },
   char = {
@@ -102,6 +106,7 @@ local matrix_methods = {
     "copy",
     "toMMap",
     "data", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
     "stringfy",
   },
   bool = {
@@ -117,6 +122,7 @@ local matrix_methods = {
     "copy",
     "toMMap",
     "data", "convert_to", "index",
+    "indexed_fill", "indexed_copy",
     "to_index",
   },
 }

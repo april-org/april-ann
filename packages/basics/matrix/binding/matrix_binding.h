@@ -1839,6 +1839,44 @@ namespace Basics {
       lua_push(L, result);
       return 1;
     }
+
+    BEGIN_METHOD(indexed_fill)
+    {
+      Matrix<T> *result;
+      int dim = lua_to<int>(L,1);
+      T val = lua_to<T>(L,3);
+      if (lua_is<Matrix<bool>*>(L,2)) {
+        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndexedFill(obj, dim-1, idx, val); // WARNING!!! -1
+      }
+      else {
+        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndexedFill(obj, dim-1, idx, val); // WARNING!!! -1
+      }
+      lua_push(L, result);
+      return 1;
+    }
+
+    BEGIN_METHOD(indexed_copy)
+    {
+      Matrix<T> *result;
+      int dim = lua_to<int>(L,1);
+      Matrix<T> *other = lua_to<Matrix<T>*>(L,3);
+      if (lua_is<Matrix<bool>*>(L,2)) {
+        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndexedCopy(obj, dim-1, idx, other); // WARNING!!! -1
+      }
+      else {
+        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        result = AprilMath::MatrixExt::Misc::
+          matIndexedCopy(obj, dim-1, idx, other); // WARNING!!! -1
+      }
+      lua_push(L, result);
+      return 1;
+    }
   };
 
 #undef FUNCTION_NAME
