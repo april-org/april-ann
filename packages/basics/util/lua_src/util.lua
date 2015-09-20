@@ -369,8 +369,9 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
   else -- general case for N processes
     local outputs = iterator(range(1,num_processes)):
     map(function(idx) return os.tmpname() end):table()
-    local id = util.split_process(num_processes)-1
-    local f = io.open(outputs[id+1], "w")
+    local id,pid = util.split_process(num_processes)
+    local id_rem = id-1
+    local f = io.open(outputs[id], "w")
     fprintf(f, "return {\n")
     -- traverse all iterator values
     local index = 0
@@ -378,7 +379,7 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
       local arg = table.pack(data_it())
       if arg[1] == nil then break end
       index = index + 1
-      if (index%num_processes) == id then -- data correspond to current process
+      if (index%num_processes) == id_rem then -- data correspond to current process
         table.insert(arg, id)
         local ret = util.pack( func(table.unpack(arg)) )
         if ret ~= nil then
@@ -389,8 +390,8 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     fprintf(f, "}\n")
     f:close()
     -- waits for all childrens
-    if id ~= 0 then util.wait() os.exit(0) end
     util.wait()
+    if id > 1 then os.exit(0) end
     -- maps all the outputs to a table
     return iterator(ipairs(outputs)):
       map(function(index,filename)

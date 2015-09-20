@@ -131,9 +131,6 @@ namespace AprilMath {
           const T *m_ptr = m->getRawDataAccess()->getPPALForRead() + m_offset;
           const int32_t *idx_ptr = idx->getRawDataAccess()->getPPALForRead() + idx_offset;
           T *dest_ptr = dest->getRawDataAccess()->getPPALForWrite() + dest_offset;
-#ifndef NO_OMP
-#pragma omp parallel for
-#endif
           for(int i=0; i<N; ++i) {
             // WARNING: idx counts from 1, instead of 0
             dest_ptr[ i*dest_stride ] = m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ];
@@ -166,9 +163,6 @@ namespace AprilMath {
 #endif
           T *m_ptr = m->getRawDataAccess()->getPPALForWrite() + m_offset;
           const int32_t *idx_ptr = idx->getRawDataAccess()->getPPALForRead() + idx_offset;
-#ifndef NO_OMP
-#pragma omp parallel for
-#endif
           for(int i=0; i<N; ++i) {
             // WARNING: idx counts from 1, instead of 0
             m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ] = val;
@@ -205,9 +199,6 @@ namespace AprilMath {
           T *m_ptr = m->getRawDataAccess()->getPPALForWrite() + m_offset;
           const int32_t *idx_ptr = idx->getRawDataAccess()->getPPALForRead() + idx_offset;
           const T *other_ptr = other->getRawDataAccess()->getPPALForRead() + other_offset;
-#ifndef NO_OMP
-#pragma omp parallel for
-#endif
           for(int i=0; i<N; ++i) {
             // WARNING: idx counts from 1, instead of 0
             m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ] = other_ptr[ i*other_stride ];
