@@ -85,6 +85,14 @@ namespace AprilMath {
       /**
        * @brief Returns the result of \f$ C = A \times B \f$
        *
+       * This operation implements a generic multiplication which result
+       * depends in the rank and shape of the given matrices. So, if
+       * a vector and a column vector are given, the operation implements
+       * an outer product. If two row vectors are given, the operation
+       * implements inner product. If a vector and a matrix is given, it
+       * implements matrix-vector product. If two matrices are given, the
+       * operation implements matrix-matrix product.
+       *
        * @note If the given @c c argument is 0, this operation allocates a
        * new destination matrix, otherwise uses the given matrix.
        */
