@@ -1832,9 +1832,19 @@ namespace Basics {
           matIndex(obj, dim-1, idx); // WARNING!!! -1
       }
       else {
-        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        AprilUtils::SharedPtr< Matrix<int32_t> > idx;
+        if (lua_istable(L,2)) {
+          lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
+          lua_pushvalue(L, 2); // dim table ... matrixInt32 table
+          lua_call(L, 1, 1); // dim table ... object
+          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          lua_pop(L,1);
+        }
+        else {
+          idx = lua_to<Matrix<int32_t>*>(L,2);
+        }
         result = AprilMath::MatrixExt::Misc::
-          matIndex(obj, dim-1, idx); // WARNING!!! -1
+          matIndex(obj, dim-1, idx.get()); // WARNING!!! -1
       }
       lua_push(L, result);
       return 1;
@@ -1851,9 +1861,19 @@ namespace Basics {
           matIndexedFill(obj, dim-1, idx, val); // WARNING!!! -1
       }
       else {
-        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        AprilUtils::SharedPtr< Matrix<int32_t> > idx;
+        if (lua_istable(L,2)) {
+          lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
+          lua_pushvalue(L, 2); // dim table ... matrixInt32 table
+          lua_call(L, 1, 1); // dim table ... object
+          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          lua_pop(L,1);
+        }
+        else {
+          idx = lua_to<Matrix<int32_t>*>(L,2);
+        }
         result = AprilMath::MatrixExt::Misc::
-          matIndexedFill(obj, dim-1, idx, val); // WARNING!!! -1
+          matIndexedFill(obj, dim-1, idx.get(), val); // WARNING!!! -1
       }
       lua_push(L, result);
       return 1;
@@ -1870,9 +1890,19 @@ namespace Basics {
           matIndexedCopy(obj, dim-1, idx, other); // WARNING!!! -1
       }
       else {
-        Matrix<int32_t> *idx = lua_to<Matrix<int32_t>*>(L,2);
+        AprilUtils::SharedPtr< Matrix<int32_t> > idx;
+        if (lua_istable(L,2)) {
+          lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
+          lua_pushvalue(L, 2); // dim table ... matrixInt32 table
+          lua_call(L, 1, 1); // dim table ... object
+          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          lua_pop(L,1);
+        }
+        else {
+          idx = lua_to<Matrix<int32_t>*>(L,2);
+        }
         result = AprilMath::MatrixExt::Misc::
-          matIndexedCopy(obj, dim-1, idx, other); // WARNING!!! -1
+          matIndexedCopy(obj, dim-1, idx.get(), other); // WARNING!!! -1
       }
       lua_push(L, result);
       return 1;
