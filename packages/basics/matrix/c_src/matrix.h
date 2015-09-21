@@ -664,7 +664,7 @@ namespace Basics {
      * for the given dimension at the given index.
      *
      * If @c dest matrix is given, it should be created using a previous
-     * execution of select method over the same dimension, otherwise, the
+     * execution of select method <b>over the same dimension</b>, otherwise, the
      * behavior of select is undefined.
      *
      * @note <b>WARNING</b>, @c dest matrix correctness is not checked, so, be
@@ -683,7 +683,7 @@ namespace Basics {
      * }
      * @endcode
      */
-    Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
+    Matrix<T> *select(int dim, int index, Matrix<T> *dest=0) const;
   
     // Expands current matrix to a diagonal matrix
     Matrix<T> *diagonalize() const;

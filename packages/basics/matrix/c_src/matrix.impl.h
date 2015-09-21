@@ -760,7 +760,7 @@ namespace Basics {
   }
 
   template<typename T>
-  Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
+  Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) const {
     if (numDim == 1)
       ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
     if (dim >= numDim)
@@ -778,7 +778,7 @@ namespace Basics {
       result->stride       = new int[d];
       result->offset       = offset + index*stride[dim]; // the select implies an offset
       result->last_raw_pos = result->offset;
-      result->data         = data;
+      result->data         = const_cast<AprilMath::GPUMirroredMemoryBlock<T>*>(data.get());
       // Not needed: result->mmapped_data = 0;
       for(int i=0; i<dim; ++i) {
         result->stride[i]      = stride[i];

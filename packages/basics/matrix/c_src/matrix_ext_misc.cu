@@ -269,9 +269,8 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Matrix<T> *matIndex(Matrix<T> *m, int dim,
+      Matrix<T> *matIndex(const Matrix<T> *m, int dim,
                           const Matrix<int32_t> *idx) {
-        AprilUtils::SharedPtr< Matrix<T> > m_ref = m; // IncRef m
         AprilUtils::SharedPtr< Matrix<int32_t> > sq_idx = idx->constSqueeze();
         if (sq_idx->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 tensor as second argument (index)\n");
@@ -293,37 +292,28 @@ namespace AprilMath {
 #endif
         if (m->size() == dim_limit) {
           // vector version, ad-hoc implementation
-          AprilUtils::SharedPtr< Matrix<T> > sq_m = m->squeeze();
+          AprilUtils::SharedPtr< Matrix<T> > sq_m = m->constSqueeze();
           AprilUtils::SharedPtr< Matrix<T> > sq_r = result->squeeze();
           indexVectorWrapper(sq_m.get(), sq_idx.get(), sq_r.get());
         }
         else {
-          // matrix version, ad-hoc general implementation, uses sliding_window
-          // iterators
-          dims[dim] = 1;
-          // given size and step
-          typename Matrix<T>::sliding_window m_sw(m, dims.get(), 0, dims.get());
-          typename Matrix<T>::sliding_window r_sw(result.get(), dims.get(), 0, dims.get());
+          // matrix version, ad-hoc general implementation using select
           AprilUtils::SharedPtr< Matrix<T> > m_slice, r_slice;
           typename Matrix<int32_t>::const_iterator it = idx->begin();
           // traverse all given indices copying submatrices
           for (int i=0; i<idx->size(); ++i, ++it) {
             april_assert(it != idx->end());
-            april_assert(!r_sw.isEnd());
+            april_assert(i < result->getDimSize(dim));
             // WARNING: idx counts from 1, instead of 0
-            // m_sw points to the submatrix indicated at idx[i]
-            const int p = *it - 1; m_sw.setAtWindow(p);
-            april_assert(!m_sw.isEnd());
+            const int p = *it - 1;
+            april_assert(p < m->getDimSize(dim));
             // take submatrices
-            m_slice = m_sw.getMatrix(m_slice.get());
-            r_slice = r_sw.getMatrix(r_slice.get());
+            m_slice = m->select(dim, p, m_slice.get());
+            r_slice = result->select(dim, i, r_slice.get());
             // copy them
             AprilMath::MatrixExt::BLAS::matCopy(r_slice.get(), m_slice.get());
-            // go to next submatrix at result matrix
-            r_sw.next();
           }
         }
-        m_ref.weakRelease(); // DecRef m
         return result.weakRelease();
       }
 
@@ -345,40 +335,28 @@ namespace AprilMath {
           indexedFillVectorWrapper(sq_m.get(), sq_idx.get(), val);
         }
         else {
-          // matrix version, ad-hoc general implementation, uses sliding_window
-          // iterators
-          const int D = m->getNumDim();          
-          // copy m->dims into a new array
-          AprilUtils::UniquePtr<int[]> dims = new int[D];
-          for (int i=0; i<D; ++i) dims[i] = m->getDimSize(i);
-          // sets the given dimension to 1 for sliding_window configuration
-          dims[dim] = 1;
-          // given size and step
-          typename Matrix<T>::sliding_window m_sw(m, dims.get(), 0, dims.get());
+          // matrix version, ad-hoc general implementation using select
           AprilUtils::SharedPtr< Matrix<T> > m_slice;
           typename Matrix<int32_t>::const_iterator it = idx->begin();
           // traverse all given indices copying submatrices
           for (int i=0; i<idx->size(); ++i, ++it) {
             april_assert(it != idx->end());
             // WARNING: idx counts from 1, instead of 0
-            // m_sw points to the submatrix indicated at idx[i]
-            const int p = *it - 1; m_sw.setAtWindow(p);
-            april_assert(!m_sw.isEnd());
+            const int p = *it - 1;
+            april_assert(p < m->getDimSize(dim));
             // take submatrix
-            m_slice = m_sw.getMatrix(m_slice.get());
+            m_slice = m->select(dim, p, m_slice.get());
             // fill it with val constant
             AprilMath::MatrixExt::Initializers::matFill(m_slice.get(), val);
           }
         }
-        return m_ref.weakRelease(); // DecRef m
+        return m;
       }
 
       template <typename T>
       Matrix<T> *matIndexedCopy(Matrix<T> *m, int dim,
                                 const Matrix<int32_t> *idx,
-                                Matrix<T> *other) {
-        AprilUtils::SharedPtr< Matrix<T> > m_ref = m; // IncRef m
-        AprilUtils::SharedPtr< Matrix<T> > o_ref = other; // IncRef other
+                                const Matrix<T> *other) {
         AprilUtils::SharedPtr< Matrix<int32_t> > sq_idx = idx->constSqueeze();
         if (sq_idx->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 tensor as second argument (index)\n");
@@ -402,39 +380,28 @@ namespace AprilMath {
           indexedCopyVectorWrapper(sq_m.get(), sq_idx.get(), sq_o.get());
         }
         else {
-          // matrix version, ad-hoc general implementation, uses sliding_window
-          // iterators
-          
-          // sets the given dimension to 1 for sliding_window configuration
-          dims[dim] = 1;
-          // given size and step
-          typename Matrix<T>::sliding_window m_sw(m, dims.get(), 0, dims.get());
-          typename Matrix<T>::sliding_window o_sw(other, dims.get(), 0, dims.get());
+          // matrix version, ad-hoc general implementation using select          
           AprilUtils::SharedPtr< Matrix<T> > m_slice, o_slice;
           typename Matrix<int32_t>::const_iterator it = idx->begin();
           // traverse all given indices copying submatrices
           for (int i=0; i<idx->size(); ++i, ++it) {
             april_assert(it != idx->end());
-            april_assert(!o_sw.isEnd());
+            april_assert(i < other->getDimSize(dim));
             // WARNING: idx counts from 1, instead of 0
-            // m_sw points to the submatrix indicated at idx[i]
-            const int p = *it - 1; m_sw.setAtWindow(p);
-            april_assert(!m_sw.isEnd());
+            const int p = *it - 1;
+            april_assert(p < m->getDimSize(dim));
             // take submatrices
-            m_slice = m_sw.getMatrix(m_slice.get());
-            o_slice = o_sw.getMatrix(o_slice.get());
+            m_slice = m->select(dim, p, m_slice.get());
+            o_slice = other->select(dim, i, o_slice.get());
             // fill it with val constant
             AprilMath::MatrixExt::BLAS::matCopy(m_slice.get(), o_slice.get());
-            // go to next
-            o_sw.next();
           }
         }
-        o_ref.weakRelease(); // DecRef other
-        return m_ref.weakRelease(); // DecRef m
+        return m;
       }
       
       template <typename T>
-      Matrix<T> *matIndex(Matrix<T> *m, int dim,
+      Matrix<T> *matIndex(const Matrix<T> *m, int dim,
                           const Matrix<bool> *mask) {
         AprilUtils::SharedPtr< Matrix<int32_t> > idx;
         idx = matNonZeroIndices(mask);
@@ -453,7 +420,7 @@ namespace AprilMath {
       template <typename T>
       Matrix<T> *matIndexedCopy(Matrix<T> *m, int dim,
                                 const Matrix<bool> *mask,
-                                Matrix<T> *other) {
+                                const Matrix<T> *other) {
         AprilUtils::SharedPtr< Matrix<int32_t> > idx;
         idx = matNonZeroIndices(mask);
         return matIndexedCopy(m, dim, idx.get(), other);
@@ -692,9 +659,9 @@ namespace AprilMath {
       template Matrix<int32_t> *matOrderRank(const Matrix<float> *,
                                              Matrix<int32_t> *);
 
-      template Matrix<float> *matIndex(Matrix<float> *, int, const Matrix<int32_t> *);
+      template Matrix<float> *matIndex(const Matrix<float> *, int, const Matrix<int32_t> *);
 
-      template Matrix<float> *matIndex(Matrix<float> *, int, const Matrix<bool> *);
+      template Matrix<float> *matIndex(const Matrix<float> *, int, const Matrix<bool> *);
       
       template Matrix<float> *matIndexedFill(Matrix<float> *, int,
                                              const Matrix<int32_t> *, float);
@@ -704,11 +671,11 @@ namespace AprilMath {
 
       template Matrix<float> *matIndexedCopy(Matrix<float> *, int,
                                              const Matrix<int32_t> *,
-                                             Matrix<float> *);
+                                             const Matrix<float> *);
 
       template Matrix<float> *matIndexedCopy(Matrix<float> *, int,
                                              const Matrix<bool> *,
-                                             Matrix<float> *);
+                                             const Matrix<float> *);
       
       template Matrix<float> *matAddition(const Matrix<float> *,
                                           const Matrix<float> *,
@@ -742,9 +709,9 @@ namespace AprilMath {
       template Matrix<int32_t> *matOrderRank(const Matrix<double> *,
                                              Matrix<int32_t> *);
 
-      template Matrix<double> *matIndex(Matrix<double> *, int, const Matrix<int32_t> *);
+      template Matrix<double> *matIndex(const Matrix<double> *, int, const Matrix<int32_t> *);
       
-      template Matrix<double> *matIndex(Matrix<double> *, int, const Matrix<bool> *);
+      template Matrix<double> *matIndex(const Matrix<double> *, int, const Matrix<bool> *);
             
       template Matrix<double> *matIndexedFill(Matrix<double> *, int,
                                               const Matrix<int32_t> *, double);
@@ -754,11 +721,11 @@ namespace AprilMath {
 
       template Matrix<double> *matIndexedCopy(Matrix<double> *, int,
                                               const Matrix<int32_t> *,
-                                              Matrix<double> *);
+                                              const Matrix<double> *);
 
       template Matrix<double> *matIndexedCopy(Matrix<double> *, int,
                                               const Matrix<bool> *,
-                                              Matrix<double> *);
+                                              const Matrix<double> *);
       
       template Matrix<double> *matAddition(const Matrix<double> *,
                                            const Matrix<double> *,
@@ -786,9 +753,9 @@ namespace AprilMath {
       
 
 
-      template Matrix<ComplexF> *matIndex(Matrix<ComplexF> *, int, const Matrix<int32_t> *);
+      template Matrix<ComplexF> *matIndex(const Matrix<ComplexF> *, int, const Matrix<int32_t> *);
 
-      template Matrix<ComplexF> *matIndex(Matrix<ComplexF> *, int, const Matrix<bool> *);
+      template Matrix<ComplexF> *matIndex(const Matrix<ComplexF> *, int, const Matrix<bool> *);
       
       template Matrix<ComplexF> *matIndexedFill(Matrix<ComplexF> *, int,
                                                 const Matrix<int32_t> *, ComplexF);
@@ -798,11 +765,11 @@ namespace AprilMath {
 
       template Matrix<ComplexF> *matIndexedCopy(Matrix<ComplexF> *, int,
                                                 const Matrix<int32_t> *,
-                                                Matrix<ComplexF> *);
+                                                const Matrix<ComplexF> *);
 
       template Matrix<ComplexF> *matIndexedCopy(Matrix<ComplexF> *, int,
                                                 const Matrix<bool> *,
-                                                Matrix<ComplexF> *);
+                                                const Matrix<ComplexF> *);
       
       template Matrix<ComplexF> *matAddition(const Matrix<ComplexF> *,
                                              const Matrix<ComplexF> *,
@@ -818,9 +785,9 @@ namespace AprilMath {
                                                   Basics::Matrix<int32_t> *dest);
 
 
-      template Matrix<char> *matIndex(Matrix<char> *, int, const Matrix<int32_t> *);
+      template Matrix<char> *matIndex(const Matrix<char> *, int, const Matrix<int32_t> *);
 
-      template Matrix<char> *matIndex(Matrix<char> *, int, const Matrix<bool> *);
+      template Matrix<char> *matIndex(const Matrix<char> *, int, const Matrix<bool> *);
       
       template Matrix<char> *matIndexedFill(Matrix<char> *, int,
                                             const Matrix<int32_t> *, char);
@@ -830,11 +797,11 @@ namespace AprilMath {
 
       template Matrix<char> *matIndexedCopy(Matrix<char> *, int,
                                             const Matrix<int32_t> *,
-                                            Matrix<char> *);
+                                            const Matrix<char> *);
 
       template Matrix<char> *matIndexedCopy(Matrix<char> *, int,
                                             const Matrix<bool> *,
-                                            Matrix<char> *);
+                                            const Matrix<char> *);
       
       template Matrix<char> *matConvertTo(const Matrix<bool> *,
                                           Matrix<char> *);
@@ -852,9 +819,9 @@ namespace AprilMath {
                                                   Basics::Matrix<int32_t> *dest);
 
 
-      template Matrix<int32_t> *matIndex(Matrix<int32_t> *, int, const Matrix<int32_t> *);
+      template Matrix<int32_t> *matIndex(const Matrix<int32_t> *, int, const Matrix<int32_t> *);
 
-      template Matrix<int32_t> *matIndex(Matrix<int32_t> *, int, const Matrix<bool> *);
+      template Matrix<int32_t> *matIndex(const Matrix<int32_t> *, int, const Matrix<bool> *);
 
       template Matrix<int32_t> *matIndexedFill(Matrix<int32_t> *, int,
                                                const Matrix<int32_t> *, int32_t);
@@ -864,11 +831,11 @@ namespace AprilMath {
 
       template Matrix<int32_t> *matIndexedCopy(Matrix<int32_t> *, int,
                                                const Matrix<int32_t> *,
-                                               Matrix<int32_t> *);
+                                               const Matrix<int32_t> *);
 
       template Matrix<int32_t> *matIndexedCopy(Matrix<int32_t> *, int,
                                                const Matrix<bool> *,
-                                               Matrix<int32_t> *);
+                                               const Matrix<int32_t> *);
       
       template Matrix<int32_t> *matOrder(const Matrix<int32_t> *,
                                          Matrix<int32_t> *);
@@ -896,9 +863,9 @@ namespace AprilMath {
                                                 Matrix<int32_t> *);
 
 
-      template Matrix<bool> *matIndex(Matrix<bool> *, int, const Matrix<int32_t> *);
+      template Matrix<bool> *matIndex(const Matrix<bool> *, int, const Matrix<int32_t> *);
 
-      template Matrix<bool> *matIndex(Matrix<bool> *, int, const Matrix<bool> *);
+      template Matrix<bool> *matIndex(const Matrix<bool> *, int, const Matrix<bool> *);
 
       template Matrix<bool> *matIndexedFill(Matrix<bool> *, int,
                                             const Matrix<int32_t> *, bool);
@@ -908,11 +875,11 @@ namespace AprilMath {
 
       template Matrix<bool> *matIndexedCopy(Matrix<bool> *, int,
                                             const Matrix<int32_t> *,
-                                            Matrix<bool> *);
+                                            const Matrix<bool> *);
       
       template Matrix<bool> *matIndexedCopy(Matrix<bool> *, int,
                                             const Matrix<bool> *,
-                                            Matrix<bool> *);
+                                            const Matrix<bool> *);
       
       template Matrix<bool> *matConvertTo(const Matrix<float> *,
                                           Matrix<bool> *);
