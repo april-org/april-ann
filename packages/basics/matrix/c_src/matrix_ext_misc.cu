@@ -136,7 +136,6 @@ namespace AprilMath {
             // WARNING: idx counts from 1, instead of 0
             dest_ptr[ i*dest_stride ] = m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ];
           }
-#endif
 #ifdef USE_CUDA
         }
 #endif
@@ -169,7 +168,6 @@ namespace AprilMath {
             // WARNING: idx counts from 1, instead of 0
             m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ] = val;
           }
-#endif
 #ifdef USE_CUDA
         }
 #endif
@@ -206,7 +204,6 @@ namespace AprilMath {
             // WARNING: idx counts from 1, instead of 0
             m_ptr[ m_stride * (idx_ptr[idx_stride*i]-1) ] = other_ptr[ i*other_stride ];
           }
-#endif
 #ifdef USE_CUDA
         }
 #endif
