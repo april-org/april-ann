@@ -22,15 +22,12 @@
 
 namespace OMPUtils {
   int get_num_threads() {
-#ifndef NO_OMP
     int n;
-#pragma omp parallel
-    {
-      n = omp_get_num_threads();
-    }
-    return n;
+#ifndef NO_OMP
+    n = omp_get_max_threads(); // WARNING!!! max_threads instead of num_threads
 #else
-    return 1;
+    n = 1;
 #endif
+    return n;
   }
 }

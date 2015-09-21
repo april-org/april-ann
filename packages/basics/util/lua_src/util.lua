@@ -367,6 +367,8 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     end
     return out
   else -- general case for N processes
+    local OMP_NUM_THREADS = util.omp_get_num_threads()
+    util.omp_set_num_threads(1)
     local outputs = iterator(range(1,num_processes)):
     map(function(idx) return os.tmpname() end):table()
     local id,pid = util.split_process(num_processes)
@@ -392,6 +394,7 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     -- waits for all childrens
     util.wait()
     if id > 1 then os.exit(0) end
+    util.omp_set_num_threads(OMP_NUM_THREADS)
     -- maps all the outputs to a table
     return iterator(ipairs(outputs)):
       map(function(index,filename)
