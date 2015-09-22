@@ -444,6 +444,7 @@ data_frame.from_csv =
         data[columns[j] or j][n], last = value, j
       end
       assert(last == #columns, "Not matching number of columns")
+      if n % 4096 == 0 then collectgarbage("collect") end
     end
     rawset(self, "index", matrixInt32(n):linspace())
     rawset(self, "index2id", invert(rawget(self, "index")))
