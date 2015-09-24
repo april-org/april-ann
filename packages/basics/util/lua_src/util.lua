@@ -221,8 +221,20 @@ end
 -- allow to bind arguments to any Lua function (only variadic arguments)
 function bind(func, ...)
   local args = table.pack(...)
-  return function(...)
-    return func(merge_unpack(args, table.pack(...)))
+  if args.n == 1 then
+    assert(args[1] ~= nil)
+    return function(...) return func(args[1],...) end
+  elseif args.n == 2 then
+    assert(args[2] ~= nil)
+    if args[1] ~= nil then
+      return function(...) return func(args[1],args[2],...) end
+    else
+      return function(a,...) return func(a,args[2],...) end
+    end
+  else
+    return function(...)
+      return func(merge_unpack(args, table.pack(...)))
+    end
   end
 end
 

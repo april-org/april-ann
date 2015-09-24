@@ -129,19 +129,19 @@ local matrix_methods = {
 
 local matrix_class_methods = {
   float = {
-    "as", "deserialize", "read", "fromMMap",
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
   },
   double = {
-    "as", "deserialize", "read", "fromMMap",
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
   },
   char = {
-    "as", "deserialize", "read", "fromMMap",
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
   },
   int32_t = {
-    "as", "deserialize", "read", "fromMMap",
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
   },
   ComplexF = {
-    "as", "deserialize", "read", "fromMMap",
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
   },
 }
 

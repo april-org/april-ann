@@ -41,6 +41,23 @@ namespace Basics {
   template<typename T>
   class MatrixBindings {
     
+    class LuaFunctionWrapper {
+    public:
+      LuaFunctionWrapper(lua_State *L, int n) : L(L), n(n) {}
+      Matrix<T> *operator()(Matrix<T> *a, const Matrix<T> *b) const {
+        lua_pushvalue(L,n);
+        lua_push(L,a);
+        lua_push(L,const_cast<Matrix<T>*>(b));
+        lua_call(L, 2, 1);
+        AprilUtils::SharedPtr< Matrix<T> > c = lua_to<Matrix<T>*>(L,-1);
+        lua_pop(L,1);
+        return c.weakRelease();
+      }
+    private:
+      mutable lua_State *L;
+      const int n; // position at Lua stack
+    };
+
     template<typename K>
     static bool lua_is(lua_State *L, int n) {
       return AprilUtils::LuaTable::checkType<K>(L,n);
@@ -1905,6 +1922,30 @@ namespace Basics {
           matIndexedCopy(obj, dim-1, idx.get(), other); // WARNING!!! -1
       }
       lua_push(L, result);
+      return 1;
+    }
+          
+    BEGIN_CLASS_METHOD(__broadcast__)
+    {
+      Matrix<T> *a = lua_to<Matrix<T>*>(L,2);
+      Matrix<T> *b = lua_to<Matrix<T>*>(L,3);
+      Matrix<T> *aux = lua_opt<Matrix<T>*>(L,4,0);
+      AprilUtils::SharedPtr< Matrix<T> > result = aux;
+      if (lua_isfunction(L,1)) {
+        result.reset( AprilMath::MatrixExt::Misc::
+                      matBroadcast(LuaFunctionWrapper(L,1),
+                                   a, b, result.get()) );
+      }
+      else if (luaL_getmetafield(L,1,"__call")) {
+        result.reset( AprilMath::MatrixExt::Misc::
+                      matBroadcast(LuaFunctionWrapper(L,lua_absindex(L,-1)),
+                                   a, b, result.get()) );
+        lua_pop(L,1);
+      }
+      else {
+        LUABIND_ERROR("Needs a function as first argument");
+      }
+      lua_push(L, result.get());
       return 1;
     }
   };

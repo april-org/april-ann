@@ -18,8 +18,7 @@ io.open = aprilio.open
 local io_old_lines = io.lines
 aprilio.lines = function(name, ...)
   if not name then return io_old_lines() end
-  local open = open_by_extension[string.get_extension(name)] or io_old_open
-  local f = april_assert(open(name), "cannot open file '%s'", name)
+  local f = april_assert(io.open(name), "cannot open file '%s'", name)
   assert(f.lines, "lines method not implemented to this kind of file")
   local it = f:lines(...)
   return function()

@@ -187,6 +187,14 @@ namespace AprilUtils {
       return ptr == other;
     }
 
+    bool operator!=(const SharedPtr<T> &other) const {
+      return ptr != other.ptr;
+    }
+
+    bool operator!=(const T *&other) const {
+      return ptr != other;
+    }
+
     /**
      * @brief Bypasses the pointer, but stills having a reference.
      */

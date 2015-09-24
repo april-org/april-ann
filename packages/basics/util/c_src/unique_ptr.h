@@ -161,6 +161,10 @@ namespace AprilUtils {
       return ptr == other;
     }
 
+    bool operator!=(const T *&other) const {
+      return ptr != other;
+    }
+
     /**
      * @brief Bypasses the pointer, but stills having the ownership.
      */
@@ -325,6 +329,10 @@ namespace AprilUtils {
 
     bool operator==(const T *&other) const {
       return ptr == other;
+    }
+
+    bool operator!=(const T *&other) const {
+      return ptr != other;
     }
 
     /**

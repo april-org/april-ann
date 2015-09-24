@@ -22,6 +22,7 @@
 extern "C" {
 #include <ctype.h>
 }
+#include "ignore_result.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "matrix_ext.h"

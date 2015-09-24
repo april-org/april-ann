@@ -135,58 +135,11 @@ matrix.ext.broadcast =
                  "matrix with the result of the broadcast"} },
   } ..
   function(func, a, b, result, ...)
-    local function private_broadcast(result, b, b_dim, func, ...)
-      local b  = b:squeeze()
-      local sw = result:sliding_window{ size=b_dim, step=b_dim }
-      local slice
-      while not sw:is_end() do
-        slice = sw:get_matrix(slice)
-        local slice = slice:squeeze()
-        local out   = func(slice, b, ...)
-        if not rawequal(out, slice) then
-          slice:copy(out)
-        end
-        sw:next()
-      end
+    if ... then
+      local args = table.pack(...)
+      func = function(a,b) return func(a,b,table.unpack(args)) end
     end
-    local function result_shape(a_dim, b_dim)
-      assert(#a_dim == #b_dim, "Incompatible number of dimensions")
-      local shape = {}
-      for i=1,#a_dim do
-        local n,m = a_dim[i],b_dim[i]
-        assert(n == m or n == 1 or m == 1, "Not aligned matrix shapes")
-        shape[i] = math.max(n, m)
-      end
-      return shape
-    end
-    local function fill(dim, N)
-      for i=#dim+1,N do table.insert(dim, 1, 1) end
-    end
-    local a_dim  = a:dim()
-    local b_dim  = b:dim()
-    local N = math.max(#a_dim, #b_dim)
-    fill(a_dim, N)
-    fill(b_dim, N)
-    local shape  = result_shape(a_dim, b_dim)
-    if result then
-      assert(#shape == result:num_dim(),
-             "Incorrect number of dimensions in result matrix")
-      for i=1,#shape do
-        april_assert(shape[i] == result:dim(i),
-                     "Incorrect size in dimension %d for result matrix, expected %d, found %d",
-                     i, shape[i], result:dim(i))
-      end
-    end
-    local result = result or matrix(table.unpack(shape))
-    if rawequal(result, b) then
-      private_broadcast(result, a, a_dim, func, ...)
-    elseif rawequal(result, a) then
-      private_broadcast(result, b, b_dim, func, ...)
-    else
-      private_broadcast(result, a, a_dim, result.copy)
-      private_broadcast(result, b, b_dim, func, ...)
-    end
-    return result
+    return class.of(a).__broadcast__(func,a,b,result)
   end
 
 matrix.__generic__.__make_index_methods__(matrix)
