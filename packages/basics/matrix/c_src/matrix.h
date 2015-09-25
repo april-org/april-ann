@@ -533,6 +533,12 @@ namespace Basics {
     Matrix<T> *constRewrap(const int *new_dims, int len,
                            bool clone_if_not_contiguous=false) const;
 
+    /// Add singleton dimensions at left
+    Matrix<T> *leftInflate(int n) const;
+
+    /// Add singleton dimensions at right
+    Matrix<T> *rightInflate(int n) const;
+
     /// Removes all singleton dimensions, always returns a new instance
     Matrix<T> *constSqueeze() const;
 

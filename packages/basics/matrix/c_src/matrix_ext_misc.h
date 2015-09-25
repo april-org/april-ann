@@ -20,6 +20,7 @@
  *
  */
 #include "matrix_ext.h"
+#include "swap.h"
 #ifndef MATRIX_EXT_MISC_H
 #define MATRIX_EXT_MISC_H
 
@@ -151,32 +152,32 @@ namespace AprilMath {
       /////////////////////////////////////////////////////////////////////////
 
       class BroadcastHelper {
-      
-        static AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, const int Na,
-                                                         const int *b_dim, const int Nb) {
-          const int minN = AprilUtils::min(Na, Nb);
-          const int maxN = AprilUtils::max(Na, Nb);
-          int *shape = new int[maxN];
-          for (int i=0; i<minN; ++i) {
-            int n = a_dim[i], m = b_dim[i];
+                
+        /// Computes the shape of the broadcast result matrix.
+        static AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, int Na,
+                                                         const int *b_dim, int Nb) {
+          if (Na > Nb) { // make sure Na < Nb
+            AprilUtils::swap(a_dim,b_dim);
+            AprilUtils::swap(Na,Nb);
+          }
+          const int d = Nb - Na; // Na < Nb always here
+          int *shape = new int[Nb];
+          for (int i=0; i<Na; ++i) {
+            int n = a_dim[i], m = b_dim[i+d];
             if (n != m && n != 1 && m != 1) {
               ERROR_EXIT(256, "Not aligned matrix shapes\n");
             }
-            shape[i] = AprilUtils::max(n, m);
+            shape[i+d] = AprilUtils::max(n, m);
           }
-          if (maxN == Na) {
-            for (int i=minN; i<maxN; ++i) shape[i] = a_dim[i];
-          }
-          else {
-            for (int i=minN; i<maxN; ++i) shape[i] = b_dim[i];
-          }
+          for (int i=0; i<d; ++i) shape[i] = b_dim[i];
           return shape;
         }
-
+        
+        /// Performs broadcasting of other matrix into dest matrix using func operation
         template<typename T, typename OP>
-        static void broadcast(const OP &func,
-                              AprilUtils::SharedPtr<Basics::Matrix<T> > dest,
-                              const Basics::Matrix<T> *other) {
+        static void oneWayBroadcast(const OP &func,
+                                    AprilUtils::SharedPtr<Basics::Matrix<T> > dest,
+                                    const Basics::Matrix<T> *other) {
           if (dest->sameDim(other)) { // particular case
             AprilUtils::SharedPtr< Basics::Matrix<T> > out =
               func(dest.get(), other);
@@ -184,64 +185,32 @@ namespace AprilMath {
               BLAS::matCopy(dest.get(), out.get());
             }
           }
-          else { // general case has two modes depending on num_dim
-            AprilUtils::SharedPtr< Basics::Matrix<T> > other_squeezed;
+          else { // general case
+            AprilUtils::SharedPtr< Basics::Matrix<T> > other_inflated;
             AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice;
-            AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice_squeezed;
-            const int *other_dim = other->getDimPtr();
             if (dest->getNumDim() != other->getNumDim()) {
-              // Different num_dim, we need to build a dim vector for the
-              // sliding window, and to squeeze 'other' matrix and dest slices
-              // in order to ensure both has the same shape.
-              AprilUtils::UniquePtr<int[]> other_dim_aux;
-              other_dim_aux = new int[dest->getNumDim()];
-              for (int i=0; i<other->getNumDim(); ++i) {
-                other_dim_aux[i] = other->getDimSize(i);
+              // We need to leftInflate 'other' matrix and change other ptr
+              other_inflated = other->leftInflate(dest->getNumDim() - other->getNumDim());
+              other = other_inflated.get();
+            }
+            const int *other_dim = other->getDimPtr();
+            typename Basics::Matrix<T>::sliding_window
+              dest_sw(dest.get(),
+                      other_dim,      // sub_matrix_size
+                      0,              // offset
+                      other_dim);     // step
+            while(!dest_sw.isEnd()) {
+              dest_slice = dest_sw.getMatrix(dest_slice.get());
+              AprilUtils::SharedPtr< Basics::Matrix<T> > out =
+                func(dest_slice.get(), other);
+              if (out.get() != dest_slice.get()) {
+                BLAS::matCopy(dest_slice.get(), out.get());
               }
-              for (int i=other->getNumDim(); i<dest->getNumDim(); ++i) {
-                other_dim_aux[i] = 1;
-              }
-              other_dim = other_dim_aux.get();
-              other_squeezed = other->constSqueeze();
-              typename Basics::Matrix<T>::sliding_window
-                dest_sw(dest.get(),
-                        other_dim,      // sub_matrix_size
-                        0,              // offset
-                        other_dim);     // step
-              while(!dest_sw.isEnd()) {
-                dest_slice = dest_sw.getMatrix(dest_slice.get());
-                if (dest_slice_squeezed.empty()) {
-                  dest_slice_squeezed = dest_slice->squeeze();
-                }
-                AprilUtils::SharedPtr< Basics::Matrix<T> > out =
-                  func(dest_slice_squeezed.get(), other_squeezed.get());
-                if (out.get() != dest_slice_squeezed.get()) {
-                  BLAS::matCopy(dest_slice_squeezed.get(), out.get());
-                }
-                dest_sw.next();
-              }
-            } // different num_dim
-            else {
-              // Same num_dim, traverse using the sliding window configured with
-              // 'other' shape.
-              typename Basics::Matrix<T>::sliding_window
-                dest_sw(dest.get(),
-                        other_dim,      // sub_matrix_size
-                        0,              // offset
-                        other_dim);     // step
-              while(!dest_sw.isEnd()) {
-                dest_slice = dest_sw.getMatrix(dest_slice.get());
-                AprilUtils::SharedPtr< Basics::Matrix<T> > out =
-                  func(dest_slice.get(), other);
-                if (out.get() != dest_slice.get()) {
-                  BLAS::matCopy(dest_slice.get(), out.get());
-                }
-                dest_sw.next();
-              }
-            } // same num_dim
+              dest_sw.next();
+            }
           } // general case
         }
-      
+        
         template<typename T>
         struct copyFunctor {
           Basics::Matrix<T> *operator()(Basics::Matrix<T> *dest,
@@ -274,14 +243,14 @@ namespace AprilMath {
             }
           }
           if (result == b) {
-            broadcast(func, result, a);
+            oneWayBroadcast(func, result, a);
           }
           else if (result == a) {
-            broadcast(func, result, b);
+            oneWayBroadcast(func, result, b);
           }
           else {
-            broadcast(copyFunctor<T>(), result, a);
-            broadcast(func, result, b);
+            oneWayBroadcast(copyFunctor<T>(), result, a);
+            oneWayBroadcast(func, result, b);
           }
           return result;
         }

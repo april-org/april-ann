@@ -82,9 +82,14 @@ namespace Basics {
     use_cuda(use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
-    for (int i=0; i<numDim; ++i) {
-      this->stride[i] = stride[i];
-      this->matrixSize[i] = matrixSize[i];
+    if (stride && matrixSize) {
+      for (int i=0; i<numDim; ++i) {
+        this->stride[i] = stride[i];
+        this->matrixSize[i] = matrixSize[i];
+      }
+    }
+    else if (stride || matrixSize) {
+      ERROR_EXIT(128, "Improper call, stride=0 XOR matrixSize==0 is not true\n");
     }
     april_assert(offset >= 0);
   }
@@ -496,14 +501,13 @@ namespace Basics {
       sizes[len++] = 1;
     }
     Matrix<T> *obj =
-      new Matrix<T>(len, strides.get(), getOffset(), sizes.get(),
+      new Matrix<T>(len, NULL, getOffset(), NULL,
                     size(), last_raw_pos,
                     const_cast< AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
                     use_cuda,
                     const_cast< AprilUtils::MMappedDataReader*>(mmapped_data.get()));
-#ifdef USE_CUDA
-    obj->setUseCuda(use_cuda);
-#endif
+    obj->matrixSize = sizes.release();
+    obj->stride     = strides.release();
     return obj;
   }
 
@@ -526,12 +530,11 @@ namespace Basics {
     }
     // return this in case len==numDim, rewrap in other case
     Matrix<T> *obj = (len==numDim) ?
-      this : new Matrix<T>(len, strides.get(), getOffset(), sizes.get(),
+      this : new Matrix<T>(len, NULL, getOffset(), NULL,
                            size(), last_raw_pos, data.get(),
                            use_cuda, mmapped_data.get());
-#ifdef USE_CUDA
-    obj->setUseCuda(use_cuda);
-#endif
+    obj->matrixSize = sizes.release();
+    obj->stride     = strides.release();
     return obj;
   }
 
@@ -1018,11 +1021,13 @@ namespace Basics {
     if (is_contiguous != NONE) return (is_contiguous==CONTIGUOUS);
     int aux = 1;
     for (int i=numDim-1; i>=0; --i) {
-      if(stride[i] != aux) {
+      if(stride[i] != aux && matrixSize[i] != 1) {
         is_contiguous = NONCONTIGUOUS;
         return false;
       }
-      else aux *= matrixSize[i];
+      else {
+        aux *= matrixSize[i];
+      }
     }
     is_contiguous = CONTIGUOUS;
     return true;
@@ -1098,6 +1103,64 @@ namespace Basics {
     delete[] result_sizes;
     delete[] matrix_pos;
     return result;
+  }
+
+  /// Add singleton dimensions at left
+  template <typename T>
+  Matrix<T> *Matrix<T>::leftInflate(int n) const {
+    const int RESULT_NUM_DIM = n + getNumDim();
+    AprilUtils::UniquePtr<int []> sizes(new int[RESULT_NUM_DIM]);
+    AprilUtils::UniquePtr<int []> strides(new int[RESULT_NUM_DIM]);
+    int k;
+    // fill with 1s
+    for (k=0; k<n; ++k) {
+      sizes[k]   = 1;
+      strides[k] = getStrideSize(0);
+    }
+    // copy matrix shape
+    for (int i=0; k<RESULT_NUM_DIM; ++i,++k) {
+      sizes[k]   = getDimSize(i);
+      strides[k] = getStrideSize(i);
+    }
+    Matrix<T> *obj = 
+      // giving 0 at size and stride vectors, they are given below
+      new Matrix<T>(RESULT_NUM_DIM, NULL, getOffset(), NULL,
+                    size(), last_raw_pos,
+                    const_cast< AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
+                    use_cuda,
+                    const_cast< AprilUtils::MMappedDataReader*>(mmapped_data.get()));
+    obj->matrixSize = sizes.release();
+    obj->stride     = strides.release();
+    return obj;
+  }
+  
+  /// Add singleton dimensions at right
+  template <typename T>
+  Matrix<T> *Matrix<T>::rightInflate(int n) const {
+    const int RESULT_NUM_DIM = n + getNumDim();
+    AprilUtils::UniquePtr<int []> sizes(new int[RESULT_NUM_DIM]);
+    AprilUtils::UniquePtr<int []> strides(new int[RESULT_NUM_DIM]);
+    int k=0;
+    // copy matrix shape
+    for (int i=0; i<getNumDim(); ++i,++k) {
+      sizes[k]   = getDimSize(i);
+      strides[k] = getStrideSize(i);
+    }
+    // fill with 1s
+    for (; k<RESULT_NUM_DIM; ++k) {
+      sizes[k]   = 1;
+      strides[k] = getStrideSize(getNumDim()-1);
+    }
+    Matrix<T> *obj = 
+      // giving 0 at size and stride vectors, they are given below
+      new Matrix<T>(RESULT_NUM_DIM, NULL, getOffset(), NULL,
+                    size(), last_raw_pos,
+                    const_cast< AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
+                    use_cuda,
+                    const_cast< AprilUtils::MMappedDataReader*>(mmapped_data.get()));
+    obj->matrixSize = sizes.release();
+    obj->stride     = strides.release();
+    return obj;
   }
   
 } // namespace Basics
