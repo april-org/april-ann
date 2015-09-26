@@ -245,7 +245,9 @@ namespace Basics {
     /**
      * The sliding is a kind of iterator which traverses the matrix producing
      * sub-matrices following a sliding window similar to dataset.matrix. This
-     * iterator couldn't account for CIRCULAR and OUTSIDE values.
+     * iterator couldn't account for CIRCULAR and OUTSIDE values. This objects
+     * IncRefs the given reference, so be careful to check not 0 references in
+     * the given matrix object.
      */
     class sliding_window : public Referenced {
       /// A reference to the matrix
@@ -531,6 +533,12 @@ namespace Basics {
     Matrix<T> *constRewrap(const int *new_dims, int len,
                            bool clone_if_not_contiguous=false) const;
 
+    /// Add singleton dimensions at left
+    Matrix<T> *leftInflate(int n) const;
+
+    /// Add singleton dimensions at right
+    Matrix<T> *rightInflate(int n) const;
+
     /// Removes all singleton dimensions, always returns a new instance
     Matrix<T> *constSqueeze() const;
 
@@ -662,7 +670,7 @@ namespace Basics {
      * for the given dimension at the given index.
      *
      * If @c dest matrix is given, it should be created using a previous
-     * execution of select method over the same dimension, otherwise, the
+     * execution of select method <b>over the same dimension</b>, otherwise, the
      * behavior of select is undefined.
      *
      * @note <b>WARNING</b>, @c dest matrix correctness is not checked, so, be
@@ -681,7 +689,7 @@ namespace Basics {
      * }
      * @endcode
      */
-    Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
+    Matrix<T> *select(int dim, int index, Matrix<T> *dest=0) const;
   
     // Expands current matrix to a diagonal matrix
     Matrix<T> *diagonalize() const;

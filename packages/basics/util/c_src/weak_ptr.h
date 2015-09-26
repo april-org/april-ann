@@ -170,6 +170,18 @@ namespace AprilUtils {
     bool operator==(const T *&other) const {
       return ptr == other;
     }
+
+    bool operator!=(const WeakPtr<T> &other) const {
+      return ptr != other.ptr;
+    }
+    
+    bool operator!=(const SharedPtr<T> &other) const {
+      return ptr != other.ptr;
+    }
+    
+    bool operator!=(const T *&other) const {
+      return ptr != other;
+    }
     
     /**
      * @brief Bypasses the pointer, but stills having it.

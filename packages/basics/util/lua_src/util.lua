@@ -221,8 +221,20 @@ end
 -- allow to bind arguments to any Lua function (only variadic arguments)
 function bind(func, ...)
   local args = table.pack(...)
-  return function(...)
-    return func(merge_unpack(args, table.pack(...)))
+  if args.n == 1 then
+    assert(args[1] ~= nil)
+    return function(...) return func(args[1],...) end
+  elseif args.n == 2 then
+    assert(args[2] ~= nil)
+    if args[1] ~= nil then
+      return function(...) return func(args[1],args[2],...) end
+    else
+      return function(a,...) return func(a,args[2],...) end
+    end
+  else
+    return function(...)
+      return func(merge_unpack(args, table.pack(...)))
+    end
   end
 end
 
@@ -367,10 +379,13 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     end
     return out
   else -- general case for N processes
+    local OMP_NUM_THREADS = util.omp_get_num_threads()
+    util.omp_set_num_threads(1)
     local outputs = iterator(range(1,num_processes)):
     map(function(idx) return os.tmpname() end):table()
-    local id = util.split_process(num_processes)-1
-    local f = io.open(outputs[id+1], "w")
+    local id,pid = util.split_process(num_processes)
+    local id_rem = id-1
+    local f = io.open(outputs[id], "w")
     fprintf(f, "return {\n")
     -- traverse all iterator values
     local index = 0
@@ -378,7 +393,7 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
       local arg = table.pack(data_it())
       if arg[1] == nil then break end
       index = index + 1
-      if (index%num_processes) == id then -- data correspond to current process
+      if (index%num_processes) == id_rem then -- data correspond to current process
         table.insert(arg, id)
         local ret = util.pack( func(table.unpack(arg)) )
         if ret ~= nil then
@@ -389,8 +404,9 @@ function parallel_foreach(num_processes, list_number_or_iterator, func)
     fprintf(f, "}\n")
     f:close()
     -- waits for all childrens
-    if id ~= 0 then util.wait() os.exit(0) end
     util.wait()
+    if id > 1 then os.exit(0) end
+    util.omp_set_num_threads(OMP_NUM_THREADS)
     -- maps all the outputs to a table
     return iterator(ipairs(outputs)):
       map(function(index,filename)

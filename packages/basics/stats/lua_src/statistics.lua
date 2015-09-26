@@ -1298,7 +1298,7 @@ local perm =
                    "Unexpected number of returned values in statistic, expected %d, found %d",
                    k, #r)
       result[i]:copy_from_table(r)
-      if (not id or id == 0) and params.verbose and i % 20 == 0 then
+      if (not id or id == 1) and params.verbose and i % 20 == 0 then
         fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
         io.stderr:flush()
       end
@@ -1418,7 +1418,7 @@ local function boot(self,params,...)
                  "Unexpected number of returned values in statistic, expected %d, found %d",
                  k, #r)
     result[i]:copy_from_table(r)
-    if (not id or id == 0) and params.verbose and i % 20 == 0 then
+    if (not id or id == 1) and params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
       io.stderr:flush()
     end

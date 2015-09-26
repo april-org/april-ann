@@ -5,15 +5,20 @@ local open_by_extension = { }
 local io_old_open = io.open
 aprilio.open = function(name, ...)
   local open = (name and open_by_extension[string.get_extension(name)]) or io_old_open
-  return open(name, ...)
+  local x,msg = open(name, ...)
+  if not x then return x,msg end
+  if not class.is_a(x, aprilio.package) then return x end
+  if x:number_of_files() ~= 1 then
+    return nil,"Opening package %s requires 1 and only 1 file in it"%{name}
+  end
+  return x:open(1)
 end
 io.open = aprilio.open
 
 local io_old_lines = io.lines
 aprilio.lines = function(name, ...)
   if not name then return io_old_lines() end
-  local open = open_by_extension[string.get_extension(name)] or io_old_open
-  local f = april_assert(open(name), "cannot open file '%s'", name)
+  local f = april_assert(io.open(name), "cannot open file '%s'", name)
   assert(f.lines, "lines method not implemented to this kind of file")
   local it = f:lines(...)
   return function()

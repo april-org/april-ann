@@ -131,7 +131,7 @@ namespace AprilIO {
     
     /// Default input buffer size, it must be a large size because this class is
     /// used for reading compressed files.
-    static const size_t DEFAULT_BUFFER_SIZE = 64*1024; // 64K
+    static const size_t DEFAULT_BUFFER_SIZE = 4*1024*1024; // 4M
     
     /// Input buffer.
     char *in_buffer;

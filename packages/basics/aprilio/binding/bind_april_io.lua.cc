@@ -487,7 +487,11 @@ namespace AprilIO {
     // open with a file index number
     unsigned int idx;
     LUABIND_GET_PARAMETER(1, uint, idx);
-    if (idx < 1) LUABIND_ERROR("Index starts at 1");
+    if (idx < 1) {
+      LUABIND_RETURN_NIL();
+      LUABIND_RETURN(string, "Index starts at 1");
+      return 2;
+    }
     stream = obj->openFile(idx - 1, flags);
   }
   else {

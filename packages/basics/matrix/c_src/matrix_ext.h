@@ -37,10 +37,8 @@ namespace AprilMath {
   /**
    * @brief Linear algebra routines and other math operations for matrices.
    *
-   * T(0.0f) and T(1.0f) and T(-1.0f) and T(-nan) constructors must be available
-   * with correct math values. In case of char buffer or integer matrices these
-   * constructors are needed but not operational because math methods are
-   * forbidden for these data types.
+   * @note AprilMath::Limits<T> will be used to give default values (as zero,
+   * one, etc.).
    */
   namespace MatrixExt {
     

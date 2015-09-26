@@ -20,6 +20,7 @@
  *
  */
 #include "matrix_ext.h"
+#include "swap.h"
 #ifndef MATRIX_EXT_MISC_H
 #define MATRIX_EXT_MISC_H
 
@@ -30,8 +31,8 @@ namespace AprilMath {
     /**
      * @brief Miscellaneous operations for Matrix instances.
      *
-     * This operations have been implemented using other matrix operations,
-     * they are wrappers to perform usual computations.
+     * This operations have been implemented using other matrix operations or
+     * ad-hoc implementations. They are wrappers to perform usual computations.
      *
      * @see AprilMath::MatrixExt
      */    
@@ -40,15 +41,49 @@ namespace AprilMath {
 
       //////////////////// OTHER MATH OPERATIONS ////////////////////
 
-      /// To be called from Lua.
+      /// To be called from Lua. Indices start at 1 instead of 0.
       template <typename T>
       Basics::Matrix<int32_t> *matOrder(const Basics::Matrix<T> *m,
                                         Basics::Matrix<int32_t> *dest = 0);
-      
-      /// To be called from Lua.
+
+      /// To be called from Lua. Indices start at 1 instead of 0.
       template <typename T>
       Basics::Matrix<int32_t> *matOrderRank(const Basics::Matrix<T> *m,
                                             Basics::Matrix<int32_t> *dest = 0);
+      
+      /// Changes the order of matrix data over a given dimension. Returns a new allocated matrix.
+      template <typename T>
+      Basics::Matrix<T> *matIndex(const Basics::Matrix<T> *m, int dim,
+                                  const Basics::Matrix<int32_t> *idx);
+
+      /// Changes the order of matrix data over a given dimension. Returns a new allocated matrix.
+      template <typename T>
+      Basics::Matrix<T> *matIndex(const Basics::Matrix<T> *m, int dim,
+                                  const Basics::Matrix<bool> *mask);
+
+      /// Fills the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedFill(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<int32_t> *idx,
+                                        T val);
+
+      /// Fills the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedFill(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<bool> *mask,
+                                        T val);
+
+      /// Copies the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedCopy(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<int32_t> *idx,
+                                        const Basics::Matrix<T> *other);
+
+      /// Copies the given indices at the given dimension. Returns m.
+      template <typename T>
+      Basics::Matrix<T> *matIndexedCopy(Basics::Matrix<T> *m, int dim,
+                                        const Basics::Matrix<bool> *mask,
+                                        const Basics::Matrix<T> *other);
       
       /**
        * @brief Returns the result of \f$ C = A + B \f$
@@ -74,6 +109,14 @@ namespace AprilMath {
 
       /**
        * @brief Returns the result of \f$ C = A \times B \f$
+       *
+       * This operation implements a generic multiplication which result
+       * depends in the rank and shape of the given matrices. So, if
+       * a vector and a column vector are given, the operation implements
+       * an outer product. If two row vectors are given, the operation
+       * implements inner product. If a vector and a matrix is given, it
+       * implements matrix-vector product. If two matrices are given, the
+       * operation implements matrix-matrix product.
        *
        * @note If the given @c c argument is 0, this operation allocates a
        * new destination matrix, otherwise uses the given matrix.
@@ -109,56 +152,65 @@ namespace AprilMath {
       /////////////////////////////////////////////////////////////////////////
 
       class BroadcastHelper {
-      
-        static AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, const int Na,
-                                                         const int *b_dim, const int Nb) {
-          const int minN = AprilUtils::min(Na, Nb);
-          const int maxN = AprilUtils::max(Na, Nb);
-          int *shape = new int[maxN];
-          for (int i=0; i<minN; ++i) {
-            int n = a_dim[i], m = b_dim[i];
+                
+        /// Computes the shape of the broadcast result matrix.
+        static AprilUtils::UniquePtr<int []> resultShape(const int *a_dim, int Na,
+                                                         const int *b_dim, int Nb) {
+          if (Na > Nb) { // make sure Na < Nb
+            AprilUtils::swap(a_dim,b_dim);
+            AprilUtils::swap(Na,Nb);
+          }
+          const int d = Nb - Na; // Na < Nb always here
+          int *shape = new int[Nb];
+          for (int i=0; i<Na; ++i) {
+            int n = a_dim[i], m = b_dim[i+d];
             if (n != m && n != 1 && m != 1) {
               ERROR_EXIT(256, "Not aligned matrix shapes\n");
             }
-            shape[i] = AprilUtils::max(n, m);
+            shape[i+d] = AprilUtils::max(n, m);
           }
-          if (maxN == Na) {
-            for (int i=minN; i<maxN; ++i) shape[i] = a_dim[i];
-          }
-          else {
-            for (int i=minN; i<maxN; ++i) shape[i] = b_dim[i];
-          }
+          for (int i=0; i<d; ++i) shape[i] = b_dim[i];
           return shape;
         }
-
+        
+        /// Performs broadcasting of other matrix into dest matrix using func operation
         template<typename T, typename OP>
-        static void broadcast(const OP &func,
-                              AprilUtils::SharedPtr<Basics::Matrix<T> > dest,
-                              const Basics::Matrix<T> *other) {
-          AprilUtils::SharedPtr< Basics::Matrix<T> > other_squeezed;
-          AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice;
-          AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice_squeezed;
-          other_squeezed = other->constSqueeze();
-          typename Basics::Matrix<T>::sliding_window
-            dest_sw(dest.get(),
-                    dest->getDimPtr(),  // sub_matrix_size
-                    0,                  // offset
-                    dest->getDimPtr()); // step
-          while(!dest_sw.isEnd()) {
-            dest_slice = dest_sw.getMatrix(dest_slice.get());
-            if (dest_slice_squeezed.empty()) {
-              dest_slice_squeezed = dest_slice->squeeze();
+        static void oneWayBroadcast(const OP &func,
+                                    AprilUtils::SharedPtr<Basics::Matrix<T> > dest,
+                                    const Basics::Matrix<T> *other) {
+          if (dest->sameDim(other)) { // particular case
+            AprilUtils::SharedPtr< Basics::Matrix<T> > out =
+              func(dest.get(), other);
+            if (out != dest) {
+              BLAS::matCopy(dest.get(), out.get());
             }
-            AprilUtils::SharedPtr< Basics::Matrix<T> > out;
-            out = func(dest_slice_squeezed.get(),
-                       static_cast<const Basics::Matrix<T>*>(other_squeezed.get()));
-            if (out.get() != dest_slice_squeezed.get()) {
-              BLAS::matCopy(dest_slice_squeezed.get(), out.get());
-            }
-            dest_sw.next();
           }
+          else { // general case
+            AprilUtils::SharedPtr< Basics::Matrix<T> > other_inflated;
+            AprilUtils::SharedPtr< Basics::Matrix<T> > dest_slice;
+            if (dest->getNumDim() != other->getNumDim()) {
+              // We need to leftInflate 'other' matrix and change other ptr
+              other_inflated = other->leftInflate(dest->getNumDim() - other->getNumDim());
+              other = other_inflated.get();
+            }
+            const int *other_dim = other->getDimPtr();
+            typename Basics::Matrix<T>::sliding_window
+              dest_sw(dest.get(),
+                      other_dim,      // sub_matrix_size
+                      0,              // offset
+                      other_dim);     // step
+            while(!dest_sw.isEnd()) {
+              dest_slice = dest_sw.getMatrix(dest_slice.get());
+              AprilUtils::SharedPtr< Basics::Matrix<T> > out =
+                func(dest_slice.get(), other);
+              if (out.get() != dest_slice.get()) {
+                BLAS::matCopy(dest_slice.get(), out.get());
+              }
+              dest_sw.next();
+            }
+          } // general case
         }
-      
+        
         template<typename T>
         struct copyFunctor {
           Basics::Matrix<T> *operator()(Basics::Matrix<T> *dest,
@@ -191,14 +243,14 @@ namespace AprilMath {
             }
           }
           if (result == b) {
-            broadcast(func, result, a);
+            oneWayBroadcast(func, result, a);
           }
           else if (result == a) {
-            broadcast(func, result, b);
+            oneWayBroadcast(func, result, b);
           }
           else {
-            broadcast(copyFunctor<T>(), result, a);
-            broadcast(func, result, b);
+            oneWayBroadcast(copyFunctor<T>(), result, a);
+            oneWayBroadcast(func, result, b);
           }
           return result;
         }
@@ -209,16 +261,18 @@ namespace AprilMath {
        * http://wiki.scipy.org/EricsBroadcastingDoc
        *
        * The operator is called as: @c out=func(a,b) where 'a' can be input and
-       * output at the same time, 'b' is always input data.
+       * output at the same time (no const), 'b' is always input data (const).
        *
        * @note Matrix<T> *func(Matrix<T> *a, const Matrix<T> *b);
        */
       template<typename T, typename OP>
-      static Basics::Matrix<T> *matBroadcast(const OP &func,
-                                             const Basics::Matrix<T> *a,
-                                             const Basics::Matrix<T> *b,
-                                             Basics::Matrix<T> *result = 0) {
-        return BroadcastHelper::execute(func, a, b, result).weakRelease();
+      Basics::Matrix<T> *matBroadcast(const OP &func,
+                                      const Basics::Matrix<T> *a,
+                                      const Basics::Matrix<T> *b,
+                                      Basics::Matrix<T> *result = 0) {
+        AprilUtils::SharedPtr< Basics::Matrix<T> > result_ref(result);
+        result_ref = BroadcastHelper::execute(func, a, b, result_ref);
+        return result_ref.weakRelease();
       }
       
       /**
@@ -229,7 +283,8 @@ namespace AprilMath {
                                       Basics::Matrix<O> *dest=0);
       
       /**
-       * @brief Converts into MatrixInt32 with all non-zero indices.
+       * @brief Converts into MatrixInt32 with all non-zero indices. Indices
+       * start a 1 instead of 0.
        */
       template <typename T>
       Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,
