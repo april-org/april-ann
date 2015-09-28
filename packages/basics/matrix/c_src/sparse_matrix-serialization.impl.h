@@ -175,27 +175,29 @@ namespace Basics {
                               const AprilUtils::LuaTable &options) {
     bool is_ascii = options.opt(MatrixIO::ASCII_OPTION, false);
     //
-    MatrixIO::SparseAsciiSizer<T> ascii_sizer;
-    MatrixIO::SparseBinarySizer<T> bin_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     MatrixIO::BinaryCoder<T> bin_coder;
-    int sizedata,sizeheader;
-    sizeheader = (this->getNumDim()+1)*10+10+10; // FIXME: To put adequate values
-    // sizedata contains the memory used by T in ascii including spaces,
-    // new lines, etc...
-    if (is_ascii) {
-      sizedata = ascii_sizer(this) +
-        this->nonZeroSize()*12 +
-        this->getDenseCoordinateSize()*12 + 3;
-    }
-    else {
-      sizedata = bin_sizer(this) +
-        AprilUtils::binarizer::buffer_size_32(this->nonZeroSize()) +
-        AprilUtils::binarizer::buffer_size_32(this->getDenseCoordinateSize()) +
-        3;
-    }
-    // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
-    // UNUSED_VARIABLE(expected_size);
+    /* Legacy code
+       MatrixIO::SparseAsciiSizer<T> ascii_sizer;
+       MatrixIO::SparseBinarySizer<T> bin_sizer;
+       int sizedata,sizeheader;
+       sizeheader = (this->getNumDim()+1)*10+10+10; // FIXME: To put adequate values
+       // sizedata contains the memory used by T in ascii including spaces,
+       // new lines, etc...
+       if (is_ascii) {
+       sizedata = ascii_sizer(this) +
+       this->nonZeroSize()*12 +
+       this->getDenseCoordinateSize()*12 + 3;
+       }
+       else {
+       sizedata = bin_sizer(this) +
+       AprilUtils::binarizer::buffer_size_32(this->nonZeroSize()) +
+       AprilUtils::binarizer::buffer_size_32(this->getDenseCoordinateSize()) +
+       3;
+       }
+       // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
+       // UNUSED_VARIABLE(expected_size);
+    */
     if (!stream->isOpened()) {
       ERROR_EXIT(256, "The stream is not prepared\n");
     }

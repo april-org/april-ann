@@ -191,19 +191,21 @@ namespace Basics {
                               const AprilUtils::LuaTable &options) {
     bool is_ascii = options.opt(MatrixIO::ASCII_OPTION, false);
     //
-    MatrixIO::AsciiSizer<T> ascii_sizer;
-    MatrixIO::BinarySizer<T> bin_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     MatrixIO::BinaryCoder<T> bin_coder;
-    int sizedata,sizeheader;
-    sizeheader = this->getNumDim()*10+10+10; // FIXME: To put adequate values
-    // sizedata contains the memory used by T in ascii including spaces,
-    // new lines, etc...
-    if (is_ascii) sizedata = ascii_sizer(this);
-    else sizedata = bin_sizer(this);
-    // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
-    UNUSED_VARIABLE(sizedata);
-    UNUSED_VARIABLE(sizeheader);
+    /* Legacy code
+       MatrixIO::AsciiSizer<T> ascii_sizer;
+       MatrixIO::BinarySizer<T> bin_sizer;
+       int sizedata,sizeheader;
+       sizeheader = this->getNumDim()*10+10+10; // FIXME: To put adequate values
+       // sizedata contains the memory used by T in ascii including spaces,
+       // new lines, etc...
+       if (is_ascii) sizedata = ascii_sizer(this);
+       else sizedata = bin_sizer(this);
+       // size_t expected_size = static_cast<size_t>(sizedata+sizeheader+1);
+       UNUSED_VARIABLE(sizedata);
+       UNUSED_VARIABLE(sizeheader);
+    */
     if (!stream->isOpened()) {
       ERROR_EXIT(256, "The stream is not prepared\n");
     }
@@ -397,16 +399,17 @@ namespace Basics {
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
                            const AprilUtils::LuaTable &options) {
     const char *delim = options.opt(MatrixIO::DELIM_OPTION, " ");
-    MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     if (this->getNumDim() != 2) {
       ERROR_EXIT(128, "Needs a matrix with 2 dimensions");
     }
-    //
-    int sizedata;
-    sizedata = ascii_sizer(this);
-    size_t expected_size = static_cast<size_t>(sizedata+1);
-    UNUSED_VARIABLE(expected_size);
+    /* Legacy code
+       MatrixIO::AsciiSizer<T> ascii_sizer;
+       int sizedata;
+       sizedata = ascii_sizer(this);
+       size_t expected_size = static_cast<size_t>(sizedata+1);
+       UNUSED_VARIABLE(expected_size);
+    */
     if (!stream->isOpened()) {
       ERROR_EXIT(256, "The stream is not prepared\n");
     }
