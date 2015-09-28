@@ -47,7 +47,7 @@ using Basics::Matrix;
 using Basics::SparseMatrix;
 
 #ifdef USE_CUDA
-using AprilMath::CUDA;
+using namespace AprilMath::CUDA;
 #endif
 
 namespace AprilMath {
@@ -124,7 +124,7 @@ namespace AprilMath {
           // Number of threads on each block dimension
           int num_threads, num_blocks;
           computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
-          indexVectorKernel<<<num_blocks, num_threads, 0, getCurrentStream()>>>
+          indexVectorKernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
             (m_ptr, m_stride, idx_ptr, idx_stride, dest_ptr, dest_stride, N);
         }
         else {
@@ -157,7 +157,7 @@ namespace AprilMath {
           // Number of threads on each block dimension
           int num_threads, num_blocks;
           computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
-          indexedFillVectorKernel<<<num_blocks, num_threads, 0, getCurrentStream()>>>
+          indexedFillVectorKernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
             (m_ptr, m_stride, idx_ptr, idx_stride, N, val);
         }
         else {
@@ -192,7 +192,7 @@ namespace AprilMath {
           // Number of threads on each block dimension
           int num_threads, num_blocks;
           computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
-          indexedFillVectorKernel<<<num_blocks, num_threads, 0, getCurrentStream()>>>
+          indexedFillVectorKernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
             (m_ptr, m_stride, idx_ptr, idx_stride, other_ptr, other_stride, N);
         }
         else {
