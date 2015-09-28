@@ -63,7 +63,7 @@ namespace AprilMath {
                                         const int32_t *idx_ptr,
                                         const int idx_stride,
                                         T *dest_ptr,
-                                        const int dest_stride
+                                        const int dest_stride,
                                         const int N) {
         for ( int i = blockIdx.x*blockDim.x + threadIdx.x;
               i < N;
@@ -106,8 +106,8 @@ namespace AprilMath {
 #endif
       
       template <typename T>
-      static void indexVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
-                                     Matrix<T> *dest) {
+      void indexVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
+                              Matrix<T> *dest) {
         const int N = idx->size();
         const int m_offset = m->getOffset();
         const int idx_offset = idx->getOffset();
@@ -142,8 +142,8 @@ namespace AprilMath {
       }
 
       template <typename T>
-      static void indexedFillVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
-                                           T val) {
+      void indexedFillVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
+                                    T val) {
         const int N = idx->size();
         const int m_offset = m->getOffset();
         const int idx_offset = idx->getOffset();
@@ -174,8 +174,8 @@ namespace AprilMath {
       }
 
       template <typename T>
-      static void indexedCopyVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
-                                           Matrix<T> *other) {
+      void indexedCopyVectorWrapper(Matrix<T> *m, Matrix<int32_t> *idx,
+                                    Matrix<T> *other) {
         const int N = idx->size();
         const int m_offset = m->getOffset();
         const int idx_offset = idx->getOffset();
@@ -192,7 +192,7 @@ namespace AprilMath {
           // Number of threads on each block dimension
           int num_threads, num_blocks;
           computeBlockAndGridSizesForArray(N, num_threads, num_blocks);
-          indexedFillVectorKernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
+          indexedCopyVectorKernel<<<num_blocks, num_threads, 0, GPUHelper::getCurrentStream()>>>
             (m_ptr, m_stride, idx_ptr, idx_stride, other_ptr, other_stride, N);
         }
         else {
