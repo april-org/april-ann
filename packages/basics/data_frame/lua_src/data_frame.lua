@@ -382,7 +382,7 @@ data_frame.from_csv =
                     "by default it is: \"" },
       decimal = { "Decimal point character [optional], by default it is: .", },
       NA = { "Not avaliable token [optional], by default it is NA" },
-      index = { "Table or matrix with an index to identify every column, it",
+      index = { "Table or matrix with an index to identify every row, it",
                 "can be a string indicating which column in CSV file is the",
                 "index [optional]" },
     },
@@ -431,7 +431,7 @@ data_frame.from_csv =
     elseif params.columns then
       rawset(self, "columns", params.columns)
       rawset(self, "col2id", invert(rawget(self, "columns")))
-      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
+      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end      
     end
     local n = 0
     if #rawget(self, "columns") == 0 then
@@ -450,7 +450,8 @@ data_frame.from_csv =
       local last
       for j,value in parse_csv_line(row_line, sep, quotechar,
                                     decimal, NA_str) do
-        data[columns[j] or j][n], last = value, j
+        local d = assert(data[columns[j] or j], "Incorrect number of columns")
+        d[n], last = value, j
       end
       assert(last == #columns, "Not matching number of columns")
       if n % 4096 == 0 then collectgarbage("collect") end
