@@ -401,6 +401,7 @@ data_frame.from_csv =
         decimal = { default='.' },
         NA = { default=defNA },
         index = { },
+        columns = { },
                                     }, params or {})
     local sep = params.sep
     local quotechar = params.quotechar
@@ -419,8 +420,16 @@ data_frame.from_csv =
           col_name = next_number(rawget(self, "columns"))
           rawget(self, "columns")[i] = col_name
         end
-        data[col_name] = {}
       end
+      if params.columns then
+        assert(#rawget(self,"columns") == #params.columns,
+               "Incorrect number of columns at field 'columns'")
+        rawset(self, "columns", params.columns)
+      end
+      rawset(self, "col2id", invert(rawget(self, "columns")))
+      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
+    elseif params.columns then
+      rawset(self, "columns", params.columns)
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
     end

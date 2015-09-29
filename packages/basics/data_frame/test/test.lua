@@ -3,6 +3,15 @@ local T        = utest.test
 local warning  = utest.warning
 
 T("DataFrameTest", function()
+    local df1 = data_frame.from_csv(aprilio.stream.c_string("a,b,c\n1,2,3\n4,5,6"),
+                                    { columns={"d","e","f"} })
+    check.eq(table.concat(df1:get_columns(),","), "d,e,f" )
+    check.errored(function()
+        local df1 = data_frame.from_csv(aprilio.stream.c_string("a,c\n1,3\n4,6"),
+                                        { columns={"d","e","f"} })
+    end)
+    local df1 = data_frame.from_csv(aprilio.stream.c_string("a,b,c\n1,2,3\n4,5,6"))
+    check.eq(table.concat(df1:get_columns(),","), "a,b,c")
     local df1 = data_frame()
     check.eq(#df1:get_index(), 0)
     check.eq(#df1:get_columns(), 0)
