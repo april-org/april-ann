@@ -52,7 +52,7 @@ stats.hist = function(m, params)
   aux:map(function(b) y_aux[b] = y_aux[b] + 1 end)
   y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
-  return data_frame{ data=result, columns={"left","bin","counts","ratio"} }
+  return data_frame{ data=result, columns={"bin","key","count","ratio"} }
 end
 
 stats.ihist = function(m, params)
@@ -65,7 +65,6 @@ stats.ihist = function(m, params)
   local inv_symbols = table.invert(symbols)
   assert(#symbols > 0, "Unable to compute histogram for given matrix")
   local x      = matrix(#symbols):linspace()
-  local names  = symbols
   local y      = matrix(#symbols)
   local z      = matrix(#symbols)
   local y_aux  = iterator.zeros():take(#symbols):table()
@@ -75,7 +74,7 @@ stats.ihist = function(m, params)
   end)
   y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
-  return data_frame{ data={ bin=x, names=names, counts=y, ratio=z } }
+  return data_frame{ data={ bin=x, key=symbols, count=y, ratio=z } }
 end
 
 -------------------------------------------------------------------------------
