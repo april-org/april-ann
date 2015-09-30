@@ -184,17 +184,19 @@ local function dataframe_tostring(proxy)
   if not next(rawget(self, "data")) then
     return table.concat{
       "Empty data_frame\n",
-      "Columns: ", stringfy(rawget(self, "columns"), "ascii"), "\n",
-      "Index: ", stringfy(rawget(self, "index"), "ascii"), "\n",
+      "[data_frame of %d rows x %d columns]\n"%
+        {#rawget(self,"index"),#rawget(self,"columns")}
     }
   else
-    local tbl = { "data_frame\n" }
+    local tbl = { }
     for j,col_name in ipairs(rawget(self, "columns")) do
       table.insert(tbl, "\t")
       table.insert(tbl, col_name)
     end
     table.insert(tbl, "\n")
+    local truncated = false
     for i,row_name in ipairs(rawget(self, "index")) do
+      if i > 20 then table.insert(tbl, "...\n") truncated = true break end
       table.insert(tbl, row_name)
       for j,col_name in ipairs(rawget(self, "columns")) do
         table.insert(tbl, "\t")
@@ -202,6 +204,20 @@ local function dataframe_tostring(proxy)
       end
       table.insert(tbl, "\n")
     end
+    if truncated then
+      local index = rawget(self,"index")
+      for i=math.max(#index - 20, 21),#index do
+        local row_name=index[i]
+        table.insert(tbl, row_name)
+        for j,col_name in ipairs(rawget(self, "columns")) do
+          table.insert(tbl, "\t")
+          table.insert(tbl, tostring(rawget(self, "data")[col_name][i]))
+        end
+        table.insert(tbl, "\n")
+      end
+    end
+    table.insert(tbl, "[data_frame of %d rows x %d columns]\n"%
+                   {#rawget(self,"index"),#rawget(self,"columns")})
     return table.concat(tbl)
   end
 end
