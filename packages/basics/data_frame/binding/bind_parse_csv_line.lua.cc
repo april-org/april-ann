@@ -47,7 +47,7 @@ bool isnumber(constString tk, const char *decimal, double &result) {
     const char *num = (const char *)tk;
     char *aux;
     result = strtod(num, &aux);
-    return num != aux;
+    return aux == num + tk.len();
   }
   else { // general case
     constString tk2 = tk;
