@@ -472,7 +472,11 @@ namespace Basics {
     Matrix() : is_contiguous(NONE),
                end_iterator(), end_const_iterator(),
                end_span_iterator_() { }
-    //
+    /**
+     * @note This constructor allocates memory for stride and matrixSize only if
+     * both arrays are given. Otherwise matrixSize and stride will be set to
+     * NULL.
+     */
     Matrix(int numDim, const int *stride, const int offset,
            const int *matrixSize, const int total_size, const int last_raw_pos,
            AprilMath::GPUMirroredMemoryBlock<T> *data,

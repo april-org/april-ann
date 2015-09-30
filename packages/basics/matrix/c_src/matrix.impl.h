@@ -76,13 +76,15 @@ namespace Basics {
                     const bool use_cuda,
                     AprilUtils::MMappedDataReader *mmapped_data) :
     AprilIO::Serializable(), shared_count(0),
-    numDim(numDim), stride(new int[numDim]), offset(offset),
-    matrixSize(new int[numDim]), total_size(total_size),
+    numDim(numDim), stride(NULL), offset(offset),
+    matrixSize(NULL), total_size(total_size),
     last_raw_pos(last_raw_pos), data(data), mmapped_data(mmapped_data),
     use_cuda(use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     if (stride && matrixSize) {
+      this->matrixSize = new int[numDim];
+      this->stride = new int[numDim];
       for (int i=0; i<numDim; ++i) {
         this->stride[i] = stride[i];
         this->matrixSize[i] = matrixSize[i];

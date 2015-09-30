@@ -120,7 +120,7 @@ namespace AprilIO {
   
   void CStringStream::flush() {
     size_t new_size = out_pos + getOutBufferPos();
-    april_assert(capacity() >= new_size);
+    // april_assert(capacity() >= new_size);
     if (size() < new_size+1) {
       data.reserve(new_size+1);
       data.resize(new_size);

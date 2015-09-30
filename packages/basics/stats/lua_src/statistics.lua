@@ -39,14 +39,20 @@ stats.hist = function(m, params)
   local result = result[{ {1,breaks}, ':' }]
   local x      = result:select(2,1)
   local x2     = result:select(2,2):copy(x):scalar_add(0.5*(x[2]-x[1]))
-  local y      = result:select(2,3):zeros()
+  local y      = result:select(2,3)
   local z      = result:select(2,4)
-  m:map(function(v)
-      local b = math.min( math.floor((v - min)/diff * breaks) + 1, breaks )
-      y[b] = y[b] + 1
-  end)
+  local aux = m:clone():
+    scalar_add(-min):
+    scal(1.0/diff * breaks):
+    floor():
+    scalar_add(1.0):
+    clamp(-math.huge,breaks):
+    flatten()
+  local y_aux = iterator.zeros():take(breaks):table()
+  aux:map(function(b) y_aux[b] = y_aux[b] + 1 end)
+  y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
-  return result
+  return data_frame{ data=result, columns={"left","bin","counts","ratio"} }
 end
 
 stats.ihist = function(m, params)
@@ -58,17 +64,18 @@ stats.ihist = function(m, params)
   if #symbols == 0 then symbols = stats.levels(m) end
   local inv_symbols = table.invert(symbols)
   assert(#symbols > 0, "Unable to compute histogram for given matrix")
-  local result = matrix(#symbols, 4)
-  local x      = result:select(2,1):linspace()
-  local x2     = result:select(2,2):copy(x)
-  local y      = result:select(2,3):zeros()
-  local z      = result:select(2,4)
+  local x      = matrix(#symbols):linspace()
+  local names  = symbols
+  local y      = matrix(#symbols)
+  local z      = matrix(#symbols)
+  local y_aux  = iterator.zeros():take(#symbols):table()
   m:map(function(v)
       local b = inv_symbols[v]
-      y[b] = y[b] + 1
+      y_aux[b] = y_aux[b] + 1
   end)
+  y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
-  return result
+  return data_frame{ data={ bin=x, names=names, counts=y, ratio=z } }
 end
 
 -------------------------------------------------------------------------------
