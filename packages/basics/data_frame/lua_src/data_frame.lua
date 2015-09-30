@@ -338,14 +338,14 @@ data_frame.constructor =
       local nd = data.num_dim
       assert(nd and nd(data)==2, "Needs a bi-dimensional matrix in argument data")
       if #rawget(self, "columns") == 0 then
-        rawset(self, "columns", matrixInt32(data:dim(2)):linspace())
+        rawset(self, "columns", iterator.range(data:dim(2)):table())
         rawset(self, "col2id", invert(rawget(self, "columns")))
       else
         assert(data:dim(2) == #rawget(self, "columns"),
                "Incorrect number of columns in data")
       end
       if #rawget(self, "index") == 0 then
-        rawset(self, "index", matrixInt32(data:dim(1)):linspace())
+        rawset(self, "index", iterator.range(data:dim(1)):table())
         rawset(self, "index2id", invert(rawget(self, "index")))
       else
         assert(data:dim(1) == #rawget(self, "index"),
@@ -436,7 +436,7 @@ data_frame.from_csv =
       n = n + 1
       local first_line = iterator(parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
                                                  decimal, NA_str, nan)):table()
-      rawset(self, "columns", matrixInt32(#first_line):linspace())
+      rawset(self, "columns", iterator.range(#first_line):table())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for j,col_name in ipairs(rawget(self, "columns")) do
         data[col_name] = { first_line[j] }
@@ -454,7 +454,7 @@ data_frame.from_csv =
       assert(last == #columns, "Not matching number of columns")
       if n % 4096 == 0 then collectgarbage("collect") end
     end
-    rawset(self, "index", matrixInt32(n):linspace())
+    rawset(self, "index", iterator.range(n):table())
     rawset(self, "index2id", invert(rawget(self, "index")))
     if path ~= f then f:close() end
     if params.index then proxy:set_index(params.index) end
