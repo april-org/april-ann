@@ -28,40 +28,49 @@ extern "C" {
 //BIND_HEADER_C
 using namespace AprilUtils;
 
-bool isnumber(constString tk, const char *decimal) {
-  if (tk[0] == '+' || tk[0] == '-') tk.skip(1);
-  if (!tk) return false;
-  while(isdigit(tk[0])) tk.skip(1);
-  if (!tk) return true;
-  if (tk[0] == *decimal) tk.skip(1);
-  if (!tk) return true;
-  while(isdigit(tk[0])) tk.skip(1);
-  if (!tk) return true;
-  if (tk[0] == 'e' || tk[0] == 'E') tk.skip(1);
-  if (tk[0] == '+' || tk[0] == '-') tk.skip(1);
-  if (!tk) return false;
-  while(isdigit(tk[0])) tk.skip(1);
-  if (!tk) return true;
-  return false;
-}
-
 double tonumber(constString tk, const char *decimal) {
   char *aux;
   double result;
-  if (*decimal != '.') {
-    AprilUtils::UniquePtr<char []> new_tk = tk.newString();
-    for (size_t i=0; i<tk.len(); ++i) {
-      if (new_tk[i] == *decimal) {
-        new_tk[i] = '.';
-        break;
+  AprilUtils::UniquePtr<char []> new_tk = tk.newString();
+  for (size_t i=0; i<tk.len(); ++i) {
+    if (new_tk[i] == *decimal) {
+      new_tk[i] = '.';
+      break;
+    }
+  }
+  result = strtod(new_tk.get(), &aux);
+  return result;
+}
+
+bool isnumber(constString tk, const char *decimal, double &result) {
+  if (*decimal == '.') { // particular case
+    const char *num = (const char *)tk;
+    char *aux;
+    result = strtod(num, &aux);
+    return num != aux;
+  }
+  else { // general case
+    constString tk2 = tk;
+    if (tk2[0] == '+' || tk2[0] == '-') tk2.skip(1);
+    if (!tk2) return false;
+    while(isdigit(tk2[0])) tk2.skip(1);
+    if (tk2) {
+      if (tk2[0] == *decimal) tk2.skip(1);      
+      if (tk2) {
+        while(isdigit(tk2[0])) tk2.skip(1);
+        if (tk2) {
+          if (tk2[0] == 'e' || tk2[0] == 'E') tk2.skip(1);
+          else return false;
+          if (tk2[0] == '+' || tk2[0] == '-') tk2.skip(1);
+          if (!tk2) return false;
+          while(isdigit(tk2[0])) tk2.skip(1);
+          if (tk2) return false;
+        }
       }
     }
-    result = strtod(new_tk.get(), &aux);
+    result = tonumber(tk, decimal);
+    return true;
   }
-  else {
-    result = strtod((const char *)tk, &aux);
-  }
-  return result;
 }
 //BIND_END
 
@@ -76,6 +85,7 @@ double tonumber(constString tk, const char *decimal) {
   const int NA_pos=6+t_pos; // NA is at stack position 7
   constString tk;
   int n = 0;
+  double number;
   do {
     ++n;
     // next field is quoted? (start with quotechar?) 
@@ -94,8 +104,8 @@ double tonumber(constString tk, const char *decimal) {
     if (!tk || tk == NA_str) { // NA field, replaced by nan
       lua_pushvalue(L, NA_pos);
     }
-    else if (isnumber(tk, decimal)) {
-      lua_pushnumber(L, tonumber(tk, decimal));
+    else if (isnumber(tk, decimal, number)) {
+      lua_pushnumber(L, number);
     }
     else {
       lua_pushlstring(L, (const char *)tk, tk.len());
