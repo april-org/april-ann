@@ -137,38 +137,14 @@ local function next_token_find(line, init, match, sep, quotechar)
   return i,j,quoted
 end
 
+local find  = string.find
+local gsub  = string.gsub
+local sub   = string.sub
+local yield = coroutine.yield
+local tonumber = tonumber
+
 -- parses a CSV line using sep as delimiter and adding NA when required
-local function parse_csv_line(line, sep, quotechar, decimal, NA_str)
-  return coroutine.wrap(function()
-      local line = line:match("^(.*[^%s])[%s]*$")
-      local line_dec = decimal == "." and line or line:gsub("%"..decimal, ".")
-      local n=0
-      local match  = "[%s%s]"%{sep, quotechar or ''}
-      local init = 1
-      while init <= #line do
-        n=n+1
-        local v,v_dec
-        local i,j,quoted = next_token_find(line, init, match, sep, quotechar)
-        i,j = i or #line+1,j or #line
-        if i == init then
-          v = NA
-        else
-          local init,i = init,i
-          if quoted then init,i = init+1,i-1 end
-          v = line:sub(init, i-1)
-          v_dec = line_dec:sub(init, i-1)
-          v = tonumber(v_dec) or v
-          if type(v) == "string" and v == NA_str then v = NA end
-        end
-        assert(v, "Unexpected read error")
-        coroutine.yield(n,v)
-        init = j+1
-      end
-      if line:sub(#line) == sep then
-        coroutine.yield(n+1,NA)
-      end
-  end)
-end
+local parse_csv_line = util.__parse_csv_line__
 
 -- converts an array or a matrix into a string
 local function stringfy(array)
@@ -407,14 +383,20 @@ data_frame.from_csv =
     local quotechar = params.quotechar
     local decimal = params.decimal
     local NA_str = params.NA
+    local double_quote = quotechar..quotechar
+    local quote_match = "^"..quotechar
+    local quote_closing = quotechar.."("..quotechar.."?)"
+    local decimal_match = "%"..decimal
+    local number_match = "^[+-]?%d*"..decimal.."?%d+[eE]?[+-]?%d*$"
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
     local f = type(path)~="string" and path or io.open(path)
+    local aux = {}
     if params.header then
-      rawset(self, "columns",
-             iterator(parse_csv_line(f:read("*l"), sep, quotechar,
-                                     decimal, NA_str)):table())
+      local t = parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
+                               decimal, NA_str, nan)
+      rawset(self, "columns", iterator(t):table())
       for i,col_name in ipairs(rawget(self, "columns")) do
         if is_nan(col_name) then
           col_name = next_number(rawget(self, "columns"))
@@ -436,8 +418,8 @@ data_frame.from_csv =
     local n = 0
     if #rawget(self, "columns") == 0 then
       n = n + 1
-      local first_line = iterator(parse_csv_line(f:read("*l"), sep, quotechar,
-                                                 decimal, NA_str)):table()
+      local first_line = iterator(parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
+                                                 decimal, NA_str, nan)):table()
       rawset(self, "columns", matrixInt32(#first_line):linspace())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for j,col_name in ipairs(rawget(self, "columns")) do
@@ -448,8 +430,8 @@ data_frame.from_csv =
     for row_line in f:lines() do
       n = n + 1
       local last
-      for j,value in parse_csv_line(row_line, sep, quotechar,
-                                    decimal, NA_str) do
+      for j,value in ipairs(parse_csv_line(aux, row_line..sep, sep, quotechar,
+                                           decimal, NA_str, nan)) do
         local d = assert(data[columns[j] or j], "Incorrect number of columns")
         d[n], last = value, j
       end

@@ -24,6 +24,7 @@
    target{
      name = "provide",
      depends = "init",
+     provide_bind{ file = "binding/bind_parse_csv_line.lua.cc", dest_dir = "include" },
    },
    target{
      name = "build",
@@ -33,6 +34,7 @@
        orig_dir = "lua_src",
        dest_dir = "build",
      },
+     build_bind{ file = "binding/bind_parse_csv_line.lua.cc", dest_dir = "build" },
    },
    target{
      name = "document",

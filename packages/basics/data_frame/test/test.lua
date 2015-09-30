@@ -56,7 +56,7 @@ T("DataFrameTest", function()
     local _   = df3[{3}]
     local _   = df3:as_matrix(2, { dtype="complex", })
     --
-    local df4 = data_frame.from_csv(aprilio.stream.input_lua_string[[id,cost
+    local df4 = data_frame.from_csv(aprilio.stream.c_string[[id,cost
 1,4
 2,1
 3,10
