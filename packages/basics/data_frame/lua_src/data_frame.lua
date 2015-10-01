@@ -460,11 +460,10 @@ data_frame.from_csv =
     local columns = rawget(self, "columns")
     for row_line in f:lines() do
       n = n + 1
-      for j,value in ipairs(parse_csv_line(aux, row_line..sep, sep, quotechar,
-                                           decimal, NA_str, nan)) do
-        data[j][n] = value
-      end
-      if n % 4096 == 0 then collectgarbage("collect") end
+      local t = parse_csv_line(aux, row_line..sep, sep, quotechar,
+                               decimal, NA_str, nan)
+      for j=1,#t do data[j][n] = t[j] end
+      if n%100000 == 0 then collectgarbage("collect") end
     end
     local obj_data = rawget(self, "data")
     for j,col_name in ipairs(rawget(self, "columns")) do
