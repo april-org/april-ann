@@ -372,6 +372,7 @@ data_frame.constructor =
     if t_params_index == "string" or t_params_index == "number" then
       proxy:set_index(params.index)
     end
+    collectgarbage("collect")
   end
 
 data_frame.from_csv =
@@ -473,6 +474,7 @@ data_frame.from_csv =
     rawset(self, "index2id", invert(rawget(self, "index")))
     if path ~= f then f:close() end
     if params.index then proxy:set_index(params.index) end
+    collectgarbage("collect")
     return proxy
   end
 
@@ -527,6 +529,7 @@ methods.to_csv =
       table.clear(tbl)
     end
     if path ~= f then f:close() end
+    collectgarbage("collect")
   end
 
 methods.drop =
@@ -1068,7 +1071,7 @@ methods.groupby =
 methods.index =
   april_doc{
     class="method",
-    summary="Indexes the data frame by rows using the given indices table or matrix",
+    summary="Indexes the data frame by rows using the given indices table or matrix. The indices table or matrix are row numbers, not real index values.",
     outputs={
       "A new allocated data_frame",
     },
@@ -1114,6 +1117,7 @@ function groupped.constructor(self, df, ...)
   end
   self.groups = groups
   self.level2id = level2id
+  collectgarbage("collect")
 end
 
 groupped_methods.levels = function(self, col_name)
@@ -1169,7 +1173,9 @@ end
 groupped_methods.get_group = function(self, ...)
   local key = { ... }
   assert(#key == self.depth, "Incompatible number of column values")
-  return self.df:index( binary_intersect(self, key) )
+  local df = self.df:index( binary_intersect(self, key) )
+  collectgarbage("collect")
+  return df
 end
 
 local MAX = 6
