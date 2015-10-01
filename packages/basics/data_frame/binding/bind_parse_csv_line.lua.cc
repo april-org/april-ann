@@ -42,7 +42,7 @@ double tonumber(constString tk, const char *decimal) {
   return result;
 }
 
-bool isnumber(constString tk, const char *decimal, double &result) {
+bool checknumber(constString tk, const char *decimal, double &result) {
   if (*decimal == '.') { // particular case
     const char *num = (const char *)tk;
     char *aux;
@@ -84,7 +84,7 @@ bool isnumber(constString tk, const char *decimal, double &result) {
   constString NA_str = lua_toconstString(L,5+t_pos);
   const int NA_pos=6+t_pos; // NA is at stack position 7
   constString tk;
-  int n = 0;
+  int n = 0, old_n = lua_rawlen(L, t_pos);
   double number;
   do {
     ++n;
@@ -104,7 +104,7 @@ bool isnumber(constString tk, const char *decimal, double &result) {
     if (!tk || tk == NA_str) { // NA field, replaced by nan
       lua_pushvalue(L, NA_pos);
     }
-    else if (isnumber(tk, decimal, number)) {
+    else if (checknumber(tk, decimal, number)) {
       lua_pushnumber(L, number);
     }
     else {
@@ -112,7 +112,7 @@ bool isnumber(constString tk, const char *decimal, double &result) {
     }
     lua_rawseti(L, t_pos, n);
   } while (line);
-  if (static_cast<size_t>(n) != lua_rawlen(L, t_pos)) {
+  if (old_n > 0 && old_n != n) {
     LUABIND_ERROR("Incorrect number of columns");
   }
   lua_pushvalue(L, t_pos);

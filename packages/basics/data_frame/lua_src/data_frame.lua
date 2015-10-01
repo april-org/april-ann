@@ -445,13 +445,11 @@ data_frame.from_csv =
     local columns = rawget(self, "columns")
     for row_line in f:lines() do
       n = n + 1
-      local last
       for j,value in ipairs(parse_csv_line(aux, row_line..sep, sep, quotechar,
                                            decimal, NA_str, nan)) do
-        local d = assert(data[columns[j] or j], "Incorrect number of columns")
-        d[n], last = value, j
+        local d = data[columns[j] or j]
+        d[n] = value
       end
-      assert(last == #columns, "Not matching number of columns")
       if n % 4096 == 0 then collectgarbage("collect") end
     end
     rawset(self, "index", matrixInt32(n):linspace())
