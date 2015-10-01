@@ -400,7 +400,7 @@ data_frame.from_csv =
   function(path, params)
     local proxy = data_frame()
     local self = getmetatable(proxy)
-    local data = rawget(self, "data")
+    local data = {}
     local params = get_table_fields({
         header = { default=true },
         sep = { default=',' },
@@ -440,11 +440,11 @@ data_frame.from_csv =
         rawset(self, "columns", params.columns)
       end
       rawset(self, "col2id", invert(rawget(self, "columns")))
-      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
+      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
     elseif params.columns then
       rawset(self, "columns", params.columns)
       rawset(self, "col2id", invert(rawget(self, "columns")))
-      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end      
+      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end      
     end
     local n = 0
     if #rawget(self, "columns") == 0 then
@@ -454,7 +454,7 @@ data_frame.from_csv =
       rawset(self, "columns", iterator.range(#first_line):table())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for j,col_name in ipairs(rawget(self, "columns")) do
-        data[col_name] = { first_line[j] }
+        data[j] = { first_line[j] }
       end
     end
     local columns = rawget(self, "columns")
@@ -462,10 +462,13 @@ data_frame.from_csv =
       n = n + 1
       for j,value in ipairs(parse_csv_line(aux, row_line..sep, sep, quotechar,
                                            decimal, NA_str, nan)) do
-        local d = data[columns[j] or j]
-        d[n] = value
+        data[j][n] = value
       end
       if n % 4096 == 0 then collectgarbage("collect") end
+    end
+    local obj_data = rawget(self, "data")
+    for j,col_name in ipairs(rawget(self, "columns")) do
+      obj_data[col_name] = data[j]
     end
     rawset(self, "index", matrixInt32(n):linspace())
     rawset(self, "index2id", invert(rawget(self, "index")))

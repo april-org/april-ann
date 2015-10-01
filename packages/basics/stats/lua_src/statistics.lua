@@ -74,7 +74,8 @@ stats.ihist = function(m, params)
   end)
   y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
-  return data_frame{ data={ bin=x, key=symbols, count=y, ratio=z } }
+  return data_frame{ data={ bin=x, key=symbols, count=y, ratio=z },
+                     columns={ "bin","key","count","ratio" } }
 end
 
 -------------------------------------------------------------------------------
