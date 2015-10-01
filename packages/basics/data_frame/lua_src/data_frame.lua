@@ -21,12 +21,12 @@ local function take(data, indices)
   local result
   if type(data) == "table" then
     result = {}
+    for i=1,#indices do result[i] = data[indices[i]] end
+  elseif type(data):find("^matrix") then
+    result = data:index(1, indices)
   else
-    local ctor = class.of(data)
-    result = ctor(#indices):index(1, indices)
+    error("Not recognized column data type")
   end
-  -- FIXME: implement in C++ if possible
-  for i=1,#indices do result[i] = data[indices[i]] end
   return result
 end
 
@@ -1077,7 +1077,7 @@ methods.index =
     local self   = getmetatable(proxy)
     local data   = rawget(self, "data")
     local idx    = take(rawget(self, "index"), indices)
-    local result = data_frame{ index=idx }
+    local result = data_frame{ index=idx, columns=rawget(self, "columns") }
     for _,col_name in ipairs(rawget(self, "columns")) do
       result[{col_name}] = take(data[col_name], indices)
     end
@@ -1099,6 +1099,7 @@ function groupped.constructor(self, df, ...)
     local current = groups[col_name]
     local lv2id = level2id[col_name]
     local data = df[{col_name}]
+    if type(data):find("^matrix") then data = data:toTable() end
     local k = 0
     for i=1,#data do
       local v = data[i]
