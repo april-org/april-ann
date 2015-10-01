@@ -1077,7 +1077,7 @@ methods.index =
     local self   = getmetatable(proxy)
     local data   = rawget(self, "data")
     local idx    = take(rawget(self, "index"), indices)
-    local result = data_frame{ index=idx, columns=rawget(self, "columns") }
+    local result = data_frame{ index=idx }
     for _,col_name in ipairs(rawget(self, "columns")) do
       result[{col_name}] = take(data[col_name], indices)
     end
