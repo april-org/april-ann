@@ -179,6 +179,18 @@ end
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
+local function quote(x, sep, quotechar, decimal)
+  if tonumber(x) then
+    x = tostring(x)
+    if decimal ~= "." then x = x:gsub("%.", decimal) end
+  end
+  if x:find(sep) then
+    return "%s%s%s"%{quotechar,x,quotechar}
+  else
+    return x
+  end
+end
+
 local function dataframe_tostring(proxy)
   local self = getmetatable(proxy)  
   if not next(rawget(self, "data")) then
@@ -191,7 +203,7 @@ local function dataframe_tostring(proxy)
     local tbl = { }
     for j,col_name in ipairs(rawget(self, "columns")) do
       table.insert(tbl, "\t")
-      table.insert(tbl, col_name)
+      table.insert(tbl, quote(col_name, '%s', '"', '.'))
     end
     table.insert(tbl, "\n")
     local truncated = false
@@ -200,7 +212,8 @@ local function dataframe_tostring(proxy)
       table.insert(tbl, row_name)
       for j,col_name in ipairs(rawget(self, "columns")) do
         table.insert(tbl, "\t")
-        table.insert(tbl, tostring(rawget(self, "data")[col_name][i]))
+        table.insert(tbl, quote(rawget(self, "data")[col_name][i],
+                                '%s', '"', '.'))
       end
       table.insert(tbl, "\n")
     end
@@ -211,7 +224,8 @@ local function dataframe_tostring(proxy)
         table.insert(tbl, row_name)
         for j,col_name in ipairs(rawget(self, "columns")) do
           table.insert(tbl, "\t")
-          table.insert(tbl, tostring(rawget(self, "data")[col_name][i]))
+          table.insert(tbl, quote(rawget(self, "data")[col_name][i],
+                                  '%s', '"', '.'))
         end
         table.insert(tbl, "\n")
       end
@@ -377,6 +391,7 @@ data_frame.from_csv =
       index = { "Table or matrix with an index to identify every row, it",
                 "can be a string indicating which column in CSV file is the",
                 "index [optional]" },
+      columns = { "A table with column keys [optional]" },
     },
     outputs = {
       "An instance of data_frame class"
@@ -458,18 +473,6 @@ data_frame.from_csv =
     if params.index then proxy:set_index(params.index) end
     return proxy
   end
-
-local function quote(x, sep, quotechar, decimal)
-  if tonumber(x) then
-    x = tostring(x)
-    if decimal ~= "." then x = x:gsub("%.", decimal) end
-  end
-  if x:find(sep) then
-    return "%s%s%s"%{quotechar,x,quotechar}
-  else
-    return x
-  end
-end
 
 methods.to_csv =
   april_doc{
