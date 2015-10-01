@@ -24,6 +24,7 @@ T("DataFrameTest", function()
                             columns = { "two", "one", "three" },
                             index = { "a", "b", "c", "d" } }
     print(df2:groupby("three"):get_group("B"))
+    print(df2:groupby("three", "one"):get_group("B",2))
     
     check.eq(#df2:get_index(), 4)
     check.eq(#df2:get_columns(), 3)

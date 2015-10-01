@@ -50,7 +50,7 @@ local function is_nan(v) return tonumber(v) and tostring(v) == tostring_nan end
 
 local function build_sorted_order(tbl, NA_symbol)
   local symbols = {}
-  for i,v in ipairs(tbl) do symbols[is_nan(v) and NA_symbol or v] = true end
+  for i=1,#tbl do local v=tbl[i] symbols[is_nan(v) and NA_symbol or v] = true end
   local order = iterator(pairs(symbols)):select(1):table()
   table.sort(order, function(a,b)
                if type(a)~=type(b) then return tostring(a) < tostring(b) else return a<b end
@@ -463,7 +463,7 @@ data_frame.from_csv =
       local t = parse_csv_line(aux, row_line..sep, sep, quotechar,
                                decimal, NA_str, nan)
       for j=1,#t do data[j][n] = t[j] end
-      if n%100000 == 0 then collectgarbage("collect") end
+      if n%1000000 == 0 then collectgarbage("collect") end
     end
     local obj_data = rawget(self, "data")
     for j,col_name in ipairs(rawget(self, "columns")) do
@@ -996,7 +996,7 @@ methods.map =
 methods.iterate =
   april_doc{
     class="method",
-    summary="Iterates over all rows (as ipairs)",
+    summary="Iterates over all rows (as ipairs). Be careful, the returned table is reused between loop iterations.",
   } ..
   function(proxy, ...)
     local self    = getmetatable(proxy)
@@ -1004,15 +1004,17 @@ methods.iterate =
     local columns = table.pack(...)
     if #columns == 0 then columns = rawget(self, "columns") end
     local col2id  = rawget(self, "col2id")
-    for _,name in ipairs(columns) do
+    local idata = {}
+    for i,name in ipairs(columns) do
       april_assert(col2id[name], "Unknown column name %s", tostring(name))
+      idata = data[name]
     end
+    local row = {}
     return function(self, i)
       if i < #rawget(self,"index") then
         i = i + 1
-        local row = {}
-        for _,col_name in ipairs(columns) do
-          row[col_name] = data[col_name][i]
+        for j=1,#columns do
+          row[columns[j]] = idata[j][i]
         end
         return i,row
       end
@@ -1044,6 +1046,11 @@ methods.parse_datetime =
     map(function(i,...) return i,os.time(parser(table.concat({...}, " "))) end):
       table()
     return result
+  end
+
+methods.select =
+  function(self,params)
+    
   end
 
 methods.groupby =
@@ -1080,46 +1087,115 @@ methods.index =
 ------------------------------------------------------------------
 
 function groupped.constructor(self, df, ...)
-  local args   = table.pack(...)
-  self.depth   = args.n
-  self.groups  = {}
-  self.columns = args
-  self.df      = df
-  for i,row in df:iterate(...) do
-    local destination = self.groups
-    for _,col_name in ipairs(args) do
-      local v = row[col_name]
-      if not is_nan(v) then
-        d = destination[v] or {}
-        destination[v],destination = d,d
-      else
-        break
+  local args     = table.pack(...)
+  self.depth     = args.n
+  self.columns   = args
+  self.df        = df
+  local groups   = {}
+  local level2id = {}
+  for _,col_name in ipairs(args) do
+    groups[col_name] = {}
+    level2id[col_name] = {}
+    local current = groups[col_name]
+    local lv2id = level2id[col_name]
+    local data = df[{col_name}]
+    local k = 0
+    for i=1,#data do
+      local v = data[i]
+      local x = lv2id[v] or (k+1)
+      if x == k+1 then
+        lv2id[v],k=x,x
+        current[x]={}
       end
+      local t = current[x]
+      t[#t+1] = i
     end
-    local v = destination[1] or mathcore.vector{ dtype="int32" }
-    destination[1] = v
-    v:push_back(i)
   end
-  local function vectors_to_matrix(d)
-    if type(d) == "table" then
-      for i,v in pairs(d) do d[i] = vectors_to_matrix(v) end
-      return d
+  self.groups = groups
+  self.level2id = level2id
+end
+
+groupped_methods.levels = function(self, col_name)
+  return table.invert(self.level2id[col_name])
+end
+
+local function intersect(a,b)
+  local t = {}
+  local i,j=1,1
+  local Na,Nb = #a,#b
+  while i<=Na and j<=Nb do
+    if a[i] < a[j] then
+      i=i+1
+    elseif a[j] < a[i] then
+      j=j+1
     else
-      return d:to_matrix()
+      t[#t+1],i,j = a[i],i+1,j+1
     end
   end
-  self.groups = vectors_to_matrix(self.groups)
+  return t
+end
+
+local function get_columns_indices(self, key)
+  local columns  = self.columns
+  local groups   = self.groups
+  local level2id = self.level2id
+  local aux = {}
+  for i=1,#key do
+    local v = key[i]
+    local c = columns[i]
+    local x = april_assert(level2id[c][v],
+                           "Unknown column value level: %s", key[i])
+    aux[i] = groups[c][x]
+  end
+  return aux
+end
+
+local function binary_intersect(self, key)
+  local aux = get_columns_indices(self, key)
+  -- binary intersection
+  while #aux > 1 do
+    local N = #aux
+    for j=1,math.floor(N/2),1 do
+      local k = N-j+1
+      local a,b
+      a,b,aux[k] = aux[j],aux[k],nil
+      aux[j] = intersect(a,b)
+    end
+  end
+  return aux[1]
 end
 
 groupped_methods.get_group = function(self, ...)
   local key = { ... }
   assert(#key == self.depth, "Incompatible number of column values")
-  local g = self.groups
-  for i,value in ipairs(key) do
-    g = april_assert(g[value], "Unknown column value %s", value)
-  end
-  return self.df:index(g[1])
+  return self.df:index( binary_intersect(self, key) )
 end
+
+local MAX = 6
+local function levels_to_string(x)
+  local t = {}
+  for i=1,math.min(MAX,#x) do t[i] = x[i] end
+  if #x > MAX then t[MAX+1] = "..." end
+  for i=math.max(MAX+1,#x-MAX),#x do t[#t+1] = x[i] end
+  return table.concat(t, " ")
+end
+
+class.extend_metamethod(groupped, "__tostring",
+                        function(self)
+                          local level2id = self.level2id
+                          local t = { "data_frame.groupby" }
+                          for i,col_name in ipairs(self.columns) do
+                            local levels = self:levels(col_name)
+                            table.sort(levels, function(a,b)
+                                         if type(a)~=type(b) then return tostring(a) < tostring(b) else return a<b end
+                            end)
+                            table.insert(t, "    %s with %d levels: %s"%{
+                                           col_name, #levels,
+                                           levels_to_string(levels)
+                            })
+                          end
+                          return table.concat(t,"\n")
+end)
 
 ------------------------------------------------------------------
 
