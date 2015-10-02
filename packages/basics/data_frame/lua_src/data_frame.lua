@@ -1129,9 +1129,9 @@ local function intersect(a,b)
   local i,j=1,1
   local Na,Nb = #a,#b
   while i<=Na and j<=Nb do
-    if a[i] < a[j] then
+    if a[i] < b[j] then
       i=i+1
-    elseif a[j] < a[i] then
+    elseif b[j] < a[i] then
       j=j+1
     else
       t[#t+1],i,j = a[i],i+1,j+1
