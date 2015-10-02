@@ -3,6 +3,15 @@ local T        = utest.test
 local warning  = utest.warning
 
 T("DataFrameTest", function()
+    local df1 = data_frame.from_csv(aprilio.stream.c_string("a,b,c\n1,2,3\n4,5,6"),
+                                    { columns={"d","e","f"} })
+    check.eq(table.concat(df1:get_columns(),","), "d,e,f" )
+    check.errored(function()
+        local df1 = data_frame.from_csv(aprilio.stream.c_string("a,c\n1,3\n4,6"),
+                                        { columns={"d","e","f"} })
+    end)
+    local df1 = data_frame.from_csv(aprilio.stream.c_string("a,b,c\n1,2,3\n4,5,6"))
+    check.eq(table.concat(df1:get_columns(),","), "a,b,c")
     local df1 = data_frame()
     check.eq(#df1:get_index(), 0)
     check.eq(#df1:get_columns(), 0)
@@ -15,6 +24,7 @@ T("DataFrameTest", function()
                             columns = { "two", "one", "three" },
                             index = { "a", "b", "c", "d" } }
     print(df2:groupby("three"):get_group("B"))
+    print(df2:groupby("three", "one"):get_group("B",2))
     
     check.eq(#df2:get_index(), 4)
     check.eq(#df2:get_columns(), 3)
@@ -47,7 +57,7 @@ T("DataFrameTest", function()
     local _   = df3[{3}]
     local _   = df3:as_matrix(2, { dtype="complex", })
     --
-    local df4 = data_frame.from_csv(aprilio.stream.input_lua_string[[id,cost
+    local df4 = data_frame.from_csv(aprilio.stream.c_string[[id,cost
 1,4
 2,1
 3,10

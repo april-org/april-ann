@@ -21,12 +21,12 @@ local function take(data, indices)
   local result
   if type(data) == "table" then
     result = {}
+    for i=1,#indices do result[i] = data[indices[i]] end
+  elseif type(data):find("^matrix") then
+    result = data:index(1, indices)
   else
-    local ctor = class.of(data)
-    result = ctor(#indices):index(1, indices)
+    error("Not recognized column data type")
   end
-  -- FIXME: implement in C++ if possible
-  for i=1,#indices do result[i] = data[indices[i]] end
   return result
 end
 
@@ -50,7 +50,7 @@ local function is_nan(v) return tonumber(v) and tostring(v) == tostring_nan end
 
 local function build_sorted_order(tbl, NA_symbol)
   local symbols = {}
-  for i,v in ipairs(tbl) do symbols[is_nan(v) and NA_symbol or v] = true end
+  for i=1,#tbl do local v=tbl[i] symbols[is_nan(v) and NA_symbol or v] = true end
   local order = iterator(pairs(symbols)):select(1):table()
   table.sort(order, function(a,b)
                if type(a)~=type(b) then return tostring(a) < tostring(b) else return a<b end
@@ -137,38 +137,14 @@ local function next_token_find(line, init, match, sep, quotechar)
   return i,j,quoted
 end
 
+local find  = string.find
+local gsub  = string.gsub
+local sub   = string.sub
+local yield = coroutine.yield
+local tonumber = tonumber
+
 -- parses a CSV line using sep as delimiter and adding NA when required
-local function parse_csv_line(line, sep, quotechar, decimal, NA_str)
-  return coroutine.wrap(function()
-      local line = line:match("^(.*[^%s])[%s]*$")
-      local line_dec = decimal == "." and line or line:gsub("%"..decimal, ".")
-      local n=0
-      local match  = "[%s%s]"%{sep, quotechar or ''}
-      local init = 1
-      while init <= #line do
-        n=n+1
-        local v,v_dec
-        local i,j,quoted = next_token_find(line, init, match, sep, quotechar)
-        i,j = i or #line+1,j or #line
-        if i == init then
-          v = NA
-        else
-          local init,i = init,i
-          if quoted then init,i = init+1,i-1 end
-          v = line:sub(init, i-1)
-          v_dec = line_dec:sub(init, i-1)
-          v = tonumber(v_dec) or v
-          if type(v) == "string" and v == NA_str then v = NA end
-        end
-        assert(v, "Unexpected read error")
-        coroutine.yield(n,v)
-        init = j+1
-      end
-      if line:sub(#line) == sep then
-        coroutine.yield(n+1,NA)
-      end
-  end)
-end
+local parse_csv_line = util.__parse_csv_line__
 
 -- converts an array or a matrix into a string
 local function stringfy(array)
@@ -203,29 +179,59 @@ end
 ---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 
+local function quote(x, sep, quotechar, decimal)
+  if tonumber(x) then
+    x = tostring(x)
+    if decimal ~= "." then x = x:gsub("%.", decimal) end
+  end
+  if x:find(sep) then
+    return "%s%s%s"%{quotechar,x,quotechar}
+  else
+    return x
+  end
+end
+
 local function dataframe_tostring(proxy)
   local self = getmetatable(proxy)  
   if not next(rawget(self, "data")) then
     return table.concat{
       "Empty data_frame\n",
-      "Columns: ", stringfy(rawget(self, "columns"), "ascii"), "\n",
-      "Index: ", stringfy(rawget(self, "index"), "ascii"), "\n",
+      "[data_frame of %d rows x %d columns]\n"%
+        {#rawget(self,"index"),#rawget(self,"columns")}
     }
   else
-    local tbl = { "data_frame\n" }
+    local tbl = { }
     for j,col_name in ipairs(rawget(self, "columns")) do
       table.insert(tbl, "\t")
-      table.insert(tbl, col_name)
+      table.insert(tbl, quote(col_name, '%s', '"', '.'))
     end
     table.insert(tbl, "\n")
+    local truncated = false
     for i,row_name in ipairs(rawget(self, "index")) do
+      if i > 20 then table.insert(tbl, "...\n") truncated = true break end
       table.insert(tbl, row_name)
       for j,col_name in ipairs(rawget(self, "columns")) do
         table.insert(tbl, "\t")
-        table.insert(tbl, tostring(rawget(self, "data")[col_name][i]))
+        table.insert(tbl, quote(rawget(self, "data")[col_name][i],
+                                '%s', '"', '.'))
       end
       table.insert(tbl, "\n")
     end
+    if truncated then
+      local index = rawget(self,"index")
+      for i=math.max(#index - 20, 21),#index do
+        local row_name=index[i]
+        table.insert(tbl, row_name)
+        for j,col_name in ipairs(rawget(self, "columns")) do
+          table.insert(tbl, "\t")
+          table.insert(tbl, quote(rawget(self, "data")[col_name][i],
+                                  '%s', '"', '.'))
+        end
+        table.insert(tbl, "\n")
+      end
+    end
+    table.insert(tbl, "[data_frame of %d rows x %d columns]\n"%
+                   {#rawget(self,"index"),#rawget(self,"columns")})
     return table.concat(tbl)
   end
 end
@@ -346,7 +352,7 @@ data_frame.constructor =
       local nd = data.num_dim
       assert(nd and nd(data)==2, "Needs a bi-dimensional matrix in argument data")
       if #rawget(self, "columns") == 0 then
-        rawset(self, "columns", matrixInt32(data:dim(2)):linspace())
+        rawset(self, "columns", iterator.range(data:dim(2)):table())
         rawset(self, "col2id", invert(rawget(self, "columns")))
       else
         assert(data:dim(2) == #rawget(self, "columns"),
@@ -366,6 +372,7 @@ data_frame.constructor =
     if t_params_index == "string" or t_params_index == "number" then
       proxy:set_index(params.index)
     end
+    collectgarbage("collect")
   end
 
 data_frame.from_csv =
@@ -382,9 +389,10 @@ data_frame.from_csv =
                     "by default it is: \"" },
       decimal = { "Decimal point character [optional], by default it is: .", },
       NA = { "Not avaliable token [optional], by default it is NA" },
-      index = { "Table or matrix with an index to identify every column, it",
+      index = { "Table or matrix with an index to identify every row, it",
                 "can be a string indicating which column in CSV file is the",
                 "index [optional]" },
+      columns = { "A table with column keys [optional]" },
     },
     outputs = {
       "An instance of data_frame class"
@@ -393,7 +401,7 @@ data_frame.from_csv =
   function(path, params)
     local proxy = data_frame()
     local self = getmetatable(proxy)
-    local data = rawget(self, "data")
+    local data = {}
     local params = get_table_fields({
         header = { default=true },
         sep = { default=',' },
@@ -401,69 +409,74 @@ data_frame.from_csv =
         decimal = { default='.' },
         NA = { default=defNA },
         index = { },
+        columns = { },
                                     }, params or {})
     local sep = params.sep
     local quotechar = params.quotechar
     local decimal = params.decimal
     local NA_str = params.NA
+    local double_quote = quotechar..quotechar
+    local quote_match = "^"..quotechar
+    local quote_closing = quotechar.."("..quotechar.."?)"
+    local decimal_match = "%"..decimal
+    local number_match = "^[+-]?%d*"..decimal.."?%d+[eE]?[+-]?%d*$"
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
     local f = type(path)~="string" and path or io.open(path)
+    local aux = {}
     if params.header then
-      rawset(self, "columns",
-             iterator(parse_csv_line(f:read("*l"), sep, quotechar,
-                                     decimal, NA_str)):table())
+      local t = parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
+                               decimal, NA_str, nan)
+      rawset(self, "columns", iterator(t):table())
       for i,col_name in ipairs(rawget(self, "columns")) do
         if is_nan(col_name) then
           col_name = next_number(rawget(self, "columns"))
           rawget(self, "columns")[i] = col_name
         end
-        data[col_name] = {}
+      end
+      if params.columns then
+        assert(#rawget(self,"columns") == #params.columns,
+               "Incorrect number of columns at field 'columns'")
+        rawset(self, "columns", params.columns)
       end
       rawset(self, "col2id", invert(rawget(self, "columns")))
-      for _,col_name in ipairs(rawget(self, "columns")) do data[col_name] = {} end
+      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
+    elseif params.columns then
+      rawset(self, "columns", params.columns)
+      rawset(self, "col2id", invert(rawget(self, "columns")))
+      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end      
     end
     local n = 0
     if #rawget(self, "columns") == 0 then
       n = n + 1
-      local first_line = iterator(parse_csv_line(f:read("*l"), sep, quotechar,
-                                                 decimal, NA_str)):table()
-      rawset(self, "columns", matrixInt32(#first_line):linspace())
+      local first_line = iterator(parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
+                                                 decimal, NA_str, nan)):table()
+      rawset(self, "columns", iterator.range(#first_line):table())
       rawset(self, "col2id", invert(rawget(self, "columns")))
       for j,col_name in ipairs(rawget(self, "columns")) do
-        data[col_name] = { first_line[j] }
+        data[j] = { first_line[j] }
       end
     end
     local columns = rawget(self, "columns")
     for row_line in f:lines() do
       n = n + 1
-      local last
-      for j,value in parse_csv_line(row_line, sep, quotechar,
-                                    decimal, NA_str) do
-        data[columns[j] or j][n], last = value, j
-      end
-      assert(last == #columns, "Not matching number of columns")
-      if n % 4096 == 0 then collectgarbage("collect") end
+      local t = parse_csv_line(aux, row_line..sep, sep, quotechar,
+                               decimal, NA_str, nan)
+      for j=1,#t do data[j][n] = t[j] end
+      if n%1000000 == 0 then collectgarbage("collect") end
+    end
+    local obj_data = rawget(self, "data")
+    for j,col_name in ipairs(rawget(self, "columns")) do
+      obj_data[col_name] = data[j]
     end
     rawset(self, "index", matrixInt32(n):linspace())
     rawset(self, "index2id", invert(rawget(self, "index")))
     if path ~= f then f:close() end
     if params.index then proxy:set_index(params.index) end
+    collectgarbage("collect")
     return proxy
   end
-
-local function quote(x, sep, quotechar, decimal)
-  if tonumber(x) then
-    x = tostring(x)
-    if decimal ~= "." then x = x:gsub("%.", decimal) end
-  end
-  if x:find(sep) then
-    return "%s%s%s"%{quotechar,x,quotechar}
-  else
-    return x
-  end
-end
 
 methods.to_csv =
   april_doc{
@@ -516,6 +529,7 @@ methods.to_csv =
       table.clear(tbl)
     end
     if path ~= f then f:close() end
+    collectgarbage("collect")
   end
 
 methods.drop =
@@ -985,7 +999,7 @@ methods.map =
 methods.iterate =
   april_doc{
     class="method",
-    summary="Iterates over all rows (as ipairs)",
+    summary="Iterates over all rows (as ipairs). Be careful, the returned table is reused between loop iterations.",
   } ..
   function(proxy, ...)
     local self    = getmetatable(proxy)
@@ -993,15 +1007,17 @@ methods.iterate =
     local columns = table.pack(...)
     if #columns == 0 then columns = rawget(self, "columns") end
     local col2id  = rawget(self, "col2id")
-    for _,name in ipairs(columns) do
+    local idata = {}
+    for i,name in ipairs(columns) do
       april_assert(col2id[name], "Unknown column name %s", tostring(name))
+      idata = data[name]
     end
+    local row = {}
     return function(self, i)
       if i < #rawget(self,"index") then
         i = i + 1
-        local row = {}
-        for _,col_name in ipairs(columns) do
-          row[col_name] = data[col_name][i]
+        for j=1,#columns do
+          row[columns[j]] = idata[j][i]
         end
         return i,row
       end
@@ -1035,6 +1051,11 @@ methods.parse_datetime =
     return result
   end
 
+methods.select =
+  function(self,params)
+    
+  end
+
 methods.groupby =
   april_doc{
     class="method",
@@ -1050,7 +1071,7 @@ methods.groupby =
 methods.index =
   april_doc{
     class="method",
-    summary="Indexes the data frame by rows using the given indices table or matrix",
+    summary="Indexes the data frame by rows using the given indices table or matrix. The indices table or matrix are row numbers, not real index values.",
     outputs={
       "A new allocated data_frame",
     },
@@ -1069,46 +1090,119 @@ methods.index =
 ------------------------------------------------------------------
 
 function groupped.constructor(self, df, ...)
-  local args   = table.pack(...)
-  self.depth   = args.n
-  self.groups  = {}
-  self.columns = args
-  self.df      = df
-  for i,row in df:iterate(...) do
-    local destination = self.groups
-    for _,col_name in ipairs(args) do
-      local v = row[col_name]
-      if not is_nan(v) then
-        d = destination[v] or {}
-        destination[v],destination = d,d
-      else
-        break
+  local args     = table.pack(...)
+  self.depth     = args.n
+  self.columns   = args
+  self.df        = df
+  local groups   = {}
+  local level2id = {}
+  for _,col_name in ipairs(args) do
+    groups[col_name] = {}
+    level2id[col_name] = {}
+    local current = groups[col_name]
+    local lv2id = level2id[col_name]
+    local data = df[{col_name}]
+    if type(data):find("^matrix") then data = data:toTable() end
+    local k = 0
+    for i=1,#data do
+      local v = data[i]
+      local x = lv2id[v] or (k+1)
+      if x == k+1 then
+        lv2id[v],k=x,x
+        current[x]={}
       end
+      local t = current[x]
+      t[#t+1] = i
     end
-    local v = destination[1] or mathcore.vector{ dtype="int32" }
-    destination[1] = v
-    v:push_back(i)
   end
-  local function vectors_to_matrix(d)
-    if type(d) == "table" then
-      for i,v in pairs(d) do d[i] = vectors_to_matrix(v) end
-      return d
+  self.groups = groups
+  self.level2id = level2id
+  collectgarbage("collect")
+end
+
+groupped_methods.levels = function(self, col_name)
+  return table.invert(self.level2id[col_name])
+end
+
+local function intersect(a,b)
+  local t = {}
+  local i,j=1,1
+  local Na,Nb = #a,#b
+  while i<=Na and j<=Nb do
+    if a[i] < a[j] then
+      i=i+1
+    elseif a[j] < a[i] then
+      j=j+1
     else
-      return d:to_matrix()
+      t[#t+1],i,j = a[i],i+1,j+1
     end
   end
-  self.groups = vectors_to_matrix(self.groups)
+  return t
+end
+
+local function get_columns_indices(self, key)
+  local columns  = self.columns
+  local groups   = self.groups
+  local level2id = self.level2id
+  local aux = {}
+  for i=1,#key do
+    local v = key[i]
+    local c = columns[i]
+    local x = april_assert(level2id[c][v],
+                           "Unknown column value level: %s", key[i])
+    aux[i] = groups[c][x]
+  end
+  return aux
+end
+
+local function binary_intersect(self, key)
+  local aux = get_columns_indices(self, key)
+  -- binary intersection
+  while #aux > 1 do
+    local N = #aux
+    for j=1,math.floor(N/2),1 do
+      local k = N-j+1
+      local a,b
+      a,b,aux[k] = aux[j],aux[k],nil
+      aux[j] = intersect(a,b)
+    end
+  end
+  return aux[1]
 end
 
 groupped_methods.get_group = function(self, ...)
   local key = { ... }
   assert(#key == self.depth, "Incompatible number of column values")
-  local g = self.groups
-  for i,value in ipairs(key) do
-    g = april_assert(g[value], "Unknown column value %s", value)
-  end
-  return self.df:index(g[1])
+  local df = self.df:index( binary_intersect(self, key) )
+  collectgarbage("collect")
+  return df
 end
+
+local MAX = 6
+local function levels_to_string(x)
+  local t = {}
+  for i=1,math.min(MAX,#x) do t[i] = x[i] end
+  if #x > MAX then t[MAX+1] = "..." end
+  for i=math.max(MAX+1,#x-MAX),#x do t[#t+1] = x[i] end
+  return table.concat(t, " ")
+end
+
+class.extend_metamethod(groupped, "__tostring",
+                        function(self)
+                          local level2id = self.level2id
+                          local t = { "data_frame.groupby" }
+                          for i,col_name in ipairs(self.columns) do
+                            local levels = self:levels(col_name)
+                            table.sort(levels, function(a,b)
+                                         if type(a)~=type(b) then return tostring(a) < tostring(b) else return a<b end
+                            end)
+                            table.insert(t, "    %s with %d levels: %s"%{
+                                           col_name, #levels,
+                                           levels_to_string(levels)
+                            })
+                          end
+                          return table.concat(t,"\n")
+end)
 
 ------------------------------------------------------------------
 
