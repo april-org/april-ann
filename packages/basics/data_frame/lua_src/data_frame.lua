@@ -1178,12 +1178,18 @@ groupped_methods.get_group = function(self, ...)
   return df
 end
 
-local MAX = 6
+local MAX = 40
 local function levels_to_string(x)
+  local size = 0
   local t = {}
-  for i=1,math.min(MAX,#x) do t[i] = x[i] end
-  if #x > MAX then t[MAX+1] = "..." end
-  for i=math.max(MAX+1,#x-MAX),#x do t[#t+1] = x[i] end
+  for i=1,#x do
+    local y = tostring(x[i])
+    size = size+#y
+    if size>=MAX then break end
+    t[i] = y
+  end
+  if #t ~= #x then t[#t+1] = "..." end
+  if #tostring(x[#x]) < MAX then t[#t+1] = tostring(x[#x]) end
   return table.concat(t, " ")
 end
 
