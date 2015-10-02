@@ -1188,8 +1188,10 @@ local function levels_to_string(x)
     if size>=MAX then break end
     t[i] = y
   end
-  if #t ~= #x then t[#t+1] = "..." end
-  if #tostring(x[#x]) < MAX then t[#t+1] = tostring(x[#x]) end
+  if #t ~= #x then
+    t[#t+1] = "..."
+    if #tostring(x[#x]) < MAX then t[#t+1] = tostring(x[#x]) end
+  end
   return table.concat(t, " ")
 end
 
