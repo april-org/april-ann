@@ -196,7 +196,7 @@ local function dataframe_tostring(proxy)
   if not next(rawget(self, "data")) then
     return table.concat{
       "Empty data_frame\n",
-      "[data_frame of %d rows x %d columns]\n"%
+      "# data_frame of %d rows x %d columns\n"%
         {#rawget(self,"index"),#rawget(self,"columns")}
     }
   else
@@ -230,7 +230,7 @@ local function dataframe_tostring(proxy)
         table.insert(tbl, "\n")
       end
     end
-    table.insert(tbl, "[data_frame of %d rows x %d columns]\n"%
+    table.insert(tbl, "# data_frame of %d rows x %d columns\n"%
                    {#rawget(self,"index"),#rawget(self,"columns")})
     return table.concat(tbl)
   end
@@ -1198,7 +1198,7 @@ end
 class.extend_metamethod(groupped, "__tostring",
                         function(self)
                           local level2id = self.level2id
-                          local t = { "data_frame.groupby" }
+                          local t = { }
                           for i,col_name in ipairs(self.columns) do
                             local levels = self:levels(col_name)
                             table.sort(levels, function(a,b)
@@ -1209,6 +1209,7 @@ class.extend_metamethod(groupped, "__tostring",
                                            levels_to_string(levels)
                             })
                           end
+                          table.insert(t, "# data_frame.groupby")
                           return table.concat(t,"\n")
 end)
 
