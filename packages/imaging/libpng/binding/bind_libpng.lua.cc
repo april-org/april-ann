@@ -35,7 +35,7 @@
   AprilUtils::constString cs;
   LUABIND_CHECK_ARGN(==, 1);
   
-  AprilIO::StreamInterface *stream;
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
   if (lua_isstring(L,1)) {
     LUABIND_GET_PARAMETER(1,constString,cs);
     const char *filename = (const char *)cs;
@@ -45,7 +45,7 @@
     stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
   }
   
-  ImageFloatRGB *res = Imaging::LibPNG::readPNG(stream);
+  ImageFloatRGB *res = Imaging::LibPNG::readPNG(stream.get());
 
   if (res == NULL) {
     LUABIND_ERROR("libpng.read failed");
@@ -63,12 +63,12 @@
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1,ImageFloatRGB,img);
   
-  AprilIO::StreamInterface *stream;
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
   if (lua_gettop(L) == 2) {
-    if (lua_isstring(L,1)) {
+    if (lua_isstring(L,2)) {
       LUABIND_GET_PARAMETER(2,constString,cs);
       const char *filename = (const char *)cs;
-      stream = new AprilIO::FileStream(filename, "r");
+      stream = new AprilIO::FileStream(filename, "w");
     }
     else {
       stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,2);
@@ -78,7 +78,7 @@
     stream = new AprilIO::OutputLuaStringStream(L);
   }
 
-  bool ok = Imaging::LibPNG::writePNG(img, stream);
+  bool ok = Imaging::LibPNG::writePNG(img, stream.get());
 
   if (!ok) {
     LUABIND_ERROR("libpng.write failed");
@@ -86,8 +86,11 @@
 
   if (lua_gettop(L) == 1) {
     AprilIO::OutputLuaStringStream *lua_stream;
-    lua_stream = (AprilIO::OutputLuaStringStream*)stream;
-    return lua_stream->push(L);
+    lua_stream = (AprilIO::OutputLuaStringStream*)(stream.get());
+    LUABIND_INCREASE_NUM_RETURNS( lua_stream->push(L) );
+  }
+  else {
+    LUABIND_RETURN(StreamInterface, stream.get());
   }
 }
 //BIND_END
