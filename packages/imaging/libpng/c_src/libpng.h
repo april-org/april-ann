@@ -26,8 +26,8 @@
 
 namespace Imaging {
   namespace LibPNG {
-    ImageFloatRGB* readPNG(const char *filename); // returns NULL if error
-    bool writePNG(ImageFloatRGB *img, const char *filename);
+    ImageFloatRGB* readPNG(AprilIO::StreamInterface *fp); // returns NULL if error
+    bool writePNG(ImageFloatRGB *img, AprilIO::StreamInterface *fp);
 
   }
 }
