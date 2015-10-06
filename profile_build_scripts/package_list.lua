@@ -18,6 +18,7 @@ return {
   "autodiff",
   "autodiff.ann",
   "data_frame",
+  "ee5_base64",
 
   -- INPUT/OUTPUT
   "aprilio",

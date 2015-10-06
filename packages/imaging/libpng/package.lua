@@ -1,6 +1,6 @@
  package{ name = "libpng",
    version = "1.0",
-   depends = { "Image", "ImageIO", "util" },
+   depends = { "Image", "ImageIO", "util", "aprilio" },
    pkgconfig_depends = { "libpng" },
    keywords = { "libpng" },
    description = "loads and saves PNG images",

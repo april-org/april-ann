@@ -26,6 +26,8 @@
 //BIND_END
 
 //BIND_HEADER_C
+#include "bind_april_io.h"
+#include "smart_ptr.h"
 //BIND_END
 
 
@@ -33,11 +35,18 @@
 {
   AprilUtils::constString cs;
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  const char *filename = (const char *)cs;
-
-  ImageFloatRGB *res = Imaging::LibPNG::readPNG(filename);
+  
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
+  if (lua_isstring(L,1)) {
+    LUABIND_GET_PARAMETER(1,constString,cs);
+    const char *filename = (const char *)cs;
+    stream = new AprilIO::FileStream(filename, "r");
+  }
+  else {
+    stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+  }
+  
+  ImageFloatRGB *res = Imaging::LibPNG::readPNG(stream.get());
 
   if (res == NULL) {
     LUABIND_ERROR("libpng.read failed");
@@ -51,17 +60,39 @@
 {
   ImageFloatRGB *img;
   AprilUtils::constString cs;
-  LUABIND_CHECK_ARGN(==, 2);
-  
-  LUABIND_CHECK_PARAMETER(2, string);
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1,ImageFloatRGB,img);
-  LUABIND_GET_PARAMETER(2,constString,cs);
-  const char *filename = (const char *)cs;
-
-  bool ok = Imaging::LibPNG::writePNG(img, filename);
   
+  const int n = lua_gettop(L);
+  AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
+  if (n == 2) {
+    if (lua_isstring(L,2)) {
+      LUABIND_GET_PARAMETER(2,constString,cs);
+      const char *filename = (const char *)cs;
+      stream = new AprilIO::FileStream(filename, "w");
+    }
+    else {
+      stream = lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,2);
+    }
+  }
+  else {
+    stream = new AprilIO::OutputLuaStringStream(L);
+  }
+
+  bool ok = Imaging::LibPNG::writePNG(img, stream.get());
+
   if (!ok) {
     LUABIND_ERROR("libpng.write failed");
+  }
+
+  if (n == 1) {
+    AprilIO::OutputLuaStringStream *lua_stream;
+    lua_stream = (AprilIO::OutputLuaStringStream*)(stream.get());
+    LUABIND_INCREASE_NUM_RETURNS( lua_stream->push(L) );
+  }
+  else {
+    LUABIND_RETURN(StreamInterface, stream.get());
   }
 }
 //BIND_END
