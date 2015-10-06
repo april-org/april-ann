@@ -23,6 +23,7 @@ local packages_list = {
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+  "ee5_base64",
   "version",
  }
 

@@ -333,6 +333,8 @@ Includes these sources
 - Google C++ Testing Framework: https://code.google.com/p/googletest/
 - (Included, but not used) Lua autocompletion rlcompleter release 2, by rthomas:
   https://github.com/rrthomas/lua-rlcompleter
+- [Lua base64 encoding](https://github.com/ErnieE5/ee5_base64) developed by
+  Ernie Ewert.
 
 Wiki documentation
 ------------------
