@@ -11,6 +11,8 @@ local REP = 10000
 --
 T("CStringTest", function()
     local s = aprilio.stream.c_string()
+    check.FALSE( s:eof() )
+    s:read(1)
     check.TRUE( s:eof() )
     for i=1,REP do s:write(lines_concat) end
     check.FALSE( s:eof() )

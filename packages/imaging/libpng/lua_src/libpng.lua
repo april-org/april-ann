@@ -18,6 +18,6 @@ do
   
   handlers[ Image ] = function(obj)
     local obj = obj:to_RGB()
-    return handlers[ obj ]( obj )
+    return handlers[ class.of(obj) ]( obj )
   end
 end
