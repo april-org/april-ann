@@ -27,6 +27,7 @@
 
 //BIND_HEADER_C
 #include "bind_april_io.h"
+#include "smart_ptr.h"
 //BIND_END
 
 
@@ -63,8 +64,9 @@
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1,ImageFloatRGB,img);
   
+  const int n = lua_gettop(L);
   AprilUtils::SharedPtr<AprilIO::StreamInterface> stream;
-  if (lua_gettop(L) == 2) {
+  if (n == 2) {
     if (lua_isstring(L,2)) {
       LUABIND_GET_PARAMETER(2,constString,cs);
       const char *filename = (const char *)cs;
@@ -84,7 +86,7 @@
     LUABIND_ERROR("libpng.write failed");
   }
 
-  if (lua_gettop(L) == 1) {
+  if (n == 1) {
     AprilIO::OutputLuaStringStream *lua_stream;
     lua_stream = (AprilIO::OutputLuaStringStream*)(stream.get());
     LUABIND_INCREASE_NUM_RETURNS( lua_stream->push(L) );

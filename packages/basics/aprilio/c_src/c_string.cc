@@ -23,16 +23,16 @@
 
 namespace AprilIO {
   CStringStream::CStringStream() :
-    StreamMemory(), in_pos(0), out_pos(0) {
+    StreamMemory(), in_pos(0), out_pos(0), eof(false) {
     data.reserve(StreamMemory::BLOCK_SIZE);
   }
 
   CStringStream::CStringStream(const AprilUtils::string &str) :
-    StreamMemory(), data(str), in_pos(0), out_pos(data.size()) {
+    StreamMemory(), data(str), in_pos(0), out_pos(data.size()), eof(false) {
   }
 
   CStringStream::CStringStream(const char *str, size_t size) :
-    StreamMemory(), data(str, size), in_pos(0), out_pos(size) {
+    StreamMemory(), data(str, size), in_pos(0), out_pos(size), eof(false) {
   }
   
   CStringStream::~CStringStream() {
@@ -126,6 +126,7 @@ namespace AprilIO {
       data.resize(new_size);
     }
     data[size()] = '\0';
+    if (in_pos < size()) eof = false;
   }
   
   int CStringStream::setvbuf(int mode, size_t size) {
@@ -146,6 +147,7 @@ namespace AprilIO {
     april_assert(size() >= in_pos + getInBufferPos());
     in_pos += getInBufferPos();
     buf_len = size() - in_pos;
+    if (buf_len == 0u) eof = true;
     return data.c_str() + in_pos;
   }
   
@@ -162,7 +164,7 @@ namespace AprilIO {
   }
   
   bool CStringStream::eofStream() const {
-    return in_pos >= size();
+    return eof;
   }
   
   void CStringStream::moveOutBuffer(size_t len) {
