@@ -1047,18 +1047,18 @@ do
   reg.APRILANN.IPyLua_output_handlers = {}
   
   local handlers = reg.APRILANN.IPyLua_output_handlers
-  local IPyLua = reg.IPyLua
+  local IPyLua = reg.IPyLua or {}
+  reg.IPyLua = IPyLua
   
-  if IPyLua then
-    local output_functions = IPyLua.output_functions
-    
-    local function april_output_function(obj)
-      local h = handlers[ class.of(obj) ]
-      if h then return h(obj) end
-    end
-    
-    table.insert(output_functions, april_output_function)
+  local output_functions = IPyLua.output_functions or {}
+  IPyLua.output_functions = output_functions
+  
+  local function april_output_function(obj)
+    local h = handlers[ class.of(obj) ]
+    if h then return h(obj) end
   end
+  
+  table.insert(output_functions, april_output_function)
 end
 
 ------------------------------------------------------------------------------
