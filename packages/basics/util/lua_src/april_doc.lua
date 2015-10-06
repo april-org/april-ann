@@ -321,30 +321,47 @@ do
   -- TODO: implement with different verbosity levels
   local function help(object, verbosity)
     local doc_table = DOC_TABLE[object]
-    if not doc_table then return end
+    local cls = class.of(object)
+    local super = cls and class.super(cls) or nil
+    local id = get_object_id(object)
+    if not doc_table then
+      if cls then doc_table = DOC_TABLE[cls] end
+      if not doc_table then return end
+    end
     
     local html = {
       "<div>",
       "<h3>APRIL help</h3>",
       "<table style=\"border:0px\">",
       "<tr><th>Key</th><th>Value</th></tr>",
-      ("<tr><td style=\"margin-right:4px\">ID</td><td>%s</td></tr>"):format(get_object_id(object)),
       ("<tr><td style=\"margin-right:4px\">LuaType</td><td>%s</td></tr>"):format(type(object)),
-      ("<tr><td style=\"margin-right:4px\">Class</td><td>%s</td></tr>"):format(tostring(class.of(object)):gsub(" class","")),
-      "</table>",
     }
 
     local plain = {
-      ("ID:       %s\n"):format(get_object_id(object)),
       ("LuaType:  %s\n"):format(type(object)),
-      ("Class:    %s\n"):format(tostring(class.of(object)):gsub(" class$",""):gsub("^class ","")),
     }
+
+    if id then
+      insert(html, ("<tr><td style=\"margin-right:4px\">ID</td><td>%s</td></tr>"):format(id))
+      insert(plain, ("ID:       %s\n"):format(id))
+    end
+    
+    if cls then
+      local x = tostring(cls):gsub(" class$",""):gsub("^class ","")
+      insert(html, ("<tr><td style=\"margin-right:4px\">Class</td><td>%s</td></tr>"):format(x))
+      insert(plain, ("Class:    %s\n"):format(x))
+    end
+    
+    if super then
+      local x = tostring(super):gsub(" class$",""):gsub("^class ","")
+      insert(html, ("<tr><td style=\"margin-right:4px\">Super</td><td>%s</td></tr>"):format(x))
+      insert(plain, ("Super:    %s\n"):format(x))
+    end
+    
+    insert(html, "</table>")
     
     for idx,current in ipairs(doc_table) do
-      if idx > 1 then
-        insert(html, "<tr></tr>")
-        insert(plain, "\n")
-      end
+      insert(plain, "\n")
       
       insert(html, ("<h4>Doc %d</h4>"):format(idx))
       insert(plain, ("\nDoc %d\n"):format(idx))
