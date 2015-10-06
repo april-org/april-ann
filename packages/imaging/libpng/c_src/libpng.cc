@@ -29,7 +29,7 @@ using namespace AprilIO;
 
 namespace Imaging {
   namespace LibPNG {
-    static void read_data_fn(png_structp png_ptr, png_bytep dest, uint64_t len) {
+    static void read_data_fn(png_structp png_ptr, png_bytep dest, png_size_t len) {
       StreamInterface *fp = (StreamInterface*)png_get_io_ptr(png_ptr);
       size_t result = fp->get((char*)dest, len);
       if (result != len) {
@@ -37,7 +37,7 @@ namespace Imaging {
       }
     }
 
-    static void write_data_fn(png_structp png_ptr, png_bytep source, uint64_t len) {
+    static void write_data_fn(png_structp png_ptr, png_bytep source, png_size_t len) {
       StreamInterface *fp = (StreamInterface*)png_get_io_ptr(png_ptr);
       size_t result = fp->put((const char*)source, len);
       if (result != len) {
