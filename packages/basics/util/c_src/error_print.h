@@ -53,27 +53,27 @@ void print_CPP_stacktrace(FILE *out = stderr);
   if (!getSilentErrorsValue()) fprintf(stderr, "Error in file %s in line %d, function %s: "  strformat, __FILE__, __LINE__, __FUNCTION__, (v1), (v2), (v3), (v4), (v5), (v6), (v7))
 
 #define ERROR_EXIT(errorcode, strformat)			\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__)
 
 #define ERROR_EXIT1(errorcode, strformat, v1)			\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1))
 
 #define ERROR_EXIT2(errorcode, strformat, v1, v2)			\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2))
 
 #define ERROR_EXIT3(errorcode, strformat, v1, v2, v3)			\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2),(v3)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2),(v3))
 
 #define ERROR_EXIT4(errorcode, strformat, v1, v2, v3, v4)		\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2),(v3),(v4)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2),(v3),(v4))
 
 #define ERROR_EXIT5(errorcode, strformat, v1, v2, v3, v4, v5)		\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2),(v3),(v4),(v5)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2),(v3),(v4),(v5))
 
 #define ERROR_EXIT6(errorcode, strformat, v1, v2, v3, v4, v5, v6)	\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2),(v3),(v4),(v5),(v6)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2),(v3),(v4),(v5),(v6))
 
 #define ERROR_EXIT7(errorcode, strformat, v1, v2, v3, v4, v5, v6, v7)	\
-  do { if (!getSilentErrorsValue()) print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,strformat,(v1),(v2),(v3),(v4),(v5),(v6),(v7)); /*exit(errorcode);*/ } while(0)
+  print_CPP_LUA_stacktrace_and_exit(errorcode,"Error in file %s in line %d, function %s: " strformat,__FILE__,__LINE__,__FUNCTION__,(v1),(v2),(v3),(v4),(v5),(v6),(v7))
 
 #endif // ERROR_EXIT_H

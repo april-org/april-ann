@@ -296,3 +296,161 @@ local april_doc_mt = {
 function april_doc(t)
   return setmetatable({t}, april_doc_mt)
 end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+-- support for IPyLua
+do
+  local reg = debug.getregistry()
+  
+  local IPyLua = reg.IPyLua or {}
+  reg.IPyLua = IPyLua
+  
+  local help_functions = IPyLua.help_functions or {}
+  IPyLua.help_functions = help_functions
+  
+  -- verbosity => 0 only names, 1 only summary, 2 all
+  local function help(object, verbosity, plain, html)
+    local verbosity = verbosity or 2
+    if verbosity > 0 then
+      if ( luatype(object) == "table" and
+           object.meta_instance and object.meta_instance.id ) then
+        print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..object.meta_instance.id)
+      elseif get_object_id(object) then
+        print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..get_object_id(object))
+      end
+    end
+    local object = object or _G
+    ----------------------------------------------------------------------------
+    -- AUXILIARY FUNCTIONS
+    local function print_result(aux)
+      local prev = { }
+      table.sort(aux, function(a,b) return a[1]<b[1] end)
+      for i,v in ipairs(aux) do
+        if v[1] ~= prev[1] then
+          april_print_doc(v[3], math.min(1, verbosity),
+                          ansi.fg["cyan"].."   * "..
+                            v[2]..ansi.fg["default"].." "..v[1])
+        end
+        prev = v
+        -- print_data(v)
+      end
+      print("")
+    end
+    local dummy_filter_function = function() return true end
+    local function process_pairs(title, tbls, filter)
+      local filter = filter or dummy_filter_function
+      local aux = {}
+      for _,t in ipairs(tbls) do
+        for i,v in pairs(t) do
+          if filter(i,v) then
+            table.insert(aux, {i,"",v})
+          end
+        end
+      end
+      if #aux > 0 then
+        print(ansi.fg["cyan"].." -- "..title..ansi.fg["default"])
+        print_result(aux)
+      end
+    end
+    local function print_inheritance(title, object)
+      while ( getmetatable(object) and get_index(getmetatable(object)) and
+              not rawequal(get_index(getmetatable(object)), object) ) do
+        local mt = getmetatable(object)
+        local superclass_name = (mt.id and mt.id:gsub(" class","")) or "UNKNOWN"
+        object = get_index(mt)
+        process_pairs(title..superclass_name, { object },
+                      function(k,v) return luatype(v) == "function" end)
+      end
+    end
+    ----------------------------------------------------------------------------
+    -- documentation
+    april_print_doc(object, verbosity)
+    if class.is_class(object) and DOC_TABLE[object.constructor] then
+      print("--------------------------------------------------------------\n")
+      -- constructor documentation is defined at class_table.constructor method
+      april_print_doc(object.constructor, verbosity)
+    end
+    local mt = getmetatable(object)
+    if mt then
+      -- metatable constructor and destructor
+      if mt.__call then
+        if DOC_TABLE[mt.__call] then
+          -- constructor documentation is defined at
+          -- getmetatable(class_table).__call metamethod
+          print("--------------------------------------------------------------\n")
+          april_print_doc(mt.__call, verbosity)
+        end
+      end
+      -- metatable constructor and destructor
+      print("--------------------------------------------------------------\n")
+      process_pairs("metatable", { mt, get_index(mt) },
+                    function(i,v) return luatype(v) == "function" end)
+      if get_index(mt) then
+        print_inheritance("inherited metatable from ", get_index(mt))
+      end
+    end
+    if luatype(object) == "table" then
+      -- OBJECT class content
+      print("--------------------------------------------------------------\n")
+      -- local print_data = function(d) print("\t * " .. d) end
+      local classes    = {}
+      local funcs      = {}
+      local names      = {}
+      local vars       = {}
+      for i,v in pairs(object) do
+        if i ~= "meta_instance" then
+          if class.is_class(v) then
+            table.insert(classes, {i, "", v})
+          elseif iscallable(v) then
+            table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
+          elseif luatype(v) == "table" and object.meta_instance then
+            table.insert(names, {i, "", v})
+          else
+            table.insert(vars, {i, string.format("%8s",luatype(v)), v})
+          end
+        end
+      end
+      if #vars > 0 then
+        print(ansi.fg["cyan"].." -- basic variables (string, number)"..
+                ansi.fg["default"])
+        print_result(vars)
+      end
+      if #names > 0 then
+        print(ansi.fg["cyan"].." -- names in the namespace"..ansi.fg["default"])
+        print_result(names)
+      end
+      if #classes > 0 then
+        print(ansi.fg["cyan"].." -- classes in the namespace"..ansi.fg["default"])
+        print_result(classes)
+      end
+      if #funcs > 0 then
+        print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
+        print_result(funcs)
+      end
+      -- OBJECT meta_instance
+      if object.meta_instance and get_index(object.meta_instance) then
+        process_pairs("object metatable", { object.meta_instance })
+        process_pairs("object methods", { get_index(object.meta_instance) },
+                      function(i,v) return luatype(v) == "function" end)
+        --
+        print_inheritance("inherited methods from ", get_index(object.meta_instance))
+      end
+    end
+    print()
+    return plain,html
+  end
+  
+  local function april_help_function(obj, verbosity)
+    local plain,html = help(obj, verbosity, {}, {})
+    local data = {
+      ["text/plain"] = table.concat(plain),
+      ["text/html"]  = table.concat(html),
+    }
+    return data
+  end
+  
+  table.insert(help_functions, april_help_function)
+end
