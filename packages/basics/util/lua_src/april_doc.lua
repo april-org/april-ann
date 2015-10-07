@@ -364,16 +364,58 @@ do
       insert(plain, "\n")
       
       insert(html, ("<h4>Doc %d</h4>"):format(idx))
-      insert(plain, ("\nDoc %d\n"):format(idx))
+      insert(plain, ("Doc %d\n"):format(idx))
       insert(html, "<table style=\"border:0px\">")
       insert(html, "<tr><th>Key</th><th>Value</th></tr>")
+
+      local definition = {}
+      if current.outputs then
+        if #current.outputs == 0 and next(current.outputs) then
+          table.insert(definition, "table")
+        else
+          local outs = {}
+          for i=1,#current.outputs do
+            if current.outputs[i] == "..." then
+              outs[i] = "..."
+              break
+            else
+              outs[i] = "out"..i
+            end
+          end
+          table.insert(definition, table.concat(outs,","))
+        end
+        table.insert(definition, " = ")
+      end
+      if #definition>0 then table.insert(definition, "funcname(") end
+      if current.params then
+        if #current.params == 0 and next(current.params) then
+          table.insert(definition, "table")
+        else
+          local args = {}
+          for i=1,#current.params do
+            if current.params[i] == "..." then
+              args[i] = "..."
+              break
+            else
+              args[i] = "arg"..i
+            end
+          end
+          table.insert(definition, table.concat(args,","))
+        end
+      end
+      if #definition>0 then
+        table.insert(definition, ")")
+        definition = table.concat(definition)
+        insert(html, ("<tr><td style=\"margin-right:4px\">Def.</td><td>%s</td></tr>"):format(definition))
+        insert(plain, ("Def.:     %s\n"):format(definition))
+      end
       
       if current.class then
         insert(html, ("<tr><td style=\"margin-right:4px\">DocClass</td><td>%s</td></tr>"):format(current.class))
         insert(plain, ("DocClass: %s\n"):format(current.class))
       end
       
-      if current.sumary then
+      if current.summary then
         insert(html, ("<tr><td style=\"margin-right:4px\">Summary</td><td>%s</td></tr>"):format(current.summary))
         insert(plain, ("Summary: %s\n"):format(current.summary))
       end
