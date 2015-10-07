@@ -1215,4 +1215,61 @@ end)
 
 ------------------------------------------------------------------
 
+-- support for IPyLua
+do
+  local handlers = debug.getregistry().APRILANN.IPyLua_output_handlers
+
+  handlers[ data_frame ] = function(proxy)
+    local plain = tostring(obj)
+    local html = {}
+    local self = getmetatable(proxy)
+    table.insert(html, "<div>")
+    if not next(rawget(self, "data")) then
+      table.insert(html, "<p>Empty data_frame</p>")
+    else
+      table.insert(html, "<table>")
+      table.insert(html, "<tr>")
+      table.insert(html, "<th></th>")
+      for j,col_name in ipairs(rawget(self, "columns")) do
+        table.insert(html, "<th>%s</th>"%{quote(col_name, '%s', '"', '.')})
+      end
+      table.insert(html, "</tr>")
+      local truncated = false
+      for i,row_name in ipairs(rawget(self, "index")) do
+        table.insert(html, "<tr>")
+        if i > 20 then
+          for j=1,(#rawget(self, "columns"))+1 do
+            table.insert(html, "<td>...</td>")
+            if j > 21 then break end
+          end
+          truncated = true
+          break
+        else
+          table.insert(html, "<td>%s</td>"%{row_name})
+          for j,col_name in ipairs(rawget(self, "columns")) do
+            if j > 20 then
+              table.insert(html, "<td>...</td>")
+              break
+            end
+            table.insert(html, "<td>%s</td>"%{quote(rawget(self, "data")[col_name][i],
+                                                    '%s', '"', '.')})
+          end
+        end
+        table.insert(html, "</tr>")
+      end
+      table.insert(html, "</table>")
+    end
+    table.insert(html, "<pre><code># data_frame of %d rows x %d columns</code></pre>"%
+                   {#rawget(self,"index"),#rawget(self,"columns")})
+    table.insert(html, "</div>")
+    --
+    local data = {
+      ["text/plain"] = plain,
+      ["text/html"] = table.concat(html),
+    }
+    return data
+  end
+  
+end
+
 return data_frame
