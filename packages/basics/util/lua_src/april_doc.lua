@@ -358,6 +358,30 @@ do
       insert(plain, ("Super:    %s\n"):format(x))
     end
     
+    if type(obj) == "function" then
+      local definition = {}
+      local info = debug.getinfo(obj)
+      if info.what == "Lua" and info.source then
+        local source = info.source
+        local first  = info.linedefined
+        local iterator
+        if source:sub(1,1) == "@" then
+          iterator = table.pack( io.lines(source:sub(2)) )
+        else
+          iterator = table.pack( source:gmatch("([^\r\n]+)") )
+        end
+        local k=1
+        for line in table.unpack( iterator ) do
+          if k == first then definition = line break end
+          k=k+1
+        end
+        if definition then
+          insert(html, ("<tr><td style=\"margin-right:4px\">LuaDef</td><td>%s</td></tr>"):format(definition))
+          insert(plain, ("LuaDef:   %s\n"):format(definition))
+        end
+      end
+    end
+    
     insert(html, "</table>")
     
     for idx,current in ipairs(doc_table) do
@@ -367,7 +391,7 @@ do
       insert(plain, ("Doc %d\n"):format(idx))
       insert(html, "<table style=\"border:0px\">")
       insert(html, "<tr><th>Key</th><th>Value</th></tr>")
-
+      
       local definition = {}
       if current.outputs then
         if #current.outputs == 0 and next(current.outputs) then
