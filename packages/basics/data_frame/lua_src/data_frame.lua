@@ -1223,7 +1223,7 @@ do
     local plain = tostring(obj)
     local html = {}
     local self = getmetatable(proxy)
-    table.insert(html, "<div>")
+    table.insert(html, "<div style=\"max-width:99%; overflow:auto\">")
     if not next(rawget(self, "data")) then
       table.insert(html, "<p>Empty data_frame</p>")
     else
@@ -1231,6 +1231,10 @@ do
       table.insert(html, "<tr>")
       table.insert(html, "<th></th>")
       for j,col_name in ipairs(rawget(self, "columns")) do
+        if j > 20 then
+          table.insert(html, "<td>...</td>")
+          break
+        end
         table.insert(html, "<th>%s</th>"%{quote(col_name, '%s', '"', '.')})
       end
       table.insert(html, "</tr>")
@@ -1259,7 +1263,7 @@ do
       end
       table.insert(html, "</table>")
     end
-    table.insert(html, "<pre><code># data_frame of %d rows x %d columns</code></pre>"%
+    table.insert(html, "<pre># data_frame of %d rows x %d columns</pre>"%
                    {#rawget(self,"index"),#rawget(self,"columns")})
     table.insert(html, "</div>")
     --
