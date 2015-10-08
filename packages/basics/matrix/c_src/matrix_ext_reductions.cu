@@ -75,6 +75,7 @@ namespace AprilMath {
       Matrix<T> *matMin(const SparseMatrix<T> *obj, int dim,
                         Matrix<T> *dest,
                         Matrix<int32_t> *argmin) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
         if (dim != 0 && dim != 1) {
           ERROR_EXIT1(128, "Incorrect given dimension %d\n", dim);
         }
@@ -88,7 +89,7 @@ namespace AprilMath {
         else {
           int result_dims[2] = { obj->getDimSize(0), obj->getDimSize(1) };
           result_dims[dim] = 1;
-          dest = new Matrix<T>(1, result_dims);
+          aux = dest = new Matrix<T>(1, result_dims);
         }
         if (argmin) {
           if (argmin->getDimSize(dim) != 1 ||
@@ -123,6 +124,7 @@ namespace AprilMath {
             }
           }
         }
+        aux.weakRelease();
         return dest;
       }
     
@@ -149,6 +151,7 @@ namespace AprilMath {
       Matrix<T> *matMax(const SparseMatrix<T> *obj,
                         int dim, Matrix<T> *dest,
                         Matrix<int32_t> *argmax) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
         if (dim != 0 && dim != 1) {
           ERROR_EXIT1(128, "Incorrect given dimension %d\n", dim);
         }
@@ -162,7 +165,7 @@ namespace AprilMath {
         else {
           int result_dims[2] = { obj->getDimSize(0), obj->getDimSize(1) };
           result_dims[dim] = 1;
-          dest = new Matrix<T>(1, result_dims);
+          aux = dest = new Matrix<T>(1, result_dims);
         }
         if (argmax) {
           if (argmax->getDimSize(dim) != 1 ||
@@ -197,6 +200,7 @@ namespace AprilMath {
             }
           }
         }
+        aux.weakRelease();
         return dest;
       }
     
@@ -269,12 +273,13 @@ namespace AprilMath {
                               Int32GPUMirroredMemoryBlock *raw_positions,
                               const int shift,
                               Matrix<T> *result) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
         if (dim < 0 || dim > obj->getNumDim()) {
           ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n",
                       dim, obj->getNumDim());
         }
         if (result == 0) {
-          result = new Matrix<T>(1, obj->getDimSize(dim));
+          aux = result = new Matrix<T>(1, obj->getDimSize(dim));
         }
         else {
           if (result->size()!=obj->getDimSize(dim) || result->getNumDim()!=1) {
@@ -386,6 +391,7 @@ namespace AprilMath {
             }
           }
         }
+        aux.weakRelease();
         return result;
       }
       
@@ -427,6 +433,7 @@ namespace AprilMath {
       template <typename T>
       Matrix<T> *matSum(const SparseMatrix<T> *obj, int dim,
                         Matrix<T> *dest, bool accumulated) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
         if (dim != 0 && dim != 1) {
           ERROR_EXIT1(128, "Incorrect given dimension %d\n", dim);
         }
@@ -443,7 +450,7 @@ namespace AprilMath {
         else {
           int result_dims[2] = { obj->getDimSize(0), obj->getDimSize(1) };
           result_dims[dim] = 1;
-          dest = new Matrix<T>(1, result_dims);
+          aux = dest = new Matrix<T>(1, result_dims);
           AprilMath::MatrixExt::Initializers::matZeros(dest);
         }
         typename Matrix<T>::random_access_iterator dest_it(dest);
@@ -455,6 +462,7 @@ namespace AprilMath {
           aux_dims[ndim] = coords[ndim];
           dest_it(aux_dims[0],aux_dims[1]) += (*it);
         }
+        aux.weakRelease();
         return dest;
       }
 

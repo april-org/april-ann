@@ -82,9 +82,11 @@ namespace Basics {
       return 0;
     }
     sparse = line.extract_token();
-    AprilMath::GPUMirroredMemoryBlock<T> *values = new AprilMath::GPUMirroredMemoryBlock<T>(NZ);
-    AprilMath::Int32GPUMirroredMemoryBlock *indices = new AprilMath::Int32GPUMirroredMemoryBlock(NZ);
-    AprilMath::Int32GPUMirroredMemoryBlock *first_index = 0;
+    AprilUtils::SharedPtr<AprilMath::GPUMirroredMemoryBlock<T> > values =
+      new AprilMath::GPUMirroredMemoryBlock<T>(NZ);
+    AprilUtils::SharedPtr<AprilMath::Int32GPUMirroredMemoryBlock > indices =
+      new AprilMath::Int32GPUMirroredMemoryBlock(NZ);
+    AprilUtils::SharedPtr<AprilMath::Int32GPUMirroredMemoryBlock > first_index;
     SPARSE_FORMAT sparse_format;
     if (!sparse || sparse=="csr") {
       first_index = new AprilMath::Int32GPUMirroredMemoryBlock(dims[0]+1);
@@ -165,7 +167,7 @@ namespace Basics {
       }
     }
     mat = new SparseMatrix<T>(dims[0],dims[1],
-                              values,indices,first_index,
+                              values.get(),indices.get(),first_index.get(),
                               sparse_format);
     return mat;
   }

@@ -406,7 +406,7 @@ namespace Basics {
   Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len,
                                bool clone_if_not_contiguous) {
     bool need_clone = false;
-    Matrix<T> * obj;
+    AprilUtils::SharedPtr< Matrix<T> > obj;
     if (!getIsContiguous()) {
       if (!clone_if_not_contiguous) {
         ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
@@ -441,14 +441,14 @@ namespace Basics {
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif
-    return obj;
+    return obj.weakRelease();
   }
 
   template <typename T>
   Matrix<T> *Matrix<T>::constRewrap(const int *new_dims, int len,
                                     bool clone_if_not_contiguous) const {
     bool need_clone = false;
-    Matrix<T> * obj;
+    AprilUtils::SharedPtr< Matrix<T> > obj;
     if (!getIsContiguous()) {
       if (!clone_if_not_contiguous) {
         ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
@@ -482,7 +482,7 @@ namespace Basics {
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif
-    return obj;
+    return obj.weakRelease();
   }
   
   template <typename T>
@@ -502,7 +502,7 @@ namespace Basics {
       strides[len] = 1;
       sizes[len++] = 1;
     }
-    Matrix<T> *obj =
+    AprilUtils::SharedPtr< Matrix<T> > obj =
       new Matrix<T>(len, NULL, getOffset(), NULL,
                     size(), last_raw_pos,
                     const_cast< AprilMath::GPUMirroredMemoryBlock<T>*>(data.get()),
@@ -510,7 +510,7 @@ namespace Basics {
                     const_cast< AprilUtils::MMappedDataReader*>(mmapped_data.get()));
     obj->matrixSize = sizes.release();
     obj->stride     = strides.release();
-    return obj;
+    return obj.weakRelease();
   }
 
   template <typename T>
@@ -531,13 +531,13 @@ namespace Basics {
       sizes[len++] = 1;
     }
     // return this in case len==numDim, rewrap in other case
-    Matrix<T> *obj = (len==numDim) ?
+    AprilUtils::SharedPtr< Matrix<T> > obj = (len==numDim) ?
       this : new Matrix<T>(len, NULL, getOffset(), NULL,
                            size(), last_raw_pos, data.get(),
                            use_cuda, mmapped_data.get());
     obj->matrixSize = sizes.release();
     obj->stride     = strides.release();
-    return obj;
+    return obj.weakRelease();
   }
 
   template<typename T>
@@ -1041,16 +1041,17 @@ namespace Basics {
     if (numDim != 1)
       ERROR_EXIT(128, "Only one-dimensional matrix is allowed\n");
     const int dims[2] = { matrixSize[0], matrixSize[0] };
-    Matrix<T> *resul  = new Matrix<T>(2, dims);
+    AprilUtils::SharedPtr< Matrix<T> > resul  = new Matrix<T>(2, dims);
     // resul_diag is a submatrix of resul, build to do a diagonal traverse
     const int stride  = matrixSize[0] + 1;
-    Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
-                                          resul->last_raw_pos, resul->data.get(),
-                                          resul->use_cuda);
-    AprilMath::MatrixExt::Initializers::matZeros(resul);
-    AprilMath::MatrixExt::BLAS::matCopy(resul_diag, this);
-    delete resul_diag;
-    return resul;
+    AprilUtils::SharedPtr< Matrix<T> > resul_diag =
+      new Matrix<T>(1, &stride, 0, dims, dims[0],
+                    resul->last_raw_pos, resul->data.get(),
+                    resul->use_cuda);
+    AprilMath::MatrixExt::Initializers::matZeros(resul.get());
+    AprilMath::MatrixExt::BLAS::matCopy(resul_diag.get(), this);
+    resul_diag.reset();
+    return resul.weakRelease();
   }
 
   template <typename T>
@@ -1061,50 +1062,48 @@ namespace Basics {
   template <typename T>
   Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
                                 T default_value) const {
-    int *result_sizes = new int[getNumDim()];
-    int *matrix_pos = new int[getNumDim()];
+    AprilUtils::UniquePtr<int []> result_sizes = new int[getNumDim()];
+    AprilUtils::UniquePtr<int []> matrix_pos = new int[getNumDim()];
     for (int i=0; i<getNumDim(); ++i) {
       result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
       matrix_pos[i] = begin_padding[i];
     }
-    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
+    AprilUtils::SharedPtr< Matrix<T> > result =
+      new Matrix<T>(getNumDim(), result_sizes.get());
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    AprilMath::MatrixExt::Initializers::matFill(result, default_value);
+    AprilMath::MatrixExt::Initializers::matFill(result.get(), default_value);
     // take submatrix where data will be located
-    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
-                                           false);
+    AprilUtils::SharedPtr< Matrix<T> > result_data =
+      new Matrix<T>(result.get(), matrix_pos.get(), getDimPtr(), false);
     // copy data to the submatrix
-    AprilMath::MatrixExt::BLAS::matCopy(result_data, this);
+    AprilMath::MatrixExt::BLAS::matCopy(result_data.get(), this);
     //
-    delete result_data;
-    delete[] result_sizes;
-    delete[] matrix_pos;
-    return result;
+    result_data.reset();
+    return result.weakRelease();
   }
 
   template <typename T>
   Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) const {
-    int *result_sizes = new int[getNumDim()];
-    int *matrix_pos = new int[getNumDim()];
+    AprilUtils::UniquePtr<int []> result_sizes = new int[getNumDim()];
+    AprilUtils::UniquePtr<int []> matrix_pos = new int[getNumDim()];
     for (int i=0; i<getNumDim(); ++i) {
       result_sizes[i] = getDimSize(i) + pad_value*2;
       matrix_pos[i] = pad_value;
     }
-    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes);
+    AprilUtils::SharedPtr< Matrix<T> > result =
+      new Matrix<T>(getNumDim(), result_sizes.get());
     // FIXME: implement fill by several submatrices for large matrix sizes with
     // small padding sizes
-    AprilMath::MatrixExt::Initializers::matFill(result, default_value);
+    AprilMath::MatrixExt::Initializers::matFill(result.get(), default_value);
     // take submatrix where data will be located
-    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
-                                           false);
+    AprilUtils::SharedPtr< Matrix<T> > result_data =
+      new Matrix<T>(result.get(), matrix_pos.get(), getDimPtr(), false);
     // copy data to the submatrix
-    AprilMath::MatrixExt::BLAS::matCopy(result_data, this);
+    AprilMath::MatrixExt::BLAS::matCopy(result_data.get(), this);
     //
-    delete result_data;
-    delete[] result_sizes;
-    delete[] matrix_pos;
-    return result;
+    result_data.reset();
+    return result.weakRelease();
   }
 
   /// Add singleton dimensions at left

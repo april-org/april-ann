@@ -130,19 +130,13 @@ void print_CPP_stacktrace(FILE *out) {
 
 #define SIZE 2048u
 void print_CPP_LUA_stacktrace_and_exit(int errorcode, const char *format, ...) {
+  UNUSED_VARIABLE(errorcode);
   va_list list;
   va_start( list, format );
   print_CPP_stacktrace();
-  if (Base::getGlobalLuaState() != 0) {
-    char error_message[SIZE+1];
-    int len = vsnprintf(error_message, SIZE, format, list);
-    if (error_message[len-1] == '\n') error_message[--len] = '\0';
-    lua_pushlstring(Base::getGlobalLuaState(), error_message, len);
-    lua_error(Base::getGlobalLuaState());
-  }
-  else {
-    vprintf(format, list);
-    exit(errorcode);
-  }
+  char *error_message = new char[SIZE+1];
+  int len = vsnprintf(error_message, SIZE, format, list);
+  va_end(list);
+  throw(error_message);
 }
 #undef SIZE

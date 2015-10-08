@@ -221,12 +221,13 @@ namespace AprilMath {
       
       template <typename T>
       Matrix<int32_t> *matOrder(const Matrix<T> *m, Matrix<int32_t> *dest) {
+        AprilUtils::SharedPtr< Matrix<int32_t> > aux;
         AprilUtils::SharedPtr< Matrix<T> > squeezed(m->constSqueeze());
         if (squeezed->getNumDim() > 1) {
           ERROR_EXIT(128, "Needs a rank 1 matrix object\n");
         }
         if (dest == 0) {
-          dest = new Matrix<int32_t>(1, squeezed->size());
+          aux = dest = new Matrix<int32_t>(1, squeezed->size());
         }
         else {
           if (squeezed->size() != dest->size()) {
@@ -244,14 +245,16 @@ namespace AprilMath {
         int32_t *ptr = dest->getRawDataAccess()->getPPALForReadAndWrite();
         MatOrderCompare<T> cmp(squeezed.get());
         AprilUtils::Sort(ptr, 0, dest->size()-1, cmp);
+        aux.weakRelease();
         return dest;
       }
 
       template <typename T>
       Matrix<int32_t> *matOrderRank(const Matrix<T> *m, Matrix<int32_t> *dest) {
         AprilUtils::SharedPtr< Matrix<int32_t> > aux = matOrder(m);
+        AprilUtils::SharedPtr< Matrix<int32_t> > aux2;
         if (dest == 0) {
-          dest = new Matrix<int32_t>(1, aux->size());
+          aux2 = dest = new Matrix<int32_t>(1, aux->size());
         }
         else {
           if (aux->size() != dest->size()) {
@@ -265,6 +268,7 @@ namespace AprilMath {
              src_it != aux->end(); ++src_it) {
           dst_it( *src_it - 1 ) = i++;
         }
+        aux2.weakRelease();
         return dest;
       }
 
@@ -430,30 +434,37 @@ namespace AprilMath {
       Matrix<T> *matAddition(const Matrix<T> *a,
                              const Matrix<T> *b,
                              Matrix<T> *c) {
-        if (c == 0) c = a->clone();
-        return AprilMath::MatrixExt::BLAS::
+        AprilUtils::SharedPtr< Matrix<T> > aux;
+        if (c == 0) aux = c = a->clone();
+        c = AprilMath::MatrixExt::BLAS::
           matAxpy(c, AprilMath::Limits<T>::one(), b);
+        aux.weakRelease();
+        return c;
       }
 
       template <typename T>
       Matrix<T> *matSubstraction(const Matrix<T> *a,
                                  const Matrix<T> *b,
                                  Matrix<T> *c) {
-        if (c == 0) c = a->clone();
-        return AprilMath::MatrixExt::BLAS::
+        AprilUtils::SharedPtr< Matrix<T> > aux;
+        if (c == 0) aux = c = a->clone();
+        c = AprilMath::MatrixExt::BLAS::
           matAxpy(c, -AprilMath::Limits<T>::one(), b);
+        aux.weakRelease();
+        return c;
       }
     
       template <typename T>
       Matrix<T> *matMultiply(const Matrix<T> *a,
                              const Matrix<T> *b,
                              Matrix<T> *c) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
         if (b->isVector()) {
           if (a->isColVector()) {
             // OUTER product
             int dim[2] = {a->size(),b->size()};
             if (c == 0) {
-              c = new Matrix<T>(2, dim);
+              aux = c = new Matrix<T>(2, dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -470,7 +481,7 @@ namespace AprilMath {
             // Matrix-Vector product
             int dim[2] = {a->getDimSize(0),1};
             if (c == 0) {
-              c = new Matrix<T>(b->getNumDim(), dim);
+              aux = c = new Matrix<T>(b->getNumDim(), dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -490,7 +501,7 @@ namespace AprilMath {
             // DOT product
             int dim[2] = {1,1};
             if (c == 0) {
-              c = new Matrix<T>(a->getNumDim(), dim);
+              aux = c = new Matrix<T>(a->getNumDim(), dim);
 #ifdef USE_CUDA
               c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -509,7 +520,7 @@ namespace AprilMath {
           // Matrix-Matrix product
           int dim[2] = {a->getDimSize(0), b->getDimSize(1)};
           if (c == 0) {
-            c = new Matrix<T>(2,dim);
+            aux = c = new Matrix<T>(2,dim);
 #ifdef USE_CUDA
             c->setUseCuda(a->getCudaFlag() || b->getCudaFlag());
 #endif
@@ -528,6 +539,7 @@ namespace AprilMath {
         else {
           ERROR_EXIT(128, "Incompatible matrix sizes\n");
         }
+        aux.weakRelease();
         return c;
       }
       
@@ -536,6 +548,7 @@ namespace AprilMath {
 						   int wsize,
 						   int wadvance,
 						   Basics::Matrix<float> *dest) {
+        AprilUtils::SharedPtr< Matrix<float> > aux;
 	const int N = obj->getNumDim();
 	if (N != 1) ERROR_EXIT(128, "Only valid for numDim=1\n");
 	if (wsize > obj->size() || wadvance > obj->size()) {
@@ -552,7 +565,7 @@ namespace AprilMath {
 	  }
 	}
 	else {
-	  dest = new Matrix<float>(N+1, dest_size.get());
+	  aux = dest = new Matrix<float>(N+1, dest_size.get());
 #ifdef USE_CUDA
 	  dest->setUseCuda(obj->getCudaFlag());
 #endif
@@ -590,22 +603,26 @@ namespace AprilMath {
 	  swindow.next();
 	}
 	april_assert(i == dest_size[0]);
+        aux.weakRelease();
 	return dest;
       }
 
       template <typename T, typename O>
       Basics::Matrix<O> *matConvertTo(const Basics::Matrix<T> *input,
                                       Basics::Matrix<O> *dest) {
+        AprilUtils::SharedPtr< Matrix<O> > aux;
         if (dest != 0) {
           if (!dest->sameDim(input)) {
             ERROR_EXIT(256, "Incompatible matrix sizes\n");
           }
         }
         else {
-          dest = new Basics::Matrix<O>(input->getNumDim(), input->getDimPtr());
+          aux = dest = new Basics::Matrix<O>(input->getNumDim(), input->getDimPtr());
         }
-        return MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(),
+        dest = MatrixScalarMap1<T,O>(input, AprilMath::Functors::m_cast<T,O>(),
                                      dest);
+        aux.weakRelease();
+        return dest;
       }
 
       // TODO: Use this function in matrixBool count_zeros, count_ones, ...
@@ -622,6 +639,7 @@ namespace AprilMath {
       template <typename T>
       Basics::Matrix<int32_t> *matNonZeroIndices(const Basics::Matrix<T> *input,
                                                  Basics::Matrix<int32_t> *dest) {
+        AprilUtils::SharedPtr<Matrix<int32_t> > aux;
         AprilUtils::SharedPtr<Matrix<T> > sq_input = input->constSqueeze();
         if (sq_input->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 matrix\n");
@@ -634,7 +652,7 @@ namespace AprilMath {
           }
         }
         else {
-          dest = new Basics::Matrix<int32_t>(1, &non_zeros);
+          aux = dest = new Basics::Matrix<int32_t>(1, &non_zeros);
         }
         if (non_zeros == 0) return dest;
         int k=0;
@@ -649,6 +667,7 @@ namespace AprilMath {
           }
         }
         april_assert(dest_it == dest->end());
+        aux.weakRelease();
         return dest;
       }
       

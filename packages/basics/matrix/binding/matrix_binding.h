@@ -31,6 +31,7 @@ extern "C" {
 #include "bind_mtrand.h"
 #include "gpu_mirrored_memory_block.h"
 #include "matrixFloat.h"
+#include "mystring.h"
 #include "luabindmacros.h"
 #include "luabindutil.h"
 #include "utilLua.h"
@@ -48,7 +49,11 @@ namespace Basics {
         lua_pushvalue(L,n);
         lua_push(L,a);
         lua_push(L,const_cast<Matrix<T>*>(b));
-        lua_call(L, 2, 1);
+        if (lua_pcall(L, 2, 1, 0) != LUA_OK) {
+          AprilUtils::string str(lua_tostring(L,-1));
+          lua_pop(L,1);
+          ERROR_EXIT1(128, "%s", str.c_str());
+        }
         AprilUtils::SharedPtr< Matrix<T> > c = lua_to<Matrix<T>*>(L,-1);
         lua_pop(L,1);
         return c.weakRelease();
@@ -197,12 +202,12 @@ namespace Basics {
         const char *data = lua_tostring(L,1);
         AprilUtils::UniquePtr<int []> dim = new int[1];
         dim[0] = len;
-        Matrix<T> *obj = new Matrix<T>(1, dim.get());
+        AprilUtils::SharedPtr<Matrix<T> > obj = new Matrix<T>(1, dim.get());
         for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, ++data) {
           april_assert(data != '\0');
           *it = static_cast<T>(*data);
         }
-        lua_push(L, obj);
+        lua_push(L, obj.get());
       }
       else {
         int i,argn;
@@ -227,12 +232,12 @@ namespace Basics {
               LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
           }
         }
-        Matrix<T>* obj;
+        AprilUtils::SharedPtr< Matrix<T> > obj;
         if (lua_is<AprilMath::GPUMirroredMemoryBlock<T>*>(L,argn)) {
-          AprilMath::GPUMirroredMemoryBlock<T> *block;
+          AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > block;
           block = lua_to<AprilMath::GPUMirroredMemoryBlock<T>*>(L, argn);
           if (dim[0] == -1) dim[0] = block->getSize();
-          obj = new Matrix<T>(ndims, dim.get(), block);
+          obj = new Matrix<T>(ndims, dim.get(), block.get());
         }
         else {
           if (lua_istable(L,argn)) {
@@ -275,11 +280,10 @@ namespace Basics {
                 april_assert(data != '\0');
                 *it = static_cast<T>(*data);
               }
-              lua_push(L, obj);
             }
           }
         } // else { !lua_is(L,argn) }
-        lua_push(L, obj);
+        lua_push(L, obj.get());
       }
       return 1;
     }
@@ -728,7 +732,11 @@ namespace Basics {
           ++list_it[j];
         }
         // CALL
-        lua_call(L, N+1, 1);
+        if (lua_pcall(L, N+1, 1, 0) != LUA_OK) {
+          AprilUtils::string str(lua_tostring(L,-1));
+          lua_pop(L,1);
+          ERROR_EXIT1(128, "%s", str.c_str());
+        }
         // pop the result, a number
         if (!lua_isnil(L, -1)) {
           if (!lua_is<T>(L, -1)) {
@@ -1853,7 +1861,11 @@ namespace Basics {
         if (lua_istable(L,2)) {
           lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
           lua_pushvalue(L, 2); // dim table ... matrixInt32 table
-          lua_call(L, 1, 1); // dim table ... object
+          if (lua_pcall(L, 1, 1, 0) != LUA_OK) { // dim table ... object
+            AprilUtils::string str(lua_tostring(L,-1));
+            lua_pop(L,1);
+            ERROR_EXIT1(128, "%s", str.c_str());
+          }
           idx = lua_to<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
@@ -1882,7 +1894,11 @@ namespace Basics {
         if (lua_istable(L,2)) {
           lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
           lua_pushvalue(L, 2); // dim table ... matrixInt32 table
-          lua_call(L, 1, 1); // dim table ... object
+          if (lua_pcall(L, 1, 1, 0) != LUA_OK) { // dim table ... object
+            AprilUtils::string str(lua_tostring(L,-1));
+            lua_pop(L,1);
+            ERROR_EXIT1(128, "%s", str.c_str());
+          }
           idx = lua_to<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
@@ -1911,7 +1927,11 @@ namespace Basics {
         if (lua_istable(L,2)) {
           lua_getglobal(L, "matrixInt32"); // dim table ... matrixInt32
           lua_pushvalue(L, 2); // dim table ... matrixInt32 table
-          lua_call(L, 1, 1); // dim table ... object
+          if (lua_pcall(L, 1, 1, 0) != LUA_OK) { // dim table ... object
+            AprilUtils::string str(lua_tostring(L,-1));
+            lua_pop(L,1);
+            ERROR_EXIT1(128, "%s", str.c_str());
+          }
           idx = lua_to<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
