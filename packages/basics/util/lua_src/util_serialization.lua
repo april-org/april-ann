@@ -384,19 +384,19 @@ deserialize =
     if type(dest) == "string" then
       if dest:find(FIND_MASK) or dest:find("^return ") then
         -- it is a previously serialized string
-        local loader = assert( loadstring(dest) )
+        local loader = assert( load(dest) )
         return loader(...)
       else
         local f = april_assert(io.open(dest), "Unable to locate %s\n",
                                dest)
         return deserialize(f, ...)
       end
-    elseif iscallable(dest) then
+    elseif iscallable(dest) then -- DEPRECATED: to be removed
       local f = assert( load(dest()) )
       return f(...)
     else
       assert(dest.read, "Needs a string or an opened file")
-      local loader = assert( load(function() return dest:read(DEFAULT_BLOCK_SIZE) end) )
+      local loader = assert( load(dest:lines(DEFAULT_BLOCK_SIZE)) )
       return loader(...)
     end
   end

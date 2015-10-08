@@ -196,7 +196,7 @@ local function dataframe_tostring(proxy)
   if not next(rawget(self, "data")) then
     return table.concat{
       "Empty data_frame\n",
-      "[data_frame of %d rows x %d columns]\n"%
+      "# data_frame of %d rows x %d columns\n"%
         {#rawget(self,"index"),#rawget(self,"columns")}
     }
   else
@@ -230,7 +230,7 @@ local function dataframe_tostring(proxy)
         table.insert(tbl, "\n")
       end
     end
-    table.insert(tbl, "[data_frame of %d rows x %d columns]\n"%
+    table.insert(tbl, "# data_frame of %d rows x %d columns\n"%
                    {#rawget(self,"index"),#rawget(self,"columns")})
     return table.concat(tbl)
   end
@@ -1178,19 +1178,27 @@ groupped_methods.get_group = function(self, ...)
   return df
 end
 
-local MAX = 6
+local MAX = 40
 local function levels_to_string(x)
+  local size = 0
   local t = {}
-  for i=1,math.min(MAX,#x) do t[i] = x[i] end
-  if #x > MAX then t[MAX+1] = "..." end
-  for i=math.max(MAX+1,#x-MAX),#x do t[#t+1] = x[i] end
+  for i=1,#x do
+    local y = tostring(x[i])
+    size = size+#y
+    if size>=MAX then break end
+    t[i] = y
+  end
+  if #t ~= #x then
+    t[#t+1] = "..."
+    if #tostring(x[#x]) < MAX then t[#t+1] = tostring(x[#x]) end
+  end
   return table.concat(t, " ")
 end
 
 class.extend_metamethod(groupped, "__tostring",
                         function(self)
                           local level2id = self.level2id
-                          local t = { "data_frame.groupby" }
+                          local t = { }
                           for i,col_name in ipairs(self.columns) do
                             local levels = self:levels(col_name)
                             table.sort(levels, function(a,b)
@@ -1201,9 +1209,71 @@ class.extend_metamethod(groupped, "__tostring",
                                            levels_to_string(levels)
                             })
                           end
+                          table.insert(t, "# data_frame.groupby")
                           return table.concat(t,"\n")
 end)
 
 ------------------------------------------------------------------
+
+-- support for IPyLua
+do
+  local handlers = debug.getregistry().APRILANN.IPyLua_output_handlers
+
+  handlers[ data_frame ] = function(proxy)
+    local plain = tostring(obj)
+    local html = {}
+    local self = getmetatable(proxy)
+    table.insert(html, "<div style=\"max-width:99%; overflow:auto\">")
+    if not next(rawget(self, "data")) then
+      table.insert(html, "<p>Empty data_frame</p>")
+    else
+      table.insert(html, "<table>")
+      table.insert(html, "<tr>")
+      table.insert(html, "<th></th>")
+      for j,col_name in ipairs(rawget(self, "columns")) do
+        if j > 20 then
+          table.insert(html, "<td>...</td>")
+          break
+        end
+        table.insert(html, "<th>%s</th>"%{quote(col_name, '%s', '"', '.')})
+      end
+      table.insert(html, "</tr>")
+      local truncated = false
+      for i,row_name in ipairs(rawget(self, "index")) do
+        table.insert(html, "<tr>")
+        if i > 20 then
+          for j=1,(#rawget(self, "columns"))+1 do
+            table.insert(html, "<td>...</td>")
+            if j > 21 then break end
+          end
+          truncated = true
+          break
+        else
+          table.insert(html, "<td>%s</td>"%{row_name})
+          for j,col_name in ipairs(rawget(self, "columns")) do
+            if j > 20 then
+              table.insert(html, "<td>...</td>")
+              break
+            end
+            table.insert(html, "<td>%s</td>"%{quote(rawget(self, "data")[col_name][i],
+                                                    '%s', '"', '.')})
+          end
+        end
+        table.insert(html, "</tr>")
+      end
+      table.insert(html, "</table>")
+    end
+    table.insert(html, "<pre># data_frame of %d rows x %d columns</pre>"%
+                   {#rawget(self,"index"),#rawget(self,"columns")})
+    table.insert(html, "</div>")
+    --
+    local data = {
+      ["text/plain"] = plain,
+      ["text/html"] = table.concat(html),
+    }
+    return data
+  end
+  
+end
 
 return data_frame

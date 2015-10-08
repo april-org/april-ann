@@ -34,6 +34,7 @@ namespace AprilIO {
   class CStringStream : public StreamMemory {
     AprilUtils::string data;
     size_t in_pos, out_pos;
+    bool eof;
     
   public:
     CStringStream();

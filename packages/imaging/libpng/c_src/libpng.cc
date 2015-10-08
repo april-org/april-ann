@@ -23,10 +23,34 @@
 
 #include "clamp.h"
 #include "libpng.h"
+#include "stream.h"
+
+using namespace AprilIO;
 
 namespace Imaging {
   namespace LibPNG {
-    ImageFloatRGB *readPNG(const char *filename)
+    static void read_data_fn(png_structp png_ptr, png_bytep dest, png_size_t len) {
+      StreamInterface *fp = (StreamInterface*)png_get_io_ptr(png_ptr);
+      size_t result = fp->get((char*)dest, len);
+      if (result != len) {
+        png_error(png_ptr, "EOF");
+      }
+    }
+
+    static void write_data_fn(png_structp png_ptr, png_bytep source, png_size_t len) {
+      StreamInterface *fp = (StreamInterface*)png_get_io_ptr(png_ptr);
+      size_t result = fp->put((const char*)source, len);
+      if (result != len) {
+        png_error(png_ptr, "EOF");
+      }
+    }
+
+    static void output_flush_fn(png_structp png_ptr) {
+      StreamInterface *fp = (StreamInterface*)png_get_io_ptr(png_ptr);
+      fp->flush();
+    }
+    
+    ImageFloatRGB *readPNG(AprilIO::StreamInterface *fp)
     {
       png_structp png_ptr;
       png_infop   info_ptr;
@@ -35,23 +59,20 @@ namespace Imaging {
       int bit_depth, color_type;
       unsigned char *image_data;
 
-      // Open input file
-      FILE *fp = fopen(filename, "rb");
-
-      if (!fp) {
-        fprintf(stderr, "LibPNG::readPNG() -> cannot open input file %s\n", filename);
+      if (!fp->good()) {
+        fprintf(stderr, "LibPNG::readPNG() -> cannot read from stream\n");
         return NULL;
       }
 
       // Check signature
       unsigned char sig[8];
-      if (fread(sig, 1, 8, fp) < 8) {
-        fprintf(stderr, "LibPNG::readPNG() -> cannot read signature from file %s\n", filename);
+      if (fp->get((char*)sig, 8u) < 8u) {
+        fprintf(stderr, "LibPNG::readPNG() -> cannot read signature from stream\n");
         return NULL;
       }
 
       if (!png_check_sig(sig, 8)) {
-        fprintf(stderr, "LibPNG::readPNG() -> %s is not a PNG file\n", filename);
+        fprintf(stderr, "LibPNG::readPNG() -> stream is not a PNG\n");
         return NULL;
       }
 
@@ -75,8 +96,9 @@ namespace Imaging {
         fprintf(stderr, "Error while initializing I/O\n");
         return NULL;
       }
-
-      png_init_io(png_ptr, fp);
+      
+      // png_init_io(png_ptr, fp);
+      png_set_read_fn(png_ptr, fp, read_data_fn);
       png_set_sig_bytes(png_ptr, 8); // 8 bytes already skipped
 
       // Read PNG info ; get image attributes
@@ -106,7 +128,7 @@ namespace Imaging {
       // Prepare to read pixels
       if (setjmp(png_jmpbuf(png_ptr))) {
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        fprintf(stderr, "Error while reading PNG image from %s\n", filename);
+        fprintf(stderr, "Error while reading PNG image from stream\n");
         return NULL;
       }
 
@@ -148,12 +170,11 @@ namespace Imaging {
       delete[] row_pointers;
       delete[] image_data;
       png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-      fclose(fp);
-
+      
       return res;
     }
 
-    bool writePNG(ImageFloatRGB *img, const char *filename)
+    bool writePNG(ImageFloatRGB *img, AprilIO::StreamInterface *fp)
     {
       bool success=false; // set to true when all ends correctly
       png_structp png_ptr;
@@ -163,9 +184,8 @@ namespace Imaging {
       png_uint_32 rowbytes = 3*img->width();
 
       // Open file for writing
-      FILE *fp = fopen(filename, "wb");
-      if (!fp) {
-        fprintf(stderr, "LibPNG::writePNG() -> cannot open output file\n");
+      if (!fp->good()) {
+        fprintf(stderr, "LibPNG::writePNG() -> cannot write at stream\n");
         return false;
       }
     
@@ -173,7 +193,7 @@ namespace Imaging {
       png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
       if (!png_ptr) {
         fprintf(stderr, "LibPNG::writePNG() -> cannot allocate memory for png_struct\n");
-        goto close_file;
+        goto finish;
       }
 
       info_ptr = png_create_info_struct(png_ptr);
@@ -188,7 +208,8 @@ namespace Imaging {
         goto destroy_png_struct;
       }
 
-      png_init_io(png_ptr, fp);
+      // png_init_io(png_ptr, fp);
+      png_set_write_fn(png_ptr, fp, write_data_fn, output_flush_fn);
 
       // Write header (fixed to RGB, 24bpp)
       if (setjmp(png_jmpbuf(png_ptr))) {
@@ -244,8 +265,7 @@ namespace Imaging {
 
     destroy_png_struct:
       png_destroy_write_struct(&png_ptr, &info_ptr);
-    close_file:
-      fclose(fp);
+    finish:
       return success;
     }
 

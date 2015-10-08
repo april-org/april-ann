@@ -296,3 +296,195 @@ local april_doc_mt = {
 function april_doc(t)
   return setmetatable({t}, april_doc_mt)
 end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+-- support for IPyLua
+do
+  
+  local insert = table.insert
+  local concat = table.concat
+  
+  local function insert_list(html, plain, list)
+    local names_table = {}
+    for name,_ in pairs(list) do table.insert(names_table,name) end
+    table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
+    for k,name in ipairs(names_table) do
+      local desc = list[name]
+      insert(html, ("<tr><td style=\"margin-right:4px\">%s</td><td>%s</td></tr>"):format(name,desc))
+      insert(plain, ("    %s: %s\n"):format(name,desc))
+    end
+  end
+
+  -- TODO: implement with different verbosity levels
+  local function help(object, verbosity)
+    local doc_table = DOC_TABLE[object]
+    local cls = class.of(object)
+    local super = cls and class.super(cls) or nil
+    local id = get_object_id(object)
+    if not doc_table then
+      if cls then doc_table = DOC_TABLE[cls] end
+      if not doc_table then return end
+    end
+    
+    local html = {
+      "<div>",
+      "<h3>APRIL help</h3>",
+      "<table style=\"border:0px\">",
+      "<tr><th>Key</th><th>Value</th></tr>",
+      ("<tr><td style=\"margin-right:4px\">LuaType</td><td>%s</td></tr>"):format(type(object)),
+    }
+
+    local plain = {
+      ("LuaType:  %s\n"):format(type(object)),
+    }
+
+    if id then
+      insert(html, ("<tr><td style=\"margin-right:4px\">ID</td><td>%s</td></tr>"):format(id))
+      insert(plain, ("ID:       %s\n"):format(id))
+    end
+    
+    if cls then
+      local x = tostring(cls):gsub(" class$",""):gsub("^class ","")
+      insert(html, ("<tr><td style=\"margin-right:4px\">Class</td><td>%s</td></tr>"):format(x))
+      insert(plain, ("Class:    %s\n"):format(x))
+    end
+    
+    if super then
+      local x = tostring(super):gsub(" class$",""):gsub("^class ","")
+      insert(html, ("<tr><td style=\"margin-right:4px\">Super</td><td>%s</td></tr>"):format(x))
+      insert(plain, ("Super:    %s\n"):format(x))
+    end
+    
+    if type(obj) == "function" then
+      local definition = {}
+      local info = debug.getinfo(obj)
+      if info.what == "Lua" and info.source then
+        local source = info.source
+        local first  = info.linedefined
+        local iterator
+        if source:sub(1,1) == "@" then
+          iterator = table.pack( io.lines(source:sub(2)) )
+        else
+          iterator = table.pack( source:gmatch("([^\r\n]+)") )
+        end
+        local k=1
+        for line in table.unpack( iterator ) do
+          if k == first then definition = line break end
+          k=k+1
+        end
+        if definition then
+          insert(html, ("<tr><td style=\"margin-right:4px\">LuaDef</td><td>%s</td></tr>"):format(definition))
+          insert(plain, ("LuaDef:   %s\n"):format(definition))
+        end
+      end
+    end
+    
+    insert(html, "</table>")
+    
+    for idx,current in ipairs(doc_table) do
+      insert(plain, "\n")
+      
+      insert(html, ("<h4>Doc %d</h4>"):format(idx))
+      insert(plain, ("Doc %d\n"):format(idx))
+      insert(html, "<table style=\"border:0px\">")
+      insert(html, "<tr><th>Key</th><th>Value</th></tr>")
+      
+      local definition = {}
+      if current.outputs then
+        if #current.outputs == 0 and next(current.outputs) then
+          table.insert(definition, "table")
+        else
+          local outs = {}
+          for i=1,#current.outputs do
+            if current.outputs[i] == "..." then
+              outs[i] = "..."
+              break
+            else
+              outs[i] = "out"..i
+            end
+          end
+          table.insert(definition, table.concat(outs,","))
+        end
+        table.insert(definition, " = ")
+      end
+      if #definition>0 then table.insert(definition, "funcname(") end
+      if current.params then
+        if #current.params == 0 and next(current.params) then
+          table.insert(definition, "table")
+        else
+          local args = {}
+          for i=1,#current.params do
+            if current.params[i] == "..." then
+              args[i] = "..."
+              break
+            else
+              args[i] = "arg"..i
+            end
+          end
+          table.insert(definition, table.concat(args,","))
+        end
+      end
+      if #definition>0 then
+        table.insert(definition, ")")
+        definition = table.concat(definition)
+        insert(html, ("<tr><td style=\"margin-right:4px\">Def.</td><td>%s</td></tr>"):format(definition))
+        insert(plain, ("Def.:     %s\n"):format(definition))
+      end
+      
+      if current.class then
+        insert(html, ("<tr><td style=\"margin-right:4px\">DocClass</td><td>%s</td></tr>"):format(current.class))
+        insert(plain, ("DocClass: %s\n"):format(current.class))
+      end
+      
+      if current.summary then
+        insert(html, ("<tr><td style=\"margin-right:4px\">Summary</td><td>%s</td></tr>"):format(current.summary))
+        insert(plain, ("Summary: %s\n"):format(current.summary))
+      end
+
+      if current.description then
+        insert(html, ("<tr><td style=\"margin-right:4px\">Desc.</td><td>%s</td></tr>"):format(current.description))
+        insert(plain, ("Desc.: %s\n"):format(current.description))
+      end
+      
+      if current.params then
+        insert(html, "<tr><td colspan=\"2\" style=\"margin-right:4px\"><b>Params</b></td></tr>")
+        insert(plain, "Params:\n")
+        insert_list(html, plain, current.params)
+      end
+      
+      if current.outputs then
+        insert(html, "<tr><td colspan=\"2\" style=\"margin-right:4px\"><b>Outputs</b></td></tr>")
+        insert(plain, "Outputs:\n")
+        insert_list(html, plain, current.outputs)
+      end
+      
+      insert(html, "</table>")
+    end
+    insert(html, "</div>")
+    return html,plain
+  end
+  
+  local function help_function_wrapper(obj, verbosity)
+    local html,plain = help(obj, verbosity)
+    if html and plain then
+      local data = {
+        ["text/html"]  = concat(html),
+        ["text/plain"] = concat(plain),
+      }
+      return data
+    end
+  end
+
+  local reg = debug.getregistry()
+  
+  local IPyLua = reg.IPyLua or {}
+  reg.IPyLua = IPyLua
+  
+  local help_functions = IPyLua.help_functions or {}
+  IPyLua.help_functions = help_functions
+  
+  table.insert(help_functions, help_function_wrapper)
+end
