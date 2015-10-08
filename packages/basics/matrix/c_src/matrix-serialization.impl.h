@@ -92,7 +92,7 @@ namespace Basics {
       ERROR_PRINT("number of dimensions overflow\n");
       return 0; // Maximum allocation problem
     }
-    Matrix<T> *mat = 0;
+    AprilUtils::SharedPtr< Matrix<T> > mat;
     // Now we read the type of the format
     line = readULine(stream, c_str.get());
     format = line.extract_token();
@@ -121,11 +121,12 @@ namespace Basics {
       }
       if (data_it!=mat->end()) {
         ERROR_PRINT("Impossible to fill all the matrix components\n");
-        delete mat; mat = 0;
+        mat.reset();
+        return 0;
       }
     } else { // version with comodin
       int size=0,maxsize=4096;
-      T *data = new T[maxsize];
+      AprilUtils::UniquePtr<T []> data = new T[maxsize];
       if (format == "ascii") {
         while ( (line=readULine(stream, c_str.get())) ) {
           while (ascii_extractor(line, data[size])) { 
@@ -136,7 +137,7 @@ namespace Basics {
                 aux[a] = data[a];
               }
               maxsize *= 2;
-              delete[] data; data = aux;
+              data = aux;
             }
           }
         }
@@ -150,7 +151,7 @@ namespace Basics {
                 aux[a] = data[a];
               }
               maxsize *= 2;
-              delete[] data; data = aux;
+              data = aux;
             }
           }
         }
@@ -164,7 +165,8 @@ namespace Basics {
       if ((size % sizesincomodin) != 0) {
         // Error: The size of the data does not coincide
         ERROR_PRINT("data size is not valid reading a matrix with '*'\n");
-        delete[] data; return 0;
+        mat.reset();
+        return 0;
       }
       dims[pos_comodin] = size / sizesincomodin;
       mat = new Matrix<T>(n,dims);
@@ -173,9 +175,9 @@ namespace Basics {
            it!=mat->end();
            ++it,++i)
         *it = data[i];
-      delete[] data;
+      data.reset();
     }
-    return mat;
+    return mat.weakRelease();
   }
   
   template <typename T>
@@ -323,7 +325,7 @@ namespace Basics {
     }
     AprilUtils::constString token;
     int dims[2] = { nrows, ncols };
-    Matrix<T> *mat = 0;
+    AprilUtils::SharedPtr< Matrix<T> > mat;
     mat = new Matrix<T>(2,dims);
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
@@ -361,6 +363,7 @@ namespace Basics {
           ++num_cols_size_count;
         }
         if (num_cols_size_count != ncols) {
+          mat.reset();
           ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
                       "expected %d, found %d\n", i, ncols, num_cols_size_count);
         }
@@ -382,6 +385,7 @@ namespace Basics {
           ++num_cols_size_count;
         }
         if (num_cols_size_count != ncols) {
+          mat.reset();
           ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
                       "expected %d, found %d\n", i, ncols, num_cols_size_count);
         }
@@ -390,9 +394,9 @@ namespace Basics {
     }
     if (data_it!=mat->end()) {
       ERROR_PRINT("Impossible to fill all the matrix components\n");
-      delete mat; mat = 0;
+      mat.reset();
     }
-    return mat;
+    return mat.weakRelease();
   }
   
   template <typename T>

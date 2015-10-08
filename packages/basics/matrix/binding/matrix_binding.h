@@ -197,12 +197,12 @@ namespace Basics {
         const char *data = lua_tostring(L,1);
         AprilUtils::UniquePtr<int []> dim = new int[1];
         dim[0] = len;
-        Matrix<T> *obj = new Matrix<T>(1, dim.get());
+        AprilUtils::SharedPtr<Matrix<T> > obj = new Matrix<T>(1, dim.get());
         for (typename Matrix<T>::iterator it(obj->begin()); it != obj->end(); ++it, ++data) {
           april_assert(data != '\0');
           *it = static_cast<T>(*data);
         }
-        lua_push(L, obj);
+        lua_push(L, obj.get());
       }
       else {
         int i,argn;
@@ -227,12 +227,12 @@ namespace Basics {
               LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
           }
         }
-        Matrix<T>* obj;
+        AprilUtils::SharedPtr< Matrix<T> > obj;
         if (lua_is<AprilMath::GPUMirroredMemoryBlock<T>*>(L,argn)) {
-          AprilMath::GPUMirroredMemoryBlock<T> *block;
+          AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > block;
           block = lua_to<AprilMath::GPUMirroredMemoryBlock<T>*>(L, argn);
           if (dim[0] == -1) dim[0] = block->getSize();
-          obj = new Matrix<T>(ndims, dim.get(), block);
+          obj = new Matrix<T>(ndims, dim.get(), block.get());
         }
         else {
           if (lua_istable(L,argn)) {
@@ -275,11 +275,10 @@ namespace Basics {
                 april_assert(data != '\0');
                 *it = static_cast<T>(*data);
               }
-              lua_push(L, obj);
             }
           }
         } // else { !lua_is(L,argn) }
-        lua_push(L, obj);
+        lua_push(L, obj.get());
       }
       return 1;
     }

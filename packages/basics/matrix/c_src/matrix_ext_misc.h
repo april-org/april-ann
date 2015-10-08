@@ -161,7 +161,7 @@ namespace AprilMath {
             AprilUtils::swap(Na,Nb);
           }
           const int d = Nb - Na; // Na < Nb always here
-          int *shape = new int[Nb];
+          AprilUtils::UniquePtr<int []> shape = new int[Nb];
           for (int i=0; i<Na; ++i) {
             int n = a_dim[i], m = b_dim[i+d];
             if (n != m && n != 1 && m != 1) {
@@ -170,7 +170,7 @@ namespace AprilMath {
             shape[i+d] = AprilUtils::max(n, m);
           }
           for (int i=0; i<d; ++i) shape[i] = b_dim[i];
-          return shape;
+          return shape.release();
         }
         
         /// Performs broadcasting of other matrix into dest matrix using func operation
