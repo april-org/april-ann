@@ -18,11 +18,17 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+extern "C" {
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+}
 #include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <cerrno>
 #include "error_print.h"
+#include "mystring.h"
 #include "signal_handler.h"
 #include "unused_variable.h"
 
@@ -43,7 +49,11 @@ namespace AprilUtils {
     }
     lua_getfield(globalL, LUA_REGISTRYINDEX, TABLE_NAME);
     lua_rawgeti(globalL, -1, signal_handlers[sgn]);
-    lua_call(globalL, 0, 0);
+    if (lua_pcall(globalL, 0, 0, 0) != LUA_OK) {
+      AprilUtils::string str(lua_tostring(globalL,-1));
+      lua_pop(globalL,1);
+      ERROR_EXIT1(128, "%s", str.c_str());
+    }
     lua_pop(globalL, 1);
   }
 

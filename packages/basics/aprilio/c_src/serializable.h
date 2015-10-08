@@ -45,7 +45,11 @@ namespace AprilIO {
     lua_getfield(L, -1, "serialize");
     AprilUtils::LuaTable::pushInto(L, object);
     AprilUtils::LuaTable::pushInto(L, dest);
-    lua_call(L, 2, 0);
+    if (lua_pcall(L, 2, 0, 0) != LUA_OK) {
+      AprilUtils::string str(lua_tostring(L,-1));
+      lua_pop(L,1);
+      ERROR_EXIT1(128, "%s", str.c_str());
+    }
     lua_pop(L, 1);
   }
 
@@ -56,7 +60,11 @@ namespace AprilIO {
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "serialize");
     AprilUtils::LuaTable::pushInto(L, object);
-    lua_call(L, 2, 1);
+    if (lua_pcall(L, 2, 1, 0) != LUA_OK) {
+      AprilUtils::string str(lua_tostring(L,-1));
+      lua_pop(L,1);
+      ERROR_EXIT1(128, "%s", str.c_str());
+    }
     AprilUtils::string result(lua_tostring(L, -1));
     lua_pop(L, 2);
     return result;
@@ -69,7 +77,11 @@ namespace AprilIO {
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "deserialize");
     AprilUtils::LuaTable::pushInto(L, dest);
-    lua_call(L, 1, 1);
+    if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+      AprilUtils::string str(lua_tostring(L,-1));
+      lua_pop(L,1);
+      ERROR_EXIT1(128, "%s", str.c_str());
+    }
     T obj = AprilUtils::LuaTable::convertTo<T>(L, -1);
     lua_pop(L, 2);
     return obj;

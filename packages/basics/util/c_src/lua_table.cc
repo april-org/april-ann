@@ -99,7 +99,11 @@ namespace AprilUtils {
     lua_getfield(L, -1, "to_lua_string");
     pushTable(L);
     lua_pushstring(L, "binary");
-    lua_call(L, 2, 1);
+    if (lua_pcall(L, 2, 1, 0) != LUA_OK) {
+      string str(lua_tostring(L,-1));
+      lua_pop(L,1);
+      ERROR_EXIT1(128, "%s", str.c_str());
+    }
     string str(lua_tostring(L,-1));
     lua_pop(L,2);
     return str;
