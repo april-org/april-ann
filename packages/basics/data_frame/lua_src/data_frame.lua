@@ -146,12 +146,6 @@ local tonumber = tonumber
 -- parses a CSV line using sep as delimiter and adding NA when required
 local parse_csv_line = util.__parse_csv_line__
 
--- converts an array or a matrix into a string
-local function stringfy(array)
-  if class.of(array) then array = array:toTable() end
-  return util.to_lua_string(array, "ascii")
-end
-
 -- checks if an array is a table or a matrix
 local function check_array(array, field)
   if type(array) ~= "table" then
@@ -1160,7 +1154,7 @@ function groupped.constructor(self, df, ...)
     local current = groups[col_name]
     local lv2id = level2id[col_name]
     local data = df[{col_name}]
-    if type(data):find("^matrix") then data = data:toTable() end
+    -- if type(data):find("^matrix") then data = data:toTable() end
     local k = 0
     for i=1,#data do
       local v = data[i]

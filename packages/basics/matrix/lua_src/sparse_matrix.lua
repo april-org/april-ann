@@ -10,11 +10,11 @@ matrix.__generic__.__make_generic_to_lua_string__(matrix.sparse)
 matrix.__generic__.__make_generic_toFilename__(matrix.sparse)
 matrix.__generic__.__make_generic_toString__(matrix.sparse)
 
-matrix.sparse.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
+-- matrix.sparse.meta_instance.__call =
+--   matrix.__generic__.__make_generic_call__()
 
--- define right side operator []
-matrix.__generic__.__make_generic_index__(matrix.sparse)
+-- -- define right side operator []
+-- matrix.__generic__.__make_generic_index__(matrix.sparse)
 
 matrix.sparse.meta_instance.__tostring = function(self)
   local out      = {}

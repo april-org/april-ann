@@ -1504,9 +1504,7 @@ class.extend(matrix, "get_major_order",
 -----------------------------
 
 -- other stuff
-
-matrix.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
+matrix.__generic__.__make_generic_call__(matrix)
 
 -- define left side operator []
 matrix.meta_instance.__newindex =

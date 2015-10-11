@@ -152,7 +152,7 @@ function matrix.__generic__.__make_all_serialization_methods__(matrix_class,
                             local self = self:squeeze()
                             assert(self:num_dim() == 1,
                                    "Needs a rank one matrix")
-                            return self:toTable()
+                            return self
                           end
   )
 end

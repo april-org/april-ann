@@ -130,19 +130,29 @@ local matrix_methods = {
 local matrix_class_methods = {
   float = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   double = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   char = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   int32_t = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   ComplexF = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
+  bool = {
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
+  },
+  
 }
 
 local matrix_class_method_binding = [[
