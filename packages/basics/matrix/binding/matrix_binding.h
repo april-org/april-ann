@@ -243,7 +243,7 @@ namespace Basics {
 
 #define FUNCTION_NAME "read_vector"
     template<typename K>
-    static AprilUtils::UniquePtr<K []> read_vector(lua_State *L, const char *key, int num_dim, K add) {
+    static K *read_vector(lua_State *L, const char *key, int num_dim, K add) {
       AprilUtils::UniquePtr<K []> v;
       lua_getfield(L, 1, key);
       if (!lua_isnil(L, -1)) {
@@ -261,7 +261,7 @@ namespace Basics {
         }
       }
       lua_pop(L, 1);
-      return v;
+      return v.release();
     }
 #undef FUNCTION_NAME
 
