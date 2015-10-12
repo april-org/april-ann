@@ -35,7 +35,7 @@ local matrix_methods = {
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   double = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -55,7 +55,7 @@ local matrix_methods = {
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   int32_t = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -73,6 +73,7 @@ local matrix_methods = {
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
+    "left_inflate", "right_inflate",
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -91,7 +92,7 @@ local matrix_methods = {
     "toMMap",
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -108,6 +109,7 @@ local matrix_methods = {
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "stringfy",
+    "left_inflate", "right_inflate",
   },
   bool = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -124,6 +126,7 @@ local matrix_methods = {
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "to_index",
+    "left_inflate", "right_inflate",
   },
 }
 

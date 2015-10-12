@@ -1122,6 +1122,18 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(left_inflate)
+    {
+      lua_push(L, obj->leftInflate(luaL_optint(L,1,1)));
+      return 1;
+    }
+
+    BEGIN_METHOD(right_inflate)
+    {
+      lua_push(L, obj->rightInflate(luaL_optint(L,1,1)));
+      return 1;
+    }
+
     BEGIN_METHOD(offset)
     {
       lua_push(L, obj->getOffset());
