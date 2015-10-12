@@ -95,7 +95,7 @@ namespace Basics {
                               const int max) {
       int tt = lua_type(L, n);
       if (tt == LUA_TTABLE) {
-        const int len = lua_rawlen(L, -1);
+        const int len = lua_rawlen(L, n);
         if (len == 0) {
           a = min;
           b = max;
