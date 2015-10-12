@@ -142,7 +142,7 @@ namespace Basics {
       if (len == 0) return obj;
       const int ndims = obj->getNumDim();
       const int *dims = obj->getDimPtr();
-      if (n > ndims) {
+      if (len > ndims) {
         ERROR_EXIT(128, "Number of dimensions out-of-bounds\n");
       }
       AprilUtils::UniquePtr<int []> coords = new int[ndims];
