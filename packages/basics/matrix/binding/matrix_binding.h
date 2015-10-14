@@ -41,6 +41,155 @@ namespace Basics {
   /// Implements binding functions reusable in different Matrix flavors.
   template<typename T>
   class MatrixBindings {
+
+    static void parse_slice(const char *slice,
+                            int &a,
+                            int &b,
+                            const int min,
+                            const int max) {
+      /* Impmentation in C of:
+         a = slice:match("^([+-]?%d+)%:.*$") or min
+         b = slice:match("^.*%:([+-]?%d+)$") or max
+      */
+      bool neg_a = false, neg_b = false;
+      // [+-]?
+      if ( *slice == '+' || *slice == '-') {
+        if ( *slice == '-') neg_a = true;
+        ++slice;
+      }
+      // ^:
+      else if ( *slice == ':') {
+        a = min;
+        ++slice;
+      }
+      // %d+:
+      else {
+        const char *next = strchr(slice, ':');
+        if (next == NULL) ERROR_EXIT(256, "Unable to locate ':' character\n");
+        a = atoi(slice);
+        slice = next+1;
+      }
+      // [+-]?
+      if ( *slice == '+' || *slice == '-') {
+        if ( *slice == '-' ) neg_b = true;
+        ++slice;
+      }
+      // empty string
+      else if ( *slice == '\0' ) {
+        b = max;
+      }
+      // %d+
+      else {
+        b = atoi(slice);
+      }
+      if (neg_a) a = -a;
+      if (neg_b) b = -b;
+    }
+    
+    static void extract_range(lua_State *L,
+                              const int n,
+                              const int k, 
+                              int &a,
+                              int &b,
+                              const int min,
+                              const int max) {
+      int tt = lua_type(L, n);
+      if (tt == LUA_TTABLE) {
+        const int len = lua_rawlen(L, n);
+        if (len == 0) {
+          a = min;
+          b = max;
+        }
+        else if (len == 2) {
+          lua_rawgeti(L, n, 1);
+          a = lua_toint(L, -1);
+          lua_pop(L, 1);
+          lua_rawgeti(L, n, 2);
+          b = lua_toint(L, -1);
+          lua_pop(L, 1);
+        }
+        else {
+          ERROR_EXIT1(256, "The table for dimension %d must contain two numbers or none\n", k+1);
+        }
+      } // if (tt == LUA_TTABLE)
+      else if (tt == LUA_TNUMBER) {
+        a = b = lua_toint(L, n);
+      }
+      else if (tt == LUA_TSTRING) {
+        const char *slice = lua_tostring(L, n);
+        MatrixBindings<T>::parse_slice(slice, a, b, min, max);
+      }
+      else { // not a table, not a number and neither a string :S
+        ERROR_EXIT1(256, "The argument %d is not a table neither a string or a number\n", k+1);
+      }
+      if (a < 0) a = max + a;
+      if (b < 0) b = max + b;
+      
+      if (a < min || a > max) {
+        ERROR_EXIT2(256, "Range limit %d out of bounds for dim %d\n", a, k+1);
+      }
+      if (b < min || b > max) {
+        ERROR_EXIT2(256, "Range limit %d out of bounds for dim %d\n", b, k+1);
+      }
+      if (a > b) {
+        ERROR_EXIT(256, "Expecting an increasing range\n");
+      }
+    }
+
+    static Matrix<T> *buildMatrixSliceFromTable(lua_State *L, const int n,
+                                                Matrix<T> *obj) {
+      const int len = lua_rawlen(L, n);
+      if (len == 0) return obj;
+      const int ndims = obj->getNumDim();
+      const int *dims = obj->getDimPtr();
+      if (len > ndims) {
+        ERROR_EXIT(128, "Number of dimensions out-of-bounds\n");
+      }
+      AprilUtils::UniquePtr<int []> coords = new int[ndims];
+      AprilUtils::UniquePtr<int []> sizes = new int[ndims];
+      int a=0, b=0;
+      for (int i=1, k=0; i<=len; ++i, ++k) {
+        lua_rawgeti(L, n, i);
+        MatrixBindings<T>::extract_range(L, -1, k, a, b, 1, dims[k]);
+        
+        coords[k] = a - 1; // -1 because in C we start at 0
+        sizes[k] = b - a + 1;
+        
+        lua_pop(L, 1);
+      } // for (int i=2, k=0; i<=n; ++i, ++k)
+      for (int k=len; k<ndims; ++k) {
+        coords[k] = 0;
+        sizes[k] = dims[k];
+      }
+      return new Matrix<T>(obj, coords.get(), sizes.get(), false); 
+    }
+
+    static Matrix<T> *buildMatrixSliceFromArgs(lua_State *L,
+                                               const int first,
+                                               Matrix<T> *obj) {
+      const int n = lua_gettop(L);
+      const int given_ndims = n - first + 1;
+      if (given_ndims == 0) return obj;
+      const int ndims = obj->getNumDim();
+      const int *dims = obj->getDimPtr();
+      if (given_ndims > ndims) {
+        ERROR_EXIT(128, "Number of dimensions out-of-bounds\n");
+      }
+      AprilUtils::UniquePtr<int []> coords = new int[ndims];
+      AprilUtils::UniquePtr<int []> sizes = new int[ndims];
+      int a=0, b=0;
+      for (int i=first, k=0; i<=n; ++i, ++k) {
+        MatrixBindings<T>::extract_range(L, i, k, a, b, 1, dims[k]);
+        
+        coords[k] = a - 1; // -1 because in C we start at 0
+        sizes[k] = b - a + 1;
+      } // for (int i=2, k=0; i<=n; ++i, ++k)
+      for (int k=given_ndims; k<ndims; ++k) {
+        coords[k] = 0;
+        sizes[k] = dims[k];
+      }
+      return new Matrix<T>(obj, coords.get(), sizes.get(), false);
+    }
     
     class LuaFunctionWrapper {
     public:
@@ -64,6 +213,11 @@ namespace Basics {
     };
 
     template<typename K>
+    static K lua_rawto(lua_State *L, int n) {
+      return AprilUtils::LuaTable::lua_rawgetudata<K>(L,n);
+    }
+    
+    template<typename K>
     static bool lua_is(lua_State *L, int n) {
       return AprilUtils::LuaTable::checkType<K>(L,n);
     }
@@ -75,7 +229,7 @@ namespace Basics {
       }
       return AprilUtils::LuaTable::convertTo<K>(L, n);
     }
-    
+
     template<typename K>
     static K lua_opt(lua_State *L, int n, K default_value) {
       if (lua_isnil(L, n) || lua_type(L, n) == LUA_TNONE) return default_value;
@@ -90,7 +244,7 @@ namespace Basics {
 #define FUNCTION_NAME "read_vector"
     template<typename K>
     static K *read_vector(lua_State *L, const char *key, int num_dim, K add) {
-      K *v = 0;
+      AprilUtils::UniquePtr<K []> v;
       lua_getfield(L, 1, key);
       if (!lua_isnil(L, -1)) {
         LUABIND_CHECK_PARAMETER(-1, table);
@@ -107,7 +261,7 @@ namespace Basics {
         }
       }
       lua_pop(L, 1);
-      return v;
+      return v.release();
     }
 #undef FUNCTION_NAME
 
@@ -388,44 +542,45 @@ namespace Basics {
 
     BEGIN_METHOD(get)
     {
+      const Matrix<T> *cobj = obj;
       int argn = lua_gettop(L); // number of arguments
-      if (argn != obj->getNumDim())
-        LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
+      if (argn != cobj->getNumDim())
+        LUABIND_FERROR2("wrong size %d instead of %d",argn,cobj->getNumDim());
       T ret;
-      if (obj->getNumDim() == 1) {
+      if (cobj->getNumDim() == 1) {
         int v1;
         LUABIND_GET_PARAMETER(1,int,v1);
-        if (v1<1 || v1 > obj->getDimSize(0)) {
+        if (v1<1 || v1 > cobj->getDimSize(0)) {
           LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d",
-                          v1, obj->getDimSize(0));
+                          v1, cobj->getDimSize(0));
         }
-        ret = (*obj)(v1-1);
+        ret = (*cobj)(v1-1);
       }
-      else if (obj->getNumDim() == 2) {
+      else if (cobj->getNumDim() == 2) {
         int v1, v2;
         LUABIND_GET_PARAMETER(1,int,v1);
         LUABIND_GET_PARAMETER(2,int,v2);
-        if (v1<1 || v1 > obj->getDimSize(0)) {
+        if (v1<1 || v1 > cobj->getDimSize(0)) {
           LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d or is not >= 1",
-                          v1, obj->getDimSize(0));
+                          v1, cobj->getDimSize(0));
         }
-        if (v2<1 || v2 > obj->getDimSize(1)) {
+        if (v2<1 || v2 > cobj->getDimSize(1)) {
           LUABIND_FERROR2("wrong index parameter 2, %d is not <= %d or is not >= 1",
-                          v2, obj->getDimSize(1));
+                          v2, cobj->getDimSize(1));
         }
-        ret = (*obj)(v1-1, v2-1);
+        ret = (*cobj)(v1-1, v2-1);
       }
       else {
-        AprilUtils::UniquePtr<int []> coords( new int[obj->getNumDim()] );
-        for (int i=0; i<obj->getNumDim(); ++i) {
+        AprilUtils::UniquePtr<int []> coords( new int[cobj->getNumDim()] );
+        for (int i=0; i<cobj->getNumDim(); ++i) {
           LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-          if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
+          if (coords[i]<1 || coords[i] > cobj->getDimSize(i)) {
             LUABIND_FERROR2("wrong index parameter %d, %d is not <= %d or is not >= 1",
-                            coords[i], obj->getDimSize(i));
+                            coords[i], cobj->getDimSize(i));
           }
           coords[i]--;
         }
-        ret = (*obj)(coords.get(), obj->getNumDim());
+        ret = (*cobj)(coords.get(), cobj->getNumDim());
       }
       lua_push(L, ret);
       return 1;
@@ -714,7 +869,7 @@ namespace Basics {
         if (!lua_is<Matrix<T>*>(L, i+1)) {
           LUABIND_FERROR1("Expected a matrix at position: ", i+1);
         }
-        v[i] = lua_to<Matrix<T>*>(L, i+1);
+        v[i] = lua_rawto<Matrix<T>*>(L, i+1);
         if (!v[i]->sameDim(obj)) {
           LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
         }
@@ -967,6 +1122,18 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(left_inflate)
+    {
+      lua_push(L, obj->leftInflate(luaL_optint(L,1,1)));
+      return 1;
+    }
+
+    BEGIN_METHOD(right_inflate)
+    {
+      lua_push(L, obj->rightInflate(luaL_optint(L,1,1)));
+      return 1;
+    }
+
     BEGIN_METHOD(offset)
     {
       lua_push(L, obj->getOffset());
@@ -1063,7 +1230,7 @@ namespace Basics {
       LUABIND_CHECK_ARGN(==, 1);
       T value;
       if (lua_is<Matrix<T>*>(L,1)) {
-        Matrix<T> *aux = lua_to<Matrix<T>*>(L,1);
+        Matrix<T> *aux = lua_rawto<Matrix<T>*>(L,1);
         for (int i=0; i<aux->getNumDim(); ++i) {
           if (aux->getDimSize(i) != 1) {
             LUABIND_ERROR("Needs a number or a matrix with only one element\n");
@@ -1453,7 +1620,7 @@ namespace Basics {
       LUABIND_CHECK_ARGN(==, 2);
       T alpha = lua_to<T>(L, 1);
       if (lua_is<Matrix<T>*>(L, 2)) {
-        Matrix<T> *mat = lua_to<Matrix<T>*>(L, 2);
+        Matrix<T> *mat = lua_rawto<Matrix<T>*>(L, 2);
 #ifdef USE_CUDA
         mat->sync();
 #endif
@@ -1534,7 +1701,7 @@ namespace Basics {
       Matrix<T> *matX = t["X"].get<Matrix<T>*>();
       lua_getfield(L, 1, "A");
       if (lua_is<Matrix<T>*>(L,-1)) {
-        Matrix<T> *matA = lua_to<Matrix<T>*>(L,-1);
+        Matrix<T> *matA = lua_rawto<Matrix<T>*>(L,-1);
         lua_pop(L,1);
 #ifdef USE_CUDA
         matA->sync();
@@ -1580,7 +1747,7 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *matX = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *matX = lua_rawto<Matrix<T>*>(L, 1);
 #ifdef USE_CUDA
         obj->sync();
         matX->sync();
@@ -1634,7 +1801,7 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Operations::
                  matDiv(obj, other));
       }
@@ -1650,7 +1817,7 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Operations::
                  matDiv(obj, other));
       }
@@ -1666,7 +1833,7 @@ namespace Basics {
     {
       LUABIND_CHECK_ARGN(==, 1);
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *other = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Operations::
                  matMod(obj, other));
       }
@@ -1738,7 +1905,7 @@ namespace Basics {
     BEGIN_METHOD(lt)
     {
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *value = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *value = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Boolean::matLT(obj, value));
       }
       else {
@@ -1751,7 +1918,7 @@ namespace Basics {
     BEGIN_METHOD(gt)
     {
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *value = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *value = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Boolean::matGT(obj, value));
       }
       else {
@@ -1764,7 +1931,7 @@ namespace Basics {
     BEGIN_METHOD(eq)
     {
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *value = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *value = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Boolean::matEQ(obj, value));
       }
       else {
@@ -1777,7 +1944,7 @@ namespace Basics {
     BEGIN_METHOD(neq)
     {
       if (lua_is<Matrix<T>*>(L, 1)) {
-        Matrix<T> *value = lua_to<Matrix<T>*>(L, 1);
+        Matrix<T> *value = lua_rawto<Matrix<T>*>(L, 1);
         lua_push(L, AprilMath::MatrixExt::Boolean::matNEQ(obj, value));
       }
       else {
@@ -1824,7 +1991,7 @@ namespace Basics {
     BEGIN_METHOD(same_dim)
     {
       if (lua_is<Matrix<T>*>(L,1)) {
-        Matrix<T> *other = lua_to<Matrix<T>*>(L,1);
+        Matrix<T> *other = lua_rawto<Matrix<T>*>(L,1);
         lua_pushboolean(L, obj->sameDim(other));
         return 1;
       }
@@ -1852,7 +2019,7 @@ namespace Basics {
       Matrix<T> *result;
       int dim = lua_to<int>(L,1);
       if (lua_is<Matrix<bool>*>(L,2)) {
-        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        Matrix<bool> *idx = lua_rawto<Matrix<bool>*>(L,2);
         result = AprilMath::MatrixExt::Misc::
           matIndex(obj, dim-1, idx); // WARNING!!! -1
       }
@@ -1866,11 +2033,14 @@ namespace Basics {
             lua_pop(L,1);
             ERROR_EXIT1(128, "%s", str.c_str());
           }
-          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          idx = lua_rawto<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
         else {
-          idx = lua_to<Matrix<int32_t>*>(L,2);
+          if (!lua_is<Matrix<int32_t>*>(L,2)) {
+            ERROR_EXIT(128, "Expecting matrixInt32 as second argument\n");
+          }
+          idx = lua_rawto<Matrix<int32_t>*>(L,2);
         }
         result = AprilMath::MatrixExt::Misc::
           matIndex(obj, dim-1, idx.get()); // WARNING!!! -1
@@ -1885,7 +2055,7 @@ namespace Basics {
       int dim = lua_to<int>(L,1);
       T val = lua_to<T>(L,3);
       if (lua_is<Matrix<bool>*>(L,2)) {
-        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        Matrix<bool> *idx = lua_rawto<Matrix<bool>*>(L,2);
         result = AprilMath::MatrixExt::Misc::
           matIndexedFill(obj, dim-1, idx, val); // WARNING!!! -1
       }
@@ -1899,7 +2069,7 @@ namespace Basics {
             lua_pop(L,1);
             ERROR_EXIT1(128, "%s", str.c_str());
           }
-          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          idx = lua_rawto<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
         else {
@@ -1916,9 +2086,9 @@ namespace Basics {
     {
       Matrix<T> *result;
       int dim = lua_to<int>(L,1);
-      Matrix<T> *other = lua_to<Matrix<T>*>(L,3);
+      Matrix<T> *other = lua_rawto<Matrix<T>*>(L,3);
       if (lua_is<Matrix<bool>*>(L,2)) {
-        Matrix<bool> *idx = lua_to<Matrix<bool>*>(L,2);
+        Matrix<bool> *idx = lua_rawto<Matrix<bool>*>(L,2);
         result = AprilMath::MatrixExt::Misc::
           matIndexedCopy(obj, dim-1, idx, other); // WARNING!!! -1
       }
@@ -1932,7 +2102,7 @@ namespace Basics {
             lua_pop(L,1);
             ERROR_EXIT1(128, "%s", str.c_str());
           }
-          idx = lua_to<Matrix<int32_t>*>(L,-1);
+          idx = lua_rawto<Matrix<int32_t>*>(L,-1);
           lua_pop(L,1);
         }
         else {
@@ -1968,6 +2138,122 @@ namespace Basics {
       lua_push(L, result.get());
       return 1;
     }
+
+    BEGIN_CLASS_METHOD(__call_function__)
+    {
+      AprilUtils::SharedPtr< Matrix<T> > obj = lua_rawto<Matrix<T>*>(L, 1);
+      obj = buildMatrixSliceFromArgs(L, 2, obj.get());
+      lua_push(L, obj.get());
+      return 1;
+    }
+
+    BEGIN_CLASS_METHOD(__index_function__)
+    {
+      int tt = lua_type(L,2);
+      if (tt == LUA_TNUMBER) {
+        const Matrix<T> *cobj = lua_rawto<Matrix<T>*>(L, 1);
+        const int key = lua_toint(L,2) - 1; // -1 because we start at 0 in C
+        if (cobj->getNumDim() > 1) {
+          lua_push(L, cobj->select(0, key));
+        }
+        else {
+          lua_push(L, (*cobj)(key));
+        }
+        return 1;
+      }
+      else if (tt == LUA_TTABLE) {
+        AprilUtils::SharedPtr< Matrix<T> >obj = lua_rawto<Matrix<T>*>(L, 1);
+        obj = buildMatrixSliceFromTable(L, 2, obj.get());
+        lua_push(L, obj);
+        return 1;
+      }
+      return 0;
+    }
+
+    BEGIN_CLASS_METHOD(__newindex_function__)
+    {
+      AprilUtils::SharedPtr< Matrix<T> > obj = lua_rawto<Matrix<T>*>(L, 1);
+      int tk = lua_type(L, 2);
+      
+      // specialization for case m[k] = v with k and v being of type T
+      if (obj->getNumDim() == 1 && tk == LUA_TNUMBER && lua_is<T>(L, 3)) {
+        // because we start at 0 in C)
+        (*obj)(lua_toint(L, 2) - 1) = lua_to<T>(L, 3);
+        return 0; // early stop here
+      }
+      else if (tk != LUA_TNUMBER && tk != LUA_TTABLE) { // it should be a MatrixBool
+        if (!lua_is<MatrixBool*>(L,2)) {
+          ERROR_EXIT(128, "Needs a table, a number or a matrixBool as key\n");
+        }
+        lua_remove(L, 1);
+        if (lua_is<T>(L, 2)) {
+          MatrixBindings::masked_fill(L, obj.get());
+        }
+        else {
+          MatrixBindings::masked_copy(L, obj.get());
+        }
+      } // if (lua_is<MatrixBool*>(L, 2))
+      else { // not a MatrixBool
+        if (tk == LUA_TNUMBER) {
+          const int key = lua_toint(L, 2) - 1; // because we start at 0 in C
+          if (obj->getNumDim() > 1) {
+            obj = obj->select(0, key);
+          }
+          else {
+            if (lua_is<T>(L, 3)) {
+              (*obj)(key) = lua_to<T>(L, 3);
+            }
+            else if (lua_is<Matrix<T>*>(L, 3)) {
+              Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 3);
+              if (other->size() != 1) {
+                ERROR_EXIT(128, "Expecting a one element matrix\n");
+              }
+              (*obj)(key) = *(other->begin());
+            }
+            else {
+              ERROR_EXIT(128, "Found incorrect type as value");
+            }
+            return 0; // early return here
+          }
+        }
+        else if (tk == LUA_TTABLE) {
+          obj = buildMatrixSliceFromTable(L, 2, obj.get());
+          if (obj->size() == 1) {
+            if (lua_is<T>(L, 3)) {
+              *(obj->begin()) = lua_to<T>(L, 3);
+            }
+            else if (lua_is<Matrix<T>*>(L, 3)) {
+              Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 3);
+              if (other->size() != 1) {
+                ERROR_EXIT(128, "Expecting a one element matrix\n");
+              }
+              *(obj->begin()) = *(other->begin());
+            }
+            else {
+              ERROR_EXIT(128, "Found incorrect type as value");
+            }
+            return 0; // early return here
+          }
+        }
+        else {
+          ERROR_EXIT(128, "Needs a table, a number or a matrixBool as key\n");
+        }
+        if (lua_is<T>(L, 3)) {
+          T value = lua_to<T>(L, 3);
+          AprilMath::MatrixExt::Initializers::matFill(obj.get(), value);
+        }
+        else if (lua_is<Matrix<T>*>(L, 3)) {
+          Matrix<T> *other = lua_rawto<Matrix<T>*>(L, 3);
+          AprilMath::MatrixExt::BLAS::matCopy(obj.get(), other);
+        }
+        else {
+          ERROR_EXIT(128, "Found incorrect type as value");
+        }
+      } // if key is not a MatrixBool
+    
+      return 0;      
+    } // __newindex_function__
+    
   };
 
 #undef FUNCTION_NAME

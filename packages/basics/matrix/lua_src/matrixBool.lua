@@ -80,8 +80,7 @@ matrixBool.meta_instance.__eq = function(op1, op2)
   return op1:equals(op2)
 end
 
-matrixBool.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
+matrix.__generic__.__make_generic_call__(matrixBool)
 
 matrixBool.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixBool)

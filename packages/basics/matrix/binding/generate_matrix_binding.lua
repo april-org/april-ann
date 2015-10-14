@@ -35,7 +35,7 @@ local matrix_methods = {
     "cholesky", "svd", "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   double = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -55,7 +55,7 @@ local matrix_methods = {
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   int32_t = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -73,6 +73,7 @@ local matrix_methods = {
     "lt", "gt", "eq", "neq", "toMMap",
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
+    "left_inflate", "right_inflate",
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -91,7 +92,7 @@ local matrix_methods = {
     "toMMap",
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
-    "ceil", "floor", "round",
+    "ceil", "floor", "round", "left_inflate", "right_inflate",
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -108,6 +109,7 @@ local matrix_methods = {
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "stringfy",
+    "left_inflate", "right_inflate",
   },
   bool = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -124,25 +126,36 @@ local matrix_methods = {
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "to_index",
+    "left_inflate", "right_inflate",
   },
 }
 
 local matrix_class_methods = {
   float = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   double = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   char = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   int32_t = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
   ComplexF = {
     "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
   },
+  bool = {
+    "as", "deserialize", "read", "fromMMap", "__broadcast__",
+    "__call_function__", "__newindex_function__", "__index_function__",
+  },
+  
 }
 
 local matrix_class_method_binding = [[

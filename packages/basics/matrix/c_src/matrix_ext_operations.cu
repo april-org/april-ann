@@ -614,6 +614,27 @@ namespace AprilMath {
                                               const Matrix<bool> *,
                                               const Matrix<int32_t> *,
                                               Matrix<int32_t> *);
+
+      
+      template Matrix<char> *matMaskedFill(Matrix<char> *,
+                                           const Matrix<bool> *,
+                                           const char &,
+                                           Matrix<char> *);
+      template Matrix<char> *matMaskedCopy(Matrix<char> *,
+                                           const Matrix<bool> *,
+                                           const Matrix<char> *,
+                                           Matrix<char> *);
+
+
+      
+      template Matrix<bool> *matMaskedFill(Matrix<bool> *,
+                                           const Matrix<bool> *,
+                                           const bool &,
+                                           Matrix<bool> *);
+      template Matrix<bool> *matMaskedCopy(Matrix<bool> *,
+                                           const Matrix<bool> *,
+                                           const Matrix<bool> *,
+                                           Matrix<bool> *);
       
 
       template Matrix<ComplexF> *matFloor(Matrix<ComplexF> *, Matrix<ComplexF> *);

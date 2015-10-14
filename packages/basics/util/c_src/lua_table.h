@@ -596,6 +596,15 @@ namespace AprilUtils {
       // return T();
     }
 
+    /// Returns a userdata interpreted as the given type T avoiding type check
+    template<typename T>
+    static T lua_rawgetudata(lua_State *L, int n) {
+      T *pre_obj = static_cast<T*>(lua_touserdata(L,n));
+      T obj = 0;
+      if (pre_obj) obj = (*pre_obj);
+      return obj;
+    }
+    
     /// Pushes into Lua stack the Lua table associated with the object.
     void pushTable(lua_State *L);
     

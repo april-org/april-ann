@@ -13,11 +13,11 @@ matrix.__generic__.__make_generic_join__ = function()
     local size = arg[1]:dim()
     if dim == 0 then
       local new_arg = {}
-      for i=1,#arg do new_arg[i] = arg[i]:rewrap(1,table.unpack(arg[i]:dim())) end
+      for i=1,#arg do new_arg[i] = arg[i]:left_inflate() end
       arg, dim, size = new_arg, 1, new_arg[1]:dim()
     elseif dim == #size+1 then
       local new_arg = {}
-      for i=1,#arg do new_arg[i] = arg[i]:rewrap(multiple_unpack(arg[i]:dim(),{1})) end
+      for i=1,#arg do new_arg[i] = arg[i]:right_inflate() end
       arg, dim, size = new_arg, #size+1, new_arg[1]:dim()
     else
       -- ERROR CHECK
