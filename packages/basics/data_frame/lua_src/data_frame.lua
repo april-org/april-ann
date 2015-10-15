@@ -1289,18 +1289,15 @@ local function compute_line_coeffs(x1, x2, y1, y2)
 end
 
 local function one_interp(x1, x2, y1, y2, xp)
-  -- substract xp to avoid rounding problems with float numbers
-  local a,b = compute_line_coeffs(x1 - xp, x2 - xp, y1, y2)
-  return xp, a + b
+  local a,b = compute_line_coeffs(x1, x2, y1, y2)
+  return xp, a*xp + b
 end
 
 local function interpolate(result, period, inv_T, x, y)
   -- the line is defined as: y = a*x + b
   -- but we want the mid-point of every two instants:
   -- m = 0.5 * [ a*x2 + b + a*x1 + b ] = 0.5*a * [ x2 + x1 ] + b
-  local off = x[1] % period
-  -- substract x[1] + off in order to avoid rounding problems
-  local x1,x2 = off, x[2] - x[1] + off
+  local x1,x2 = x[1], x[2]
   local a,b = compute_line_coeffs(x1, x2, y[1], y[2])
   local a2  = a * 0.5
   local x1,x2 = math_ceil( x1 * inv_T ), math_floor( x2 * inv_T )
@@ -1312,8 +1309,8 @@ local function interpolate(result, period, inv_T, x, y)
   return result,x1,x2
 end
 
-local function update(result, inv_T, x1, x2, y1, y2)
-  result:axpy(inv_T, (x2-x1) * 0.5 * (y1 + y2))
+local function integrate(result, inv_T, x1, x2, y1, y2)
+  result:axpy(0.5*inv_T, (x2-x1) * (y1+y2))
 end
 
 local function aggregate(result, period, inv_T, x, y, start, frontier)
@@ -1321,28 +1318,52 @@ local function aggregate(result, period, inv_T, x, y, start, frontier)
   assert(#x == #y)
   local i = 1 -- traverse x and y tables
   result:zeros()
+
+  -- interpolate first segment
   if x[i] < start then
     local x1,x2 = x[i],x[i+1]
     if x2 > start then
       local y1,y2 = y[i],y[i+1]
       local x1,y1 = one_interp(x1, x2, y1, y2, start)
-      update(result, inv_T, x1, x2, y1, y2)
+      integrate(result, inv_T, x1, x2, y1, y2)
     end
     i = i + 1
   end
-  assert(x[i] >= start, ("%d %d :: %d"):format(x[i], start, frontier))
-  while i<#x and x[i+1] <= frontier do
-    update(result, inv_T, x[i], x[i+1], y[i], y[i+1])
-    i = i + 1
+
+  -- integrate the whole region between start and frontier
+  do
+    assert(x[i] >= start)
+    local j = i
+    while j<#x and x[j+1] <= frontier do j = j + 1 end
+    if i ~= j then
+      local x_dif = x[{ {i+1,j} }] - x[{ {i,j-1} }]
+      local y_sum = y[{ {i+1,j} }] + y[{ {i,j-1} }]
+      result:scalar_add( 0.5 * inv_T * x_dif:cmul( y_sum ):sum() )
+    end
+    i = j
   end
+
+  -- interpolate last segment
   if i<#x then
     local x1,x2  = x[i],x[i+1]
     local y1,y2  = y[i],y[i+1]
     local x2,y2 = one_interp(x1, x2, y1, y2, frontier)
-    update(result, inv_T, x1, x2, y1, y2)
+    integrate(result, inv_T, x1, x2, y1, y2)
     i = i + 1
   end
   assert(i == #x)
+end
+
+local function check_sequential(self)
+  local time = self.time
+  if #time == 1 then
+    self.seq_period = 1
+  elseif #time == 2 then
+    self.seq_period = time[2] - time[1]
+  else
+    local aux = time[{'2:'}] - time[{'1:-2'}]
+    if aux:eq( (aux:max()) ):all() then self.seq_period = max end
+  end
 end
 
 --------------------------------------------------
@@ -1373,10 +1394,13 @@ series.constructor =
       -- loading directly from matrix data
       local time  = df
       local data  = time_column
+      assert(class.is_a(time, matrixDouble))
+      assert(class.is_a(data, matrix))
       self.time_column_name  = select(1, ...)
       self.data_column_names = table.pack( select(2, ...) )
       self.time = time
       self.data = data
+      check_sequential(self)
     else
       assert(class.is_a(df, data_frame), "Needs a data_frame as first argument")
       assert(..., "At least three arguments are needed")
@@ -1385,15 +1409,12 @@ series.constructor =
       self.data_column_names = data_columns
       self.data = df:as_matrix(...) -- by default it is float
       if time_column then
-        local t = df[{time_column}]
-        if type(t) ~= "table" then
-          self.time = t:toTable()
-        else
-          self.time = util.clone(t)
-        end
+        self.time = df:as_matrix(time_column, { dtype="double" }):squeeze()
+        check_sequential(self)
       else
         -- generate a sequence for time column
-        self.time = matrixDouble(self.data:dim(1)):linear():toTable()
+        self.time = matrixDouble(self.data:dim(1)):linear()
+        self.seq_period = 1
       end
     end
   end
@@ -1459,7 +1480,7 @@ series_methods.resampleU =
     -- HALF is used to move time labels in order to center data aggregations
     -- into the resampled time labels.
     local HALF  = period * 0.5
-    local time  = iterator(self.time):map(bind(math.add,HALF)):table()
+    local time  = self.time + HALF
     local data  = self.data
     local inv_T = 1/period
     -- data should be sorted by time, it is expected monotonous time (increasing)
@@ -1487,29 +1508,33 @@ series_methods.resampleU =
              "stop_time should be <= than last timestamp-period")
       last = stop_time
     end
+
+    -- remove first value to avoid rounding problems with large timestamp values
+    -- in float resolution at aggregation and/or interpolate functions
+    local time = time:scalar_add(-first):convert_to("float")
+    local old_first
+    old_first, first, last = first, 0, last-first
     
     local result_length = (last - first)/period
 
-    local result_times = {}
+    local result_times = matrixDouble(result_length):linspace():scal(period):scalar_add(old_first)
     local result = matrix(result_length, data:dim(2))
 
     local i,j = 1,1
     
     while i<=result_length do
-      local slice_first, slice_next = first + i*period, first + (i+1)*period
-      local x = {}
-
+      if i % 100000 then collectgarbage("collect") end
+      
+      local slice_first, slice_next = i*period, (i+1)*period
+      
       -- search the lower bound for slice_first (if possible)
       while time[j] < slice_first do j = j+1 end
       j = j - 1
 
       -- search the upper bound for slice_next
-      local k = j      
-      while time[k] < slice_next do
-        x[#x+1] = time[k]
-        k = k + 1
-      end
-      x[#x+1] = time[k]
+      local k = j
+      while time[k] < slice_next do k = k + 1 end
+      local x = time[{ {j,k} }]
       local t_j = x[1]
       local t_k = x[#x]
       
@@ -1520,19 +1545,15 @@ series_methods.resampleU =
         local next_i = i + math_floor(t_k * inv_T) - math_ceil(t_j * inv_T) - 1
         interpolate(result[{ {i,next_i}, ':' }], period, inv_T,
                     x, data[{ {j,k}, ':' }])
-        for j=i,next_i do result_times[#result_times+1] = first + j*period end
         i = next_i
       else -- dt <= period
         assert(#x >= 2)
         aggregate(result[i], period, inv_T,
                   x, data[{ {j,k}, ':'}], slice_first, slice_next)
-        result_times[#result_times+1] = first + i*period
       end
       j = k - 1
       i = i + 1
     end
-    
-    assert(#result == #result_times)
     
     -- build resulting data_frame and time series instance
     local result_ts = series(result_times,

@@ -52,18 +52,18 @@ namespace Basics {
          b = slice:match("^.*%:([+-]?%d+)$") or max
       */
       bool neg_a = false, neg_b = false;
-      // [+-]?
+      // ^[+-]?
       if ( *slice == '+' || *slice == '-') {
         if ( *slice == '-') neg_a = true;
         ++slice;
       }
       // ^:
-      else if ( *slice == ':') {
+      if ( *slice == ':') {
         a = min;
         ++slice;
       }
-      // %d+:
       else {
+        // %d+:
         const char *next = strchr(slice, ':');
         if (next == NULL) ERROR_EXIT(256, "Unable to locate ':' character\n");
         a = atoi(slice);
@@ -75,7 +75,7 @@ namespace Basics {
         ++slice;
       }
       // empty string
-      else if ( *slice == '\0' ) {
+      if ( *slice == '\0' ) {
         b = max;
       }
       // %d+
@@ -122,8 +122,8 @@ namespace Basics {
       else { // not a table, not a number and neither a string :S
         ERROR_EXIT1(256, "The argument %d is not a table neither a string or a number\n", k+1);
       }
-      if (a < 0) a = max + a;
-      if (b < 0) b = max + b;
+      if (a < 0) a = max + a + 1;
+      if (b < 0) b = max + b + 1;
       
       if (a < min || a > max) {
         ERROR_EXIT2(256, "Range limit %d out of bounds for dim %d\n", a, k+1);
