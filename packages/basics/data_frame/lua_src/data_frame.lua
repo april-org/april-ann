@@ -1523,7 +1523,7 @@ series_methods.resampleU =
     local i,j = 1,1
     
     while i<=result_length do
-      if i % 100000 then collectgarbage("collect") end
+      if i%1000000 == 0 then collectgarbage("collect") end
       
       local slice_first, slice_next = i*period, (i+1)*period
       
