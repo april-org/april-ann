@@ -187,7 +187,7 @@ end
 
 -- support for IPyLua
 local function data_frame_show(proxy)
-  local plain = tostring(obj)
+  local plain = tostring(proxy)
   local html = {}
   local self = getmetatable(proxy)
   table.insert(html, "<div style=\"max-width:99%; overflow:auto\">")
@@ -1265,6 +1265,273 @@ class.extend_metamethod(groupped, "__tostring",
                           return table.concat(t,"\n")
 end)
 
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
+
+local axpy = matrix .. "axpy"
+local bind = bind
+local broadcast = matrix.ext.broadcast
+local cmul = matrix .. "cmul"
+local math_ceil = math.ceil
+local math_floor = math.floor
+
+---------- PRIVATE FUNCTIONS -----------
+
+-- the line is defined as: y = a*x + b
+local function compute_line_coeffs(x1, x2, y1, y2)
+  local a = (y2 - y1):scal(1/(x2 - x1))
+  local b = y1 - a*x1
+  return a,b
+end
+
+local function one_interp(x1, x2, y1, y2, xp)
+  local a,b = compute_line_coeffs(x1, x2, y1, y2)
+  return xp,a*xp + b
+end
+
+local function interpolate(result, period, inv_T, x, y)
+  -- the line is defined as: y = a*x + b
+  -- but we want the mid-point of every two instants:
+  -- m = 0.5 * [ a*x2 + b + a*x1 + b ] = 0.5*a * [ x2 + x1 ] + b
+  local a,b = compute_line_coeffs(x[1], x[2], y[1], y[2])
+  local a2  = a * 0.5
+  local x1, x2 = math_ceil( x[1] * inv_T ), math_floor( x[2] * inv_T )
+  assert( (x2-x1)==result:dim(1) )
+  local col = result:select(2,1):linspace( (x1 + x1)*period + period, (x2 + x2)*period - period )
+  for i=2,result:dim(2) do result:select(2,i):copy(col) end
+  for i=1,result:dim(1) do result[i]:cmul(a2):axpy(1.0,b) end
+  return result,x1,x2
+end
+
+local function update(result, inv_T, x1, x2, y1, y2)
+  result:axpy(inv_T, (x2-x1) * 0.5 * (y1 + y2))
+end
+
+local function aggregate(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  local i = 1 -- traverse x and y tables
+  result:zeros()
+  if x[i]%period ~= 0 then
+    local x1,x2 = x[i],x[i+1]
+    local y1,y2 = y[i],y[i+1]
+    local x1,y1 = one_interp(x1, x2, y1, y2, math_floor(x2 * inv_T) * period)
+    update(result, inv_T, x1, x2, y1, y2)
+    i = i + 1
+  end
+  while i<#x and x[i+1] <= frontier do
+    update(result, inv_T, x[i], x[i+1], y[i], y[i+1])
+    i = i + 1
+  end
+  if i<#x then
+    local x1,x2  = x[i],x[i+1]
+    local y1,y2  = y[i],y[i+1]
+    local x2,y2 = one_interp(x1, x2, y1, y2, frontier)
+    update(result, inv_T, x1, x2, y1, y2)
+    i = i + 1
+  end
+  assert(i == #x)
+end
+
+--------------------------------------------------
+--------------------------------------------------
+--------------------------------------------------
+
+assert(data_frame, "series class needs data_frame class")
+local series,methods = class("data_frame.series", aprilio.lua_serializable)
+_G.data_frame.series = series
+
+series.constructor =
+  april_doc{
+    class = "method",
+    summary = "Constructs a time series given a data_frame and a serie of column names",
+    description = {
+      "Time stamp column should be numeric and will be interpreted with double resolution.",
+      "Data columns should be numeric and will be interpreted to float resolution.",
+      "This class clones the memory of the given data_frame for performance purposes.",
+    },
+    params = {
+      "A data_frame instance",
+      "A timestamp column name. It can be nil, in which case a sequence would be generated",
+      "A data column name",
+      "...",
+    },
+    outputs = {
+      "An instance of series class",
+    },
+  } ..
+  function(self, df, time_column, ...)
+    if not class.is_a(df, data_frame) then
+      -- loading directly from matrix data
+      local time  = df
+      local data  = time_column
+      self.time_column_name  = select(1, ...)
+      self.data_column_names = table.pack( select(2, ...) )
+      self.time = time
+      self.data = data
+    else
+      assert(class.is_a(df, data_frame), "Needs a data_frame as first argument")
+      assert(..., "At least three arguments are needed")
+      local data_columns = table.pack(...)
+      self.time_column_name = time_column or "time"
+      self.data_column_names = data_columns
+      self.data = df:as_matrix(...) -- by default it is float
+      if time_column then
+        local t = df[{time_column}]
+        if type(t) ~= "table" then
+          self.time = t:toTable()
+        else
+          self.time = util.clone(t)
+        end
+      else
+        -- generate a sequence for time column
+        self.time = matrixDouble(self.data:dim(1)):linear():toTable()
+      end
+    end
+  end
+
+methods.ctor_name =
+  function(self)
+    return "data_frame.series"
+  end
+
+methods.ctor_params =
+  function(self)
+    return self.time, self.data, self.time_column_name, table.unpack(self.data_column_names)
+  end
+
+methods.clone = function(self) return series(table.unpack(util.clone(table.pack(self:ctor_params())))) end
+
+methods.get_time =
+  april_doc{
+    class = "method",
+    summary = "Returns the time column",
+  } ..
+  function(self)
+    return self.time
+  end
+
+methods.get_data =
+  april_doc{
+    class = "method",
+    summary = "Returns the data column",
+  } ..
+  function(self)
+    return self.data
+  end
+
+methods.to_data_frame =
+  april_doc{
+    class = "method",
+    summary = "Returns a data_frame which references this time series",
+  } ..
+  function(self)
+    local col_names = table.join( {self.time_column_name},
+                                  self.data_column_names)
+    local df_data = iterator.zip( iterator(self.data_column_names),
+                                  iterator(matrix.ext.iterate(self.data, 2):select(2) ) ):table()
+    df_data[self.time_column_name] = self.time
+    return data_frame{ data=df_data, columns = col_names }
+  end
+
+methods.resampleU =
+  april_doc{
+    class = "method",
+    summary = "Resamples the time series using a uniform time period",
+    params = {
+      "The desired time period, a number >= 1 in same units as timestamp column",
+    },
+    outputs = {
+      "A new series instance with all resampled data",
+    },
+  } ..
+  function(self, period)
+    -- HALF is used to move time labels in order to center data aggregations
+    -- into the resampled time labels.
+    local HALF  = period * 0.5
+    local time  = iterator(self.time):map(bind(math.add,HALF)):table()
+    local data  = self.data
+    local inv_T = 1/period
+    -- data should be sorted by time, it is expected monotonous time (increasing)
+    assert(type(period) == "number" , "Needs a period number as first argument")
+    assert(period >= 1 and math.floor(period) == period, "Expected an integer period >= 1 as first argument")
+    
+    local N = #data
+    local result_length = math.floor( time[#time] * inv_T ) - 1
+    local first = math.floor( time[1] * inv_T + 1) * period
+    local last  = result_length * period
+    local result_times = {}
+    local result = matrix(result_length, data:dim(2))
+
+    local i,j = 1,1
+    
+    while time[j] < first do j = j+1 end
+    if time[j] > first and j>1 then j = j - 1 end
+    
+    while i<=result_length do
+      local slice_first, slice_next = i*period, (i+1)*period
+      local k = j
+      local x = {}
+      while time[k] < slice_next do
+        x[#x+1] = time[k]
+        k = k + 1
+      end
+      x[#x+1] = time[k]
+      local t_j = x[1]
+      local t_k = x[#x]
+      -- Two cases:
+      --   1. When #x == 2, interpolate.
+      --   2. Otherwise aggregate.
+      if #x==2 and x[2] > slice_next then
+        local next_i = i + math_floor(t_k * inv_T) - math_ceil(t_j * inv_T) - 1
+        interpolate(result[{ {i,next_i}, ':' }], period, inv_T,
+                    x, data[{ {j,k}, ':' }])
+        for j=i,next_i do result_times[#result_times+1] = j*period end
+        i = next_i
+      else -- dt <= period
+        aggregate(result[i], period, inv_T,
+                  x, data[{ {j,k}, ':'}], slice_first, slice_next)
+        result_times[#result_times+1] = i*period
+      end
+      -- Normally the next sequence starts at time[k-1], just one
+      -- before slice_next, however, the case x[#x]==slice_next
+      -- requires to start the next iteration at time[k].
+      if x[#x] > slice_next then j = k - 1 else j = k end
+      i = i + 1
+    end
+    
+    -- build resulting data_frame and time series instance
+    local result_ts = series(result_times,
+                             result,
+                             self.time_column_name,
+                             table.unpack(self.data_column_names))
+    
+    return result_ts
+  end
+
+class.extend_metamethod(
+  series, "__tostring",
+  function(self)
+    return tostring(self:to_data_frame()):gsub("data_frame", "data_frame.series")
+  end
+)
+
+class.extend_metamethod(
+  series, "ipylua_show",
+  function(self)
+    local df = self:to_data_frame()
+    local show = getmetatable(df).ipylua_show
+    local tbl = show(df)
+    for k,v in pairs(tbl) do
+      tbl[k] = tbl[k]:gsub("data_frame", "data_frame.series")
+    end
+    return tbl
+  end
+)
+
+------------------------------------------------------------------
+------------------------------------------------------------------
 ------------------------------------------------------------------
 
 return data_frame
