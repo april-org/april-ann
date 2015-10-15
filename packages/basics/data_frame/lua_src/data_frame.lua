@@ -1560,7 +1560,8 @@ series_methods.resampleU =
                              result,
                              self.time_column_name,
                              table.unpack(self.data_column_names))
-    
+
+    collectgarbage("collect")
     return result_ts
   end
 
