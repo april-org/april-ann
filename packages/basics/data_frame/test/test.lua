@@ -88,9 +88,8 @@ T("TimeSeriesTest", function()
     local ts = data_frame.series(df, "x", "y")
     local tsp = ts:resampleU(12)
     local result = tsp:to_data_frame():as_matrix()
-    local target = matrix.fromString[[82 2
+    local target = matrix.fromString[[81 2
 ascii
-12 27.994438171387
 24 69.562454223633
 36 119.13578796387
 48 174.67581176758

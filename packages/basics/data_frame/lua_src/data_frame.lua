@@ -2,6 +2,9 @@
 -- http://pandas-docs.github.io/pandas-docs-travis/
 local data_frame,methods        = class("data_frame", aprilio.lua_serializable)
 local groupped,groupped_methods = class("data_frame.groupped")
+local series,series_methods = class("data_frame.series", aprilio.lua_serializable)
+data_frame.series = series
+
 _G.data_frame = data_frame -- global definition
 ------------------------------------------------------------------
 
@@ -111,7 +114,7 @@ do
         return ctor(#data,1,data)
       else
         data = class.of(data)==ctor and data or data:convert_to(dtype)
-        return data:rewrap(data:size(),1)
+        return data:right_inflate()
       end
     end
   end
@@ -1286,19 +1289,24 @@ local function compute_line_coeffs(x1, x2, y1, y2)
 end
 
 local function one_interp(x1, x2, y1, y2, xp)
-  local a,b = compute_line_coeffs(x1, x2, y1, y2)
-  return xp,a*xp + b
+  -- substract xp to avoid rounding problems with float numbers
+  local a,b = compute_line_coeffs(x1 - xp, x2 - xp, y1, y2)
+  return xp, a + b
 end
 
 local function interpolate(result, period, inv_T, x, y)
   -- the line is defined as: y = a*x + b
   -- but we want the mid-point of every two instants:
   -- m = 0.5 * [ a*x2 + b + a*x1 + b ] = 0.5*a * [ x2 + x1 ] + b
-  local a,b = compute_line_coeffs(x[1], x[2], y[1], y[2])
+  local off = x[1] % period
+  -- substract x[1] + off in order to avoid rounding problems
+  local x1,x2 = off, x[2] - x[1] + off
+  local a,b = compute_line_coeffs(x1, x2, y[1], y[2])
   local a2  = a * 0.5
-  local x1, x2 = math_ceil( x[1] * inv_T ), math_floor( x[2] * inv_T )
+  local x1,x2 = math_ceil( x1 * inv_T ), math_floor( x2 * inv_T )
   assert( (x2-x1)==result:dim(1) )
-  local col = result:select(2,1):linspace( (x1 + x1)*period + period, (x2 + x2)*period - period )
+  local col = result:select(2,1):linspace( (x1 + x1)*period + period,
+                                           (x2 + x2)*period - period )
   for i=2,result:dim(2) do result:select(2,i):copy(col) end
   for i=1,result:dim(1) do result[i]:cmul(a2):axpy(1.0,b) end
   return result,x1,x2
@@ -1313,13 +1321,16 @@ local function aggregate(result, period, inv_T, x, y, start, frontier)
   assert(#x == #y)
   local i = 1 -- traverse x and y tables
   result:zeros()
-  if x[i]%period ~= 0 then
+  if x[i] < start then
     local x1,x2 = x[i],x[i+1]
-    local y1,y2 = y[i],y[i+1]
-    local x1,y1 = one_interp(x1, x2, y1, y2, math_floor(x2 * inv_T) * period)
-    update(result, inv_T, x1, x2, y1, y2)
+    if x2 > start then
+      local y1,y2 = y[i],y[i+1]
+      local x1,y1 = one_interp(x1, x2, y1, y2, start)
+      update(result, inv_T, x1, x2, y1, y2)
+    end
     i = i + 1
   end
+  assert(x[i] >= start, ("%d %d :: %d"):format(x[i], start, frontier))
   while i<#x and x[i+1] <= frontier do
     update(result, inv_T, x[i], x[i+1], y[i], y[i+1])
     i = i + 1
@@ -1337,10 +1348,6 @@ end
 --------------------------------------------------
 --------------------------------------------------
 --------------------------------------------------
-
-assert(data_frame, "series class needs data_frame class")
-local series,methods = class("data_frame.series", aprilio.lua_serializable)
-_G.data_frame.series = series
 
 series.constructor =
   april_doc{
@@ -1391,19 +1398,19 @@ series.constructor =
     end
   end
 
-methods.ctor_name =
+series_methods.ctor_name =
   function(self)
     return "data_frame.series"
   end
 
-methods.ctor_params =
+series_methods.ctor_params =
   function(self)
     return self.time, self.data, self.time_column_name, table.unpack(self.data_column_names)
   end
 
-methods.clone = function(self) return series(table.unpack(util.clone(table.pack(self:ctor_params())))) end
+series_methods.clone = function(self) return series(table.unpack(util.clone(table.pack(self:ctor_params())))) end
 
-methods.get_time =
+series_methods.get_time =
   april_doc{
     class = "method",
     summary = "Returns the time column",
@@ -1412,7 +1419,7 @@ methods.get_time =
     return self.time
   end
 
-methods.get_data =
+series_methods.get_data =
   april_doc{
     class = "method",
     summary = "Returns the data column",
@@ -1421,7 +1428,7 @@ methods.get_data =
     return self.data
   end
 
-methods.to_data_frame =
+series_methods.to_data_frame =
   april_doc{
     class = "method",
     summary = "Returns a data_frame which references this time series",
@@ -1435,18 +1442,20 @@ methods.to_data_frame =
     return data_frame{ data=df_data, columns = col_names }
   end
 
-methods.resampleU =
+series_methods.resampleU =
   april_doc{
     class = "method",
     summary = "Resamples the time series using a uniform time period",
     params = {
       "The desired time period, a number >= 1 in same units as timestamp column",
+      "A start_time number [optional]",
+      "A stop_time number [optional]",      
     },
     outputs = {
       "A new series instance with all resampled data",
     },
   } ..
-  function(self, period)
+  function(self, period, start_time, end_time)
     -- HALF is used to move time labels in order to center data aggregations
     -- into the resampled time labels.
     local HALF  = period * 0.5
@@ -1458,21 +1467,44 @@ methods.resampleU =
     assert(period >= 1 and math.floor(period) == period, "Expected an integer period >= 1 as first argument")
     
     local N = #data
-    local result_length = math.floor( time[#time] * inv_T ) - 1
-    local first = math.floor( time[1] * inv_T + 1) * period
-    local last  = result_length * period
+    local first = math.floor( time[1] * inv_T + 1 ) * period
+    local last  = math.floor( time[#time] * inv_T - 1 ) * period
+    
+    if start_time then
+      assert(start_time % period == 0,
+             "start_time should be multiple of period")
+      start_time = start_time + HALF
+      assert(start_time >= first,
+             "start_time should be >= than first timestamp+period")
+      first = start_time
+    end
+    
+    if stop_time then
+      assert(stop_time % period == 0,
+             "stop_time should be multiple of period")
+      stop_time = stop_time + HALF
+      assert(stop_time <= last,
+             "stop_time should be <= than last timestamp-period")
+      last = stop_time
+    end
+    
+    local result_length = (last - first)/period
+
     local result_times = {}
     local result = matrix(result_length, data:dim(2))
 
     local i,j = 1,1
     
-    while time[j] < first do j = j+1 end
-    if time[j] > first and j>1 then j = j - 1 end
-    
     while i<=result_length do
-      local slice_first, slice_next = i*period, (i+1)*period
-      local k = j
+      local slice_first, slice_next = first + i*period, first + (i+1)*period
       local x = {}
+
+      -- search the lower bound for slice_first (if possible)
+      while time[j] < slice_first do j = j+1 end
+      j = j - 1
+
+      -- search the upper bound for slice_next
+      local k = j      
       while time[k] < slice_next do
         x[#x+1] = time[k]
         k = k + 1
@@ -1480,26 +1512,27 @@ methods.resampleU =
       x[#x+1] = time[k]
       local t_j = x[1]
       local t_k = x[#x]
+      
       -- Two cases:
       --   1. When #x == 2, interpolate.
       --   2. Otherwise aggregate.
-      if #x==2 and x[2] > slice_next then
+      if #x==2 and x[1] < slice_first and x[2] > slice_next then
         local next_i = i + math_floor(t_k * inv_T) - math_ceil(t_j * inv_T) - 1
         interpolate(result[{ {i,next_i}, ':' }], period, inv_T,
                     x, data[{ {j,k}, ':' }])
-        for j=i,next_i do result_times[#result_times+1] = j*period end
+        for j=i,next_i do result_times[#result_times+1] = first + j*period end
         i = next_i
       else -- dt <= period
+        assert(#x >= 2)
         aggregate(result[i], period, inv_T,
                   x, data[{ {j,k}, ':'}], slice_first, slice_next)
-        result_times[#result_times+1] = i*period
+        result_times[#result_times+1] = first + i*period
       end
-      -- Normally the next sequence starts at time[k-1], just one
-      -- before slice_next, however, the case x[#x]==slice_next
-      -- requires to start the next iteration at time[k].
-      if x[#x] > slice_next then j = k - 1 else j = k end
+      j = k - 1
       i = i + 1
     end
+    
+    assert(#result == #result_times)
     
     -- build resulting data_frame and time series instance
     local result_ts = series(result_times,
