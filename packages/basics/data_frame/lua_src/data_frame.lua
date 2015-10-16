@@ -1517,8 +1517,6 @@ series_methods.resampleU =
       "The desired time period, a number >= 1 in same units as timestamp column",
       { "A table of extra arguements, as start_time, stop_time, and resampling method.",
         "Currently method can be 'trapezoid' (by default) or 'rectangle'", },
-      "A start_time number [optional]",
-      "A stop_time number [optional]",
     },
     outputs = {
       "A new series instance with all resampled data",
