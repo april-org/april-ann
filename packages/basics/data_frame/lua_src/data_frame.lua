@@ -1293,7 +1293,7 @@ local function one_interp(x1, x2, y1, y2, xp)
   return xp, a*xp + b
 end
 
-local function interpolate(result, period, inv_T, x, y)
+local function interpolate_trapezoid(result, period, inv_T, x, y)
   -- the line is defined as: y = a*x + b
   -- but we want the mid-point of every two instants:
   -- m = 0.5 * [ a*x2 + b + a*x1 + b ] = 0.5*a * [ x2 + x1 ] + b
@@ -1306,14 +1306,18 @@ local function interpolate(result, period, inv_T, x, y)
                                            (x2 + x2)*period - period )
   for i=2,result:dim(2) do result:select(2,i):copy(col) end
   for i=1,result:dim(1) do result[i]:cmul(a2):axpy(1.0,b) end
-  return result,x1,x2
+end
+
+local function interpolate_rectangle(result, period, inv_T, x, y)
+  local y1 = y[1]
+  for i=1,result:dim(1) do result[i]:copy( y1 ) end
 end
 
 local function integrate(result, inv_T, x1, x2, y1, y2)
   result:axpy(0.5*inv_T, (x2-x1) * (y1+y2))
 end
 
-local function aggregate(result, period, inv_T, x, y, start, frontier)
+local function aggregate_trapezoid(result, period, inv_T, x, y, start, frontier)
   assert(#x >= 2)
   assert(#x == #y)
   local i = 1 -- traverse x and y tables
@@ -1348,6 +1352,48 @@ local function aggregate(result, period, inv_T, x, y, start, frontier)
     local x1,x2  = x[i],x[i+1]
     local y1,y2  = y[i],y[i+1]
     local x2,y2 = one_interp(x1, x2, y1, y2, frontier)
+    integrate(result, inv_T, x1, x2, y1, y2)
+    i = i + 1
+  end
+  assert(i == #x)
+end
+
+local function aggregate_rectangle(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  local i = 1 -- traverse x and y tables
+  result:zeros()
+
+  -- interpolate first segment
+  if x[i] < start then
+    local x1,x2 = x[i],x[i+1]
+    if x2 > start then
+      local x1    = start
+      local y1    = y[i+1]
+      local y2    = y1
+      integrate(result, inv_T, x1, x2, y1, y2)
+    end
+    i = i + 1
+  end
+
+  -- integrate the whole region between start and frontier
+  do
+    assert(x[i] >= start)
+    local j = i
+    while j<#x and x[j+1] <= frontier do j = j + 1 end
+    if i ~= j then
+      local x_dif = x[{ {i+1,j} }] - x[{ {i,j-1} }]
+      local y_sum = y[{ {i,j-1} }] * 2
+      result:scalar_add( 0.5 * inv_T * x_dif:cmul( y_sum ):sum() )
+    end
+    i = j
+  end
+
+  -- interpolate last segment
+  if i<#x then
+    local x1,x2 = x[i],frontier
+    local y1    = y[i]
+    local y2    = y1
     integrate(result, inv_T, x1, x2, y1, y2)
     i = i + 1
   end
@@ -1469,14 +1515,35 @@ series_methods.resampleU =
     summary = "Resamples the time series using a uniform time period",
     params = {
       "The desired time period, a number >= 1 in same units as timestamp column",
+      { "A table of extra arguements, as start_time, stop_time, and resampling method.",
+        "Currently method can be 'trapezoid' (by default) or 'rectangle'", },
       "A start_time number [optional]",
-      "A stop_time number [optional]",      
+      "A stop_time number [optional]",
     },
     outputs = {
       "A new series instance with all resampled data",
     },
   } ..
-  function(self, period, start_time, end_time)
+  function(self, period, params)
+    local params = get_table_fields({ start_time={type_match="number"},
+                                      stop_time={type_match="number"},
+                                      method={type_match="string",
+                                              default="trapezoid"}, }, params)
+    local start_time = params.start_time
+    local stop_time  = params.stop_time
+    local method     = params.method
+    
+    local interpolate,aggregate
+    if method == "trapezoid" then
+      interpolate = interpolate_trapezoid
+      aggregate   = aggregate_trapezoid
+    elseif method == "rectangle" then
+      interpolate = interpolate_rectangle
+      aggregate   = aggregate_rectangle
+    else
+      error("Unknown method " .. method)
+    end
+    
     -- HALF is used to move time labels in order to center data aggregations
     -- into the resampled time labels.
     local HALF  = period * 0.5

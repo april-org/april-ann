@@ -173,4 +173,7 @@ ascii
 984 9789.099609375
 ]]
     check.eq(result, target)
+
+    local tsp = ts:resampleU(12, { method="rectangle" })
+    -- TODO: check method=rectangle output
 end)
