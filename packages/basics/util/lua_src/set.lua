@@ -155,6 +155,14 @@ function set_methods:consult(v)
   return self.data[v] or false
 end
 
+function set_methods:iterate()
+  return coroutine.wrap(function()
+      for name,_ in pairs(self.data) do
+        coroutine.yield(name)
+      end
+  end)
+end
+
 class.extend_metamethod(set, "__tostring",
                         function(self)
                           local t = iterator(pairs(self.data)):select(1):
