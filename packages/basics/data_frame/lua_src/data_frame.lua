@@ -525,8 +525,13 @@ data_frame.from_csv =
     for j,col_name in ipairs(rawget(self, "columns")) do
       obj_data[col_name] = data[j]
     end
-    rawset(self, "index", matrixInt32(n):linspace())
-    rawset(self, "index2id", invert(rawget(self, "index")))
+    if n == 0 then
+      rawset(self, "index", {})
+      rawset(self, "index2id", {})
+    else
+      rawset(self, "index", matrixInt32(n):linspace())
+      rawset(self, "index2id", invert(rawget(self, "index")))
+    end
     if path ~= f then f:close() end
     if params.index then proxy:set_index(params.index) end
     collectgarbage("collect")
