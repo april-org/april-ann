@@ -169,7 +169,7 @@ class.extend_metamethod(set, "__tostring",
                             take(10):map(tostring):table()
                           table.sort(t)
                           if #self > 10 then table.insert(t, "...") end
-                          return table.concat{"{ ",table.concat(t, ", ")," } ",
+                          return table.concat{"set{ ",table.concat(t, ", ")," } ",
                                               "N=", #self }
 end)
 
