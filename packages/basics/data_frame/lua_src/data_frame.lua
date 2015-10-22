@@ -481,22 +481,28 @@ data_frame.from_csv =
     local f = type(path)~="string" and path or io.open(path)
     local aux = {}
     if params.header then
-      local t = parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
-                               decimal, NA_str, nan)
-      rawset(self, "columns", iterator(t):table())
-      for i,col_name in ipairs(rawget(self, "columns")) do
-        if is_nan(col_name) then
-          col_name = next_number(rawget(self, "columns"))
-          rawget(self, "columns")[i] = col_name
+      local line = f:read("*l")
+      if line then
+        local t = parse_csv_line(aux, line..sep, sep, quotechar,
+                                 decimal, NA_str, nan)
+        rawset(self, "columns", iterator(t):table())
+        for i,col_name in ipairs(rawget(self, "columns")) do
+          if is_nan(col_name) then
+            col_name = next_number(rawget(self, "columns"))
+            rawget(self, "columns")[i] = col_name
+          end
         end
+        if params.columns then
+          assert(#rawget(self,"columns") == #params.columns,
+                 "Incorrect number of columns at field 'columns'")
+          rawset(self, "columns", params.columns)
+        end
+        rawset(self, "col2id", invert(rawget(self, "columns")))
+        for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
+      else -- not line
+        rawset(self, "columns", {})
+        rawset(self, "col2id", {})
       end
-      if params.columns then
-        assert(#rawget(self,"columns") == #params.columns,
-               "Incorrect number of columns at field 'columns'")
-        rawset(self, "columns", params.columns)
-      end
-      rawset(self, "col2id", invert(rawget(self, "columns")))
-      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
     elseif params.columns then
       rawset(self, "columns", params.columns)
       rawset(self, "col2id", invert(rawget(self, "columns")))
@@ -505,12 +511,18 @@ data_frame.from_csv =
     local n = 0
     if #rawget(self, "columns") == 0 then
       n = n + 1
-      local first_line = iterator(parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
-                                                 decimal, NA_str, nan)):table()
-      rawset(self, "columns", iterator.range(#first_line):table())
-      rawset(self, "col2id", invert(rawget(self, "columns")))
-      for j,col_name in ipairs(rawget(self, "columns")) do
-        data[j] = { first_line[j] }
+      local line = f:read("*l")
+      if line then
+        local first_line = iterator(parse_csv_line(aux, line..sep, sep, quotechar,
+                                                   decimal, NA_str, nan)):table()
+        rawset(self, "columns", iterator.range(#first_line):table())
+        rawset(self, "col2id", invert(rawget(self, "columns")))
+        for j,col_name in ipairs(rawget(self, "columns")) do
+          data[j] = { first_line[j] }
+        end
+      else -- not line
+        rawset(self, "columns", {})
+        rawset(self, "col2id", {})
       end
     end
     local columns = rawget(self, "columns")
