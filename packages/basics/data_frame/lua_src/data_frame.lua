@@ -478,7 +478,7 @@ data_frame.from_csv =
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
-    local f = type(path)~="string" and path or io.open(path)
+    local f = type(path)~="string" and path or assert( io.open(path) )
     local aux = {}
     if params.header then
       local line = f:read("*l")
@@ -579,7 +579,7 @@ methods.to_csv =
     local decimal = params.decimal
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
-    local f = type(path)~="string" and path or io.open(path, "w")
+    local f = type(path)~="string" and path or assert( io.open(path, "w") )
     if params.header then
       local columns = {}
       for i,col_name in ipairs(rawget(self, "columns")) do
