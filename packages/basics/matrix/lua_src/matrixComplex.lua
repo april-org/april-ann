@@ -600,8 +600,7 @@ april_set_doc(matrixComplex.__sliding_window__.."iterate",
 		outputs     = { "An iterator function" },
 })
 
-matrixComplex.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
+matrix.__generic__.__make_generic_call__(matrixComplex)
 
 matrixComplex.meta_instance.__newindex =
   matrix.__generic__.__make_generic_newindex__(matrixComplex)

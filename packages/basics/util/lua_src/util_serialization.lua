@@ -9,22 +9,38 @@ local NIL_TAG = function() return "NIL dummy function" end -- dummy function
 __ipairs_iterator__ = select(1,ipairs({}))
 __pairs_iterator__  = select(1,pairs({}))
 local builtin = {
-  [coroutine.wrap]  = "coroutine.wrap",
-  [coroutine.yield] = "coroutine.yield",
-  [ipairs] = "ipairs",
-  [next]   = "next",
-  [pairs]  = "pairs",
-  [print]  = "print",
-  [table.pack]   = "table.pack",
-  [table.unpack] = "table.unpack",
-  [table.insert] = "table.insert",
-  [table.remove] = "table.remove",
-  [table.concat] = "table.concat",
   [__ipairs_iterator__] = "__ipairs_iterator__",
   [__pairs_iterator__]  = "__pairs_iterator__",
   [ENV_TAG] = "_ENV",
   [NIL_TAG] = "nil",
 }
+local blacklist = {
+  _ENV = true,
+  _G = true,
+  debug = true,
+  package = true,
+}
+local update_builtin_environment
+do
+  local type = luatype or type
+  function update_builtin_environment(tbl, prefix, visited)
+    tbl, prefix, visited = tbl or _G, prefix or "", visited or {}
+    if visited[tbl] then return end
+    visited[tbl] = true
+    for k,v in pairs(tbl) do
+      if type(k) == "string" and not blacklist[k] then
+        local next_prefix = (#prefix>0) and ("%s.%s"):format(prefix,k) or k
+        if type(v) == "table" then
+          update_builtin_environment(v, next_prefix, visited)
+        elseif type(v) == "function" and not builtin[v] then
+          builtin[v] = next_prefix
+        end
+      end
+    end
+  end
+end
+update_builtin_environment()
+
 -----------------------------------------------------------------------
 
 -- adding serialization to iterator class
@@ -266,8 +282,14 @@ do
             upvalues[i] = value
             i = i + 1
           end
-          local upv_str = transform(map, varname, upvalues, destination)
-          local func_dump = "assert(load(%q))"%{ string.dump(data) }
+          
+          local ok,upv_str = pcall(transform, map, varname, upvalues, destination)
+          if not ok then error(upv_str) end
+          
+          local ok,aux = pcall(string.dump, data)
+          if not ok then error(aux) end
+          
+          local func_dump = "assert(load(%q))"%{ aux }
           destination:write("%s[%d]=util.function_setupvalues(%s,%s)\n"%
                               {varname,id,func_dump,upv_str})
         else

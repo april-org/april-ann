@@ -160,15 +160,16 @@ namespace AprilMath {
         result_size    *= result_dims[i];
       }
       /******************************/
-      Basics::Matrix<T> *result  = dest;
+      AprilUtils::SharedPtr< Basics::Matrix<T> > result = dest;
+      AprilUtils::SharedPtr< Basics::Matrix<int32_t> > aux_which;
       Basics::Matrix<int32_t> *result2 = which;
-      if (result == 0) {
+      if (result.empty()) {
         result = new Basics::Matrix<T>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
       if (result2 == 0) {
-        result2 = new Basics::Matrix<int32_t>(numDim,
-                                              result_dims.get());
+        aux_which = result2 = new Basics::Matrix<int32_t>(numDim,
+                                                          result_dims.get());
         set_dest_to_zero = true;
       }
 #ifdef USE_CUDA
@@ -187,7 +188,7 @@ namespace AprilMath {
       unsigned int span_stride = static_cast<unsigned int>(span_it.getStride());
       april_assert(span_it.numberOfIterations() == result->size());
       // traverse in row major order
-      for (typename Basics::Matrix<T>::pos_iterator it(result);
+      for (typename Basics::Matrix<T>::pos_iterator it(result.get());
            !it.isEnd(); ++it, ++it2, ++span_it) {
         april_assert(span_it != input->end_span_iterator());
         april_assert(!it2.isEnd());
@@ -206,7 +207,7 @@ namespace AprilMath {
       }
       april_assert(span_it == input->end_span_iterator());
       april_assert(it2.isEnd());
-      return result;
+      return result.weakRelease();
     }
 
     template<typename T, typename O, typename OP1, typename OP2>
@@ -253,8 +254,8 @@ namespace AprilMath {
         result_size    *= result_dims[i];
       }
       /******************************/
-      Basics::Matrix<O> *result = dest;
-      if (result == 0) {
+      AprilUtils::SharedPtr< Basics::Matrix<O> > result = dest;
+      if (result.empty()) {
         result = new Basics::Matrix<O>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
@@ -271,7 +272,7 @@ namespace AprilMath {
       unsigned int span_stride = static_cast<unsigned int>(span_it.getStride());
       april_assert(span_it.numberOfIterations() == result->size());
       // traverse in row major order
-      for (typename Basics::Matrix<O>::pos_iterator it(result);
+      for (typename Basics::Matrix<O>::pos_iterator it(result.get());
            !it.isEnd(); ++it, ++span_it) {
         april_assert(span_it != input->end_span_iterator());
         inter_span_red_functor(span_size,
@@ -284,7 +285,7 @@ namespace AprilMath {
                                set_dest_to_zero);
       }
       april_assert(span_it == input->end_span_iterator());
-      return result;
+      return result.weakRelease();
     }
     
     template<typename T, typename OP>
@@ -665,8 +666,8 @@ namespace AprilMath {
         result_size    *= result_dims[i];
       }
       /******************************/
-      Basics::Matrix<O> *result = dest;
-      if (result == 0) {
+      AprilUtils::SharedPtr< Basics::Matrix<O> > result = dest;
+      if (result.empty()) {
         result = new Basics::Matrix<O>(numDim, result_dims.get());
         set_dest_to_zero = true;
       }
@@ -687,7 +688,7 @@ namespace AprilMath {
       april_assert(span2_it.getSize() == span1_it.getSize());
       april_assert(span2_it.numberOfIterations() == span1_it.numberOfIterations());
       // traverse in row major order
-      for (typename Basics::Matrix<O>::pos_iterator it(result);
+      for (typename Basics::Matrix<O>::pos_iterator it(result.get());
            !it.isEnd(); ++it, ++span1_it, ++span2_it) {
         april_assert(span1_it != input1->end_span_iterator());
         april_assert(span2_it != input2->end_span_iterator());
@@ -705,7 +706,7 @@ namespace AprilMath {
       }
       april_assert(span1_it == input1->end_span_iterator());
       april_assert(span2_it == input2->end_span_iterator());
-      return result;
+      return result.weakRelease();
     }
     
   } // namespace MatrixExt

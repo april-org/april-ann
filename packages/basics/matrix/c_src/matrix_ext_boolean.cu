@@ -54,99 +54,123 @@ namespace AprilMath {
       template <typename T>
       Matrix<bool> *matLT(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap1<T,bool>(obj, m_curried_lt<T>(value), dest);
+        dest = MatrixScalarMap1<T,bool>(obj, m_curried_lt<T>(value), dest);
+        aux.weakRelease();
+        return dest;
       }
 
       template <typename T>
       Matrix<bool> *matLT(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap2<T,T,bool>(obj, other,
+        dest = MatrixScalarMap2<T,T,bool>(obj, other,
                                           AprilMath::Functors::m_lt<T>(), dest);
+        aux.weakRelease();
+        return dest;
       }
 
       template <typename T>
       Matrix<bool> *matGT(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap1<T,bool>(obj, m_curried_gt<T>(value), dest);
+        dest = MatrixScalarMap1<T,bool>(obj, m_curried_gt<T>(value), dest);
+        aux.weakRelease();
+        return dest;
       }
 
       template <typename T>
       Matrix<bool> *matGT(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap2<T,T,bool>(obj, other,
+        dest = MatrixScalarMap2<T,T,bool>(obj, other,
                                           AprilMath::Functors::m_gt<T>(), dest);
+        aux.weakRelease();
+        return dest;
       }
 
       template <typename T>
       Matrix<bool> *matEQ(const Matrix<T> *obj, const T &value,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
         if (m_isnan(value)) {
-          return MatrixScalarMap1<T,bool>(obj, m_curried_eq_nan<T>(), dest);
+          dest = MatrixScalarMap1<T,bool>(obj, m_curried_eq_nan<T>(), dest);
         }
         else {
-          return MatrixScalarMap1<T,bool>(obj, m_curried_eq<T>(value), dest);
+          dest =MatrixScalarMap1<T,bool>(obj, m_curried_eq<T>(value), dest);
         }
+        aux.weakRelease();
+        return dest;
       }
     
       template <typename T>
       Matrix<bool> *matEQ(const Matrix<T> *obj,
                           const Matrix<T> *other,
                           Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap2<T,T,bool>(obj, other,
+        dest = MatrixScalarMap2<T,T,bool>(obj, other,
                                           AprilMath::Functors::m_eq<T>(), dest);
+        aux.weakRelease();
+        return dest;
       }
     
       template <typename T>
       Matrix<bool> *matNEQ(const Matrix<T> *obj, const T &value,
                            Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
         if (m_isnan(value)) {
-          return MatrixScalarMap1<T,bool>(obj, m_curried_neq_nan<T>(), dest);
+          dest = MatrixScalarMap1<T,bool>(obj, m_curried_neq_nan<T>(), dest);
         }
         else {
-          return MatrixScalarMap1<T,bool>(obj, m_curried_neq<T>(value), dest);
+          dest = MatrixScalarMap1<T,bool>(obj, m_curried_neq<T>(value), dest);
         }
+        aux.weakRelease();
+        return dest;
       }
     
       template <typename T>
       Matrix<bool> *matNEQ(const Matrix<T> *obj,
                            const Matrix<T> *other,
                            Matrix<bool> *dest) {
+        AprilUtils::SharedPtr< Matrix<bool> > aux;
         if (dest == 0) {
-          dest = new Matrix<bool>(obj->getNumDim(),
-                                  obj->getDimPtr());
+          aux = dest = new Matrix<bool>(obj->getNumDim(),
+                                        obj->getDimPtr());
         }
-        return MatrixScalarMap2<T,T,bool>(obj, other,
+        dest = MatrixScalarMap2<T,T,bool>(obj, other,
                                           AprilMath::Functors::m_neq<T>(), dest);
+        aux.weakRelease();
+        return dest;
       }
 
       template Matrix<bool> *matLT(const Matrix<float> *, const float &,

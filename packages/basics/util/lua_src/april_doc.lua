@@ -372,7 +372,7 @@ do
         end
         local k=1
         for line in table.unpack( iterator ) do
-          if k == first then definition = line break end
+          if k == first then definition = line:match("^%s*(.*)%s*$") break end
           k=k+1
         end
         if definition then

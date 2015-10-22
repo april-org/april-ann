@@ -84,7 +84,12 @@ namespace AprilMath {
           ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
                       obj->size(), other->size());
         }
+#ifdef USE_MKL
+        return MatrixSpanMap1<T,T>(other, CurriedAxpy<T>(alpha), obj,
+                                   obj->size(), obj->size());
+#else
         return MatrixSpanMap1<T,T>(other, CurriedAxpy<T>(alpha), obj);
+#endif
       }
 
       template <typename T>

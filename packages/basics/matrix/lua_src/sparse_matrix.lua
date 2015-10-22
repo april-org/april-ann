@@ -10,11 +10,61 @@ matrix.__generic__.__make_generic_to_lua_string__(matrix.sparse)
 matrix.__generic__.__make_generic_toFilename__(matrix.sparse)
 matrix.__generic__.__make_generic_toString__(matrix.sparse)
 
-matrix.sparse.meta_instance.__call =
-  matrix.__generic__.__make_generic_call__()
+local function parse_slice(slice, max)
+  if not slice then return 1,max end
+
+  local a,b
+  local tt = type(slice)
+  if tt == "string" then
+    a = slice:match("^(%d+)%:.*$") or 1
+    b = slice:match("^.*%:(%d+)$") or max
+  elseif tt == "table" then
+    a = slice[1] or 1
+    b = slice[2] or max
+  elseif tt == "number" then
+    a,b = slice,slice
+  else
+    error("Incorrect slice format, expecting a string, a table or a number")
+  end
+
+  a = tonumber(a)
+  b = tonumber(b)
+  
+  if a < 0 then a = max + a end
+  if b < 0 then b = max + b end
+  
+  assert(a >= 1 and a <= max)
+  assert(b >= 1 and b <= max)
+  assert(a <= b)
+
+  return a,b
+end
+
+matrix.sparse.meta_instance.__call = function(self, x_slice, y_slice)
+  local x_a,x_b = parse_slice(x_slice, self:dim(1))
+  local y_a,y_b = parse_slice(y_slice, self:dim(2))
+  local coords = { x_a, y_a }
+  local sizes  = { x_b - x_a + 1, y_b - y_a + 1 }
+  return self:slice(coords, sizes, false)
+end
 
 -- define right side operator []
-matrix.__generic__.__make_generic_index__(matrix.sparse)
+class.declare_functional_index
+(
+  matrix.sparse,
+  function(self, key)
+    local tt = type(key)
+    if tt == "number" then
+      return self:select(1, key)
+    elseif tt == "table" then
+      return self(key[1], key[2])
+    end
+  end
+)
+
+matrix.sparse.meta_instance.__newindex = function(self, key, value)
+  error("Not implemented for sparse matrix instance")
+end
 
 matrix.sparse.meta_instance.__tostring = function(self)
   local out      = {}

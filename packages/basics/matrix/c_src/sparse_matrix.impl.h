@@ -321,7 +321,7 @@ namespace Basics {
   template <typename T>
   SparseMatrix<T> *SparseMatrix<T>::
   fromMMappedDataReader(AprilUtils::MMappedDataReader *mmapped_data) {
-    SparseMatrix<T> *obj = new SparseMatrix();
+    AprilUtils::SharedPtr< SparseMatrix<T> > obj = new SparseMatrix();
     //
     obj->values  = AprilMath::GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
     obj->indices = AprilMath::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
@@ -343,7 +343,7 @@ namespace Basics {
     // THE MMAP POINTER
     obj->mmapped_data  = mmapped_data;
     //
-    return obj;
+    return obj.weakRelease();
   }
 
   template <typename T>
@@ -424,15 +424,15 @@ namespace Basics {
 
   template <typename T>
   Matrix<T> *SparseMatrix<T>::toDense() const {
-    Matrix<T> *result = new Matrix<T>(2, matrixSize);
-    typename Matrix<T>::random_access_iterator result_it(result);
-    AprilMath::MatrixExt::Initializers::matZeros(result);
+    AprilUtils::SharedPtr< Matrix<T> > result = new Matrix<T>(2, matrixSize);
+    typename Matrix<T>::random_access_iterator result_it(result.get());
+    AprilMath::MatrixExt::Initializers::matZeros(result.get());
     int x0=0,x1=0;
     for (const_iterator it(begin()); it != end(); ++it) {
       it.getCoords(x0,x1);
       result_it(x0,x1) = *it;
     }
-    return result;
+    return result.weakRelease();
   }
 
   template <typename T>

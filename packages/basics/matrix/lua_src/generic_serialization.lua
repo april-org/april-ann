@@ -146,4 +146,13 @@ function matrix.__generic__.__make_all_serialization_methods__(matrix_class,
   matrix.__generic__.__make_generic_toString__(matrix_class, defmode)
   matrix.__generic__.__make_generic_to_lua_string__(matrix_class, defmode)
   matrix.__generic__.__make_generic_toCSVFilename__(matrix_class)
+
+  class.extend_metamethod(matrix_class, "ipylua_toseries",
+                          function(self)
+                            local self = self:squeeze()
+                            assert(self:num_dim() == 1,
+                                   "Needs a rank one matrix")
+                            return self
+                          end
+  )
 end

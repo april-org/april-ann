@@ -70,7 +70,7 @@ namespace AprilUtils {
      * @brief Builds a UniquePtr from other UniquePtr object, taking the
      * ownership of the referenced pointer.
      */
-    UniquePtr(UniquePtr<T,Referencer,Deleter> &other) :
+    UniquePtr(UniquePtr &other) :
       referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
 
     /**
@@ -116,7 +116,7 @@ namespace AprilUtils {
      * @brief Assignment operator, transfers the ownership of the pointer
      * referenced by the given other object.
      */
-    UniquePtr<T,Referencer,Deleter> &operator=(UniquePtr<T,Referencer,Deleter> &other) {
+    UniquePtr &operator=(UniquePtr &other) {
       take(other.release());
       return *this;
     }
@@ -126,7 +126,7 @@ namespace AprilUtils {
      * referenced by the given other object.
      */
     template<typename T1>
-    UniquePtr<T,Referencer,Deleter> &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
+    UniquePtr &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
       take(other.release());
       return *this;
     }
@@ -134,7 +134,7 @@ namespace AprilUtils {
     /**
      * @brief Assignment operator, takes the ownership of the given pointer.
      */
-    UniquePtr<T,Referencer,Deleter> &operator=(T *other) {
+    UniquePtr &operator=(T *other) {
       reset(other);
       return *this;
     }
@@ -244,18 +244,16 @@ namespace AprilUtils {
      * @brief Builds a UniquePtr from other UniquePtr object, taking the
      * ownership of the referenced pointer.
      */
-    UniquePtr(UniquePtr<T,Referencer,Deleter> &other) :
+    UniquePtr(UniquePtr<T,Referenced,Deleter> &other) :
       referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
 
-  private:
     /**
      * @brief Builds a UniquePtr from other UniquePtr object, taking the
      * ownership of the referenced pointer.
      */
     template<typename T1>
-    UniquePtr(UniquePtr<T1,Referencer,Deleter> &other) {
-      UNUSED_VARIABLE(other);
-    }
+    UniquePtr(UniquePtr<T1,Referencer,Deleter> &other) :
+      referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
     
   public:
 
@@ -288,7 +286,7 @@ namespace AprilUtils {
      * @brief Assignment operator, transfers the ownership of the pointer
      * referenced by the given other object.
      */
-    UniquePtr<T[],Referencer,Deleter> &operator=(UniquePtr<T,Referencer,Deleter> &other) {
+    UniquePtr &operator=(UniquePtr<T,Referencer,Deleter> &other) {
       take(other.release());
       return *this;
     }
@@ -298,7 +296,7 @@ namespace AprilUtils {
      * referenced by the given other object.
      */
     template<typename T1>
-    UniquePtr<T[],Referencer,Deleter> &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
+    UniquePtr &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
       take(other.release());
       return *this;
     }
@@ -306,7 +304,7 @@ namespace AprilUtils {
     /**
      * @brief Assignment operator, takes the ownership of the given pointer.
      */
-    UniquePtr<T[],Referencer,Deleter> &operator=(T *other) {
+    UniquePtr &operator=(T *other) {
       reset(other);
       return *this;
     }

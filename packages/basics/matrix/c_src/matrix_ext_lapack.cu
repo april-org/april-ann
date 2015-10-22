@@ -95,11 +95,14 @@ namespace AprilMath {
         for (int i=numSV; i<=m; ++i) {
           (*S_first)[i]=numSV;
         }
-        *U  = new Matrix<float>(2, dimsU);
-        *S  = new SparseMatrix<float>(m,n,S_values,S_indices,S_first);
-        *VT = new Matrix<float>(2, dimsVT);
-        AprilUtils::SharedPtr< Matrix<float> > UT( (*VT)->transpose() );
-        AprilUtils::SharedPtr< Matrix<float> > V( (*U)->transpose() );
+        AprilUtils::SharedPtr< Matrix<float> > sU;
+        AprilUtils::SharedPtr< SparseMatrix<float> > sS;
+        AprilUtils::SharedPtr< Matrix<float> > sVT;
+        sU  = new Matrix<float>(2, dimsU);
+        sS  = new SparseMatrix<float>(m,n,S_values,S_indices,S_first);
+        sVT = new Matrix<float>(2, dimsVT);
+        AprilUtils::SharedPtr< Matrix<float> > UT( sVT->transpose() );
+        AprilUtils::SharedPtr< Matrix<float> > V( sU->transpose() );
         // m,n are changed by n,m because the tranposition of the matrices
         INFO = clapack_sgesdd(CblasColMajor, n, m, AT->getStrideSize(1),
                               AT->getRawDataAccess()->getPPALForReadAndWrite(),
@@ -107,6 +110,9 @@ namespace AprilMath {
                               S_values->getPPALForWrite(),
                               V->getRawDataAccess()->getPPALForWrite());
         checkLapackInfo(INFO);
+        *U  = sU.weakRelease();
+        *S  = sS.weakRelease();
+        *VT = sVT.weakRelease();
       }
 
       // FROM: http://www.r-bloggers.com/matrix-determinant-with-the-lapack-routine-dspsv/    

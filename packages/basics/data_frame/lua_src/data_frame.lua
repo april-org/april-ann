@@ -2,6 +2,9 @@
 -- http://pandas-docs.github.io/pandas-docs-travis/
 local data_frame,methods        = class("data_frame", aprilio.lua_serializable)
 local groupped,groupped_methods = class("data_frame.groupped")
+local series,series_methods = class("data_frame.series", aprilio.lua_serializable)
+data_frame.series = series
+
 _G.data_frame = data_frame -- global definition
 ------------------------------------------------------------------
 
@@ -111,7 +114,7 @@ do
         return ctor(#data,1,data)
       else
         data = class.of(data)==ctor and data or data:convert_to(dtype)
-        return data:rewrap(data:size(),1)
+        return data:right_inflate()
       end
     end
   end
@@ -145,12 +148,6 @@ local tonumber = tonumber
 
 -- parses a CSV line using sep as delimiter and adding NA when required
 local parse_csv_line = util.__parse_csv_line__
-
--- converts an array or a matrix into a string
-local function stringfy(array)
-  if class.of(array) then array = array:toTable() end
-  return util.to_lua_string(array, "ascii")
-end
 
 -- checks if an array is a table or a matrix
 local function check_array(array, field)
@@ -189,6 +186,62 @@ local function quote(x, sep, quotechar, decimal)
   else
     return x
   end
+end
+
+-- support for IPyLua
+local function data_frame_show(proxy)
+  local plain = tostring(proxy)
+  local html = {}
+  local self = getmetatable(proxy)
+  table.insert(html, "<div style=\"max-width:99%; overflow:auto\">")
+  if not next(rawget(self, "data")) then
+    table.insert(html, "<p>Empty data_frame</p>")
+  else
+    table.insert(html, "<table>")
+    table.insert(html, "<tr>")
+    table.insert(html, "<th></th>")
+    for j,col_name in ipairs(rawget(self, "columns")) do
+      if j > 20 then
+        table.insert(html, "<td>...</td>")
+        break
+      end
+      table.insert(html, "<th>%s</th>"%{quote(col_name, '%s', '"', '.')})
+    end
+    table.insert(html, "</tr>")
+    local truncated = false
+    for i,row_name in ipairs(rawget(self, "index")) do
+      table.insert(html, "<tr>")
+      if i > 20 then
+        for j=1,(#rawget(self, "columns"))+1 do
+          table.insert(html, "<td>...</td>")
+          if j > 21 then break end
+        end
+        truncated = true
+        break
+      else
+        table.insert(html, "<td>%s</td>"%{row_name})
+        for j,col_name in ipairs(rawget(self, "columns")) do
+          if j > 20 then
+            table.insert(html, "<td>...</td>")
+            break
+          end
+          table.insert(html, "<td>%s</td>"%{quote(rawget(self, "data")[col_name][i],
+                                                  '%s', '"', '.')})
+        end
+      end
+      table.insert(html, "</tr>")
+    end
+    table.insert(html, "</table>")
+  end
+  table.insert(html, "<pre># data_frame of %d rows x %d columns</pre>"%
+                 {#rawget(self,"index"),#rawget(self,"columns")})
+  table.insert(html, "</div>")
+  --
+  local data = {
+    ["text/plain"] = plain,
+    ["text/html"] = table.concat(html),
+  }
+  return data
 end
 
 local function dataframe_tostring(proxy)
@@ -300,6 +353,8 @@ data_frame.constructor =
       self.index_table = mt.index_table
       self.cls         = mt.cls
       self.id          = mt.id
+      -- support for IPyLua
+      self.ipylua_show = data_frame_show
       setmetatable(proxy, self)
       setmetatable(self, mt)
     end
@@ -423,25 +478,31 @@ data_frame.from_csv =
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
-    local f = type(path)~="string" and path or io.open(path)
+    local f = type(path)~="string" and path or assert( io.open(path) )
     local aux = {}
     if params.header then
-      local t = parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
-                               decimal, NA_str, nan)
-      rawset(self, "columns", iterator(t):table())
-      for i,col_name in ipairs(rawget(self, "columns")) do
-        if is_nan(col_name) then
-          col_name = next_number(rawget(self, "columns"))
-          rawget(self, "columns")[i] = col_name
+      local line = f:read("*l")
+      if line then
+        local t = parse_csv_line(aux, line..sep, sep, quotechar,
+                                 decimal, NA_str, nan)
+        rawset(self, "columns", iterator(t):table())
+        for i,col_name in ipairs(rawget(self, "columns")) do
+          if is_nan(col_name) then
+            col_name = next_number(rawget(self, "columns"))
+            rawget(self, "columns")[i] = col_name
+          end
         end
+        if params.columns then
+          assert(#rawget(self,"columns") == #params.columns,
+                 "Incorrect number of columns at field 'columns'")
+          rawset(self, "columns", params.columns)
+        end
+        rawset(self, "col2id", invert(rawget(self, "columns")))
+        for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
+      else -- not line
+        rawset(self, "columns", {})
+        rawset(self, "col2id", {})
       end
-      if params.columns then
-        assert(#rawget(self,"columns") == #params.columns,
-               "Incorrect number of columns at field 'columns'")
-        rawset(self, "columns", params.columns)
-      end
-      rawset(self, "col2id", invert(rawget(self, "columns")))
-      for j,col_name in ipairs(rawget(self, "columns")) do data[j] = {} end
     elseif params.columns then
       rawset(self, "columns", params.columns)
       rawset(self, "col2id", invert(rawget(self, "columns")))
@@ -450,12 +511,18 @@ data_frame.from_csv =
     local n = 0
     if #rawget(self, "columns") == 0 then
       n = n + 1
-      local first_line = iterator(parse_csv_line(aux, f:read("*l")..sep, sep, quotechar,
-                                                 decimal, NA_str, nan)):table()
-      rawset(self, "columns", iterator.range(#first_line):table())
-      rawset(self, "col2id", invert(rawget(self, "columns")))
-      for j,col_name in ipairs(rawget(self, "columns")) do
-        data[j] = { first_line[j] }
+      local line = f:read("*l")
+      if line then
+        local first_line = iterator(parse_csv_line(aux, line..sep, sep, quotechar,
+                                                   decimal, NA_str, nan)):table()
+        rawset(self, "columns", iterator.range(#first_line):table())
+        rawset(self, "col2id", invert(rawget(self, "columns")))
+        for j,col_name in ipairs(rawget(self, "columns")) do
+          data[j] = { first_line[j] }
+        end
+      else -- not line
+        rawset(self, "columns", {})
+        rawset(self, "col2id", {})
       end
     end
     local columns = rawget(self, "columns")
@@ -470,8 +537,13 @@ data_frame.from_csv =
     for j,col_name in ipairs(rawget(self, "columns")) do
       obj_data[col_name] = data[j]
     end
-    rawset(self, "index", matrixInt32(n):linspace())
-    rawset(self, "index2id", invert(rawget(self, "index")))
+    if n == 0 then
+      rawset(self, "index", {})
+      rawset(self, "index2id", {})
+    else
+      rawset(self, "index", matrixInt32(n):linspace())
+      rawset(self, "index2id", invert(rawget(self, "index")))
+    end
     if path ~= f then f:close() end
     if params.index then proxy:set_index(params.index) end
     collectgarbage("collect")
@@ -507,7 +579,7 @@ methods.to_csv =
     local decimal = params.decimal
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
-    local f = type(path)~="string" and path or io.open(path, "w")
+    local f = type(path)~="string" and path or assert( io.open(path, "w") )
     if params.header then
       local columns = {}
       for i,col_name in ipairs(rawget(self, "columns")) do
@@ -1102,7 +1174,7 @@ function groupped.constructor(self, df, ...)
     local current = groups[col_name]
     local lv2id = level2id[col_name]
     local data = df[{col_name}]
-    if type(data):find("^matrix") then data = data:toTable() end
+    -- if type(data):find("^matrix") then data = data:toTable() end
     local k = 0
     for i=1,#data do
       local v = data[i]
@@ -1214,66 +1286,389 @@ class.extend_metamethod(groupped, "__tostring",
 end)
 
 ------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
 
--- support for IPyLua
-do
-  local handlers = debug.getregistry().APRILANN.IPyLua_output_handlers
+local axpy = matrix .. "axpy"
+local bind = bind
+local broadcast = matrix.ext.broadcast
+local cmul = matrix .. "cmul"
+local math_ceil = math.ceil
+local math_floor = math.floor
 
-  handlers[ data_frame ] = function(proxy)
-    local plain = tostring(obj)
-    local html = {}
-    local self = getmetatable(proxy)
-    table.insert(html, "<div style=\"max-width:99%; overflow:auto\">")
-    if not next(rawget(self, "data")) then
-      table.insert(html, "<p>Empty data_frame</p>")
-    else
-      table.insert(html, "<table>")
-      table.insert(html, "<tr>")
-      table.insert(html, "<th></th>")
-      for j,col_name in ipairs(rawget(self, "columns")) do
-        if j > 20 then
-          table.insert(html, "<td>...</td>")
-          break
-        end
-        table.insert(html, "<th>%s</th>"%{quote(col_name, '%s', '"', '.')})
-      end
-      table.insert(html, "</tr>")
-      local truncated = false
-      for i,row_name in ipairs(rawget(self, "index")) do
-        table.insert(html, "<tr>")
-        if i > 20 then
-          for j=1,(#rawget(self, "columns"))+1 do
-            table.insert(html, "<td>...</td>")
-            if j > 21 then break end
-          end
-          truncated = true
-          break
-        else
-          table.insert(html, "<td>%s</td>"%{row_name})
-          for j,col_name in ipairs(rawget(self, "columns")) do
-            if j > 20 then
-              table.insert(html, "<td>...</td>")
-              break
-            end
-            table.insert(html, "<td>%s</td>"%{quote(rawget(self, "data")[col_name][i],
-                                                    '%s', '"', '.')})
-          end
-        end
-        table.insert(html, "</tr>")
-      end
-      table.insert(html, "</table>")
-    end
-    table.insert(html, "<pre># data_frame of %d rows x %d columns</pre>"%
-                   {#rawget(self,"index"),#rawget(self,"columns")})
-    table.insert(html, "</div>")
-    --
-    local data = {
-      ["text/plain"] = plain,
-      ["text/html"] = table.concat(html),
-    }
-    return data
-  end
-  
+---------- PRIVATE FUNCTIONS -----------
+
+-- the line is defined as: y = a*x + b
+local function compute_line_coeffs(x1, x2, y1, y2)
+  local a = (y2 - y1):scal(1/(x2 - x1))
+  local b = y1 - a*x1
+  return a,b
 end
+
+local function one_interp(x1, x2, y1, y2, xp)
+  local a,b = compute_line_coeffs(x1, x2, y1, y2)
+  return xp, a*xp + b
+end
+
+local function interpolate_trapezoid(result, period, inv_T, x, y)
+  -- the line is defined as: y = a*x + b
+  -- but we want the mid-point of every two instants:
+  -- m = 0.5 * [ a*x2 + b + a*x1 + b ] = 0.5*a * [ x2 + x1 ] + b
+  local x1,x2 = x[1], x[2]
+  local a,b = compute_line_coeffs(x1, x2, y[1], y[2])
+  local a2  = a * 0.5
+  local x1,x2 = math_ceil( x1 * inv_T ), math_floor( x2 * inv_T )
+  assert( (x2-x1)==result:dim(1) )
+  local col = result:select(2,1):linspace( (x1 + x1)*period + period,
+                                           (x2 + x2)*period - period )
+  for i=2,result:dim(2) do result:select(2,i):copy(col) end
+  for i=1,result:dim(1) do result[i]:cmul(a2):axpy(1.0,b) end
+end
+
+local function interpolate_rectangle(result, period, inv_T, x, y)
+  local y1 = y[1]
+  for i=1,result:dim(1) do result[i]:copy( y1 ) end
+end
+
+local function integrate(result, inv_T, x1, x2, y1, y2)
+  result:axpy(0.5*inv_T, (x2-x1) * (y1+y2))
+end
+
+local function aggregate_trapezoid(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  local i = 1 -- traverse x and y tables
+  result:zeros()
+
+  -- interpolate first segment
+  if x[i] < start then
+    local x1,x2 = x[i],x[i+1]
+    if x2 > start then
+      local y1,y2 = y[i],y[i+1]
+      local x1,y1 = one_interp(x1, x2, y1, y2, start)
+      integrate(result, inv_T, x1, x2, y1, y2)
+    end
+    i = i + 1
+  end
+
+  -- integrate the whole region between start and frontier
+  do
+    assert(x[i] >= start)
+    local j = i
+    while j<#x and x[j+1] <= frontier do j = j + 1 end
+    if i ~= j then
+      local x_dif = x[{ {i+1,j} }] - x[{ {i,j-1} }]
+      local y_sum = y[{ {i+1,j} }] + y[{ {i,j-1} }]
+      result:scalar_add( 0.5 * inv_T * x_dif:cmul( y_sum ):sum() )
+    end
+    i = j
+  end
+
+  -- interpolate last segment
+  if i<#x then
+    local x1,x2  = x[i],x[i+1]
+    local y1,y2  = y[i],y[i+1]
+    local x2,y2 = one_interp(x1, x2, y1, y2, frontier)
+    integrate(result, inv_T, x1, x2, y1, y2)
+    i = i + 1
+  end
+  assert(i == #x)
+end
+
+local function aggregate_rectangle(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  local i = 1 -- traverse x and y tables
+  result:zeros()
+
+  -- interpolate first segment
+  if x[i] < start then
+    local x1,x2 = x[i],x[i+1]
+    if x2 > start then
+      local x1    = start
+      local y1    = y[i+1]
+      local y2    = y1
+      integrate(result, inv_T, x1, x2, y1, y2)
+    end
+    i = i + 1
+  end
+
+  -- integrate the whole region between start and frontier
+  do
+    assert(x[i] >= start)
+    local j = i
+    while j<#x and x[j+1] <= frontier do j = j + 1 end
+    if i ~= j then
+      local x_dif = x[{ {i+1,j} }] - x[{ {i,j-1} }]
+      local y_sum = y[{ {i,j-1} }] * 2
+      result:scalar_add( 0.5 * inv_T * x_dif:cmul( y_sum ):sum() )
+    end
+    i = j
+  end
+
+  -- interpolate last segment
+  if i<#x then
+    local x1,x2 = x[i],frontier
+    local y1    = y[i]
+    local y2    = y1
+    integrate(result, inv_T, x1, x2, y1, y2)
+    i = i + 1
+  end
+  assert(i == #x)
+end
+
+local function check_sequential(self)
+  local time = self.time
+  if #time == 1 then
+    self.seq_period = 1
+  elseif #time == 2 then
+    self.seq_period = time[2] - time[1]
+  else
+    local aux = time[{'2:'}] - time[{'1:-2'}]
+    if aux:eq( (aux:max()) ):all() then self.seq_period = max end
+  end
+end
+
+--------------------------------------------------
+--------------------------------------------------
+--------------------------------------------------
+
+series.constructor =
+  april_doc{
+    class = "method",
+    summary = "Constructs a time series given a data_frame and a serie of column names",
+    description = {
+      "Time stamp column should be numeric and will be interpreted with double resolution.",
+      "Data columns should be numeric and will be interpreted to float resolution.",
+      "This class clones the memory of the given data_frame for performance purposes.",
+    },
+    params = {
+      "A data_frame instance",
+      "A timestamp column name. It can be nil, in which case a sequence would be generated",
+      "A data column name",
+      "...",
+    },
+    outputs = {
+      "An instance of series class",
+    },
+  } ..
+  function(self, df, time_column, ...)
+    if not class.is_a(df, data_frame) then
+      -- loading directly from matrix data
+      local time  = df
+      local data  = time_column
+      assert(class.is_a(time, matrixDouble))
+      assert(class.is_a(data, matrix))
+      self.time_column_name  = select(1, ...)
+      self.data_column_names = table.pack( select(2, ...) )
+      self.time = time
+      self.data = data
+      check_sequential(self)
+    else
+      assert(class.is_a(df, data_frame), "Needs a data_frame as first argument")
+      assert(..., "At least three arguments are needed")
+      local data_columns = table.pack(...)
+      self.time_column_name = time_column or "time"
+      self.data_column_names = data_columns
+      self.data = df:as_matrix(...) -- by default it is float
+      if time_column then
+        self.time = df:as_matrix(time_column, { dtype="double" }):squeeze()
+        check_sequential(self)
+      else
+        -- generate a sequence for time column
+        self.time = matrixDouble(self.data:dim(1)):linear()
+        self.seq_period = 1
+      end
+    end
+  end
+
+series_methods.ctor_name =
+  function(self)
+    return "data_frame.series"
+  end
+
+series_methods.ctor_params =
+  function(self)
+    return self.time, self.data, self.time_column_name, table.unpack(self.data_column_names)
+  end
+
+series_methods.clone = function(self) return series(table.unpack(util.clone(table.pack(self:ctor_params())))) end
+
+series_methods.get_time =
+  april_doc{
+    class = "method",
+    summary = "Returns the time column",
+  } ..
+  function(self)
+    return self.time
+  end
+
+series_methods.get_data =
+  april_doc{
+    class = "method",
+    summary = "Returns the data column",
+  } ..
+  function(self)
+    return self.data
+  end
+
+series_methods.to_data_frame =
+  april_doc{
+    class = "method",
+    summary = "Returns a data_frame which references this time series",
+  } ..
+  function(self)
+    local col_names = table.join( {self.time_column_name},
+                                  self.data_column_names)
+    local df_data = iterator.zip( iterator(self.data_column_names),
+                                  iterator(matrix.ext.iterate(self.data, 2):select(2) ) ):table()
+    df_data[self.time_column_name] = self.time
+    return data_frame{ data=df_data, columns = col_names }
+  end
+
+series_methods.resampleU =
+  april_doc{
+    class = "method",
+    summary = "Resamples the time series using a uniform time period",
+    params = {
+      "The desired time period, a number >= 1 in same units as timestamp column",
+      { "A table of extra arguements, as start_time, stop_time, and resampling method.",
+        "Currently method can be 'trapezoid' (by default) or 'rectangle'", },
+    },
+    outputs = {
+      "A new series instance with all resampled data",
+    },
+  } ..
+  function(self, period, params)
+    local params = get_table_fields({ start_time={type_match="number"},
+                                      stop_time={type_match="number"},
+                                      method={type_match="string",
+                                              default="trapezoid"}, }, params)
+    local start_time = params.start_time
+    local stop_time  = params.stop_time
+    local method     = params.method
+    
+    local interpolate,aggregate
+    if method == "trapezoid" then
+      interpolate = interpolate_trapezoid
+      aggregate   = aggregate_trapezoid
+    elseif method == "rectangle" then
+      interpolate = interpolate_rectangle
+      aggregate   = aggregate_rectangle
+    else
+      error("Unknown method " .. method)
+    end
+    
+    -- HALF is used to move time labels in order to center data aggregations
+    -- into the resampled time labels.
+    local HALF  = period * 0.5
+    local time  = self.time + HALF
+    local data  = self.data
+    local inv_T = 1/period
+    -- data should be sorted by time, it is expected monotonous time (increasing)
+    assert(type(period) == "number" , "Needs a period number as first argument")
+    assert(period >= 1 and math.floor(period) == period, "Expected an integer period >= 1 as first argument")
+    
+    local N = #data
+    local first = math.floor( time[1] * inv_T + 1 ) * period
+    local last  = math.floor( time[#time] * inv_T - 1 ) * period
+    
+    if start_time then
+      assert(start_time % period == 0,
+             "start_time should be multiple of period")
+      start_time = start_time + HALF
+      assert(start_time >= first,
+             "start_time should be >= than first timestamp+period")
+      first = start_time
+    end
+    
+    if stop_time then
+      assert(stop_time % period == 0,
+             "stop_time should be multiple of period")
+      stop_time = stop_time + HALF
+      assert(stop_time <= last,
+             "stop_time should be <= than last timestamp-period")
+      last = stop_time
+    end
+
+    -- remove first value to avoid rounding problems with large timestamp values
+    -- in float resolution at aggregation and/or interpolate functions
+    local time = time:scalar_add(-first):convert_to("float")
+    local old_first
+    old_first, first, last = first, 0, last-first
+    
+    local result_length = (last - first)/period
+
+    local result_times = matrixDouble(result_length):linspace():scal(period):scalar_add(old_first)
+    local result = matrix(result_length, data:dim(2))
+
+    local i,j = 1,1
+    
+    while i<=result_length do
+      if i%1000000 == 0 then collectgarbage("collect") end
+      
+      local slice_first, slice_next = i*period, (i+1)*period
+      
+      -- search the lower bound for slice_first (if possible)
+      while time[j] < slice_first do j = j+1 end
+      j = j - 1
+
+      -- search the upper bound for slice_next
+      local k = j
+      while time[k] < slice_next do k = k + 1 end
+      local x = time[{ {j,k} }]
+      local t_j = x[1]
+      local t_k = x[#x]
+      
+      -- Two cases:
+      --   1. When #x == 2, interpolate.
+      --   2. Otherwise aggregate.
+      if #x==2 and x[1] < slice_first and x[2] > slice_next then
+        local next_i = i + math_floor(t_k * inv_T) - math_ceil(t_j * inv_T) - 1
+        interpolate(result[{ {i,next_i}, ':' }], period, inv_T,
+                    x, data[{ {j,k}, ':' }])
+        i = next_i
+      else -- dt <= period
+        assert(#x >= 2)
+        aggregate(result[i], period, inv_T,
+                  x, data[{ {j,k}, ':'}], slice_first, slice_next)
+      end
+      j = k - 1
+      i = i + 1
+    end
+    
+    -- build resulting data_frame and time series instance
+    local result_ts = series(result_times,
+                             result,
+                             self.time_column_name,
+                             table.unpack(self.data_column_names))
+
+    collectgarbage("collect")
+    return result_ts
+  end
+
+class.extend_metamethod(
+  series, "__tostring",
+  function(self)
+    return tostring(self:to_data_frame()):gsub("data_frame", "data_frame.series")
+  end
+)
+
+class.extend_metamethod(
+  series, "ipylua_show",
+  function(self)
+    local df = self:to_data_frame()
+    local show = getmetatable(df).ipylua_show
+    local tbl = show(df)
+    for k,v in pairs(tbl) do
+      tbl[k] = tbl[k]:gsub("data_frame", "data_frame.series")
+    end
+    return tbl
+  end
+)
+
+------------------------------------------------------------------
+------------------------------------------------------------------
+------------------------------------------------------------------
 
 return data_frame
