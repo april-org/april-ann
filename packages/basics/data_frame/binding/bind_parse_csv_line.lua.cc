@@ -97,7 +97,12 @@ bool checknumber(constString tk, const char *decimal, double &result) {
         lua_pushfstring(L, "unmatched %c", *quotechar);
         return 2; // unmatched quote, likely to accept after appending next line
       }
-      line.ltrim(sep);
+      if (line) { // not empty
+        if (line[0] != *sep) {
+          LUABIND_ERROR("Unable to locate sepparator after quoted cell");
+        }
+        line.skip(1);
+      }
     }
     else { // unquoted; find next sep
       tk = line.extract_token(sep, true);

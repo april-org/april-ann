@@ -1144,9 +1144,24 @@ methods.parse_datetime =
     return result
   end
 
+methods.count_NAs =
+  function(proxy)
+    local self = getmetatable(proxy)
+    local data = rawget(self, "data")
+    local result = {}
+    for col_name,v in pairs(data) do
+      local count = 0
+      for i=1,#v do
+        if is_nan(v[i]) then count=count+1 end
+      end
+      result[col_name] = count
+    end
+    return result
+  end
+
 methods.select =
   function(self,params)
-    
+
   end
 
 methods.groupby =
