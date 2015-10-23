@@ -1048,6 +1048,22 @@ methods.levels =
     return build_sorted_order(data[key], NA_symbol or defNA)
   end
 
+methods.counts =
+  function(self, key, NA_symbol)
+    NA_symbol = NA_symbol or defNA
+    local self = getmetatable(self)
+    local key = tonumber(key) or key
+    local data = rawget(self, "data")
+    local tbl = data[key]
+    local counts = {}
+    for i=1,#tbl do
+      local v = tbl[i]
+      local x = is_nan(v) and NA_symbol or v
+      counts[x] = (counts[x] or 0) + 1
+    end
+    return counts
+  end
+
 methods.ctor_name =
   function(self)
     return "data_frame"
