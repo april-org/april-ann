@@ -478,13 +478,18 @@ data_frame.from_csv =
     assert(#sep == 1, "Only one character sep is allowed")
     assert(#quotechar <= 1, "Only zero or one character quotechar is allowed")
     assert(#decimal == 1, "Only one character decimal is allowed")
+    local line_n = 0
     local f = type(path)~="string" and path or assert( io.open(path) )
     local aux = {}
     if params.header then
+      line_n = line_n + 1
       local line = f:read("*l")
       if line then
-        local t = parse_csv_line(aux, line..sep, sep, quotechar,
-                                 decimal, NA_str, nan)
+        local t,msg = parse_csv_line(aux, line..sep, sep, quotechar,
+                                     decimal, NA_str, nan)
+        if not t then
+          error("Problem reading CSV filename at line 1: "..msg)
+        end
         rawset(self, "columns", iterator(t):table())
         for i,col_name in ipairs(rawget(self, "columns")) do
           if is_nan(col_name) then
@@ -510,11 +515,16 @@ data_frame.from_csv =
     end
     local n = 0
     if #rawget(self, "columns") == 0 then
+      line_n = line_n + 1
       n = n + 1
       local line = f:read("*l")
       if line then
-        local first_line = iterator(parse_csv_line(aux, line..sep, sep, quotechar,
-                                                   decimal, NA_str, nan)):table()
+        local parsed_t,msg = parse_csv_line(aux, line..sep, sep, quotechar,
+                                            decimal, NA_str, nan)
+        if not parsed_t then
+          error("Problem reading CSV filename at line %d: %s"%{line_n,msg})
+        end
+        local first_line = iterator(parsed_t):table()
         rawset(self, "columns", iterator.range(#first_line):table())
         rawset(self, "col2id", invert(rawget(self, "columns")))
         for j,col_name in ipairs(rawget(self, "columns")) do
@@ -527,9 +537,20 @@ data_frame.from_csv =
     end
     local columns = rawget(self, "columns")
     for row_line in f:lines() do
+      line_n = line_n + 1
       n = n + 1
-      local t = parse_csv_line(aux, row_line..sep, sep, quotechar,
+      local t,msg
+      repeat
+        t,msg = parse_csv_line(aux, row_line..sep, sep, quotechar,
                                decimal, NA_str, nan)
+        if not t then
+          if msg:find("unmatched") then -- retry appending the next line
+            row_line = table.concat({row_line,"\n",f:read("*l")},"\n")
+          else
+            error("Problem reading CSV filename at line %d: %s"%{line_n,msg})
+          end
+        end
+      until t
       for j=1,#t do data[j][n] = t[j] end
       if n%1000000 == 0 then collectgarbage("collect") end
     end
@@ -1082,7 +1103,7 @@ methods.iterate =
     local idata = {}
     for i,name in ipairs(columns) do
       april_assert(col2id[name], "Unknown column name %s", tostring(name))
-      idata = data[name]
+      idata[i] = data[name]
     end
     local row = {}
     return function(self, i)
