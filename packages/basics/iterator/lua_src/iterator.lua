@@ -376,6 +376,11 @@ function iterator_methods:table()
   return t
 end
 
+-- Converts to table and then unpack the resulting table.
+function iterator_methods:unpack(...)
+  return table.unpack(self:table(), ...)
+end
+
 -- Returns the iterator result at nth position.
 function iterator_methods:nth(nth)
   for i=1,nth-1 do

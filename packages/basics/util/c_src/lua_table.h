@@ -308,6 +308,53 @@ namespace AprilUtils {
     /// Destructor.
     ~LuaTable();
     
+    /**
+     * @brief Pushes into stack the table and takes it as an absolute index.
+     *
+     * Be careful, the stack will be modified because a reference to the table
+     * will be pushed on top of it. This method allows to perform a large number
+     * of table read/write operations in an efficient way. See the example:
+     *
+     * @code
+     * LuaTable t(L,-1);
+     * t.lock();
+     * double sum;
+     * for (int i=1; i<=1000000; ++i) sum += t[i].get<double>();
+     * t.unlock();
+     * @endcode
+     *
+     * @note If LuaTable has been locked before, this method does nothing and
+     * returns false. Otherwise it returns true.
+     *
+     * @note It is necessary to call unlock() method every time you do a lock().
+     */
+    bool lock() {
+      if (absindex == 0) {
+        int abspos;
+        int pos = checkAndGetRef(abspos);
+        if (pos == 0) ERROR_EXIT(128, "Found empty table\n");
+        assert(pos == -1);
+        absindex = abspos;
+        return true;
+      }
+      return false;
+    }
+    
+    /**
+     * @brief Removes from stack the absolute index taken by lock() method. Be
+     * careful, the stack will be modified.
+     *
+     * @see lock() method.
+     */
+    bool unlock() {
+      if (absindex > 0) {
+        lua_remove(L, absindex);
+        absindex = 0;
+        return true;
+      }
+      return false;
+    }
+    
     /// Indicates if the LuaTable is empty.
     bool empty() const;
     
@@ -350,7 +397,7 @@ namespace AprilUtils {
     }
     
     /// Returns a C++ string with the Lua representation of the table.
-    string toLuaString();
+    string toLuaString(bool binary=true);
     
     /// Puts a new value into the table, using the given key name.
     template<typename T>
@@ -386,64 +433,70 @@ namespace AprilUtils {
     /// Puts a new value into the table, using the given key number.
     template<typename T>
     LuaTable &put(int n, T value) {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushnumber(L, n);
       pushInto(L, value);
-      lua_settable(L, -3);
-      lua_pop(L, 1);
+      lua_settable(L, abspos);
+      popRef(pos);
       return *this;
     }
 
     /// Puts a new value into the table, using the given key pointer or string.
     template<typename T, typename K>
     LuaTable &put(K *key, T value) {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, key);
       pushInto(L, value);
-      lua_settable(L, -3);
-      lua_pop(L, 1);
+      lua_settable(L, abspos);
+      popRef(pos);
       return *this;
     }
 
     /// Puts a new value into the table, using the given key name.
     template<typename T>
     LuaTable &put(const char *name, size_t len, T value) {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushlstring(L, name, len);
       pushInto(L, value);
-      lua_settable(L, -3);
-      lua_pop(L, 1);
+      lua_settable(L, abspos);
+      popRef(pos);
       return *this;
     }
     
     /// Checks if the field at the given key number is nil.
     bool checkNil(int n) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushnumber(L, n);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret =  lua_isnil(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
 
     /// Checks if the field at the given key pointer or string is nil.
     template<typename K>
     bool checkNil(K *key) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, key);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret = lua_isnil(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
 
     /// Checks if the field at the given key name is nil.    
     bool checkNil(const char *name, size_t len) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos==checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushlstring(L, name, len);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret =  lua_isnil(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
 
@@ -451,11 +504,12 @@ namespace AprilUtils {
     /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(int n) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushnumber(L, n);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
 
@@ -463,11 +517,12 @@ namespace AprilUtils {
     /// type (a nil value will be taken as true).
     template<typename T, typename K>
     bool checkNilOrType(K *key) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, key);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
     
@@ -475,33 +530,36 @@ namespace AprilUtils {
     /// value will be taken as true).
     template<typename T>
     bool checkNilOrType(const char *name, size_t len) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushlstring(L, name, len);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       bool ret = lua_isnil(L, -1) || checkType<T>(L, -1);
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return ret;
     }
 
     /// Returns the value stored at the given key number field.
     template<typename T>
     T get(int n) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushnumber(L, n);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %d\n", n);
       if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
       T v = convertTo<T>(L, -1);
-      lua_pop(L,2);
+      popRef(pos, 1);
       return v;
     }
 
     /// Returns the value stored at the given key pointer or string field.
     template<typename T, typename K>
     T get(K *key) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       pushInto(L, key);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       if (lua_isnil(L,-1)) {
         if (is_same<K*, const char*>::value ||
             is_same<K*, char*>::value) { // string case, resolved at compilation
@@ -513,20 +571,21 @@ namespace AprilUtils {
       }
       if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
       T v = convertTo<T>(L, -1);
-      lua_pop(L,2);
+      popRef(pos, 1);
       return v;
     }
     
     /// Returns the value stored at the given key name field.
     template<typename T>
     T get(const char *name, size_t len) const {
-      if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushlstring(L, name, len);
-      lua_gettable(L, -2);
+      lua_gettable(L, abspos);
       if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
       if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
       T v = convertTo<T>(L, -1);
-      lua_pop(L,2);
+      popRef(pos, 1);
       return v;
     }
 
@@ -534,19 +593,20 @@ namespace AprilUtils {
     /// is empty, it returns the given def_value argument.    
     template<typename T>
     T opt(int n, const T def_value) const {
-      if (!checkAndPushRef()) {
-        lua_pop(L, 1);
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) {
+        popRef(pos);
         return def_value;
       }
       else {
         lua_pushnumber(L, n);
-        lua_gettable(L, -2);
+        lua_gettable(L, abspos);
         T v(def_value);
         if (!lua_isnil(L,-1)) {
           if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
           v = convertTo<T>(L, -1);
         }
-        lua_pop(L,2);
+        popRef(pos, 1);
         return v;
       }
       // return T();
@@ -556,19 +616,20 @@ namespace AprilUtils {
     /// case the field is empty, it returns the given def_value argument.
     template<typename T, typename K>
     T opt(K *key, const T def_value) const {
-      if (!checkAndPushRef()) {
-        lua_pop(L, 1);
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) {
+        popRef(pos);
         return def_value;
       }
       else {
         pushInto(L, key);
-        lua_gettable(L, -2);
+        lua_gettable(L, abspos);
         T v(def_value);
         if (!lua_isnil(L,-1)) {
           if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
           v = convertTo<T>(L, -1);
         }
-        lua_pop(L,2);
+        popRef(pos, 1);
         return v;
       }
       // return T();
@@ -578,19 +639,20 @@ namespace AprilUtils {
     /// is empty, it returns the given def_value argument.    
     template<typename T>
     T opt(const char *name, size_t len, const T def_value) const {
-      if (!checkAndPushRef()) {
-        lua_pop(L, 1);
+      int pos, abspos;
+      if ((pos=checkAndGetRef(abspos)) == 0) {
+        popRef(pos);
         return def_value;
       }
       else {
         lua_pushlstring(L, name, len);
-        lua_gettable(L, -2);
+        lua_gettable(L, abspos);
         T v(def_value);
         if (!lua_isnil(L,-1)) {
           if (!checkType<T>(L, -1)) ERROR_EXIT(128, "Incorrect type\n");
           v = convertTo<T>(L, -1);
         }
-        lua_pop(L,2);
+        popRef(pos, 1);
         return v;
       }
       // return T();
@@ -647,12 +709,18 @@ namespace AprilUtils {
     mutable lua_State *L;
     /// The reference in the registry where the table can be retrieved.
     int ref;
+    /// Absolute index, only valid when LuaTable is in locked state (absindex>0).
+    int absindex;
 
     /// Auxiliary method to simplify constructors.
     void init(lua_State *L, int i);
     
-    /// Checks ref != LUA_NOREF and pushes it into the Lua stack.
-    bool checkAndPushRef() const;
+    /// Checks the value of ref and absindex and returns a valid position to the stack.
+    int checkAndGetRef(int &abspos) const;
+    
+    /// Receives the position returned by checkAndGetRef() and performs operations needed to end using it.
+    void popRef(int pos, int extra=0) const;
+    
     
   };
 
