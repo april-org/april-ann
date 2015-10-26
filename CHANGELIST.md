@@ -16,6 +16,9 @@ Master branch release
 
 ### API Changes
 
+- Updated `matrix_ext_operations.h` to change API of matrix operations. All
+  functions have been overloaded to accept an **in-place** operation and another
+  version which receives a destination matrix.
 - Serializable objects API have been augmented with methods `ctor_name()` and
   `ctor_params()` in Lua, refered to `luaCtorName()` and `luaCtorParams()` in
   C++.
