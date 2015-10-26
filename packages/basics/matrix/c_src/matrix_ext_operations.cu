@@ -531,7 +531,7 @@ namespace AprilMath {
       }
 
       template <typename T>
-      Basics::Matrix<T> *matDiv(Basics::Matrix<T> *obj,
+      Basics::Matrix<T> *matDiv(const Basics::Matrix<T> *obj,
                                 const Basics::Matrix<T> *other,
                                 Basics::Matrix<T> *dest) {
         april_assert( dest != 0 );
@@ -614,7 +614,7 @@ namespace AprilMath {
       template <typename T>
       Matrix<T> *matMaskedCopy(const Matrix<T> *obj1, const Matrix<bool> *mask,
                                const Matrix<T> *obj2, Matrix<T> *dest) {
-        if (dest == 0) dest = obj1;
+        april_assert( dest != 0 );
         // TODO: sanity check, to be removed after checking all the code has
         // been updated with commit performed 2015/10/26 around 13:00
         if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
