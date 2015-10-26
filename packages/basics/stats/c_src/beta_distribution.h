@@ -22,12 +22,13 @@
 #define BETA_DISTRIBUTION_H
 
 #include "logbase.h"
+#include "smart_ptr.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
 
   class BetaDistribution : public StatisticalDistributionBase {
-    Basics::MatrixFloat *alpha, *beta;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> alpha, beta;
     float alphaf, betaf;
     AprilUtils::log_float Bab;
 

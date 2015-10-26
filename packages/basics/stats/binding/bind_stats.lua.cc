@@ -29,6 +29,7 @@
 #include "binomial_distribution.h"
 #include "combinations.h"
 #include "exponential_distribution.h"
+#include "gamma_distribution.h"
 #include "statistical_distribution.h"
 #include "uniform_distribution.h"
 #include "normal_distribution.h"
@@ -461,6 +462,40 @@ using namespace Stats;
 }
 //BIND_END
 
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GammaDistribution stats.dist.gamma
+//BIND_CPP_CLASS    GammaDistribution
+//BIND_SUBCLASS_OF  GammaDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR GammaDistribution
+{
+  MatrixFloat *alpha, *beta;
+  if (lua_isMatrixFloat(L, 1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, alpha);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, beta);
+  }
+  else {
+    float alphaf, betaf;
+    LUABIND_GET_PARAMETER(1, float, alphaf);
+    LUABIND_GET_PARAMETER(2, float, betaf);
+    int dims[1] = {1};
+    alpha = new MatrixFloat(1, dims);
+    (*alpha)(0) = alphaf;
+    beta = new MatrixFloat(1, dims);
+    (*beta)(0) = betaf;
+  }
+  obj = new GammaDistribution(alpha, beta);
+  LUABIND_RETURN(GammaDistribution, obj);
+}
+//BIND_END
+
+//BIND_METHOD GammaDistribution clone
+{
+  LUABIND_RETURN(GammaDistribution,
+                 static_cast<GammaDistribution*>(obj->clone()));
+}
+//BIND_END
 
 //////////////////////////////////////////////////////////////////////////
 

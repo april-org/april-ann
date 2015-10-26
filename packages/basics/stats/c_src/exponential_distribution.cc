@@ -48,8 +48,6 @@ namespace Stats {
   }
 
   ExponentialDistribution::~ExponentialDistribution() {
-    DecRef(lambda);
-    if (inv_lambda != 0) DecRef(inv_lambda);
   }
   
   void ExponentialDistribution::updateParams() {
@@ -59,23 +57,16 @@ namespace Stats {
                     it.getIdx());
       }
     }
-    MatrixFloat *log_lambda = lambda->clone();
-    IncRef(log_lambda);
-    matLog(log_lambda);
-    lambda_prod = log_float(matSum(log_lambda));
-    DecRef(log_lambda);
-    if (inv_lambda) {
-      DecRef(inv_lambda);
-      inv_lambda = 0;
-    }
+    AprilUtils::UniquePtr<MatrixFloat> log_lambda( lambda->clone() );
+    matLog(log_lambda.get());
+    lambda_prod = log_float(matSum(log_lambda.get()));
+    if (inv_lambda) inv_lambda.reset();
   }
   
   void ExponentialDistribution::privateSample(MTRand *rng,
                                               MatrixFloat *result) {
-    if (inv_lambda == 0) {
-      AssignRef(inv_lambda, lambda->clone());
-      matDiv(inv_lambda,1.0f);
-    }
+    if (inv_lambda.empty()) inv_lambda = matDiv(lambda.get(), 1.0f,
+                                                lambda->cloneOnlyDims());
     for (MatrixFloat::iterator it(result->begin()); it != result->end(); ++it) {
       float v = static_cast<float>(rng->randDblExc());
       april_assert(v > 0.0f && v < 1.0f);
@@ -86,7 +77,7 @@ namespace Stats {
     MatrixFloat *result_row = 0;
     for (int i=0; i<result->getDimSize(0); ++i) {
       result_row = result->select(0, i, result_row);
-      matCmul(result_row, inv_lambda);
+      matCmul(result_row, inv_lambda.get());
     }
     delete result_row;
   }
@@ -100,7 +91,7 @@ namespace Stats {
     UNUSED_VARIABLE(a);
     UNUSED_VARIABLE(b);
     matFill(result, lambda_prod.log());
-    matGemv(result, CblasNoTrans, -1.0f, x, lambda, 1.0f);
+    matGemv(result, CblasNoTrans, -1.0f, x, lambda.get(), 1.0f);
   }
 
   void ExponentialDistribution::privateLogcdf(const MatrixFloat *x,
@@ -117,7 +108,7 @@ namespace Stats {
     //
     for (int i=0; i<x->getDimSize(0); ++i) {
       x_row = x_clone->select(0, i, x_row.get());
-      matCmul(x_row.get(), lambda);
+      matCmul(x_row.get(), lambda.get());
     }
     matScal(x_clone.get(), -1.0f);
     matExp(x_clone.get());

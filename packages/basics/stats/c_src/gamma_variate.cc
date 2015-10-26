@@ -25,53 +25,53 @@
 using Basics::MTRand;
 
 namespace Stats {
+  // a=location, b=scale, c=shape
   // Modification of: http://ftp.arl.mil/random/random.pdf
-  double gammaVariate(MTRand *rng, double a, double b, double c) {
-    double result;
-    april_assert( b > 0.0f && c > 0.0f );
-    const double A = 1. / sqrt( 2.0f * c - 1.0f );
-    const double B = c - log( 4.0f );
-    const double Q = c + 1.0f / A;
-    const double T = 4.5f;
-    const double D = 1.0f + log( T );
-    const double C = 1.0f + c / M_E;
-    if ( c < 1.0f ) {
+  double gammaVariate(MTRand *rng, const double a, const double b,
+                      const double c) {
+    double y;
+    april_assert( b > 0.0 && c > 0.0 );
+    const double A = 1. / sqrt( 2.0 * c - 1.0 );
+    const double B = c - log( 4.0 );
+    const double Q = c + 1.0 / A;
+    const double T = 4.5;
+    const double D = 1.0 + log( T );
+    const double C = 1.0 + c / M_E;
+    if ( c < 1.0 ) {
       while ( true ) {
-        double p = C * rng->rand();
-        if ( p > 1.0f ) {
-          double y = -log( ( C - p ) / c );
-          if ( rng->rand() <= pow( y, c - 1.0f ) ) {
-            result = a + b * y;
-            break;
-          }
+        const double p = C * rng->rand();
+        if ( p > 1.0 ) {
+          y = -log( ( C - p ) / c );
+          if ( rng->rand() <= pow( y, c - 1.0 ) ) break;
         }
         else {
-          double y = pow( p, 1.0f / c );
-          if ( rng->rand() <= exp( -y ) ) {
-            result = a + b * y;
-            break;
-          }
+          y = pow( p, 1.0 / c );
+          if ( rng->rand() <= exp( -y ) ) break;
         }
       }
     }
-    else if ( c == 1.0f ) {
+    else if ( c == 1.0 ) {
       // exponential variate
-      result = -log(rng->randDblExc());
+      y = -log(rng->randDblExc());
     }
     else {
       while ( true ) {
-        double p1 = rng->rand();
-        double p2 = rng->rand();
-        double v = A * log( p1 / ( 1.0f - p1 ) );
-        double y = c * exp( v );
-        double z = p1 * p1 * p2;
-        double w = B + Q * v - y;
-        if ( w + D - T * z >= 0.0f || w >= log( z ) ) {
-          result = a + b * y;
-          break;
-        }
+        const double p1 = rng->rand();
+        const double p2 = rng->rand();
+        const double v = A * log( p1 / ( 1.0 - p1 ) );
+        y = c * exp( v );
+        const double z = p1 * p1 * p2;
+        const double w = B + Q * v - y;
+        if ( w + D - T * z >= 0.0 || w >= log( z ) ) break;
       }
     }
-    return result;
+    if (a == 0.0) {
+      if (b == 1.0) return y;
+      else return b*y;
+    }
+    else {
+      if (b == 1.0) return a + y;
+      else return a + b*y;
+    }
   }
 }

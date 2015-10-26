@@ -22,12 +22,13 @@
 #define EXPONENTIAL_DISTRIBUTION_H
 
 #include "logbase.h"
+#include "smart_ptr.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
 
   class ExponentialDistribution : public StatisticalDistributionBase {
-    Basics::MatrixFloat *lambda, *inv_lambda;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> lambda, inv_lambda;
     AprilUtils::log_float lambda_prod;
     
     void updateParams();
