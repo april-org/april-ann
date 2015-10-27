@@ -102,7 +102,7 @@ namespace Stats {
   }
   int GammaDistribution::exportParamsToLua(lua_State *L) {
     AprilUtils::LuaTable::pushInto(L, alphaf);
-    AprilUtils::LuaTable::pushInto(L, gammaf);
+    AprilUtils::LuaTable::pushInto(L, betaf);
     return 2;
   }
   
