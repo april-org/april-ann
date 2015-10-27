@@ -15,11 +15,12 @@ stats.dist = stats.dist or {}
 stats.levels = function(m)
   local symbols = {}
   local inv_symbols = {}
-  m:map(function(x)
-      if not inv_symbols[x] then
-        symbols[#symbols+1],inv_symbols[x] = x,true
-      end
-  end)
+  for i=1,#m do
+    local x = m[i]
+    if not inv_symbols[x] then
+      symbols[#symbols+1],inv_symbols[x] = x,true
+    end
+  end
   table.sort(symbols)
   return symbols
 end
@@ -51,7 +52,7 @@ stats.hist = function(m, params)
     clamp(-math.huge,breaks):
     flatten()
   local y_aux = iterator.zeros():take(breaks):table()
-  aux:map(function(b) y_aux[b] = y_aux[b] + 1 end)
+  for i=1,#aux do local b=aux[i] y_aux[b] = y_aux[b] + 1 end
   y:copy_from_table(y_aux)
   local ratio = 1 / (y:sum() * dx)
   z:copy(y):scal( ratio )
@@ -73,10 +74,11 @@ stats.ihist = function(m, params)
   local y      = matrix(#symbols)
   local z      = matrix(#symbols)
   local y_aux  = iterator.zeros():take(#symbols):table()
-  m:map(function(v)
-      local b = inv_symbols[v]
-      y_aux[b] = y_aux[b] + 1
-  end)
+  for i=1,#m do
+    local v=m[i]
+    local b = inv_symbols[v]
+    y_aux[b] = y_aux[b] + 1
+  end
   y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
   return data_frame{ data={ bin=x, key=symbols, count=y, ratio=z },
