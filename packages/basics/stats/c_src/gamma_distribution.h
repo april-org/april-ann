@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2014, Francisco Zamora-Martinez
+ * Copyright 2015, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef BETA_DISTRIBUTION_H
-#define BETA_DISTRIBUTION_H
+#ifndef GAMMA_DISTRIBUTION_H
+#define GAMMA_DISTRIBUTION_H
 
 #include "logbase.h"
 #include "smart_ptr.h"
@@ -27,11 +27,16 @@
 
 namespace Stats {
 
-  class BetaDistribution : public StatisticalDistributionBase {
-    AprilUtils::SharedPtr<Basics::MatrixFloat> alpha, beta;
-    float alphaf, betaf;
-    AprilUtils::log_float Bab;
-
+  class GammaDistribution : public StatisticalDistributionBase {
+    /// A positive real number. The scale parameter.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> alpha;
+    /// A positive real number. The rate paremater.
+    AprilUtils::SharedPtr<Basics::MatrixFloat> beta;
+    
+    float alphaf; ///< The scale parameter.
+    float betaf;  /// The rate parameter.
+    AprilUtils::log_float CTE;
+    
     void updateParams();
     
   protected:
@@ -42,8 +47,8 @@ namespace Stats {
                                Basics::MatrixFloat *result);
     
   public:
-    BetaDistribution(Basics::MatrixFloat *alpha, Basics::MatrixFloat *beta);
-    virtual ~BetaDistribution();
+    GammaDistribution(Basics::MatrixFloat *alpha, Basics::MatrixFloat *beta);
+    virtual ~GammaDistribution();
     virtual StatisticalDistributionBase *clone();
 
     virtual const char *luaCtorName() const;
@@ -52,4 +57,4 @@ namespace Stats {
   
 }
 
-#endif // BETA_DISTRIBUTION_H
+#endif // GAMMA_DISTRIBUTION_H

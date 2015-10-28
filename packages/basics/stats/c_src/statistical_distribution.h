@@ -57,7 +57,7 @@ namespace Stats {
      * sized result MatrixFloat.
      *
      * @param x - A NxM MatrixFloat with N data points of size M.
-     * @param result - A MatrixFloat where logpdf will be stored.
+     * @param result - A one-dimensional MatrixFloat where logpdf will be stored.
      */
     virtual void privateLogpdf(const Basics::MatrixFloat *x,
                                Basics::MatrixFloat *result) = 0;
@@ -66,7 +66,7 @@ namespace Stats {
      * sized result MatrixFloat.
      *
      * @param x - A NxM MatrixFloat with N data points of size M.
-     * @param result - A MatrixFloat where logcdf will be stored.
+     * @param result - A one-dimensional MatrixFloat where logcdf will be stored.
      */
     virtual void privateLogcdf(const Basics::MatrixFloat *x,
                                Basics::MatrixFloat *result) = 0;

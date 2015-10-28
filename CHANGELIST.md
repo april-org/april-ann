@@ -16,6 +16,7 @@ Master branch release
 
 ### API Changes
 
+- Added methods `count_eq()` and `count_neq()` at `matrix` classes.
 - Serializable objects API have been augmented with methods `ctor_name()` and
   `ctor_params()` in Lua, refered to `luaCtorName()` and `luaCtorParams()` in
   C++.
@@ -63,6 +64,11 @@ Master branch release
 
 ### C/C++
 
+- Implementation of `matCountEq()` and `matCountNeq()` functions for
+  `Matrix<T>`.
+- Updated `matrix_ext_operations.h` to change API of matrix operations. All
+  functions have been overloaded to accept an **in-place** operation and another
+  version which receives a destination matrix.
 - Adding iterators to language models.
 - Added `MatrixScalarMap2` which receives as `input2` a `SparaseMatrix`
   instance. This functions needs to be generalized to work with CPU and CUDA.

@@ -15,11 +15,12 @@ stats.dist = stats.dist or {}
 stats.levels = function(m)
   local symbols = {}
   local inv_symbols = {}
-  m:map(function(x)
-      if not inv_symbols[x] then
-        symbols[#symbols+1],inv_symbols[x] = x,true
-      end
-  end)
+  for i=1,#m do
+    local x = m[i]
+    if not inv_symbols[x] then
+      symbols[#symbols+1],inv_symbols[x] = x,true
+    end
+  end
   table.sort(symbols)
   return symbols
 end
@@ -30,7 +31,7 @@ stats.hist = function(m, params)
       normalize = { type_match="boolean", default=false },
                                   }, params or {})
   local breaks = params.breaks
-  local result = matrix(breaks+1, 4)
+  local result = matrix(breaks+1, 5)
   local min    = m:min()
   local max    = m:max()
   local diff   = max - min
@@ -38,9 +39,11 @@ stats.hist = function(m, params)
   local x      = result:select(2,1):linspace(min, max)
   local result = result[{ {1,breaks}, ':' }]
   local x      = result:select(2,1)
-  local x2     = result:select(2,2):copy(x):scalar_add(0.5*(x[2]-x[1]))
+  local dx     = math.abs( x[2] - x[1] )
+  local x2     = result:select(2,2):copy(x):scalar_add(0.5*dx)
   local y      = result:select(2,3)
   local z      = result:select(2,4)
+  local z2     = result:select(2,5)
   local aux = m:clone():
     scalar_add(-min):
     scal(1.0/diff * breaks):
@@ -49,10 +52,13 @@ stats.hist = function(m, params)
     clamp(-math.huge,breaks):
     flatten()
   local y_aux = iterator.zeros():take(breaks):table()
-  aux:map(function(b) y_aux[b] = y_aux[b] + 1 end)
+  for i=1,#aux do local b=aux[i] y_aux[b] = y_aux[b] + 1 end
   y:copy_from_table(y_aux)
-  z:copy(y):scal(1/m:size())
-  return data_frame{ data=result, columns={"bin","key","count","ratio"} }
+  local ratio = 1 / (y:sum() * dx)
+  z:copy(y):scal( ratio )
+  z2:copy(y):scal(1/m:size())
+  local df = data_frame{ data=result, columns={"bin","key","count","density","ratio"} }
+  return df
 end
 
 stats.ihist = function(m, params)
@@ -68,10 +74,11 @@ stats.ihist = function(m, params)
   local y      = matrix(#symbols)
   local z      = matrix(#symbols)
   local y_aux  = iterator.zeros():take(#symbols):table()
-  m:map(function(v)
-      local b = inv_symbols[v]
-      y_aux[b] = y_aux[b] + 1
-  end)
+  for i=1,#m do
+    local v=m[i]
+    local b = inv_symbols[v]
+    y_aux[b] = y_aux[b] + 1
+  end
   y:copy_from_table(y_aux)
   z:copy(y):scal(1/m:size())
   return data_frame{ data={ bin=x, key=symbols, count=y, ratio=z },

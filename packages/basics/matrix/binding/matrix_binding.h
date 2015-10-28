@@ -2114,7 +2114,19 @@ namespace Basics {
       lua_push(L, result);
       return 1;
     }
-          
+    
+    BEGIN_METHOD(count_eq)
+    {
+      lua_push(L, AprilMath::MatrixExt::Misc::matCountEq(obj, lua_to<T>(L,1)));
+      return 1;
+    }
+
+    BEGIN_METHOD(count_neq)
+    {
+      lua_push(L, AprilMath::MatrixExt::Misc::matCountNeq(obj, lua_to<T>(L,1)));
+      return 1;
+    }
+    
     BEGIN_CLASS_METHOD(__broadcast__)
     {
       Matrix<T> *a = lua_to<Matrix<T>*>(L,2);
