@@ -2123,7 +2123,7 @@ namespace Basics {
 
     BEGIN_METHOD(count_neq)
     {
-      lua_push(L, AprilMath::MatrixExt::Misc::matCountEq(obj, lua_to<T>(L,1)));
+      lua_push(L, AprilMath::MatrixExt::Misc::matCountNeq(obj, lua_to<T>(L,1)));
       return 1;
     }
     
