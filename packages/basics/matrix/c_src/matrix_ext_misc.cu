@@ -625,12 +625,21 @@ namespace AprilMath {
         return dest;
       }
 
-      // TODO: Use this function in matrixBool count_zeros, count_ones, ...
       template <typename T>
-      int matCount(const Basics::Matrix<T> *input, T value) {
+      int matCountEq(const Basics::Matrix<T> *input, T value) {
         return MatrixScalarReduce1(input,
                                    AprilMath::make_r_map1<T,int>
                                    (AprilMath::m_curried_eq<T>(value),
+                                    AprilMath::Functors::r_add<bool,int>()),
+                                   AprilMath::Functors::r_add<int,int>(),
+                                   0);
+      }
+
+      template <typename T>
+      int matCountNeq(const Basics::Matrix<T> *input, T value) {
+        return MatrixScalarReduce1(input,
+                                   AprilMath::make_r_map1<T,int>
+                                   (AprilMath::m_curried_neq<T>(value),
                                     AprilMath::Functors::r_add<bool,int>()),
                                    AprilMath::Functors::r_add<int,int>(),
                                    0);
@@ -644,8 +653,11 @@ namespace AprilMath {
         if (sq_input->getNumDim() != 1) {
           ERROR_EXIT(128, "Needs a rank 1 matrix\n");
         }
-        int non_zeros = sq_input->size() - matCount(sq_input.get(),
-                                                    AprilMath::Limits<T>::zero());
+        int non_zeros = sq_input->size() - matCountEq(sq_input.get(),
+                                                      AprilMath::Limits<T>::zero());
+        if (non_zeros == 0) {
+          ERROR_EXIT(128, "Unable to handle the given input matrix, it looks like an all false/zero matrix\n");
+        }
         if (dest != 0) {
           if (dest->size() != non_zeros) {
             ERROR_EXIT(256, "Incompatible matrix sizes\n");
@@ -654,7 +666,6 @@ namespace AprilMath {
         else {
           aux = dest = new Basics::Matrix<int32_t>(1, &non_zeros);
         }
-        if (non_zeros == 0) return dest;
         int k=0;
         Basics::Matrix<int32_t>::iterator dest_it = dest->begin();
         for (typename Basics::Matrix<T>::const_iterator it = sq_input->begin();
@@ -720,6 +731,8 @@ namespace AprilMath {
                                            Matrix<float> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<float> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template int matCountEq(const Matrix<float> *, float);
+      template int matCountNeq(const Matrix<float> *, float);
 
 
       template Matrix<int32_t> *matOrder(const Matrix<double> *,
@@ -769,6 +782,8 @@ namespace AprilMath {
                                             Matrix<double> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<double> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template int matCountEq(const Matrix<double> *, double);
+      template int matCountNeq(const Matrix<double> *, double);
       
 
 
@@ -802,6 +817,8 @@ namespace AprilMath {
                                              Matrix<ComplexF> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<ComplexF> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template int matCountEq(const Matrix<ComplexF> *, ComplexF);
+      template int matCountNeq(const Matrix<ComplexF> *, ComplexF);
 
 
       template Matrix<char> *matIndex(const Matrix<char> *, int, const Matrix<int32_t> *);
@@ -836,6 +853,8 @@ namespace AprilMath {
                                           Matrix<char> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<char> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template int matCountEq(const Matrix<char> *, char);
+      template int matCountNeq(const Matrix<char> *, char);
 
 
       template Matrix<int32_t> *matIndex(const Matrix<int32_t> *, int, const Matrix<int32_t> *);
@@ -880,6 +899,8 @@ namespace AprilMath {
       template Matrix<int32_t> *matSubstraction(const Matrix<int32_t> *,
                                                 const Matrix<int32_t> *,
                                                 Matrix<int32_t> *);
+      template int matCountEq(const Matrix<int32_t> *, int32_t);
+      template int matCountNeq(const Matrix<int32_t> *, int32_t);
 
 
       template Matrix<bool> *matIndex(const Matrix<bool> *, int, const Matrix<int32_t> *);
@@ -914,6 +935,8 @@ namespace AprilMath {
                                           Matrix<bool> *);
       template Matrix<int32_t> *matNonZeroIndices(const Matrix<bool> *input,
                                                   Basics::Matrix<int32_t> *dest);
+      template int matCountEq(const Matrix<bool> *, bool);
+      template int matCountNeq(const Matrix<bool> *, bool);
 
       
       template Matrix<ComplexF> *matConvertTo(const Matrix<float> *,
