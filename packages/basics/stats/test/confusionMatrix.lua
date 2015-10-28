@@ -1,8 +1,6 @@
 -- Check 4 clases with table
-
 local N = 4
 local myConf = stats.confusion_matrix(N)
-print (myConf)
 local myPred = { 1, 2, 3, 4, 1, 2 , 3 , 4}
 local myGT   = { 2, 1, 2, 1, 1, 2,  3,  1}
 
@@ -92,3 +90,12 @@ printf("#\n----------------------#\n")
 print("Deleting class c (Pred)")
 cloneConf:clearPredClass(3)
 cloneConf:printConfusion(tags)
+
+print("Matrix")
+
+m1 = matrix{0, 1, 0, 1}
+m2 = matrix{0, 1, 1, 0}
+
+local m_confusion = stats.confusion_matrix(2)
+m_confusion:addData(m1,m2)
+m_confusion:printConfusion()

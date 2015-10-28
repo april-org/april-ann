@@ -951,6 +951,10 @@ confus_matrix_methods.addData =
   function(self, param1, param2)
 
     local iterator
+
+    if type(param1) == 'matrix' then
+        return self:addDataMatrix(param1, param2)
+    end
     if( type(param1) == 'function') then
       iterator = param1
       assert(param2 == nil)
@@ -962,771 +966,798 @@ confus_matrix_methods.addData =
       assert(#param1, #param2, "The tables does not have the same dimension")
     end
 
-
     for pred, gt in iterator do
       self:addSample(pred, gt)
     end
   end
 
----------------------------------------------------------------
-confus_matrix_methods.getError =
+  function confus_matrix_methods.addDataMatrix(self, m1, m2)
+      assert(#m1:dim() == 1, "M1 does not have one dimension")
+      assert(#m2:dim() == 1, "M2 does not have dimension")
+      assert(m1:dim(1) == m2:dim(1), "Dimensions did not match")
+      -- Compute hits
+      --
+      self.samples = m1:dim(1)
+      self.hits = m1:eq(m2):count_ones()
+
+      for gt = 1,self.num_classes do
+          for pred = 1, self.num_classes do
+            b_m1 = m1:eq(gt)
+            b_m2 = m2:eq(pred)
+            self.confusion[gt][pred] = b_m1:land(b_m2):count_ones()
+          end
+      end
+  end
+
+  function confus_matrix_methods.combine(self, conf1)
+      assert(conf1.num_classes == self.num_classes)
+      self.samples = self.samples + conf1.samples
+      self.hits = self.hits + conf1.hits
+      for gt = 1,self.num_classes do
+          for pred = 1, self.num_classes do
+              self.confusion[gt][pred] = self.confusion[gt][pred] + conf1.confusion[gt][pred]
+          end
+      end
+  end
+  ---------------------------------------------------------------
+  confus_matrix_methods.getError =
   april_doc{
-    class = "method", summary = "Return the global classification error (misses/total)",
-    outputs = { "The global classification error." }, 
+      class = "method", summary = "Return the global classification error (misses/total)",
+      outputs = { "The global classification error." }, 
   } ..
   function(self)
-    return self.misses/self.samples, self.misses, self.samples
+      return self.misses/self.samples, self.misses, self.samples
   end
 
-confus_matrix_methods.getWeightedError =
+  confus_matrix_methods.getWeightedError =
   april_doc{
-    class = "method", summary = "Return the classification error weighted by given values",
-    params = {"A table of size weight"},
-    outputs = { "The global classification error." }, 
+      class = "method", summary = "Return the classification error weighted by given values",
+      params = {"A table of size weight"},
+      outputs = { "The global classification error." }, 
   } ..
   function(self, weights)
-    
-    local totalError = 0.0
-    for i,w in ipairs(weights) do
-      totalError = totalError+(1-w*self:getRecall(i))
-    end
 
-    return totalError
+      local totalError = 0.0
+      for i,w in ipairs(weights) do
+          totalError = totalError+(1-w*self:getRecall(i))
+      end
+
+      return totalError
   end
 
-confus_matrix_methods.getAvgError =
+  confus_matrix_methods.getAvgError =
   april_doc{
-    class = "method", summary = "Return the average error.",
-    outputs = { "The average classification error." }, 
+      class = "method", summary = "Return the average error.",
+      outputs = { "The average classification error." }, 
   } ..
   function(self, weights)
-    local totalError = 0.0
-    local w = 1.0/self.num_classes
-    local i
-    for i = 1, self.num_classes do
-      totalError = totalError+(1-self:getRecall(i))
-    end
+      local totalError = 0.0
+      local w = 1.0/self.num_classes
+      local i
+      for i = 1, self.num_classes do
+          totalError = totalError+(1-self:getRecall(i))
+      end
 
-    return totalError*w
+      return totalError*w
   end
 
-confus_matrix_methods.getAccuracy =
+  confus_matrix_methods.getAccuracy =
   april_doc{
-    class = "method", summary = "Return the accuracy (hits/total)",
-    outputs = { "The global accuracy." },
+      class = "method", summary = "Return the accuracy (hits/total)",
+      outputs = { "The global accuracy." },
   } ..
   function(self)
-    return self.hits/self.samples, self.hits, self.samples
+      return self.hits/self.samples, self.hits, self.samples
   end
 
---------------------------------------------------------------
-function confus_matrix_methods:getConfusionTables()
-  return self.confusion
-end
-------------------------------------------------------------
---
-confus_matrix_methods.getPrecision =
+  --------------------------------------------------------------
+  function confus_matrix_methods:getConfusionTables()
+      return self.confusion
+  end
+  ------------------------------------------------------------
+  --
+  confus_matrix_methods.getPrecision =
   april_doc{
-    class = "method", summary = "Return the accuracy (hits/total)",
-    params = {"The index of the class for computing the Precision"},
-    outputs = { "The selected class Precision." },
+      class = "method", summary = "Return the accuracy (hits/total)",
+      params = {"The index of the class for computing the Precision"},
+      outputs = { "The selected class Precision." },
   } ..
   function(self, tipo)
 
-    local tp = 0
-    local den = 0
+      local tp = 0
+      local den = 0
 
-    -- Moving by columns
-    for i=1, self.num_classes do
-      v = self.confusion[i][tipo]
-      if i == tipo then
-        tp = v
+      -- Moving by columns
+      for i=1, self.num_classes do
+          v = self.confusion[i][tipo]
+          if i == tipo then
+              tp = v
 
+          end
+          den = den + v
+      end     
+      if den == 0 then
+          return 1, tp, den
       end
-      den = den + v
-    end     
-    if den == 0 then
-      return 1, tp, den
-    end
-    return tp/den, tp, den
+      return tp/den, tp, den
   end
 
-confus_matrix_methods.getMultiPrecision =
+  confus_matrix_methods.getMultiPrecision =
   april_doc{
-    class = "method", summary = "Return the precision of joined classes",
-    params = {"The indexes of the joined classes"},
-    outputs = { "The selected classes Precision." },
+      class = "method", summary = "Return the precision of joined classes",
+      params = {"The indexes of the joined classes"},
+      outputs = { "The selected classes Precision." },
   } ..
   function(self, cls)
 
-    local tp = 0
-    local den = 0
+      local tp = 0
+      local den = 0
 
-    -- Moving by columns
-    for i=1, self.num_classes do
-      local iscorrect = false
-      local values = 0
-      for t, tipo in pairs(cls) do
-        v = self.confusion[i][tipo]
-        values = values + v
-        if i == tipo then
-          iscorrect = true
+      -- Moving by columns
+      for i=1, self.num_classes do
+          local iscorrect = false
+          local values = 0
+          for t, tipo in pairs(cls) do
+              v = self.confusion[i][tipo]
+              values = values + v
+              if i == tipo then
+                  iscorrect = true
 
-        end
+              end
+          end
+
+          if iscorrect then
+              tp = tp + values
+          end
+          den = den + values
+      end     
+      if den == 0 then
+          return 1, tp, den
       end
-
-      if iscorrect then
-        tp = tp + values
-      end
-      den = den + values
-    end     
-    if den == 0 then
-      return 1, tp, den
-    end
-    return tp/den, tp, den
+      return tp/den, tp, den
   end
-confus_matrix_methods.getRecall =
+  confus_matrix_methods.getRecall =
   april_doc{
-    class = "method", summary = "Return the accuracy (hits/total)",
-    params = {"The index of the class for computing the Recall"},
-    outputs = { "The selected class Recall." },
+      class = "method", summary = "Return the accuracy (hits/total)",
+      params = {"The index of the class for computing the Recall"},
+      outputs = { "The selected class Recall." },
   } ..
   function(self, tipo)
 
-    local tp = 0
-    local den = 0
+      local tp = 0
+      local den = 0
 
-    -- Moving by columns
-    for j=1, self.num_classes do
-      v = self.confusion[tipo][j]
-      if j == tipo then
-        tp = v
+      -- Moving by columns
+      for j=1, self.num_classes do
+          v = self.confusion[tipo][j]
+          if j == tipo then
+              tp = v
 
+          end
+          den = den + v
+      end 
+
+      if den == 0 then
+          return 1, tp, den
       end
-      den = den + v
-    end 
-
-    if den == 0 then
-      return 1, tp, den
-    end
-    return tp/den, tp, den
+      return tp/den, tp, den
   end
 
-confus_matrix_methods.getMultiRecall =
+  confus_matrix_methods.getMultiRecall =
   april_doc{
-    class = "method", summary = "Return the accuracy (hits/total)",
-    params = {"Index of the joined class for the Recall"},
-    outputs = { "The selected class Recall." },
+      class = "method", summary = "Return the accuracy (hits/total)",
+      params = {"Index of the joined class for the Recall"},
+      outputs = { "The selected class Recall." },
   } ..
   function(self, cls)
 
-    local tp = 0
-    local den = 0
-    print ("joining")
-    -- Moving by columns
-    for j=1, self.num_classes do
-      local iscorrect = false
-      local values = 0
-      for t, tipo in ipairs(cls) do
-        local v = self.confusion[tipo][j]
-        values = values + v
+      local tp = 0
+      local den = 0
+      print ("joining")
+      -- Moving by columns
+      for j=1, self.num_classes do
+          local iscorrect = false
+          local values = 0
+          for t, tipo in ipairs(cls) do
+              local v = self.confusion[tipo][j]
+              values = values + v
 
-        if tipo == j then
-          iscorrect = true
-        end
+              if tipo == j then
+                  iscorrect = true
+              end
+          end
+          if iscorrect then
+              tp = tp + values
+          end
+          den = den + values
       end
-      if iscorrect then
-        tp = tp + values
+      if den == 0 then
+          return 1, tp, den
       end
-      den = den + values
-    end
-    if den == 0 then
-      return 1, tp, den
-    end
-    return tp/den, tp, den
+      return tp/den, tp, den
   end
-confus_matrix_methods.getFMeasure =
+  confus_matrix_methods.getFMeasure =
   april_doc{
-    class = "method", summary = "Return the accuracy (hits/total)",
-    params = {"The index of the class for computing the Precision"},
-    outputs = { "The selected class Precision." },
+      class = "method", summary = "Return the accuracy (hits/total)",
+      params = {"The index of the class for computing the Precision"},
+      outputs = { "The selected class Precision." },
   } ..
   function(self, tipo, beta)
-    local nBeta = beta or 1
-    nBeta = nBeta*nBeta
-    local PR = self:getRecall(tipo)
-    local RC = self:getPrecision(tipo)
+      local nBeta = beta or 1
+      nBeta = nBeta*nBeta
+      local PR = self:getRecall(tipo)
+      local RC = self:getPrecision(tipo)
 
-    return (1+nBeta)*(PR*RC)/(nBeta*PR+RC)
+      return (1+nBeta)*(PR*RC)/(nBeta*PR+RC)
   end
 
 
 
--------------------------------------------------------
-confus_matrix_methods.clearGTClass =
+  -------------------------------------------------------
+  confus_matrix_methods.clearGTClass =
   april_doc{
-    class = "method", summary = "Clear the counters of one class",
-    description= "This function is useful when you don't want to count determinated class.",
-    params = {"The index of the class to be clear"},
+      class = "method", summary = "Clear the counters of one class",
+      description= "This function is useful when you don't want to count determinated class.",
+      params = {"The index of the class to be clear"},
   } ..
   function(self, tipo)
 
-    local n_samples = 0
-    local hits = 0
-    local misses = 0
-    -- Moving by columns
-    for i=1, self.num_classes do
-      n_samples = n_samples + self.confusion[tipo][i]
-      if i == tipo then
-        hits = self.confusion[tipo][i]
-      else
-        misses = misses + self.confusion[tipo][i]
+      local n_samples = 0
+      local hits = 0
+      local misses = 0
+      -- Moving by columns
+      for i=1, self.num_classes do
+          n_samples = n_samples + self.confusion[tipo][i]
+          if i == tipo then
+              hits = self.confusion[tipo][i]
+          else
+              misses = misses + self.confusion[tipo][i]
+          end
+          self.confusion[tipo][i] = 0
       end
-      self.confusion[tipo][i] = 0
-    end
 
-    self.samples = self.samples - n_samples
-    self.hits    = self.hits - hits
-    self.misses  = self.misses - misses
+      self.samples = self.samples - n_samples
+      self.hits    = self.hits - hits
+      self.misses  = self.misses - misses
   end
 
-confus_matrix_methods.clearClass =
+  confus_matrix_methods.clearClass =
   april_doc{
-    class = "method", summary = "Clear the counters of one pair classes",
-    description= "This function is useful when you don't want to count determinated pair class.",
-    params = {"The index of the Ground Truth class.","The index of the predicted class"},
+      class = "method", summary = "Clear the counters of one pair classes",
+      description= "This function is useful when you don't want to count determinated pair class.",
+      params = {"The index of the Ground Truth class.","The index of the predicted class"},
   } ..
   function(self, gt, pred)
 
-    local samples = self.confusion[gt][pred]
-    local n_samples = 0
-    if gt == pred then
-      self.hits = self.hits - samples
-    else
-      self.misses = self.misses - samples
-    end
-    self.confusion[gt][pred] = 0
+      local samples = self.confusion[gt][pred]
+      local n_samples = 0
+      if gt == pred then
+          self.hits = self.hits - samples
+      else
+          self.misses = self.misses - samples
+      end
+      self.confusion[gt][pred] = 0
 
-    self.samples = self.samples - samples
+      self.samples = self.samples - samples
   end
 
-confus_matrix_methods.clearPredClass =
+  confus_matrix_methods.clearPredClass =
   april_doc{
-    class = "method", summary = "Clear the counters of one class",
-    description= "This function is useful when you don't want to count determinated class.",
-    params = {"The index of the class to be clear"},
+      class = "method", summary = "Clear the counters of one class",
+      description= "This function is useful when you don't want to count determinated class.",
+      params = {"The index of the class to be clear"},
   } ..
   function(self, tipo)
 
-    local n_samples = 0
-    -- Moving by Rows
-    for i=1, self.num_classes do
-      n_samples = n_samples + self.confusion[i][tipo]
-      self.confusion[i][tipo] = 0
-    end
+      local n_samples = 0
+      -- Moving by Rows
+      for i=1, self.num_classes do
+          n_samples = n_samples + self.confusion[i][tipo]
+          self.confusion[i][tipo] = 0
+      end
 
-    self.samples = self.samples - n_samples
+      self.samples = self.samples - n_samples
 
   end
 
------------------------------------------------------------------------------
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
 
-stats.perm = {}
+  stats.perm = {}
 
-local perm =
+  local perm =
   function(self,params,...)
-    local params = get_table_fields(
+      local params = get_table_fields(
       {
-        samples    = { mandatory = true, type_match="table" },
-        R           = { type_match = "number",   mandatory = true },
-        statistic   = { type_match = "function", mandatory = true },
-        k           = { type_match = "number", mandatory = false, default = 1 },
-        verbose     = { mandatory = false },
-        ncores      = { mandatory = false, type_match = "number", default = 1 },
-        seed        = { mandatory = false, type_match = "number" },
-        random      = { mandatory = false, isa_match  = random },
-        paired      = { mandatory = false, type_match = "boolean" },
+          samples    = { mandatory = true, type_match="table" },
+          R           = { type_match = "number",   mandatory = true },
+          statistic   = { type_match = "function", mandatory = true },
+          k           = { type_match = "number", mandatory = false, default = 1 },
+          verbose     = { mandatory = false },
+          ncores      = { mandatory = false, type_match = "number", default = 1 },
+          seed        = { mandatory = false, type_match = "number" },
+          random      = { mandatory = false, isa_match  = random },
+          paired      = { mandatory = false, type_match = "boolean" },
       },
       params)
-    assert(not params.seed or not params.random,
-           "Fields 'seed' and 'random' are forbidden together")
-    local extra       = table.pack(...)
-    local paired      = params.paired
-    local samples     = params.samples
-    local repetitions = params.R
-    local statistic   = params.statistic
-    local ncores      = params.ncores
-    local seed        = params.seed
-    local rnd         = params.random or random(seed)
-    local k           = params.k
-    local result      = matrix.MMapped(repetitions, k):zeros()
-    local joined      = matrix.join(1, samples)
-    local joined_size = joined:size()
-    local sizes       = iterator(samples):call("size"):table()
-    local get_row,N
-    -- resample function executed in parallel using parallel_foreach
-    local last_i = 0
-    local rnd_matrix
-    assert(not paired, "Paired option is not fully implemented")
-    if paired then
-      for i=2,#sizes do assert(sizes[i-1] == sizes[i], "Found different sizes in paired test") end
-      local M = sizes[1]
-      local sub_indices = matrix.ext.repmat(matrixInt32(M):linspace(), #sizes)
-      local indices = {}
-      for i=1,#sizes do for j=1,M do indices[#indices+1] = i-1 end end
-        rnd_matrix = function()
-          local shuf = rnd:shuffle(indices)
-          local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
-          return m
-        end
-    else
-      local indices = iterator.range(joined_size):table()
-      rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(indices)) end
-    end
-    local permute = function(i, id)
-      collectgarbage("collect")
-      -- this loop allows to synchronize the random number generator, allowing to
-      -- produce the same exact result independently of ncores value
-      for j=last_i+1,i-1 do rnd_matrix() end
-      last_i = i
-      --
-      local new_samples_idx = rnd_matrix()
-      local new_samples_joined = joined:index(1,new_samples_idx)
-      local new_samples = {}
-      local acc = 1
-      for i=1,#sizes do
-        new_samples[i] = new_samples_joined[{ {acc, acc+sizes[i]-1} }]
-        acc = acc + sizes[i]
+      assert(not params.seed or not params.random,
+      "Fields 'seed' and 'random' are forbidden together")
+      local extra       = table.pack(...)
+      local paired      = params.paired
+      local samples     = params.samples
+      local repetitions = params.R
+      local statistic   = params.statistic
+      local ncores      = params.ncores
+      local seed        = params.seed
+      local rnd         = params.random or random(seed)
+      local k           = params.k
+      local result      = matrix.MMapped(repetitions, k):zeros()
+      local joined      = matrix.join(1, samples)
+      local joined_size = joined:size()
+      local sizes       = iterator(samples):call("size"):table()
+      local get_row,N
+      -- resample function executed in parallel using parallel_foreach
+      local last_i = 0
+      local rnd_matrix
+      assert(not paired, "Paired option is not fully implemented")
+      if paired then
+          for i=2,#sizes do assert(sizes[i-1] == sizes[i], "Found different sizes in paired test") end
+          local M = sizes[1]
+          local sub_indices = matrix.ext.repmat(matrixInt32(M):linspace(), #sizes)
+          local indices = {}
+          for i=1,#sizes do for j=1,M do indices[#indices+1] = i-1 end end
+          rnd_matrix = function()
+              local shuf = rnd:shuffle(indices)
+              local m = matrixInt32(shuf):scal(M):axpy(1.0, sub_indices)
+              return m
+          end
+      else
+          local indices = iterator.range(joined_size):table()
+          rnd_matrix = function() return matrixInt32(joined:size(), rnd:shuffle(indices)) end
       end
-      local r = table.pack( statistic(multiple_unpack(new_samples, extra)) )
-      april_assert(#r == k,
-                   "Unexpected number of returned values in statistic, expected %d, found %d",
-                   k, #r)
-      result[i]:copy_from_table(r)
-      if (not id or id == 1) and params.verbose and i % 20 == 0 then
-        fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
-        io.stderr:flush()
+      local permute = function(i, id)
+          collectgarbage("collect")
+          -- this loop allows to synchronize the random number generator, allowing to
+          -- produce the same exact result independently of ncores value
+          for j=last_i+1,i-1 do rnd_matrix() end
+          last_i = i
+          --
+          local new_samples_idx = rnd_matrix()
+          local new_samples_joined = joined:index(1,new_samples_idx)
+          local new_samples = {}
+          local acc = 1
+          for i=1,#sizes do
+              new_samples[i] = new_samples_joined[{ {acc, acc+sizes[i]-1} }]
+              acc = acc + sizes[i]
+          end
+          local r = table.pack( statistic(multiple_unpack(new_samples, extra)) )
+          april_assert(#r == k,
+          "Unexpected number of returned values in statistic, expected %d, found %d",
+          k, #r)
+          result[i]:copy_from_table(r)
+          if (not id or id == 1) and params.verbose and i % 20 == 0 then
+              fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
+              io.stderr:flush()
+          end
       end
-    end
-    local ok,msg = xpcall(parallel_foreach, debug.traceback,
-                          ncores, repetitions, permute)
-    result = result:clone()
-    if not ok then error(msg) end
-    if params.verbose then fprintf(io.stderr, " done\n") end
-    return result
+      local ok,msg = xpcall(parallel_foreach, debug.traceback,
+      ncores, repetitions, permute)
+      result = result:clone()
+      if not ok then error(msg) end
+      if params.verbose then fprintf(io.stderr, " done\n") end
+      return result
   end
-setmetatable(stats.perm, { __call = perm })
+  setmetatable(stats.perm, { __call = perm })
 
-stats.perm.pvalue =
+  stats.perm.pvalue =
   function(perm_result, observed, idx, alternative)
-    assert(not alternative or alternative == "two-sided")
-    local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
-    local pvalue = ge_observed / perm_result:dim(1)
-    return (pvalue<0.5) and pvalue or (1.0 - pvalue)
+      assert(not alternative or alternative == "two-sided")
+      local ge_observed = perm_result:select(2, idx or 1):lt(observed):count_zeros()
+      local pvalue = ge_observed / perm_result:dim(1)
+      return (pvalue<0.5) and pvalue or (1.0 - pvalue)
   end
 
------------------------------------------------------------------------------
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
 
-stats.boot = {}
-april_set_doc(stats.boot,
-              {
-                class = "function",
-                summary = "Produces a bootstrap resampling table",
-                description= {
-                  "This function is useful to compute confidence intervals",
-                  "by using bootstrapping technique. The function receives",
-                  "the population size and a function which returns statistics",
-                  "of a sample.",
-                  "A table with the computation of the post-process function",
-                  "for every repetition will be returned.",
-                },
-                params = {
-                  size = "Population size, it can be a table with several sizes",
-                  resample = "Resample value [optional] by default it is 1",
-                  R = "Number of repetitions, recommended minimum of 1000",
-                  statistic = {
-                    "A function witch receives as many matrixInt32 (with",
-                    "sample indices) as given number of population sizes",
-                    "and computes statistics (k>=1 statistics) over",
-                    "the sample.",
-                  },
-                  k = "Expected number of returned values in statistic function [optional], by default it is 1",
-                  verbose = "True or false",
-                  ncores = "Number of cores [optional], by default it is 1",
-                  seed = "A random seed [optional]",
-                  random = "A random numbers generator [optional]",
-                  ["..."] = "Second and beyond parameters are extra arguments for statistic function.",
-                },
-                outputs = {
-                  "A matrix with Rxk, being R repetitions."
-                },
-})
+  stats.boot = {}
+  april_set_doc(stats.boot,
+  {
+      class = "function",
+      summary = "Produces a bootstrap resampling table",
+      description= {
+          "This function is useful to compute confidence intervals",
+          "by using bootstrapping technique. The function receives",
+          "the population size and a function which returns statistics",
+          "of a sample.",
+          "A table with the computation of the post-process function",
+          "for every repetition will be returned.",
+      },
+      params = {
+          size = "Population size, it can be a table with several sizes",
+          resample = "Resample value [optional] by default it is 1",
+          R = "Number of repetitions, recommended minimum of 1000",
+          statistic = {
+              "A function witch receives as many matrixInt32 (with",
+              "sample indices) as given number of population sizes",
+              "and computes statistics (k>=1 statistics) over",
+              "the sample.",
+          },
+          k = "Expected number of returned values in statistic function [optional], by default it is 1",
+          verbose = "True or false",
+          ncores = "Number of cores [optional], by default it is 1",
+          seed = "A random seed [optional]",
+          random = "A random numbers generator [optional]",
+          ["..."] = "Second and beyond parameters are extra arguments for statistic function.",
+      },
+      outputs = {
+          "A matrix with Rxk, being R repetitions."
+      },
+  })
 
--- self is needed because of __call metamethod, but it will be ignored
-local function boot(self,params,...)
-  local params = get_table_fields(
-    {
-      size        = { mandatory = true, },
-      resample    = { mandatory = false, type_match = "number", default = 1 },
-      R           = { type_match = "number",   mandatory = true },
-      statistic   = { type_match = "function", mandatory = true },
-      k           = { type_match = "number", mandatory = false, default = 1 },
-      verbose     = { mandatory = false },
-      ncores      = { mandatory = false, type_match = "number", default = 1 },
-      seed        = { mandatory = false, type_match = "number" },
-      random      = { mandatory = false, isa_match  = random },
-    },
-    params)
-  assert(not params.seed or not params.random,
-         "Fields 'seed' and 'random' are forbidden together")
-  local extra       = table.pack(...)
-  local size        = params.size
-  local resample    = params.resample
-  local repetitions = params.R
-  local statistic   = params.statistic
-  local ncores      = params.ncores
-  local seed        = params.seed
-  local rnd         = params.random or random(seed)
-  local tsize       = type(size)
-  local k           = params.k
-  local result      = matrix.MMapped(repetitions, k):zeros()
-  assert(resample > 0.0 and resample <= 1.0, "Incorrect resample value")
-  assert(tsize == "number" or tsize == "table",
-         "Needs a 'size' field with a number or a table of numbers")
-  if tsize == "number" then size = { size } end
-  local resamples = {}
-  for i=1,#size do
-    resamples[i] = math.round(size[i]*resample)
-    assert(resamples[i] > 0, "Resample underflow, increase resample value")
-  end
-  local get_row,N
-  -- resample function executed in parallel using parallel_foreach
-  local last_i = 0
-  local rnd_matrix = function(sz,rsmpls) return matrixInt32(rsmpls):uniform(1,sz,rnd) end
-  local resample = function(i, id)
-    collectgarbage("collect")
-    -- this loop allows to synchronize the random number generator, allowing to
-    -- produce the same exact result independently of ncores value
-    for j=last_i+1,i-1 do
-      for r=1,#size do
-        for k=1,resamples[r] do rnd:randInt(size[r]-1) end
+  -- self is needed because of __call metamethod, but it will be ignored
+  local function boot(self,params,...)
+      local params = get_table_fields(
+      {
+          size        = { mandatory = true, },
+          resample    = { mandatory = false, type_match = "number", default = 1 },
+          R           = { type_match = "number",   mandatory = true },
+          statistic   = { type_match = "function", mandatory = true },
+          k           = { type_match = "number", mandatory = false, default = 1 },
+          verbose     = { mandatory = false },
+          ncores      = { mandatory = false, type_match = "number", default = 1 },
+          seed        = { mandatory = false, type_match = "number" },
+          random      = { mandatory = false, isa_match  = random },
+      },
+      params)
+      assert(not params.seed or not params.random,
+      "Fields 'seed' and 'random' are forbidden together")
+      local extra       = table.pack(...)
+      local size        = params.size
+      local resample    = params.resample
+      local repetitions = params.R
+      local statistic   = params.statistic
+      local ncores      = params.ncores
+      local seed        = params.seed
+      local rnd         = params.random or random(seed)
+      local tsize       = type(size)
+      local k           = params.k
+      local result      = matrix.MMapped(repetitions, k):zeros()
+      assert(resample > 0.0 and resample <= 1.0, "Incorrect resample value")
+      assert(tsize == "number" or tsize == "table",
+      "Needs a 'size' field with a number or a table of numbers")
+      if tsize == "number" then size = { size } end
+      local resamples = {}
+      for i=1,#size do
+          resamples[i] = math.round(size[i]*resample)
+          assert(resamples[i] > 0, "Resample underflow, increase resample value")
       end
-    end
-    last_i = i
-    --
-    local sample = iterator.zip(iterator(size),
-                                iterator(resamples)):map(rnd_matrix):table()
-    local r = table.pack( statistic(multiple_unpack(sample, extra)) )
-    april_assert(#r == k,
-                 "Unexpected number of returned values in statistic, expected %d, found %d",
-                 k, #r)
-    result[i]:copy_from_table(r)
-    if (not id or id == 1) and params.verbose and i % 20 == 0 then
-      fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
-      io.stderr:flush()
-    end
+      local get_row,N
+      -- resample function executed in parallel using parallel_foreach
+      local last_i = 0
+      local rnd_matrix = function(sz,rsmpls) return matrixInt32(rsmpls):uniform(1,sz,rnd) end
+      local resample = function(i, id)
+          collectgarbage("collect")
+          -- this loop allows to synchronize the random number generator, allowing to
+          -- produce the same exact result independently of ncores value
+          for j=last_i+1,i-1 do
+              for r=1,#size do
+                  for k=1,resamples[r] do rnd:randInt(size[r]-1) end
+              end
+          end
+          last_i = i
+          --
+          local sample = iterator.zip(iterator(size),
+          iterator(resamples)):map(rnd_matrix):table()
+          local r = table.pack( statistic(multiple_unpack(sample, extra)) )
+          april_assert(#r == k,
+          "Unexpected number of returned values in statistic, expected %d, found %d",
+          k, #r)
+          result[i]:copy_from_table(r)
+          if (not id or id == 1) and params.verbose and i % 20 == 0 then
+              fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
+              io.stderr:flush()
+          end
+      end
+      local ok,msg = xpcall(parallel_foreach, debug.traceback,
+      ncores, repetitions, resample)
+      result = result:clone()
+      if not ok then error(msg) end
+      if params.verbose then fprintf(io.stderr, " done\n") end
+      return result
   end
-  local ok,msg = xpcall(parallel_foreach, debug.traceback,
-                        ncores, repetitions, resample)
-  result = result:clone()
-  if not ok then error(msg) end
-  if params.verbose then fprintf(io.stderr, " done\n") end
-  return result
-end
-setmetatable(stats.boot, { __call = boot })
+  setmetatable(stats.boot, { __call = boot })
 
------------------------------------------------------------------------------
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
 
-stats.boot.ci =
+  stats.boot.ci =
   april_doc{
-    class = "function",
-    summary = "Returns the extremes of a confidence interval",
-    description= {
-      "This function returns the extremes of a confidence interval",
-      "given the result of stats.boot function and the confidence value.",
-      "It could compute the interval over a slice of the table.",
-      "This functions uses stats.boot.percentile() to compute the interval.",
-    },
-    params = {
-      "The result of stats.boot function.",
-      "The confidence [optional], by default it is 0.95.",
-      "The statistic index for which you want compute the CI [optional], by default it is 1",
-    },
-    outputs = {
-      "The left limit of the interval",
-      "The right limit of the interval",
-    },
+      class = "function",
+      summary = "Returns the extremes of a confidence interval",
+      description= {
+          "This function returns the extremes of a confidence interval",
+          "given the result of stats.boot function and the confidence value.",
+          "It could compute the interval over a slice of the table.",
+          "This functions uses stats.boot.percentile() to compute the interval.",
+      },
+      params = {
+          "The result of stats.boot function.",
+          "The confidence [optional], by default it is 0.95.",
+          "The statistic index for which you want compute the CI [optional], by default it is 1",
+      },
+      outputs = {
+          "The left limit of the interval",
+          "The right limit of the interval",
+      },
   } ..
   -- returns the extremes of the interval
   function(data, confidence, index, alternative)
-    local alternative = alternative or "two-sided"
-    april_assert(alternatives[alternative],
-                 "Unknown alternative value %s", alternative)
-    local confidence,index  = confidence or 0.95, index or 1
-    assert(confidence > 0 and confidence < 1,
-           "Incorrect confidence value, it must be in range (0,1)")
-    local Pa = 0.0
-    local Pb = 1.0
-    if alternative == "two-sided" then
-      Pa = (1.0 - confidence)*0.5
-      Pb = 1.0 - Pa
-    elseif alternative == "left" then
-      Pb = confidence
-    else
-      Pa = 1.0 - confidence
-    end
-    return stats.boot.percentile(data, { Pa, Pb }, index)
+      local alternative = alternative or "two-sided"
+      april_assert(alternatives[alternative],
+      "Unknown alternative value %s", alternative)
+      local confidence,index  = confidence or 0.95, index or 1
+      assert(confidence > 0 and confidence < 1,
+      "Incorrect confidence value, it must be in range (0,1)")
+      local Pa = 0.0
+      local Pb = 1.0
+      if alternative == "two-sided" then
+          Pa = (1.0 - confidence)*0.5
+          Pb = 1.0 - Pa
+      elseif alternative == "left" then
+          Pb = confidence
+      else
+          Pa = 1.0 - confidence
+      end
+      return stats.boot.percentile(data, { Pa, Pb }, index)
   end
 
-stats.boot.percentile =
+  stats.boot.percentile =
   april_doc{
-    class = "function",
-    summary = "Returns a percentile value from bootstrap output following NIST method",
-    description= {
-      "This function returns a percentile value",
-      "given the result of stats.boot function and the percentile number.",
-      "It could compute the percentile over a slice of the table.",
-    },
-    params = {
-      "The result of stats.boot function.",
-      "The percentile [optional], by default it is 0.5. It can be a table of several percentiles",
-      "The statistic index for which you want compute the percentile [optional], by default it is 1",
-    },
-    outputs = {
-      "The percentile value",
-      "Another pecentil value",
-      "..."
-    },
+      class = "function",
+      summary = "Returns a percentile value from bootstrap output following NIST method",
+      description= {
+          "This function returns a percentile value",
+          "given the result of stats.boot function and the percentile number.",
+          "It could compute the percentile over a slice of the table.",
+      },
+      params = {
+          "The result of stats.boot function.",
+          "The percentile [optional], by default it is 0.5. It can be a table of several percentiles",
+          "The statistic index for which you want compute the percentile [optional], by default it is 1",
+      },
+      outputs = {
+          "The percentile value",
+          "Another pecentil value",
+          "..."
+      },
   } ..
   -- returns the percentile
   function(data, percentile, index)
-    if type(percentile) ~= "table" then percentile= { percentile } end
-    return stats.percentile(data:select(2, index or 1),
-                            table.unpack(percentile))
+      if type(percentile) ~= "table" then percentile= { percentile } end
+      return stats.percentile(data:select(2, index or 1),
+      table.unpack(percentile))
   end
 
--- An Empirical Investigation of Statistical Significance in NLP.
--- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
--- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
-stats.boot.pvalue =
+  -- An Empirical Investigation of Statistical Significance in NLP.
+  -- Taylor Berg-Kirkpatrick David Burkett Dan Klein.
+  -- http://www.cs.berkeley.edu/~tberg/papers/emnlp2012.pdf
+  stats.boot.pvalue =
   function(data, pivot, index, params)
-    local params = get_table_fields(
+      local params = get_table_fields(
       {
-        h0 = { mandatory = false, default = 0.0, type_match = "number" },
-        alternative = { mandatory = false, default = "two-sided", type_match = "string" },
+          h0 = { mandatory = false, default = 0.0, type_match = "number" },
+          alternative = { mandatory = false, default = "two-sided", type_match = "string" },
       },
       params or {})
-    local h0  = params.h0
-    local p50 = stats.boot.percentile(data, 0.50, index)
-    local alternative = params.alternative
-    april_assert(alternatives[alternative],
-                 "Unknown alternative value %s", alternative)
-    local data = data:select(2, index or 1)
-    local a,b  = 0.0,0.0
-    local two_sided = (alternative=="two-sided")
-    if two_sided or alternative == "left" then
-      if two_sided and pivot > 0.0 then
-        a = data:lt(-pivot + p50 + h0):count_ones()
-      else
-        a = data:lt(pivot + p50 + h0):count_ones()
+      local h0  = params.h0
+      local p50 = stats.boot.percentile(data, 0.50, index)
+      local alternative = params.alternative
+      april_assert(alternatives[alternative],
+      "Unknown alternative value %s", alternative)
+      local data = data:select(2, index or 1)
+      local a,b  = 0.0,0.0
+      local two_sided = (alternative=="two-sided")
+      if two_sided or alternative == "left" then
+          if two_sided and pivot > 0.0 then
+              a = data:lt(-pivot + p50 + h0):count_ones()
+          else
+              a = data:lt(pivot + p50 + h0):count_ones()
+          end
       end
-    end
-    if two_sided or alternative == "right" then
-      if two_sided and pivot < 0.0 then
-        b = data:gt(-pivot + p50 + h0):count_ones()
-      else
-        b = data:gt(pivot + p50 + h0):count_ones()
+      if two_sided or alternative == "right" then
+          if two_sided and pivot < 0.0 then
+              b = data:gt(-pivot + p50 + h0):count_ones()
+          else
+              b = data:gt(pivot + p50 + h0):count_ones()
+          end
       end
-    end
-    local pvalue = (a + b + 1) / (data:size() + 1)
-    return pvalue
+      local pvalue = (a + b + 1) / (data:size() + 1)
+      return pvalue
   end
 
-----------------------------------------------------------------------------
+  ----------------------------------------------------------------------------
 
-stats.percentile =
+  stats.percentile =
   april_doc{
-    class = "function",
-    summary = "Returns a percentile value from a matrix (should be a vector)",
-    params = {
-      "A one-dimensional matrix (a vector).",
-      "A percentile",
-      "Another percentile",
-      "...",
-    },
-    outputs = {
-      "The percentile value",
-      "Another percentile value",
-      "..."
-    },
+      class = "function",
+      summary = "Returns a percentile value from a matrix (should be a vector)",
+      params = {
+          "A one-dimensional matrix (a vector).",
+          "A percentile",
+          "Another percentile",
+          "...",
+      },
+      outputs = {
+          "The percentile value",
+          "Another percentile value",
+          "..."
+      },
   } ..
   -- returns the percentile
   function(data, ...)
-    local data = data:squeeze()
-    assert(data:num_dim() == 1, "Needs a data vector")
-    local order = data:order()
-    local result_tbl = {}
-    for _,v in ipairs(table.pack(...)) do
-      assert(v >= 0.0 and v <= 1.0,
-             "Incorrect percentile value, it must be in range [0,1]")
-      local N = data:size()
-      local pos = (N+1)*v
-      local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
-      local result
-      if pos_floor == 0 then
-        result = data[order[1]]
-      elseif pos_floor >= N then
-        result = data[order[data:size()]]
+      local data = data:squeeze()
+      assert(data:num_dim() == 1, "Needs a data vector")
+      local order = data:order()
+      local result_tbl = {}
+      for _,v in ipairs(table.pack(...)) do
+          assert(v >= 0.0 and v <= 1.0,
+          "Incorrect percentile value, it must be in range [0,1]")
+          local N = data:size()
+          local pos = (N+1)*v
+          local pos_floor,pos_ceil,result = math.floor(pos),math.ceil(pos)
+          local result
+          if pos_floor == 0 then
+              result = data[order[1]]
+          elseif pos_floor >= N then
+              result = data[order[data:size()]]
+          else
+              local dec = pos - pos_floor
+              local a,b = data[order[pos_floor]],data[order[pos_ceil]]
+              result = a + dec * (b - a)
+          end
+          result_tbl[#result_tbl + 1] = result
+      end
+      return table.unpack(result_tbl)
+  end
+
+  stats.summary = function(data)
+      local data = data:squeeze()
+      assert(data:num_dim() == 1, "Needs a data vector")
+      local var,mean = stats.var(data)
+      local order = data:order()
+      local p0,p25,p50,p75,p100 = stats.percentile(data,
+      0.00, 0.25, 0.50, 0.75, 1.00)
+      return setmetatable({
+          sd = math.sqrt(var),
+          mean = mean,
+          p0 = p0,
+          p25 = p25,
+          p50 = p50,
+          p75 = p75,
+          p100 = p100,
+      },
+      {
+          __tostring = function(self)
+              local header = iterator{"Mean","SD","Min","Q1","Median","Q3","Max"}:
+              map(bind(string.format, "%8s")):concat(" ")
+              local data = iterator{self.mean, self.sd,
+              self.p0, self.p25, self.p50,
+              self.p75, self.p100 }:
+              map(bind(string.format, "%8.4g")):concat(" ")
+              return table.concat({header, data}, "\n")
+          end
+      })
+  end
+
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+
+  local pearson,pearson_methods = class("stats.running.pearson")
+  stats.running.pearson = pearson
+
+  function pearson:constructor(x,y)
+      self.mean_var_x  = stats.running.mean_var()
+      self.mean_var_y  = stats.running.mean_var()
+      self.xy_sum      = 0
+      if x then self:add(x,y) end
+  end
+
+  function pearson_methods:clear()
+      self.mean_var_x:clear()
+      self.mean_var_y:clear()
+      self.xy_sum = 0
+      return self
+  end
+
+  function pearson_methods:add(x,y)
+      local x,y = x,y
+      if not y then
+          if type(x) == "table" then x,y = table.unpack(x) end
+      end
+      assert(x and y, "Needs two values or an array table with two components")
+      self.mean_var_x:add(x)
+      self.mean_var_y:add(y)
+      self.xy_sum = self.xy_sum + x*y
+      return self
+  end
+
+  function pearson_methods:compute()
+      local N          = self.mean_var_x:size()
+      local mu_x,s_x   = self.mean_var_x:compute()
+      local mu_y,s_y   = self.mean_var_y:compute()
+      local rxy = ( self.xy_sum - N*mu_x*mu_y ) / ( (N-1)*math.sqrt(s_x*s_y) )
+      return rxy
+  end
+
+  -------------------------------------------------------------------------------
+
+  stats.dist.bernoulli = function(p)
+      if class.is_a(p, matrix) then
+          return stats.dist.binomial(matrix(1,{1}),p)
       else
-        local dec = pos - pos_floor
-        local a,b = data[order[pos_floor]],data[order[pos_ceil]]
-        result = a + dec * (b - a)
+          return stats.dist.binomial(1,p)
       end
-      result_tbl[#result_tbl + 1] = result
-    end
-    return table.unpack(result_tbl)
   end
 
-stats.summary = function(data)
-  local data = data:squeeze()
-  assert(data:num_dim() == 1, "Needs a data vector")
-  local var,mean = stats.var(data)
-  local order = data:order()
-  local p0,p25,p50,p75,p100 = stats.percentile(data,
-                                               0.00, 0.25, 0.50, 0.75, 1.00)
-  return setmetatable({
-      sd = math.sqrt(var),
-      mean = mean,
-      p0 = p0,
-      p25 = p25,
-      p50 = p50,
-      p75 = p75,
-      p100 = p100,
-                      },
-    {
-      __tostring = function(self)
-        local header = iterator{"Mean","SD","Min","Q1","Median","Q3","Max"}:
-          map(bind(string.format, "%8s")):concat(" ")
-        local data = iterator{self.mean, self.sd,
-                              self.p0, self.p25, self.p50,
-                              self.p75, self.p100 }:
-          map(bind(string.format, "%8.4g")):concat(" ")
-        return table.concat({header, data}, "\n")
+  -------------------------------------------------------------------------------
+  do
+      local std_norm = stats.dist.normal()
+      local check = function(x)
+          local tt = type(x)
+          if tt == "number" then
+              x = matrix{x}
+          elseif tt == "table" then
+              x = matrix(x)
+          end
+          x = x:contiguous():rewrap(x:size(), 1)
+          return x,tt
       end
+      --
+      stats.dnorm = function(x, mean, sd)
+          local x,tt = check(x)
+          if mean then x:axpy(-1.0, mean) end
+          if sd then x:scal(1/sd) end
+          return std_norm:logpdf(x):exp()
+      end
+      --
+      stats.pnorm = function(x, mean, sd)
+          local x,tt = check(x)
+          if mean then x:axpy(-1.0, mean) end
+          if sd then x:scal(1/sd) end
+          return std_norm:logcdf(x):exp()
+      end
+      --
+      stats.qnorm = function(x, mean, sd)
+          return stats.dist.quantile(std_norm, x)*(sd or 1) + (mean or 0)
+      end
+  end
+
+  -------------------------------------------------------------------------------
+
+  class.extend(stats.dist, "quantile", stats.dist.quantile)
+
+  -------------------------------------------------------------------------------
+
+  april_set_doc(stats.comb,{
+      class = "function", 
+      summary = "Computes k-combination",
+      params = {
+          "Total number of elements (n)",
+          "How many selected elements (k)",
+      },
+      outputs = { "A number with (n over k)" },
   })
-end
 
------------------------------------------------------------------------------
------------------------------------------------------------------------------
------------------------------------------------------------------------------
+  stats.mean_var = make_deprecated_function("stats.mean_var",
+  "stats.running.mean_var",
+  stats.running.mean_var)
 
-local pearson,pearson_methods = class("stats.running.pearson")
-stats.running.pearson = pearson
-
-function pearson:constructor(x,y)
-  self.mean_var_x  = stats.running.mean_var()
-  self.mean_var_y  = stats.running.mean_var()
-  self.xy_sum      = 0
-  if x then self:add(x,y) end
-end
-
-function pearson_methods:clear()
-  self.mean_var_x:clear()
-  self.mean_var_y:clear()
-  self.xy_sum = 0
-  return self
-end
-
-function pearson_methods:add(x,y)
-  local x,y = x,y
-  if not y then
-    if type(x) == "table" then x,y = table.unpack(x) end
-  end
-  assert(x and y, "Needs two values or an array table with two components")
-  self.mean_var_x:add(x)
-  self.mean_var_y:add(y)
-  self.xy_sum = self.xy_sum + x*y
-  return self
-end
-
-function pearson_methods:compute()
-  local N          = self.mean_var_x:size()
-  local mu_x,s_x   = self.mean_var_x:compute()
-  local mu_y,s_y   = self.mean_var_y:compute()
-  local rxy = ( self.xy_sum - N*mu_x*mu_y ) / ( (N-1)*math.sqrt(s_x*s_y) )
-  return rxy
-end
-
--------------------------------------------------------------------------------
-
-stats.dist.bernoulli = function(p)
-  if class.is_a(p, matrix) then
-    return stats.dist.binomial(matrix(1,{1}),p)
-  else
-    return stats.dist.binomial(1,p)
-  end
-end
-
--------------------------------------------------------------------------------
-do
-  local std_norm = stats.dist.normal()
-  local check = function(x)
-    local tt = type(x)
-    if tt == "number" then
-      x = matrix{x}
-    elseif tt == "table" then
-      x = matrix(x)
-    end
-    x = x:contiguous():rewrap(x:size(), 1)
-    return x,tt
-  end
-  --
-  stats.dnorm = function(x, mean, sd)
-    local x,tt = check(x)
-    if mean then x:axpy(-1.0, mean) end
-    if sd then x:scal(1/sd) end
-    return std_norm:logpdf(x):exp()
-  end
-  --
-  stats.pnorm = function(x, mean, sd)
-    local x,tt = check(x)
-    if mean then x:axpy(-1.0, mean) end
-    if sd then x:scal(1/sd) end
-    return std_norm:logcdf(x):exp()
-  end
-  --
-  stats.qnorm = function(x, mean, sd)
-    return stats.dist.quantile(std_norm, x)*(sd or 1) + (mean or 0)
-  end
-end
-
--------------------------------------------------------------------------------
-
-class.extend(stats.dist, "quantile", stats.dist.quantile)
-
--------------------------------------------------------------------------------
-
-april_set_doc(stats.comb,{
-                class = "function", 
-                summary = "Computes k-combination",
-                params = {
-                  "Total number of elements (n)",
-                  "How many selected elements (k)",
-                },
-                outputs = { "A number with (n over k)" },
-})
-
-stats.mean_var = make_deprecated_function("stats.mean_var",
-                                          "stats.running.mean_var",
-                                          stats.running.mean_var)
-
-stats.correlation = {} -- deprecated table
-stats.correlation.pearson = make_deprecated_function("stats.correlation.pearson",
-                                                     "stats.running.pearson",
-                                                     stats.running.pearson)
+  stats.correlation = {} -- deprecated table
+  stats.correlation.pearson = make_deprecated_function("stats.correlation.pearson",
+  "stats.running.pearson",
+  stats.running.pearson)
