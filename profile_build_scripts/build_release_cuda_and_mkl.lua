@@ -37,8 +37,8 @@ luapkg{
       -- "-fPIC",
       -- For CUDA
       "-DUSE_CUDA",
-       --"-I/usr/local/cuda/include",
-       --"-L/usr/local/cuda/lib",
+       "-I/usr/local/cuda/include",
+       "-L/usr/local/cuda/lib64",
     },
     extra_libs={
       -- "-fPIC",

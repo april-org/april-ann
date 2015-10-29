@@ -971,7 +971,7 @@ confus_matrix_methods.addData =
     end
   end
 
-  function confus_matrix_methods.addDataMatrix(self, m1, m2)
+--[[  function confus_matrix_methods.addDataMatrix(self, m1, m2)
       assert(#m1:dim() == 1, "M1 does not have one dimension")
       assert(#m2:dim() == 1, "M2 does not have dimension")
       assert(m1:dim(1) == m2:dim(1), "Dimensions did not match")
@@ -988,6 +988,16 @@ confus_matrix_methods.addData =
           end
       end
   end
+]]
+  function confus_matrix_methods.addDataMatrix(self, target, pred)
+      for i=1,#target do
+          local t_c = target[i]
+          local p_c = pred[i]
+          local row = self.confusion[t_c]
+          row[p_c] = row[p_c] + 1
+      end
+  end
+
 
   function confus_matrix_methods.combine(self, conf1)
       assert(conf1.num_classes == self.num_classes)
