@@ -492,7 +492,7 @@ namespace AprilUtils {
     /// Checks if the field at the given key name is nil.    
     bool checkNil(const char *name, size_t len) const {
       int pos, abspos;
-      if ((pos==checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
+      if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
       lua_pushlstring(L, name, len);
       lua_gettable(L, abspos);
       bool ret =  lua_isnil(L, -1);

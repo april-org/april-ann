@@ -19,11 +19,24 @@ local function check_grads(d, point)
   end
 end
 
+local function check_pdf_and_sample(d)
+  if d:size() == 1 then
+    local m = d:sample(random(1234), 10000)
+    local h = stats.hist(m, {breaks=100})
+    local key = h[{"key"}]
+    local density = h[{"density"}][{'2:-2'}]
+    local aux = d:logpdf(key:right_inflate():contiguous())[{'2:-2'}]:exp()
+    check.TRUE(aux:eq(density))
+  end
+end
+
 -----------------------------------------------------------------------------
 -- UNIFORM DISTRIBUTION
 
 T("UniformDistTest", function()
     local d = stats.dist.uniform( M(3,{1,2,3}), M(3,{2,3,4}) )
+    check_pdf_and_sample(d)
+    
     local cdf_result = M(10,{ 
                            0.0592946, 0.21913, 0.472505, 0.0353412, 0.0440094,
                            0.124041, 0.0364003, 0.00314816, 0.161239, 0.0291983 })
@@ -37,6 +50,8 @@ end)
 T("NormalDistTest", function()
     local d = stats.dist.normal( M(3):uniformf(0,1,random(1234)),
                                  M(3,3):zeros():diag(2):set(1,2,1):set(2,1,1) )
+    check_pdf_and_sample(d)
+    
     check.eq(type(d), "stats.dist.normal.general")
     
     local pdf_result = M(2, { 0.0151933, 0.00832571 })
@@ -47,6 +62,8 @@ T("NormalDistTest", function()
       for _,b in ipairs{0.1, 1.0, 4.0} do
         local d = stats.dist.normal( M(3):fill(a),
                                      M(3,3):zeros():diag(b) )
+        check_pdf_and_sample(d)
+        
         local data = d:sample( random(4295), M(N,3) )
         -- FIXME: check this test, it fails eventually
         -- check(function()
@@ -81,6 +98,7 @@ T("DiagNormalDistTest", function()
     for _,a in ipairs{-4, -0.1, 0.1, 4} do
       for _,b in ipairs{0.1, 1.0, 4.0} do
         local d = stats.dist.normal( M(3):fill(a), matrix.sparse.diag{b, b, b} )
+        check_pdf_and_sample(d)
         
         check.eq(type(d), "stats.dist.normal.diagonal")
         local data = d:sample( random(4295), M(N,3) )
@@ -104,6 +122,8 @@ end)
 
 T("StdNormalDist", function()
     local d = stats.dist.normal()
+    check_pdf_and_sample(d)
+    
     check.eq(type(d), "stats.dist.normal.standard")
     local data = d:sample( random(4295), M(N,1) )
     check(function()
@@ -122,6 +142,8 @@ end)
 
 T("ExpDistTest", function()
     local d = stats.dist.exponential(4)
+    check_pdf_and_sample(d)
+    
     local samples = M(10,1,{ 0.41319,
                              0.17446,
                              0.11866,
@@ -171,6 +193,7 @@ T("ExpDistTest", function()
 
     local x = x:rewrap(1,10)
     local d = stats.dist.exponential(M(10):fill(4))
+    check_pdf_and_sample(d)
 
     check.number_eq( d:logpdf(x):get(1), pdf_result:sum() )
     check.number_eq( d:logcdf(x):get(1), cdf_result:sum() )
@@ -181,7 +204,7 @@ end)
 
 T("BinomDistTest", function()
     local d = stats.dist.binomial(10,0.5)
-
+    
     check.eq( d:sample(random(1234),10),
               M(10,1,{3,6,6,6,5,5,4,5,3,5}) )
 
@@ -208,6 +231,7 @@ T("LogNormalDistTest", function()
       for _,b in ipairs{0.1, 1.0, 4.0} do
         local d = stats.dist.lognormal( M(3):fill(a),
                                         M(3,3):zeros():diag(b) )
+        check_pdf_and_sample(d)
         local data = d:sample( random(4295), M(N,3) )
         check(function()
             return (data:sum(1):scal(1/N):log() - M(1,3):fill(a + b/2)):abs():sum()/3 < 0.1
@@ -229,6 +253,7 @@ T("DiagLogNormalDistTest", function()
     for _,a in ipairs{-4, -0.1, 0.1, 4} do
       for _,b in ipairs{0.1, 1.0, 4.0} do
         local d = stats.dist.lognormal( M(3):fill(a), matrix.sparse.diag{b, b, b} )
+        check_pdf_and_sample(d)
         check.eq(type(d), "stats.dist.lognormal.diagonal")
         local data = d:sample( random(4295), M(N,3) )
         check(function()
@@ -241,5 +266,16 @@ T("DiagLogNormalDistTest", function()
         -- FIXME: PRECISSION PROBLEMS ?????
         -- check.number_eq(math.log(sigma), (b - 1 + (2*a + b)), 0.08)
       end
+    end
+end)
+
+-----------------------------------------------------------------------------
+-- GAMMA DISTRIBUTION
+
+T("GammaDistribution", function()
+    for _,pair in ipairs{ {1.0,1.0}, {2.0,1.0}, {0.5,1.0}, {1.0,2.0}, {1.0,0.5} } do
+      local a,b = table.unpack(pair)
+      local d = stats.dist.gamma(a, b)
+      check_pdf_and_sample(d)
     end
 end)

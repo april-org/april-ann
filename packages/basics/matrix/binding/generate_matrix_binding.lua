@@ -36,6 +36,7 @@ local matrix_methods = {
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "ceil", "floor", "round", "left_inflate", "right_inflate",
+    "count_eq", "count_neq",
   },
   double = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -56,6 +57,7 @@ local matrix_methods = {
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "ceil", "floor", "round", "left_inflate", "right_inflate",
+    "count_eq", "count_neq",
   },
   int32_t = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -74,6 +76,7 @@ local matrix_methods = {
     "data", "order", "order_rank", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "left_inflate", "right_inflate",
+    "count_eq", "count_neq",
   },
   ComplexF = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -93,6 +96,7 @@ local matrix_methods = {
     "data", "convert_to", "index",
     "indexed_fill", "indexed_copy",
     "ceil", "floor", "round", "left_inflate", "right_inflate",
+    "count_eq", "count_neq",
   },
   char = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",
@@ -110,6 +114,7 @@ local matrix_methods = {
     "indexed_fill", "indexed_copy",
     "stringfy",
     "left_inflate", "right_inflate",
+    "count_eq", "count_neq",
   },
   bool = {
     "size", "rewrap", "squeeze", "get_reference_string", "copy_from_table",

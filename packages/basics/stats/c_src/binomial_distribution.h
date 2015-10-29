@@ -22,12 +22,13 @@
 #define BINOMIAL_DISTRIBUTION_H
 
 #include "logbase.h"
+#include "smart_ptr.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
 
   class BinomialDistribution : public StatisticalDistributionBase {
-    Basics::MatrixFloat *n, *p;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> n, p;
     int ni;
     float pf, pfm1;
     AprilUtils::log_float lpf, lpfm1;

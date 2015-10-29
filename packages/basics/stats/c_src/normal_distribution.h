@@ -22,6 +22,7 @@
 #define NORMAL_DISTRIBUTION_H
 
 #include "matrixFloat.h"
+#include "smart_ptr.h"
 #include "sparse_matrixFloat.h"
 #include "statistical_distribution.h"
 
@@ -30,7 +31,7 @@ namespace Stats {
   /// Normal distribution with general covariance matrix
   class GeneralNormalDistribution : public StatisticalDistributionBase {
   protected:
-    Basics::MatrixFloat *mean, *cov, *inv_cov, *L;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> mean, cov, inv_cov, L;
     AprilUtils::log_float cov_det, K;
     float cov_det_sign;
 
@@ -57,10 +58,10 @@ namespace Stats {
   /// Normal distribution with diagonal covariance sparse matrix
   class DiagonalNormalDistribution : public StatisticalDistributionBase {
   protected:
-    Basics::MatrixFloat *mean;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> mean;
     AprilUtils::log_float cov_det, K;
     float cov_det_sign;
-    Basics::SparseMatrixFloat *cov, *inv_cov, *L;
+    AprilUtils::SharedPtr<Basics::SparseMatrixFloat> cov, inv_cov, L;
 
     void updateParams();
     virtual void privateSample(Basics::MTRand *rng,
@@ -108,7 +109,7 @@ namespace Stats {
 
   /// Log-Normal distribution with general covariance matrix
   class GeneralLogNormalDistribution : public GeneralNormalDistribution {
-    Basics::MatrixFloat *location;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> location;
   
   protected:
     virtual void privateSample(Basics::MTRand *rng,
@@ -133,7 +134,7 @@ namespace Stats {
 
   /// Log-LogNormal distribution with diagonal covariance sparse matrix
   class DiagonalLogNormalDistribution : public DiagonalNormalDistribution {
-    Basics::MatrixFloat *location;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> location;
 
   protected:
     virtual void privateSample(Basics::MTRand *rng,

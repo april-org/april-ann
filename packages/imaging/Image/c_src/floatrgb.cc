@@ -189,9 +189,12 @@ namespace AprilMath {
     namespace Operations {
       
       template <>
-      Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,
+      Basics::Matrix<Imaging::FloatRGB> *matComplement(const Basics::Matrix<Imaging::FloatRGB> *src,
                                                        Basics::Matrix<Imaging::FloatRGB> *dst) {
-        if (dst == 0) dst = src;
+        april_assert( dst != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dst == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         if (!src->sameDim(dst)) ERROR_EXIT(128,"Incompatible matrix sizes\n");
         Basics::Matrix<Imaging::FloatRGB>::iterator dst_it(dst->begin());
         for (Basics::Matrix<Imaging::FloatRGB>::const_iterator src_it(src->begin());

@@ -283,6 +283,19 @@ namespace AprilMath {
                                       Basics::Matrix<O> *dest=0);
       
       /**
+       * @brief Counts the number of values equals to the given parameter.
+       */
+      template <typename T>
+      int matCountEq(const Basics::Matrix<T> *input, T value);
+
+
+      /**
+       * @brief Counts the number of values not equals to the given parameter.
+       */
+      template <typename T>
+      int matCountNeq(const Basics::Matrix<T> *input, T value);
+
+      /**
        * @brief Converts into MatrixInt32 with all non-zero indices. Indices
        * start a 1 instead of 0.
        */

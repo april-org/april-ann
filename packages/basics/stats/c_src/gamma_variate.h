@@ -24,7 +24,22 @@
 #include "MersenneTwister.h"
 
 namespace Stats {
-  double gammaVariate(Basics::MTRand *rng, double a, double b, double c);
+  /**
+   * @brief Computes a Gamma variate random number.
+   *
+   * @params rng A random numbers generator.
+   * @params a A location parameter.
+   * @params b A scale parameter.
+   * @params c A shape parameter.
+   *
+   * @note The shape can be transformed into a rate computing \f$
+   * \frac{1}{shape} \f$.
+   *
+   * @note Modification of: http://ftp.arl.mil/random/random.pdf
+   */
+  
+  double gammaVariate(Basics::MTRand *rng, const double a, const double b,
+                      const double c);
 }
 
 #endif // GAMMA_VARIATE_H

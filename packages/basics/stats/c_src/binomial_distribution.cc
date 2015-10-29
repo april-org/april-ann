@@ -43,8 +43,6 @@ namespace Stats {
   }
 
   BinomialDistribution::~BinomialDistribution() {
-    DecRef(n);
-    DecRef(p);
   }
   
   void BinomialDistribution::updateParams() {

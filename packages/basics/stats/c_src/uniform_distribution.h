@@ -21,13 +21,14 @@
 #ifndef UNIFORM_DISTRIBUTION_H
 #define UNIFORM_DISTRIBUTION_H
 
-#include "unused_variable.h"
+#include "smart_ptr.h"
 #include "statistical_distribution.h"
+#include "unused_variable.h"
 
 namespace Stats {
   
   class UniformDistribution : public StatisticalDistributionBase {
-    Basics::MatrixFloat *low, *high, *diff;
+    AprilUtils::SharedPtr<Basics::MatrixFloat> low, high, diff;
     
     void updateParams();
 
