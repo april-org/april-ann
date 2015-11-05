@@ -34,8 +34,6 @@ namespace Stats {
                                            MatrixFloat *high) :
     StatisticalDistributionBase(low->size()),
     low(low), high(high), diff(0) {
-    IncRef(low);
-    IncRef(high);
     if (!low->sameDim(high))
       ERROR_EXIT(128, "Expected same sizes in low and high matrices\n");
     MatrixFloat::const_iterator low_it(low->begin());
@@ -50,9 +48,6 @@ namespace Stats {
   }
 
   UniformDistribution::~UniformDistribution() {
-    DecRef(low);
-    DecRef(high);
-    DecRef(diff);
   }
 
   void UniformDistribution::privateSample(MTRand *rng, MatrixFloat *result) {
@@ -148,7 +143,7 @@ namespace Stats {
   }
   
   void UniformDistribution::updateParams() {
-    AssignRef(diff, high->clone());
-    AprilMath::MatrixExt::BLAS::matAxpy(diff, -1.0f, low);
+    diff = high->clone();
+    AprilMath::MatrixExt::BLAS::matAxpy(diff.get(), -1.0f, low.get());
   }
 }

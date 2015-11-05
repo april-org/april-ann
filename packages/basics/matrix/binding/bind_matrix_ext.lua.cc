@@ -202,44 +202,30 @@ extern "C" {
 
 //BIND_METHOD MatrixBool count_ones
 {
-  int count=0;
-  for (MatrixBool::const_iterator it(obj->begin());
-       it != obj->end(); ++it) {
-    if (*it) ++count;
-  }
+  int count=AprilMath::MatrixExt::Misc::matCountEq(obj, true);
   LUABIND_RETURN(int, count);
 }
 //BIND_END
 
 //BIND_METHOD MatrixBool count_zeros
 {
-  int count=0;
-  for (MatrixBool::const_iterator it(obj->begin());
-       it != obj->end(); ++it) {
-    if (!(*it)) ++count;
-  }
+  int count=AprilMath::MatrixExt::Misc::matCountEq(obj, false);
   LUABIND_RETURN(int, count);
 }
 //BIND_END
 
 //BIND_METHOD MatrixBool any
 {
-  bool result = false;
-  for (MatrixBool::const_iterator it(obj->begin());
-       it != obj->end() && !result; ++it) {
-    result = result || (*it);
-  }
+  int count=AprilMath::MatrixExt::Misc::matCountEq(obj, true);
+  bool result=(count != 0);
   LUABIND_RETURN(boolean, result);
 }
 //BIND_END
 
 //BIND_METHOD MatrixBool all
 {
-  bool result = true;
-  for (MatrixBool::const_iterator it(obj->begin());
-       it != obj->end() && result; ++it) {
-    result = result && (*it);
-  }
+  int count=AprilMath::MatrixExt::Misc::matCountEq(obj, false);
+  bool result=(count == 0);
   LUABIND_RETURN(boolean, result);
 }
 //BIND_END

@@ -93,9 +93,16 @@ bool checknumber(constString tk, const char *decimal, double &result) {
       line.skip(1);
       tk = line.extract_token(quotechar, true);
       if (tk[tk.len()-1] != *quotechar) {
-        LUABIND_FERROR1("unmatched %c", *quotechar);
+        lua_pushnil(L);
+        lua_pushfstring(L, "unmatched %c", *quotechar);
+        return 2; // unmatched quote, likely to accept after appending next line
       }
-      line.ltrim(sep);
+      if (line) { // not empty
+        if (line[0] != *sep) {
+          LUABIND_ERROR("Unable to locate sepparator after quoted cell");
+        }
+        line.skip(1);
+      }
     }
     else { // unquoted; find next sep
       tk = line.extract_token(sep, true);
@@ -112,8 +119,16 @@ bool checknumber(constString tk, const char *decimal, double &result) {
     }
     lua_rawseti(L, t_pos, n);
   } while (line);
-  if (old_n > 0 && old_n != n) {
-    LUABIND_ERROR("Incorrect number of columns");
+  if (old_n > 0) {
+    if (n > old_n) {
+      LUABIND_ERROR("Incorrect number of columns");
+    }
+    else if (n < old_n) {
+      for (++n; n <= old_n; ++n) {
+        lua_pushvalue(L, NA_pos);
+        lua_rawseti(L, t_pos, n);
+      }
+    }
   }
   lua_pushvalue(L, t_pos);
   LUABIND_INCREASE_NUM_RETURNS(1);

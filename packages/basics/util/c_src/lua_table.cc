@@ -38,23 +38,30 @@ namespace AprilUtils {
   }
 
   LuaTable::LuaTable(const LuaTable &other) {
-    other.checkAndPushRef();
-    init(other.L, -1);
-    lua_pop(L, 1);
+    int abspos;
+    int pos = other.checkAndGetRef(abspos);
+    if (pos != 0) {
+      init(other.L, pos);
+      other.popRef(pos);
+    }
   }
 
   LuaTable::~LuaTable() {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
+    if (absindex != 0) {
+      ERROR_EXIT(128, "You need to call LuaTable::unlock() method\n");
+    }
   }
 
   bool LuaTable::empty() const {
+    int pos, abspos;
     bool result;
-    if (!checkAndPushRef()) {
+    if ((pos=checkAndGetRef(abspos)) == 0) {
       result = true;
     }
     else {
       lua_pushnil(L);
-      if (lua_next(L, -2)) {
+      if (lua_next(L, abspos)) {
         lua_pop(L, 2);
         result = false;
       }
@@ -62,27 +69,30 @@ namespace AprilUtils {
         result = true;
       }
     }
-    lua_pop(L, 1);
+    popRef(pos);
     return result;
   }
   
   size_t LuaTable::length() const {
-    if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-    int len = luaL_len(L, -1);
-    lua_pop(L, 1);
+    int pos, abspos;
+    if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
+    int len = luaL_len(L, pos);
+    popRef(pos);
     return static_cast<size_t>(len);
   }
 
   LuaTable &LuaTable::operator=(const LuaTable &other) {
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
-    other.checkAndPushRef();
-    init(other.L, -1);
-    lua_pop(L, 1);
+    int abspos;
+    int pos = other.checkAndGetRef(abspos);
+    init(other.L, pos);
+    other.popRef(pos);
     return *this;
   }
   
   void LuaTable::init(lua_State *L, int i) {
     this->L = L;
+    this->absindex = 0;
     if (lua_isnil(L,i) || lua_type(L,i) == LUA_TNONE) ref = LUA_NOREF;
     else {
       lua_pushvalue(L,i);
@@ -93,12 +103,13 @@ namespace AprilUtils {
     }
   }
 
-  string LuaTable::toLuaString() {
+  string LuaTable::toLuaString(bool binary) {
     /* the function name */
     lua_getglobal(L, "util");
     lua_getfield(L, -1, "to_lua_string");
     pushTable(L);
-    lua_pushstring(L, "binary");
+    if (binary) lua_pushstring(L, "binary");
+    else lua_pushstring(L, "ascii");
     if (lua_pcall(L, 2, 1, 0) != LUA_OK) {
       string str(lua_tostring(L,-1));
       lua_pop(L,1);
@@ -111,18 +122,27 @@ namespace AprilUtils {
     
   void LuaTable::pushTable(lua_State *L) {
     if (this->L != L) ERROR_EXIT(128, "Given incorrect lua_State\n");
-    checkAndPushRef();
+    int abspos;
+    int pos = checkAndGetRef(abspos);
+    if (pos != -1) lua_pushvalue(L, pos);
   }
   
-  bool LuaTable::checkAndPushRef() const {
-    if (ref == LUA_NOREF) {
-      lua_pushnil(L); // just to be coherent, it always pushes a value
-      return false;
+  int LuaTable::checkAndGetRef(int &abspos) const {
+    if (absindex != 0) {
+      abspos = absindex;
+      return absindex;
     }
-    else {
-      lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-      return true;
+    else if (ref == LUA_NOREF) {
+      return 0;
     }
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+    abspos = lua_absindex(L, -1);
+    return -1;
+  }
+  
+  void LuaTable::popRef(int pos, int extra) const {
+    if (pos == -1) lua_pop(L, 1 + extra);
+    else lua_pop(L, extra);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -282,33 +302,35 @@ namespace AprilUtils {
   // overload of get for const char *
   template<>
   const char *LuaTable::get<const char *>(const char *name) const {
-    if (!checkAndPushRef()) ERROR_EXIT(128, "Invalid reference\n");
-    lua_getfield(L, -1, name);
+    int pos, abspos;
+    if ((pos=checkAndGetRef(abspos)) == 0) ERROR_EXIT(128, "Invalid reference\n");
+    lua_getfield(L, pos, name);
     if (lua_isnil(L,-1)) ERROR_EXIT1(128, "Unable to find field %s\n", name);
     const char *str = lua_tostring(L, -1);
     // NOTE: it is safe to pop because the string is referenced in a table, so,
     // as far as the table exists, the string will also exists.
-    lua_pop(L, 2);
+    popRef(pos, 1);
     return str;
   }
 
   // overload of opt for const char *
   template<>
   const char *LuaTable::opt<const char *>(const char *name, const char *def) const {
-    if (!checkAndPushRef()) {
-      lua_pop(L, 1);
+    int pos, abspos;
+    if ((pos=checkAndGetRef(abspos)) == 0) {
+      popRef(pos);
       return def;
     }
     else {
-      lua_getfield(L, -1, name);
+      lua_getfield(L, pos, name);
       if (lua_isnil(L,-1)) {
-        lua_pop(L, 2);
+        popRef(pos, 1);
         return def;
       }
       const char *str = lua_tostring(L,-1);
       // NOTE: it is safe to pop because the string is referenced in a table,
       // so, as far as the table exists, the string will also exists.
-      lua_pop(L, 2);
+      popRef(pos, 1);
       return str;
     }
     // return T();

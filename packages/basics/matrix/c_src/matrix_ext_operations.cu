@@ -47,240 +47,342 @@ namespace AprilMath {
     namespace Operations {
       
       template <typename T>
-      Matrix<T> *matPlogp(Matrix<T> *obj,
+      Matrix<T> *matPlogp(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T> (obj, AprilMath::Functors::m_plogp<T>(), dest);
       }
-    
+      
       template <typename T>
-      Matrix<T> *matLog(Matrix<T> *obj,
+      Matrix<T> *matLog(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_log<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matLog1p(Matrix<T> *obj,
+      Matrix<T> *matLog1p(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_log1p<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matExp(Matrix<T> *obj,
+      Matrix<T> *matExp(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_exp<T>(), dest);
       }
 
       template <typename T>
-      Matrix<T> *matExpm1(Matrix<T> *obj,
+      Matrix<T> *matExpm1(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_expm1<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matSqrt(Matrix<T> *obj,
+      Matrix<T> *matSqrt(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sqrt<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matSqrt(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matSqrt(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sqrt<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matPow(Matrix<T> *obj, const T &value,
+      Matrix<T> *matPow(const Matrix<T> *obj, const T &value,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, m_curried_pow<T>(value), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matPow(SparseMatrix<T> *obj, const T &value,
+      SparseMatrix<T> *matPow(const SparseMatrix<T> *obj, const T &value,
                               SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, m_curried_pow<T>(value), dest);
       }
     
       template <typename T>
-      Matrix<T> *matTan(Matrix<T> *obj,
+      Matrix<T> *matTan(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_tan<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matTan(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matTan(const SparseMatrix<T> *obj,
                               SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_tan<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matTanh(Matrix<T> *obj,
+      Matrix<T> *matTanh(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_tanh<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matTanh(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matTanh(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_tanh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAtan(Matrix<T> *obj,
+      Matrix<T> *matAtan(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_atan<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matAtan(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matAtan(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_atan<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAtanh(Matrix<T> *obj,
+      Matrix<T> *matAtanh(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_atanh<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matAtanh(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matAtanh(const SparseMatrix<T> *obj,
                                 SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_atanh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matSin(Matrix<T> *obj,
+      Matrix<T> *matSin(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sin<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matSin(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matSin(const SparseMatrix<T> *obj,
                               SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sin<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matSinh(Matrix<T> *obj,
+      Matrix<T> *matSinh(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sinh<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matSinh(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matSinh(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sinh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAsin(Matrix<T> *obj,
+      Matrix<T> *matAsin(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_asin<T>(), dest);
       }
     
       template <typename T>
-      SparseMatrix<T> *matAsin(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matAsin(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_asin<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAsinh(Matrix<T> *obj,
+      Matrix<T> *matAsinh(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_asinh<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matAsinh(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matAsinh(const SparseMatrix<T> *obj,
                                 SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_asinh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matCos(Matrix<T> *obj,
+      Matrix<T> *matCos(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_cos<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matCosh(Matrix<T> *obj,
+      Matrix<T> *matCosh(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_cosh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAcos(Matrix<T> *obj,
+      Matrix<T> *matAcos(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_acos<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAcosh(Matrix<T> *obj,
+      Matrix<T> *matAcosh(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_acosh<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAbs(Matrix<T> *obj,
+      Matrix<T> *matAbs(const Matrix<T> *obj,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_abs<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matAbs(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matAbs(const SparseMatrix<T> *obj,
                               SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_abs<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matComplement(Matrix<T> *obj,
+      Matrix<T> *matComplement(const Matrix<T> *obj,
                                Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_complement<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matSign(Matrix<T> *obj,
+      Matrix<T> *matSign(const Matrix<T> *obj,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sign<T>(), dest);
       }
     
       template <typename T>
-      SparseMatrix<T> *matSign(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matSign(const SparseMatrix<T> *obj,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_sign<T>(), dest);
       }
     
@@ -289,77 +391,104 @@ namespace AprilMath {
       /// Performs a clamp operation, in-place operation if @c dest=0, otherwise,
       /// the result will be computed at the given @c dest Matrix.
       template<typename T>
-      Matrix<T> *matClamp(Matrix<T> *obj,
+      Matrix<T> *matClamp(const Matrix<T> *obj,
                           const T lower, const T upper,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, m_curried_clamp<T>(lower,upper), dest);
       }
 
       /// Performs a floor operation, in-place operation if @c dest=0, otherwise,
       /// the result will be computed at the given @c dest Matrix.
       template<typename T>
-      Matrix<T> *matFloor(Matrix<T> *obj,
+      Matrix<T> *matFloor(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_floor<T>(), dest);
       }
 
       /// Performs a ceil operation, in-place operation if @c dest=0, otherwise,
       /// the result will be computed at the given @c dest Matrix.
       template<typename T>
-      Matrix<T> *matCeil(Matrix<T> *obj,
-                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+      Matrix<T> *matCeil(const Matrix<T> *obj,
+                         Matrix<T> *dest) {
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_ceil<T>(), dest);
       }
 
       /// Performs a round operation, in-place operation if @c dest=0, otherwise,
       /// the result will be computed at the given @c dest Matrix.
       template<typename T>
-      Matrix<T> *matRound(Matrix<T> *obj,
+      Matrix<T> *matRound(const Matrix<T> *obj,
                           Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::Functors::m_round<T>(), dest);
       }
     
       template <typename T>
-      Matrix<T> *matScal(Matrix<T> *obj, const T value,
+      Matrix<T> *matScal(const Matrix<T> *obj, const T value,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixSpanMap1<T,T>(obj, CurriedScal<T>(value), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matScal(SparseMatrix<T> *obj,
+      SparseMatrix<T> *matScal(const SparseMatrix<T> *obj,
                                const T value,
                                SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, m_curried_mul<T>(value), dest);
       }
 
       template <typename T>
-      Matrix<T> *matCmul(Matrix<T> *obj,
+      Matrix<T> *matCmul(const Matrix<T> *obj,
                          const Matrix<T> *other,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap2<T,T,T>(obj, other,
                                        AprilMath::Functors::m_mul<T>(),
                                        dest);
       }
     
       template <typename T>
-      Matrix<T> *matScalarAdd(Matrix<T> *obj, const T &v,
+      Matrix<T> *matScalarAdd(const Matrix<T> *obj, const T &v,
                               Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, m_curried_add<T>(v), dest);
       }
     
       template <typename T>
-      Matrix<T> *matAdjustRange(Matrix<T> *obj,
+      Matrix<T> *matAdjustRange(const Matrix<T> *obj,
                                 const T &rmin, const T &rmax,
                                 Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         T mmin, mmax;
         AprilMath::MatrixExt::Reductions::matMinAndMax(obj, mmin, mmax);
         // especial case, set all values to rmin
@@ -382,47 +511,65 @@ namespace AprilMath {
       }
         
       template <typename T>
-      Matrix<T> *matDiv(Matrix<T> *obj, const T &value,
+      Matrix<T> *matDiv(const Matrix<T> *obj, const T &value,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, m_curried_div<T>(value), dest);
       }
 
       template <typename T>
-      Matrix<T> *matIDiv(Matrix<T> *obj, const T &value,
+      Matrix<T> *matIDiv(const Matrix<T> *obj, const T &value,
                          Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, m_curried_idiv<T>(value), dest);
       }
 
       template <typename T>
-      Basics::Matrix<T> *matDiv(Basics::Matrix<T> *obj,
+      Basics::Matrix<T> *matDiv(const Basics::Matrix<T> *obj,
                                 const Basics::Matrix<T> *other,
                                 Basics::Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap2<T,T,T>(obj, other,
                                        AprilMath::Functors::m_div<T>(), dest);
       }
 
       template <typename T>
-      SparseMatrix<T> *matDiv(SparseMatrix<T> *obj, const T &value,
+      SparseMatrix<T> *matDiv(const SparseMatrix<T> *obj, const T &value,
                               SparseMatrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return SparseMatrixScalarMap1<T,T>(obj, m_curried_div<T>(value), dest);
       }
 
       template <typename T>
-      Matrix<T> *matMod(Matrix<T> *obj, const T &value,
+      Matrix<T> *matMod(const Matrix<T> *obj, const T &value,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap1<T,T>(obj, AprilMath::m_curried_mod<T>(value),
                                      dest);
       }
 
       template <typename T>
-      Matrix<T> *matMod(Matrix<T> *obj, const Basics::Matrix<T> *other,
+      Matrix<T> *matMod(const Matrix<T> *obj, const Basics::Matrix<T> *other,
                         Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap2<T,T>(obj, other,
                                      AprilMath::Functors::m_mod<T>(), dest);
       }
@@ -441,9 +588,12 @@ namespace AprilMath {
       };
       
       template <typename T>
-      Matrix<T> *matMaskedFill(Matrix<T> *obj, const Matrix<bool> *mask,
+      Matrix<T> *matMaskedFill(const Matrix<T> *obj, const Matrix<bool> *mask,
                                const T &value, Matrix<T> *dest) {
-        if (dest == 0) dest = obj;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap2<T,bool,T>(obj, mask,
                                           maskedFillOp<T>(value),
                                           dest);
@@ -462,18 +612,21 @@ namespace AprilMath {
       };
       
       template <typename T>
-      Matrix<T> *matMaskedCopy(Matrix<T> *obj1, const Matrix<bool> *mask,
+      Matrix<T> *matMaskedCopy(const Matrix<T> *obj1, const Matrix<bool> *mask,
                                const Matrix<T> *obj2, Matrix<T> *dest) {
-        if (dest == 0) dest = obj1;
+        april_assert( dest != 0 );
+        // TODO: sanity check, to be removed after checking all the code has
+        // been updated with commit performed 2015/10/26 around 13:00
+        if (dest == 0) ERROR_EXIT(128, "Given a NULL destination matrix");
         return MatrixScalarMap3<T,bool,T,T>(obj1, mask, obj2,
                                             maskedCopyOp<T>(), dest);
       }
       
       //////////////// integer versions ///////////////////
       template <>
-      Matrix<int32_t> *matScal(Matrix<int32_t> *obj, const int32_t value,
-                         Matrix<int32_t> *dest) {
-        if (dest == 0) dest = obj;
+      Matrix<int32_t> *matScal(const Matrix<int32_t> *obj, const int32_t value,
+                               Matrix<int32_t> *dest) {
+        april_assert( dest != 0 );
         return MatrixScalarMap1<int32_t,int32_t>(obj,
                                                  AprilMath::
                                                  m_curried_mul<int32_t>(value),
@@ -481,253 +634,253 @@ namespace AprilMath {
       }
       ////////////////////////////////////////////////////
       
-      template Matrix<float> *matPlogp(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matLog(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matLog1p(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matExp(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matExpm1(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matSqrt(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matPow(Matrix<float> *, const float &, Matrix<float> *);
-      template Matrix<float> *matTan(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matTanh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAtan(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAtanh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matSin(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matSinh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAsin(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAsinh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matCos(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matCosh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAcos(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAcosh(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matAbs(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matComplement(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matSign(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matClamp(Matrix<float> *, const float,
+      template Matrix<float> *matPlogp(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matLog(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matLog1p(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matExp(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matExpm1(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matSqrt(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matPow(const Matrix<float> *, const float &, Matrix<float> *);
+      template Matrix<float> *matTan(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matTanh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAtan(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAtanh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matSin(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matSinh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAsin(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAsinh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matCos(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matCosh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAcos(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAcosh(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matAbs(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matComplement(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matSign(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matClamp(const Matrix<float> *, const float,
                                        const float, Matrix<float> *);
-      template Matrix<float> *matFloor(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matCeil(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matRound(Matrix<float> *, Matrix<float> *);
-      template Matrix<float> *matScal(Matrix<float> *, const float,
+      template Matrix<float> *matFloor(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matCeil(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matRound(const Matrix<float> *, Matrix<float> *);
+      template Matrix<float> *matScal(const Matrix<float> *, const float,
                                       Matrix<float> *);
-      template Matrix<float> *matCmul(Matrix<float> *,
+      template Matrix<float> *matCmul(const Matrix<float> *,
                                       const Matrix<float> *,
                                       Matrix<float> *);
-      template Matrix<float> *matScalarAdd(Matrix<float> *, const float &,
+      template Matrix<float> *matScalarAdd(const Matrix<float> *, const float &,
                                            Matrix<float> *);
-      template Matrix<float> *matAdjustRange(Matrix<float> *,
+      template Matrix<float> *matAdjustRange(const Matrix<float> *,
                                              const float &, const float &,
                                              Matrix<float> *);        
-      template Matrix<float> *matDiv(Matrix<float> *,
+      template Matrix<float> *matDiv(const Matrix<float> *,
                                      const float &,
                                      Matrix<float> *);
-      template Matrix<float> *matDiv(Matrix<float> *,
+      template Matrix<float> *matDiv(const Matrix<float> *,
                                      const Matrix<float> *,
                                      Matrix<float> *);
-      template Matrix<float> *matMaskedFill(Matrix<float> *,
+      template Matrix<float> *matMaskedFill(const Matrix<float> *,
                                             const Matrix<bool> *,
                                             const float &,
                                             Matrix<float> *);
-      template Matrix<float> *matMaskedCopy(Matrix<float> *,
+      template Matrix<float> *matMaskedCopy(const Matrix<float> *,
                                             const Matrix<bool> *,
                                             const Matrix<float> *,
                                             Matrix<float> *);
 
-      template Matrix<double> *matPlogp(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matLog(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matLog1p(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matExp(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matExpm1(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matSqrt(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matPow(Matrix<double> *, const double &, Matrix<double> *);
-      template Matrix<double> *matTan(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matTanh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAtan(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAtanh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matSin(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matSinh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAsin(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAsinh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matCos(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matCosh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAcos(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAcosh(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matAbs(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matComplement(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matSign(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matClamp(Matrix<double> *, const double,
+      template Matrix<double> *matPlogp(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matLog(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matLog1p(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matExp(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matExpm1(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matSqrt(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matPow(const Matrix<double> *, const double &, Matrix<double> *);
+      template Matrix<double> *matTan(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matTanh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAtan(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAtanh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matSin(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matSinh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAsin(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAsinh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matCos(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matCosh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAcos(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAcosh(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matAbs(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matComplement(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matSign(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matClamp(const Matrix<double> *, const double,
                                         const double, Matrix<double> *);
-      template Matrix<double> *matFloor(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matCeil(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matRound(Matrix<double> *, Matrix<double> *);
-      template Matrix<double> *matScal(Matrix<double> *, const double,
+      template Matrix<double> *matFloor(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matCeil(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matRound(const Matrix<double> *, Matrix<double> *);
+      template Matrix<double> *matScal(const Matrix<double> *, const double,
                                        Matrix<double> *);
-      template Matrix<double> *matCmul(Matrix<double> *,
+      template Matrix<double> *matCmul(const Matrix<double> *,
                                        const Matrix<double> *,
                                        Matrix<double> *);
-      template Matrix<double> *matScalarAdd(Matrix<double> *, const double &,
+      template Matrix<double> *matScalarAdd(const Matrix<double> *, const double &,
                                             Matrix<double> *);
-      template Matrix<double> *matAdjustRange(Matrix<double> *,
+      template Matrix<double> *matAdjustRange(const Matrix<double> *,
                                               const double &, const double &,
                                               Matrix<double> *);        
-      template Matrix<double> *matDiv(Matrix<double> *, const double &,
+      template Matrix<double> *matDiv(const Matrix<double> *, const double &,
                                       Matrix<double> *);
-      template Matrix<double> *matDiv(Matrix<double> *,
+      template Matrix<double> *matDiv(const Matrix<double> *,
                                       const Matrix<double> *,
                                       Matrix<double> *);
-      template Matrix<double> *matMaskedFill(Matrix<double> *,
+      template Matrix<double> *matMaskedFill(const Matrix<double> *,
                                              const Matrix<bool> *,
                                              const double &,
                                              Matrix<double> *);
-      template Matrix<double> *matMaskedCopy(Matrix<double> *,
+      template Matrix<double> *matMaskedCopy(const Matrix<double> *,
                                              const Matrix<bool> *,
                                              const Matrix<double> *,
                                              Matrix<double> *);
 
 
 
-      template Matrix<int32_t> *matScal(Matrix<int32_t> *, const int32_t,
+      template Matrix<int32_t> *matScal(const Matrix<int32_t> *, const int32_t,
                                         Matrix<int32_t> *);
-      template Matrix<int32_t> *matCmul(Matrix<int32_t> *,
+      template Matrix<int32_t> *matCmul(const Matrix<int32_t> *,
                                         const Matrix<int32_t> *,
                                         Matrix<int32_t> *);
-      template Matrix<int32_t> *matClamp(Matrix<int32_t> *, const int32_t,
+      template Matrix<int32_t> *matClamp(const Matrix<int32_t> *, const int32_t,
                                          const int32_t, Matrix<int32_t> *);
-      template Matrix<int32_t> *matScalarAdd(Matrix<int32_t> *, const int32_t &,
+      template Matrix<int32_t> *matScalarAdd(const Matrix<int32_t> *, const int32_t &,
                                              Matrix<int32_t> *);
-      template Matrix<int32_t> *matIDiv(Matrix<int32_t> *, const int32_t &,
+      template Matrix<int32_t> *matIDiv(const Matrix<int32_t> *, const int32_t &,
                                         Matrix<int32_t> *);
-      template Matrix<int32_t> *matDiv(Matrix<int32_t> *,
+      template Matrix<int32_t> *matDiv(const Matrix<int32_t> *,
                                        const Matrix<int32_t> *,
                                        Matrix<int32_t> *);
-      template Matrix<int32_t> *matMod(Matrix<int32_t> *,
+      template Matrix<int32_t> *matMod(const Matrix<int32_t> *,
                                        const Matrix<int32_t> *,
                                        Matrix<int32_t> *);
-      template Matrix<int32_t> *matMod(Matrix<int32_t> *,
+      template Matrix<int32_t> *matMod(const Matrix<int32_t> *,
                                        const int32_t &,
                                        Matrix<int32_t> *);
-      template Matrix<int32_t> *matMaskedFill(Matrix<int32_t> *,
+      template Matrix<int32_t> *matMaskedFill(const Matrix<int32_t> *,
                                               const Matrix<bool> *,
                                               const int32_t &,
                                               Matrix<int32_t> *);
-      template Matrix<int32_t> *matMaskedCopy(Matrix<int32_t> *,
+      template Matrix<int32_t> *matMaskedCopy(const Matrix<int32_t> *,
                                               const Matrix<bool> *,
                                               const Matrix<int32_t> *,
                                               Matrix<int32_t> *);
 
       
-      template Matrix<char> *matMaskedFill(Matrix<char> *,
+      template Matrix<char> *matMaskedFill(const Matrix<char> *,
                                            const Matrix<bool> *,
                                            const char &,
                                            Matrix<char> *);
-      template Matrix<char> *matMaskedCopy(Matrix<char> *,
+      template Matrix<char> *matMaskedCopy(const Matrix<char> *,
                                            const Matrix<bool> *,
                                            const Matrix<char> *,
                                            Matrix<char> *);
 
 
       
-      template Matrix<bool> *matMaskedFill(Matrix<bool> *,
+      template Matrix<bool> *matMaskedFill(const Matrix<bool> *,
                                            const Matrix<bool> *,
                                            const bool &,
                                            Matrix<bool> *);
-      template Matrix<bool> *matMaskedCopy(Matrix<bool> *,
+      template Matrix<bool> *matMaskedCopy(const Matrix<bool> *,
                                            const Matrix<bool> *,
                                            const Matrix<bool> *,
                                            Matrix<bool> *);
       
 
-      template Matrix<ComplexF> *matFloor(Matrix<ComplexF> *, Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matCeil(Matrix<ComplexF> *, Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matRound(Matrix<ComplexF> *, Matrix<ComplexF> *);      
-      template Matrix<ComplexF> *matScal(Matrix<ComplexF> *, const ComplexF,
+      template Matrix<ComplexF> *matFloor(const Matrix<ComplexF> *, Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matCeil(const Matrix<ComplexF> *, Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matRound(const Matrix<ComplexF> *, Matrix<ComplexF> *);      
+      template Matrix<ComplexF> *matScal(const Matrix<ComplexF> *, const ComplexF,
                                          Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matCmul(Matrix<ComplexF> *,
+      template Matrix<ComplexF> *matCmul(const Matrix<ComplexF> *,
                                          const Matrix<ComplexF> *,
                                          Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matScalarAdd(Matrix<ComplexF> *, const ComplexF &,
+      template Matrix<ComplexF> *matScalarAdd(const Matrix<ComplexF> *, const ComplexF &,
                                               Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matDiv(Matrix<ComplexF> *, const ComplexF &,
+      template Matrix<ComplexF> *matDiv(const Matrix<ComplexF> *, const ComplexF &,
                                         Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matDiv(Matrix<ComplexF> *,
+      template Matrix<ComplexF> *matDiv(const Matrix<ComplexF> *,
                                         const Matrix<ComplexF> *,
                                         Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matMaskedFill(Matrix<ComplexF> *,
+      template Matrix<ComplexF> *matMaskedFill(const Matrix<ComplexF> *,
                                                const Matrix<bool> *,
                                                const ComplexF &,
                                                Matrix<ComplexF> *);
-      template Matrix<ComplexF> *matMaskedCopy(Matrix<ComplexF> *,
+      template Matrix<ComplexF> *matMaskedCopy(const Matrix<ComplexF> *,
                                                const Matrix<bool> *,
                                                const Matrix<ComplexF> *,
                                                Matrix<ComplexF> *);
 
       
-      template SparseMatrix<float> *matSqrt(SparseMatrix<float> *,
+      template SparseMatrix<float> *matSqrt(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matPow(SparseMatrix<float> *,
+      template SparseMatrix<float> *matPow(const SparseMatrix<float> *,
                                            const float &,
                                            SparseMatrix<float> *);
-      template SparseMatrix<float> *matTan(SparseMatrix<float> *,
+      template SparseMatrix<float> *matTan(const SparseMatrix<float> *,
                                            SparseMatrix<float> *);
-      template SparseMatrix<float> *matAtan(SparseMatrix<float> *,
+      template SparseMatrix<float> *matAtan(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matTanh(SparseMatrix<float> *,
+      template SparseMatrix<float> *matTanh(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matAtanh(SparseMatrix<float> *,
+      template SparseMatrix<float> *matAtanh(const SparseMatrix<float> *,
                                              SparseMatrix<float> *);
-      template SparseMatrix<float> *matSin(SparseMatrix<float> *,
+      template SparseMatrix<float> *matSin(const SparseMatrix<float> *,
                                            SparseMatrix<float> *);
-      template SparseMatrix<float> *matAsin(SparseMatrix<float> *,
+      template SparseMatrix<float> *matAsin(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matSinh(SparseMatrix<float> *,
+      template SparseMatrix<float> *matSinh(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matAsinh(SparseMatrix<float> *,
+      template SparseMatrix<float> *matAsinh(const SparseMatrix<float> *,
                                              SparseMatrix<float> *);
-      template SparseMatrix<float> *matAbs(SparseMatrix<float> *,
+      template SparseMatrix<float> *matAbs(const SparseMatrix<float> *,
                                            SparseMatrix<float> *);
-      template SparseMatrix<float> *matSign(SparseMatrix<float> *,
+      template SparseMatrix<float> *matSign(const SparseMatrix<float> *,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matScal(SparseMatrix<float> *, const float,
+      template SparseMatrix<float> *matScal(const SparseMatrix<float> *, const float,
                                             SparseMatrix<float> *);
-      template SparseMatrix<float> *matDiv(SparseMatrix<float> *, const float &,
+      template SparseMatrix<float> *matDiv(const SparseMatrix<float> *, const float &,
                                            SparseMatrix<float> *);
 
 
       
-      template SparseMatrix<ComplexF> *matScal(SparseMatrix<ComplexF> *,
+      template SparseMatrix<ComplexF> *matScal(const SparseMatrix<ComplexF> *,
                                                const ComplexF,
                                                SparseMatrix<ComplexF> *);
 
       
 
-      template SparseMatrix<double> *matSqrt(SparseMatrix<double> *,
+      template SparseMatrix<double> *matSqrt(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matPow(SparseMatrix<double> *,
+      template SparseMatrix<double> *matPow(const SparseMatrix<double> *,
                                             const double &,
                                             SparseMatrix<double> *);
-      template SparseMatrix<double> *matTan(SparseMatrix<double> *,
+      template SparseMatrix<double> *matTan(const SparseMatrix<double> *,
                                             SparseMatrix<double> *);
-      template SparseMatrix<double> *matAtan(SparseMatrix<double> *,
+      template SparseMatrix<double> *matAtan(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matTanh(SparseMatrix<double> *,
+      template SparseMatrix<double> *matTanh(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matAtanh(SparseMatrix<double> *,
+      template SparseMatrix<double> *matAtanh(const SparseMatrix<double> *,
                                               SparseMatrix<double> *);
-      template SparseMatrix<double> *matSin(SparseMatrix<double> *,
+      template SparseMatrix<double> *matSin(const SparseMatrix<double> *,
                                             SparseMatrix<double> *);
-      template SparseMatrix<double> *matAsin(SparseMatrix<double> *,
+      template SparseMatrix<double> *matAsin(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matSinh(SparseMatrix<double> *,
+      template SparseMatrix<double> *matSinh(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matAsinh(SparseMatrix<double> *,
+      template SparseMatrix<double> *matAsinh(const SparseMatrix<double> *,
                                               SparseMatrix<double> *);
-      template SparseMatrix<double> *matAbs(SparseMatrix<double> *,
+      template SparseMatrix<double> *matAbs(const SparseMatrix<double> *,
                                             SparseMatrix<double> *);
-      template SparseMatrix<double> *matSign(SparseMatrix<double> *,
+      template SparseMatrix<double> *matSign(const SparseMatrix<double> *,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matScal(SparseMatrix<double> *, const double,
+      template SparseMatrix<double> *matScal(const SparseMatrix<double> *, const double,
                                              SparseMatrix<double> *);
-      template SparseMatrix<double> *matDiv(SparseMatrix<double> *, const double &,
+      template SparseMatrix<double> *matDiv(const SparseMatrix<double> *, const double &,
                                             SparseMatrix<double> *);
       
     } // namespace Operations

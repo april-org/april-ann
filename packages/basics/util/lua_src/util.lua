@@ -77,6 +77,17 @@ end
 
 ------------------------------------------------------------------------------
 
+function sorted_pairs(tbl,cmp)
+  local keys = {} for k in pairs(tbl) do keys[#keys+1] = k end
+  table.sort(keys)
+  return coroutine.wrap(function()
+      local keys,tbl = keys,tbl
+      for _,k in ipairs(keys) do coroutine.yield(k,tbl[k]) end
+  end)
+end
+
+------------------------------------------------------------------------------
+
 pprint = function(...)
   local args = table.pack(...)
   for i,v in ipairs(args) do

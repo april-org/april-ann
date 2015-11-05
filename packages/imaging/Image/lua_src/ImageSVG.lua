@@ -64,6 +64,25 @@ function imageSVG_methods:addPathFromTable(path, params)
     table.insert(self.body, table.concat(buffer))
 end
 
+function imageSVG_methods:addPolygon(points, params)
+
+    local id = params.id or ""
+    local stroke = params.stroke or "black"
+    local stroke_width = params.stroke_width or "2"
+
+    local buffer = {}
+
+    table.insert(buffer, string.format("<polygon id=\"%s\" points =\"", id))
+    for i, v in ipairs(points) do
+        table.insert(buffer, string.format("%0.4f, %0.4f ", v[1], v[2]))
+    end
+
+    table.insert(buffer, string.format("\" style=\"fill:none;stroke:%s;stroke-width:%s;\"/>", stroke, stroke_width))
+
+    table.insert(self.body, table.concat(buffer))
+
+
+end
 function imageSVG_methods:getHeader()
     return table.concat(self.header, "\n") 
 end
@@ -87,7 +106,7 @@ end
 function imageSVG_methods:addPaths(paths)
     for i, path in ipairs(paths) do
         local color = "black"
-            color = colors[i%#colors+1]
+        color = colors[i%#colors+1]
         --        print(i, color, #path)
         self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end
@@ -96,7 +115,7 @@ end
 
 -- Each element of the table is a path
 function imageSVG_methods:addInterestPointPaths(paths, ...)
-    
+
     params = table.pack(...)
     local num_classes = params.num_class or 5
     for i, path in ipairs(paths) do
@@ -145,9 +164,9 @@ function imageSVG_methods:addSquare(point, params)
 
     local side = params.side or 1
     local color = params.color or "green"
-    
+
     if params.cls then
-      color = colors[params.cls]
+        color = colors[params.cls]
     end
     local x = point[1]
     local y = point[2]
@@ -158,9 +177,9 @@ end
 function imageSVG_methods:addRect(rect, params)
 
     local color = params.color or "black"
-    
+
     if params.cls then
-      color = colors[params.cls]
+        color = colors[params.cls]
     end
 
     local x = rect[1]
@@ -172,36 +191,37 @@ end
 
 function imageSVG_methods:addPoint(point, params)
     -- TODO: add confidence
-    
+
     if params.conf then 
-      self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = (params.conf*2)^2, opacity = 0.5})
+        self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = (params.conf*2)^2, opacity = 0.5})
     end
 
     if params.circle then
-      self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = params.side})
+        self:addCircle({point[1],point[2]}, {color = colors[params.cls] , radius = params.side})
     else
-      self:addSquare(point, params)
+        self:addSquare(point, params)
     end
 end
 
 function imageSVG_methods:addTriangle(point, params)
 
-     
-   local side = params.side or 1
 
-   if params.reverse then
-       side = -side
-   end
-   local mid = point[2] - side
-   local color = params.color or "black"
-   local leftx, lefty = point[1]-side, point[2]+side
-   local rightx, righty = point[1]+side, point[2]+side
-  
+    local side = params.side or 1
 
-   local spoints = string.format("%f,%f %f,%f %f,%f", point[1], mid, leftx, lefty, rightx, righty)
+    if params.reverse then
+        side = -side
+    end
+    local mid = point[2] - side
+    local color = params.color or "black"
+    local leftx, lefty = point[1]-side, point[2]+side
+    local rightx, righty = point[1]+side, point[2]+side
 
-   table.insert(self.body, string.format('<polygon points="%s" style="fill:%s"/>', spoints, color)) 
+
+    local spoints = string.format("%f,%f %f,%f %f,%f", point[1], mid, leftx, lefty, rightx, righty)
+
+    table.insert(self.body, string.format('<polygon points="%s" style="fill:%s"/>', spoints, color)) 
 end
+
 function imageSVG_methods:addLine(ini_point, end_point, params)
 
     --local color = params.color or "black"
@@ -223,7 +243,7 @@ function imageSVG_methods:addImage(filename, width, height, offsetX, offsetY, ab
 end
 
 function imageSVG_methods:addEmbedImage(filename, width, height, offsetX, offsetY)
-    
+
     local image64 = toImage64(filename)
 
     table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"\
@@ -237,7 +257,7 @@ function imageSVG.fromImageFile(filename, width, height, absolute)
     mySVG:setFooter()
 
     absolute = absolute or false
-    
+
     mySVG:addImage(filename, width, height, 0, 0, absolute)
     return mySVG  
 end

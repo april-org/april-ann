@@ -177,3 +177,24 @@ ascii
     local tsp = ts:resampleU(12, { method="rectangle" })
     -- TODO: check method=rectangle output
 end)
+
+T("ParseCSVLineTest",
+  function()
+    local ref = 'Company2 Success 2011 3 125 nan Market Research|Marketing|Crowdfunding Marketing, sales nan nan nan No nan nan nan United States North America 5 0 2 0 4 20 No 0 medium Yes Large Yes Yes No No Product No Public Yes Both No Platform Local Non-Linear No Few Yes No Yes Yes No No Yes Yes Yes No Online B2C Low High Yes High Masters 21 Supply Chain Management & Entrepreneurship Yes Yes Tier_1 500 High 0 0 0 Medium 13 None 34 High Medium Yes No Low No Info No Yes Yes No No Yes Medium 1067034 Yes Yes No 3 Medium 0 6.666666667 5 Not Applicable 10 9 Trough 2 to 5 15.88235294 11.76470588 15 12.94117647 0 8.823529412 21.76470588 10.88235294 2.941176471 0 0 0 0 0 8'
+    
+    local x = 'Company2,Success,2011,3,125,,Market Research|Marketing|Crowdfunding,"Marketing, sales",,,,No,,,,United States,North America,5,0,2,0,4,20,No,0,medium,Yes,Large,Yes,Yes,No,No,Product,No,Public,Yes,Both,No,Platform,Local,Non-Linear,No,Few,Yes,No,Yes,Yes,No,No,Yes,Yes,Yes,No,Online,B2C,Low,High,Yes,High,Masters,21,Supply Chain Management & Entrepreneurship,Yes,Yes,Tier_1,500,High,0,0,0,Medium,13,None,34,High,Medium,Yes,No,Low,No Info,No,Yes,Yes,No,No,Yes,Medium,1067034,Yes,Yes,No,3,Medium,0,6.666666667,5,Not Applicable,10,9,Trough,2 to 5,15.88235294,11.76470588,15,12.94117647,0,8.823529412,21.76470588,10.88235294,2.941176471,0,0,0,0,0,8,'
+    local y = 'Company2,Success,2011,3,125,,Market Research|Marketing|Crowdfunding,"Marketing, sales",,,,No,,,,United States,North America,5,0,2,0,4,20,No,0,medium,Yes,Large,Yes,Yes,No,No,Product,No,Public,Yes,Both,No,Platform,Local,Non-Linear,No,Few,Yes,No,Yes,Yes,No,No,Yes,Yes,Yes,No,Online,B2C,Low,High,Yes,High,Masters,21,Supply Chain Management & Entrepreneurship,Yes,Yes,Tier_1,500,High,0,0,0,Medium,13,None,34,High,Medium,Yes,No,Low,No Info,No,Yes,Yes,No,No,Yes,Medium,1067034,Yes,Yes,No,3,Medium,0,6.666666667,5,Not Applicable,10,9,Trough,2 to 5,15.88235294,11.76470588,15,12.94117647,0,8.823529412,21.76470588,10.88235294,2.941176471,0,0,0,0,0,"8",'
+    local z = 'Company2 Success 2011 3 125  Market Research|Marketing|Crowdfunding "Marketing, sales"    No    United States North America 5 0 2 0 4 20 No 0 medium Yes Large Yes Yes No No Product No Public Yes Both No Platform Local Non-Linear No Few Yes No Yes Yes No No Yes Yes Yes No Online B2C Low High Yes High Masters 21 Supply Chain Management & Entrepreneurship Yes Yes Tier_1 500 High 0 0 0 Medium 13 None 34 High Medium Yes No Low No Info No Yes Yes No No Yes Medium 1067034 Yes Yes No 3 Medium 0 "6,666666667" 5 Not Applicable 10 9 Trough 2 to 5 "15,88235294" "11,76470588" 15 "12,94117647" 0 "8,823529412" "21,76470588" "10,88235294" "2,941176471" 0 0 0 0 0 "8" '
+    
+    local tx = util.__parse_csv_line__({}, x, ',', '"', '.', 'NA', nan)
+    local ty = util.__parse_csv_line__({}, y, ',', '"', '.', 'NA', nan)
+    local tz = util.__parse_csv_line__({}, z, ' ', '"', ',', 'NA', nan)
+    
+    local sx = table.concat(tx," ")
+    local sy = table.concat(ty," ")
+    local sz = table.concat(tz," ")
+
+    check.eq(sx, sy)
+    check.eq(sx, sz)
+    check.eq(sx, ref)    
+end)

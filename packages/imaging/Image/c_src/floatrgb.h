@@ -90,7 +90,7 @@ namespace AprilMath {
     namespace Operations {
       
       template <>
-      Basics::Matrix<Imaging::FloatRGB> *matComplement(Basics::Matrix<Imaging::FloatRGB> *src,
+      Basics::Matrix<Imaging::FloatRGB> *matComplement(const Basics::Matrix<Imaging::FloatRGB> *src,
                                                        Basics::Matrix<Imaging::FloatRGB> *dst);
     }
   }
