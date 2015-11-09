@@ -253,6 +253,28 @@ namespace AprilMath {
     template<typename T, typename OP>
     T MatrixSpanSumReduce1(const Basics::Matrix<T> *input,
                            const OP &inter_span_red_functor);
+
+    template<typename T, typename OP>
+    void MatrixScalarProdReduce1(const Basics::Matrix<T> *input,
+                                 const OP &scalar_red_functor,
+                                 AprilMath::GPUMirroredMemoryBlock<T> *dest,
+                                 unsigned int dest_raw_pos=0,
+                                 bool set_dest_to_one=true,
+                                 int N_th = DEFAULT_N_TH,
+                                 unsigned int SIZE_th = DEFAULT_SIZE_TH);
+    
+    template<typename T, typename OP>
+    void MatrixSpanProdReduce1(const Basics::Matrix<T> *input,
+                               const OP &inter_span_red_functor,
+                               AprilMath::GPUMirroredMemoryBlock<T> *dest,
+                               unsigned int dest_raw_pos=0,
+                               bool set_dest_to_one=true,
+                               int N_th = DEFAULT_N_TH,
+                               unsigned int SIZE_th = DEFAULT_N_TH);
+
+    template<typename T, typename OP>
+    T MatrixSpanProdReduce1(const Basics::Matrix<T> *input,
+                            const OP &inter_span_red_functor);
     
   } // namespace MatrixExt
 

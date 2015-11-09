@@ -1602,6 +1602,70 @@ namespace Basics {
       return 1;
     }
 
+    BEGIN_METHOD(prod)
+    {
+#ifdef USE_CUDA
+      obj->sync();
+#endif
+      LUABIND_CHECK_ARGN(>=, 0);
+      LUABIND_CHECK_ARGN(<=, 2);
+      int argn = lua_gettop(L); // number of arguments
+      if (argn > 0 && !lua_isnil(L,1)) {
+        int dim;
+        LUABIND_GET_PARAMETER(1, int, dim);
+        Matrix<T> *dest = lua_opt<Matrix<T>*>(L, 2, 0);
+        if (dim < 1 || dim > obj->getNumDim()) {
+          LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+                          dim, obj->getNumDim());
+        }
+        lua_push(L, AprilMath::MatrixExt::Reductions::
+                 matProd(obj, dim-1, dest));
+      }
+      else {
+        lua_push(L, AprilMath::MatrixExt::Reductions::
+                 matProd(obj));
+      }
+      return 1;
+    }
+
+    BEGIN_METHOD(cumsum)
+    {
+#ifdef USE_CUDA
+      obj->sync();
+#endif
+      LUABIND_CHECK_ARGN(>=, 0);
+      LUABIND_CHECK_ARGN(<=, 2);
+      int dim;
+      LUABIND_GET_OPTIONAL_PARAMETER(1, int, dim, 1);
+      Matrix<T> *dest = lua_opt<Matrix<T>*>(L, 2, 0);
+      if (dim < 1 || dim > obj->getNumDim()) {
+        LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+                        dim, obj->getNumDim());
+      }
+      lua_push(L, AprilMath::MatrixExt::Reductions::
+               matCumSum(obj, dim-1, dest));
+      return 1;
+    }
+
+    BEGIN_METHOD(cumprod)
+    {
+#ifdef USE_CUDA
+      obj->sync();
+#endif
+      LUABIND_CHECK_ARGN(>=, 0);
+      LUABIND_CHECK_ARGN(<=, 2);
+      int dim;
+      LUABIND_GET_OPTIONAL_PARAMETER(1, int, dim, 1);
+      Matrix<T> *dest = lua_opt<Matrix<T>*>(L, 2, 0);
+      if (dim < 1 || dim > obj->getNumDim()) {
+        LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+                        dim, obj->getNumDim());
+      }
+      lua_push(L, AprilMath::MatrixExt::Reductions::
+               matCumProd(obj, dim-1, dest));
+      return 1;
+    }
+
     BEGIN_METHOD(copy)
     {
       int argn;

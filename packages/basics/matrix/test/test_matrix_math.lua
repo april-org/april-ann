@@ -539,6 +539,35 @@ ascii
       local gt_idx = gt_0:flatten():to_index()
       check.eq(gt_idx, matrixInt32{3,4,6,7,8,9,10,15,16,17,19}, "to_index()")
   end)
+  
+  T("MatrixProdTest", function()
+      local a = matrix(3,4,{ 0,1,2,3,
+                             1,1,2,2,
+                             1,0,1,1 })
+      check.eq( a:prod(), 0 )
+      check.eq( a:prod(1), matrix(1,4, {0,0,4,6}) )
+      check.eq( a:prod(2), matrix(3,1, {0,
+                                        4,
+                                        0}) )
+  end)
+
+  T("MatrixCumOps", function()
+      local x = matrix{1,2,3,4}
+      local y = x:rewrap(2,2)
+
+      check.eq(x:cumsum(),  x:cumsum(1))
+      check.eq(x:cumsum(),  matrix{1,3,6,10})
+      check.eq(y:cumsum(),  y:cumsum(1))
+      check.eq(y:cumsum(),  matrix(2,2,{1,2, 4,6}))
+      check.eq(y:cumsum(2), matrix(2,2,{1,3, 3,7}))
+
+      check.eq(x:cumprod(),  x:cumprod(1))
+      check.eq(x:cumprod(),  matrix{1,2,6,24})
+      check.eq(y:cumprod(),  y:cumprod(1))
+      check.eq(y:cumprod(),  matrix(2,2,{1,2, 3,8}))
+      check.eq(y:cumprod(2), matrix(2,2,{1,2, 3,12}))
+  end)
+  
 end
 
 --

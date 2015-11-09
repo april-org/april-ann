@@ -16,6 +16,7 @@ Master branch release
 
 ### API Changes
 
+- Added methods `prod()`, `cumsum()` and `cumprod()` at `matrix` classes.
 - Added methods `count_eq()` and `count_neq()` at `matrix` classes.
 - Serializable objects API have been augmented with methods `ctor_name()` and
   `ctor_params()` in Lua, refered to `luaCtorName()` and `luaCtorParams()` in
@@ -64,6 +65,7 @@ Master branch release
 
 ### C/C++
 
+- Implementation of `matProd()`, `matCumSum()` and `matCumProd()` functions.
 - Implementation of `matCountEq()` and `matCountNeq()` functions for
   `Matrix<T>`.
 - Updated `matrix_ext_operations.h` to change API of matrix operations. All
