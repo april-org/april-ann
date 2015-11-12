@@ -300,6 +300,19 @@ namespace AprilMath {
                            N_th, SIZE_th,
                            set_dest_to_zero);
     }
+
+    template<typename T, typename OP>
+    void MatrixScalarProdReduce1(const Basics::Matrix<T> *input,
+                                 const OP &scalar_red_functor,
+                                 AprilMath::GPUMirroredMemoryBlock<T> *dest,
+                                 unsigned int dest_raw_pos,
+                                 bool set_dest_to_one,
+                                 int N_th, unsigned int SIZE_th) {
+      ScalarToSpanReduce1<T,T,OP> span_functor(scalar_red_functor);
+      MatrixSpanProdReduce1(input, span_functor, dest, dest_raw_pos,
+                            N_th, SIZE_th,
+                            set_dest_to_one);
+    }
     
     template<typename T, typename O, typename OP1, typename OP2>
     O MatrixSpanReduce1(const Basics::Matrix<T> *input,
@@ -400,6 +413,14 @@ namespace AprilMath {
       MatrixSpanSumReduce1(input, inter_span_red_functor, dest.get(), 0u, true);
       return dest->get(0);
     }
+
+    template<typename T, typename OP>
+    T MatrixSpanProdReduce1(const Basics::Matrix<T> *input,
+                            const OP &inter_span_red_functor) {
+      AprilUtils::SharedPtr< AprilMath::GPUMirroredMemoryBlock<T> > dest( new AprilMath::GPUMirroredMemoryBlock<T>(1) );
+      MatrixSpanProdReduce1(input, inter_span_red_functor, dest.get(), 0u, true);
+      return dest->get(0);
+    }
     
     template<typename T, typename OP>
     void MatrixSpanSumReduce1(const Basics::Matrix<T> *input,
@@ -496,6 +517,102 @@ namespace AprilMath {
 #endif
       } // General case
     } // function MatrixSpanSumReduce1
+
+    template<typename T, typename OP>
+    void MatrixSpanProdReduce1(const Basics::Matrix<T> *input,
+                               const OP &inter_span_red_functor,
+                               AprilMath::GPUMirroredMemoryBlock<T> *dest,
+                               unsigned int dest_raw_pos,
+                               bool set_dest_to_one,
+                               int N_th,
+                               unsigned int SIZE_th) {
+      april_assert(input != 0);
+      if (dest == 0) ERROR_EXIT(128, "Expected a non-NULL dest pointer\n");
+#ifdef NO_OMP
+      UNUSED_VARIABLE(N_th);
+      UNUSED_VARIABLE(SIZE_th);
+#endif
+      bool cuda_flag = input->getCudaFlag();
+      // Contiguous memory block or one dimension.
+      if (input->getIsContiguous() || input->getNumDim() == 1) {
+        unsigned int size = static_cast<unsigned int>(input->size());
+        unsigned int input_offset = static_cast<unsigned int>(input->getOffset());
+        unsigned int input_stride;
+        if (input->getIsContiguous()) {
+          // Contiguous.
+          input_stride = 1u;
+        }
+        else {
+          // One dimension.
+          input_stride = static_cast<unsigned int>(input->getStrideSize(0));
+        }
+        inter_span_red_functor(size,
+                               input->getRawDataAccess(),
+                               input_stride, input_offset,
+                               cuda_flag,
+                               AprilMath::Limits<T>::one(),
+                               AprilMath::Functors::r_mul<T,T>(),
+                               dest, dest_raw_pos,
+                               set_dest_to_one);
+      }
+      // General case
+      else {
+        typename Basics::Matrix<T>::span_iterator span_it(input);
+        unsigned int size   = static_cast<unsigned int>(span_it.getSize());
+        unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+        const int N = span_it.numberOfIterations();
+#ifndef NO_OMP
+        // this if controls the execution using OMP only when the number of threads
+        // is more than 1 and the iterator size is big enough
+        if (OMPUtils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
+          T result;
+          if (set_dest_to_one) result = AprilMath::Limits<T>::one();
+          else dest->getValue(dest_raw_pos, result);
+          GPUMirroredMemoryBlock<T> aux(1);
+          T partial;
+#ifdef USE_CUDA
+          // Forces execution of memory copy from GPU to PPAL or viceversa (if
+          // needed), avoiding race conditions on the following.
+          input->getRawDataAccess()->forceSync(cuda_flag);
+#endif
+#pragma omp parallel for reduction(*:result) firstprivate(span_it)
+          for (int i=0; i<N; ++i) {
+            span_it.setAtIteration(i);
+            inter_span_red_functor(size,
+                                   input->getRawDataAccess(),
+                                   stride,
+                                   span_it.getOffset(),
+                                   cuda_flag,
+                                   AprilMath::Limits<T>::one(),
+                                   AprilMath::Functors::r_mul<T,T>(),
+                                   &aux, 0, true);
+            aux.getValue(0, partial);
+            result *= partial;
+          }
+          dest->putValue(dest_raw_pos, result);
+        }
+        else {
+#endif
+          for (int i=0; i<N; ++i) {
+            april_assert(span_it != input->end_span_iterator());
+            inter_span_red_functor(size,
+                                   input->getRawDataAccess(),
+                                   stride,
+                                   span_it.getOffset(),
+                                   cuda_flag,
+                                   AprilMath::Limits<T>::one(),
+                                   AprilMath::Functors::r_mul<T,T>(),
+                                   dest, dest_raw_pos,
+                                   set_dest_to_one);
+            set_dest_to_one = false; // use only in the first iteration
+            ++span_it;
+          }
+          april_assert(span_it == input->end_span_iterator());
+#ifndef NO_OMP
+        }
+#endif
+      } // General case
+    } // function MatrixSpanProdReduce1
 
     template<typename T1, typename T2, typename O, typename OP1, typename OP2>
     O MatrixSpanReduce2(const Basics::Matrix<T1> *input1,

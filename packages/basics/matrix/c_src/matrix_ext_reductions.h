@@ -152,14 +152,14 @@ namespace AprilMath {
                                       const int shift,
                                       Basics::Matrix<T> *result=0);
       
-            /// Returns the sum of all the elements of the given matrix.
+      /// Returns the sum of all the elements of the given matrix.
       template <typename T>
       T matSum(const Basics::Matrix<T> *obj);
-
+      
       /// Returns the sum of all the elements of the given matrix.
       template <>
       ComplexF matSum(const Basics::Matrix<ComplexF> *obj);
-
+      
       /// Returns the sum of all the elements of the given matrix.
       template <typename T>
       T matSum(const Basics::SparseMatrix<T> *obj);
@@ -179,7 +179,7 @@ namespace AprilMath {
                                 int dim,
                                 Basics::Matrix<T> *dest=0,
                                 bool accumulated=false);
-
+      
       // TODO: Implement using a wrapper for GPU/CPU computation.
       /**
        * @brief Sum reduction over a given dimension number.
@@ -195,7 +195,60 @@ namespace AprilMath {
       Basics::Matrix<T> *matSum(const Basics::SparseMatrix<T> *obj, int dim,
                                 Basics::Matrix<T> *dest=0,
                                 bool accumulated=false);
+      
+      
+      /// Returns the product of all the elements of the given matrix.
+      template <typename T>
+      T matProd(const Basics::Matrix<T> *obj);
 
+      /// Returns the product of all the elements of the given matrix.
+      template <>
+      ComplexF matProd(const Basics::Matrix<ComplexF> *obj);
+      
+      /**
+       * @brief Product reduction over a given dimension number.
+       *
+       * @param obj - The source matrix object.
+       * @param dim - The dimension (a value between 0 and @c obj->getNumDim()
+       * @param dest - The destination matrix, if it is 0, a new matrix would be allocated.
+       *
+       * @result The given @c dest argument or a new allocated matrix with the product values.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matProd(Basics::Matrix<T> *obj,
+                                 int dim,
+                                 Basics::Matrix<T> *dest=0);
+      
+      // TODO: Implement using a wrapper for GPU/CPU computation.
+      /**
+       * @brief Cumulative sum reduction over a given dimension number.
+       *
+       * @param obj - The source matrix object.
+       * @param dim - The dimension (a value between 0 and @c obj->getNumDim()
+       * @param dest - The destination matrix, if it is 0, a new matrix would be allocated.
+       *
+       * @result The given @c dest argument or a new allocated matrix with the cumulative sum values.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matCumSum(Basics::Matrix<T> *obj,
+                                   int dim,
+                                   Basics::Matrix<T> *dest=0);
+
+      // TODO: Implement using a wrapper for GPU/CPU computation.
+      /**
+       * @brief Cumulative prod reduction over a given dimension number.
+       *
+       * @param obj - The source matrix object.
+       * @param dim - The dimension (a value between 0 and @c obj->getNumDim()
+       * @param dest - The destination matrix, if it is 0, a new matrix would be allocated.
+       *
+       * @result The given @c dest argument or a new allocated matrix with the cumulative prod values.
+       */
+      template <typename T>
+      Basics::Matrix<T> *matCumProd(Basics::Matrix<T> *obj,
+                                    int dim,
+                                    Basics::Matrix<T> *dest=0);
+      
       /**** COMPONENT WISE OPERATIONS ****/
 
       /// Returns true if \f$ A = B \f$ using the given \f$ \epsilon \f$ as relative error threshold.

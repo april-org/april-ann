@@ -395,7 +395,7 @@ namespace AprilMath {
         return result;
       }
       
-            template <typename T>
+      template <typename T>
       T matSum(const Matrix<T> *obj) {
         return MatrixSpanSumReduce1(obj,
                                     ScalarToSpanReduce1< T, T, AprilMath::Functors::r_add<T,T> >
@@ -466,6 +466,110 @@ namespace AprilMath {
         return dest;
       }
 
+      template <typename T>
+      T matProd(const Matrix<T> *obj) {
+        return MatrixSpanProdReduce1(obj,
+                                     ScalarToSpanReduce1< T, T, AprilMath::Functors::r_mul<T,T> >
+                                     (AprilMath::Functors::r_mul<T,T>()));
+      }
+
+      template <>
+      ComplexF matProd(const Matrix<ComplexF> *obj) {
+        return MatrixScalarReduce1(obj,
+                                   AprilMath::Functors::r_mul<ComplexF,ComplexF>(),
+                                   AprilMath::Functors::r_mul<ComplexF,ComplexF>(),
+                                   AprilMath::Limits<ComplexF>::one());
+      }
+
+      template <typename T>
+      Matrix<T> *matProd(Matrix<T> *obj,
+                         int dim,
+                         Matrix<T> *dest) {
+        return MatrixScalarReduce1OverDimension(obj, dim,
+                                                AprilMath::Functors::r_mul<T,T>(),
+                                                AprilMath::Functors::r_mul<T,T>(),
+                                                AprilMath::Limits<T>::one(),
+                                                dest, true);
+      }
+
+      template <typename T>
+      Basics::Matrix<T> *matCumSum(Basics::Matrix<T> *obj,
+                                   int dim,
+                                   Basics::Matrix<T> *dest) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
+        if (dest) {
+          if (!dest->sameDim(obj)) ERROR_EXIT(128, "Incorrect matrix sizes\n");
+        }
+        else {
+          aux = dest = obj->cloneOnlyDims();
+        }
+        if (obj->getNumDim() == 1) {
+          T agg = AprilMath::Limits<T>::zero();
+          typename Matrix<T>::const_iterator obj_it = obj->begin();
+          typename Matrix<T>::iterator dst_it = dest->begin();
+          while(obj_it != obj->end()) {
+            april_assert( dst_it != dest->end() );
+            agg += *obj_it;
+            *dst_it = agg;
+            ++obj_it; ++dst_it;
+          }
+        }
+        else {
+          AprilUtils::SharedPtr< Matrix<T> > obj_slice, dst_slice;
+          AprilUtils::SharedPtr< Matrix<T> > agg = obj->select(dim, 0);
+          agg = AprilMath::MatrixExt::Initializers::matZeros(agg->cloneOnlyDims());
+          for (int i=0; i<obj->getDimSize(dim); ++i) {
+            obj_slice = obj->select(dim, i, obj_slice.get());
+            dst_slice = dest->select(dim, i, dst_slice.get());
+            AprilMath::MatrixExt::BLAS::
+              matAxpy(agg.get(), AprilMath::Limits<T>::one(), obj_slice.get());
+            AprilMath::MatrixExt::BLAS::
+              matCopy(dst_slice.get(), agg.get());
+          }
+        }
+        aux.weakRelease();
+        return dest;
+      }
+
+      template <typename T>
+      Basics::Matrix<T> *matCumProd(Basics::Matrix<T> *obj,
+                                    int dim,
+                                    Basics::Matrix<T> *dest) {
+        AprilUtils::SharedPtr< Matrix<T> > aux;
+        if (dest) {
+          if (!dest->sameDim(obj)) ERROR_EXIT(128, "Incorrect matrix sizes\n");
+        }
+        else {
+          aux = dest = obj->cloneOnlyDims();
+        }
+        if (obj->getNumDim() == 1) {
+          T agg = AprilMath::Limits<T>::one();
+          typename Matrix<T>::const_iterator obj_it = obj->begin();
+          typename Matrix<T>::iterator dst_it = dest->begin();
+          while(obj_it != obj->end()) {
+            april_assert( dst_it != dest->end() );
+            agg *= *obj_it;
+            *dst_it = agg;
+            ++obj_it; ++dst_it;
+          }
+        }
+        else {
+          AprilUtils::SharedPtr< Matrix<T> > obj_slice, dst_slice;
+          AprilUtils::SharedPtr< Matrix<T> > agg = obj->select(dim, 0);
+          agg = AprilMath::MatrixExt::Initializers::matOnes(agg->cloneOnlyDims());
+          for (int i=0; i<obj->getDimSize(dim); ++i) {
+            obj_slice = obj->select(dim, i, obj_slice.get());
+            dst_slice = dest->select(dim, i, dst_slice.get());
+            AprilMath::MatrixExt::Operations::
+              matCmul(agg.get(), obj_slice.get());
+            AprilMath::MatrixExt::BLAS::
+              matCopy(dst_slice.get(), agg.get());
+          }
+        }
+        aux.weakRelease();
+        return dest;
+      }
+      
       /**** COMPONENT WISE OPERATIONS ****/
     
       template <typename T>
@@ -540,6 +644,16 @@ namespace AprilMath {
                                      int,
                                      Matrix<float> *,
                                      bool);
+      template float matProd(const Matrix<float> *);
+      template Matrix<float> *matProd(Matrix<float> *,
+                                     int,
+                                     Matrix<float> *);
+      template Matrix<float> *matCumSum(Matrix<float> *,
+                                        int,
+                                        Matrix<float> *);
+      template Matrix<float> *matCumProd(Matrix<float> *,
+                                         int,
+                                         Matrix<float> *);
       template bool matEquals(const Matrix<float> *, const Matrix<float> *,
                               float);
       template bool matIsFinite(const Matrix<float> *);
@@ -566,6 +680,16 @@ namespace AprilMath {
                                       int,
                                       Matrix<double> *,
                                       bool);
+      template double matProd(const Matrix<double> *);
+      template Matrix<double> *matProd(Matrix<double> *,
+                                       int,
+                                       Matrix<double> *);
+      template Matrix<double> *matCumSum(Matrix<double> *,
+                                         int,
+                                         Matrix<double> *);
+      template Matrix<double> *matCumProd(Matrix<double> *,
+                                          int,
+                                          Matrix<double> *);
       template bool matEquals(const Matrix<double> *, const Matrix<double> *,
                               float);
       template bool matIsFinite(const Matrix<double> *);
@@ -617,6 +741,16 @@ namespace AprilMath {
                                         int,
                                         Matrix<ComplexF> *,
                                         bool);
+      template ComplexF matProd(const Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matProd(Matrix<ComplexF> *,
+                                         int,
+                                         Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matCumSum(Matrix<ComplexF> *,
+                                           int,
+                                           Matrix<ComplexF> *);
+      template Matrix<ComplexF> *matCumProd(Matrix<ComplexF> *,
+                                            int,
+                                            Matrix<ComplexF> *);
       template bool matEquals(const Matrix<ComplexF> *, const Matrix<ComplexF> *,
                               float);
       template bool matIsFinite(const Matrix<ComplexF> *);
@@ -653,6 +787,16 @@ namespace AprilMath {
                                        int,
                                        Matrix<int32_t> *,
                                        bool);
+      template int32_t matProd(const Matrix<int32_t> *);
+      template Matrix<int32_t> *matProd(Matrix<int32_t> *,
+                                        int,
+                                        Matrix<int32_t> *);
+      template Matrix<int32_t> *matCumSum(Matrix<int32_t> *,
+                                          int,
+                                          Matrix<int32_t> *);
+      template Matrix<int32_t> *matCumProd(Matrix<int32_t> *,
+                                           int,
+                                           Matrix<int32_t> *);
       template bool matEquals(const Matrix<int32_t> *, const Matrix<int32_t> *,
                               float);
 
