@@ -6,7 +6,26 @@ Master branch release
 
 ### Unstable changes
 
-- Added `data_frame` object, similar to Python Pandas DataFrame.
+### API Changes
+
+### Bugs fixed
+
+### C/C++
+
+### Other
+
+v0.4.1
+------
+
+### Unstable changes
+
+- Improved serialize/deserialize functions, reimplemented all the serialization
+  procedure.
+- Added exceptions support to LuaPkg and APRIL-ANN, allowing to capture C++
+  errors into Lua code.
+- Added `set` class.
+- Added `series` class.
+- Added `data_frame` class, similar to Python Pandas DataFrame.
 - Serialization and deserilization have been updated with more robust and
   reusable API, implemented in `util.serialize()` and `util.deserialize()`
   functions.
@@ -16,6 +35,8 @@ Master branch release
 
 ### API Changes
 
+- Added batch normalization ANN component.
+- Allowing `matrix.join` to add new axis.
 - Added methods `prod()`, `cumsum()` and `cumprod()` at `matrix` classes.
 - Added methods `count_eq()` and `count_neq()` at `matrix` classes.
 - Serializable objects API have been augmented with methods `ctor_name()` and
@@ -52,8 +73,10 @@ Master branch release
 - Added method `data` to numeric matrix classes.
 - Added methods `values`, `indices`, `first_index` to sparse matrix class.
 
-### Bugs removed
+### Bugs fixed
 
+- Fixed bugs when reading bad formed CSV files.
+- Fixed bugs at statistical distributions.
 - FloatRGB bug solved on equal (+=, -=, ...) operators. This bug affected 
   ImageRGB operations such as resize.
 - Solved problems when chaining methods in Lua, some objects end to be garbage
@@ -65,6 +88,9 @@ Master branch release
 
 ### C/C++
 
+- Better `LuaTable` accessors, using `[]` operator.
+- Implementation of matrix `__index`, `__newindex` and `__call` metamethods in
+  C++.
 - Implementation of `matProd()`, `matCumSum()` and `matCumProd()` functions.
 - Implementation of `matCountEq()` and `matCountNeq()` functions for
   `Matrix<T>`.
@@ -82,6 +108,8 @@ Master branch release
 
 ### Other
 
+- Added support for [IPyLua](https://github.com/pakozm/IPyLua).
+- Optimized matrix access for confusion matrix.
 - Minor changes in `class.lua`.
 - Improved binding to avoid multiple object copies when pushing C++ objects.
 - Added Git commit hash and compilation time.
@@ -116,7 +144,7 @@ v0.4.0
 - `matrix.dict` could store sparse and dense float matrices.
 - Added `matrix.cholesky(...)` method.
 
-### Bugs removed
+### Bugs fixed
 
 - Solved bug at `matrix:max()` and `matrix:min()` methods.
 - Removed memory leak at `SelectANNComponent::doBackprop()` method.
@@ -196,7 +224,7 @@ v0.3.1
 - Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
 
-### Bugs removed
+### Bugs fixed
 
 - Solved bug which makes to load unitialized weight matrices when loading old
   trainable.supervised_trainer (without `matrix.dict` object).
@@ -272,7 +300,7 @@ v0.3.1-alpha (pre-relase of v0.3.1-beta)
 - Added `matrix.svd` and `matrix.diagonalize`.
 - Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
 
-### Bugs removed
+### Bugs fixed
 
 - Memory leak due to the GPUMirroredMemoryBlock pool was solved.
 - Solved bug at `stats.correlation.pearson`.
@@ -398,7 +426,7 @@ v0.3.0-beta relase
   the feature vectors.
 - Added stepDataset.
 
-### Bugs removed
+### Bugs fixed
 
 - Solved bug at `luabind_template.cc`, which introduced spurious segmentation
   faults due to Lua execution of garbage collection in the middle of a
