@@ -2,7 +2,7 @@ return {
   description = "A Pattern Recognizer In Lua",
   version = "0.4.1",
   prefix = os.getenv("PREFIX") or "/usr",
-  url = "https://github.com/pakozm/april-ann",
+  url = "https://github.com/april-org/april-ann",
   version_flags = {
     '-DAPRILANN_VERSION_MAJOR=0',
     '-DAPRILANN_VERSION_MINOR=4',
