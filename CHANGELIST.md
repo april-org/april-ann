@@ -8,6 +8,8 @@ Master branch release
 
 ### API Changes
 
+- Added `dataset:bunches(bsize)` and `dataset.token:bunches(bsize)` methods.
+
 ### Bugs fixed
 
 ### C/C++
