@@ -4,8 +4,9 @@ class.extend(dataset.token, "bunches", function(ds, bunch_size)
                return coroutine.wrap(function()
                    local idxs = matrixInt32(bunch_size):linspace()
                    local nump = ds:numPatterns()
+                   local j=1
                    for i=1,nump-bunch_size+1,bunch_size do
-                     if i%1000 == 0 then collectgarbage("collect") end
+                     if j%1000 == 0 then j=1 collectgarbage("collect") end j=j+1
                      local tbl = idxs:toTable()
                      coroutine.yield(ds:getPatternBunch(tbl), tbl)
                      idxs:scalar_add(bunch_size)
