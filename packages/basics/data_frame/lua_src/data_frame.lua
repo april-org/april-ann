@@ -1578,6 +1578,41 @@ series_methods.to_data_frame =
     return data_frame{ data=df_data, columns = col_names }
   end
 
+series_methods.integrate =
+  april_doc{
+    class = "method",
+    summary = "Integrates a time series using a given method",
+    params = {
+      "The integration method: 'rectangle' (by default) or 'trapezoid'",
+    },
+    outputs = {
+      "A matrix with one value for each data column in the series",
+    },
+  } ..
+  function(self, method)
+    local bd = matrix.ext.broadcast
+    local method = method or "rectangle"
+    local time = self.time
+    local data = self.data
+    
+    if method == "rectangle" then
+      local t1,t2 = time[{'1:-2'}],time[{'2:-1'}]
+      local dx = data[{'1:-2'}]
+      local dt = (t2 - t1):right_inflate():convert_to("float")
+      return bd(dt.cmul, dx, dt):sum(1)
+      
+    elseif method == "trapezoid" then
+      local t1,t2 = time[{'1:-2'}],time[{'2:-1'}]
+      local x1,x2 = data[{'1:-2'}],data[{'2:-1'}]
+      local dt = (t2 - t1):right_inflate():convert_to("float")
+      local dx = (x1 + x2):scal(0.5)
+      return bd(dt.cmul, dx, dt):sum(1)
+      
+    else
+      error("Unknown integration method")
+    end
+  end
+
 series_methods.resampleU =
   april_doc{
     class = "method",

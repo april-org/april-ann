@@ -8,6 +8,7 @@ Master branch release
 
 ### API Changes
 
+- Added `data_frame.series:integrate()` method.
 - Added `dataset:bunches(bsize)` and `dataset.token:bunches(bsize)` methods.
 
 ### Bugs fixed
