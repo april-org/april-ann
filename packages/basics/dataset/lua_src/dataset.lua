@@ -1,3 +1,32 @@
+-----------------------------------------------------------------------------
+
+class.extend(dataset.token, "bunches", function(ds, bunch_size)
+               return coroutine.wrap(function()
+                   local idxs = matrixInt32(bunch_size):linspace()
+                   local nump = ds:numPatterns()
+                   local j=1
+                   for i=1,nump-bunch_size+1,bunch_size do
+                     if j%1000 == 0 then j=1 collectgarbage("collect") end j=j+1
+                     local tbl = idxs:toTable()
+                     coroutine.yield(ds:getPatternBunch(tbl), tbl)
+                     idxs:scalar_add(bunch_size)
+                   end
+                   local sz = nump % bunch_size
+                   if sz > 0 then
+                     local tbl = idxs[{ {1,sz} }]:toTable()
+                     coroutine.yield(ds:getPatternBunch(tbl), tbl)
+                   end
+                   collectgarbage("collect")
+               end)
+end)
+
+class.extend(dataset, "bunches",
+             function(ds, bunch_size)
+               return dataset.token.wrapper(ds):bunches(bunch_size)
+end)
+
+-----------------------------------------------------------------------------
+
 function dataset.to_fann_file_format(input_dataset, output_dataset)
   local numpat = input_dataset:numPatterns()
   if (output_dataset:numPatterns() ~= numpat) then

@@ -1,14 +1,14 @@
 APRIL-ANN
 =========
 
-[![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=master)](https://travis-ci.org/pakozm/april-ann) Travis CI (master branch)
+[![Build Status](https://travis-ci.org/april-org/april-ann.png?branch=master)](https://travis-ci.org/april-org/april-ann) Travis CI (master branch)
 
-[![Build Status](https://travis-ci.org/pakozm/april-ann.png?branch=devel)](https://travis-ci.org/pakozm/april-ann) Travis CI (devel branch)
+[![Build Status](https://travis-ci.org/april-org/april-ann.png?branch=devel)](https://travis-ci.org/april-org/april-ann) Travis CI (devel branch)
 
 User documentation
 ------------------
 
-Follow [wiki](https://github.com/pakozm/april-ann/wiki) for user documentation.
+Follow [wiki](https://github.com/april-org/april-ann/wiki) for user documentation.
 
 Tutorials
 ---------
@@ -35,7 +35,7 @@ Dependencies and basic setup
 Clone the repository and enter to it:
 
 ```
-$ git clone https://github.com/pakozm/april-ann.git
+$ git clone https://github.com/april-org/april-ann.git
 $ cd april-ann
 ```
 
@@ -244,7 +244,7 @@ you can use this bibitem:
 @misc{aprilann,
   Author = {Francisco Zamora-Mart\'inez and Salvador Espa{\~n}a-Boquera and
 	        Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adri\'an Palacios-Corella},
-  Note = {{https://github.com/pakozm/april-ann}},
+  Note = {{https://github.com/april-org/april-ann}},
   Title = {{APRIL-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
   Year = {2013}}
 ```
@@ -339,8 +339,8 @@ Includes these sources
 Wiki documentation
 ------------------
 
-- [PDF version](https://rawgithub.com/wiki/pakozm/april-ann/WIKI.pdf)
-- [HTML one-page](https://rawgithub.com/wiki/pakozm/april-ann/WIKI.html)
+- [PDF version](https://rawgithub.com/wiki/april-org/april-ann/WIKI.pdf)
+- [HTML one-page](https://rawgithub.com/wiki/april-org/april-ann/WIKI.html)
 
 
 Doxygen documentation

@@ -409,6 +409,9 @@ namespace AprilMath {
                           const Matrix<bool> *mask) {
         AprilUtils::SharedPtr< Matrix<int32_t> > idx;
         idx = matNonZeroIndices(mask);
+        if (idx.empty()) {
+          ERROR_EXIT(128, "Unable to handle the given input matrix, it looks like an all false/zero matrix\n");
+        }
         return matIndex(m, dim, idx.get());
       }
 
@@ -418,6 +421,7 @@ namespace AprilMath {
                                 T val) {
         AprilUtils::SharedPtr< Matrix<int32_t> > idx;
         idx = matNonZeroIndices(mask);
+        if (idx.empty()) return m;
         return matIndexedFill(m, dim, idx.get(), val);
       }
 
@@ -427,6 +431,7 @@ namespace AprilMath {
                                 const Matrix<T> *other) {
         AprilUtils::SharedPtr< Matrix<int32_t> > idx;
         idx = matNonZeroIndices(mask);
+        if (idx.empty()) return m;
         return matIndexedCopy(m, dim, idx.get(), other);
       }
       
@@ -656,7 +661,8 @@ namespace AprilMath {
         int non_zeros = sq_input->size() - matCountEq(sq_input.get(),
                                                       AprilMath::Limits<T>::zero());
         if (non_zeros == 0) {
-          ERROR_EXIT(128, "Unable to handle the given input matrix, it looks like an all false/zero matrix\n");
+          // ERROR_EXIT(128, "Unable to handle the given input matrix, it looks like an all false/zero matrix\n");
+          return 0;
         }
         if (dest != 0) {
           if (dest->size() != non_zeros) {

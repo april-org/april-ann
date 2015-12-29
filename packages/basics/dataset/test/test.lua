@@ -30,3 +30,12 @@ T("SparseMatrixDataSet",
                                            6, 0, 0, 0, 0, 0,
                                            0, 0, 4, 0, 0, 0, })) )    
 end)
+
+T("DatasetIterators",
+  function()
+    local ds = dataset.matrix(matrix(10,20):linspace())
+    for i,tbl in ds:bunches(5) do print(i) end
+    for i,tbl in ds:bunches(6) do print(i) end
+    for i,tbl in ds:bunches(4) do print(i) end
+end)
+
