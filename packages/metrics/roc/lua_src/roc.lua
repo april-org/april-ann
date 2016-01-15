@@ -132,6 +132,7 @@ do
   
   -- two-sided test, checks if both curves have a different AUC
   -- http://cran.r-project.org/web/packages/pROC/pROC.pdf
+  -- this is only for paired case.
   metrics.roc.test =
     function(r1, r2, params)
       assert(r1.data:dim(1) == r2.data:dim(1), "Incompatible ROC curves")
