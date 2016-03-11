@@ -625,6 +625,29 @@ methods.to_csv =
     collectgarbage("collect")
   end
 
+-- TODO: Finish implementation of append.
+--
+-- FIXME: Does it should allow concatenation of more than two data frames?
+--
+-- methods.append =
+--   april_doc{
+--   } ..
+--   function(self, other, args)
+--     local args = get_table_fields({
+--         ignore_index = { type_match="boolean" },
+--         verify_integrity = { type_match="boolean" },
+--                                   }, args)
+--     local ignore_index     = args.ignore_index
+--     local verify_integrity = args.verify_integrity
+--     local idx
+--     if ignore_index then
+--       local n = self:nrows() + other:nrows()
+--       idx = matrixInt32(n):linspace()
+--     else
+--     end
+--     local result = data_frame{ index = idx }
+--   end
+
 methods.drop =
   april_doc{
     class = "method",
