@@ -174,8 +174,10 @@ ascii
 ]]
     check.eq(result, target)
 
-    local tsp = ts:resampleU(12, { method="rectangle" })
-    -- TODO: check method=rectangle output
+    local tsp_rect = ts:resampleU(12, { method="rectangle" })
+    local tsp_max = ts:resampleU(12, { method="max" })
+
+    -- TODO: check methods output
 end)
 
 T("ParseCSVLineTest",

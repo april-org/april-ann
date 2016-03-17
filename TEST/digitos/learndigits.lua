@@ -95,7 +95,7 @@ function ver_resultado()
     digito  = otrorand:randInt(0,9)
     autor   = otrorand:randInt(0,19)
     index   = 1+autor*10+digito
-    resul   = trainer:calculate(val_input:getPattern(index)):rewrap(10)
+    resul   = trainer:get_component():forward(matrix(val_input:getPattern(index))):rewrap(10)
     resul:exp()
     desired = val_output:getPattern(index)
     inputpattern  = train_input:getPattern(index)
