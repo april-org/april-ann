@@ -1469,6 +1469,12 @@ local function aggregate_rectangle(result, period, inv_T, x, y, start, frontier)
   assert(i == #x)
 end
 
+local function aggregate_max(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  result:fill((y:max()))
+end
+
 local function check_sequential(self)
   local time = self.time
   if #time == 1 then
@@ -1585,7 +1591,7 @@ series_methods.resampleU =
     params = {
       "The desired time period, a number >= 1 in same units as timestamp column",
       { "A table of extra arguements, as start_time, stop_time, and resampling method.",
-        "Currently method can be 'trapezoid' (by default) or 'rectangle'", },
+        "Currently method can be 'trapezoid' (by default), 'rectangle', 'max'.", },
     },
     outputs = {
       "A new series instance with all resampled data",
@@ -1607,6 +1613,9 @@ series_methods.resampleU =
     elseif method == "rectangle" then
       interpolate = interpolate_rectangle
       aggregate   = aggregate_rectangle
+    elseif method == "max" then
+      interpolate = interpolate_rectangle
+      aggregate = aggregate_max
     else
       error("Unknown method " .. method)
     end
