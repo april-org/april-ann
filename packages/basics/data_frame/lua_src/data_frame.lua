@@ -625,6 +625,29 @@ methods.to_csv =
     collectgarbage("collect")
   end
 
+-- TODO: Finish implementation of append.
+--
+-- FIXME: Does it should allow concatenation of more than two data frames?
+--
+-- methods.append =
+--   april_doc{
+--   } ..
+--   function(self, other, args)
+--     local args = get_table_fields({
+--         ignore_index = { type_match="boolean" },
+--         verify_integrity = { type_match="boolean" },
+--                                   }, args)
+--     local ignore_index     = args.ignore_index
+--     local verify_integrity = args.verify_integrity
+--     local idx
+--     if ignore_index then
+--       local n = self:nrows() + other:nrows()
+--       idx = matrixInt32(n):linspace()
+--     else
+--     end
+--     local result = data_frame{ index = idx }
+--   end
+
 methods.drop =
   april_doc{
     class = "method",
@@ -1469,6 +1492,12 @@ local function aggregate_rectangle(result, period, inv_T, x, y, start, frontier)
   assert(i == #x)
 end
 
+local function aggregate_max(result, period, inv_T, x, y, start, frontier)
+  assert(#x >= 2)
+  assert(#x == #y)
+  result:fill((y:max()))
+end
+
 local function check_sequential(self)
   local time = self.time
   if #time == 1 then
@@ -1620,7 +1649,7 @@ series_methods.resampleU =
     params = {
       "The desired time period, a number >= 1 in same units as timestamp column",
       { "A table of extra arguements, as start_time, stop_time, and resampling method.",
-        "Currently method can be 'trapezoid' (by default) or 'rectangle'", },
+        "Currently method can be 'trapezoid' (by default), 'rectangle', 'max'.", },
     },
     outputs = {
       "A new series instance with all resampled data",
@@ -1642,6 +1671,9 @@ series_methods.resampleU =
     elseif method == "rectangle" then
       interpolate = interpolate_rectangle
       aggregate   = aggregate_rectangle
+    elseif method == "max" then
+      interpolate = interpolate_rectangle
+      aggregate = aggregate_max
     else
       error("Unknown method " .. method)
     end
