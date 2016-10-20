@@ -1845,7 +1845,7 @@ namespace Basics {
     {
       MatrixBool *mask = lua_to<MatrixBool*>(L, 1);
       T value          = lua_to<T>(L, 2);
-      Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, 0);
+      Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, obj);
       lua_push(L, AprilMath::MatrixExt::Operations::
                matMaskedFill(obj, mask, value, dest));
       return 1;
@@ -1855,7 +1855,7 @@ namespace Basics {
     {
       MatrixBool *mask = lua_to<MatrixBool*>(L, 1);
       Matrix<T> *value = lua_to<Matrix<T>*>(L, 2);
-      Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, 0);
+      Matrix<T> *dest  = lua_opt<Matrix<T>*>(L, 3, obj);
       lua_push(L, AprilMath::MatrixExt::Operations::
                matMaskedCopy(obj, mask, value, dest));
       return 1;
