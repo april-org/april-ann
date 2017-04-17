@@ -435,6 +435,18 @@ using namespace Imaging;
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat get_indexes
+{
+  float threshold;;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, float, threshold);
+  MatrixFloat *res;
+  res = obj->get_indexes_from_image(threshold);
+  
+  LUABIND_RETURN(MatrixFloat, res);
+}
+//BIND_END
+
 //BIND_METHOD ImageFloat to_RGB
 {
   LUABIND_CHECK_ARGN(==,0);

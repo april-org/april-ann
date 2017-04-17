@@ -990,6 +990,40 @@ namespace Imaging {
     }
   }
 
+  /* Returns a vector with the indexes that of pixels that are above threshold element
+   * 
+   */
+  template <typename T>
+  Basics::MatrixFloat * Image<T>::get_indexes_from_image(T threshold) {
+
+      // Compute the number of pixels
+      int total = 0;
+      int width  = this->width();
+      int height = this->height();
+      // float eps = 0.05;
+      for (int col = 0; col < width; ++col)
+      {
+          for(int row = 0; row < height; ++row) 
+              if ((*this)(col,row) >= threshold) total++;
+          
+      }
+      Basics::MatrixFloat *m_pixels = new Basics::MatrixFloat(1, total);
+
+      int current = 0;
+      for (int col= 0; col < width; ++col){
+
+          for(int row = 0; row < height; ++row) {
+              float value = (*this)(col,row);
+              float index = (row)*width+col+1;
+
+              if ((*this)(col,row) >= threshold) {
+                  (*m_pixels)(current) = index;
+                  current++;
+              }
+          }
+      }
+      return m_pixels;
+  }
 } // namespace Imaging
 
 #endif // IMAGE_CC

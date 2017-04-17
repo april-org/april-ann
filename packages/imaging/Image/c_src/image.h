@@ -121,13 +121,13 @@ namespace Imaging {
 
     Basics::Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, Basics::LinearCombConf<T> *cl);
     void threshold_image(T low, T high, T value_low, T value_high);
+    Basics::MatrixFloat * get_indexes_from_image(T threshold);
   };
 
 
   template<>
   Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
                                                    FloatRGB default_color) const;
-
 }
 
   /*** Implementacion ***/

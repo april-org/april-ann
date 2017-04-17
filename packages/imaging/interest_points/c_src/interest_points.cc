@@ -895,6 +895,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
       return m_pixels;
   }
 
+
   // Class Set Points
   SetPoints::SetPoints(ImageFloat *img) {
       // Compute connected components of the image
